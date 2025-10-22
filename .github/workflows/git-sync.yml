@@ -1,11 +1,13 @@
 name: Auto Sync GPT Output
+
 permissions:
-  contents: write
+  contents: write  # needed for git push
+  actions: read
+
 on:
-  push:
-  workflow_dispatch:
+  workflow_dispatch:    # manual trigger (GPT or you)
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */6 * * *"  # optional, every 6 hours
 
 jobs:
   sync:
@@ -20,6 +22,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Configure Git identity
         run: |
           git config user.name "github-actions[bot]"
