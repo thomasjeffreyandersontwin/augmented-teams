@@ -1,5 +1,6 @@
 name: Auto Sync GPT Output
-
+permissions:
+  contents: write
 on:
   push:
   workflow_dispatch:
