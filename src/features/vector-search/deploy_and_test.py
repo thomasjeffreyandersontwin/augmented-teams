@@ -70,6 +70,23 @@ def run_command(command: str, cwd: Path = None) -> Tuple[bool, str]:
         print_status(f"❌ Command error: {e}", "ERROR")
         return False, str(e)
 
+def install_dependencies():
+    """Install required dependencies"""
+    print_status("📦 Installing dependencies...")
+    
+    success, output = run_command(
+        "pip install -r requirements.txt",
+        cwd=VECTOR_SEARCH_PATH
+    )
+    
+    if not success:
+        print_status("❌ Failed to install dependencies", "ERROR")
+        print_status(f"Dependency installation output: {output}", "ERROR")
+        return False
+    
+    print_status("✅ Dependencies installed successfully!", "SUCCESS")
+    return True
+
 def stop_server():
     """Stop any running server processes"""
     print_status("🛑 Stopping existing server processes...")
@@ -237,39 +254,48 @@ def main():
     # Change to vector search directory
     os.chdir(VECTOR_SEARCH_PATH)
     
-    # Step 1: Stop existing server
+    # Step 1: Install dependencies
+    print_status("=" * 60)
+    print_status("STEP 1: Installing dependencies")
+    print_status("=" * 60)
+    
+    if not install_dependencies():
+        print_status("❌ Dependency installation failed! Stopping deployment.", "ERROR")
+        sys.exit(1)
+    
+    # Step 2: Stop existing server
     stop_server()
     
-    # Step 2: Run all tests
+    # Step 3: Run all tests
     print_status("=" * 60)
-    print_status("STEP 1: Running all tests")
+    print_status("STEP 2: Running all tests")
     print_status("=" * 60)
     
     if not run_tests():
         print_status("❌ Tests failed! Stopping deployment.", "ERROR")
         sys.exit(1)
     
-    # Step 3: Start server
+    # Step 4: Start server
     print_status("=" * 60)
-    print_status("STEP 2: Starting server")
+    print_status("STEP 3: Starting server")
     print_status("=" * 60)
     
     if not start_server():
         print_status("❌ Failed to start server! Stopping deployment.", "ERROR")
         sys.exit(1)
     
-    # Step 4: Reindex database
+    # Step 5: Reindex database
     print_status("=" * 60)
-    print_status("STEP 3: Reindexing database")
+    print_status("STEP 4: Reindexing database")
     print_status("=" * 60)
     
     if not reindex_database():
         print_status("❌ Database indexing failed! Stopping deployment.", "ERROR")
         sys.exit(1)
     
-    # Step 5: Test all services
+    # Step 6: Test all services
     print_status("=" * 60)
-    print_status("STEP 4: Testing all services")
+    print_status("STEP 5: Testing all services")
     print_status("=" * 60)
     
     if not test_all_services():
