@@ -50,7 +50,7 @@ def commit_and_push(commit_msg: str=None):
         print("No changes to commit.")
         return
     run_cmd(["git", "push", REMOTE_NAME, BRANCH])
-    print(f"✅ Changes pushed successfully: {msg}")
+    print(f"[OK] Changes pushed successfully: {msg}")
 
 def copy_workflow_files():
     """Copy workflow files from feature folders to .github/workflows/"""
