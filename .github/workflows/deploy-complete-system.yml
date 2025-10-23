@@ -63,6 +63,7 @@ jobs:
         
         # Start server in background
         nohup python -m uvicorn api:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
+        echo $! > server.pid
         
         # Wait for server to start
         sleep 10
@@ -71,6 +72,7 @@ jobs:
         curl -f http://localhost:8000/health || exit 1
         
         echo "✅ Vector search server deployed!"
+        echo "🌐 Server running on port 8000 - make it public in Codespace!"
         
     - name: Index and test vector database
       env:
@@ -141,8 +143,12 @@ jobs:
         echo "- **Git Sync**: Available via GPT Action" >> $GITHUB_STEP_SUMMARY
         echo "- **API Documentation**: \`/docs\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Next Steps" >> $GITHUB_STEP_SUMMARY
-        echo "1. Make port 8000 public in your Codespace" >> $GITHUB_STEP_SUMMARY
-        echo "2. Update GPT Actions with new OpenAPI schemas" >> $GITHUB_STEP_SUMMARY
-        echo "3. Test complete workflow from GPT interface" >> $GITHUB_STEP_SUMMARY
-        echo "4. Verify git sync + vector search integration" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Manual Next Steps (Action Cannot Do These)" >> $GITHUB_STEP_SUMMARY
+        echo "1. **Make port 8000 public** in your Codespace (Ports tab → Make Public)" >> $GITHUB_STEP_SUMMARY
+        echo "3. **Test complete workflow** from GPT interface (Try search commands)" >> $GITHUB_STEP_SUMMARY
+        echo "4. **Verify git sync + vector search** integration (Test both actions)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 GPT Action Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **OpenAPI Schema**: \`src/features/vector-search/openapi-gpt-action.yaml\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Server URL**: Update with your Codespace public URL" >> $GITHUB_STEP_SUMMARY
+        echo "- **Enhanced Search**: Use \`searchDetailed\` for better results" >> $GITHUB_STEP_SUMMARY

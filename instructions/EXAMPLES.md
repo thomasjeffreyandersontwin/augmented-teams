@@ -11,7 +11,25 @@
 
 ---
 
-### 2. Flow Mapping
+### 2. Document Search & Retrieval
+**Prompt:**  
+> "Find any documents that mention 'Augmented Delivery Life Cycle' and show me the specific locations."
+
+**Response Approach:**
+- Use `searchDetailed` to find documents containing the query
+- Show specific locations (page numbers, slide numbers)
+- Offer to retrieve complete documents
+- Provide action suggestions for next steps
+
+**Example Workflow:**
+1. Search for content: "Find documents about AI transformation"
+2. Get details: "Show me the complete PURPOSE.md file"
+3. Browse by topic: "What files are available in the assets folder?"
+4. Move content: "Move this document to Notion"
+
+---
+
+### 3. Flow Mapping
 **Prompt:**  
 > “Visualize the flow between human input, GPT reasoning, and output validation.”
 
