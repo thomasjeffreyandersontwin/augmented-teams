@@ -111,6 +111,50 @@ def search_knowledge(query: str, topic: str = None, file_type: str = None, max_r
         print(f"❌ Search failed: {e}")
         raise
 
+def reindex_after_content_changes():
+    """
+    Reindex the vector database after content changes.
+    
+    This function should be called after any content changes to ensure
+    the vector search system has the latest documents indexed.
+    """
+    try:
+        print("🔄 Content changed - reindexing vector database...")
+        result = index_knowledge_base(force=True)
+        
+        print(f"✅ Vector database reindexed after content changes:")
+        print(f"   - Total indexed: {result['indexed']}")
+        print(f"   - Total skipped: {result['skipped']}")
+        print(f"   - Total errors: {result['errors']}")
+        
+        return result
+    except Exception as e:
+        print(f"❌ Failed to reindex after content changes: {e}")
+        raise
+
+def sync_and_reindex(content_changes: bool = False):
+    """
+    Complete sync workflow: git operations + vector reindexing if needed.
+    
+    Args:
+        content_changes: If True, reindex the vector database after sync
+    """
+    try:
+        print("🔄 Starting complete sync workflow...")
+        
+        # Ensure latest code
+        ensure_latest()
+        
+        # Reindex if content changed
+        if content_changes:
+            reindex_after_content_changes()
+        
+        print("✅ Complete sync workflow finished!")
+        
+    except Exception as e:
+        print(f"❌ Sync workflow failed: {e}")
+        raise
+
 if __name__ == "__main__":
     ensure_latest()
     commit_and_push()

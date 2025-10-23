@@ -1,0 +1,40 @@
+# Cursor Rules for Augmented Teams Project
+
+## Global Project Commands
+
+### Deploy Complete System
+- **Command**: `deploy`
+- **Description**: Run comprehensive deployment and testing
+- **Usage**: Type `@deploy` in Cursor
+- **Action**: `python src/features/vector-search/deploy_and_test.py`
+
+### Git Sync with Reindex
+- **Command**: `sync-reindex`
+- **Description**: Git sync with vector database reindexing
+- **Usage**: Type `@sync-reindex` in Cursor
+- **Action**: `cd src/integration/git && python git_sync.py && python -c "import git_sync; git_sync.reindex_after_content_changes()"`
+
+### Complete Workflow
+- **Command**: `complete-workflow`
+- **Description**: Complete development workflow (git sync + deploy + start server)
+- **Usage**: Type `@complete-workflow` in Cursor
+- **Action**: `cd src/integration/git && python git_sync.py && python -c "import git_sync; git_sync.reindex_after_content_changes()" && cd ../../features/vector-search && python deploy_and_test.py`
+
+### Quick Test
+- **Command**: `quick-test`
+- **Description**: Run quick system tests
+- **Usage**: Type `@quick-test` in Cursor
+- **Action**: `cd src/features/vector-search && python test_setup.py`
+
+## Project Structure
+- **Vector Search**: `src/features/vector-search/`
+- **Git Integration**: `src/integration/git/`
+- **GitHub Actions**: `.github/workflows/`
+- **Instructions**: `instructions/`
+- **Assets**: `assets/`
+
+## Development Workflow
+1. Make changes to code
+2. Run `@deploy` to test and deploy
+3. Commit changes to trigger GitHub Actions
+4. Test GPT Actions integration
