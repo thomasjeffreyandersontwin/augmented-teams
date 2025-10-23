@@ -24,7 +24,7 @@
 - **Command**: `complete-workflow`
 - **Description**: Complete development workflow (git sync + deploy + start server)
 - **Usage**: Type `@complete-workflow` in Cursor
-- **Action**: `cd ../../integration/git && python git_sync.py && python -c "import git_sync; git_sync.reindex_after_content_changes()" && cd ../../features/vector-search && python deploy_and_test.py`
+- **Action**: `cd /workspaces/augmented-teams && cd src/integration/git && python git_sync.py && python -c "import git_sync; git_sync.reindex_after_content_changes()" && cd ../../features/vector-search && python deploy_and_test.py`
 
 ### Quick Test
 - **Command**: `quick-test`
