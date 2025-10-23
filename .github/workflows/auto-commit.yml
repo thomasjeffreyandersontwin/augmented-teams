@@ -2,14 +2,8 @@ name: Commit Content from GPT
 
 on:
   workflow_dispatch:  # Manual trigger
-  workflow_call:      # Called by other workflows
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/features/**'
-      - 'src/integration/**'
-      - 'instructions/**'
+  schedule:
+    - cron: "0 */6 * * *"  # Every 6 hours
 
 jobs:
   sync-gpt-output:
