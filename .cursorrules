@@ -8,11 +8,12 @@
 - **Usage**: Type `@ensure-latest` in Cursor
 - **Action**: `cd src/integration/git && python -c "import git_sync; git_sync.ensure_latest()"`
 
-### Deploy Complete System
-- **Command**: `deploy`
-- **Description**: Run comprehensive deployment and testing
-- **Usage**: Type `@deploy` in Cursor
-- **Action**: `python src/features/vector-search/deploy_and_test.py`
+
+### Complete Workflow
+- **Command**: `complete-workflow`
+- **Description**: Complete development workflow (git sync + deploy + start server)
+- **Usage**: Type `@complete-workflow` in Cursor
+- **Action**: `cd /workspaces/augmented-teams && cd src/integration/git && python git_sync.py && python -c "import git_sync; git_sync.reindex_after_content_changes()" && cd ../../features/vector-search && python deploy_and_test.py`APter
 
 ### Git Sync with Reindex
 - **Command**: `sync-reindex`
