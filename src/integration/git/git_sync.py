@@ -66,13 +66,13 @@ def copy_workflow_files():
             shutil.copy2(git_sync_source, git_sync_dest)
             print(f"[OK] Copied git-sync.yml to .github/workflows/")
         
-        # Copy sync-gpt-builder.yml from update_gpt_instructions_from_git feature
-        gpt_sync_source = REPO_PATH / "src" / "features" / "update_gpt_instructions_from_git" / "sync-gpt-builder.yml"
-        gpt_sync_dest = workflows_dir / "sync-gpt-builder.yml"
+        # Copy update_gpt_instructions.yml from update_gpt_instructions_from_git feature
+        gpt_sync_source = REPO_PATH / "src" / "features" / "update_gpt_instructions_from_git" / "update_gpt_instructions.yml"
+        gpt_sync_dest = workflows_dir / "update_gpt_instructions.yml"
         if gpt_sync_source.exists():
             import shutil
             shutil.copy2(gpt_sync_source, gpt_sync_dest)
-            print(f"[OK] Copied sync-gpt-builder.yml to .github/workflows/")
+            print(f"[OK] Copied update_gpt_instructions.yml to .github/workflows/")
             
     except Exception as e:
         print(f"[WARNING] Could not copy workflow files: {e}")
