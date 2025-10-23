@@ -173,7 +173,7 @@ curl "http://localhost:8000/files/instructions/PURPOSE.md"
 ### Environment Variables
 - **`OPENAI_API_KEY`** - Your OpenAI API key (required)
 - **`API_KEY`** - Secure API key for authentication (optional, defaults to 'dev-key-change-in-production')
-- **`VECTOR_DB_PATH`** - Path to vector database (optional, defaults to `.vector_db`)
+- **`VECTOR_DB_PATH`** - Path to vector database (optional, defaults to `.vector_db` in feature folder)
 
 ### Chunking Settings
 - **`CHUNK_SIZE`** - 1024 tokens (increased for better context)

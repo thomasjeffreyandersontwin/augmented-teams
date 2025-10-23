@@ -26,7 +26,7 @@ load_dotenv(override=True)
 
 # Configuration
 REPO_PATH = Path(__file__).resolve().parents[3]  # augmented-teams/
-VECTOR_DB_PATH = Path(os.getenv("VECTOR_DB_PATH", REPO_PATH / ".vector_db"))
+VECTOR_DB_PATH = Path(os.getenv("VECTOR_DB_PATH", Path(__file__).parent / ".vector_db"))
 EMBEDDING_MODEL = "text-embedding-3-small"  # Latest efficient model, cost-effective
 CHUNK_SIZE = 1024  # tokens - increased for better context preservation
 CHUNK_OVERLAP = 100  # tokens - increased for better continuity
