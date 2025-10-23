@@ -146,6 +146,71 @@ async def health_check():
         )
 
 
+@app.get("/search-detailed", response_model=SearchResponse)
+async def search_detailed(
+    query: str = Query(..., description="Natural language search query"),
+    topic: Optional[str] = Query(None, description="Filter by topic/directory"),
+    file_type: Optional[str] = Query(None, description="Filter by file type"),
+    max_results: int = Query(10, ge=1, le=20, description="Maximum number of results"),
+    vs: VectorSearchSystem = Depends(get_vector_search)
+):
+    """
+    Enhanced search that finds documents and shows specific locations.
+    
+    Returns documents containing the query with context about where the content appears.
+    """
+    try:
+        logger.info(f"Detailed search request: query='{query}', topic={topic}, file_type={file_type}")
+        
+        # Get search results
+        results = vs.search(
+            query=query,
+            topic=topic,
+            file_type=file_type,
+            max_results=max_results
+        )
+        
+        # Enhance results with document context
+        enhanced_results = []
+        for result in results:
+            file_path = result['file_path']
+            
+            # Get complete document info
+            try:
+                file_details = vs.get_file_details(file_path)
+                enhanced_result = {
+                    **result,
+                    'document_context': {
+                        'total_chunks': file_details.get('total_chunks', 0),
+                        'file_exists': file_details.get('exists', False),
+                        'all_chunks_available': True
+                    },
+                    'action_suggestions': [
+                        f"Get complete document: /files/{file_path}",
+                        f"Get specific chunks: /chunks/{file_path}",
+                        f"Move to Notion: Use file content for Notion pages"
+                    ]
+                }
+                enhanced_results.append(enhanced_result)
+            except Exception as e:
+                logger.warning(f"Could not get details for {file_path}: {e}")
+                enhanced_results.append(result)
+        
+        return SearchResponse(
+            query=query,
+            results=enhanced_results,
+            count=len(enhanced_results)
+        )
+        
+    except Exception as e:
+        logger.error(f"Detailed search failed: {e}")
+        return SearchResponse(
+            query=query,
+            results=[],
+            count=0
+        )
+
+
 @app.get("/search", response_model=SearchResponse)
 async def search(
     query: str = Query(..., description="Natural language search query"),

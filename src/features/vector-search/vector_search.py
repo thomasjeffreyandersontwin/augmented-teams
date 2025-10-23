@@ -28,9 +28,9 @@ load_dotenv(override=True)
 REPO_PATH = Path(__file__).resolve().parents[3]  # augmented-teams/
 VECTOR_DB_PATH = Path(os.getenv("VECTOR_DB_PATH", REPO_PATH / ".vector_db"))
 EMBEDDING_MODEL = "text-embedding-3-small"  # Latest efficient model, cost-effective
-CHUNK_SIZE = 512  # tokens - balances context with precision
-CHUNK_OVERLAP = 50  # tokens - ensures content at boundaries isn't lost
-MAX_RESULTS = 5
+CHUNK_SIZE = 1024  # tokens - increased for better context preservation
+CHUNK_OVERLAP = 100  # tokens - increased for better continuity
+MAX_RESULTS = 10  # Increased to return more context
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

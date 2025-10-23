@@ -75,6 +75,80 @@ paths:
                   count:
                     type: integer
 
+  /search-detailed:
+    get:
+      operationId: searchDetailed
+      summary: Enhanced search with document context and action suggestions
+      description: Find documents containing query terms and get suggestions for next actions
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Natural language search query
+        - name: topic
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [instructions, config, assets, src]
+          description: Filter by folder/topic
+        - name: file_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [word, excel, powerpoint, pdf, markdown, text]
+          description: Filter by document type
+        - name: max_results
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 20
+          description: Maximum number of results
+      responses:
+        '200':
+          description: Enhanced search results with document context and action suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                        file_path:
+                          type: string
+                        file_type:
+                          type: string
+                        relevance_score:
+                          type: number
+                        document_context:
+                          type: object
+                          properties:
+                            total_chunks:
+                              type: integer
+                            file_exists:
+                              type: boolean
+                            all_chunks_available:
+                              type: boolean
+                        action_suggestions:
+                          type: array
+                          items:
+                            type: string
+                  count:
+                    type: integer
+
   /files:
     get:
       operationId: listFiles
