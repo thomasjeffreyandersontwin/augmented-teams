@@ -1,4 +1,4 @@
-name: Auto Sync GPT Output
+name: Commit Content from GPT
 
 on:
   workflow_dispatch:  # Manual trigger
