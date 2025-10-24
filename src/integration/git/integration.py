@@ -11,8 +11,8 @@ REMOTE_NAME = "origin"
 BRANCH = "main"
 DEFAULT_COMMIT_MSG = "update: synced changes from GPT session at {timestamp}"
 
-def run_cmd(cmd, cwd=REPO_PATH):
-    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+def run_cmd(cmd, cwd=REPO_PATH, timeout=30):
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
     if result.returncode != 0:
         print(f"Command failed: {' '.join(cmd)}")
         print(result.stderr)
