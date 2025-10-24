@@ -1,9 +1,9 @@
 name: Commit Content from GPT
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:        # ✅ Enables manual and API-triggered runs
   schedule:
-    - cron: "0 */6 * * *"  # Every 6 hours
+    - cron: "0 */6 * * *"   # ✅ Every 6 hours
 
 jobs:
   sync-gpt-output:
