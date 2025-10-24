@@ -53,8 +53,34 @@ class GitIntegrationTester:
             "message": message
         })
         
+    def start_service(self):
+        """Start the service, kill existing if running"""
+        import subprocess
+        import time
+        
+        # Kill any existing service
+        try:
+            print("Killing existing service...")
+            subprocess.run(["taskkill", "/f", "/im", "python.exe"], 
+                         capture_output=True, text=True)
+            time.sleep(1)
+        except:
+            pass
+        
+        try:
+            print("Starting Git Integration Service...")
+            process = subprocess.Popen(["python", "service.py"], 
+                                     stdout=subprocess.PIPE, 
+                                     stderr=subprocess.PIPE)
+            time.sleep(3)  # Give service time to start
+            print("Service started successfully")
+            return True
+        except Exception as e:
+            print(f"Failed to start service: {e}")
+            return False
+
     def check_service_running(self) -> bool:
-        """Check if the service is running"""
+        """Check if the service is running, start if needed"""
         try:
             response = self.session.get(f"{self.service_url}/", timeout=5)
             if response.status_code == 200:
@@ -66,7 +92,19 @@ class GitIntegrationTester:
                 self.log_test("Service Health Check", False, f"HTTP {response.status_code}")
                 return False
         except requests.exceptions.RequestException as e:
-            self.log_test("Service Health Check", False, f"Connection failed: {e}")
+            print(f"Service not running: {e}")
+            print("Starting service automatically...")
+            if self.start_service():
+                # Try again after starting
+                try:
+                    response = self.session.get(f"{self.service_url}/", timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        github_auth = data.get("github_auth", False)
+                        self.log_test("Service Health Check", True, f"Service started and running, GitHub auth: {github_auth}")
+                        return True
+                except Exception as e2:
+                    self.log_test("Service Health Check", False, f"Still can't connect: {e2}")
             return False
     
     def test_authentication(self):

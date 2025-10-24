@@ -1,5 +1,15 @@
 # Cursor Rules for Augmented Teams Project
 
+## !!! CRITICAL: COMMAND EXECUTION SPEED !!!
+**NEVER WAIT FOR COMMANDS TO COMPLETE - EXECUTE AND MOVE ON IMMEDIATELY**
+- Run commands in parallel batches using multiple tool calls
+- Use background processes for long-running services
+- Stop interrupting commands - let them finish naturally
+- Use PowerShell syntax correctly (`;` not `&&`)
+- Execute next command immediately without waiting for response
+- Batch operations instead of sequential one-by-one execution
+- This is a recurring issue that drives users crazy - FIX IT NOW
+
 ## Domain-Oriented Design Principles
 
 ### Feature Localization
