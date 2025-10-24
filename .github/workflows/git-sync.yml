@@ -1,31 +1,65 @@
-name: Auto Sync GPT Output
+name: Commit Content from GPT
 
-permissions:
-  contents: write  # needed for git push
-  actions: read
-
-# This workflow is disabled - auto-commit workflow handles sync now
-# on:
-#   workflow_dispatch:    # manual trigger only
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to run workflow on'
+        required: false
+        default: 'main'
+  schedule:
+    - cron: "0 */6 * * *"   # Every 6 hours
 
 jobs:
-  sync:
+  sync-gpt-output:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.target_branch || 'main' }}
 
       - name: Configure Git identity
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "Augmented Teams GPT"
+          git config --global user.email "gpt@openai.com"
 
-      - name: Run Git Sync Script
-        run: python src/integration/git/git_sync.py
+      - name: Commit GPT-created files
+        run: |
+          echo "🔍 Checking for GPT-generated changes..."
+          
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "📝 Found changes to commit:"
+            git status --porcelain
+            
+            git add .
+            git commit -m "🤖 Auto-sync: Add or update GPT-generated content"
+            git push origin ${{ github.event.inputs.target_branch || 'main' }}
+            
+            echo "✅ Changes committed and pushed successfully"
+          else
+            echo "✅ Nothing to commit - repository is clean"
+          fi
+
+      - name: Update vector database if content changed
+        run: |
+          echo "🔄 Checking if vector database needs updating..."
+          
+          # Check if any content files were modified
+          if git diff --name-only HEAD~1 HEAD | grep -E '\.(md|txt|docx|xlsx|pptx|pdf)$'; then
+            echo "📚 Content files changed - triggering vector reindex"
+            
+            # Trigger vector search reindexing
+            curl -X POST \
+              -H "Accept: application/json" \
+              "http://localhost:8000/reindex" \
+              || echo "⚠️ Vector search service not available - manual reindex may be needed"
+          else
+            echo "✅ No content files changed - vector database up to date"
+          fi
