@@ -58,13 +58,13 @@ def copy_workflow_files():
         workflows_dir = REPO_PATH / ".github" / "workflows"
         workflows_dir.mkdir(parents=True, exist_ok=True)
         
-        # Copy git-sync.yml from git integration
-        git_sync_source = REPO_PATH / "src" / "integration" / "git" / "git-sync.yml"
-        git_sync_dest = workflows_dir / "git-sync.yml"
-        if git_sync_source.exists():
+        # Copy auto-commit.yml from git integration
+        auto_commit_source = REPO_PATH / "src" / "integration" / "git" / "auto-commit.yml"
+        auto_commit_dest = workflows_dir / "auto-commit.yml"
+        if auto_commit_source.exists():
             import shutil
-            shutil.copy2(git_sync_source, git_sync_dest)
-            print(f"[OK] Copied git-sync.yml to .github/workflows/")
+            shutil.copy2(auto_commit_source, auto_commit_dest)
+            print(f"[OK] Copied auto-commit.yml to .github/workflows/")
         
         # Copy update_gpt_instructions.yml from update_gpt_instructions_from_git feature
         gpt_sync_source = REPO_PATH / "src" / "features" / "update_gpt_instructions_from_git" / "update_gpt_instructions.yml"
