@@ -1,6 +1,6 @@
-# Git Commit REST Service
+# Git Integration Service
 
-A clean, focused FastAPI service for committing changes to Git. Replaces the complex git_sync.py with simple REST endpoints.
+A FastAPI service that wraps git_integration.py functions for REST API access.
 
 ## 🚀 Quick Start
 
@@ -17,20 +17,32 @@ python start_service.py
 ### Manual
 ```bash
 pip install -r requirements.txt
-python git_commit.py
+python git_service.py
 ```
 
 ## 📡 API Endpoints
 
-### Health Check
-- **GET** `/` - Service status
+### Health & Status
+- **GET** `/` - Health check
 - **GET** `/status` - Repository status
 
-### Commit Operations
-- **POST** `/commit/text` - Commit text content to a file
-- **POST** `/commit/document` - Commit uploaded document
-- **POST** `/push` - Push changes to remote
-- **POST** `/commit-and-push` - Commit and push in one operation
+### Git Operations
+- **POST** `/commit/text` - Commit text content
+- **POST** `/commit/document` - Commit uploaded file
+- **POST** `/push` - Push changes
+- **POST** `/sync` - Pull latest changes
+
+### Repository Navigation
+- **GET** `/tree` - Get repository tree
+- **GET** `/folder/{path}` - Get folder content
+- **GET** `/file/{path}` - Get file content
+
+### Search Operations
+- **POST** `/search/content` - Search file contents (git grep)
+- **GET** `/search/files?pattern=*` - Search filenames
+
+### Workflow Management
+- **POST** `/workflows/copy` - Copy workflow files
 
 ## 📋 Usage Examples
 
@@ -45,41 +57,46 @@ curl -X POST "http://localhost:8001/commit/text" \
   }'
 ```
 
-### Commit Document
+### Search Content
 ```bash
-curl -X POST "http://localhost:8001/commit/document" \
-  -F "file=@document.pdf" \
-  -F "file_path=assets/document.pdf" \
-  -F "commit_message=docs: add new PDF"
+curl -X POST "http://localhost:8001/search/content" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "function",
+    "file_pattern": "*.py"
+  }'
 ```
 
-### Check Status
+### Get Repository Tree
 ```bash
-curl "http://localhost:8001/status"
+curl "http://localhost:8001/tree"
+```
+
+### Get Folder Content
+```bash
+curl "http://localhost:8001/folder/src/features"
 ```
 
 ## 🔧 Configuration
 
-- **Repository**: Auto-detected from script location
 - **Port**: 8001
-- **Git User**: "Git Commit Service"
-- **Git Email**: "git-commit-service@augmented-teams.com"
+- **Backend**: Uses git_integration.py functions
+- **Git Commands**: Native git operations (git grep, git ls-tree, etc.)
 
 ## 🎯 Features
 
-- ✅ **Simple REST API** - No complex workflows
-- ✅ **Text & Document Support** - Handle any file type
-- ✅ **Custom Commit Messages** - Or auto-generated
-- ✅ **Error Handling** - Clear error responses
-- ✅ **Health Checks** - Monitor service status
-- ✅ **Auto Git Identity** - No manual git config needed
+- ✅ **Native Git Operations** - Uses git commands directly
+- ✅ **Fast Search** - git grep for content, git ls-files for filenames
+- ✅ **Repository Navigation** - Tree structure and folder browsing
+- ✅ **File Operations** - Read, commit, push
+- ✅ **Workflow Management** - Copy workflow files
+- ✅ **Clean REST API** - Simple HTTP endpoints
 
 ## 🔄 Integration
 
-This service can be called from:
-- GPT Actions (via HTTP requests)
-- GitHub Actions (via curl)
-- Any HTTP client
-- Custom applications
+This service works alongside:
+- **Vector Search Service** (port 8000) - Semantic search
+- **Git Integration Service** (port 8001) - Git operations
 
-**Much cleaner than the old git_sync.py approach!** 🚀
+**Two focused services, no duplication!** 🚀
+

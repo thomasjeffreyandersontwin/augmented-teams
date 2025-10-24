@@ -1,0 +1,19 @@
+# Git Integration Service Environment Variables
+# Copy this file to .env and fill in your values
+
+# GitHub Authentication (REQUIRED)
+# Get a Personal Access Token from: https://github.com/settings/tokens
+# Required scopes: repo, workflow
+# This token is used for both GitHub API calls AND client authentication
+GITHUB_TOKEN=your_github_token_here
+
+# GitHub Repository (format: owner/repo)
+GITHUB_REPO=thomasjeffreyandersontwin/augmented-teams
+
+# Service Configuration
+SERVICE_PORT=8001
+SERVICE_HOST=0.0.0.0
+
+# Git Configuration (optional - will use system defaults if not set)
+GIT_USER_NAME=Your Name
+GIT_USER_EMAIL=your.email@example.com
