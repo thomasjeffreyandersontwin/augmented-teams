@@ -307,18 +307,25 @@ async def delete_file(file_path: str, commit_message: Optional[str] = None):
         
         # Check if file exists
         full_path = REPO_PATH / file_path
+        print(f"DEBUG: Looking for file at {full_path}")
         if not full_path.exists():
-            raise HTTPException(status_code=404, detail=f"File {file_path} not found")
+            raise HTTPException(status_code=404, detail=f"File {file_path} not found at {full_path}")
         
         # Remove the file
-        run_cmd(["git", "rm", file_path])[0]
+        stdout, stderr, returncode = run_cmd(["git", "rm", file_path])
+        if returncode != 0:
+            raise HTTPException(status_code=500, detail=f"git rm failed: {stderr}")
         
         # Commit the deletion
         msg = commit_message or f"Remove {file_path}"
-        run_cmd(["git", "commit", "-m", msg])[0]
+        stdout, stderr, returncode = run_cmd(["git", "commit", "-m", msg])
+        if returncode != 0:
+            raise HTTPException(status_code=500, detail=f"git commit failed: {stderr}")
         
         # Push changes
-        run_cmd(["git", "push", "origin", "main"])[0]
+        stdout, stderr, returncode = run_cmd(["git", "push", "origin", "main"])
+        if returncode != 0:
+            raise HTTPException(status_code=500, detail=f"git push failed: {stderr}")
         
         return {
             "success": True,
