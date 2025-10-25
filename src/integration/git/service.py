@@ -299,6 +299,35 @@ async def sync_repository():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/file/{file_path:path}", dependencies=[Depends(verify_client_token)])
+async def delete_file(file_path: str, commit_message: Optional[str] = None):
+    """Delete a file from the repository"""
+    try:
+        from integration import run_cmd, REPO_PATH
+        
+        # Check if file exists
+        full_path = REPO_PATH / file_path
+        if not full_path.exists():
+            raise HTTPException(status_code=404, detail=f"File {file_path} not found")
+        
+        # Remove the file
+        run_cmd(["git", "rm", file_path])[0]
+        
+        # Commit the deletion
+        msg = commit_message or f"Remove {file_path}"
+        run_cmd(["git", "commit", "-m", msg])[0]
+        
+        # Push changes
+        run_cmd(["git", "push", "origin", "main"])[0]
+        
+        return {
+            "success": True,
+            "message": f"Successfully deleted {file_path}",
+            "file_path": file_path
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/workflows/copy")
 async def copy_workflows():
     """Copy workflow files to .github/workflows/"""

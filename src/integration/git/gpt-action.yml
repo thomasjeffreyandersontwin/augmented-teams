@@ -91,6 +91,43 @@ paths:
                     type: string
                   file_path:
                     type: string
+
+  /file/{file_path}:
+    delete:
+      operationId: deleteFile
+      summary: Delete a file
+      description: Delete a file from the repository
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Path to the file to delete
+        - name: commit_message
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional commit message
+      responses:
+        "200":
+          description: File deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  file_path:
+                    type: string
+        "404":
+          description: File not found
+        "500":
+          description: Error deleting file
   /commit/document:
     post:
       operationId: commitDocument
@@ -129,6 +166,43 @@ paths:
                     type: string
                   file_path:
                     type: string
+
+  /file/{file_path}:
+    delete:
+      operationId: deleteFile
+      summary: Delete a file
+      description: Delete a file from the repository
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Path to the file to delete
+        - name: commit_message
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional commit message
+      responses:
+        "200":
+          description: File deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  file_path:
+                    type: string
+        "404":
+          description: File not found
+        "500":
+          description: Error deleting file
   /push:
     post:
       operationId: pushChanges
@@ -185,3 +259,40 @@ paths:
                     type: string
                   file_path:
                     type: string
+
+  /file/{file_path}:
+    delete:
+      operationId: deleteFile
+      summary: Delete a file
+      description: Delete a file from the repository
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Path to the file to delete
+        - name: commit_message
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional commit message
+      responses:
+        "200":
+          description: File deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  file_path:
+                    type: string
+        "404":
+          description: File not found
+        "500":
+          description: Error deleting file
