@@ -1,0 +1,89 @@
+[33mtag v1.0.1[m
+Tagger: thomasjeffreyandersontwin <thomasjeffreyandersontwin@gmail.com>
+Date:   Sat Oct 25 10:23:26 2025 -0400
+
+Git Integration Service v1.0.1 - Pure Git operations for GPT Actions
+
+[33mcommit 8349b304b2f0b6391032fb7c5abfe492c60c30ac[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.0.1[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: thomasjeffreyandersontwin <thomasjeffreyandersontwin@gmail.com>
+Date:   Sat Oct 25 10:23:24 2025 -0400
+
+    feat: Git Integration Service v1.0.1 - Remove document functionality, focus on pure Git operations
+
+[1mdiff --git a/src/integration/git/gpt-action.yml b/src/integration/git/gpt-action.yml[m
+[1mindex 58f7f7c..992b247 100644[m
+[1m--- a/src/integration/git/gpt-action.yml[m
+[1m+++ b/src/integration/git/gpt-action.yml[m
+[36m@@ -1,10 +1,10 @@[m
+ openapi: 3.1.0[m
+ info:[m
+[31m-  title: Git Integration Service (GTP Action)[m
+[32m+[m[32m  title: Git Integration Service (GPT Action)[m
+   version: 1.0.1[m
+   description: >[m
+[31m-    API for Git operations used by Augmented Team GPT — includes committing text, uploading documents, checking[m
+[31m-    repository status, and pushing to remote.[m
+[32m+[m[32m    API for Git operations used by Augmented Team GPT — includes committing text, checking[m
+[32m+[m[32m    repository status, and pushing to remote. Focused on pure Git operations without document processing.[m
+ servers:[m
+   - url: http://localhost:8001[m
+     description: Git Integration Service (Local Development)[m
+[1mdiff --git a/src/integration/git/service.py b/src/integration/git/service.py[m
+[1mindex 4d48be8..b7e677e 100644[m
+[1m--- a/src/integration/git/service.py[m
+[1m+++ b/src/integration/git/service.py[m
+[36m@@ -37,6 +37,9 @@[m [msecurity = HTTPBearer(auto_error=False)[m
+ current_dir = Path(__file__).parent[m
+ sys.path.insert(0, str(current_dir))[m
+ [m
+[32m+[m[32m# Import version info[m
+[32m+[m[32mfrom version import __version__[m
+[32m+[m
+ # Import our git integration functions[m
+ from integration import ([m
+     ensure_latest, save_code, commit_and_push, copy_workflow_files,[m
+[36m@@ -96,13 +99,13 @@[m [mdef get_current_client():[m
+     return {[m
+         "authenticated": True,[m
+         "service": "git-integration",[m
+[31m-        "version": "1.0.0"[m
+[32m+[m[32m        "version": __version__[m
+     }[m
+ [m
+ app = FastAPI([m
+     title="Git Integration Service",[m
+     description="REST API for Git operations using native git commands",[m
+[31m-    version="1.0.0"[m
+[32m+[m[32m    version=__version__[m
+ )[m
+ [m
+ # Add CORS middleware for GPT Actions[m
+[36m@@ -136,7 +139,7 @@[m [masync def health_check():[m
+     return {[m
+         "message": "Git Integration Service is running",[m
+         "service": "git-integration",[m
+[31m-        "version": "1.0.0",[m
+[32m+[m[32m        "version": __version__,[m
+         "github_auth": auth_status,[m
+         "github_message": auth_message,[m
+         "repository": GITHUB_REPO[m
+[1mdiff --git a/src/integration/git/version.py b/src/integration/git/version.py[m
+[1mindex 33069d8..da1f421 100644[m
+[1m--- a/src/integration/git/version.py[m
+[1m+++ b/src/integration/git/version.py[m
+[36m@@ -1,12 +1,11 @@[m
+ # Git Integration Service Version Information[m
+ [m
+[31m-__version__ = "1.0.2"[m
+[31m-__version_info__ = (1, 0, 2)[m
+[32m+[m[32m__version__ = "1.0.1"[m
+[32m+[m[32m__version_info__ = (1, 0, 1)[m
+ __build__ = "2024-01-15"[m
+ __author__ = "Augmented Teams"[m
+ __description__ = "Git Integration Service for GPT Actions"[m
+ [m
+ # Version History:[m
+ # 1.0.0 - Initial release with basic Git operations[m
+[31m-# 1.0.1 - Added /extract endpoint and improved authentication[m
+[31m-# 1.0.2 - Fixed GPT Action YAML schema definitions and Bearer token auth[m
+[32m+[m[32m# 1.0.1 - Git Integration Service - Removed document functionality, focused on pure Git operations[m

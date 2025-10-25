@@ -3,6 +3,8 @@
 ## !!! CRITICAL: COMMAND EXECUTION SPEED !!!
 **COMMAND TYPE DISTINCTION - EXECUTE BASED ON TYPE**
 
+<!-- @cmd-exec-remind -->
+
 ### QUICK COMMANDS (Interrupt after 2-3 seconds):
 - Directory changes (`cd`, `pwd`, `ls`)
 - File operations (`mv`, `cp`, `rm`, `mkdir`)
@@ -28,6 +30,8 @@
 
 ## Domain-Oriented Design Principles
 
+<!-- @domain-design-remind -->
+
 ### Feature Localization
 - **Keep everything local to the feature** - All files, classes, functions, and configurations for a specific domain should be in their feature folder
 - **Domain boundaries** - Each feature (`src/features/`) and integration (`src/integration/`) is a self-contained domain
@@ -52,6 +56,8 @@
 - **Self-contained** - Each feature should work independently with its own config
 
 ## Global Project Commands
+
+<!-- @project-commands-remind -->
 
 ### Ensure Latest Code
 - **Command**: `ensure-latest`
@@ -135,6 +141,8 @@ Each feature in `src/features/` should contain:
 - **Windows Compatibility** - Code must work on Windows PowerShell without Unicode errors
 - **Cross-Platform** - Avoid platform-specific characters that cause encoding issues
 
+<!-- @code-standards-remind -->
+
 ## Commit Message Standards
 - **Audit Trail Format** - All commits must follow strict naming convention:
   - `feature: <feature name>` - for new features
@@ -144,6 +152,8 @@ Each feature in `src/features/` should contain:
   - `test: <test update>` - for tests
 - **No Generic Commits** - Avoid generic messages like "update" or "changes"
 - **Consistent Formatting** - Maintain clean audit trail for project history
+
+<!-- @commit-standards-remind -->
 
 ## Development Workflow
 1. Make changes to code
@@ -155,3 +165,5 @@ Each feature in `src/features/` should contain:
 - **No Automatic Git Operations** - Do NOT run git_sync.py or any git commands unless explicitly asked
 - **Manual Commits Only** - Wait for user to specify commit messages and timing
 - **Ask Before Committing** - Always ask for commit message format before any git operations
+
+<!-- @git-operations-remind -->
