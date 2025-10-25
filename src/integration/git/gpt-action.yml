@@ -1,10 +1,10 @@
 openapi: 3.1.0
 info:
-  title: Git Integration Service (GTP Action)
+  title: Git Integration Service (GPT Action)
   version: 1.0.1
   description: >
-    API for Git operations used by Augmented Team GPT — includes committing text, uploading documents, checking
-    repository status, and pushing to remote.
+    API for Git operations used by Augmented Team GPT — includes committing text, checking
+    repository status, and pushing to remote. Focused on pure Git operations without document processing.
 servers:
   - url: http://localhost:8001
     description: Git Integration Service (Local Development)

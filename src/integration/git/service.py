@@ -37,6 +37,9 @@ security = HTTPBearer(auto_error=False)
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
+# Import version info
+from version import __version__
+
 # Import our git integration functions
 from integration import (
     ensure_latest, save_code, commit_and_push, copy_workflow_files,
@@ -96,13 +99,13 @@ def get_current_client():
     return {
         "authenticated": True,
         "service": "git-integration",
-        "version": "1.0.0"
+        "version": __version__
     }
 
 app = FastAPI(
     title="Git Integration Service",
     description="REST API for Git operations using native git commands",
-    version="1.0.0"
+    version=__version__
 )
 
 # Add CORS middleware for GPT Actions
@@ -136,7 +139,7 @@ async def health_check():
     return {
         "message": "Git Integration Service is running",
         "service": "git-integration",
-        "version": "1.0.0",
+        "version": __version__,
         "github_auth": auth_status,
         "github_message": auth_message,
         "repository": GITHUB_REPO
