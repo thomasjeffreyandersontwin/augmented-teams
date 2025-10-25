@@ -299,7 +299,7 @@ async def sync_repository():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.delete("/file/{file_path:path}", dependencies=[Depends(verify_client_token)])
+@app.delete("/delete/{file_path:path}", dependencies=[Depends(verify_client_token)])
 async def delete_file(file_path: str, commit_message: Optional[str] = None):
     """Delete a file from the repository"""
     try:

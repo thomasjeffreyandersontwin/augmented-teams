@@ -262,7 +262,7 @@ class GitIntegrationTester:
                 return
             
             # Now delete the file
-            delete_response = self.session.delete(f"{self.service_url}/file/{test_file_path}?commit_message=test: delete test file")
+            delete_response = self.session.delete(f"{self.service_url}/delete/{test_file_path}?commit_message=test: delete test file")
             
             if delete_response.status_code == 200:
                 data = delete_response.json()
