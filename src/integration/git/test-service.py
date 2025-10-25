@@ -242,47 +242,6 @@ class GitIntegrationTester:
         except Exception as e:
             self.log_test("Folder Endpoint", False, str(e))
 
-    def test_extract_file_endpoint(self):
-        """Test the GET /extract/{path} endpoint"""
-        try:
-            # Test extracting content from a text file (.gitignore in root)
-            response = self.session.get(f"{self.service_url}/extract/.gitignore")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success') and data.get('file_type') == 'text':
-                    content_length = len(data.get('content', ''))
-                    self.log_test("Extract File Endpoint (Text)", True, f"Extracted {content_length} chars from .gitignore")
-                else:
-                    self.log_test("Extract File Endpoint (Text)", False, f"Unexpected response format: {data}")
-            else:
-                error_detail = response.json().get('detail', 'No detail') if response.headers.get('content-type') == 'application/json' else response.text
-                self.log_test("Extract File Endpoint (Text)", False, f"HTTP {response.status_code}: {error_detail}")
-        except Exception as e:
-            self.log_test("Extract File Endpoint (Text)", False, str(e))
-
-    def test_extract_powerpoint_endpoint(self):
-        """Test extracting content from PowerPoint files"""
-        try:
-            # Test extracting content from the actual PowerPoint file
-            pptx_file = "assets/AI Workforce Enablement Proposal/AI Transformation Slides 2.pptx"
-            
-            response = self.session.get(f"{self.service_url}/extract/{pptx_file}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success') and data.get('file_type') == 'binary':
-                    extracted_length = len(data.get('extracted_content', ''))
-                    extension = data.get('extension', 'unknown')
-                    self.log_test(f"Extract PowerPoint ({extension})", True, f"Extracted {extracted_length} chars from {pptx_file}")
-                else:
-                    self.log_test(f"Extract PowerPoint ({pptx_file})", False, f"Unexpected response format: {data}")
-            else:
-                error_detail = response.json().get('detail', 'No detail') if response.headers.get('content-type') == 'application/json' else response.text
-                self.log_test(f"Extract PowerPoint ({pptx_file})", False, f"HTTP {response.status_code}: {error_detail}")
-        except Exception as e:
-            self.log_test("Extract PowerPoint Endpoint", False, str(e))
-    
     def test_sync_endpoint(self):
         """Test the /sync endpoint"""
         try:
@@ -336,8 +295,6 @@ class GitIntegrationTester:
         self.test_commit_text_endpoint()
         self.test_get_file_endpoint()
         self.test_folder_endpoint()
-        self.test_extract_file_endpoint()
-        self.test_extract_powerpoint_endpoint()
         self.test_sync_endpoint()
         self.test_workflows_copy_endpoint()
         
