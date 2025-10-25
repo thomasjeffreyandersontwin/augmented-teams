@@ -456,6 +456,8 @@ async def extract_file_content(file_path: str):
         file_extension = full_path.suffix.lower()
         file_name = full_path.name.lower()
         
+        print(f"DEBUG: file_extension='{file_extension}', file_name='{file_name}'")
+        
         # Read file content
         with open(full_path, "rb") as f:
             file_content = f.read()
@@ -468,6 +470,8 @@ async def extract_file_content(file_path: str):
         
         # Check if it's a known text file
         is_text_file = (file_extension in text_extensions) or (file_name in text_filenames) or (file_extension == "" and not file_name.startswith("."))
+        
+        print(f"DEBUG: is_text_file={is_text_file}, in textnames={file_name in text_filenames}")
         
         # Try to decode as text first (for text files or files without extension)
         if is_text_file or file_extension == "":
