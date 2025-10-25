@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Git Integration Service Provisioning Script
 Write-Host "🔧 Git Integration Service Provisioning" -ForegroundColor Green
 Write-Host "=" * 50 -ForegroundColor Yellow
