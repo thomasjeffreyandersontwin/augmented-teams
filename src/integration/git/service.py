@@ -13,6 +13,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import requests
@@ -102,6 +103,15 @@ app = FastAPI(
     title="Git Integration Service",
     description="REST API for Git operations using native git commands",
     version="1.0.0"
+)
+
+# Add CORS middleware for GPT Actions
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for GPT Actions
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Pydantic models
