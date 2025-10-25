@@ -454,13 +454,23 @@ async def extract_file_content(file_path: str):
         
         # Get file extension
         file_extension = full_path.suffix.lower()
+        file_name = full_path.name.lower()
         
         # Read file content
         with open(full_path, "rb") as f:
             file_content = f.read()
         
-        # If it's a text file, return as-is
-        if file_extension in [".txt", ".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".xml", ".html", ".css"]:
+        # Known text file extensions
+        text_extensions = [".txt", ".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".xml", ".html", ".css", ".sh", ".bash", ".ps1", ".sql", ".log", ".ini", ".cfg", ".conf"]
+        
+        # Known text files without extensions
+        text_filenames = [".gitignore", ".gitattributes", "readme", "license", "dockerfile", "makefile", ".env", ".dockerignore"]
+        
+        # Check if it's a known text file
+        is_text_file = (file_extension in text_extensions) or (file_name in text_filenames) or (file_extension == "" and not file_name.startswith("."))
+        
+        # Try to decode as text first (for text files or files without extension)
+        if is_text_file or file_extension == "":
             try:
                 text_content = file_content.decode('utf-8')
                 return {
@@ -471,23 +481,25 @@ async def extract_file_content(file_path: str):
                     "size": len(file_content)
                 }
             except UnicodeDecodeError:
-                return {
-                    "success": False,
-                    "file_path": file_path,
-                    "error": "File contains non-UTF-8 text content"
-                }
+                # If decode fails for a known text file, it's an error
+                if is_text_file:
+                    return {
+                        "success": False,
+                        "file_path": file_path,
+                        "error": "File contains non-UTF-8 text content"
+                    }
+                # Otherwise, treat as binary and continue
         
-        # If it's a binary file, try to extract text
-        else:
-            extracted_text = extract_text_from_binary(file_content, file_extension)
-            return {
-                "success": True,
-                "file_path": file_path,
-                "file_type": "binary",
-                "extracted_content": extracted_text,
-                "size": len(file_content),
-                "extension": file_extension
-            }
+        # It's a binary file, try to extract text
+        extracted_text = extract_text_from_binary(file_content, file_extension)
+        return {
+            "success": True,
+            "file_path": file_path,
+            "file_type": "binary",
+            "extracted_content": extracted_text,
+            "size": len(file_content),
+            "extension": file_extension
+        }
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -498,3 +510,4 @@ if __name__ == "__main__":
     print(f"REPO_PATH exists: {REPO_PATH.exists()}")
     print(f"Current working directory: {Path.cwd()}")
     uvicorn.run(app, host="0.0.0.0", port=8001, log_level="info")
+
