@@ -1,2 +1,1 @@
-# Test Document
-This is a test file created by the test suite.
+test content
