@@ -28,6 +28,8 @@ class Provisioner(ABC):
             return ServiceProvisioner(feature_path, containerization_path)
         elif mode == 'CONTAINER':
             return ContainerProvisioner(feature_path, containerization_path)
+        elif mode == 'AZURE':
+            return AzureContainerProvisioner(feature_path, containerization_path)
         else:
             raise ValueError(f"Unknown mode: {mode}")
     
@@ -282,6 +284,96 @@ def main():
     
     print(f"✅ {feature_path.name} provisioned and started successfully!")
     sys.exit(0)
+
+class AzureContainerProvisioner(Provisioner):
+    """Provisioner for AZURE mode - deploys to Azure Container Apps"""
+    
+    def provision(self, always=False):
+        """Build and push Docker image to ACR"""
+        print("🚀 Provisioning for AZURE deployment...")
+        config = self._get_config()
+        
+        # Run inject-config to ensure Dockerfile is up to date
+        print("📦 Generating Dockerfile...")
+        inject_script = self.containerization_path / "inject-config.py"
+        result = subprocess.run(
+            [sys.executable, str(inject_script), str(self.feature_path)],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+            print(f"❌ Failed to generate Dockerfile: {result.stderr}")
+            return False
+        
+        print("✅ Dockerfile generated")
+        return True
+    
+    def start(self, always=False):
+        """Deploy to Azure Container Apps using Azure CLI"""
+        print("🚀 Deploying to Azure Container Apps...")
+        config = self._get_config()
+        
+        # Check if az CLI is available
+        result = subprocess.run(["az", "--version"], capture_output=True)
+        if result.returncode != 0:
+            print("❌ Azure CLI not found. Install from https://aka.ms/installazurecliwindows")
+            return False
+        
+        # Get Azure config from feature-config.yaml
+        resource_group = config.get('azure', {}).get('resource_group', 'AugmentedTeams')
+        acr_server = config.get('azure', {}).get('container_registry', '')
+        feature_name = config.get('feature', {}).get('name', self.feature_path.name)
+        environment = 'managedEnvironment-AugmentedTeams-aa2c'  # TODO: get from config
+        
+        image_name = f"{acr_server}/{feature_name}:latest"
+        
+        # Check if container app exists
+        check_cmd = ["az", "containerapp", "show", 
+                    "--name", feature_name,
+                    "--resource-group", resource_group]
+        
+        result = subprocess.run(check_cmd, capture_output=True)
+        app_exists = result.returncode == 0
+        
+        if app_exists:
+            print(f"📦 Updating existing Container App '{feature_name}'...")
+            # Update existing app
+            update_cmd = [
+                "az", "containerapp", "update",
+                "--name", feature_name,
+                "--resource-group", resource_group,
+                "--image", image_name
+            ]
+            result = subprocess.run(update_cmd, capture_output=True, text=True)
+        else:
+            print(f"🚀 Creating new Container App '{feature_name}'...")
+            # Create new app
+            create_cmd = [
+                "az", "containerapp", "create",
+                "--name", feature_name,
+                "--resource-group", resource_group,
+                "--environment", environment,
+                "--image", image_name,
+                "--registry-server", acr_server,
+                "--target-port", "8000",
+                "--ingress", "external",
+                "--cpu", "0.05",
+                "--memory", "0.128Gi"
+            ]
+            result = subprocess.run(create_cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"❌ Failed to deploy: {result.stderr}")
+            return False
+        
+        print(f"✅ Container App deployed successfully!")
+        return True
+    
+    def get_test_url(self):
+        """Get Azure Container App URL from config"""
+        config = self._get_config()
+        return config.get('environment', {}).get('production', {}).get('url', '')
 
 if __name__ == "__main__":
     main()
