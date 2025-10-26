@@ -72,6 +72,7 @@ class TestRunner:
         total_count = 0
         
         # Discover routes from the app
+        skipped_routes = []
         for route in app.routes:
             if hasattr(route, 'path') and hasattr(route, 'methods'):
                 methods = route.methods
@@ -79,6 +80,9 @@ class TestRunner:
                 
                 # Skip routes with path parameters (they require specific values)
                 if '{' in path and '}' in path:
+                    for method in methods:
+                        if method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']:
+                            skipped_routes.append(f"{method} {path}")
                     continue
                 
                 for method in methods:
