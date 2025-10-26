@@ -24,8 +24,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def load_config():
-    """Load configuration from config.yaml"""
-    config_file = Path(__file__).parent / "config" / "config.yaml"
+    """Load configuration from feature-config.yaml"""
+    config_file = Path(__file__).parent / "config" / "feature-config.yaml"
     with open(config_file, 'r') as f:
         return yaml.safe_load(f)
 

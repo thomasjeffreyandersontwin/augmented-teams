@@ -1,30 +1,37 @@
-# Git Integration Configuration
+# [FEATURE_NAME] Configuration
 # Single source of truth for all configuration values
 
 feature:
-  name: "git-integration"
+  name: "[FEATURE_NAME]"
   version: "1.0.0"
-  description: "Git Integration Service for Augmented Teams"
+  description: "[Feature Description]"
+
+build:
+  requirements:
+    - "fastapi>=0.104.0"
+    - "uvicorn>=0.24.0"
+    - "pydantic>=2.4.0"
+    - "requests>=2.31.0"
+    - "pyyaml>=6.0"
+    - "python-dotenv>=1.0.0"
+    # Add feature-specific dependencies here
 
 service:
   port: 8000
   host: "0.0.0.0"
-  url: "http://localhost:8000"
   timeout: 30
 
 environment:
   development:
+    url: "http://localhost:8000"
     log_level: "DEBUG"
-    api_endpoint: "http://localhost:3000"
-    debug: true
   production:
+    url: "https://[FEATURE_NAME].azurecontainerapps.io"
     log_level: "INFO"
-    api_endpoint: "https://api.production.com"
-    debug: false
 
 azure:
   resource_group: "augmented-team-rg"
-  container_registry: "augmentedteamacr.azurecr.io"
+  container_registry: "augmentedteams-hfdzfjhghshucaf6.azurecr.io"
   namespace: "augmented-teams"
   replicas: 1
   memory_request: "256Mi"
@@ -33,8 +40,8 @@ azure:
   cpu_limit: "250m"
 
 secrets:
-  github_token: "${GITHUB_TOKEN}"
   api_key: "${API_KEY}"
+  # Add feature-specific secrets here
 
 health_check:
   interval: 30

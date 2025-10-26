@@ -1,0 +1,42 @@
+feature:
+  name: test-containerization
+  version: "1.0.0"
+  description: "Test feature for lifecycle automation"
+
+service:
+  port: 8000
+  host: "0.0.0.0"
+  url: "http://localhost:8000"
+  timeout: 30
+
+environment:
+  development:
+    log_level: "DEBUG"
+    api_endpoint: "http://localhost:8000"
+    debug: true
+  production:
+    log_level: "INFO"
+    api_endpoint: "https://api.production.com"
+    debug: false
+
+secrets:
+  github_token: "${GITHUB_TOKEN}"
+  api_key: "${API_KEY}"
+
+azure:
+  resource_group: "AugmentedTeams"
+  container_registry: "augmentedteams-hfdzfjhghshucaf6.azurecr.io"
+  namespace: "test-features"
+  replicas: 1
+  memory_request: "128Mi"
+  memory_limit: "256Mi"
+  cpu_request: "50m"
+  cpu_limit: "100m"
+
+health_check:
+  interval: 30
+  timeout: 10
+  start_period: 5
+  retries: 3
+  path: "/"
+

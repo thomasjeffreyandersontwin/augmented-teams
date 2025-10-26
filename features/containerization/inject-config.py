@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Shared Configuration Injection Script
 Injects centralized configuration values into any feature's configuration files
@@ -12,45 +13,29 @@ import re
 import sys
 from pathlib import Path
 
+# Fix Windows console encoding
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 def load_config(feature_path):
-    """Load centralized configuration from feature's config/config.yaml"""
-    config_file = feature_path / "config" / "config.yaml"
+    """Load centralized configuration from feature's config/feature-config.yaml"""
+    config_file = feature_path / "config" / "feature-config.yaml"
     if not config_file.exists():
-        print(f"❌ Error: config/config.yaml not found in {feature_path}")
+        print(f"❌ Error: config/feature-config.yaml not found in {feature_path}")
         return None
     
     with open(config_file, 'r') as f:
         return yaml.safe_load(f)
 
-def inject_env_template(config, feature_path):
-    """Generate env-template.txt from config"""
-    env_content = f"""# {config['feature']['name']} Service Environment Variables
-# Copy this file to .env and fill in your values
-
-# Service Configuration
-SERVICE_PORT={config['service']['port']}
-SERVICE_HOST={config['service']['host']}
-SERVICE_URL={config['service']['url']}
-
-# Environment
-ENVIRONMENT=development
-LOG_LEVEL={config['environment']['development']['log_level']}
-
-# Feature-specific configuration
-API_ENDPOINT={config['environment']['development']['api_endpoint']}
-API_KEY=your_api_key_here
-
-# Azure Configuration
-AZURE_RESOURCE_GROUP={config['azure']['resource_group']}
-AZURE_CONTAINER_REGISTRY={config['azure']['container_registry']}
-"""
-    
-    env_file = feature_path / "config" / "env-template.txt"
-    with open(env_file, 'w') as f:
-        f.write(env_content)
-
 def inject_dockerfile(config, feature_path):
     """Generate Dockerfile from config"""
+    # Get requirements from config
+    requirements = config.get('build', {}).get('requirements', [])
+    
+    # Build pip install command
+    pip_install = "pip install --no-cache-dir " + " ".join(requirements)
+    
     dockerfile_content = f"""FROM python:3.11-slim
 
 # Set working directory
@@ -60,12 +45,13 @@ WORKDIR /app
 ENV SERVICE_PORT={config['service']['port']}
 ENV SERVICE_HOST={config['service']['host']}
 ENV ENVIRONMENT=production
+ENV LOG_LEVEL={config['environment']['production']['log_level']}
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Install dependencies directly from config
+RUN {pip_install}
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy shared start script
+COPY start-service-in-container.py .
 
 # Copy source code
 COPY . .
@@ -77,8 +63,8 @@ EXPOSE ${{SERVICE_PORT}}
 HEALTHCHECK --interval={config['health_check']['interval']}s --timeout={config['health_check']['timeout']}s --start-period={config['health_check']['start_period']}s --retries={config['health_check']['retries']} \\
   CMD curl -f http://localhost:${{SERVICE_PORT}}{config['health_check']['path']} || exit 1
 
-# Run the application
-CMD ["python", "main.py"]
+# Run the application using shared container script
+CMD ["python", "start-service-in-container.py", "/app"]
 """
     
     dockerfile = feature_path / "config" / "Dockerfile"
@@ -115,14 +101,6 @@ spec:
           value: "production"
         - name: LOG_LEVEL
           value: "{config['environment']['production']['log_level']}"
-        # Feature-specific configuration
-        - name: API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {config['feature']['name']}-secrets
-              key: api-key
-        - name: API_ENDPOINT
-          value: "{config['environment']['production']['api_endpoint']}"
         resources:
           requests:
             memory: "{config['azure']['memory_request']}"
@@ -199,11 +177,17 @@ HEALTH_CHECK_PATH = "{config['health_check']['path']}"
 def main():
     """Main injection function"""
     if len(sys.argv) != 2:
-        print("Usage: python inject-config.py <feature-path>")
-        print("Example: python inject-config.py src/features/vector-search")
+        print("Usage: python inject-config.py <feature-name-or-path>")
+        print("Example: python inject-config.py vector-search")
+        print("Example: python inject-config.py features/vector-search")
         sys.exit(1)
     
-    feature_path = Path(sys.argv[1])
+    arg = sys.argv[1]
+    # If it's just a feature name, construct the path
+    if not "/" in arg and not "\\" in arg:
+        feature_path = Path("features") / arg
+    else:
+        feature_path = Path(arg)
     
     if not feature_path.exists():
         print(f"❌ Error: Feature path {feature_path} does not exist")
@@ -214,9 +198,6 @@ def main():
     config = load_config(feature_path)
     if not config:
         sys.exit(1)
-    
-    inject_env_template(config, feature_path)
-    print("✅ Generated env-template.txt")
     
     inject_dockerfile(config, feature_path)
     print("✅ Generated Dockerfile")

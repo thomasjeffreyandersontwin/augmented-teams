@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Git Integration Provision Script
-Tiny wrapper that calls shared containerization script
+Provisions the git-integration feature
+This calls the shared containerization scripts
 """
 
 import subprocess
@@ -9,14 +9,31 @@ import sys
 from pathlib import Path
 
 def main():
-    # Get feature path (parent of config folder)
     feature_path = Path(__file__).parent.parent
+    containerization_path = Path(__file__).parent.parent.parent / "containerization"
     
-    # Call shared containerization script
-    containerization_script = Path(__file__).parent.parent.parent / "containerization" / "provision-service.py"
+    print(f"🚀 Provisioning {feature_path.name}...")
     
-    result = subprocess.run([sys.executable, str(containerization_script), str(feature_path)])
-    sys.exit(result.returncode)
+    # Step 1: Inject configuration
+    result = subprocess.run([
+        sys.executable, 
+        str(containerization_path / "inject-config.py"),
+        str(feature_path)
+    ])
+    if result.returncode != 0:
+        return 1
+    
+    # Step 2: Run shared provisioning
+    result = subprocess.run([
+        sys.executable,
+        str(containerization_path / "provision-service.py"), 
+        str(feature_path)
+    ])
+    if result.returncode != 0:
+        return 1
+    
+    print(f"✅ {feature_path.name} provisioned and deployed successfully!")
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

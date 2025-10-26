@@ -5,8 +5,13 @@ import subprocess
 from pathlib import Path
 import datetime
 
-# Locate repository root (assumes this file is in features/git-integration/)
-REPO_PATH = Path(__file__).resolve().parents[2]  # repo root
+# Locate repository root
+# In Docker: /app is the repo root
+# Locally: features/git-integration/../../ (repo root)
+if str(__file__).startswith('/app'):
+    REPO_PATH = Path("/app")
+else:
+    REPO_PATH = Path(__file__).resolve().parents[2]  # repo root
 REMOTE_NAME = "origin"
 BRANCH = "main"
 DEFAULT_COMMIT_MSG = "update: synced changes from GPT session at {timestamp}"
