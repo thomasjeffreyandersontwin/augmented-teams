@@ -1,7 +1,15 @@
 feature:
-  name: test-containerization
+  name: test-feature
   version: "1.0.0"
   description: "Test feature for lifecycle automation"
+
+build:
+  requirements:
+    - "fastapi>=0.104.0"
+    - "uvicorn>=0.24.0"
+    - "pydantic>=2.4.0"
+    - "requests>=2.31.0"
+    - "pyyaml>=6.0"
 
 service:
   port: 8000
@@ -11,13 +19,11 @@ service:
 
 environment:
   development:
+    url: "http://localhost:8000"
     log_level: "DEBUG"
-    api_endpoint: "http://localhost:8000"
-    debug: true
   production:
+    url: "https://test-feature.azurecontainerapps.io"
     log_level: "INFO"
-    api_endpoint: "https://api.production.com"
-    debug: false
 
 secrets:
   github_token: "${GITHUB_TOKEN}"

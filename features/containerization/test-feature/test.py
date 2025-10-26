@@ -1,32 +1,31 @@
 #!/usr/bin/env python3
 """
-Test runner for test-feature
-Calls TestRunner from containerization
+Test test-feature - plain Python tests
+Tests the actual functions from main.py
 """
 
-import sys
-from pathlib import Path
+from main import hello, add_numbers
 
-# Add containerization to path
-feature_path = Path(__file__).parent
-containerization_path = feature_path.parent.parent / "containerization"
+def test_hello_world():
+    """Test hello with World"""
+    result = hello("World")
+    assert result == "Hello World!", f"Expected 'Hello World!', got '{result}'"
+    print("✅ test_hello_world passed")
 
-sys.path.insert(0, str(containerization_path))
-from test import TestRunner
+def test_hello_custom():
+    """Test hello with custom name"""
+    result = hello("Alice")
+    assert result == "Hello Alice!", f"Expected 'Hello Alice!', got '{result}'"
+    print("✅ test_hello_custom passed")
 
-def main():
-    """Run tests"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='Test test-feature')
-    parser.add_argument('mode', choices=['CODE', 'SERVICE', 'CONTAINER'])
-    parser.add_argument('--always-provision', action='store_true')
-    
-    args = parser.parse_args()
-    
-    runner = TestRunner(feature_path)
-    result = runner.run_tests(args.mode, args.always_provision)
-    sys.exit(result)
+def test_add_numbers():
+    """Test add_numbers function"""
+    result = add_numbers(2, 3)
+    assert result == 5, f"Expected 5, got {result}"
+    print("✅ test_add_numbers passed")
 
 if __name__ == "__main__":
-    main()
+    test_hello_world()
+    test_hello_custom()
+    test_add_numbers()
+    print("✅ All tests passed")

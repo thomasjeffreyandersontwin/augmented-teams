@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 """
-Test Containerization Feature - Main Service
-Simple Flask service for testing the feature lifecycle
+Test Containerization Feature - Core Business Logic
 """
 
-from flask import Flask
+# Plain Python functions - no service dependencies
+def hello(name: str) -> str:
+    """Greet someone"""
+    return f"Hello {name}!"
 
-app = Flask(__name__)
-
-@app.route('/')
-def health():
-    """Health check endpoint"""
-    return {'status': 'healthy', 'service': 'test-containerization'}
-
-@app.route('/test')
-def test():
-    """Test endpoint"""
-    return {'message': 'test-containerization is working'}
+def add_numbers(a: int, b: int) -> int:
+    """Add two numbers"""
+    return a + b
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
-
+    # Simple test when run directly
+    print(hello("World"))
+    print(add_numbers(2, 3))

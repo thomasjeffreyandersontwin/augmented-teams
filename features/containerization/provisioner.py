@@ -131,8 +131,16 @@ class ServiceProvisioner(Provisioner):
         import threading
         
         # Run in background thread
+        # Try service.py first, fall back to main.py
+        try:
+            from service import app
+            module = "service"
+        except ImportError:
+            from main import app
+            module = "main"
+        
         def run_server():
-            uvicorn.run("main:app", host='0.0.0.0', port=8000, log_level='info', reload=False)
+            uvicorn.run(f"{module}:app", host='0.0.0.0', port=8000, log_level='info', reload=False)
         
         server_thread = threading.Thread(target=run_server, daemon=True)
         server_thread.start()
@@ -187,15 +195,34 @@ class ContainerProvisioner(Provisioner):
         return True
     
     def start(self, always=False):
-        """Start container by spawning main.py as subprocess"""
+        """Start container by spawning service.py as background subprocess"""
         # Check if already running
         if not always and self.is_service_running():
             print("✅ Container already running")
             return True
         
-        # Start service by spawning main.py
+        # Start service by spawning service.py in background
         print("🚀 Starting container...")
-        subprocess.run([sys.executable, "main.py"], cwd=self.feature_path, check=True)
+        sys.path.insert(0, str(self.feature_path))
+        import uvicorn
+        import threading
+        
+        # Try service.py first, fall back to main.py
+        try:
+            from service import app
+            module = "service"
+        except ImportError:
+            from main import app
+            module = "main"
+        
+        def run_server():
+            uvicorn.run(f"{module}:app", host='0.0.0.0', port=8000, log_level='info', reload=False)
+        
+        server_thread = threading.Thread(target=run_server, daemon=True)
+        server_thread.start()
+        
+        # Wait for service to be ready
+        time.sleep(2)
         return True
     
     def get_test_url(self):
