@@ -60,7 +60,7 @@ jobs:
             --registry-password ${{ secrets.ACR_PASSWORD }} \
             --target-port 8000 \
             --ingress external \
-            --cpu 0.05 \
-            --memory 0.128Gi
+            --cpu 0.25 \
+            --memory 0.5Gi
         fi
         echo "✅ Container App deployed successfully!"

@@ -22,7 +22,7 @@ environment:
     url: "http://localhost:8000"
     log_level: "DEBUG"
   production:
-    url: "https://test-feature.azurecontainerapps.io"
+    url: "https://test-feature.icyrock-e61cf3e7.westus2.azurecontainerapps.io"
     log_level: "INFO"
 
 secrets:
@@ -32,12 +32,14 @@ secrets:
 azure:
   resource_group: "AugmentedTeams"
   container_registry: "augmentedteams-hfdzfjhghshucaf6.azurecr.io"
+  registry_username: "augmentedteams"
+  # registry_password should be set via environment variable ACR_PASSWORD
   namespace: "test-features"
   replicas: 1
-  memory_request: "128Mi"
-  memory_limit: "256Mi"
-  cpu_request: "50m"
-  cpu_limit: "100m"
+  memory_request: "0.5Gi"
+  memory_limit: "0.5Gi"
+  cpu_request: "0.25"
+  cpu_limit: "0.25"
 
 health_check:
   interval: 30

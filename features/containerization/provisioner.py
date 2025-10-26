@@ -119,12 +119,49 @@ class ServiceProvisioner(Provisioner):
         
         return True
     
+    @staticmethod
+    def _kill_port(port=8000):
+        """Kill any process using the specified port"""
+        import os
+        import subprocess
+        
+        if os.name == 'nt':  # Windows
+            try:
+                # Find process using the port
+                result = subprocess.run(
+                    ["netstat", "-ano"],
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    errors='ignore'
+                )
+                for line in result.stdout.split('\n'):
+                    if f':{port}' in line and 'LISTENING' in line:
+                        parts = line.split()
+                        if len(parts) >= 5:
+                            pid = parts[-1]
+                            if pid.isdigit():
+                                print(f"⚠️  Killing process {pid} using port {port}")
+                                subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
+            except Exception as e:
+                print(f"⚠️  Could not kill process on port {port}: {e}")
+        else:  # Unix/Linux/Mac
+            try:
+                subprocess.run(["lsof", "-ti", f":{port}", "-s", "TCP:LISTEN", "|", "xargs", "-r", "kill", "-9"], shell=True)
+            except Exception as e:
+                print(f"⚠️  Could not kill process on port {port}: {e}")
+    
     def start(self, always=False):
         """Start service in-memory"""
         # Check if already running
         if not always and self.is_service_running():
             print("✅ Service already running")
             return True
+        
+        # Kill any existing service on the port if forcing
+        if always:
+            self._kill_port(8000)
+            time.sleep(1)  # Give time for port to be released
         
         # Start service by importing and running with uvicorn
         print("🚀 Starting service in-memory...")
@@ -202,6 +239,12 @@ class ContainerProvisioner(Provisioner):
         if not always and self.is_service_running():
             print("✅ Container already running")
             return True
+        
+        # Kill any existing service on the port if forcing
+        if always:
+            print("⚠️  Force mode: killing any existing services on port 8000...")
+            ServiceProvisioner._kill_port(8000)
+            time.sleep(1)  # Give time for port to be released
         
         # Start service by spawning service.py in background
         print("🚀 Starting container...")
@@ -288,6 +331,15 @@ def main():
 class AzureContainerProvisioner(Provisioner):
     """Provisioner for AZURE mode - deploys to Azure Container Apps"""
     
+    def _get_config(self):
+        """Load config from feature-config.yaml"""
+        import yaml
+        config_file = self.feature_path / "config" / "feature-config.yaml"
+        if config_file.exists():
+            with open(config_file, 'r') as f:
+                return yaml.safe_load(f)
+        return {}
+    
     def provision(self, always=False):
         """Build and push Docker image to ACR"""
         print("🚀 Provisioning for AZURE deployment...")
@@ -299,7 +351,9 @@ class AzureContainerProvisioner(Provisioner):
         result = subprocess.run(
             [sys.executable, str(inject_script), str(self.feature_path)],
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8',
+            errors='ignore'
         )
         
         if result.returncode != 0:
@@ -314,54 +368,78 @@ class AzureContainerProvisioner(Provisioner):
         print("🚀 Deploying to Azure Container Apps...")
         config = self._get_config()
         
-        # Check if az CLI is available
-        result = subprocess.run(["az", "--version"], capture_output=True)
+        # Get Azure CLI path from PATH environment variable
+        import os
+        az_path = None
+        for path_dir in os.environ.get("Path", "").split(os.pathsep):
+            az_test = os.path.join(path_dir, "az.cmd" if os.name == 'nt' else "az")
+            if os.path.isfile(az_test):
+                az_path = az_test
+                break
+        
+        if not az_path:
+            print("❌ Azure CLI not found in PATH. Install from https://aka.ms/installazurecliwindows")
+            return False
+        
+        # Check if az CLI is working
+        result = subprocess.run(
+            [az_path, "--version"], 
+            capture_output=True, 
+            text=True,
+            encoding='utf-8',
+            errors='ignore'
+        )
         if result.returncode != 0:
-            print("❌ Azure CLI not found. Install from https://aka.ms/installazurecliwindows")
+            print("❌ Azure CLI not working properly")
             return False
         
         # Get Azure config from feature-config.yaml
+        import os
         resource_group = config.get('azure', {}).get('resource_group', 'AugmentedTeams')
         acr_server = config.get('azure', {}).get('container_registry', '')
+        registry_username = config.get('azure', {}).get('registry_username', '')
+        registry_password = os.environ.get('ACR_PASSWORD', '')
         feature_name = config.get('feature', {}).get('name', self.feature_path.name)
         environment = 'managedEnvironment-AugmentedTeams-aa2c'  # TODO: get from config
         
         image_name = f"{acr_server}/{feature_name}:latest"
         
         # Check if container app exists
-        check_cmd = ["az", "containerapp", "show", 
+        check_cmd = [az_path, "containerapp", "show", 
                     "--name", feature_name,
                     "--resource-group", resource_group]
         
-        result = subprocess.run(check_cmd, capture_output=True)
+        result = subprocess.run(check_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
         app_exists = result.returncode == 0
         
         if app_exists:
             print(f"📦 Updating existing Container App '{feature_name}'...")
             # Update existing app
             update_cmd = [
-                "az", "containerapp", "update",
+                az_path, "containerapp", "update",
                 "--name", feature_name,
                 "--resource-group", resource_group,
                 "--image", image_name
             ]
-            result = subprocess.run(update_cmd, capture_output=True, text=True)
+            result = subprocess.run(update_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
         else:
             print(f"🚀 Creating new Container App '{feature_name}'...")
             # Create new app
             create_cmd = [
-                "az", "containerapp", "create",
+                az_path, "containerapp", "create",
                 "--name", feature_name,
                 "--resource-group", resource_group,
                 "--environment", environment,
                 "--image", image_name,
                 "--registry-server", acr_server,
+                "--registry-username", registry_username,
+                "--registry-password", registry_password,
                 "--target-port", "8000",
                 "--ingress", "external",
-                "--cpu", "0.05",
-                "--memory", "0.128Gi"
+                "--cpu", "0.25",
+                "--memory", "0.5Gi"
             ]
-            result = subprocess.run(create_cmd, capture_output=True, text=True)
+            result = subprocess.run(create_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
         
         if result.returncode != 0:
             print(f"❌ Failed to deploy: {result.stderr}")

@@ -2,7 +2,13 @@
 """Provision this feature by calling provisioner class"""
 
 import sys
+import io
 from pathlib import Path
+
+# Fix encoding for Windows - allow emojis in output
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
 if __name__ == "__main__":
     feature_path = Path(__file__).parent.parent

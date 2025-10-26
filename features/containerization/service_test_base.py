@@ -5,11 +5,21 @@ Provides common functionality for loading URLs from config and running tests
 """
 
 import sys
+import io
 import yaml
 from pathlib import Path
 
-def get_base_url(feature_path, mode='SERVICE'):
+# Fix encoding for Windows - allow emojis in output
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+
+def get_base_url(feature_path, mode=None):
     """Get base URL from config based on mode"""
+    # Use global mode if not explicitly provided
+    if mode is None:
+        mode = _mode
+    
     config_file = feature_path / "config" / "feature-config.yaml"
     
     if not config_file.exists():
@@ -18,10 +28,10 @@ def get_base_url(feature_path, mode='SERVICE'):
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)
     
-    if mode == 'SERVICE':
-        return config.get('environment', {}).get('development', {}).get('url', 'http://localhost:8000')
-    else:  # CONTAINER
+    if mode == 'AZURE':
         return config.get('environment', {}).get('production', {}).get('url', 'http://localhost:8000')
+    else:  # SERVICE or CONTAINER - both use development URL (local)
+        return config.get('environment', {}).get('development', {}).get('url', 'http://localhost:8000')
 
 # Global mode variable for get_base_url
 _mode = 'SERVICE'
@@ -43,19 +53,22 @@ def run_service_tests(test_functions):
     from provisioner import Provisioner
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['SERVICE', 'CONTAINER'])
+    parser.add_argument('mode', choices=['SERVICE', 'CONTAINER', 'AZURE'])
     parser.add_argument('--always-provision', action='store_true')
     args = parser.parse_args()
     
     # Store mode globally
     _mode = args.mode
     
-    # Provision and start
-    provisioner = Provisioner.create(args.mode, feature_path, containerization_path)
-    if not provisioner.provision(args.always_provision):
-        sys.exit(1)
-    if not provisioner.start(args.always_provision):
-        sys.exit(1)
+    # Provision and start (skip for AZURE since it's already deployed)
+    if args.mode == 'AZURE':
+        print("ℹ️  AZURE mode - skipping local provision/start, using production URL")
+    else:
+        provisioner = Provisioner.create(args.mode, feature_path, containerization_path)
+        if not provisioner.provision(args.always_provision):
+            sys.exit(1)
+        if not provisioner.start(args.always_provision):
+            sys.exit(1)
     
     # Run all test functions
     for test_func in test_functions:

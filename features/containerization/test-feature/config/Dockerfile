@@ -15,12 +15,8 @@ RUN pip install --no-cache-dir fastapi>=0.104.0 uvicorn>=0.24.0 pydantic>=2.4.0 
 # Copy source code
 COPY . .
 
-# Expose port (configurable via ENV)
+# Expose port
 EXPOSE ${SERVICE_PORT}
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:${SERVICE_PORT}/ || exit 1
-
-# Run the application using uvicorn
+# Run the FastAPI service directly
 CMD ["uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8000"]

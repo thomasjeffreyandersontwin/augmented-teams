@@ -50,21 +50,14 @@ ENV LOG_LEVEL={config['environment']['production']['log_level']}
 # Install dependencies directly from config
 RUN {pip_install}
 
-# Copy shared start script
-COPY start-service-in-container.py .
-
 # Copy source code
 COPY . .
 
-# Expose port (configurable via ENV)
+# Expose port
 EXPOSE ${{SERVICE_PORT}}
 
-# Health check
-HEALTHCHECK --interval={config['health_check']['interval']}s --timeout={config['health_check']['timeout']}s --start-period={config['health_check']['start_period']}s --retries={config['health_check']['retries']} \\
-  CMD curl -f http://localhost:${{SERVICE_PORT}}{config['health_check']['path']} || exit 1
-
-# Run the application using shared container script
-CMD ["python", "start-service-in-container.py", "/app"]
+# Run the FastAPI service directly
+CMD ["uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8000"]
 """
     
     dockerfile = feature_path / "config" / "Dockerfile"

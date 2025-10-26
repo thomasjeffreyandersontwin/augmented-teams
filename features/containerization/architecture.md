@@ -29,19 +29,46 @@ The goal is to ensure:
 - **Full Azure alignment** — each service runs as its own Azure Container App
 - **Composable orchestration** — the global layer coordinates, not controls
 
-## 🧱 Design Principles
+## 🎯 Design Principles
 
 ### Feature-Owned Infrastructure
 
 Each feature defines its own:
 
 - Source code
+- Configuration settings
+- GitHub Actions workflows
 - Dockerfile (generated)
-- `.azure/containerapp.yaml` (generated)
-- GitHub Actions workflows (versioned in feature domain)
-- Independent scaling and secrets
+- Azure settings (generated)
 
-## 🎯 Strategy
+### Testing Strategy
+
+**Two-Tier Testing Approach:**
+
+1. **test.py - Plain Python Unit Tests**
+   - Imports functions directly from `main.py`
+   - Tests business logic without any service layer
+   - Fast execution, no dependencies
+   - Example: `def test_hello_world(): assert hello("World") == "Hello World!"`
+
+2. **service-test.py - HTTP Integration Tests**
+   - Tests via HTTP against running service
+   - Covers the full stack: main.py → service.py → HTTP
+   - Three modes:
+     - SERVICE: Tests against local FastAPI service
+     - CONTAINER: Tests against local Docker container
+     - AZURE: Tests against production Azure Container Apps
+   - Uses `service_test_base.py` for common infrastructure
+
+**No Runtime Proxying**
+- Old approach used complex `TestRunner` with runtime proxying
+- New approach: direct function calls (test.py) + HTTP calls (service-test.py)
+- Simpler, easier to debug, no magic
+
+**Automated Generation**
+- `generate-service-test.py` parses `test.py` to create `service-test.py`
+- Infers HTTP endpoints and parameters from test.py
+- Uses GPT with function calling for assertion generation
 
 ### GitHub Actions Versioning Strategy
 
@@ -87,9 +114,11 @@ All features MUST follow the standardized template based on the proven git integ
 
 | File | Purpose | Action |
 |------|---------|-------|
-| `main.py` | Main application entry point | deploy to target env |
+| `main.py` | Core business logic (plain Python functions) | No service dependencies |
+| `service.py` | FastAPI service that wraps main.py functions | HTTP API layer |
+| `test.py` | Plain Python unit tests (calls main.py directly) | run python test.py |
+| `service-test.py` | HTTP integration tests (calls service via HTTP) | run python service-test.py [SERVICE\|CONTAINER\|AZURE] |
 | `config/gpt-action.yml` | GPT Action OpenAPI schema | **uploaded to ChatGPT prefixed as `[feature-name]-gpt-action.yml`** |
-| `test.py` | Calls TestRunner for CODE/SERVICE/CONTAINER modes | run python test.py [CODE\|SERVICE\|CONTAINER] |
 
 ### 2. Configure the Service
 
@@ -104,51 +133,64 @@ All features MUST follow the standardized template based on the proven git integ
 | File | Purpose | Action |
 |------|---------|-------|
 | `config/deploy-github-action.yml` | GitHub Actions deployment workflow | **moved to `.github/workflows/` prefixed as `[feature-name]-deploy.yml`** |
-| `config/provision-service.py` | Calls Provisioner.create(mode) to provision feature | run python provision-service.py [SERVICE\|CONTAINER] |
-| `config/start-service.py` | Calls Provisioner.start(mode) based on mode arg | run python start-service.py [SERVICE\|CONTAINER] |
+| `config/provision-service.py` | Calls Provisioner.create(mode) to provision feature | run python provision-service.py [SERVICE\|CONTAINER\|AZURE] |
 
 
 **Shared Classes (from containerization feature):**
 
 | File | Purpose | Key Actions |
 |------|---------|-------------|
-| `provisioner.py` | Provision and start services with checks | • Creates CODE/SERVICE/CONTAINER provisioners<br>• Checks if provisioning needed<br>• Installs dependencies<br>• Checks if service running<br>• Returns dev/prod URL from config |
-| `test.py` | Run tests in CODE/SERVICE/CONTAINER modes | • Uses provisioner to provision & start<br>• Gets test URL from provisioner<br>• Runs code tests or HTTP tests<br>• Auto-discovers routes |
+| `provisioner.py` | Provision and start services with checks | • Creates CODE/SERVICE/CONTAINER/AZURE provisioners<br>• CODE: Plain Python, no service<br>• SERVICE: Local FastAPI service<br>• CONTAINER: Docker container locally<br>• AZURE: Deploys to Azure Container Apps<br>• Installs dependencies from build.requirements<br>• Returns dev/prod URL from config |
+| `service_test_base.py` | Common test infrastructure | • Loads URLs from feature-config.yaml by mode<br>• Provides get_base_url() for service tests<br>• Provides run_service_tests() runner<br>• Handles provisioning/starting for SERVICE/CONTAINER<br>• Skips provisioning for AZURE (already deployed) |
 | `inject-config.py` | Generate config from feature-config.yaml | • Reads feature-config.yaml<br>• Generates config/Dockerfile (with pip install from build.requirements)<br>• Generates .azure/containerapp.yaml |
+| `generate-service-test.py` | Generate service-test.py from test.py | • Parses test.py functions<br>• Infers HTTP endpoints and parameters<br>• Generates service-test.py with HTTP calls<br>• Includes GPT helper for assertion generation |
 
 **Usage:**
-```python
-# Provision a feature
-python features/containerization/provisioner.py SERVICE features/git-integration
+```bash
+# Provision and deploy to Azure
+python features/containerization/test-feature/config/provision-service.py AZURE
 
-# Test a feature  
-python features/containerization/test.py features/git-integration SERVICE
+# Run plain Python unit tests (direct function calls)
+python features/containerization/test-feature/test.py
+
+# Run HTTP integration tests (SERVICE/CONTAINER/AZURE modes)
+python features/containerization/test-feature/service-test.py SERVICE
+python features/containerization/test-feature/service-test.py CONTAINER  
+python features/containerization/test-feature/service-test.py AZURE
 ```
 
 **Flow:**
 
-1. **Test initialization:**
-   - `test.py` imports `provisioner.py` from containerization feature
-   - Calculates `containerization_path = feature_path.parent / "containerization"` (peer feature directory) 
-   - Creates provisioner using `Provisioner.create(mode, feature_path, containerization_path)`
+1. **Test.py (Plain Python unit tests):**
+   - Imports functions directly from `main.py`
+   - Tests business logic without service layer
+   - Example: `from main import hello; assert hello("World") == "Hello World!"`
 
-2. **Provision phase:**
-   - Calls `provisioner.provision()` which:
-     - Checks if provisioning needed (skips if up to date)
-     - Reads `config/feature-config.yaml` via `provisioner._get_config()`
-     - Installs dependencies via pip from build.requirements in config
+2. **Service-test.py (HTTP integration tests):**
+   - Uses `service_test_base.py` for common infrastructure
+   - Calls `get_base_url(feature_path)` which reads `feature-config.yaml`
+   - URL selection based on mode:
+     - SERVICE mode → `environment.development.url` (http://localhost:8000)
+     - CONTAINER mode → `environment.production.url` (https://...)
+     - AZURE mode → `environment.production.url` (Azure Container Apps URL)
+   - Provisioning handled by `service_test_base.run_service_tests()`:
+     - SERVICE: Provisions locally, starts FastAPI service
+     - CONTAINER: Provisions locally, starts Docker container
+     - AZURE: Skips provisioning (already deployed to Azure)
 
-3. **Start phase:**
-   - Calls `provisioner.start()` which:
-     - Reads `config/feature-config.yaml` via `provisioner._get_config()` for URL
-     - Checks if service running (HTTP check on environment.url)
-     - Imports `main.py` to start service (SERVICE mode)
-     - Uses environment.development.url (SERVICE) or environment.production.url (CONTAINER)
-
-4. **Test execution:**
-   - `test.py` gets URL from `provisioner.get_test_url()` which reads config
-   - `test.py` imports `main.py` to discover routes
-   - Auto-discovers routes from `main.py` using introspection (scans FastAPI app.routes)
+3. **Azure deployment (AZURE mode):**
+   - Uses Azure CLI (`az` command) to deploy to Azure Container Apps
+   - Requires ACR password in `ACR_PASSWORD` environment variable
+   - Validates CPU/memory against Azure Container Apps tiers
+   - **Valid CPU/Memory combinations:**
+     | CPU | Memory |
+     |-----|--------|
+     | 0.25 | 0.5Gi |
+     | 0.5 | 1.0Gi |
+     | 0.75 | 1.5Gi |
+     | 1.0 | 2.0Gi |
+   - Minimum tier: 0.25 CPU, 0.5Gi memory
+   - Default used: 0.25 CPU, 0.5Gi memory
 
 **Configuration generation (when dependencies change):**
 - Run `inject-config.py` to generate:
@@ -159,17 +201,34 @@ python features/containerization/test.py features/git-integration SERVICE
 **Creating a New Feature:**
 ```bash
 # Copy template
-cp -r features/containerization/template-feature features/[your-feature-name]
+cp -r features/containerization/test-feature features/[your-feature-name]
 
 # Update config/feature-config.yaml with your values
-# Replace [FEATURE_NAME] placeholders
+# - Set feature name, description, version
+# - Update azure.container_registry to your ACR
+# - Configure build.requirements with your dependencies
+# - Set environment URLs (development and production)
+
+# Update main.py with your business logic functions
+# Update service.py with your FastAPI routes
+# Update test.py with your unit tests
+# Update service-test.py with your HTTP integration tests
 
 # Generate Dockerfile and Azure config
 python features/containerization/inject-config.py features/[your-feature-name]
 
-# Provision and test
-python features/[your-feature-name]/config/provision-service.py SERVICE
-python features/[your-feature-name]/test.py SERVICE
+# Test locally
+python features/[your-feature-name]/test.py
+python features/[your-feature-name]/service-test.py SERVICE
+
+# Test in container
+python features/[your-feature-name]/service-test.py CONTAINER
+
+# Deploy to Azure
+$env:ACR_PASSWORD="your-password"; python features/[your-feature-name]/config/provision-service.py AZURE
+
+# Test against production
+python features/[your-feature-name]/service-test.py AZURE
 ```
 
 
@@ -178,36 +237,29 @@ python features/[your-feature-name]/test.py SERVICE
 ```
 repo/
 ├─ features/
-│  ├─ git-integration/              # Example feature
-│  │  ├─ main.py                    # Main application entry point
-│  │  ├─ test.py                    # Calls TestRunner from containerization
+│  ├─ test-feature/                 # Example feature (completed)
+│  │  ├─ main.py                    # Core business logic
+│  │  ├─ service.py                 # FastAPI service
+│  │  ├─ test.py                    # Plain Python unit tests
+│  │  ├─ service-test.py            # HTTP integration tests
 │  │  ├─ config/
-│  │  │  ├─ feature-config.yaml      # Feature configuration (single source of truth)
+│  │  │  ├─ feature-config.yaml      # Single source of truth
 │  │  │  ├─ Dockerfile              # generated by inject-config.py
-│  │  │  ├─ .azure/
-│  │  │  │  └─ containerapp.yaml   # generated by inject-config.py
 │  │  │  ├─ provision-service.py    # Calls Provisioner.create()
-│  │  │  ├─ deploy-github-action.yml # Versioned workflow
-│  │  │  └─ gpt-action.yml          # GPT Action schema
+│  │  │  └─ .azure/
+│  │  │     └─ containerapp.yaml     # generated by inject-config.py
 │  │  └─ README.md
 │  └─ containerization/             # Shared containerization logic
+│     ├─ provisioner.py             # CODE/SERVICE/CONTAINER/AZURE provisioners
+│     ├─ service_test_base.py        # Common test infrastructure
 │     ├─ inject-config.py           # Generates Dockerfile & Azure config
-│     ├─ provisioner.py             # Provisioner classes
-│     ├─ test.py                    # TestRunner class
-│     ├─ template-feature/          # Template for new features
-│     │  ├─ main.py
-│     │  ├─ test.py
-│     │  ├─ README.md
-│     │  └─ config/
-│     │     ├─ feature-config.yaml      # Single source of truth (with placeholders)
-│     │     ├─ provision-service.py      # Calls Provisioner.create()
-│     │     ├─ gpt-action.yml            # GPT Action schema template
-│     │     └─ deploy-github-action.yml  # Deployment workflow template
+│     ├─ generate-service-test.py    # Generates service-test.py from test.py
+│     ├─ test-feature/              # Example feature reference
 │     └─ architecture.md            # This file
 └─ .github/
    └─ workflows/
-      ├─ git-integration-deploy.yml  # Copied from feature
-      └─ common-deploy.yml          # Orchestrates all features
+      ├─ test-feature-deploy.yml    # Copied from feature
+      └─ [other-feature]-deploy.yml
 ```
 
 
