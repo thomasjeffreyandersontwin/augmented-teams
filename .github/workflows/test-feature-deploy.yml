@@ -34,15 +34,33 @@ jobs:
           augmentedteams-hfdzfjhghshucaf6.azurecr.io/test-feature:latest
           augmentedteams-hfdzfjhghshucaf6.azurecr.io/test-feature:${{ github.sha }}
         
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
     - name: Deploy to Azure Container Apps
       run: |
-        echo "✅ Image pushed to ACR: augmentedteams-hfdzfjhghshucaf6.azurecr.io/test-feature:latest"
-        echo "📋 Next steps:"
-        echo "1. Go to Azure Portal → Container Apps"
-        echo "2. Create Container App with these settings:"
-        echo "   - Name: test-feature"
-        echo "   - Resource Group: AugmentedTeams"
-        echo "   - Environment: managedEnvironment-AugmentedTeams-aa2c"
-        echo "   - Image: augmentedteams-hfdzfjhghshucaf6.azurecr.io/test-feature:latest"
-        echo "   - Username: ${{ secrets.ACR_USERNAME }}"
-        echo "   - Password: ${{ secrets.ACR_PASSWORD }}"
+        # Check if container app exists, create or update
+        if az containerapp show --name test-feature --resource-group AugmentedTeams &>/dev/null; then
+          echo "📦 Updating existing container app..."
+          az containerapp update \
+            --name test-feature \
+            --resource-group AugmentedTeams \
+            --image augmentedteams-hfdzfjhghshucaf6.azurecr.io/test-feature:latest
+        else
+          echo "🚀 Creating new container app..."
+          az containerapp create \
+            --name test-feature \
+            --resource-group AugmentedTeams \
+            --environment managedEnvironment-AugmentedTeams-aa2c \
+            --image augmentedteams-hfdzfjhghshucaf6.azurecr.io/test-feature:latest \
+            --registry-server augmentedteams-hfdzfjhghshucaf6.azurecr.io \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
+            --target-port 8000 \
+            --ingress external \
+            --cpu 0.05 \
+            --memory 0.128Gi
+        fi
+        echo "✅ Container App deployed successfully!"
