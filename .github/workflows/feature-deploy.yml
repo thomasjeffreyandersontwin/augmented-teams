@@ -1,6 +1,6 @@
 name: Deploy Features
 
-# Version: 1.0.9
+# Version: 1.1.0
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Version Info
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Feature Deploy Workflow v1.0.9"
+        echo "🚀 Feature Deploy Workflow v1.1.0"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
     
@@ -166,6 +166,15 @@ jobs:
           
           if python features/$FEATURE/config/provision-service.py AZURE --always; then
             echo "✅ Successfully deployed $FEATURE"
+            
+            # Check container app status and logs
+            echo ""
+            echo "🔍 Checking Azure Container App status..."
+            az containerapp show --name test-feature --resource-group AugmentedTeams --query "{status: properties.runningStatus, provisioning: properties.provisioningState, url: properties.configuration.ingress.fqdn}" -o json || echo "Could not fetch status"
+            
+            echo ""
+            echo "📋 Recent container logs..."
+            az containerapp logs show --name test-feature --resource-group AugmentedTeams --tail 10 --follow false || echo "Could not fetch logs"
             
             # Get and display the deployment URL from config
             echo ""
