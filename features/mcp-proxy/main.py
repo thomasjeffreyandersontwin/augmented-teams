@@ -251,21 +251,26 @@ def _call_via_http(mcp_request: dict, config: dict, tool_name: str) -> dict:
 
 
 def _send_mcp_request_via_docker(mcp_request: dict, config: dict, timeout: int = 10) -> dict:
-    """Send any MCP request via Docker stdio protocol - generic helper"""
+    """Send any MCP request - uses local MCP server process (runs in supervisord)"""
     github_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN", "")
     
-    docker_cmd = ["docker", "run", "-i", "--rm"]
-    for key, value in config.get("env", {}).items():
-        if value:
-            docker_cmd.extend(["-e", f"{key}={value}"])
-    docker_cmd.append(config.get("image", "ghcr.io/github/github-mcp-server"))
+    # Use local MCP server binary (embedded in container via Dockerfile)
+    mcp_server_path = "/usr/local/bin/github-mcp-server"
+    
+    if not os.path.exists(mcp_server_path):
+        return {"error": "MCP server binary not found. Make sure you're running in the containerized environment."}
+    
+    # Run MCP server process
+    env = os.environ.copy()
+    env["GITHUB_PERSONAL_ACCESS_TOKEN"] = github_token
     
     process = subprocess.Popen(
-        docker_cmd,
+        [mcp_server_path],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True
+        text=True,
+        env=env
     )
     
     # MCP protocol requires initialize handshake first

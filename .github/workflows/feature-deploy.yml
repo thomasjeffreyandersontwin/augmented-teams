@@ -137,6 +137,7 @@ jobs:
     - name: Provision and deploy changed features
       env:
         ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN }}
       run: |
         set -e  # Exit on error
         FEATURES="${{ steps.detect.outputs.features }}"

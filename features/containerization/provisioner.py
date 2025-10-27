@@ -523,6 +523,34 @@ class AzureContainerProvisioner(Provisioner):
             print(f"❌ Failed to deploy: {result.stderr}")
             return False
         
+        # Set up GitHub token secret if the feature requires it
+        github_token = os.environ.get('GITHUB_PERSONAL_ACCESS_TOKEN', '')
+        if github_token and feature_name == 'mcp-proxy':
+            print(f"🔐 Setting up GitHub token secret...")
+            secret_cmd = [
+                az_path, "containerapp", "secret", "set",
+                "--name", feature_name,
+                "--resource-group", resource_group,
+                "--secrets", f"github-token={github_token}"
+            ]
+            secret_result = subprocess.run(secret_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+            if secret_result.returncode == 0:
+                print("✅ GitHub token secret configured")
+                # Set it as an environment variable in the container app
+                set_env_cmd = [
+                    az_path, "containerapp", "update",
+                    "--name", feature_name,
+                    "--resource-group", resource_group,
+                    "--set-env-vars", "GITHUB_PERSONAL_ACCESS_TOKEN=secretref:github-token"
+                ]
+                env_result = subprocess.run(set_env_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+                if env_result.returncode == 0:
+                    print("✅ GitHub token environment variable configured")
+                else:
+                    print(f"⚠️ Failed to set environment variable: {env_result.stderr}")
+            else:
+                print(f"⚠️ Failed to set secret: {secret_result.stderr}")
+        
         print(f"✅ Container App deployed successfully!")
         return True
     

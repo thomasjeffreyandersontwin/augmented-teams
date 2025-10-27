@@ -1,0 +1,14 @@
+# GitHub MCP Server Configuration
+# This server runs the MCP protocol and mcp-proxy connects to it via stdio
+
+service:
+  name: git-mcp
+  description: "GitHub MCP server for repository operations"
+  protocol: "stdio"  # MCP protocol uses stdio
+
+runtime:
+  image: ghcr.io/github/github-mcp-server
+  
+environment:
+  required:
+    - GITHUB_PERSONAL_ACCESS_TOKEN
