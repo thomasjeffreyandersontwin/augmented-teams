@@ -15,6 +15,10 @@ def add_numbers(a: int, b: int) -> int:
 def goodbye(param: str) -> str:
     """Say goodbye"""
     return f"Goodbye {param}!"
+
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers"""
+    return a * b
    
 if __name__ == '__main__':
     # Simple test when run directly

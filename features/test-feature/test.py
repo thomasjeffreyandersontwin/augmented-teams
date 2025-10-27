@@ -39,9 +39,17 @@ def test_goodbye():
     assert result == "Goodbye World!", f"Expected 'Goodbye World!', got '{result}'"
     print("✅ test_goodbye passed")
 
+def test_multiply():
+    """Test multiply function"""
+    from main import multiply
+    result = multiply(3, 4)
+    assert result == 12, f"Expected 12, got {result}"
+    print("✅ test_multiply passed")
+
 if __name__ == "__main__":
     test_hello_world()
     test_hello_custom()
     test_add_numbers()
     test_goodbye()
+    test_multiply()
     print("✅ All tests passed")

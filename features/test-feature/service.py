@@ -54,6 +54,11 @@ def goodbye_endpoint(param: str = "Farewell"):
     """Goodbye endpoint"""
     return {"message": main.goodbye(param)}
 
+@app.get("/multiply")
+def multiply_endpoint(a: int, b: int):
+    """Multiply endpoint"""
+    return {"result": main.multiply(a, b)}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("service:app", host="0.0.0.0", port=8000)
