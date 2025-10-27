@@ -130,9 +130,9 @@ class TestHappyPathDeployment:
         result = run_deployment(test_feature_name, requirements)
         
         # Verify deployment succeeded
-        print(f"\n📋 Deployment output:\n{result.stdout}")
+        print(f"\n[OUTPUT] Deployment output:\n{result.stdout}")
         if result.returncode != 0:
-            print(f"\n❌ Deployment failed:\n{result.stderr}")
+            print(f"\n[FAILED] Deployment failed:\n{result.stderr}")
         
         assert result.returncode == 0, f"Deployment failed: {result.stderr}"
         

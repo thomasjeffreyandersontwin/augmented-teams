@@ -9,8 +9,23 @@ import sys
 import subprocess
 import requests
 import time
+import re
 from pathlib import Path
 from abc import ABC, abstractmethod
+
+# Windows-safe print function
+def safe_print(message: str):
+    """Print with automatic Unicode handling for Windows"""
+    try:
+        print(message, flush=True)
+    except UnicodeEncodeError:
+        # Remove emojis and try again
+        clean_message = re.sub(r'[\U0001F300-\U0001F9FF]', '', message)
+        try:
+            print(clean_message, flush=True)
+        except:
+            # ASCII only fallback
+            print(message.encode('ascii', errors='ignore').decode('ascii'), flush=True)
 
 class Provisioner(ABC):
     """Abstract base class for provisioners"""
@@ -95,14 +110,14 @@ class ServiceProvisioner(Provisioner):
         """Provision the service"""
         # Check if provisioning is needed
         if not always and not self.is_provisioning_needed():
-            print("✅ Service already provisioned and up to date")
+            safe_print("[SKIP] Service already provisioned and up to date")
             return True
         
-        print(f"🚀 Provisioning {self.feature_path.name}...")
+        safe_print(f"[PROVISION] Provisioning {self.feature_path.name}...")
         print("=" * 60)
         
         # Install dependencies from build.requirements in config
-        print("📦 Installing dependencies...")
+        safe_print("[DEPS] Installing dependencies...")
         config = self._get_config()
         requirements = config.get('build', {}).get('requirements', [])
         
@@ -111,11 +126,11 @@ class ServiceProvisioner(Provisioner):
             for req in requirements:
                 result = subprocess.run([sys.executable, "-m", "pip", "install", req])
                 if result.returncode != 0:
-                    print(f"❌ Failed to install {req}")
+                    safe_print(f"[FAILED] Failed to install {req}")
                     return False
-            print("✅ Dependencies installed")
+            safe_print("[SUCCESS] Dependencies installed")
         else:
-            print("⚠️ No build.requirements in config")
+            safe_print("[WARN] No build.requirements in config")
         
         return True
     
@@ -141,15 +156,15 @@ class ServiceProvisioner(Provisioner):
                         if len(parts) >= 5:
                             pid = parts[-1]
                             if pid.isdigit():
-                                print(f"⚠️  Killing process {pid} using port {port}")
+                                safe_print(f"[WARN]  Killing process {pid} using port {port}")
                                 subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
             except Exception as e:
-                print(f"⚠️  Could not kill process on port {port}: {e}")
+                safe_print(f"[WARN]  Could not kill process on port {port}: {e}")
         else:  # Unix/Linux/Mac
             try:
                 subprocess.run(["lsof", "-ti", f":{port}", "-s", "TCP:LISTEN", "|", "xargs", "-r", "kill", "-9"], shell=True)
             except Exception as e:
-                print(f"⚠️  Could not kill process on port {port}: {e}")
+                safe_print(f"[WARN]  Could not kill process on port {port}: {e}")
     
     def start(self, always=False):
         """Start service in-memory"""
@@ -209,14 +224,14 @@ class ContainerProvisioner(Provisioner):
         """Provision the container"""
         # Check if provisioning is needed
         if not always and not self.is_provisioning_needed():
-            print("✅ Service already provisioned and up to date")
+            safe_print("[SKIP] Service already provisioned and up to date")
             return True
         
-        print(f"🚀 Provisioning {self.feature_path.name}...")
+        safe_print(f"[PROVISION] Provisioning {self.feature_path.name}...")
         print("=" * 60)
         
         # Install dependencies from build.requirements in config
-        print("📦 Installing dependencies...")
+        safe_print("[DEPS] Installing dependencies...")
         config = self._get_config()
         requirements = config.get('build', {}).get('requirements', [])
         
@@ -225,11 +240,11 @@ class ContainerProvisioner(Provisioner):
             for req in requirements:
                 result = subprocess.run([sys.executable, "-m", "pip", "install", req])
                 if result.returncode != 0:
-                    print(f"❌ Failed to install {req}")
+                    safe_print(f"[FAILED] Failed to install {req}")
                     return False
-            print("✅ Dependencies installed")
+            safe_print("[SUCCESS] Dependencies installed")
         else:
-            print("⚠️ No build.requirements in config")
+            safe_print("[WARN] No build.requirements in config")
         
         return True
     
@@ -242,7 +257,7 @@ class ContainerProvisioner(Provisioner):
         
         # Kill any existing service on the port if forcing
         if always:
-            print("⚠️  Force mode: killing any existing services on port 8000...")
+            safe_print("[WARN]  Force mode: killing any existing services on port 8000...")
             ServiceProvisioner._kill_port(8000)
             time.sleep(1)  # Give time for port to be released
         
@@ -381,7 +396,7 @@ class AzureContainerProvisioner(Provisioner):
                 errors='ignore'
             )
             if docker_login.returncode != 0:
-                print(f"⚠️ Docker login failed (may already be logged in)")
+                safe_print(f"[WARN] Docker login failed (may already be logged in)")
         
         # Build the image
         # For containerization, build from repo root; for others, build from feature directory
