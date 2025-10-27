@@ -68,19 +68,42 @@ def run_service_tests(test_functions):
         # Wait for service to be ready
         base_url = get_base_url(feature_path, args.mode)
         print(f"⏳ Waiting for service at {base_url} to be ready...")
-        max_attempts = 30
+        max_attempts = 60  # Increase to 2 minutes
         for attempt in range(max_attempts):
             try:
-                response = requests.get(f"{base_url}/hello?name=HealthCheck", timeout=5)
-                if response.status_code == 200:
+                # Try root endpoint first (most reliable)
+                response = requests.get(f"{base_url}/", timeout=10)
+                if response.status_code in [200, 404, 405]:  # 404/405 means service is up but endpoint doesn't exist
                     print(f"✅ Service is ready!")
                     break
-            except:
+            except requests.exceptions.SSLError as e:
+                # SSL errors might indicate service is still starting
                 if attempt < max_attempts - 1:
-                    print(f"⏳ Attempt {attempt + 1}/{max_attempts} - waiting for service...")
+                    print(f"⏳ Attempt {attempt + 1}/{max_attempts} - SSL error, waiting...")
                     time.sleep(2)
                 else:
-                    print("❌ Service failed to become ready after 60 seconds")
+                    print(f"❌ SSL Error: {e}")
+                    sys.exit(1)
+            except requests.exceptions.Timeout:
+                if attempt < max_attempts - 1:
+                    print(f"⏳ Attempt {attempt + 1}/{max_attempts} - timeout, waiting...")
+                    time.sleep(2)
+                else:
+                    print("❌ Service failed to respond after 2 minutes")
+                    sys.exit(1)
+            except requests.exceptions.ConnectionError as e:
+                if attempt < max_attempts - 1:
+                    print(f"⏳ Attempt {attempt + 1}/{max_attempts} - connection error: {e}")
+                    time.sleep(2)
+                else:
+                    print(f"❌ Connection failed: {e}")
+                    sys.exit(1)
+            except Exception as e:
+                if attempt < max_attempts - 1:
+                    print(f"⏳ Attempt {attempt + 1}/{max_attempts} - error: {e}")
+                    time.sleep(2)
+                else:
+                    print(f"❌ Service failed: {e}")
                     sys.exit(1)
     else:
         provisioner = Provisioner.create(args.mode, feature_path, containerization_path)
