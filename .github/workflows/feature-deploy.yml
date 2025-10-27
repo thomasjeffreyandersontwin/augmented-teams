@@ -1,6 +1,6 @@
 name: Deploy Features
 
-# Version: 1.0.1
+# Version: 1.0.2
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Version Info
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Feature Deploy Workflow v1.0.1"
+        echo "🚀 Feature Deploy Workflow v1.0.2"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
     
@@ -55,6 +55,9 @@ jobs:
         else
           # Auto-detect changed features - look at changed files in last commit
           echo "🔍 Detecting changed files..."
+          
+          # Fetch full history for git diff to work
+          git fetch --unshallow 2>/dev/null || git fetch
           
           # Use the most reliable method - just get the last commit's changed files
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
