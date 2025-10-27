@@ -16,6 +16,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.12"
+    - name: Install dependencies
+      run: |
+        pip install docker requests pyyaml fastapi uvicorn pydantic
     - name: Install Docker
       uses: docker/setup-buildx-action@v3
     - name: Login to Azure Container Registry
@@ -33,11 +36,32 @@ jobs:
         ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        echo "Deploying all features..."
-        FEATURES=$(ls features/containerization/ | grep -v "^_\|containerization" | tr "\\n" " ")
-        for FEATURE in $FEATURES; do
-          if [ -f "features/containerization/$FEATURE/config/provision-service.py" ]; then
-            echo "Deploying $FEATURE..."
-            python "features/containerization/$FEATURE/config/provision-service.py" AZURE --always
+        echo "🚀 Deploying all features..."
+        echo ""
+        
+        # Find all features at features/* level
+        FEATURES=""
+        for dir in features/*; do
+          DIRNAME=$(basename "$dir")
+          if [ "$DIRNAME" = "containerization" ] || [ "$DIRNAME" = "_template" ]; then
+            continue
+          fi
+          if [ -f "$dir/config/provision-service.py" ]; then
+            FEATURES="$FEATURES $DIRNAME"
           fi
         done
+        FEATURES=$(echo "$FEATURES" | xargs)
+        
+        echo "📦 Features found: $FEATURES"
+        echo ""
+        
+        for FEATURE in $FEATURES; do
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Deploying $FEATURE..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          python "features/$FEATURE/config/provision-service.py" AZURE --always
+          echo "✅ $FEATURE deployed"
+          echo ""
+        done
+        
+        echo "✅ ALL FEATURES DEPLOYED!"
