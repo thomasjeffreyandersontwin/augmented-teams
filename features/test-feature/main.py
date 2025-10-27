@@ -13,7 +13,7 @@ def add_numbers(a: int, b: int) -> int:
     return a + b
 
 def goodbye(param: str) -> str:
-    """Say goodbye fri!  """
+    """Say goodbye f!  """
     return f"Goodbye {param}!"
    
 if __name__ == '__main__':
