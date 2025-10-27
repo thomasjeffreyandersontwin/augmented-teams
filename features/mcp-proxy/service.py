@@ -60,6 +60,19 @@ def list_tools():
     """List available MCP tools"""
     return {"tools": mcp_main.get_mcp_tools()}
 
+@app.get("/tools/with-schemas")
+def list_tools_with_schemas():
+    """List all tools with their full schemas for ChatGPT introspection"""
+    return {"tools": mcp_main.list_tools_with_schemas()}
+
+@app.get("/tools/{tool_name}/schema")
+def get_tool_schema(tool_name: str):
+    """Get schema for a specific tool - enables ChatGPT to understand parameters"""
+    schema = mcp_main.get_tool_schema(tool_name)
+    if "error" in schema:
+        raise HTTPException(status_code=404, detail=schema["error"])
+    return schema
+
 @app.post("/call", response_model=MCPToolResponse)
 def call_mcp_tool(request: MCPToolCall):
     """Call an MCP tool"""

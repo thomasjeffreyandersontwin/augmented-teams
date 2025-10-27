@@ -101,9 +101,34 @@ def test_call_mcp_tool():
     print("✅ test_call_mcp_tool passed")
 
 
+def test_list_tools_with_schemas():
+    """Test list tools with schemas endpoint"""
+    url = f"{get_base_url(feature_path)}/tools/with-schemas"
+    response = requests.get(url, timeout=30)
+    result = response.json()
+    assert "tools" in result
+    assert isinstance(result["tools"], list)
+    assert len(result["tools"]) > 0
+    print("✅ test_list_tools_with_schemas passed")
+
+
+def test_get_tool_schema():
+    """Test get specific tool schema endpoint"""
+    url = f"{get_base_url(feature_path)}/tools/github_search_code/schema"
+    response = requests.get(url, timeout=30)
+    schema = response.json()
+    assert "name" in schema
+    assert "description" in schema
+    assert "inputSchema" in schema
+    assert schema["name"] == "github_search_code"
+    print("✅ test_get_tool_schema passed")
+
+
 if __name__ == "__main__":
     run_service_tests([
         test_list_tools,
-        test_call_mcp_tool
+        test_call_mcp_tool,
+        test_list_tools_with_schemas,
+        test_get_tool_schema
     ])
 

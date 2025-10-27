@@ -73,6 +73,77 @@ def get_mcp_tools(mcp_server: str = "github") -> list:
     ]
 
 
+def get_tool_schema(tool_name: str) -> dict:
+    """Get schema for a specific tool - supports ChatGPT introspection"""
+    # Tool schemas based on GitHub MCP server documentation
+    schemas = {
+        "github_search_code": {
+            "name": "github_search_code",
+            "description": "Search for code in GitHub repositories",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search query using GitHub code search syntax"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Filter by programming language (e.g., 'python', 'javascript')"
+                    },
+                    "owner": {
+                        "type": "string",
+                        "description": "Repository owner to search within"
+                    },
+                    "repo": {
+                        "type": "string",
+                        "description": "Specific repository to search"
+                    }
+                },
+                "required": ["query"]
+            }
+        },
+        "github_get_file_contents": {
+            "name": "github_get_file_contents",
+            "description": "Get contents of a file from a GitHub repository",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "owner": {"type": "string", "description": "Repository owner"},
+                    "repo": {"type": "string", "description": "Repository name"},
+                    "path": {"type": "string", "description": "File path in repository"},
+                    "ref": {"type": "string", "description": "Branch or commit SHA"}
+                },
+                "required": ["owner", "repo", "path"]
+            }
+        },
+        "github_create_issue": {
+            "name": "github_create_issue",
+            "description": "Create a new GitHub issue",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "owner": {"type": "string", "description": "Repository owner"},
+                    "repo": {"type": "string", "description": "Repository name"},
+                    "title": {"type": "string", "description": "Issue title"},
+                    "body": {"type": "string", "description": "Issue body"},
+                    "labels": {"type": "array", "description": "Labels to apply"}
+                },
+                "required": ["owner", "repo", "title"]
+            }
+        }
+    }
+    return schemas.get(tool_name, {"error": f"Unknown tool: {tool_name}"})
+
+
+def list_tools_with_schemas() -> list:
+    """List all tools with their schemas for full introspection"""
+    tools = get_mcp_tools()
+    return [
+        get_tool_schema(tool) for tool in tools
+    ]
+
+
 def get_mcp_server_config(mcp_server: str = "github") -> dict:
     """
     Get configuration for an MCP server
