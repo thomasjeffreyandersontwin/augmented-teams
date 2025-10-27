@@ -148,15 +148,15 @@ All features MUST follow the standardized template based on the proven git integ
 **Usage:**
 ```bash
 # Provision and deploy to Azure
-python features/containerization/test-feature/config/provision-service.py AZURE
+python features/test-feature/config/provision-service.py AZURE
 
 # Run plain Python unit tests (direct function calls)
-python features/containerization/test-feature/test.py
+python features/test-feature/test.py
 
 # Run HTTP integration tests (SERVICE/CONTAINER/AZURE modes)
-python features/containerization/test-feature/service-test.py SERVICE
-python features/containerization/test-feature/service-test.py CONTAINER  
-python features/containerization/test-feature/service-test.py AZURE
+python features/test-feature/service-test.py SERVICE
+python features/test-feature/service-test.py CONTAINER  
+python features/test-feature/service-test.py AZURE
 ```
 
 **Flow:**
@@ -201,7 +201,7 @@ python features/containerization/test-feature/service-test.py AZURE
 **Creating a New Feature:**
 ```bash
 # Copy template
-cp -r features/containerization/test-feature features/[your-feature-name]
+cp -r features/test-feature features/[your-feature-name]
 
 # Update config/feature-config.yaml with your values
 # - Set feature name, description, version
@@ -254,7 +254,6 @@ repo/
 │     ├─ service_test_base.py        # Common test infrastructure
 │     ├─ inject-config.py           # Generates Dockerfile & Azure config
 │     ├─ generate-service-test.py    # Generates service-test.py from test.py
-│     ├─ test-feature/              # Example feature reference
 │     └─ architecture.md            # This file
 └─ .github/
    └─ workflows/
