@@ -50,10 +50,8 @@ jobs:
           echo "📄 Changed files:"
           echo "$CHANGED_FILES"
           
+          # Extract feature names from paths like features/containerization/test-feature/
           FEATURES=$(echo "$CHANGED_FILES" | grep '^features/containerization/[^/]*/' | cut -d'/' -f3 | sort -u | tr '\n' ' ')
-          
-          # Filter out directories that aren't actual features
-          FEATURES=$(echo "$FEATURES" | grep -v "template-feature\|_template\|config\|chats" | xargs)
           
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
         fi
