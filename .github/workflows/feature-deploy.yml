@@ -1,6 +1,6 @@
 name: Deploy Features
 
-# Version: 1.0.6
+# Version: 1.0.7
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Version Info
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Feature Deploy Workflow v1.0.6"
+        echo "🚀 Feature Deploy Workflow v1.0.7"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
     
@@ -95,9 +95,17 @@ jobs:
       with:
         python-version: '3.12'
     
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
     - name: Install dependencies
       run: |
-        pip install docker requests pyyaml fastapi uvicorn pydantic
+        pip install --cache-dir ~/.cache/pip docker requests pyyaml fastapi uvicorn pydantic
     
     - name: Install Azure CLI
       run: |
