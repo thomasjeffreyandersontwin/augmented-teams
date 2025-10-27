@@ -567,6 +567,10 @@ class AzureContainerProvisioner(Provisioner):
         import yaml
         dockerfile_path = self.feature_path / "config" / "Dockerfile"
         
+        # First pass: collect multi-stage builds and other commands separately
+        multi_stage_commands = []
+        other_commands = []
+        
         # Look for subdirectories with config.yaml
         for subdir in self.feature_path.iterdir():
             if not subdir.is_dir() or subdir.name == 'config':
@@ -583,24 +587,49 @@ class AzureContainerProvisioner(Provisioner):
                     continue
                 
                 # Generate Docker commands from config
-                docker_commands = self._generate_docker_commands_from_config(subdir_config, subdir.name)
+                docker_commands, is_multistage = self._generate_docker_commands_from_config(subdir_config, subdir.name)
                 
                 if docker_commands:
-                    # Append to main Dockerfile
-                    with open(dockerfile_path, 'a') as f:
-                        f.write("\n# Additional configuration from " + subdir.name + "\n")
-                        f.write(docker_commands)
+                    if is_multistage:
+                        multi_stage_commands.append(("# Additional configuration from " + subdir.name, docker_commands))
+                    else:
+                        other_commands.append(("# Additional configuration from " + subdir.name, docker_commands))
                     
                     print(f"✅ Merged config from {subdir.name}/")
+        
+        # If there are multi-stage builds, prepend them to the Dockerfile
+        if multi_stage_commands:
+            print("📝 Prepending multi-stage builds to Dockerfile...")
+            
+            with open(dockerfile_path, 'r') as f:
+                original_content = f.read()
+            
+            with open(dockerfile_path, 'w') as f:
+                # Write multi-stage builds first
+                for comment, commands in multi_stage_commands:
+                    f.write(comment + "\n")
+                    f.write(commands + "\n\n")
+                
+                # Then write original content
+                f.write(original_content)
+        
+        # Append other commands at the end
+        if other_commands:
+            print("📝 Appending additional Docker configuration...")
+            with open(dockerfile_path, 'a') as f:
+                for comment, commands in other_commands:
+                    f.write("\n" + comment + "\n")
+                    f.write(commands + "\n")
     
     def _generate_docker_commands_from_config(self, config, feature_name):
-        """Generate Docker commands from a feature config"""
+        """Generate Docker commands from a feature config - returns (commands, is_multistage)"""
         commands = []
+        is_multistage = False
         
         # Multi-stage build
         if 'build' in config and 'from_image' in config['build']:
+            is_multistage = True
             from_image = config['build']['from_image']
-            commands.append(f"# Build stage for {feature_name}")
             commands.append(f"FROM {from_image} AS {feature_name}_stage")
             commands.append("")
         
@@ -608,6 +637,7 @@ class AzureContainerProvisioner(Provisioner):
         if 'build' in config and 'copy_from' in config['build']:
             for copy in config['build']['copy_from']:
                 commands.append(f"COPY --from={feature_name}_stage {copy['src']} {copy['dst']}")
+            commands.append("")
         
         # Install packages
         if 'install' in config and 'packages' in config['install']:
@@ -617,7 +647,12 @@ class AzureContainerProvisioner(Provisioner):
         # Run commands
         if 'run' in config:
             for run_cmd in config['run']:
-                commands.append(f"RUN {run_cmd}")
+                if run_cmd.startswith("echo"):
+                    # Shell command - add as RUN
+                    commands.append(f"RUN {run_cmd}")
+                else:
+                    # Already formatted as command
+                    commands.append(f"RUN {run_cmd}")
         
         # Environment variables
         if 'env' in config:
@@ -630,7 +665,7 @@ class AzureContainerProvisioner(Provisioner):
             cmd_str = ', '.join([f'"{c}"' for c in cmd_list])
             commands.append(f"CMD [{cmd_str}]")
         
-        return "\n".join(commands) if commands else ""
+        return ("\n".join(commands) if commands else "", is_multistage)
 
 if __name__ == "__main__":
     main()
