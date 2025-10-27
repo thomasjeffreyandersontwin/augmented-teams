@@ -39,6 +39,11 @@ jobs:
     - name: Detect changed features
       id: detect
       run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🔍 Detecting changed features..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           # Manual trigger - list ONLY features at features/* level
           FEATURES=""
