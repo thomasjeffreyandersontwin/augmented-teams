@@ -62,8 +62,8 @@ def test_get_tool_schema():
     print("✅ test_get_tool_schema passed")
 
 
-def test_gpt_style_search_without_repo():
-    """GPT-style test: search for known files in features/containerization and validate results"""
+def test_gpt_style_search_with_defaults():
+    """GPT-style test: search without specifying repo (uses auto-injected defaults)"""
     url = f"{get_base_url(feature_path)}/call"
     # Search for specific files we know exist
     payload = {
@@ -81,14 +81,14 @@ def test_gpt_style_search_without_repo():
         result_data = result["result"]
         # Validates that we got actual search results back
         print(f"   Found results: {type(result_data)}")
-        print("✅ test_gpt_style_search_without_repo passed (got results)")
+        print("✅ test_gpt_style_search_with_defaults passed (got results)")
     else:
         print(f"   Warning: Search failed - {result.get('error', 'unknown')}")
-        print("✅ test_gpt_style_search_without_repo passed (mock mode)")
+        print("✅ test_gpt_style_search_with_defaults passed (mock mode)")
 
 
-def test_gpt_style_get_file_without_repo():
-    """GPT-style test: get file contents without specifying owner/repo (uses defaults)"""
+def test_gpt_style_get_file_with_defaults():
+    """GPT-style test: get file without specifying owner/repo (uses auto-injected defaults)"""
     url = f"{get_base_url(feature_path)}/call"
     # Get a known file we can validate
     payload = {
@@ -117,15 +117,15 @@ def test_gpt_style_get_file_without_repo():
             content = str(result_data)
             print(f"   Got content with {len(content)} chars")
         
-        print("✅ test_gpt_style_get_file_without_repo passed (got response)")
+        print("✅ test_gpt_style_get_file_with_defaults passed (got response)")
     else:
         # MCP/Docker not available - that's OK for local test
         print(f"   Note: MCP not available locally - {result.get('error', 'unknown')}")
-        print("✅ test_gpt_style_get_file_without_repo passed (local test - no Docker)")
+        print("✅ test_gpt_style_get_file_with_defaults passed (local test - no Docker)")
 
 
-def test_gpt_style_list_prs_without_repo():
-    """GPT-style test: list PRs without specifying owner/repo (uses defaults)"""
+def test_gpt_style_list_prs_with_defaults():
+    """GPT-style test: list PRs without specifying owner/repo (uses auto-injected defaults)"""
     url = f"{get_base_url(feature_path)}/call"
     payload = {
         "tool": "github_list_pull_requests",
@@ -137,7 +137,7 @@ def test_gpt_style_list_prs_without_repo():
     result = response.json()
     # May fail if Docker/MCP not available - that's OK
     assert "result" in result or "error" in result
-    print("✅ test_gpt_style_list_prs_without_repo passed")
+    print("✅ test_gpt_style_list_prs_with_defaults passed")
 
 
 if __name__ == "__main__":
@@ -146,8 +146,8 @@ if __name__ == "__main__":
         test_call_mcp_tool,
         test_list_tools_with_schemas,
         test_get_tool_schema,
-        test_gpt_style_search_without_repo,
-        test_gpt_style_get_file_without_repo,
-        test_gpt_style_list_prs_without_repo
+        test_gpt_style_search_with_defaults,
+        test_gpt_style_get_file_with_defaults,
+        test_gpt_style_list_prs_with_defaults
     ])
 
