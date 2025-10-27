@@ -62,10 +62,16 @@ jobs:
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
         else
           # Auto-detect changed features - look at changed files in last commit
-          if [ -n "${{ github.event.before }}" ] && [ -n "${{ github.sha }}" ]; then
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} 2>/dev/null || echo "")
-          else
-            # If no before, look at last commit against previous
+          # Get the commit hash
+          COMMIT_SHA="${{ github.sha }}"
+          
+          # Try multiple methods to get changed files
+          if [ -n "$COMMIT_SHA" ] && [ "$COMMIT_SHA" != "0000000000000000000000000000000000000000" ]; then
+            CHANGED_FILES=$(git diff --name-only "$COMMIT_SHA~1" "$COMMIT_SHA" 2>/dev/null || echo "")
+          fi
+          
+          # Fallback to HEAD
+          if [ -z "$CHANGED_FILES" ]; then
             CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
           fi
           
