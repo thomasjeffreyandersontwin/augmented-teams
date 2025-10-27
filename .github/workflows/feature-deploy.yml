@@ -1,6 +1,6 @@
 name: Deploy Features
 
-# Version: 1.0.4
+# Version: 1.0.5
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Version Info
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Feature Deploy Workflow v1.0.4"
+        echo "🚀 Feature Deploy Workflow v1.0.5"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
     
@@ -156,10 +156,19 @@ jobs:
           if python features/$FEATURE/config/provision-service.py AZURE --always; then
             echo "✅ Successfully deployed $FEATURE"
             
-            # Get and display the deployment URL
+            # Get and display the deployment URL from config
+            URL=$(python -c "
+import yaml
+from pathlib import Path
+config_path = Path('features') / '$FEATURE' / 'config' / 'feature-config.yaml'
+with open(config_path) as f:
+    config = yaml.safe_load(f)
+    url = config.get('environment', {}).get('production', {}).get('url', 'NOT SET')
+    print(url)
+" 2>/dev/null || echo "NOT SET")
+            
             echo ""
-            echo "🌐 $FEATURE deployed successfully"
-            echo "   (URL available in Azure Portal)"
+            echo "🌐 $FEATURE deployed to: $URL"
             echo ""
             
             # Run tests if test file exists
