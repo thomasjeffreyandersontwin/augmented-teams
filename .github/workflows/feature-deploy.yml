@@ -1,6 +1,6 @@
 name: Deploy Features
 
-# Version: 1.0.7
+# Version: 1.0.8
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Version Info
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Feature Deploy Workflow v1.0.7"
+        echo "🚀 Feature Deploy Workflow v1.0.8"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
     
@@ -89,6 +89,9 @@ jobs:
           echo "⚠️ This indicates the workflow was triggered by a non-feature change"
           exit 1
         fi
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     
     - name: Set up Python
       uses: actions/setup-python@v4
