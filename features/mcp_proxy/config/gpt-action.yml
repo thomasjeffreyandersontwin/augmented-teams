@@ -1,0 +1,163 @@
+openapi: 3.1.0
+info:
+  title: MCP Proxy
+  version: 1.0.0
+  description: HTTP API proxy for MCP server operations - bridges Custom GPT Actions to MCP servers
+
+servers:
+  - url: https://mcp-proxy.icyrock-e61cf3e7.westus2.azurecontainerapps.io
+    description: Production Azure deployment
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /:
+    get:
+      operationId: root
+      summary: Root endpoint
+      description: Health check and service info
+      responses:
+        "200":
+          description: Service info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  service:
+                    type: string
+                  version:
+                    type: string
+
+  /health:
+    get:
+      operationId: health
+      summary: Health check
+      description: Check if service is running
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /tools:
+    get:
+      operationId: listTools
+      summary: List available MCP tools
+      description: Get list of available MCP tools from the server
+      parameters:
+        - name: server
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "github"
+          description: MCP server name (github, byterover, etc.)
+      responses:
+        "200":
+          description: List of available tools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items:
+                      type: string
+
+  /mcp_proxy:
+    post:
+      operationId: callMcpTool
+      summary: Call an MCP tool
+      description: |
+        Call an MCP tool through the proxy. This bridges Custom GPT Actions 
+        to MCP protocol servers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tool
+                - input
+              properties:
+                tool:
+                  type: string
+                  description: Name of the MCP tool to call
+                  example: "github_search_code"
+                input:
+                  type: object
+                  description: Input parameters for the tool
+                  example:
+                    query: "python test framework"
+                server:
+                  type: string
+                  description: Optional MCP server name (default: github)
+                  example: "github"
+      responses:
+        "200":
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tool:
+                    type: string
+                  result:
+                    type: object
+                    description: Tool-specific result data
+
+  /call:
+    post:
+      operationId: callTool
+      summary: Call an MCP tool (alternative endpoint)
+      description: Alternative endpoint for calling MCP tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tool
+                - input
+              properties:
+                tool:
+                  type: string
+                  description: Name of the MCP tool to call
+                  example: "github_create_issue"
+                input:
+                  type: object
+                  description: Input parameters for the tool
+                  example:
+                    owner: "thomasjeffreyandersontwin"
+                    repo: "augmented-teams"
+                    title: "Bug found"
+                    body: "Description of the bug"
+      responses:
+        "200":
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tool:
+                    type: string
+                  result:
+                    type: object
+
