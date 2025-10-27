@@ -255,10 +255,15 @@ def _send_mcp_request_via_docker(mcp_request: dict, config: dict, timeout: int =
     github_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN", "")
     
     # Use local MCP server binary (embedded in container via Dockerfile)
-    mcp_server_path = "/usr/local/bin/github-mcp-server"
+    # Try both possible locations
+    mcp_server_path = None
+    for path in ["/usr/local/bin/github-mcp-server", "/server/github-mcp-server"]:
+        if os.path.exists(path):
+            mcp_server_path = path
+            break
     
-    if not os.path.exists(mcp_server_path):
-        return {"error": "MCP server binary not found. Make sure you're running in the containerized environment."}
+    if not mcp_server_path:
+        return {"error": f"MCP server binary not found at /usr/local/bin/github-mcp-server or /server/github-mcp-server"}
     
     # Run MCP server process
     env = os.environ.copy()

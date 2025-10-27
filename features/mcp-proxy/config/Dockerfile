@@ -26,7 +26,7 @@ RUN echo '[supervisord]' > /etc/supervisor/conf.d/mcp.conf && \
     echo 'nodaemon=true' >> /etc/supervisor/conf.d/mcp.conf && \
     echo '' >> /etc/supervisor/conf.d/mcp.conf && \
     echo '[program:mcp-server]' >> /etc/supervisor/conf.d/mcp.conf && \
-    echo 'command=/usr/local/bin/github-mcp-server' >> /etc/supervisor/conf.d/mcp.conf && \
+    echo 'command=/usr/local/bin/github-mcp-server stdio' >> /etc/supervisor/conf.d/mcp.conf && \
     echo 'environment=GITHUB_PERSONAL_ACCESS_TOKEN="%(ENV_GITHUB_PERSONAL_ACCESS_TOKEN)s"' >> /etc/supervisor/conf.d/mcp.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisor/conf.d/mcp.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisor/conf.d/mcp.conf && \
