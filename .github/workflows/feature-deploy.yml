@@ -51,7 +51,8 @@ jobs:
           echo "$CHANGED_FILES"
           
           # Extract feature names from paths like features/test-feature/
-          FEATURES=$(echo "$CHANGED_FILES" | grep '^features/[^/]*/' | grep -v '^features/containerization/' | cut -d'/' -f2 | sort -u | tr '\n' ' ')
+          # Exclude features/containerization/* (those are templates/config, not real features)
+          FEATURES=$(echo "$CHANGED_FILES" | grep '^features/[^/]*/' | grep -v '^features/containerization/' | cut -d'/' -f2 | sort -u | grep -v "^$" | tr '\n' ' ')
           
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
         fi
