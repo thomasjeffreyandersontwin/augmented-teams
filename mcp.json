@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "byterover-mcp": {
+      "url": "https://mcp.byterover.dev/mcp?machineId=1f09a4ad-34fd-6fd0-9189-4d836952d45b"
+    },
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN=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",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+      }
+    }
+  }
+}
+

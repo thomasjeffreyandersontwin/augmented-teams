@@ -1,10 +1,6 @@
 # Common Azure Environment Configuration
 
-This file defines shared Azure environment settings for all features.
 
-## Environment Variables
-
-```yaml
 environment:
   name: augmented-teams-prod
   resourceGroup: augmented-team-rg
@@ -27,8 +23,8 @@ networking:
   vnetName: augmented-teams-vnet
   subnetName: container-apps-subnet
   dnsZone: augmented-teams.local
-```
+
 
 ## Usage
 
-This configuration is used by all features when deploying to Azure Container Apps. Each feature can override specific settings in their own `.azure/containerapp.yaml` file.
+
