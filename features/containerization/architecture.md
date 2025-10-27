@@ -60,40 +60,33 @@ Each feature defines its own:
      - AZURE: Tests against production Azure Container Apps
    - Uses `service_test_base.py` for common infrastructure
 
-**No Runtime Proxying**
-- Old approach used complex `TestRunner` with runtime proxying
-- New approach: direct function calls (test.py) + HTTP calls (service-test.py)
-- Simpler, easier to debug, no magic
 
-**Automated Generation**
+3. **Automated Generation**
 - `generate-service-test.py` parses `test.py` to create `service-test.py`
 - Infers HTTP endpoints and parameters from test.py
 - Uses GPT with function calling for assertion generation
 
-### GitHub Actions Versioning Strategy
+### GitHub Actions Deployment Strategy
 
-**Feature Domain (Versioned):**
-- Workflows stored in `features/[feature-name]/config/`
-- Example: `features/git-integration/config/deploy-github-action.yml`
-- Maintained in feature domain with version control
+**Single Central Workflow:**
+- One workflow handles ALL feature deployments: `.github/workflows/feature-deploy.yml`
+- Detects changed features from git history
+- Runs `provision-service.py` for each changed feature
+- No per-feature workflow duplication
 
-**Global Deployment (Runtime):**
-- Copied to `.github/workflows/` during build
-- Renamed with feature prefix: `[feature-name]-deploy.yml`
-- Example: `.github/workflows/git-integration-deploy.yml`
-- Prevents naming conflicts
-
-**Build Process:**
-- Workflows automatically copied from feature domains
-- Feature prefix ensures no conflicts
-- Version control lives in feature domain
+**How It Works:**
+1. User pushes changes to `features/[feature-name]/*`
+2. `feature-deploy.yml` workflow triggers automatically
+3. Detects changed features by analyzing git diff
+4. For each feature, calls `features/[feature-name]/config/provision-service.py AZURE --always`
+5. Provision script handles: Dockerfile generation, Docker build, Docker push to ACR, Azure deployment
 
 ### Common Coordination, Not Control
 
-- **Global orchestrator** triggers feature deploys via `repository_dispatch`
-- **Feature workflows** handle their own build, test, and deploy
-- **No central control** - features are independent
-- **Simplified coordination** - just dispatch to feature workflows
+- **Single central workflow** (feature-deploy.yml) detects and deploys changed features
+- **No per-feature workflows** - each feature has provision-service.py script
+- **Git-based detection** - analyzes git diff to find changed features
+- **Simplified coordination** - one workflow handles all feature deployments
 
 ### Separation of Concerns
 - **Common** → CI/CD orchestration and shared settings
@@ -118,7 +111,6 @@ All features MUST follow the standardized template based on the proven git integ
 | `service.py` | FastAPI service that wraps main.py functions | HTTP API layer |
 | `test.py` | Plain Python unit tests (calls main.py directly) | run python test.py |
 | `service-test.py` | HTTP integration tests (calls service via HTTP) | run python service-test.py [SERVICE\|CONTAINER\|AZURE] |
-| `config/gpt-action.yml` | GPT Action OpenAPI schema | **uploaded to ChatGPT prefixed as `[feature-name]-gpt-action.yml`** |
 
 ### 2. Configure the Service
 
@@ -132,7 +124,6 @@ All features MUST follow the standardized template based on the proven git integ
 
 | File | Purpose | Action |
 |------|---------|-------|
-| `config/deploy-github-action.yml` | GitHub Actions deployment workflow | **moved to `.github/workflows/` prefixed as `[feature-name]-deploy.yml`** |
 | `config/provision-service.py` | Calls Provisioner.create(mode) to provision feature | run python provision-service.py [SERVICE\|CONTAINER\|AZURE] |
 
 
@@ -257,8 +248,7 @@ repo/
 │     └─ architecture.md            # This file
 └─ .github/
    └─ workflows/
-      ├─ test-feature-deploy.yml    # Copied from feature
-      └─ [other-feature]-deploy.yml
+      └─ feature-deploy.yml          # Single workflow for all feature deployments
 ```
 
 
