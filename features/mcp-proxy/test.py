@@ -12,7 +12,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-from main import proxy_mcp_call, get_mcp_tools, get_tool_schema, list_tools_with_schemas
+from main import proxy_mcp_call, get_mcp_tools, get_tool_schema, list_tools_with_schemas, inject_default_repo_params
 
 def test_get_mcp_tools():
     """Test getting list of MCP tools"""

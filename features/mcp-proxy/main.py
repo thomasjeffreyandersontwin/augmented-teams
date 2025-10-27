@@ -10,6 +10,34 @@ import os
 from typing import Dict, Any
 
 
+def inject_default_repo_params(tool_name: str, input_data: dict) -> dict:
+    """Inject default owner/repo into input_data if not provided"""
+    # Default repository for augmented-teams project
+    default_owner = "thomasjeffreyandersontwin"
+    default_repo = "augmented-teams"
+    
+    # Tools that need owner/repo params
+    repo_required_tools = [
+        "github_get_file_contents", "github_create_issue", "github_list_pull_requests",
+        "github_list_commits", "github_get_commit", "github_create_branch",
+        "github_push_files", "github_delete_file", "github_create_pull_request",
+        "github_update_issue"
+    ]
+    
+    # Don't modify if search_code - it searches across GitHub
+    if tool_name == "github_search_code":
+        return input_data
+    
+    # Inject defaults if owner/repo not provided
+    if tool_name in repo_required_tools:
+        if "owner" not in input_data:
+            input_data["owner"] = default_owner
+        if "repo" not in input_data:
+            input_data["repo"] = default_repo
+    
+    return input_data
+
+
 def proxy_mcp_call(tool_name: str, input_data: dict, mcp_server: str = "github") -> dict:
     """
     Proxy an MCP call to the GitHub MCP server running in Docker
@@ -33,25 +61,104 @@ def proxy_mcp_call(tool_name: str, input_data: dict, mcp_server: str = "github")
             "error": "GITHUB_PERSONAL_ACCESS_TOKEN not set"
         }
     
-    # Build the MCP request following the protocol
-    mcp_request = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "tools/call",
-        "params": {
-            "name": tool_name,
-            "arguments": input_data
+    # Get MCP server configuration
+    config = get_mcp_server_config(mcp_server)
+    if not config:
+        return {
+            "success": False,
+            "error": f"Unknown MCP server: {mcp_server}"
         }
-    }
     
-    # For now, return a structured response
-    # TODO: Implement full MCP stdio communication
-    return {
-        "success": True,
-        "tool": tool_name,
-        "input": input_data,
-        "result": f"MCP call would be made with: {json.dumps(mcp_request, indent=2)}"
-    }
+    try:
+        # Inject default owner/repo parameters if not provided
+        input_data = inject_default_repo_params(tool_name, input_data)
+        
+        # Build the MCP request following the protocol
+        mcp_request = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": tool_name,
+                "arguments": input_data
+            }
+        }
+        
+        # Prepare environment for Docker
+        env = os.environ.copy()
+        env["GITHUB_PERSONAL_ACCESS_TOKEN"] = github_token
+        
+        # Call MCP server via Docker with stdio communication
+        # Using docker run with stdin/stdout for MCP protocol
+        docker_args = config["args"].copy()
+        docker_args.extend([
+            "ghcr.io/github/github-mcp-server"
+        ])
+        
+        # Start the process
+        process = subprocess.Popen(
+            ["docker", "run", "-i", "--rm", "-e", f"GITHUB_PERSONAL_ACCESS_TOKEN={github_token}",
+             "ghcr.io/github/github-mcp-server"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env
+        )
+        
+        # Send request
+        request_json = json.dumps(mcp_request) + "\n"
+        stdout, stderr = process.communicate(input=request_json, timeout=30)
+        
+        if process.returncode != 0:
+            return {
+                "success": False,
+                "error": f"MCP server error: {stderr}",
+                "tool": tool_name
+            }
+        
+        # Parse response
+        try:
+            response = json.loads(stdout)
+            
+            # Check for errors in response
+            if "error" in response:
+                return {
+                    "success": False,
+                    "error": response["error"],
+                    "tool": tool_name
+                }
+            
+            # Extract result from MCP response
+            if "result" in response:
+                return {
+                    "success": True,
+                    "tool": tool_name,
+                    "result": response["result"]
+                }
+            else:
+                return {
+                    "success": True,
+                    "tool": tool_name,
+                    "result": response
+                }
+        except json.JSONDecodeError as e:
+            return {
+                "success": False,
+                "error": f"Failed to parse MCP response: {e}",
+                "raw_response": stdout
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "error": "MCP server call timed out after 30 seconds"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to call MCP server: {str(e)}"
+        }
 
 
 def get_mcp_tools(mcp_server: str = "github") -> list:
@@ -105,98 +212,98 @@ def get_tool_schema(tool_name: str) -> dict:
         },
         "github_get_file_contents": {
             "name": "github_get_file_contents",
-            "description": "Get contents of a file from a GitHub repository",
+            "description": "Get contents of a file from a GitHub repository (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "path": {"type": "string", "description": "File path in repository"},
                     "ref": {"type": "string", "description": "Branch or commit SHA"}
                 },
-                "required": ["owner", "repo", "path"]
+                "required": ["path"]
             }
         },
         "github_create_issue": {
             "name": "github_create_issue",
-            "description": "Create a new GitHub issue",
+            "description": "Create a new GitHub issue (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "title": {"type": "string", "description": "Issue title"},
                     "body": {"type": "string", "description": "Issue body"},
                     "labels": {"type": "array", "description": "Labels to apply"}
                 },
-                "required": ["owner", "repo", "title"]
+                "required": ["title"]
             }
         },
         "github_list_pull_requests": {
             "name": "github_list_pull_requests",
-            "description": "List pull requests in a repository",
+            "description": "List pull requests in a repository (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "state": {"type": "string", "description": "Filter by state (open, closed, all)"},
                     "base": {"type": "string", "description": "Filter by base branch"},
                     "head": {"type": "string", "description": "Filter by head branch"}
                 },
-                "required": ["owner", "repo"]
+                "required": []
             }
         },
         "github_list_commits": {
             "name": "github_list_commits",
-            "description": "List commits in a repository or branch",
+            "description": "List commits in a repository or branch (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "sha": {"type": "string", "description": "Branch or commit SHA"},
                     "author": {"type": "string", "description": "Filter by author"}
                 },
-                "required": ["owner", "repo"]
+                "required": []
             }
         },
         "github_get_commit": {
             "name": "github_get_commit",
-            "description": "Get details of a specific commit",
+            "description": "Get details of a specific commit (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "sha": {"type": "string", "description": "Commit SHA"},
                     "include_diff": {"type": "boolean", "description": "Include file diffs in response"}
                 },
-                "required": ["owner", "repo", "sha"]
+                "required": ["sha"]
             }
         },
         "github_create_branch": {
             "name": "github_create_branch",
-            "description": "Create a new branch in a repository",
+            "description": "Create a new branch in a repository (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "branch": {"type": "string", "description": "New branch name"},
                     "from_branch": {"type": "string", "description": "Branch to create from (defaults to default branch)"}
                 },
-                "required": ["owner", "repo", "branch"]
+                "required": ["branch"]
             }
         },
         "github_push_files": {
             "name": "github_push_files",
-            "description": "Push multiple files to a repository in a single commit",
+            "description": "Push multiple files to a repository in a single commit (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "branch": {"type": "string", "description": "Branch to push to"},
                     "message": {"type": "string", "description": "Commit message"},
                     "files": {
@@ -211,56 +318,56 @@ def get_tool_schema(tool_name: str) -> dict:
                         }
                     }
                 },
-                "required": ["owner", "repo", "branch", "files", "message"]
+                "required": ["branch", "files", "message"]
             }
         },
         "github_delete_file": {
             "name": "github_delete_file",
-            "description": "Delete a file from a repository",
+            "description": "Delete a file from a repository (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "path": {"type": "string", "description": "Path to file to delete"},
                     "message": {"type": "string", "description": "Commit message"},
                     "branch": {"type": "string", "description": "Branch to delete from"}
                 },
-                "required": ["owner", "repo", "path", "message", "branch"]
+                "required": ["path", "message", "branch"]
             }
         },
         "github_create_pull_request": {
             "name": "github_create_pull_request",
-            "description": "Create a new pull request",
+            "description": "Create a new pull request (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "title": {"type": "string", "description": "PR title"},
                     "body": {"type": "string", "description": "PR description"},
                     "head": {"type": "string", "description": "Branch containing changes"},
                     "base": {"type": "string", "description": "Branch to merge into"},
                     "draft": {"type": "boolean", "description": "Create as draft PR"}
                 },
-                "required": ["owner", "repo", "title", "head", "base"]
+                "required": ["title", "head", "base"]
             }
         },
         "github_update_issue": {
             "name": "github_update_issue",
-            "description": "Update an existing GitHub issue",
+            "description": "Update an existing GitHub issue (defaults to augmented-teams repo)",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "owner": {"type": "string", "description": "Repository owner"},
-                    "repo": {"type": "string", "description": "Repository name"},
+                    "owner": {"type": "string", "description": "Repository owner (defaults to thomasjeffreyandersontwin)"},
+                    "repo": {"type": "string", "description": "Repository name (defaults to augmented-teams)"},
                     "issue_number": {"type": "number", "description": "Issue number to update"},
                     "title": {"type": "string", "description": "New issue title"},
                     "body": {"type": "string", "description": "New issue body"},
                     "state": {"type": "string", "description": "Issue state (open, closed)"},
                     "labels": {"type": "array", "description": "Labels to apply"}
                 },
-                "required": ["owner", "repo", "issue_number"]
+                "required": ["issue_number"]
             }
         },
         "github_create_repository": {
