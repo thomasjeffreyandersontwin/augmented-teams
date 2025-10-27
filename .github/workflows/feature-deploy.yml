@@ -1,6 +1,6 @@
 name: Deploy Features
 
-# Version: 1.0.2
+# Version: 1.0.3
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Version Info
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Feature Deploy Workflow v1.0.2"
+        echo "🚀 Feature Deploy Workflow v1.0.3"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
     
@@ -165,7 +165,13 @@ jobs:
             # Run tests if test file exists
             if [ -f "features/$FEATURE/service-test.py" ]; then
               echo "🧪 Running tests..."
-              python features/$FEATURE/service-test.py AZURE || echo "⚠️ Tests failed or skipped"
+              if python features/$FEATURE/service-test.py AZURE; then
+                echo "✅ Tests passed"
+              else
+                TEST_EXIT=$?
+                echo "❌ Tests FAILED (exit code: $TEST_EXIT)"
+                exit $TEST_EXIT
+              fi
             fi
           else
             EXIT_CODE=$?
