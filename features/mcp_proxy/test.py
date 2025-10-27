@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-Test test-feature - plain Python tests
+Test MCP_proxy - plain Python tests
 Tests the actual functions from main.py
 """
 
@@ -12,44 +12,32 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-from main import hello, add_numbers
+from main import proxy_mcp_call, get_mcp_tools
 
-def test_hello_world():
-    """Test hello with World"""
-    result = hello("World")
-    assert result == "Hello World!", f"Expected 'Hello World!', got '{result}'"
-    print("✅ test_hello_world passed")
+def test_get_mcp_tools():
+    """Test getting list of MCP tools"""
+    result = get_mcp_tools()
+    assert isinstance(result, list), f"Expected list, got {type(result)}"
+    assert len(result) > 0, "Expected tools list to not be empty"
+    print("âœ… test_get_mcp_tools passed")
 
-def test_hello_custom():
-    """Test hello with custom name"""
-    result = hello("Alice")
-    assert result == "Hello Alice!", f"Expected 'Hello Alice!', got '{result}'"
-    print("✅ test_hello_custom passed")
+def test_proxy_mcp_call():
+    """Test MCP proxy call"""
+    result = proxy_mcp_call(""github_search_code"", {""query"": ""test""})
+    assert result[""success""] == True, f""Expected success=True, got {result}""
+    assert result[""tool""] == ""github_search_code"", f""Expected tool name, got {result}""
+    print("âœ… test_proxy_mcp_call passed")
 
-def test_add_numbers():
-    """Test add_numbers function"""
-    result = add_numbers(2, 3)
-    assert result == 5, f"Expected 5, got {result}"
-    print("✅ test_add_numbers passed")
+def test_proxy_mcp_call_with_data():
+    """Test MCP proxy call with input data"""
+    input_data = {""query"": ""python"", ""language"": ""python""}
+    result = proxy_mcp_call(""github_search_code"", input_data)
+    assert result[""success""] == True
+    assert ""result"" in result
+    print("âœ… test_proxy_mcp_call_with_data passed")
 
-def test_goodbye():
-    """Test goodbye function"""
-    from main import goodbye
-    result = goodbye("World")
-    assert result == "Goodbye World!", f"Expected 'Goodbye World!', got '{result}'"
-    print("✅ test_goodbye passed")
-
-def test_multiply():
-    """Test multiply function"""
-    from main import multiply
-    result = multiply(3, 4)
-    assert result == 12, f"Expected 12, got {result}"
-    print("✅ test_multiply passed")
-
-if __name__ == "__main__":
-    test_hello_world()
-    test_hello_custom()
-    test_add_numbers()
-    test_goodbye()
-    test_multiply()
-    print("✅ All tests passed")
+if __name__ == ""__main__"":
+    test_get_mcp_tools()
+    test_proxy_mcp_call()
+    test_proxy_mcp_call_with_data()
+    print("âœ… All tests passed")
