@@ -19,6 +19,10 @@ jobs:
       with:
         python-version: '3.12'
     
+    - name: Install dependencies
+      run: |
+        pip install docker requests pyyaml fastapi uvicorn pydantic
+    
     - name: Install Azure CLI
       run: |
         curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -27,13 +31,22 @@ jobs:
       id: detect
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          # Manual trigger - list actual features
+          # Manual trigger - list ONLY features at features/* level
           FEATURES=""
           for dir in features/*; do
+            if [ ! -d "$dir" ]; then
+              continue
+            fi
             DIRNAME=$(basename "$dir")
-            # Only include directories with config/provision-service.py
-            if [ -f "$dir/config/provision-service.py" ] && [ "$DIRNAME" != "containerization" ] && [ "$DIRNAME" != "_template" ]; then
-              FEATURES="$FEATURES $DIRNAME"
+            # Skip containerization, _template, and only check direct children of features/
+            if [ "$DIRNAME" = "containerization" ] || [ "$DIRNAME" = "_template" ]; then
+              continue
+            fi
+            # Only include if it has config/provision-service.py AND is not inside containerization
+            if echo "$dir" | grep -q '^features/[^/]*$'; then
+              if [ -f "$dir/config/provision-service.py" ]; then
+                FEATURES="$FEATURES $DIRNAME"
+              fi
             fi
           done
           FEATURES=$(echo "$FEATURES" | xargs)
@@ -58,10 +71,6 @@ jobs:
         fi
         
         echo "📋 Detected features: $FEATURES"
-    
-    - name: Install dependencies
-      run: |
-        pip install docker requests pyyaml fastapi uvicorn pydantic
     
     - name: Login to Azure Container Registry
       uses: azure/docker-login@v1
