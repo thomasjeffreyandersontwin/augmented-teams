@@ -155,7 +155,7 @@ python features/test-feature/service-test.py AZURE
 
 1. **Make changes** to `main.py` or `service.py`
 2. **Write tests** in `test.py` (plain Python)
-3. **Generate service-test.py** using GPT functions (TODO - automated generation from test.py)
+3. **Generate service and service-test.py** using GPT functions (TODO - automated generation from main and test.py)
 4. **Test locally in 3 modes:**
    - `python test.py` - CODE mode (plain Python)
    - `python service-test.py SERVICE` - SERVICE mode (local FastAPI service)
@@ -165,6 +165,7 @@ python features/test-feature/service-test.py AZURE
    **Option A: Automatic via GitHub Actions:**
    - Commit and push changes to `features/[feature-name]/*`
    - `.github/workflows/feature-deploy.yml` triggers
+   - Sets up environment: Docker, Python, Azure CLI (cached for speed)
    - Detects changed features via git diff
    - For each feature: runs `config/provision-service.py AZURE --always`
    
