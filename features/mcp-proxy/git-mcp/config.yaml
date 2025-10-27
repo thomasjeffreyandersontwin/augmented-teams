@@ -14,7 +14,17 @@ install:
 
 run:
   - mkdir -p /etc/supervisor/conf.d
-  - echo '[supervisord]' > /etc/supervisor/conf.d/mcp.conf && echo 'nodaemon=true' >> /etc/supervisor/conf.d/mcp.conf && echo '' >> /etc/supervisor/conf.d/mcp.conf && echo '[program:mcp-server]' >> /etc/supervisor/conf.d/mcp.conf && echo 'command=/usr/local/bin/github-mcp-server stdio' >> /etc/supervisor/conf.d/mcp.conf && echo 'environment=GITHUB_PERSONAL_ACCESS_TOKEN="%(ENV_GITHUB_PERSONAL_ACCESS_TOKEN)s"' >> /etc/supervisor/conf.d/mcp.conf && echo 'stdout_logfile=/dev/stdout' >> /etc/supervisor/conf.d/mcp.conf && echo 'stderr_logfile=/dev/stderr' >> /etc/supervisor/conf.d/mcp.conf && echo '' >> /etc/supervisor/conf.d/mcp.conf && echo '[program:mcp-proxy]' >> /etc/supervisor/conf.d/mcp.conf && echo 'command=uvicorn service:app --host 0.0.0.0 --port 8000' >> /etc/supervisor/conf.d/mcp.conf && echo 'stdout_logfile=/dev/stdout' >> /etc/supervisor/conf.d/mcp.conf && echo 'stderr_logfile=/dev/stderr' >> /etc/supervisor/conf.d/mcp.conf
+  - "echo '[supervisord]' > /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'nodaemon=true' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo '[program:mcp-server]' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'command=/usr/local/bin/github-mcp-server stdio' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'environment=GITHUB_PERSONAL_ACCESS_TOKEN=\"%(ENV_GITHUB_PERSONAL_ACCESS_TOKEN)s\"' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'stdout_logfile=/dev/stdout' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'stderr_logfile=/dev/stderr' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo '[program:mcp-proxy]' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'command=uvicorn service:app --host 0.0.0.0 --port 8000' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'stdout_logfile=/dev/stdout' >> /etc/supervisor/conf.d/mcp.conf"
+  - "echo 'stderr_logfile=/dev/stderr' >> /etc/supervisor/conf.d/mcp.conf"
 
 cmd:
   - supervisord
