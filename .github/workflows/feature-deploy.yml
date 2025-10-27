@@ -24,11 +24,18 @@ jobs:
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           # Manual trigger - deploy all features
-          FEATURES=$(ls features/containerization/ | grep -v "^_" | grep -v "^containerization$" | tr '\n' ' ')
+          FEATURES=$(ls features/containerization/ | grep -v "^_\|template-feature\|containerization$" | tr '\n' ' ')
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
         else
-          # Auto-detect changed features - look at last commit
-          FEATURES=$(git log --name-only --format="" -1 --diff-filter=ACMR | grep '^features/containerization/[^/]*/' | cut -d'/' -f3 | sort -u | tr '\n' ' ')
+          # Auto-detect changed features - look at changed files
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          echo "📄 Changed files:"
+          echo "$CHANGED_FILES"
+          
+          FEATURES=$(echo "$CHANGED_FILES" | grep '^features/containerization/[^/]*/' | cut -d'/' -f3 | sort -u | tr '\n' ' ')
+          
+          # Exclude template-feature
+          FEATURES=$(echo "$FEATURES" | sed 's/template-feature//g' | xargs)
           
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
         fi
