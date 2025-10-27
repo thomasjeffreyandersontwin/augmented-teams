@@ -61,10 +61,10 @@ jobs:
         else
           # Auto-detect changed features - look at changed files in last commit
           if [ -n "${{ github.event.before }}" ]; then
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} 2>/dev/null || echo "")
           else
-            # If no before, just look at last commit
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+            # If no before, just look at last commit (skip if it's the first commit)
+            CHANGED_FILES=$(git log --oneline -1 2>/dev/null && git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
           fi
           
           echo "📄 Changed files:"
@@ -73,6 +73,12 @@ jobs:
           # Extract feature names from paths like features/test-feature/
           # Exclude features/containerization/* (those are templates/config, not real features)
           FEATURES=$(echo "$CHANGED_FILES" | grep '^features/[^/]*/' | grep -v '^features/containerization/' | cut -d'/' -f2 | sort -u | grep -v "^$" | tr '\n' ' ')
+          
+          # If no changes detected, deploy all features (for manual or force-deploy cases)
+          if [ -z "$FEATURES" ]; then
+            echo "⚠️ No changes detected, deploying all features"
+            FEATURES="test-feature git-integration"
+          fi
           
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
         fi
