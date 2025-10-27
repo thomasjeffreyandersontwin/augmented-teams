@@ -38,8 +38,8 @@ jobs:
               continue
             fi
             DIRNAME=$(basename "$dir")
-            # Skip containerization, _template, and only check direct children of features/
-            if [ "$DIRNAME" = "containerization" ] || [ "$DIRNAME" = "_template" ]; then
+            # Skip containerization, _template, template-feature and only check direct children of features/
+            if [ "$DIRNAME" = "containerization" ] || [ "$DIRNAME" = "_template" ] || [ "$DIRNAME" = "template-feature" ]; then
               continue
             fi
             # Only include if it has config/provision-service.py AND is not inside containerization
