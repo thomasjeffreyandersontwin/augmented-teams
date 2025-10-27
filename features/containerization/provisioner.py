@@ -360,22 +360,29 @@ class AzureContainerProvisioner(Provisioner):
         print("🚀 Provisioning for AZURE deployment...")
         config = self._get_config()
         
-        # Run inject-config to ensure Dockerfile is up to date
-        print("📦 Generating Dockerfile...")
-        inject_script = self.containerization_path / "inject-config.py"
-        result = subprocess.run(
-            [sys.executable, str(inject_script), str(self.feature_path)],
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='ignore'
-        )
+        # Skip inject-config for features that have custom Dockerfiles (like mcp-proxy)
+        feature_name = config.get('feature', {}).get('name', self.feature_path.name).lower()
+        features_with_custom_dockerfile = ['mcp-proxy']
         
-        if result.returncode != 0:
-            print(f"❌ Failed to generate Dockerfile: {result.stderr}")
-            return False
-        
-        print("✅ Dockerfile generated")
+        if feature_name not in features_with_custom_dockerfile:
+            # Run inject-config to ensure Dockerfile is up to date
+            print("📦 Generating Dockerfile...")
+            inject_script = self.containerization_path / "inject-config.py"
+            result = subprocess.run(
+                [sys.executable, str(inject_script), str(self.feature_path)],
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='ignore'
+            )
+            
+            if result.returncode != 0:
+                print(f"❌ Failed to generate Dockerfile: {result.stderr}")
+                return False
+            
+            print("✅ Dockerfile generated")
+        else:
+            print(f"📋 Skipping inject-config for {feature_name} (using custom Dockerfile)")
         
         # Build and push Docker image
         import os
