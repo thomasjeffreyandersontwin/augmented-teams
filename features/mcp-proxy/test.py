@@ -12,7 +12,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-from main import proxy_mcp_call, get_mcp_tools, get_tool_schema, list_tools_with_schemas, inject_default_repo_params, get_available_services
+from main import proxy_mcp_call, get_mcp_tools, get_tool_schema, list_tools_with_schemas, inject_default_server_params, get_available_services
 
 def test_get_mcp_tools():
     """Test getting list of MCP tools"""
@@ -22,27 +22,24 @@ def test_get_mcp_tools():
     print("✅ test_get_mcp_tools passed")
 
 def test_proxy_mcp_call():
-    """Test MCP proxy call"""
+    """Test MCP proxy call - MUST hit real GitHub service"""
     result = proxy_mcp_call("search_code", {"query": "test"}, mcp_server="github")
-    # May fail if Docker/MCP server not running - that's OK for local tests
-    # Just check that it returns a valid structure
-    assert "success" in result, f"Expected success key, got {result}"
-    assert "tool" in result or "error" in result, f"Expected tool or error, got {result}"
-    if result.get("success"):
-        assert result["tool"] == "search_code"  # Correct tool name without prefix
-    print("✅ test_proxy_mcp_call passed (may show error if Docker not running)")
+    
+    # This MUST succeed with real service - no mocks allowed
+    assert result.get("success") == True, f"Call to GitHub service failed: {result.get('error', 'unknown error')}"
+    assert result.get("tool") == "search_code", "Expected correct tool name in response"
+    assert "result" in result, "Expected result in successful response"
+    print("✅ test_proxy_mcp_call passed (connected to real GitHub service)")
 
 def test_proxy_mcp_call_with_data():
-    """Test MCP proxy call with input data"""
+    """Test MCP proxy call with input data - MUST hit real GitHub service"""
     input_data = {"query": "python"}
     result = proxy_mcp_call("search_code", input_data, mcp_server="github")
-    # May fail if Docker not available
-    assert "success" in result or "error" in result
-    if result.get("success"):
-        assert "result" in result
-        print("✅ test_proxy_mcp_call_with_data passed (got result)")
-    else:
-        print(f"✅ test_proxy_mcp_call_with_data passed (Docker not available: {result.get('error', 'unknown')})")
+    
+    # This MUST succeed with real service - no mocks allowed
+    assert result.get("success") == True, f"Call to GitHub service failed: {result.get('error', 'unknown error')}"
+    assert "result" in result, "Expected result in successful response"
+    print("✅ test_proxy_mcp_call_with_data passed (connected to real GitHub service)")
 
 def test_get_tool_schema():
     """Test getting schema for a tool"""
@@ -80,14 +77,14 @@ def test_inject_default_repo_params():
     """Test auto-injecting owner/repo parameters"""
     # Test with search_code (should NOT inject)
     input_data = {"query": "test"}
-    result = inject_default_repo_params("search_code", input_data)
+    result = inject_default_server_params("search_code", input_data)
     assert "owner" not in result
     assert "repo" not in result
     print("✅ test_inject_default_repo_params - search_code skipped injection")
     
     # Test with get_file_contents (should inject)
     input_data = {"path": "somefile.py"}
-    result = inject_default_repo_params("get_file_contents", input_data)
+    result = inject_default_server_params("get_file_contents", input_data)
     assert "owner" in result
     assert "repo" in result
     assert result["owner"] == "thomasjeffreyandersontwin"
@@ -96,7 +93,7 @@ def test_inject_default_repo_params():
     
     # Test that explicit owner/repo are NOT overridden
     input_data = {"owner": "custom", "repo": "custom", "path": "somefile.py"}
-    result = inject_default_repo_params("get_file_contents", input_data)
+    result = inject_default_server_params("get_file_contents", input_data)
     assert result["owner"] == "custom"
     assert result["repo"] == "custom"
     print("✅ test_inject_default_repo_params - explicit values preserved")

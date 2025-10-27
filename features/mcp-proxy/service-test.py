@@ -36,7 +36,7 @@ def test_list_tools():
 
 
 def test_call_mcp_tool():
-    """Test MCP tool call endpoint"""
+    """Test MCP tool call endpoint - MUST hit real GitHub service"""
     url = f"{get_base_url(feature_path)}/call"
     payload = {
         "tool": "search_code",
@@ -45,9 +45,9 @@ def test_call_mcp_tool():
     }
     response = requests.post(url, json=payload, timeout=30)
     result = response.json()
-    assert result["success"] == True or "error" in result.get("result", {})
+    assert result["success"] == True, f"Call to real GitHub service failed: {result.get('result', {}).get('error', 'unknown')}"
     assert "result" in result
-    print("✅ test_call_mcp_tool passed")
+    print("✅ test_call_mcp_tool passed (hit real GitHub service)")
 
 
 def test_list_tools_with_schemas():
@@ -74,7 +74,7 @@ def test_get_tool_schema():
 
 
 def test_gpt_style_search_with_defaults():
-    """GPT-style test: search without specifying repo (uses auto-injected defaults)"""
+    """GPT-style test: search without specifying repo (uses auto-injected defaults) - MUST hit real service"""
     url = f"{get_base_url(feature_path)}/call"
     # Search for specific files we know exist
     payload = {
@@ -87,20 +87,17 @@ def test_gpt_style_search_with_defaults():
     }
     response = requests.post(url, json=payload, timeout=30)
     result = response.json()
-    # May fail if Docker/MCP not available
-    if result.get("success") and "result" in result:
-        # Should find containerization main.py or service.py
-        result_data = result["result"]
-        # Validates that we got actual search results back
-        print(f"   Found results: {type(result_data)}")
-        print("✅ test_gpt_style_search_with_defaults passed (got results)")
-    else:
-        print(f"   Warning: Search failed - {result.get('error', 'unknown')}")
-        print("✅ test_gpt_style_search_with_defaults passed (mock mode)")
+    # MUST succeed with real service
+    assert result.get("success") == True, f"Call to real GitHub service failed: {result.get('result', {}).get('error', 'unknown')}"
+    assert "result" in result
+    result_data = result["result"]
+    # Should find containerization main.py or service.py
+    print(f"   Found results: {type(result_data)}")
+    print("✅ test_gpt_style_search_with_defaults passed (got real results)")
 
 
 def test_gpt_style_get_file_with_defaults():
-    """GPT-style test: get file without specifying owner/repo (uses auto-injected defaults)"""
+    """GPT-style test: get file without specifying owner/repo (uses auto-injected defaults) - MUST hit real service"""
     url = f"{get_base_url(feature_path)}/call"
     # Get a known file we can validate
     payload = {
@@ -113,28 +110,26 @@ def test_gpt_style_get_file_with_defaults():
     response = requests.post(url, json=payload, timeout=30)
     result = response.json()
     
-    # Check if MCP is actually working
-    if result.get("success") and "result" in result:
-        result_data = result["result"]
-        print(f"   Got response: {type(result_data)}")
-        
-        # If it's a dict, try to extract content
-        if isinstance(result_data, dict):
-            # Look for content, file, or text fields
-            content = result_data.get("content", result_data.get("file", result_data.get("text", "")))
-            if content:
-                print(f"   Got file with {len(content)} chars")
-            else:
-                print(f"   Response dict keys: {list(result_data.keys())[:5]}")
+    # MUST succeed with real service
+    assert result.get("success") == True, f"Call to real GitHub service failed: {result.get('result', {}).get('error', 'unknown')}"
+    assert "result" in result
+    
+    result_data = result["result"]
+    print(f"   Got response: {type(result_data)}")
+    
+    # If it's a dict, try to extract content
+    if isinstance(result_data, dict):
+        # Look for content, file, or text fields
+        content = result_data.get("content", result_data.get("file", result_data.get("text", "")))
+        if content:
+            print(f"   Got file with {len(content)} chars")
         else:
-            content = str(result_data)
-            print(f"   Got content with {len(content)} chars")
-        
-        print("✅ test_gpt_style_get_file_with_defaults passed (got response)")
+            print(f"   Response dict keys: {list(result_data.keys())[:5]}")
     else:
-        # MCP/Docker not available - that's OK for local test
-        print(f"   Note: MCP not available locally - {result.get('error', 'unknown')}")
-        print("✅ test_gpt_style_get_file_with_defaults passed (local test - no Docker)")
+        content = str(result_data)
+        print(f"   Got content with {len(content)} chars")
+    
+    print("✅ test_gpt_style_get_file_with_defaults passed (got real response)")
 
 
 def test_gpt_style_list_prs_with_defaults():

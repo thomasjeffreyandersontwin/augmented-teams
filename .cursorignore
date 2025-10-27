@@ -1,0 +1,10 @@
+assets
+instructions
+**/.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+*.log
+
