@@ -63,10 +63,10 @@
 5. Test in Cursor Chat with phrases
 
 **Phase 2 (Next):**
-6. Add code execution to steps
-7. Generate contextual prompts
-8. Test prompt quality
-9. Refine based on results
+6. Add code execution to steps- all states and septes, feedback and progress logic , everything being passed to chat that we want
+
+**Phase 3 (Next):**
+7. add prompts to each step;
 
 **Future Phases:**
 10. Add remaining tools
