@@ -1,0 +1,47 @@
+## Command: dev-mamba-test [test_pattern]
+Runs Mamba tests in debug mode with detailed output for rapid debugging and iteration.
+
+**Args:** 
+- `test_pattern` (optional) - Test name pattern to match. If omitted, runs all tests.
+
+**Usage:**
+```bash
+python test-drive-development/mamba-debug.py [test_pattern]
+# Or directly:
+python -m mamba [test_pattern]
+```
+
+**Examples:**
+- `python mamba-debug.py` - Run all tests
+- `python mamba-debug.py "should render attack button"` - Run tests matching pattern
+- `python mamba-debug.py "attack_test.py"` - Run specific test file
+
+**Features:**
+- Verbose output showing all test details
+- No coverage collection for faster runs
+- Provides debug instructions on failure
+- Supports pattern matching to run specific tests
+
+**On Test Failure:**
+1. Check the test output above for failed assertions
+2. Look for error messages and stack traces
+3. Use Claude to analyze the stack trace and variables
+4. Add print statements to trace execution in source code
+5. Re-run specific failing tests with pattern matching
+
+**Best Practices:**
+- Use specific test patterns to focus on failing tests
+- Leverage Claude Debugs MCP for analyzing test results
+- Add temporary print statements to trace execution flow
+- Re-run with narrowed patterns to isolate issues
+
+**Related Rules:**
+- `.cursor/rules/testing-approach.mdc` - BDD testing structure and patterns for writing tests
+- `.cursor/rules/code-analysis.mdc` - Always read file documentation before writing tests
+- `.cursor/rules/testing-infrastructure.mdc` - Testing tool usage and Chrome DevTools MCP integration
+
+**Integration:**
+- Works with mamba's built-in test discovery
+- Output suitable for AI analysis via Claude Debugs MCP
+- Tests should follow patterns defined in testing rules files
+
