@@ -6,7 +6,7 @@ Runs Mamba tests in debug mode with detailed output for rapid debugging and iter
 
 **Usage:**
 ```bash
-python commands/mamba-debug.py [test_pattern]
+python test-drive-development/mamba-debug.py [test_pattern]
 # Or directly:
 python -m mamba [test_pattern]
 ```
@@ -44,3 +44,4 @@ python -m mamba [test_pattern]
 - Works with mamba's built-in test discovery
 - Output suitable for AI analysis via Claude Debugs MCP
 - Tests should follow patterns defined in testing rules files
+

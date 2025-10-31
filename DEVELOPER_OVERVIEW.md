@@ -251,93 +251,8 @@ python features/containerization/service-test.py AZURE
   - Deployment guide
   - Setup instructions
 
-#### Class and Function Organization
-- **Domain-specific classes** - All classes stay within their feature domain
-- **Feature-specific functions** - No cross-feature dependencies unless explicitly needed
-- **Local utilities** - Helper functions belong to the feature that uses them
-- **Clear interfaces** - If other features need functionality, expose through clean APIs
 
-#### Configuration Management
-- **Feature configs** - All feature-specific configuration in the feature folder
-- **No global configs** - Avoid putting feature-specific configs in root `config/`
-- **Self-contained** - Each feature should work independently with its own config
-
-#### Code Documentation Standards
-
-**All code files must maintain hierarchical feature documentation**:
-
-1. **Table of Contents** - Must be at the top of every major file
-   - Hierarchical numbered sections (1, 1.1, 1.1.1, etc.)
-   - Shows all major features and sub-features at a glance
-
-2. **Section Headers** - Use consistent formatting:
-   - `// 1. MAJOR FEATURE   <Subject Area>` (e.g., ATTACKS)
-   - `// 1.1 Sub-Feature  <Verb Noun>` (e.g., Create Attacks)
-   - `// 1.1.1 Specific behavior when user action`
-
-3. **Behavior-Oriented Naming** - Describe WHAT happens WHEN:
-   - ✅ "Show/hide action buttons using animation when hovering over token"
-   - ✅ "Create attacks from powers when clicking 'Convert Powers' button"
-   - ❌ "Token hover handler" (too vague)
-   - ❌ "Attack creation logic" (too abstract)
-
-4. **Function Placement** - Align code at the LOWEST applicable feature level:
-   - If function serves ONE specific behavior → place under that behavior (e.g., 2.1.3)
-   - If function serves multiple behaviors in a sub-feature → place under sub-feature (e.g., 2.1)
-   - If function serves multiple sub-features → place under major feature (e.g., 2)
-   - If function used across ALL features → place in COMMON/SHARED
-
----
-
-## 5. MCP Servers
-
-**MCP (Model Context Protocol)** servers provide tool-based AI assistance. This project uses:
-
-### 5.1 TDD Pipeline MCP Server
-
-**Location**: `features/test-driven-development-mcp/mcp_server.py`
-
-**Purpose**: Manages test-driven development pipeline state and workflow.
-
-**Available Tools**:
-- `get_current_step` - Get current pipeline step and status
-- `start_next_step` - Execute the next step in pipeline
-- `repeat_current_step` - Retry current step
-- `get_workflow_status` - Show all phases and status
-- `resume_pipeline` - Resume from human activity
-- `reset_pipeline` - Reset to beginning
-- `skip_to_step` - Jump to any step by name
-- `list_workflow_phases` - List all phases
-- `get_phase_details` - Get specific phase info
-
-**Configuration**: `.cursor/mcp.json` or `mcp.json`
-
-```json
-{
-  "mcpServers": {
-    "tdd-pipeline": {
-      "command": "python",
-      "args": [
-        "features/test-driven-development-mcp/mcp_server.py"
-      ]
-    }
-  }
-}
-```
-
-### 5.2 Byterover MCP Server
-
-**Purpose**: Knowledge storage and retrieval for code patterns and solutions.
-
-**Available Tools**:
-- `byterover-retrieve-knowledge` - Retrieve learned patterns and solutions
-- `byterover-store-knowledge` - Store new patterns and techniques
-
-**When to Use**:
-- **Retrieve**: Starting new tasks, debugging issues, making architectural decisions
-- **Store**: Completing significant tasks, learning new patterns, finding reusable solutions
-
-### 5.3 GitHub MCP Server
+### 5.2 GitHub MCP Server
 
 **Purpose**: Git operations and repository management.
 
@@ -606,7 +521,6 @@ cat features/apples/.deployment-state.json
 3. **Leverage AI Assistance**:
    - Use MCP tools for pipeline management
    - Use AI for code generation (with human review)
-   - Store patterns in Byterover knowledge base
 
 4. **Document Thoroughly**:
    - Include Table of Contents

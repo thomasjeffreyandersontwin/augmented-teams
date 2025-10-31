@@ -33,8 +33,9 @@ Commands will often identify repetitive patterns or parameterized workflows. Bui
 
 #### Function Placement
 
-- **Global commands folder** - Place utility functions used across multiple domains in `commands/` at repo root (ex: `commands/mamba-debug.py`, `commands/playwright-debug.mjs`)
-- **Domain-specific folder** - Place functions specific to a feature/domain in that domain's root folder (ex: `features/api/commands/api-test.py`)
+- **Author at source** - Place command functions in `features/<feature>/cursor/<name>_cmd.py` (matches command doc pattern)
+- **Synced to commands/** - Functions are automatically synced to `commands/<name>_cmd.py` via `@cursor-update-env`
+- **Feature-local** - All command functions are authored in their feature's `cursor/` folder and synced for execution
 
 #### Function Structure
 
@@ -53,25 +54,28 @@ Commands can be created through two different workflows depending on how the nee
 
 **Scenario:** User needs to document or use a command before automation exists
 
-1. **Build command documentation** - User creates `.cursor/commands/[name].md` file describing the command usage, parameters, examples, and integration context
-2. **Use the documented command** - Use references the command in a chat or it is used as the result of a rule
-3. **AI builds function** - AI creates the corresponding `commands/[name].py` function based on the documentation
-4. **Request feedback** - AI prompts user for feedback on the implementation
+1. **Create command documentation** - Use `@cursor-create-command` to scaffold `features/<feature>/cursor/<name>-cmd.md` describing the command usage, parameters, examples, and integration context
+2. **Sync to environment** - Run `python commands/cursor-update-env_cmd.py --feature <feature>` to sync command doc to `.cursor/commands/`
+3. **Use the documented command** - Command is now available via `@<name>` in Cursor chat
+4. **AI builds function** - AI creates the corresponding `features/<feature>/cursor/<name>_cmd.py` function based on the documentation
+5. **Sync function** - Run sync again to push function to `commands/`
+6. **Request feedback** - AI prompts user for feedback on the implementation
 
-**Example:** Command doc `mamba-debug.md` is created first, then when actually needed, AI builds `commands/mamba-debug.py`
+**Example:** Command doc `tdd-mamba-debug-cmd.md` is created in `features/test-driven-development/cursor/`, synced, then when needed, AI builds `tdd-mamba-debug_cmd.py`
 
 #### Workflow 2: Pattern-Driven Creation
 
 **Scenario:** AI detects repetitive work patterns during development
 
 1. **Identify repetitive work** - AI notices repeated manual steps (ex: repeatedly running `python -m mamba --pattern "..."`)
-2. **AI suggests command** - AI proposes creating a command function to automate the pattern and asks user for approval
-3. **User approves with feedback** - User confirms and provides context, requirements, or modifications
-4. **AI builds command file** - AI creates `.cursor/commands/[name].md` with usage, function definition, examples, and integration context
-5. **AI builds command function** - AI creates `commands/[name].py` implementing the function based on the documentation
-6. **AI prompts for feedback** - AI requests feedback on the implementation to refine if needed
+2. **AI suggests command** - AI proposes creating a command function to automate the pattern and asks user for approval, including which feature it belongs to
+3. **User approves with feedback** - User confirms feature location and provides context, requirements, or modifications
+4. **AI creates command scaffold** - AI uses `@cursor-create-command` to create `features/<feature>/cursor/<name>-cmd.md` with usage, function definition, examples, and integration context
+5. **AI builds command function** - AI creates `features/<feature>/cursor/<name>_cmd.py` implementing the function based on the documentation
+6. **AI syncs to environment** - AI runs sync command to deploy to `.cursor/commands/` and `commands/`
+7. **AI prompts for feedback** - AI requests feedback on the implementation to refine if needed
 
-**Example:** AI detects users frequently debugging tests with patterns, suggests `mamba-debug` command, user approves, AI creates both `.md` and `.py` files
+**Example:** AI detects users frequently debugging tests with patterns, suggests `mamba-debug` command in `test-driven-development` feature, user approves, AI creates both `-cmd.md` and `_cmd.py` files in the feature's cursor folder
 
 ### When to Build Commands
 
@@ -88,9 +92,10 @@ Commands can be created through two different workflows depending on how the nee
 
 ### Integration with Rules
 
-- **Rule files** - Reference commands in rule documentation (ex: "Use `dev-mamba-test` command when debugging tests")
-- **Command files** - Reference back to rules that motivated the command (ex: "This command supports patterns from `testing-approach.mdc`")
+- **Rule files** - Reference commands in rule documentation (ex: "Use `@tdd-mamba-debug` command when debugging tests")
+- **Command files** - Reference back to rules that motivated the command (ex: "This command supports patterns from `tdd-approach.mdc`")
 - **Workflow documentation** - Show how commands and rules create complete workflows
+- **Cross-references** - Follow `cursor-behavior-governance.mdc` for reference patterns between rules, commands, and MCP tools
 
 ### Maintenance
 
