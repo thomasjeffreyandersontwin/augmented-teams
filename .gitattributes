@@ -1,0 +1,34 @@
+# Git Archive Export Settings
+# Only include code-agent-behavior feature and essential config files in releases
+
+# Exclude all feature folders except code-agent-behavior
+features/containerization export-ignore
+features/code-guidelines export-ignore
+features/cursor-behavior export-ignore
+features/git-integration export-ignore
+features/mcp-proxy export-ignore
+features/test-driven-development export-ignore
+features/test-driven-development-mcp export-ignore
+features/update_gpt_instructions_from_git export-ignore
+features/vector-search export-ignore
+features/*.zip export-ignore
+
+# Exclude development/internal files
+commands export-ignore
+.cursor export-ignore
+.vscode export-ignore
+.github export-ignore
+src export-ignore
+instructions export-ignore
+config export-ignore
+assets export-ignore
+aaa.txt export-ignore
+Backlog.txt export-ignore
+check-watchers.py export-ignore
+DEVELOPER_OVERVIEW.md export-ignore
+practices.txt export-ignore
+mcp.json export-ignore
+on export-ignore
+AGENTS.md export-ignore
+.cursorrules export-ignore
+

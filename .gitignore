@@ -13,3 +13,7 @@ src/integration/git/packages-microsoft-prod.deb.3
 .kiro/steering/byterover-rules.md
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md
+
+# Deployed/Generated Code Agent Behavior Files (synced from features/*/code-agent-behaviors/)
+.cursor/
+commands/code-agent-behavior-*.py

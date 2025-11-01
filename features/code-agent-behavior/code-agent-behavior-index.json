@@ -1,0 +1,283 @@
+{
+  "feature": "code-agent-behavior",
+  "last_updated": "Fri Oct 31 19:49:48 2025",
+  "last_updated_timestamp": 1761954588.7927349,
+  "behavior_count": 17,
+  "deployed": {
+    ".cursor/commands/": [
+      {
+        "file": "code-agent-behavior-consistency-cmd.md",
+        "purpose": "when behaviors are changed, deleted, updated, or created, validate for inconsistentencies, overlapping behaviors, or inconsistent guidance, and surface potential contradictions or redundancies for review.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-consistency-cmd.md"
+      },
+      {
+        "file": "code-agent-behavior-index-cmd.md",
+        "purpose": "maintain an up-to-date index of all ai code agent behaviors across features.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-index-cmd.md"
+      },
+      {
+        "file": "code-agent-behavior-structure-create-cmd.md",
+        "purpose": "scaffold a new ai behavior with all required files and proper structure.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-structure-create-cmd.md"
+      },
+      {
+        "file": "code-agent-behavior-structure-fix-cmd.md",
+        "purpose": "automatically fix structure and naming convention issues in ai behaviors.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-structure-fix-cmd.md"
+      },
+      {
+        "file": "code-agent-behavior-structure-validate-cmd.md",
+        "purpose": "validate ai behaviors for structure and naming convention compliance.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-structure-validate-cmd.md"
+      },
+      {
+        "file": "code-agent-behavior-suggest-cmd.md",
+        "purpose": "when doing repetitive tasks, suggest creating new behaviors to capture patterns. help users decide if suggestions belong in an existing behavior-feature, a new behavior-feature, or the current feature being worked on.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-suggest-cmd.md"
+      },
+      {
+        "file": "code-agent-behavior-sync-cmd.md",
+        "purpose": "keep ai behaviors up to date across all features.",
+        "deployed_file": ".cursor/commands/code-agent-behavior-sync-cmd.md"
+      }
+    ],
+    "commands/": [
+      {
+        "file": "code-agent-behavior-consistency-cmd.py",
+        "purpose": "{b.get('purpose', 'N/A')}\\n\"",
+        "deployed_file": "commands/code-agent-behavior-consistency-cmd.py"
+      },
+      {
+        "file": "code-agent-behavior-index-cmd.py",
+        "purpose": "(must be at start or after whitespace/markers)",
+        "deployed_file": "commands/code-agent-behavior-index-cmd.py"
+      },
+      {
+        "file": "code-agent-behavior-structure-cmd.py",
+        "purpose": "[describe the command purpose]",
+        "deployed_file": "commands/code-agent-behavior-structure-cmd.py"
+      },
+      {
+        "file": "code-agent-behavior-sync-cmd.py",
+        "purpose": "Check all watcher processes and ensure they're running",
+        "deployed_file": "commands/code-agent-behavior-sync-cmd.py"
+      }
+    ],
+    ".cursor/rules/": [
+      {
+        "file": "code-agent-behavior-consistency-rule.mdc",
+        "purpose": "code-agent-behavior-consistency-rule behavior",
+        "deployed_file": ".cursor/rules/code-agent-behavior-consistency-rule.mdc"
+      },
+      {
+        "file": "code-agent-behavior-index-rule.mdc",
+        "purpose": "code-agent-behavior-index-rule behavior",
+        "deployed_file": ".cursor/rules/code-agent-behavior-index-rule.mdc"
+      },
+      {
+        "file": "code-agent-behavior-structure-rule.mdc",
+        "purpose": "a **rule** (`.mdc`) that defines the triggering condition and guidelines,",
+        "deployed_file": ".cursor/rules/code-agent-behavior-structure-rule.mdc"
+      },
+      {
+        "file": "code-agent-behavior-suggest-rule.mdc",
+        "purpose": "code-agent-behavior-suggest-rule behavior",
+        "deployed_file": ".cursor/rules/code-agent-behavior-suggest-rule.mdc"
+      },
+      {
+        "file": "code-agent-behavior-sync-rule.mdc",
+        "purpose": "code-agent-behavior-sync-rule behavior",
+        "deployed_file": ".cursor/rules/code-agent-behavior-sync-rule.mdc"
+      }
+    ]
+  },
+  "behaviors": [
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-consistency-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-consistency-cmd.md",
+      "purpose": "when behaviors are changed, deleted, updated, or created, validate for inconsistentencies, overlapping behaviors, or inconsistent guidance, and surface potential contradictions or redundancies for review.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-consistency-cmd.md",
+      "modified": "Fri Oct 31 19:35:18 2025",
+      "modified_timestamp": 1761953718.854952
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-consistency-cmd.py",
+      "type": ".py",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-consistency-cmd.py",
+      "purpose": "{b.get('purpose', 'N/A')}\\n\"",
+      "deployed_location": "commands/",
+      "deployed_file": "commands/code-agent-behavior-consistency-cmd.py",
+      "modified": "Fri Oct 31 19:45:41 2025",
+      "modified_timestamp": 1761954341.54578
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-consistency-rule.mdc",
+      "type": ".mdc",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-consistency-rule.mdc",
+      "purpose": "code-agent-behavior-consistency-rule behavior",
+      "deployed_location": ".cursor/rules/",
+      "deployed_file": ".cursor/rules/code-agent-behavior-consistency-rule.mdc",
+      "modified": "Fri Oct 31 14:27:30 2025",
+      "modified_timestamp": 1761935250.1186738
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-index-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-index-cmd.md",
+      "purpose": "maintain an up-to-date index of all ai code agent behaviors across features.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-index-cmd.md",
+      "modified": "Fri Oct 31 19:45:34 2025",
+      "modified_timestamp": 1761954334.7697847
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-index-cmd.py",
+      "type": ".py",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-index-cmd.py",
+      "purpose": "(must be at start or after whitespace/markers)",
+      "deployed_location": "commands/",
+      "deployed_file": "commands/code-agent-behavior-index-cmd.py",
+      "modified": "Fri Oct 31 14:27:30 2025",
+      "modified_timestamp": 1761935250.1196804
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-index-rule.mdc",
+      "type": ".mdc",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-index-rule.mdc",
+      "purpose": "code-agent-behavior-index-rule behavior",
+      "deployed_location": ".cursor/rules/",
+      "deployed_file": ".cursor/rules/code-agent-behavior-index-rule.mdc",
+      "modified": "Fri Oct 31 14:27:30 2025",
+      "modified_timestamp": 1761935250.12068
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-structure-cmd.py",
+      "type": ".py",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-structure-cmd.py",
+      "purpose": "[describe the command purpose]",
+      "deployed_location": "commands/",
+      "deployed_file": "commands/code-agent-behavior-structure-cmd.py",
+      "modified": "Fri Oct 31 17:51:12 2025",
+      "modified_timestamp": 1761947472.1997705
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-structure-create-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-structure-create-cmd.md",
+      "purpose": "scaffold a new ai behavior with all required files and proper structure.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-structure-create-cmd.md",
+      "modified": "Fri Oct 31 19:35:32 2025",
+      "modified_timestamp": 1761953732.4819508
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-structure-fix-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-structure-fix-cmd.md",
+      "purpose": "automatically fix structure and naming convention issues in ai behaviors.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-structure-fix-cmd.md",
+      "modified": "Fri Oct 31 17:51:12 2025",
+      "modified_timestamp": 1761947472.1997705
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-structure-rule.mdc",
+      "type": ".mdc",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-structure-rule.mdc",
+      "purpose": "a **rule** (`.mdc`) that defines the triggering condition and guidelines,",
+      "deployed_location": ".cursor/rules/",
+      "deployed_file": ".cursor/rules/code-agent-behavior-structure-rule.mdc",
+      "modified": "Fri Oct 31 19:35:43 2025",
+      "modified_timestamp": 1761953743.4549005
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-structure-validate-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-structure-validate-cmd.md",
+      "purpose": "validate ai behaviors for structure and naming convention compliance.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-structure-validate-cmd.md",
+      "modified": "Fri Oct 31 19:40:30 2025",
+      "modified_timestamp": 1761954030.7199748
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-suggest-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-suggest-cmd.md",
+      "purpose": "when doing repetitive tasks, suggest creating new behaviors to capture patterns. help users decide if suggestions belong in an existing behavior-feature, a new behavior-feature, or the current feature being worked on.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-suggest-cmd.md",
+      "modified": "Fri Oct 31 17:27:00 2025",
+      "modified_timestamp": 1761946020.2177377
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-suggest-rule.mdc",
+      "type": ".mdc",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-suggest-rule.mdc",
+      "purpose": "code-agent-behavior-suggest-rule behavior",
+      "deployed_location": ".cursor/rules/",
+      "deployed_file": ".cursor/rules/code-agent-behavior-suggest-rule.mdc",
+      "modified": "Fri Oct 31 19:35:54 2025",
+      "modified_timestamp": 1761953754.8214576
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-sync-cmd.md",
+      "type": ".md",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-sync-cmd.md",
+      "purpose": "keep ai behaviors up to date across all features.",
+      "deployed_location": ".cursor/commands/",
+      "deployed_file": ".cursor/commands/code-agent-behavior-sync-cmd.md",
+      "modified": "Fri Oct 31 19:35:14 2025",
+      "modified_timestamp": 1761953714.7974818
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-sync-cmd.py",
+      "type": ".py",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-sync-cmd.py",
+      "purpose": "Check all watcher processes and ensure they're running",
+      "deployed_location": "commands/",
+      "deployed_file": "commands/code-agent-behavior-sync-cmd.py",
+      "modified": "Fri Oct 31 19:37:07 2025",
+      "modified_timestamp": 1761953827.669666
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-sync-rule.mdc",
+      "type": ".mdc",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-sync-rule.mdc",
+      "purpose": "code-agent-behavior-sync-rule behavior",
+      "deployed_location": ".cursor/rules/",
+      "deployed_file": ".cursor/rules/code-agent-behavior-sync-rule.mdc",
+      "modified": "Fri Oct 31 17:51:12 2025",
+      "modified_timestamp": 1761947472.173584
+    },
+    {
+      "feature": "code-agent-behavior",
+      "file": "code-agent-behavior-tasks.json",
+      "type": ".json",
+      "path": "features\\code-agent-behavior\\code-agent-behaviors\\code-agent-behavior-tasks.json",
+      "purpose": "code-agent-behavior-tasks behavior",
+      "deployed_location": null,
+      "deployed_file": null,
+      "modified": "Fri Oct 31 17:51:11 2025",
+      "modified_timestamp": 1761947471.5349047
+    }
+  ]
+}
