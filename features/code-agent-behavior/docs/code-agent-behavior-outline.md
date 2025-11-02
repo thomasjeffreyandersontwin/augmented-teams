@@ -1,22 +1,6 @@
 # Code Agent Behavior Feature Outline
 
 ## Overview
-Treat each AI behavior as a distinct feature.
-A Code Agent Behavior Feature can be defined, developed, tested, and iterated just like any product feature we deliver to users — only this time, the "user" is the AI itself.
-
-Use the AI in your IDE to iteratively build and refine its own behaviors.
-
-The purpose is to give you fine-grained control of your AI — steering it away from churn and frustration, and toward practices and consistency rooted in context.
-
-AI IDE-Behavior-Features makes AI guidance modular, versioned, composable, and portable and auditable — all essential for high-quality outcomes as AI becomes part of the development team.
-
-How to apply it:
-
-* Treat AI behaviors as miniature product features — design, code, document, and test them.
-* Manage each behavior in a repo with standard versioning and collaboration workflows.
-* Keep all AI-related instructions, prompts, tools, config, and code for a single behavior together.
-* Deploy selectively — sync or publish behaviors to IDE environments feature-by-feature, based on context.
-
 This Behavior Feature contains behaviors for managing AI behavior files themselves - the behaviors that govern how behaviors are structured, validated, indexed, synced, and maintained. These behaviors enable the self-managing behavior system.
 
 ## Main Behaviors
@@ -29,7 +13,7 @@ This Behavior Feature contains behaviors for managing AI behavior files themselv
 
 **Behavior Suggest** - Analyze conversation patterns and suggest creating new behaviors when repetitive tasks are detected, helping users create reusable behavior definitions.
 
-**Behavior Sync** - Keep AI behaviors up to date across all features by syncing files from `features/*/code-agent-behaviors/` folders to `.cursor/` directories, merging MCP configs and tasks.json files.
+**Behavior Sync** - Keep AI behaviors up to date by syncing files from features marked with `code-agent-behavior.json` (deployed: true) to `.cursor/` directories, merging MCP configs and tasks.json files.
 
 ## Tools
 

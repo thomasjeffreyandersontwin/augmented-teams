@@ -22,10 +22,10 @@ The behavior sync is implemented according to `behavior-sync-rule.mdc`:
 
 ### File Structure & Routing
 
-**All files** in `features/<feature-name>/code-agent-behaviors/` are synced to their destination:
+**All files** in features marked with `code-agent-behavior.json` (deployed: true) are synced to their destination:
 
 ```
-features/<feature-name>/code-agent-behaviors/
+features/<feature-name>/
   ├── <rule-name>.mdc          → .cursor/rules/
   ├── <command-name>.md         → .cursor/commands/
   ├── <function-name>.py        → commands/ (root level, NOT .cursor/commands/)
@@ -57,7 +57,7 @@ python behavior-sync-cmd.py watch
 ### Watch Mode
 
 Watch mode automatically syncs behaviors when files change:
-- Monitors all `features/*/code-agent-behaviors/` directories
+- Monitors all features marked with `code-agent-behavior.json` (deployed: true)
 - Triggers sync when `.mdc`, `.md`, `.py`, or `.json` files change
 - Debounces rapid changes (waits 2 seconds after last change)
 - Skips draft/experimental files (same logic as manual sync)

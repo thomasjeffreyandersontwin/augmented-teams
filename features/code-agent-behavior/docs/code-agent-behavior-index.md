@@ -9,7 +9,7 @@ The behavior index is implemented according to `behavior-index-rule.mdc`:
 ### Rule Compliance
 
 **Always:**
-- ✅ Detects additions, updates, or deletions in `features/*/code-agent-behaviors/`
+- ✅ Detects additions, updates, or deletions in features marked with `code-agent-behavior.json` (deployed: true)
 - ✅ Records feature name, file type, path, and modification timestamp
 - ✅ Updates both local (`features/<feature>/code-agent-behavior-index.json`) and global (`.cursor/behavior-index.json`) indexes
 - ✅ Logs the number of behaviors detected and updated
@@ -47,7 +47,7 @@ After generating the index, review `.cursor/behavior-index.json` and manually up
 
 After updating purposes in the global index, run:
 ```bash
-python features/code-agent-behavior/code-agent-behaviors/code-agent-behavior-index-cmd.py sync-purposes
+python features/code-agent-behavior/code-agent-behavior-index-cmd.py sync-purposes
 ```
 
 This copies updated purposes from the global index to all local index files.
@@ -56,10 +56,10 @@ This copies updated purposes from the global index to all local index files.
 
 ```
 features/<feature>/
-  ├── code-agent-behaviors/
-  │   ├── <behavior-name>-rule.mdc
-  │   ├── <behavior-name>-cmd.md
-  │   └── <behavior-name>-cmd.py
+  ├── code-agent-behavior.json        ← Marker file (deployed: true)
+  ├── <behavior-name>-rule.mdc
+  ├── <behavior-name>-cmd.md
+  ├── <behavior-name>-cmd.py
   └── code-agent-behavior-index.json  ← Local index
 ```
 

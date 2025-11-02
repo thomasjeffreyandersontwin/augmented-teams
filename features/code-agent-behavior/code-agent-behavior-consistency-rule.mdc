@@ -1,3 +1,14 @@
+---
+description: Code agent behavior consistency validation
+globs:
+  - "**/*-rule.mdc"
+  - "**/*-cmd.md"
+  - "**/*-cmd.py"
+  - "**/code-agent-behavior/**"
+  - "**/.cursor/rules/**"
+  - "**/.cursor/commands/**"
+---
+
 **When** behaviors are changed, deleted, updated, created 
 **then** validate there are inconsistencies, overlap or inconsistent guidance,
 **and**  surface potential contradictions or redundancies for review.

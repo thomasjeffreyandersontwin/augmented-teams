@@ -1,3 +1,14 @@
+---
+description: Code agent behavior index maintenance
+globs:
+  - "**/*-rule.mdc"
+  - "**/*-cmd.md"
+  - "**/*-cmd.py"
+  - "**/code-agent-behavior/**"
+  - "**/.cursor/rules/**"
+  - "**/.cursor/commands/**"
+---
+
 **When** any rule, command, function, or MCP config changes,
 **then** update the behavior index for the feature and refresh the global index.
 

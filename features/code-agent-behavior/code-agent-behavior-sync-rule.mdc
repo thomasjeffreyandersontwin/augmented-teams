@@ -1,3 +1,14 @@
+---
+description: Sync behaviors from features to .cursor/ deployment
+globs:
+  - "**/*-rule.mdc"
+  - "**/*-cmd.md"
+  - "**/*-cmd.py"
+  - "**/code-agent-behavior/**"
+  - "**/.cursor/rules/**"
+  - "**/.cursor/commands/**"
+---
+
 **When** a behavior is added or updated in a feature's `cursor/` folder,
 **then** sync it to the corresponding location in `.cursor/`.
 

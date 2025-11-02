@@ -5,7 +5,7 @@
 **Usage:**
 * `\behavior-consistency` — check all behaviors
 * `\behavior-consistency <feature>` — check one feature
-* `python features/code-agent-behavior/code-agent-behaviors/code-agent-behavior-consistency-cmd.py watch` — watch for file changes and auto-check
+* `python features/code-agent-behavior/code-agent-behavior-consistency-cmd.py watch` — watch for file changes and auto-check
 
 **When to Run:**
 * After behaviors are created, updated, changed, or deleted

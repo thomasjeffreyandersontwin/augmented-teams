@@ -5,10 +5,11 @@
 **Usage:**
 * `\behavior-sync` — sync all behaviors
 * `\behavior-sync <feature>` — sync a specific feature
-* `python features/code-agent-behavior/code-agent-behaviors/code-agent-behavior-sync-cmd.py watch` — watch for file changes and auto-sync
+* `python features/code-agent-behavior/code-agent-behavior-sync-cmd.py watch` — watch for file changes and auto-sync
 
 **File Routing Rules:**
-1. **All files** in `features/*/code-agent-behaviors/` folders are synced
+1. Scans `features/*` for `code-agent-behavior.json` with `"deployed": true`
+2. **All files** in marked features are synced
 2. Files are routed to correct locations based on extension:
    * `.mdc` files → `.cursor/rules/`
    * `.md` files → `.cursor/commands/`
@@ -18,7 +19,7 @@
      - `*-tasks.json` → Merged into root `.vscode/tasks.json` (tasks combined, duplicate labels avoided)
 
 **Steps:**
-1. The code function `behavior_sync()` scans `features/*/cursor/` folders
+1. The code function `behavior_sync()` scans `features/*` for `code-agent-behavior.json` marker files with `deployed: true`
 2. The code function routes files to correct destination based on extension
 3. The code function merges MCP configs (`*-mcp.json`) if they already exist
 4. The code function collects `*-tasks.json` files and merges their tasks into root `.vscode/tasks.json` (duplicate labels avoided)

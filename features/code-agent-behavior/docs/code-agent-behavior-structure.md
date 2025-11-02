@@ -11,7 +11,7 @@ The behavior structure is implemented according to `behavior-structure-rule.mdc`
 **Always:**
 - ✅ Name files using `<feature>-<behavior-name>-<type>.<ext>` pattern
 - ✅ For rules with multiple commands, add a verb suffix: `<feature>-<behavior-name>-<verb>-cmd.md`
-- ✅ Keep each behavior in its own folder under `features/<feature>/code-agent-behaviors/`
+- ✅ Keep each behavior in its own feature folder under `features/<feature>/` (mark with `code-agent-behavior.json`)
 - ✅ Link related files by prefix (same `<feature>-<behavior-name>` prefix)
 - ✅ Rules must reference the commands that execute them: `**Executing Commands:**`
 - ✅ Commands must reference rules, code, AI usage, and code usage
@@ -96,7 +96,7 @@ python behavior-structure-cmd.py create <feature> <behavior-name> --no-implement
 ### File Structure
 
 ```
-features/<feature>/code-agent-behaviors/
+features/<feature>/
   ├── <behavior-name>-rule.mdc
   ├── <behavior-name>-validate-cmd.md  ← Multiple commands for same rule
   ├── <behavior-name>-fix-cmd.md

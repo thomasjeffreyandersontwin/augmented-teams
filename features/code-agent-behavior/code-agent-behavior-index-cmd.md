@@ -14,7 +14,7 @@
 
 **Steps:**
 1. The user or AI agent runs `python commands/behavior-index-cmd.py` to generate the index
-2. The code function `behavior_index()` scans all `features/*/code-agent-behaviors/` folders for behavior files
+2. The code function `behavior_index()` scans features marked with `code-agent-behavior.json` (deployed: true) for behavior files
 3. The code function detects changed or missing files
 4. The code function skips draft or experimental behaviors
 5. The code function **PRESERVES existing purposes from the index (code NEVER extracts or updates purposes)**

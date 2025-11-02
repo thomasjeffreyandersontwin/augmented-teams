@@ -1,3 +1,14 @@
+---
+description: Suggest new behaviors from repetitive patterns
+globs:
+  - "**/*-rule.mdc"
+  - "**/*-cmd.md"
+  - "**/*-cmd.py"
+  - "**/code-agent-behavior/**"
+  - "**/.cursor/rules/**"
+  - "**/.cursor/commands/**"
+---
+
 **When** repetitive tasks are performed repeatedly during development,
 **then** suggest creating a new behavior to capture and automate the pattern,
 **and** allow the user to confirm and determine where the behavior should be placed.

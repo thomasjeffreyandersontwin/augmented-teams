@@ -193,12 +193,30 @@ def behavior_sync(feature=None):
     # Ensure .vscode directory exists for tasks.json merging
     Path(".vscode").mkdir(parents=True, exist_ok=True)
 
-    # Determine features to sync
+    # Determine features to sync (features with code-agent-behavior.json and deployed: true)
+    features = []
     if feature:
-        cursor_path = src_root / feature / "code-agent-behaviors"
-        features = [cursor_path] if cursor_path.exists() else []
+        feature_path = src_root / feature
+        marker_file = feature_path / "code-agent-behavior.json"
+        if marker_file.exists():
+            try:
+                marker_data = json.load(marker_file.open('r', encoding='utf-8'))
+                if marker_data.get("deployed"):
+                    features = [feature_path]
+            except:
+                pass
     else:
-        features = [p for p in src_root.glob("*/code-agent-behaviors") if p.is_dir()]
+        for feature_dir in src_root.glob("*"):
+            if not feature_dir.is_dir():
+                continue
+            marker_file = feature_dir / "code-agent-behavior.json"
+            if marker_file.exists():
+                try:
+                    marker_data = json.load(marker_file.open('r', encoding='utf-8'))
+                    if marker_data.get("deployed"):
+                        features.append(feature_dir)
+                except:
+                    pass
 
     synced_files = []
     merged_files = []
@@ -207,8 +225,8 @@ def behavior_sync(feature=None):
     # Collect tasks.json files from features for merging
     feature_tasks_files = []
 
-    for cursor_path in features:
-        for file in cursor_path.rglob("*"):
+    for feature_path in features:
+        for file in feature_path.rglob("*"):
             # Skip directories
             if file.is_dir():
                 continue
@@ -270,12 +288,6 @@ def behavior_sync(feature=None):
                 except Exception as e:
                     print(f"❌ Error syncing {file.name}: {e}")
                     skipped_files.append((file, f"copy error: {e}"))
-        
-        # Look for tasks.json in feature's .vscode directory
-        feature_path = cursor_path.parent
-        feature_tasks = feature_path / ".vscode" / "tasks.json"
-        if feature_tasks.exists():
-            feature_tasks_files.append(feature_tasks)
     
     # Merge tasks.json files from all features into root .vscode/tasks.json
     if feature_tasks_files:
