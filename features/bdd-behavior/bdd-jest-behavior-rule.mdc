@@ -1,0 +1,233 @@
+---
+description: BDD testing practices for Jest/JavaScript
+globs: ["**/*.test.js", "**/*.spec.js", "**/*.test.ts", "**/*.spec.ts", "**/*.test.jsx", "**/*.spec.jsx", "**/*.test.tsx", "**/*.spec.tsx"]
+alwaysApply: false
+---
+
+**When** writing Jest tests,
+**then** apply BDD practices with Jest-specific patterns.
+
+See `bdd-behavior-rule.mdc` for complete BDD principles. This file provides Jest-specific examples.
+
+For comprehensive examples and edge cases, see `bdd-jest-behavior-reference.md`.
+
+---
+
+## 1. Business Readable Language
+
+Write `describe`/`it` so that inner/outer sentences create natural sentence. Use nouns for `describe` (concepts, states). Start each `it()` with "should …". Nest from broad → specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon. Connect base business concept to more specific concepts using linking words: "that is/that has" "that has been"
+
+**✅ DO:**
+```javascript
+describe('a ranged damage power', () => {  // DO: Use nouns for describe, connect with "a/an", use domain terms
+  describe('that has targeted and resulted in a successful attack', () => {  // DO: Connect with "that has", nest broad→specific
+    it('should apply damage based on degrees of failure', () => {  // DO: Start with "should", use plain behavioral language
+      expect(result.injuries).toBe(2);
+    });
+  });
+});
+```
+
+**❌ DON'T:**
+```javascript
+describe('when Attack.targetToken()', () => {});  // DON'T: Use action verbs, use class/method names, omit article
+describe('retrieved attack', () => {});  // DON'T: Break natural connection (should be "that is retrieved"), repeat parent context
+it('sets isSubmitting flag', () => {});  // DON'T: Include technical jargon (flags/IDs), omit "should"
+```
+
+---
+
+## 2. Comprehensive and Brief
+
+Test observable behavior, not hidden internals. Cover state, validation, rules, and interactions. Cover normal, edge, and failure paths. Keep tests short, expressive, readable. Keep tests independent, deterministic, and fast.
+
+**✅ DO:**
+```javascript
+describe('a damage power', () => {
+  beforeEach(() => {
+    mockTarget = { dodge: 15, injury: 0 };  // DO: Isolate with stubs, keep tests independent
+  });
+  
+  it('should be a ranged attack', () => {  // DO: Test observable state, keep short & expressive
+    expect(attack.isRanged).toBe(true);
+  });
+  
+  it('should calculate DC from targets dodge', () => {  // DO: Cover calculations/business rules/interactions
+    expect(attack.execute(mockTarget).DC).toBe(20);
+  });
+  
+  describe('whose roll exceeds the DC', () => {  // DO: Cover normal paths, keep tests fast
+    it('should indicate a hit', () => { expect(result.hit).toBe(true); });
+  });
+  
+  describe('whose roll does not exceed the DC', () => {  // DO: Cover failure paths
+    it('should indicate a miss', () => { expect(result.hit).toBe(false); });
+  });
+});
+```
+
+**❌ DON'T:**
+```javascript
+it('calls _validateCredentials()', () => {  // DON'T: Assert internal calls, test hidden internals, omit "should"
+  expect(form._internal_flag).toBe(true);  // DON'T: Test private state
+  expect(form._validateCredentials).toHaveBeenCalled();
+});
+it('handles attack', () => {  // DON'T: Skip validations (no assertions!), write long procedural tests
+  // 50 lines...
+  await sleep(2000);  // DON'T: Use arbitrary sleeps, depend on external state, let suites grow slow
+  expect(db.records).toHaveLength(5);
+});
+```
+
+---
+
+## 3. Balance Context Sharing with Localization
+
+Nest parent context, don't repeat it. Provide expected data via helper factories/builders. Extract complex logic into helpers. Reuse helpers/factories where possible. Centralize setup/teardown logic and helpers when sharing. But keep setup/helper code as close to your test code as you can. Initialize helper instances for every test; reset between runs. Clear state after each run.
+
+**✅ DO:**
+```javascript
+const createPower = (o = {}) => ({ name: 'Test', rank: 10, ...o });  // DO: Use helper factories, extract complex logic
+
+describe('a Power', () => {
+  beforeEach(() => {  // DO: Place setup at correct scope, centralize when sharing
+    factory = new MockFactory();
+    factory.reset();  // DO: Clear state/reset between runs
+    power = createPower();  // DO: Reuse helpers, keep code close to tests
+  });
+  
+  describe('that is a ranged power', () => {  // DO: Nest parent context, don't repeat it
+    beforeEach(() => { power = createPower({ range: 'ranged' }); });
+  });
+});
+```
+
+**❌ DON'T:**
+```javascript
+describe('Power', () => {
+  describe('created from actor', () => {
+    beforeEach(() => { this.actor = { id: '123' }; });  // DON'T: Duplicate init, scatter setup
+  });
+  describe('that is ranged', () => {
+    beforeEach(() => { this.actor = { id: '123' }; });  // DON'T: Duplicate setup across contexts/files
+  });
+});
+it('has tokens', () => {
+  const t = getTokens();  // DON'T: Create helpers per test
+  this.state = 'dirty';  // DON'T: Leave side effects between tests
+});
+```
+
+---
+
+## 4. Cover All Layers of the System
+
+Include separate front end, business logic, integration, and data access tests. Isolate across architecture boundaries with mocks and stubs. Keep tests for a story/feature together across architectural layers. Stub/mock external deps between each layer. Organize tests so they tell a story, front, middle or integration, back. Keep unit tests fast and isolated. Focus tests on the code under test, not its dependencies. Apply a behavioral lens at every layer.
+
+**✅ DO:**
+```javascript
+describe('an Attack Power', () => {  // DO: Organize to tell story (front/middle/back), keep feature tests together
+  describe('whose actor data is being displayed on a character sheet', () => {  // DO: Front-end - Include separate tests
+    it('should include attack bonus in context', () => { expect(context.attackPowers[0].bonus).toBe(8); });  // DO: Keep fast & isolated
+    it('should render attack bonus in HTML', () => { expect(html).toContain('value="8"'); });  // DO: Focus on code under test
+  });
+  
+  describe('that is a damage power', () => {  // DO: Domain - Apply behavioral lens at every layer
+    it('should calculate damage from rank', () => { expect(calculateDamage(5)).toBe(10); });
+  });
+  
+  describe('that has been saved to the repository', () => {  // DO: Data access - Isolate with mocks, stub external deps
+    beforeEach(() => { mockDb = jest.fn(); repo.saveAttack(attack); });
+    describe('that is retrieved at a later time', () => {
+      it('should return the saved attack with all properties', () => { expect(repo.getAttack(attack.id).bonus).toBe(attack.bonus); });
+    });
+  });
+});
+```
+
+**❌ DON'T:**
+```javascript
+describe('damage', () => {  // DON'T: Stop at happy path, test 3rd party libs
+  it('works', () => { expect(axios.get(url)).toBe(ok); });
+});
+it('passes if repo ready', () => {  // DON'T: Rely on dependent code, mix test types
+  renderPage(); expect(db.hasRecord()).toBe(true);
+});
+```
+
+---
+
+## 5. Unit Tests the Front-End
+
+Mock services, business logic, and routing. Stub user events and verify resulting state or view. Validate conditional render paths (loading, empty, err). Test sheet/page functions/methods that are substantive in nature. Assert emitted events or callbacks. Reset DOM and mocks each test.
+
+**✅ DO:**
+```javascript
+jest.mock('../services/api');  // DO: Mock services/business logic/routing, reset DOM & mocks
+
+describe('an attack power display', () => {
+  beforeEach(() => {
+    mockService = jest.fn();  // DO: Stub user events, assert emitted events/callbacks
+    context = prepareContext(actor);
+  });
+  
+  it('should include attack bonus in context', () => {  // DO: Test BOTH data structure
+    expect(context.attackPowers[0].bonus).toBe(8);
+  });
+  
+  it('should render attack bonus in HTML', () => {  // DO: AND rendered output
+    expect(renderTemplate(context)).toContain('value="8"');
+  });
+  
+  describe('that is loading', () => {  // DO: Validate conditional render paths (loading/empty/error)
+    it('should show spinner', () => { expect(html).toContain('loading-spinner'); });
+  });
+});
+```
+
+**❌ DON'T:**
+```javascript
+it('renders bonus', () => {  // DON'T: Test only HTML not data, hit live APIs, test styling
+  expect(html).toContain('value="8"');
+  expect(html).toContain('color: blue');
+  await fetch('http://api.com');
+});
+it('calls _onMount()', () => {  // DON'T: Depend on lifecycle/internals, re-render full app trees
+  expect(component._onMount).toHaveBeenCalled();
+});
+```
+
+---
+
+## Common Jest Patterns
+
+**Mocking modules:**
+```javascript
+jest.mock('../services/api');
+```
+
+**Async tests:**
+```javascript
+it('should fetch data', async () => {
+  const data = await fetchData();
+  expect(data).toBeDefined();
+});
+```
+
+**Spy on functions:**
+```javascript
+const spy = jest.spyOn(service, 'method');
+expect(spy).toHaveBeenCalledWith(expectedArgs);
+```
+
+**Test React components:**
+```javascript
+import { render, screen, fireEvent } from '@testing-library/react';
+
+it('should toggle visibility', () => {
+  render(<Toggle />);
+  fireEvent.click(screen.getByRole('button'));
+  expect(screen.getByText('Visible')).toBeInTheDocument();
+});
+```
+
