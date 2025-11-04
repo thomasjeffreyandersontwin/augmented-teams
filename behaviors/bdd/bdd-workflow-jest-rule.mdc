@@ -1,0 +1,580 @@
+---
+description: Jest-specific BDD workflow patterns for Red-Green-Refactor cycle
+globs: ["**/*.test.js", "**/*.spec.js", "**/*.test.ts", "**/*.spec.ts", "**/*.test.jsx", "**/*.spec.jsx", "**/*.test.tsx", "**/*.spec.tsx", "**/*.test.mjs", "**/*.spec.mjs"]
+alwaysApply: false
+---
+**When** practicing BDD with Jest/JavaScript tests,
+**then** follow these Jest-specific patterns for the Red-Green-Refactor cycle.
+
+This rule extends `bdd-workflow-rule.mdc` and references `bdd-jest-rule.mdc`.
+
+## Phase 1: Build Test Signatures (Jest)
+
+**✅ DO:**
+```javascript
+describe('a user authentication service', () => {
+  describe('a user that is being authenticated', () => {
+    describe('with valid credentials', () => {
+      it('should receive an access token', () => {
+        // TODO: implement
+      });
+    });
+    
+    describe('with invalid credentials', () => {
+      it('should receive an authentication error', () => {
+        // TODO: implement
+      });
+    });
+    
+    describe('whose account is locked', () => {
+      it('should receive an account locked error', () => {
+        // TODO: implement
+      });
+    });
+  });
+  
+  describe('a token that is being validated', () => {
+    describe('that is valid and not expired', () => {
+      it('should return true', () => {
+        // TODO: implement
+      });
+    });
+    
+    describe('that is expired', () => {
+      it('should return false', () => {
+        // TODO: implement
+      });
+    });
+    
+    describe('that has an invalid signature', () => {
+      it('should return false', () => {
+        // TODO: implement
+      });
+    });
+  });
+});
+```
+
+**❌ DON'T:**
+```javascript
+// Violates Phase 1 - building ALL signatures at once, not one-at-a-time
+describe('a user authentication service', () => {
+  it('should return user token', () => {
+    // TODO: implement
+  });
+  
+  // NO! Where are the failure cases? Edge cases?
+  // Phase 1 requires thinking through ALL scenarios upfront
+});
+```
+
+---
+
+## Phase 2: RED - Write Failing Test (Jest)
+
+### Arrange-Act-Assert Pattern
+
+**✅ DO:**
+```javascript
+describe('a user that is being authenticated', () => {
+  describe('with valid credentials', () => {
+    it('should receive an access token', () => {
+      // Arrange
+      const authService = new AuthService();
+      const credentials = {
+        username: 'alice@example.com',
+        password: 'SecurePass123!'
+      };
+      
+      // Act
+      const result = authService.authenticate(credentials);
+      
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.token).toMatch(/^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/); // JWT format
+      expect(result.userId).toBe('alice@example.com');
+      expect(result.expiresAt).toBeInstanceOf(Date);
+    });
+  });
+});
+
+// Run: npm test AuthService.test.js
+// Expected: ❌ FAIL - ReferenceError: AuthService is not defined
+```
+
+**❌ DON'T:**
+```javascript
+it('should receive an access token', () => {
+  // NO! Implementing multiple tests at once - violates RED phase
+  const authService = new AuthService();
+  expect(authService.authenticate({username: 'alice', password: 'pass'})).toBeDefined();
+  expect(authService.authenticate({username: 'bob', password: 'pass2'})).toBeDefined();
+  // Work on ONE test at a time!
+});
+```
+
+### Testing Async Code
+
+**✅ DO:**
+```javascript
+it('should return user data when fetch succeeds', async () => {
+  // Arrange
+  const userService = new UserService();
+  const userId = 'user123';
+  
+  // Act
+  const user = await userService.getUser(userId);
+  
+  // Assert
+  expect(user).toBeDefined();
+  expect(user.id).toBe(userId);
+  expect(user.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+});
+
+// Expected: ❌ FAIL - UserService is not defined
+```
+
+### Testing Error Cases
+
+**✅ DO:**
+```javascript
+it('should receive an authentication error', () => {
+  // Arrange
+  const authService = new AuthService();
+  const invalidCredentials = {
+    username: 'alice@example.com',
+    password: 'WrongPassword'
+  };
+  
+  // Act & Assert
+  expect(() => {
+    authService.authenticate(invalidCredentials);
+  }).toThrow(AuthError);
+  
+  expect(() => {
+    authService.authenticate(invalidCredentials);
+  }).toThrow('Invalid username or password');
+});
+
+// Expected: ❌ FAIL - AuthError is not defined
+```
+
+**❌ DON'T:**
+```javascript
+it('should receive an authentication error', () => {
+  // NO! Writing production code during RED phase
+  class AuthService {
+    authenticate(creds) {
+      if (creds.password === 'wrong') throw new Error('Bad');
+      return {token: 'abc'};
+    }
+  }
+  
+  const authService = new AuthService();
+  // This violates RED - implement production code in production file, not test!
+});
+```
+
+### Using Test Helpers and Factories
+
+**✅ DO:**
+```javascript
+describe('a user that is being authenticated', () => {
+  // Helper at top of describe block
+  function createValidCredentials(overrides = {}) {
+    return {
+      username: 'alice@example.com',
+      password: 'SecurePass123!',
+      ...overrides
+    };
+  }
+  
+  describe('with valid credentials', () => {
+    it('should receive an access token', () => {
+      const authService = new AuthService();
+      const credentials = createValidCredentials();
+      
+      const result = authService.authenticate(credentials);
+      
+      expect(result.token).toBeDefined();
+    });
+  });
+  
+  describe('with a password that is too short', () => {
+    it('should receive a validation error', () => {
+      const authService = new AuthService();
+      const credentials = createValidCredentials({ password: '123' });
+      
+      expect(() => authService.authenticate(credentials)).toThrow(ValidationError);
+    });
+  });
+});
+```
+
+---
+
+## Phase 3: GREEN - Implement Code (Jest)
+
+### Minimal Implementation
+
+**✅ DO:**
+```javascript
+// AuthService.js - Minimal implementation to make test pass
+class AuthService {
+  login(credentials) {
+    if (credentials.username === 'alice@example.com' && 
+        credentials.password === 'SecurePass123!') {
+      return {
+        token: 'header.payload.signature', // Minimal JWT-like token
+        userId: 'alice@example.com',
+        expiresAt: new Date(Date.now() + 3600000) // 1 hour from now
+      };
+    }
+    throw new Error('Invalid username or password');
+  }
+}
+
+module.exports = AuthService;
+
+// Run: npm test AuthService.test.js
+// Expected: ✅ PASS - 1 test passing
+```
+
+**❌ DON'T:**
+```javascript
+// Over-engineered before tests demand it
+class AuthService {
+  constructor(
+    userRepository,
+    tokenGenerator,
+    passwordHasher,
+    logger,
+    rateLimiter,
+    sessionManager
+  ) {
+    // Tests don't require this complexity yet!
+  }
+  
+  async login(credentials) {
+    await this.logger.log('Login attempt', credentials.username);
+    await this.rateLimiter.check(credentials.username);
+    // ... lots of code not required by tests
+  }
+}
+```
+
+### Verify All Tests Pass
+
+```bash
+# Run single test to verify it passes
+npm test -- AuthService.test.js -t "should return user token"
+# ✅ PASS
+
+# Run all tests to check for regressions
+npm test -- AuthService.test.js
+# ✅ PASS - All tests passing
+```
+
+---
+
+## Phase 4: REFACTOR - Suggest Improvements (Jest)
+
+### Example Refactoring Suggestions
+
+**Smell: Hardcoded Credentials**
+```javascript
+// Current implementation
+login(credentials) {
+  if (credentials.username === 'alice@example.com' && 
+      credentials.password === 'SecurePass123!') {
+    return { token: '...', userId: 'alice@example.com', expiresAt: new Date(...) };
+  }
+  throw new Error('Invalid username or password');
+}
+```
+
+**Suggestion:**
+```
+REFACTORING: Extract User Validation
+
+Current: Hardcoded username/password check
+Suggest: Introduce UserRepository to validate credentials
+
+Why: 
+- Separation of concerns (auth logic vs user data)
+- Testable in isolation
+- Allows multiple users in tests
+
+Impact:
+Production:
+  - AuthService.js (add UserRepository dependency)
+  - UserRepository.js (new file)
+  
+Tests:
+  - AuthService.test.js (mock UserRepository)
+  - UserRepository.test.js (new test file)
+
+Trade-offs:
+  ✅ Better separation of concerns
+  ✅ More testable
+  ❌ More files to maintain
+  ❌ Requires mocking in tests
+```
+
+**Smell: Generic Error Type**
+```javascript
+throw new Error('Invalid username or password');
+```
+
+**Suggestion:**
+```
+REFACTORING: Introduce Custom Error Types
+
+Current: Generic Error for all auth failures
+Suggest: Create AuthError with error codes
+
+Why:
+- More specific error handling
+- Better test assertions
+- Clearer error messages to consumers
+
+Impact:
+Production:
+  - errors/AuthError.js (new file)
+  - AuthService.js (throw AuthError instead of Error)
+
+Tests:
+  - AuthService.test.js (update assertions to check for AuthError)
+
+Example:
+  throw new AuthError('INVALID_CREDENTIALS', 'Invalid username or password');
+```
+
+---
+
+## Phase 5: IMPLEMENT - Apply Refactorings (Jest)
+
+### Step-by-Step Refactoring
+
+**Refactoring #1: Extract UserRepository**
+
+```javascript
+// Step 1: Create UserRepository (production code)
+class UserRepository {
+  validateCredentials(credentials) {
+    // Minimal implementation for current tests
+    if (credentials.username === 'alice@example.com' && 
+        credentials.password === 'SecurePass123!') {
+      return { id: 'alice@example.com', email: 'alice@example.com' };
+    }
+    return null;
+  }
+}
+
+module.exports = UserRepository;
+
+// Step 2: Update AuthService to use UserRepository
+class AuthService {
+  constructor(userRepository = new UserRepository()) {
+    this.userRepository = userRepository;
+  }
+  
+  login(credentials) {
+    const user = this.userRepository.validateCredentials(credentials);
+    
+    if (user) {
+      return {
+        token: 'header.payload.signature',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 3600000)
+      };
+    }
+    
+    throw new Error('Invalid username or password');
+  }
+}
+
+// Step 3: Run tests
+// npm test -- AuthService.test.js
+// ✅ PASS - All tests still passing
+
+// Step 4: Commit
+// git add AuthService.js UserRepository.js
+// git commit -m "Extract UserRepository from AuthService"
+```
+
+**Refactoring #2: Introduce Custom Error**
+
+```javascript
+// Step 1: Create AuthError
+class AuthError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = 'AuthError';
+    this.code = code;
+  }
+}
+
+module.exports = AuthError;
+
+// Step 2: Update AuthService
+const AuthError = require('./errors/AuthError');
+
+class AuthService {
+  // ... constructor ...
+  
+  login(credentials) {
+    const user = this.userRepository.validateCredentials(credentials);
+    
+    if (user) {
+      return {
+        token: 'header.payload.signature',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 3600000)
+      };
+    }
+    
+    throw new AuthError('INVALID_CREDENTIALS', 'Invalid username or password');
+  }
+}
+
+// Step 3: Update tests to use AuthError
+it('should throw AuthError when credentials are invalid', () => {
+  const authService = new AuthService();
+  const credentials = createValidCredentials({ password: 'wrong' });
+  
+  expect(() => authService.login(credentials)).toThrow(AuthError);
+  
+  try {
+    authService.login(credentials);
+  } catch (error) {
+    expect(error.code).toBe('INVALID_CREDENTIALS');
+  }
+});
+
+// Step 4: Run tests
+// npm test -- AuthService.test.js
+// ✅ PASS - All tests passing with improved error handling
+
+// Step 5: Commit
+// git add AuthService.js AuthError.js AuthService.test.js
+// git commit -m "Introduce AuthError for better error handling"
+```
+
+---
+
+## Jest-Specific Testing Patterns
+
+### Mocking Dependencies
+
+**✅ DO (during GREEN phase when dependency exists):**
+```javascript
+// UserService.test.js
+import { UserService } from './UserService';
+import { UserRepository } from './UserRepository';
+
+jest.mock('./UserRepository');
+
+describe('a user service', () => {
+  describe('when fetching user by ID', () => {
+    it('should return user when repository finds user', () => {
+      // Arrange
+      const mockUser = { id: 'user123', name: 'Alice' };
+      UserRepository.prototype.findById = jest.fn().mockReturnValue(mockUser);
+      
+      const userService = new UserService(new UserRepository());
+      
+      // Act
+      const user = userService.getUser('user123');
+      
+      // Assert
+      expect(user).toEqual(mockUser);
+      expect(UserRepository.prototype.findById).toHaveBeenCalledWith('user123');
+    });
+  });
+});
+```
+
+### Testing React Components (if applicable)
+
+**✅ DO:**
+```javascript
+// LoginForm.test.js
+import { render, screen, fireEvent } from '@testing-library/react';
+import { LoginForm } from './LoginForm';
+
+describe('a login form', () => {
+  describe('when user submits valid credentials', () => {
+    it('should call onLogin with credentials', () => {
+      // Arrange
+      const onLogin = jest.fn();
+      render(<LoginForm onLogin={onLogin} />);
+      
+      // Act
+      fireEvent.change(screen.getByLabelText('Username'), {
+        target: { value: 'alice@example.com' }
+      });
+      fireEvent.change(screen.getByLabelText('Password'), {
+        target: { value: 'SecurePass123!' }
+      });
+      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      
+      // Assert
+      expect(onLogin).toHaveBeenCalledWith({
+        username: 'alice@example.com',
+        password: 'SecurePass123!'
+      });
+    });
+  });
+});
+```
+
+---
+
+## Running Tests at Each Phase
+
+### RED Phase
+```bash
+# Run single failing test
+npm test -- AuthService.test.js -t "should return user token"
+# Expected: ❌ FAIL
+
+# Verify failure reason
+# Should see: "ReferenceError: AuthService is not defined"
+# NOT: "SyntaxError" or other issues
+```
+
+### GREEN Phase
+```bash
+# Run single test to verify it passes
+npm test -- AuthService.test.js -t "should return user token"
+# Expected: ✅ PASS
+
+# Run all tests to check regressions
+npm test -- AuthService.test.js
+# Expected: ✅ PASS - All tests passing
+```
+
+### REFACTOR Phase
+```bash
+# After each refactoring, run all tests
+npm test -- AuthService.test.js
+# Expected: ✅ PASS - All tests still passing
+
+# Run related tests too
+npm test -- UserRepository.test.js
+# Expected: ✅ PASS
+```
+
+---
+
+## Integration with BDD Jest Rule
+
+This BDD workflow follows all patterns from `bdd-jest-behavior-rule.mdc`:
+* **Test Structure**: describe/it nesting (§ 1)
+* **Assertions**: expect() with specific matchers (§ 2)
+* **Setup/Teardown**: beforeEach/afterEach (§ 3)
+* **Mocking**: jest.fn(), jest.mock() (§ 4)
+* **Async**: async/await patterns (§ 5)
+
+Always reference `bdd-jest-rule.mdc` for detailed Jest patterns and `bdd-rule.mdc` for core BDD principles.

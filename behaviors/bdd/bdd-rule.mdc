@@ -1,0 +1,129 @@
+---
+description: Framework-agnostic BDD testing practices
+globs: ["**/*.test.js", "**/*.spec.js", "**/*.test.ts", "**/*.spec.ts", "**/*_test.py", "**/test_*.py", "**/*.test.jsx", "**/*.spec.jsx", "**/*.test.tsx", "**/*.spec.tsx", "**/*_spec.py", "**/spec_*.py", "**/*_test.pyi", "**/test_*.pyi", "**/*_spec.pyi", "**/spec_*.pyi", "**/*.test.mjs", "**/*.spec.mjs"]
+alwaysApply: false
+---
+**When** writing BDD tests,
+**then** follow these practices to create clear, maintainable, behavior-focused tests.
+
+BDD tests describe observable behavior in clear language. Keep them fast, isolated, deterministic, and worth maintaining.
+
+## 1. Business Readable Language
+
+**Do:**
+* Write `describe`/`it` so that inner/outer sentences create natural sentence
+* Use nouns for `describe` (concepts, states)
+* Start each `it()` with "should …"
+* Nest from broad → specific; each child adds context
+* Use plain behavioral language
+* Prefer domain terms over technical jargon
+* Connect base business concept to more specific concepts using linking words: "that is/that has/that has been"
+* Use fluent, subject-focused language: "a user that is being authenticated" not "authentication with credentials"
+
+**Don't:**
+* Use action verbs in `describe` names
+* Use generic, or technical instead of subject-focused descriptions
+* connect concept in an unclear or confusing way, or skip important concepts for brevity
+* Repeat parent context or flatten hierarchy
+* Mix unrelated states in one block
+* Include flags, IDs, or symbols in names
+* Use verbs without being specific about the subject
+* Use overly verbose names
+* Break natural connections (e.g., "retrieved attack" instead of "that is retrieved")
+
+**Pattern:**
+Express all related concepts: WHO (subject) + WHAT STATE + CONDITION
+- **✅ Fluent**: "a user that is being authenticated" with "valid credentials" 
+- **❌ Missing subject**: "authentication with credentials" (WHO is being authenticated?)
+- **❌ Action verb**: "when authenticating a user" (use nouns, not verbs)
+
+See framework-specific rules for concrete code examples.
+
+## 2. Comprehensive and Brief
+
+**Do:**
+* Test observable behavior, not hidden internals
+* Cover state, validation, rules, and interactions
+* Cover normal, edge, and failure paths
+* Keep tests short, expressive, readable
+* Keep tests independent, deterministic, and fast
+
+**Don't:**
+* Assert internal calls or framework logic
+* Mistake helpers or glue code for test targets
+* Skip "obvious" validations
+* Write long procedural tests
+* Let suites grow too slow to run
+* Accept flaky or timing-sensitive tests
+* Use arbitrary sleeps
+
+
+## 3. Balance Context Sharing with Localization
+
+**Do:**
+* Nest parent context, don't repeat it
+* Provide excpected data via helper factories / builders
+* Extract complex logic into helpers
+* Reuse helpers/factories where possible
+* Centralize setup/teardown logic and helpers when sharing
+* But keep setup / helper code as close to your test code as you can
+* Initializes helper instances for every test; reset between runs
+* Clear state after each run
+
+**Don't:**
+* Duplicate the same init or stack nested `beforeEach`
+* Leave side effects between tests
+* Duplicate common  helper / setup code/ other logic across tests
+* Create define helpers per test
+* Scatter or repeat setup logic across files
+
+---
+
+## 4. Cover All Layers of the System
+**Do:**
+* Include separate front end, business logic, integration, and data access tests
+* Isolate across archiecture boundaries with mocks and stubs
+* Keep tests for a story / feature together across architectural layers
+* Stub/mock external deps between each layer
+* organize tests so tey tell a story, front, middle or integration, back 
+* Keep unit tests fast and isolated
+* Focus tests on the code under test, not it's dependencies
+* Apply a behavioral lens at every layer
+
+
+**Don't:**
+* Stop at the happy path
+* test 3rd party libs, generated code, or vanilla property access
+* Create tests that rely on depenendant code to pass
+* Mix test types in one test
+* Spam logs or custom debug scripts
+* Depend on external state or timing
+---
+
+## 5. Unit Tests the Front-End
+
+**Do:**
+* Mock services, business logic, and routing
+* Stub user events and verify resulting state or view
+* Validate conditional render paths (loading, empty, err)
+* Test sheet /page functions / methods that are substantive in nature
+* Assert emitted events or callbacks
+* Reset DOM and mocks each test
+
+**Don't:**
+* Hit live APIs or the container
+* Test styling or layout
+* Depend on lifecycle or internals
+* Re-render full app trees
+
+---
+
+## Framework-Specific Rules
+
+For framework-specific examples and patterns:
+* **Jest/JavaScript**: See `bdd-jest-rule.mdc`
+* **Mamba/Python**: See `bdd-mamba-rule.mdc`
+
+For comprehensive examples and edge cases:
+* **Jest Reference**: See `bdd-jest-reference.md`
+* **Mamba Reference**: See `bdd-mamba-reference.md`
