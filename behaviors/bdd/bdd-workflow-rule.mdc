@@ -28,7 +28,7 @@ True TDD follows a strict cycle:
 
 **Don't:**
 * Write ANY test implementation code yet
-* Write ANY production code yet
+* Write ANY code under test yet
 * Skip edge cases or failure scenarios in your signatures
 * Create signatures one-at-a-time (think through the whole domain first)
 
@@ -40,7 +40,7 @@ See framework-specific rules for concrete code examples.
 
 ## Phase 1: RED - Write Failing Test (in small bacthes)
 
-**Purpose:** Verify the test fails for the right reason before writing production code.
+**Purpose:** Verify the test fails for the right reason before writing code under test.
 
 **Scope Options:**
 * **Current describe block** (default): Implement all tests in the current `describe`

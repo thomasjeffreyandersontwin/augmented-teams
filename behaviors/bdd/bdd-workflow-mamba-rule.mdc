@@ -388,7 +388,7 @@ Example:
 **Refactoring #1: Extract UserRepository**
 
 ```python
-# Step 1: Create UserRepository (production code)
+# Step 1: Create UserRepository (code under test)
 # user_repository.py
 class UserRepository:
     def validate_credentials(self, credentials):

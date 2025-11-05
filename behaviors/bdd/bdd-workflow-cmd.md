@@ -120,7 +120,7 @@
 
 ### Phase 2: GREEN - Implement Minimal Code
 
-1. **AI Agent** writes minimal production code to make ALL tests pass
+1. **AI Agent** uncomments/writes minimal code under test to make ALL tests pass
 2. **AI Agent** resists adding features no test demands
 3. **Code** `run_tests()` runs all tests to verify they pass
 4. **Code** checks for regressions in existing tests
@@ -135,10 +135,10 @@
 1. **Code** `identify_code_relationships()` finds code under test and related test files
 2. **AI Agent** runs `/bdd-validate` to ensure tests follow BDD principles (NO EXCEPTIONS)
 3. **AI Agent** fixes ALL violations before refactoring (MUST achieve zero violations)
-4. **AI Agent** identifies all code smells (duplication, long methods, magic values, poor names)
+4. **AI Agent** identifies all code smells in code under test (duplication, long methods, magic values, poor names)
 5. **AI Agent** suggests refactorings with WHAT to change, WHY, and trade-offs
 6. **User** reviews and approves refactorings
-7. **AI Agent** implements ALL approved refactorings
+7. **AI Agent** implements ALL approved refactorings to code under test
 8. **Code** `run_tests()` verifies all tests still pass
 9. **AI Agent** runs `/bdd-validate` to ensure BDD quality maintained
 10. **AI Agent** fixes any violations

@@ -162,7 +162,7 @@ it('should receive an authentication error', () => {
 **❌ DON'T:**
 ```javascript
 it('should receive an authentication error', () => {
-  // NO! Writing production code during RED phase
+  // NO! Writing code under test during RED phase
   class AuthService {
     authenticate(creds) {
       if (creds.password === 'wrong') throw new Error('Bad');
@@ -171,7 +171,7 @@ it('should receive an authentication error', () => {
   }
   
   const authService = new AuthService();
-  // This violates RED - implement production code in production file, not test!
+  // This violates RED - implement code under test in production file, not test!
 });
 ```
 
@@ -359,7 +359,7 @@ Example:
 **Refactoring #1: Extract UserRepository**
 
 ```javascript
-// Step 1: Create UserRepository (production code)
+// Step 1: Create UserRepository (code under test)
 class UserRepository {
   validateCredentials(credentials) {
     // Minimal implementation for current tests
