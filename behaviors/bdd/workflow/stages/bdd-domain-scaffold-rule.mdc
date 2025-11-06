@@ -314,11 +314,14 @@ When domain map exists, use it as primary source for test structure.
 |----------------|----------------|---------|
 | Domain Concept | `describe('a concept', () => {})` | Power Item → `describe('a power item', () => {})` |
 | Concept State/Property | `describe('with X', () => {})` | Fire descriptor → `describe('with fire descriptor', () => {})` |
-| Concept State (passive) | `describe('that has X', () => {})` | Macro attached → `describe('that has an attached macro', () => {})` |
-| Concept State (active) | `describe('that is doing X', () => {})` | Being edited → `describe('that is being edited', () => {})` |
+| Concept Possession | `describe('that has X', () => {})` | Has errors → `describe('that has validation errors', () => {})` |
+| Concept State (active) | `describe('that is being X', () => {})` | Being edited → `describe('that is being edited', () => {})` |
 | Concept Action/Usage | `describe('used to do X', () => {})` | Launch attack → `describe('used to launch an attack', () => {})` |
-| Relationship | `describe('whose X', () => {})` | Animation being edited → `describe('whose animation is being edited', () => {})` |
-| Condition/Trigger | `describe('when X happens', () => {})` | Macro exists → `describe('when attached macro exists', () => {})` |
+| Relationship/Property | `describe('whose X', () => {})` | Property being acted on → `describe('whose files are being synchronized', () => {})` |
+| Condition (RARE) | `describe('when X exists', () => {})` | External condition → `describe('when attached macro exists', () => {})` |
+
+**IMPORTANT:** Use "when" RARELY - only for external conditions/events like "when macro exists", "when no data found". 
+For actions/processes, use "whose X is being Y" NOT "when Y-ing X".
 
 **Example Domain Map Section:**
 ```
