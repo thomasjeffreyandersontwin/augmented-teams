@@ -1,16 +1,57 @@
 {
-  "python.testing.pytestEnabled": false,
-  "python.testing.unittestEnabled": false,
-  "python.testing.mamba": {
-    "enabled": true,
-    "args": [
-      "--format=documentation"
-    ]
+  "python.defaultInterpreterPath": "C:\\Users\\thoma\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/behaviors"
+  ],
+  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.logLevel": "Error",
+  "python.analysis.exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/*test*.py",
+    "**/*_test.py",
+    "**/common_command_runner_test.py"
+  ],
+  "python.analysis.ignore": [
+    "**/*test*.py",
+    "**/*_test.py"
+  ],
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportUndefinedVariable": "none",
+    "reportMissingImports": "none",
+    "reportGeneralTypeIssues": "none",
+    "reportAttributeAccessIssue": "none",
+    "reportCallIssue": "none",
+    "reportAssignmentType": "none",
+    "reportOperatorIssue": "none",
+    "reportUnboundVariable": "none",
+    "reportInvalidTypeVarUse": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownLambdaType": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownMemberType": "none",
+    "reportMissingParameterType": "none",
+    "reportMissingTypeArgument": "none",
+    "reportOptionalMemberAccess": "none",
+    "reportOptionalOperand": "none",
+    "reportOptionalSubscript": "none"
   },
+  "python.languageServer": "None",
+  "python.linting.enabled": false,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": false,
+  "python.linting.mypyEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "-v",
+    "behaviors"
+  ],
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
   "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
   "python.testing.cwd": "${workspaceFolder}",
-  
   "jest.jestCommandLine": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
   "jest.autoRun": "off",
   "jest.rootPath": "demo/mm3e-animations",
@@ -21,5 +62,16 @@
   "files.associations": {
     "*.test.mjs": "javascript",
     "*.spec.mjs": "javascript"
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never"
+    }
   }
 }

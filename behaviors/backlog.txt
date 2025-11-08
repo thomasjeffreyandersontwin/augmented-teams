@@ -1,0 +1,3 @@
+
+commands are shown in prompt and as a step is executedits highlightewrs in proimpt
+

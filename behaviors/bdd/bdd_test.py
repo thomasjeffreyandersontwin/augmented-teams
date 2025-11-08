@@ -1,185 +1,77 @@
-"""BDD Feature Tests - Domain Scaffold Conversion to Mamba"""
+"""BDD Feature Tests - BDD-Specific Domain Model"""
 
 from mamba import description, context, it, before
-from expects import expect, equal, be_true, be_false, contain, have_length
+from expects import expect, equal, be_true, be_false, contain, have_length, be_none
+from unittest.mock import Mock
+
+# Import BDD-specific helpers
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from bdd.helpers import (
+    create_bdd_command,
+    create_bdd_phase_command
+)
+from common_command_runner.common_command_runner import (
+    Content,
+    SpecializingRule,
+    FrameworkSpecializingRule,
+    SpecializedRule,
+    Principle,
+    Example,
+    CodeHeuristic,
+    Violation,
+    ViolationReport,
+    Run,
+    RunHistory,
+    Command,
+    CodeGuidingCommand,
+    IncrementalCommand
+)
+
+def create_content(file_path='test.py', file_extension='.py'):
+    return Content(file_path=file_path, file_extension=file_extension)
+
+def create_specializing_rule(specialized_rules=None):
+    if specialized_rules is None:
+        specialized_rules = {}
+    return FrameworkSpecializingRule(specialized_rules=specialized_rules)
+
+def create_specialized_rule():
+    return SpecializedRule(parent=None)
+
+def create_principle(principle_number=1, name="Test Principle"):
+    return Principle(principle_number=principle_number, principle_name=name)
+
+def create_example(example_type="DO", principle=None):
+    return Example(example_type=example_type, principle=principle)
+
+def create_code_heuristic(detection_pattern="test_pattern"):
+    return CodeHeuristic(detection_pattern=detection_pattern)
+
+def create_violation(line_number=10, message="Test violation"):
+    return Violation(line_number=line_number, message=message)
+
+def create_violation_report(violations=None, principles=None):
+    return ViolationReport(violations=violations or [], principles=principles or [], report_format='CHECKLIST')
+
+def create_run(run_number=1, status="IN_PROGRESS"):
+    return Run(run_number=run_number, status=status)
+
+def create_run_history():
+    return RunHistory()
+
+def create_command(content, specializing_rule):
+    return Command(content=content, specializing_rule=specializing_rule)
+
+def create_code_guiding_command(content, specializing_rule, validation_mode="STRICT"):
+    return CodeGuidingCommand(content=content, specializing_rule=specializing_rule, validation_mode=validation_mode)
+
+def create_incremental_command(content, specializing_rule, max_sample_size=18):
+    return IncrementalCommand(content=content, specializing_rule=specializing_rule, max_sample_size=max_sample_size)
 
 # ============================================================================
-# PART 1: REUSABLE CAPABILITIES (Base - Generic)
-# ============================================================================
-
-with description('a piece of content'):
-    """Base capability: specializing behavior for different file types"""
-    
-    with context('that is being processed by a command'):
-        
-        with context('that implements a specializing rule'):
-            with it('should select the appropriate specialized rule based on the file extension'):
-                # BDD: SIGNATURE
-                pass
-            
-            with it('should include base rule principles'):
-                # BDD: SIGNATURE
-                pass
-            
-            with context('and the specializing has been loaded'):
-                with it('should have access to the base rule and its principles'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should provide access to specialized examples with DOs and DONTs for each principle'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('that is being verified for consistency'):
-                with it('should verify specialized rule references specializing rule'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should verify specialized examples map to specializing rule principles'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('that performs code augmented AI guidance'):
-                with context('that is being validated against its rules'):
-                    with it('should load a code heuristics for each principles from associated specializing rule'):
-                        # BDD: SIGNATURE
-                        pass
-                    
-                    with it('should analyze content for violations using the heuristic'):
-                        # BDD: SIGNATURE
-                        pass
-                    
-                    with it('should assemble related violations, principles, and examples into a checklist based report'):
-                        # BDD: SIGNATURE
-                        pass
-                    
-                    with it('should send the violation report to AI'):
-                        # BDD: SIGNATURE
-                        pass
-                    
-                    with it('should apply fix suggestions from AI'):
-                        # BDD: SIGNATURE
-                        pass
-        
-        with context('that implements incremental runs'):
-            with it('should provide the sample size based on code analysis and configured maximum'):
-                # BDD: SIGNATURE
-                pass
-            
-            with it('should confirm sample size with AI'):
-                # BDD: SIGNATURE
-                pass
-            
-            with it('should submit sample size instructions to limit AI batch size before stopping'):
-                # BDD: SIGNATURE
-                pass
-            
-            with context('that has completed a run'):
-                with it('should mark run complete'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should save run to history'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should save state to disk'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should provide the user with the option to repeat the run, start next run, abandon run, or expand to do all remaining'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with context('that has been repeated'):
-                    with it('should revert current run results'):
-                        # BDD: SIGNATURE
-                        pass
-                    
-                    with it('should restart same run from beginning'):
-                        # BDD: SIGNATURE
-                        pass
-            
-            with context('that is proceeding to the next run'):
-                with it('should proceed to next run with same sample size'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('that is proceeding to expand to all work'):
-                with it('should prompt the AI to learn from mistakes in previous runs'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should execute all remaining work'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('with more work remaining'):
-                with it('should enable next run option'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('with all work complete'):
-                with it('should mark the command as complete'):
-                    # BDD: SIGNATURE
-                    pass
-        
-        with context('that is a phase in a workflow'):
-            with it('should initialize workflow phase'):
-                # BDD: SIGNATURE
-                pass
-            
-            with it('should set state of phase to starting'):
-                # BDD: SIGNATURE
-                pass
-            
-            with it('should save state to disk'):
-                # BDD: SIGNATURE
-                pass
-            
-            with context('that is being resumed from previous session'):
-                with it('should load state from disk'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should start from current phase'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should start from current run'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('that has been invoked out of Phase order'):
-                with it('should block execution'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should report on current phase that needs to be completed'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('that has completed all steps for the command'):
-                with it('should provide the user with the option to proceed to next phase, verify against rules, or redo the phase'):
-                    # BDD: SIGNATURE
-                    pass
-            
-            with context('that has been approved to proceed'):
-                with it('should determine next action from state'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should mark the phase as complete in the Workflow'):
-                    # BDD: SIGNATURE
-                    pass
-                
-                with it('should start the next phase command in the workflow'):
-                    # BDD: SIGNATURE
-                    pass
-
-
-# ============================================================================
-# PART 2: BDD IMPLEMENTATION (Specific)
+# BDD-SPECIFIC TESTS
 # ============================================================================
 
 with description('a test file'):

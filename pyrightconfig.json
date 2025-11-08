@@ -1,0 +1,33 @@
+{
+  "include": [
+    "behaviors"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/*test*.py",
+    "**/*_test.py",
+    "**/common_command_runner_test.py"
+  ],
+  "reportUndefinedVariable": "none",
+  "reportMissingImports": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportCallIssue": "none",
+  "reportAssignmentType": "none",
+  "reportOperatorIssue": "none",
+  "reportUnboundVariable": "none",
+  "reportInvalidTypeVarUse": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownLambdaType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportMissingParameterType": "none",
+  "reportMissingTypeArgument": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportOptionalOperand": "none",
+  "reportOptionalSubscript": "none",
+  "typeCheckingMode": "off",
+  "pythonVersion": "3.12"
+}
