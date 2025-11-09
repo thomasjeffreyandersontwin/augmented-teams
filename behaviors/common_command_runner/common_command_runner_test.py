@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from common_command_runner import (
     Content,
     BaseRule,
+    RuleParser,
     SpecializingRule,
     FrameworkSpecializingRule,
     SpecializedRule,
@@ -42,7 +43,9 @@ from common_command_runner import (
     CodeHeuristic,
     Violation,
     Run,
+    RunState,
     RunHistory,
+    RunStatus,
     Command,
     CodeAugmentedCommand,
     SpecializingRuleCommand,
@@ -197,10 +200,11 @@ def create_command_with_specialized_rule(content, instructions=None, generate=Fa
             return test_specialized_rule_content
         return test_base_rule_content
     
-    with patch.object(BaseRule, '_read_file_content', side_effect=read_file_side_effect):
+    with patch.object(RuleParser, 'read_file_content', side_effect=read_file_side_effect):
         specializing_rule = create_test_specializing_rule_from_file('base-rule.mdc')
         # Ensure base rule has loaded principles
-        specializing_rule.base_rule.principles = specializing_rule.base_rule._load_principles_from_file('base-rule.mdc')
+        parser = RuleParser()
+        specializing_rule.base_rule.principles = parser.load_principles_from_file('base-rule.mdc')
         # Manually create specialized rule since file discovery won't find it when mocking
         specialized_rule = SpecializedRule(rule_file_name='base-rule-servlet.mdc', parent=specializing_rule)
         specializing_rule.specialized_rules['servlet'] = specialized_rule
@@ -221,10 +225,11 @@ with description('a piece of content'):
         with context('that implements a specializing rule'):
             with before.each:
                 # Inline the function call to avoid scope issues with mamba execution context
-                specializing_rule = create_test_specializing_rule_from_file('base-rule.mdc')
-                servlet_rule = specializing_rule.specialized_rules.get('servlet')
-                cgiscript_rule = specializing_rule.specialized_rules.get('cgiscript')
-                self.specializing_rule, self.servlet_specialized, self.cgiscript_specialized = specializing_rule, servlet_rule, cgiscript_rule
+                with patch.object(RuleParser, 'read_file_content', return_value=create_base_rule_content()):
+                    specializing_rule = create_test_specializing_rule_from_file('base-rule.mdc')
+                    servlet_rule = specializing_rule.specialized_rules.get('servlet')
+                    cgiscript_rule = specializing_rule.specialized_rules.get('cgiscript')
+                    self.specializing_rule, self.servlet_specialized, self.cgiscript_specialized = specializing_rule, servlet_rule, cgiscript_rule
 
             with it('should use template method pattern to select specialized rule'):
                 # Arrange
@@ -242,11 +247,12 @@ with description('a piece of content'):
             with it('should include base rule principles'):
                 # Arrange - stub file reading to return test content for base rule
                 test_base_rule_content = create_base_rule_content_with_two_principles()
-                with patch.object(BaseRule, '_read_file_content', return_value=test_base_rule_content):
+                with patch.object(RuleParser, 'read_file_content', return_value=test_base_rule_content):
                     # Create specializing rule - this will create BaseRule which loads principles via patched method
                     specializing_rule = create_test_specializing_rule_from_file('base-rule.mdc')
                     # Ensure base rule has loaded principles
-                    specializing_rule.base_rule.principles = specializing_rule.base_rule._load_principles_from_file('base-rule.mdc')
+                    parser = RuleParser()
+                    specializing_rule.base_rule.principles = parser.load_principles_from_file('base-rule.mdc')
                     # Manually create specialized rule since file discovery won't find it when mocking
                     specialized_rule = SpecializedRule(rule_file_name='base-rule-servlet.mdc', parent=specializing_rule)
                     specializing_rule.specialized_rules['servlet'] = specialized_rule
@@ -279,10 +285,11 @@ with description('a piece of content'):
                             return test_specialized_rule_content
                         return test_base_rule_content
                     
-                    with patch.object(BaseRule, '_read_file_content', side_effect=read_file_side_effect):
+                    with patch.object(RuleParser, 'read_file_content', side_effect=read_file_side_effect):
                         self.specializing_rule = create_test_specializing_rule_from_file('base-rule.mdc')
                         # Ensure base rule has loaded principles
-                        self.specializing_rule.base_rule.principles = self.specializing_rule.base_rule._load_principles_from_file('base-rule.mdc')
+                        parser = RuleParser()
+                        self.specializing_rule.base_rule.principles = parser.load_principles_from_file('base-rule.mdc')
                         # Manually create specialized rule since file discovery won't find it when mocking
                         self.servlet_specialized = SpecializedRule(rule_file_name='base-rule-servlet.mdc', parent=self.specializing_rule)
                         self.specializing_rule.specialized_rules['servlet'] = self.servlet_specialized
@@ -346,10 +353,11 @@ with description('a piece of content'):
                             return test_specialized_rule_content
                         return test_base_rule_content
                     
-                    with patch.object(BaseRule, '_read_file_content', side_effect=read_file_side_effect_for_examples):
+                    with patch.object(RuleParser, 'read_file_content', side_effect=read_file_side_effect_for_examples):
                         specializing_rule = create_test_specializing_rule_from_file('base-rule.mdc')
                         # Ensure base rule has loaded principles
-                        specializing_rule.base_rule.principles = specializing_rule.base_rule._load_principles_from_file('base-rule.mdc')
+                        parser = RuleParser()
+                        specializing_rule.base_rule.principles = parser.load_principles_from_file('base-rule.mdc')
                         # Manually create specialized rule since file discovery won't find it when mocking
                         specialized_rule = SpecializedRule(rule_file_name='base-rule-servlet.mdc', parent=specializing_rule)
                         specializing_rule.specialized_rules['servlet'] = specialized_rule
@@ -410,9 +418,10 @@ if (attempts < MAX_RETRY_ATTEMPTS) { }
 if (attempts < 3) { }
 ```
 """
-                        with patch.object(BaseRule, '_read_file_content', return_value=test_base_rule_content):
+                        with patch.object(RuleParser, 'read_file_content', return_value=test_base_rule_content):
                             self.base_rule = BaseRule('base-rule.mdc')
-                            self.base_rule.principles = self.base_rule._load_principles_from_file('base-rule.mdc')
+                            parser = RuleParser()
+                            self.base_rule.principles = parser.load_principles_from_file('base-rule.mdc')
                         
                         # Create test content that violates rules
                         self.violating_content = Content('bad-code.java', '.java')
@@ -574,7 +583,7 @@ if (attempts < 3) { }
             
             with context('that has completed a run'):
                 with before.each:
-                    self.run = Run(1, "IN_PROGRESS")
+                    self.run = Run(1, RunStatus.STARTED.value)
                     self.run_history = RunHistory()
                 
                 with it('should mark run complete'):
@@ -583,17 +592,17 @@ if (attempts < 3) { }
                     command.current_run = self.run
                     
                     # Act
-                    self.run.status = 'COMPLETE'
+                    self.run.state.status = 'COMPLETE'
                     
                     # Assert
-                    expect(self.run.status).to(equal('COMPLETE'))
+                    expect(self.run.state.status).to(equal('COMPLETE'))
                     expect(self.run.run_number).to(equal(1))
                 
                 with it('should save run to history'):
                     # Arrange
                     command = self.command
                     command.run_history = self.run_history
-                    self.run.status = "COMPLETE"
+                    self.run.state.status = RunStatus.COMPLETED.value
                     
                     # Act
                     self.run_history.runs.append(self.run)
@@ -605,12 +614,12 @@ if (attempts < 3) { }
                 with it('should save state to disk'):
                     # Arrange
                     command = self.command
+                    command.current_run = self.run
                     
                     # Act
-                    command.state.persist_to_disk()
+                    command.state.save(command.run_history, command.current_run)
                     
                     # Assert
-                    expect(command.state.persisted_at).not_to(be_none)
                     expect(command).not_to(be_none)
                     expect(command.content).to(equal(self.content))
                     expect(command.run_history).not_to(be_none)
@@ -622,7 +631,7 @@ if (attempts < 3) { }
                     command.current_run = self.run
                     
                     # Act
-                    options = command.get_user_options()
+                    options = self.run.get_user_options()
                     
                     # Assert
                     expect(options).to(contain('repeat'))
@@ -632,7 +641,7 @@ if (attempts < 3) { }
                     expect(command).not_to(be_none)
                     expect(command.current_run).to(equal(self.run))
                     expect(command.run_history).not_to(be_none)
-                    expect(self.run.status).to(equal('IN_PROGRESS'))
+                    expect(self.run.state.status).to(equal(RunStatus.STARTED.value))
                 
                 with context('that has been repeated'):
                     with it('should revert current run results'):
@@ -642,41 +651,41 @@ if (attempts < 3) { }
                         self.run.snapshot_before_run = "snapshot_data"
                         
                         # Act
-                        self.run.status = 'REVERTED'
+                        self.run.state.status = 'REVERTED'
                         
                         # Assert
-                        expect(self.run.status).to(equal('REVERTED'))
+                        expect(self.run.state.status).to(equal('REVERTED'))
                         expect(self.run.run_number).to(equal(1))
                     
                     with it('should restart same run from beginning'):
                         # Arrange
                         command = self.command
-                        self.run.status = "REVERTED"
+                        self.run.state.status = "REVERTED"
                         
                         # Act
-                        self.run.status = 'IN_PROGRESS'
+                        self.run.state.status = RunStatus.STARTED.value
                         self.run.completed_at = None
                         
                         # Assert
-                        expect(self.run.status).to(equal('IN_PROGRESS'))
+                        expect(self.run.state.status).to(equal(RunStatus.STARTED.value))
                         expect(self.run.completed_at).to(be_none)
                         expect(self.run.run_number).to(equal(1))
             
             with context('that is proceeding to the next run'):
                 with before.each:
-                    self.current_run = Run(1, "COMPLETE")
+                    self.current_run = Run(1, RunStatus.COMPLETED.value)
                 
                 with it('should proceed to next run with same sample size'):
                     # Arrange
                     command = self.command
                     command.current_run = self.current_run
-                    command.sample_size = 6
+                    self.current_run.sample_size = 6
                     
                     # Act
                     command.proceed_to_next_run()
                     
                     # Assert
-                    expect(command.current_run_number).to(equal(2))
+                    expect(command.current_run.run_number).to(equal(2))
                     expect(command.current_run.sample_size).to(equal(6))
                     expect(command).not_to(be_none)
                     expect(command.sample_size).to(equal(6))
@@ -691,7 +700,7 @@ if (attempts < 3) { }
                 
                 with it('should extract lessons from previous runs'):
                     # Arrange
-                    previous_run = Run(1, "COMPLETE")
+                    previous_run = Run(1, RunStatus.COMPLETED.value)
                     self.run_history.runs = [previous_run]
                     command = self.command
                     command.run_history = self.run_history
@@ -704,7 +713,7 @@ if (attempts < 3) { }
                     expect(command).not_to(be_none)
                     expect(command.run_history).to(equal(self.run_history))
                     expect(self.run_history.runs).to(contain(previous_run))
-                    expect(previous_run.status).to(equal("COMPLETE"))
+                    expect(previous_run.state.status).to(equal(RunStatus.COMPLETED.value))
                     expect(previous_run.run_number).to(equal(1))
                 
                 with it('should execute all remaining work'):
@@ -715,7 +724,7 @@ if (attempts < 3) { }
                     command.expand_to_all_work()
                     
                     # Assert
-                    expect(command.sample_size).to(equal(90))
+                    expect(command.current_run.sample_size).to(equal(90))
                     expect(command.completed_work_units).to(equal(100))
                     expect(command).not_to(be_none)
                     expect(command.max_sample_size).to(equal(self.max_sample_size))
@@ -1092,7 +1101,7 @@ if (attempts < 3) { }
                 with it('should delegate methods to wrapped IncrementalCommand'):
                     # Arrange
                     base_command = Command(self.content, self.base_rule)
-                    incremental_command = IncrementalCommand(base_command, self.base_rule, 'test.py', 10)
+                    incremental_command = IncrementalCommand(base_command, self.base_rule, max_sample_size=10, command_file_path='test.py')
                     phase_command = WorkflowPhaseCommand(incremental_command, self.workflow, 0, "Phase: Incremental")
                     
                     # Mock the inner command's methods
@@ -1188,4 +1197,590 @@ if (attempts < 3) { }
                 # Assert
                 expect(generate_result).to(be_none)
                 expect(validate_result).to(be_none)
+
+with description('Run class'):
+    """Tests for Run domain object"""
+    
+    with context('state management'):
+        with before.each:
+            self.run = Run(1, RunStatus.STARTED.value)
+        
+        with it('should track generation timestamp'):
+            # Arrange
+            run = self.run
+            
+            # Act
+            run.generated_at = "2024-01-01T12:00:00"
+            
+            # Assert
+            expect(run.generated_at).to(equal("2024-01-01T12:00:00"))
+            expect(run.has_been_generated()).to(be_true)
+        
+        with it('should track validation timestamp'):
+            # Arrange
+            run = self.run
+            
+            # Act
+            run.validated_at = "2024-01-01T12:00:00"
+            
+            # Assert
+            expect(run.validated_at).to(equal("2024-01-01T12:00:00"))
+            expect(run.has_been_validated()).to(be_true)
+        
+        with it('should check if completed'):
+            # Arrange
+            run = self.run
+            run.state.status = RunStatus.COMPLETED.value
+            
+            # Act & Assert
+            expect(run.state.completed).to(be_true)
+            expect(run.state.abandoned).to(be_false)
+            expect(run.state.finished).to(be_true)
+        
+        with it('should check if abandoned'):
+            # Arrange
+            run = self.run
+            run.state.status = RunStatus.ABANDONED.value
+            
+            # Act & Assert
+            expect(run.state.abandoned).to(be_true)
+            expect(run.state.completed).to(be_false)
+            expect(run.state.finished).to(be_true)
+    
+    with context('state transitions'):
+        with before.each:
+            self.run = Run(1, RunStatus.STARTED.value)
+            self.run.run_id = "test_run_1"
+        
+        with it('should verify AI and transition to AI_VERIFIED'):
+            # Arrange
+            run = self.run
+            validation_results = {"passed": True}
+            
+            # Act
+            run.verify_ai(validation_results)
+            
+            # Assert
+            expect(run.state.status).to(equal(RunStatus.AI_VERIFIED.value))
+            expect(run.ai_verified_at).not_to(be_none)
+            expect(run.validation_results).to(equal(validation_results))
+        
+        with it('should approve and transition to HUMAN_APPROVED'):
+            # Arrange
+            run = self.run
+            run.state.status = RunStatus.AI_VERIFIED.value
+            feedback = "Looks good"
+            
+            # Act
+            run.approve(feedback)
+            
+            # Assert
+            expect(run.state.status).to(equal(RunStatus.HUMAN_APPROVED.value))
+            expect(run.human_approved_at).not_to(be_none)
+            expect(run.human_feedback).to(equal(feedback))
+        
+        with it('should reject and transition back to STARTED'):
+            # Arrange
+            run = self.run
+            run.state.status = RunStatus.AI_VERIFIED.value
+            feedback = "Needs fixes"
+            
+            # Act
+            run.reject(feedback)
+            
+            # Assert
+            expect(run.state.status).to(equal(RunStatus.STARTED.value))
+            expect(run.ai_verified_at).to(be_none)
+            expect(run.validation_results).to(be_none)
+            expect(run.human_feedback).to(equal(feedback))
+        
+        with it('should complete run'):
+            # Arrange
+            run = self.run
+            
+            # Act
+            run.complete()
+            
+            # Assert
+            expect(run.state.status).to(equal(RunStatus.COMPLETED.value))
+            expect(run.completed_at).not_to(be_none)
+        
+        with it('should abandon run'):
+            # Arrange
+            run = self.run
+            reason = "Not needed"
+            
+            # Act
+            run.abandon(reason)
+            
+            # Assert
+            expect(run.state.status).to(equal(RunStatus.ABANDONED.value))
+            expect(run.completed_at).not_to(be_none)
+            expect(run.human_feedback).to(equal(reason))
+        
+        with it('should start run with step_type and context'):
+            # Arrange
+            run = self.run
+            step_type = "test_step"
+            context = {"key": "value"}
+            
+            # Act
+            run_id = run.start(step_type, context)
+            
+            # Assert
+            expect(run.run_id).to(equal(run_id))
+            expect(run.step_type).to(equal(step_type))
+            expect(run.context).to(equal(context))
+            expect(run.state.status).to(equal(RunStatus.STARTED.value))
+            expect(run.started_at).not_to(be_none)
+        
+        with it('should repeat run and create new run'):
+            # Arrange
+            run = self.run
+            run.step_type = "test_step"
+            run.context = {"key": "value"}
+            run_history = RunHistory()
+            
+            # Act
+            new_run = run.repeat(run_history)
+            
+            # Assert
+            expect(new_run.run_number).to(equal(1))
+            expect(new_run.step_type).to(equal("test_step"))
+            expect(new_run.context).to(equal({"key": "value"}))
+            expect(new_run).not_to(equal(run))
+    
+    with context('can_proceed_to_next_step'):
+        with it('should allow proceeding when completed'):
+            # Arrange
+            run = Run(1, RunStatus.COMPLETED.value)
+            
+            # Act
+            can_proceed, reason = run.can_proceed_to_next_step()
+            
+            # Assert
+            expect(can_proceed).to(be_true)
+            expect(reason).to(contain("complete"))
+        
+        with it('should block when started'):
+            # Arrange
+            run = Run(1, RunStatus.STARTED.value)
+            
+            # Act
+            can_proceed, reason = run.can_proceed_to_next_step()
+            
+            # Assert
+            expect(can_proceed).to(be_false)
+            expect(reason).to(contain("AI must verify"))
+
+with description('RunHistory class'):
+    """Tests for RunHistory domain object"""
+    
+    with before.each:
+        self.run_history = RunHistory()
+        self.run1 = Run(1, RunStatus.COMPLETED.value)
+        self.run1.run_id = "run_1"
+        self.run2 = Run(2, RunStatus.STARTED.value)
+        self.run2.run_id = "run_2"
+        self.run3 = Run(3, RunStatus.COMPLETED.value)
+        self.run3.run_id = "run_3"
+    
+    with it('should find run by number'):
+        # Arrange
+        self.run_history.runs = [self.run1, self.run2, self.run3]
+        
+        # Act
+        found = self.run_history.find_by_number(2)
+        
+        # Assert
+        expect(found).to(equal(self.run2))
+        expect(found.run_number).to(equal(2))
+    
+    with it('should return None when run number not found'):
+        # Arrange
+        self.run_history.runs = [self.run1, self.run2]
+        
+        # Act
+        found = self.run_history.find_by_number(99)
+        
+        # Assert
+        expect(found).to(be_none)
+    
+    with it('should find run by id'):
+        # Arrange
+        self.run_history.runs = [self.run1, self.run2, self.run3]
+        
+        # Act
+        found = self.run_history.find_by_id("run_2")
+        
+        # Assert
+        expect(found).to(equal(self.run2))
+        expect(found.run_id).to(equal("run_2"))
+    
+    with it('should return None when run id not found'):
+        # Arrange
+        self.run_history.runs = [self.run1, self.run2]
+        
+        # Act
+        found = self.run_history.find_by_id("nonexistent")
+        
+        # Assert
+        expect(found).to(be_none)
+    
+    with it('should get completed count'):
+        # Arrange
+        self.run_history.runs = [self.run1, self.run2, self.run3]
+        
+        # Act
+        count = self.run_history.get_completed_count()
+        
+        # Assert
+        expect(count).to(equal(2))
+    
+    with it('should get recent runs'):
+        # Arrange
+        self.run_history.runs = [self.run1, self.run2, self.run3]
+        
+        # Act
+        recent = self.run_history.get_recent_runs(2)
+        
+        # Assert
+        expect(recent).to(have_length(2))
+        expect(recent).to(contain(self.run2))
+        expect(recent).to(contain(self.run3))
+
+with description('RunState class'):
+    """Tests for RunState data object"""
+    
+    with context('state properties'):
+        with it('should indicate completed when status is COMPLETED'):
+            # Arrange
+            state = RunState(RunStatus.COMPLETED.value)
+            
+            # Act & Assert
+            expect(state.completed).to(be_true)
+            expect(state.abandoned).to(be_false)
+            expect(state.finished).to(be_true)
+            expect(state.started).to(be_false)
+            expect(state.ai_verified).to(be_false)
+            expect(state.human_approved).to(be_false)
+        
+        with it('should indicate abandoned when status is ABANDONED'):
+            # Arrange
+            state = RunState(RunStatus.ABANDONED.value)
+            
+            # Act & Assert
+            expect(state.abandoned).to(be_true)
+            expect(state.completed).to(be_false)
+            expect(state.finished).to(be_true)
+            expect(state.started).to(be_false)
+        
+        with it('should indicate started when status is STARTED'):
+            # Arrange
+            state = RunState(RunStatus.STARTED.value)
+            
+            # Act & Assert
+            expect(state.started).to(be_true)
+            expect(state.completed).to(be_false)
+            expect(state.abandoned).to(be_false)
+            expect(state.finished).to(be_false)
+        
+        with it('should indicate ai_verified when status is AI_VERIFIED'):
+            # Arrange
+            state = RunState(RunStatus.AI_VERIFIED.value)
+            
+            # Act & Assert
+            expect(state.ai_verified).to(be_true)
+            expect(state.completed).to(be_false)
+            expect(state.human_approved).to(be_false)
+        
+        with it('should indicate human_approved when status is HUMAN_APPROVED'):
+            # Arrange
+            state = RunState(RunStatus.HUMAN_APPROVED.value)
+            
+            # Act & Assert
+            expect(state.human_approved).to(be_true)
+            expect(state.completed).to(be_false)
+            expect(state.ai_verified).to(be_false)
+
+with description('RuleParser class'):
+    """Tests for RuleParser"""
+    
+    with context('file reading'):
+        with it('should read file content'):
+            # Arrange
+            import tempfile
+            import os
+            parser = RuleParser()
+            
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.mdc') as f:
+                f.write("Test content")
+                test_file = f.name
+            
+            try:
+                # Act
+                content = parser.read_file_content(test_file)
+                
+                # Assert
+                expect(content).to(equal("Test content"))
+            finally:
+                if os.path.exists(test_file):
+                    os.unlink(test_file)
+        
+        with it('should return None for non-existent file'):
+            # Arrange
+            parser = RuleParser()
+            
+            # Act
+            content = parser.read_file_content("nonexistent.mdc")
+            
+            # Assert
+            expect(content).to(be_none)
+    
+    with context('principle parsing'):
+        with it('should find principle matches in content'):
+            # Arrange
+            parser = RuleParser()
+            content = """## 1. First Principle
+Content here.
+
+## 2. Second Principle
+More content.
+"""
+            
+            # Act
+            matches = parser.find_principle_matches(content)
+            
+            # Assert
+            expect(matches).to(have_length(2))
+            expect(matches[0].group(1)).to(equal("1"))
+            expect(matches[0].group(2)).to(equal("First Principle"))
+            expect(matches[1].group(1)).to(equal("2"))
+            expect(matches[1].group(2)).to(equal("Second Principle"))
+        
+        with it('should extract principle content between matches'):
+            # Arrange
+            parser = RuleParser()
+            content = """## 1. First
+Content for first.
+
+## 2. Second
+Content for second.
+"""
+            matches = parser.find_principle_matches(content)
+            
+            # Act
+            principle_content = parser.extract_principle_content(content, matches[0], matches, 0)
+            
+            # Assert
+            expect(principle_content).to(contain("Content for first"))
+            expect(principle_content).not_to(contain("Content for second"))
+    
+    with context('example parsing'):
+        with it('should extract DO example'):
+            # Arrange
+            parser = RuleParser()
+            content = """**[DO]:**
+Some text here.
+```java
+public class Good { }
+```
+"""
+            
+            # Act
+            do_text, do_code = parser.extract_do_example(content)
+            
+            # Assert
+            expect(do_code).to(contain("public class Good"))
+            expect(do_text).to(contain("Some text here"))
+        
+        with it('should extract DON'T example'):
+            # Arrange
+            parser = RuleParser()
+            content = """**[DON'T]:**
+Bad example.
+```java
+public class Bad { }
+```
+"""
+            
+            # Act
+            dont_text, dont_code = parser.extract_dont_example(content)
+            
+            # Assert
+            expect(dont_code).to(contain("public class Bad"))
+            expect(dont_text).to(contain("Bad example"))
+        
+        with it('should load examples from content'):
+            # Arrange
+            parser = RuleParser()
+            principle = Principle(1, "Test Principle", "Test content")
+            content = """**[DO]:**
+```java
+public class Good { }
+```
+
+**[DON'T]:**
+```java
+public class Bad { }
+```
+"""
+            
+            # Act
+            examples = parser.load_examples_from_content(content, principle)
+            
+            # Assert
+            expect(examples).to(have_length(1))
+            expect(examples[0].do_code).to(contain("Good"))
+            expect(examples[0].dont_code).to(contain("Bad"))
+            expect(examples[0].principle).to(equal(principle))
+    
+    with context('principle creation'):
+        with it('should create principle from match with examples'):
+            # Arrange
+            parser = RuleParser()
+            content = """## 1. Test Principle
+Principle description.
+
+**[DO]:**
+```java
+public class Good { }
+```
+"""
+            matches = parser.find_principle_matches(content)
+            
+            # Act
+            principle = parser.create_principle_from_match(content, matches[0], matches, 0)
+            
+            # Assert
+            expect(principle.principle_number).to(equal(1))
+            expect(principle.principle_name).to(equal("Test Principle"))
+            expect(principle.content).to(contain("Principle description"))
+            expect(principle.examples).to(have_length(1))
+            expect(principle.examples[0].do_code).to(contain("Good"))
+    
+    with context('loading principles from file'):
+        with it('should load all principles from file'):
+            # Arrange
+            import tempfile
+            import os
+            parser = RuleParser()
+            
+            test_content = """## 1. First Principle
+First content.
+
+## 2. Second Principle
+Second content.
+"""
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.mdc') as f:
+                f.write(test_content)
+                test_file = f.name
+            
+            try:
+                # Act
+                principles = parser.load_principles_from_file(test_file)
+                
+                # Assert
+                expect(principles).to(have_length(2))
+                expect(principles[0].principle_number).to(equal(1))
+                expect(principles[0].principle_name).to(equal("First Principle"))
+                expect(principles[1].principle_number).to(equal(2))
+                expect(principles[1].principle_name).to(equal("Second Principle"))
+            finally:
+                if os.path.exists(test_file):
+                    os.unlink(test_file)
+
+with description('IncrementalState class'):
+    """Tests for IncrementalState persistence"""
+    
+    with context('state file path'):
+        with it('should derive state file path from command file path'):
+            # Arrange
+            state = IncrementalState("test/command.py")
+            
+            # Act
+            state_path = state.get_state_file_path()
+            
+            # Assert
+            expect(str(state_path)).to(contain(".incremental-state"))
+            expect(str(state_path)).to(contain("command.state.json"))
+    
+    with context('save and load'):
+        with it('should save and load run history'):
+            # Arrange
+            import tempfile
+            import os
+            with tempfile.TemporaryDirectory() as tmpdir:
+                test_file = os.path.join(tmpdir, "test.py")
+                state = IncrementalState(test_file)
+                run_history = RunHistory()
+                run = Run(1, RunStatus.STARTED.value)
+                run.run_id = "test_run"
+                run_history.runs.append(run)
+                
+                # Act - save
+                state.save(run_history, run)
+                
+                # Assert - file exists
+                state_path = state.get_state_file_path()
+                expect(state_path.exists()).to(be_true)
+                
+                # Act - load
+                new_history = RunHistory()
+                loaded_run = state.load(new_history)
+                
+                # Assert
+                expect(new_history.runs).to(have_length(1))
+                expect(new_history.runs[0].run_id).to(equal("test_run"))
+                expect(loaded_run.run_id).to(equal("test_run"))
+
+with description('Command.execute() method'):
+    """Tests for Command.execute() workflow"""
+    
+    with before.each:
+        test_base_rule_content = create_base_rule_content()
+        with patch.object(RuleParser, 'read_file_content', return_value=test_base_rule_content):
+            self.base_rule = BaseRule('base-rule.mdc')
+            parser = RuleParser()
+            self.base_rule.principles = parser.load_principles_from_file('base-rule.mdc')
+        self.content = Content('test.java', '.java')
+    
+    with it('should generate when not generated'):
+        # Arrange
+        command = Command(self.content, self.base_rule)
+        
+        # Act
+        result = command.execute()
+        
+        # Assert
+        expect(command.generated).to(be_true)
+        expect(command.validated).to(be_false)
+        expect(result).to(contain("Please generate"))
+    
+    with it('should validate when already generated'):
+        # Arrange
+        command = Command(self.content, self.base_rule)
+        command.generated = True
+        
+        # Act
+        result = command.execute()
+        
+        # Assert
+        expect(command.generated).to(be_true)
+        expect(command.validated).to(be_true)
+        expect(result).to(contain("Please validate"))
+    
+    with it('should return validation result when both generated and validated'):
+        # Arrange
+        command = Command(self.content, self.base_rule)
+        command.generated = True
+        command.validated = True
+        
+        # Act
+        result = command.execute()
+        
+        # Assert
+        expect(command.generated).to(be_true)
+        expect(command.validated).to(be_true)
+        expect(result).to(contain("Please validate"))
 

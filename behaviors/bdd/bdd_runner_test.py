@@ -63,20 +63,13 @@ bdd_runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bdd_runner)
 
 BDDRule = bdd_runner.BDDRule
-BDDRunState = bdd_runner.BDDRunState
 BDDIncrementalCommand = bdd_runner.BDDIncrementalCommand
 BDDCommand = bdd_runner.BDDCommand
 BDDWorkflowPhaseCommand = bdd_runner.BDDWorkflowPhaseCommand
-create_bdd_workflow = bdd_runner.create_bdd_workflow
+BDDWorkflow = bdd_runner.BDDWorkflow
+bdd_workflow = bdd_runner.bdd_workflow
 RunStatus = bdd_runner.RunStatus
 StepType = bdd_runner.StepType
-WorkflowStepTemplate = bdd_runner.WorkflowStepTemplate
-DomainScaffolder = bdd_runner.DomainScaffolder
-SignatureGenerator = bdd_runner.SignatureGenerator
-RedExecutor = bdd_runner.RedExecutor
-GreenExecutor = bdd_runner.GreenExecutor
-RefactorExecutor = bdd_runner.RefactorExecutor
-BDDWorkflowState = bdd_runner.BDDWorkflowState
 BDDPhase = bdd_runner.BDDPhase
 detect_framework_from_file = bdd_runner.detect_framework_from_file
 parse_test_structure = bdd_runner.parse_test_structure
@@ -417,21 +410,10 @@ def create_bdd_command_with_specialized_rule(content, framework='mamba', instruc
             base_command = Command(content, base_rule, validate_instructions=instructions or "Please validate test as specified by BDD rules")
         return SpecializingRuleCommand(base_command, specializing_rule)
 
-def create_bdd_run_state(test_file='test_test.py', state_data=None):
-    """Create BDDRunState with optional state data"""
-    if state_data is None:
-        state_data = {
-            "runs": [],
-            "current_run_id": None,
-            "phase": "signatures",
-            "scope": "describe",
-            "created_at": "2024-01-01T00:00:00"
-        }
-    
-    # Mock the file system operations
-    run_state = BDDRunState(test_file)
-    run_state.state = state_data
-    return run_state
+# BDDRunState removed - functionality moved to IncrementalCommand
+# def create_bdd_run_state(test_file='test_test.py', state_data=None):
+#     """Create BDDRunState with optional state data"""
+#     pass
 
 def test_bdd_heuristic(content_lines, file_name, expected_violations, principle_number, framework='mamba'):
     """
@@ -943,7 +925,8 @@ with description('a large test suite'):
                     bdd_command = BDDCommand(self.content, 'bdd-rule.mdc')
                     self.test_file = 'test_test.py'
                     self.framework = 'mamba'
-                    self.workflow = create_bdd_workflow(bdd_command, self.test_file, self.framework)
+                    content = Content(self.test_file)
+                    self.workflow = BDDWorkflow(content, self.test_file, self.framework)
             
             with it('should create workflow with phases in correct order'):
                 # Arrange
@@ -996,7 +979,8 @@ with description('a large test suite'):
                     mock_bdd_command.base_rule = BaseRule('bdd-rule.mdc')
                     
                     # Create workflow with mocked command
-                    test_workflow = create_bdd_workflow(mock_bdd_command, self.test_file, self.framework)
+                    content = Content(self.test_file)
+                    test_workflow = BDDWorkflow(content, self.test_file, self.framework)
                     phase = test_workflow.phases[0]
                     
                     # Act
@@ -1013,7 +997,8 @@ with description('a large test suite'):
                 mock_bdd_command.content = self.content
                 
                 # Create workflow with mocked command
-                test_workflow = create_bdd_workflow(mock_bdd_command, self.test_file, self.framework)
+                content = Content(self.test_file)
+                test_workflow = BDDWorkflow(content, self.test_file, self.framework)
                 phase = test_workflow.phases[0]
                 
                 # Act
@@ -1030,7 +1015,8 @@ with description('a large test suite'):
                 mock_bdd_command.content = self.content
                 
                 # Create workflow with mocked command
-                test_workflow = create_bdd_workflow(mock_bdd_command, self.test_file, self.framework)
+                content = Content(self.test_file)
+                test_workflow = BDDWorkflow(content, self.test_file, self.framework)
                 phase = test_workflow.phases[0]
                 
                 # Act

@@ -3,9 +3,12 @@
 from pathlib import Path
 import re
 import json
+import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # ENUMS
@@ -50,7 +53,7 @@ class Content:
         self.violations = []
         self._content_lines = content_lines  # Optional: pre-loaded content lines
     
-    def get_code_snippet(self, line_number, context_lines=3):
+    def get_code_snippet(self, line_number: int, context_lines: int = 3) -> Optional[str]:
         
         if not self._ensure_content_loaded():
             return None
@@ -75,7 +78,7 @@ class Content:
         end_line = min(len(self._content_lines), line_number + context_lines)
         return start_line, end_line
     
-    def _build_snippet_with_line_numbers(self, start_line, end_line, violation_line):
+    def _build_snippet_with_line_numbers(self, start_line: int, end_line: int, violation_line: int) -> str:
         
         snippet_lines = []
         for i in range(start_line - 1, end_line):
@@ -89,61 +92,21 @@ class Content:
         self.violations = []
 
 
-class BaseRule:
+class RuleParser:
     
-    def __init__(self, rule_file_name):
+    def read_file_content(self, file_path: str) -> Optional[str]:
+        rule_path = Path(file_path)
+        if not rule_path.exists():
+            return None
         
-        self.rule_file_name = rule_file_name
-        self.principles = []
-        self._load_principles()
+        with open(rule_path, 'r', encoding='utf-8') as f:
+            return f.read()
     
-    def _load_principles(self):
-        
-        self.principles = self._load_principles_from_file(self.rule_file_name)
-    
-    def _load_principles_from_file(self, rule_file_name):
-        
-        principles = []
-        try:
-            content = self._read_file_content(rule_file_name)
-            if not content:
-                return principles
-            
-            matches = self._find_principle_matches(content)
-            for i, match in enumerate(matches):
-                principle = self._create_principle_from_match(content, match, matches, i)
-                if principle:
-                    principles.append(principle)
-        
-        except Exception:
-            pass
-        
-        return principles
-    
-    def _find_principle_matches(self, content):
-        
+    def find_principle_matches(self, content: str):
         pattern = r'^##\s+(\d+)(?:\.\d+)*\.\s+(.+)$'
         return list(re.finditer(pattern, content, re.MULTILINE))
     
-    def _create_principle_from_match(self, content, match, matches, index):
-        
-        principle_number = int(match.group(1))
-        principle_name = match.group(2).strip()
-        principle_content = self._extract_principle_content(content, match, matches, index)
-        
-        principle = Principle(
-            principle_number=principle_number,
-            principle_name=principle_name,
-            content=principle_content
-        )
-        
-        examples = self._load_examples_from_content(principle_content, principle)
-        principle.examples = examples
-        
-        return principle
-    
-    def _extract_principle_content(self, content, match, matches, index):
-        
+    def extract_principle_content(self, content: str, match, matches: list, index: int) -> str:
         start_pos = match.end()
         if index + 1 < len(matches):
             end_pos = matches[index + 1].start()
@@ -151,15 +114,52 @@ class BaseRule:
             end_pos = len(content)
         return content[start_pos:end_pos].strip()
     
-    def _load_examples_from_content(self, section_content, principle):
+    def extract_do_example(self, section_content: str):
+        do_pattern = r'\*\*✅\s+DO:\*\*|\*\*\[DO\]:\*\*|✅\s+DO:|\[DO\]:'
+        do_match = re.search(do_pattern, section_content, re.IGNORECASE)
+        if not do_match:
+            return None, None
         
+        text_start = do_match.end()
+        code_block_match = re.search(r'```', section_content[text_start:], re.DOTALL)
+        if code_block_match:
+            text_content = section_content[text_start:text_start + code_block_match.start()].strip()
+        else:
+            text_content = ""
+        
+        code_content = self.extract_code_block(section_content[do_match.end():])
+        
+        return text_content, code_content
+    
+    def extract_dont_example(self, section_content: str):
+        dont_pattern = r'\*\*❌\s+DON\'T:\*\*|\*\*\[DON\'T\]:\*\*|❌\s+DON\'T:|\[DON\'T\]:'
+        dont_match = re.search(dont_pattern, section_content, re.IGNORECASE)
+        if not dont_match:
+            return None, None
+        
+        text_start = dont_match.end()
+        code_block_match = re.search(r'```', section_content[text_start:], re.DOTALL)
+        if code_block_match:
+            text_content = section_content[text_start:text_start + code_block_match.start()].strip()
+        else:
+            text_content = ""
+        
+        code_content = self.extract_code_block(section_content[dont_match.end():])
+        
+        return text_content, code_content
+    
+    def extract_code_block(self, content_after_marker: str) -> Optional[str]:
+        code_block_match = re.search(r'```[\w]*\n(.*?)```', content_after_marker, re.DOTALL)
+        if not code_block_match:
+            return None
+        return code_block_match.group(1).strip()
+    
+    def load_examples_from_content(self, section_content: str, principle) -> list:
         examples = []
         try:
-            # Extract both DO and DON'T into a single Example object
-            do_text, do_code = self._extract_do_example(section_content)
-            dont_text, dont_code = self._extract_dont_example(section_content)
+            do_text, do_code = self.extract_do_example(section_content)
+            dont_text, dont_code = self.extract_dont_example(section_content)
             
-            # Create example with both DO and DON'T if at least one exists
             if do_code or dont_code:
                 example = Example(
                     principle=principle,
@@ -170,66 +170,64 @@ class BaseRule:
                 )
                 examples.append(example)
         
-        except Exception:
-            pass
+        except (ValueError, AttributeError, IndexError) as e:
+            logger.warning(f"Failed to extract examples from content: {e}")
+            raise
         
         return examples
     
-    def _extract_do_example(self, section_content):
+    def create_principle_from_match(self, content: str, match, matches: list, index: int):
+        principle_number = int(match.group(1))
+        principle_name = match.group(2).strip()
+        principle_content = self.extract_principle_content(content, match, matches, index)
         
-        do_pattern = r'\*\*✅\s+DO:\*\*|\*\*\[DO\]:\*\*|✅\s+DO:|\[DO\]:'
-        do_match = re.search(do_pattern, section_content, re.IGNORECASE)
-        if not do_match:
-            return None, None
+        principle = Principle(
+            principle_number=principle_number,
+            principle_name=principle_name,
+            content=principle_content
+        )
         
-        # Extract text before code block (if any)
-        text_start = do_match.end()
-        code_block_match = re.search(r'```', section_content[text_start:], re.DOTALL)
-        if code_block_match:
-            text_content = section_content[text_start:text_start + code_block_match.start()].strip()
-        else:
-            text_content = ""
+        examples = self.load_examples_from_content(principle_content, principle)
+        principle.examples = examples
         
-        # Extract code block
-        code_content = self._extract_code_block(section_content[do_match.end():])
-        
-        return text_content, code_content
+        return principle
     
-    def _extract_dont_example(self, section_content):
+    def load_principles_from_file(self, rule_file_name: str) -> list:
+        principles = []
+        try:
+            content = self.read_file_content(rule_file_name)
+            if not content:
+                return principles
+            
+            matches = self.find_principle_matches(content)
+            for i, match in enumerate(matches):
+                principle = self.create_principle_from_match(content, match, matches, i)
+                if principle:
+                    principles.append(principle)
         
-        dont_pattern = r'\*\*❌\s+DON\'T:\*\*|\*\*\[DON\'T\]:\*\*|❌\s+DON\'T:|\[DON\'T\]:'
-        dont_match = re.search(dont_pattern, section_content, re.IGNORECASE)
-        if not dont_match:
-            return None, None
+        except (FileNotFoundError, IOError, UnicodeDecodeError) as e:
+            logger.error(f"Failed to load principles from {rule_file_name}: {e}")
+            raise
         
-        # Extract text before code block (if any)
-        text_start = dont_match.end()
-        code_block_match = re.search(r'```', section_content[text_start:], re.DOTALL)
-        if code_block_match:
-            text_content = section_content[text_start:text_start + code_block_match.start()].strip()
-        else:
-            text_content = ""
-        
-        # Extract code block
-        code_content = self._extract_code_block(section_content[dont_match.end():])
-        
-        return text_content, code_content
+        return principles
+
+
+class BaseRule:
     
-    def _extract_code_block(self, content_after_marker):
-        
-        code_block_match = re.search(r'```[\w]*\n(.*?)```', content_after_marker, re.DOTALL)
-        if not code_block_match:
-            return None
-        return code_block_match.group(1).strip()
+    def __init__(self, rule_file_name, parser: Optional[RuleParser] = None):
+        self.rule_file_name = rule_file_name
+        self.principles = []
+        self._parser = parser or RuleParser()
+        self._load_principles()
     
-    def _read_file_content(self, file_path):
-        
-        rule_path = Path(file_path)
-        if not rule_path.exists():
-            return None
-        
-        with open(rule_path, 'r', encoding='utf-8') as f:
-            return f.read()
+    def _load_principles(self):
+        self.principles = self._parser.load_principles_from_file(self.rule_file_name)
+    
+    def _read_file_content(self, file_path: str) -> Optional[str]:
+        return self._parser.read_file_content(file_path)
+    
+    def _load_examples_from_content(self, section_content: str, principle) -> list:
+        return self._parser.load_examples_from_content(section_content, principle)
 
 
 class SpecializingRule:
@@ -396,42 +394,23 @@ class SpecializedRule:
         return self.parent.base_rule.principles
     
     def _read_file_content(self, file_path):
-        
         if self.parent:
             return self.parent._read_file_content(file_path)
         return None
     
     def _load_examples(self, specialized_file_name, specialized_principle):
+        content = self._read_file_content(specialized_file_name)
+        if not content:
+            return []
         
-        examples = []
-        try:
-            content = self._read_file_content(specialized_file_name)
-            if not content:
-                return examples
-            
-            section_content = self._extract_principle_section_content(content, specialized_principle)
-            if not section_content:
-                return examples
-            
-            # Parse DO and DON'T examples
-            do_text, do_code = self._parse_do_example(section_content, specialized_principle)
-            dont_text, dont_code = self._parse_dont_example(section_content, specialized_principle)
-            
-            # Create example with both DO and DON'T if at least one exists
-            if do_code or dont_code:
-                example = Example(
-                    principle=specialized_principle._base_principle,
-                    do_text=do_text or "",
-                    do_code=do_code or "",
-                    dont_text=dont_text or "",
-                    dont_code=dont_code or ""
-                )
-                examples.append(example)
+        section_content = self._extract_principle_section_content(content, specialized_principle)
+        if not section_content:
+            return []
         
-        except Exception:
-            pass
+        if not self.parent or not self.parent.base_rule:
+            return []
         
-        return examples
+        return self.parent.base_rule._load_examples_from_content(section_content, specialized_principle._base_principle)
     
     def _extract_principle_section_content(self, content, specialized_principle):
         
@@ -455,52 +434,6 @@ class SpecializedRule:
             return section_start + next_principle_match.start()
         return len(content)
     
-    def _parse_do_example(self, section_content, specialized_principle):
-        
-        do_pattern = r'\*\*✅\s+DO:\*\*|\*\*\[DO\]:\*\*|✅\s+DO:|\[DO\]:'
-        do_match = re.search(do_pattern, section_content, re.IGNORECASE)
-        if not do_match:
-            return None, None
-        
-        # Extract text before code block (if any)
-        text_start = do_match.end()
-        code_block_match = re.search(r'```', section_content[text_start:], re.DOTALL)
-        if code_block_match:
-            text_content = section_content[text_start:text_start + code_block_match.start()].strip()
-        else:
-            text_content = ""
-        
-        # Extract code block
-        code_content = self._extract_code_block(section_content[do_match.end():])
-        
-        return text_content, code_content
-    
-    def _parse_dont_example(self, section_content, specialized_principle):
-        
-        dont_pattern = r'\*\*❌\s+DON\'T:\*\*|\*\*\[DON\'T\]:\*\*|❌\s+DON\'T:|\[DON\'T\]:'
-        dont_match = re.search(dont_pattern, section_content, re.IGNORECASE)
-        if not dont_match:
-            return None, None
-        
-        # Extract text before code block (if any)
-        text_start = dont_match.end()
-        code_block_match = re.search(r'```', section_content[text_start:], re.DOTALL)
-        if code_block_match:
-            text_content = section_content[text_start:text_start + code_block_match.start()].strip()
-        else:
-            text_content = ""
-        
-        # Extract code block
-        code_content = self._extract_code_block(section_content[dont_match.end():])
-        
-        return text_content, code_content
-    
-    def _extract_code_block(self, content_after_marker):
-        
-        code_block_match = re.search(r'```[\w]*\n(.*?)```', content_after_marker, re.DOTALL)
-        if not code_block_match:
-            return None
-        return code_block_match.group(1).strip()
     
     def _get_specialized_file_name(self, base_file_name, principle_name):
         
@@ -592,11 +525,41 @@ class ViolationReport:
         self.report_format = report_format
 
 
+class RunState:
+    
+    def __init__(self, status: str = RunStatus.STARTED.value):
+        self.status = status
+    
+    @property
+    def completed(self) -> bool:
+        return self.status == RunStatus.COMPLETED.value
+    
+    @property
+    def abandoned(self) -> bool:
+        return self.status == RunStatus.ABANDONED.value
+    
+    @property
+    def finished(self) -> bool:
+        return self.status in [RunStatus.COMPLETED.value, RunStatus.ABANDONED.value]
+    
+    @property
+    def started(self) -> bool:
+        return self.status == RunStatus.STARTED.value
+    
+    @property
+    def ai_verified(self) -> bool:
+        return self.status == RunStatus.AI_VERIFIED.value
+    
+    @property
+    def human_approved(self) -> bool:
+        return self.status == RunStatus.HUMAN_APPROVED.value
+
+
 class Run:
     
-    def __init__(self, run_number=1, status="IN_PROGRESS"):
+    def __init__(self, run_number=1, status: str = RunStatus.STARTED.value):
         self.run_number = run_number
-        self.status = status
+        self.state = RunState(status)
         self.completed_at = None
         self.snapshot_before_run = None
         self.sample_size = None
@@ -609,12 +572,164 @@ class Run:
         self.validation_results = None
         self.human_feedback = None
         self.context = {}
+        # Operation tracking
+        self.generated_at = None
+        self.validated_at = None
+    
+    def has_been_generated(self) -> bool:
+        
+        return self.generated_at is not None
+    
+    def has_been_validated(self) -> bool:
+        
+        return self.validated_at is not None
+    
+    def can_proceed_to_next_step(self) -> tuple[bool, str]:
+        
+        if self.state.completed:
+            return (True, "Current run complete")
+        
+        if self.state.started:
+            return (False, "AI must verify before proceeding")
+        
+        if self.state.ai_verified:
+            return (False, "Human must review and approve before proceeding")
+        
+        if self.state.human_approved:
+            return (False, "Run approved but not marked complete. Call complete()")
+        
+        return (False, f"Unknown status: {self.state.status}")
+    
+    def verify_ai(self, validation_results: Dict[str, Any] = None):
+        
+        if not self.state.started:
+            raise RuntimeError(
+                f"Run {self.run_id} not in STARTED status. "
+                f"Current status: {self.state.status}"
+            )
+        
+        if validation_results is None:
+            validation_results = {}
+        
+        self.state.status = RunStatus.AI_VERIFIED.value
+        self.ai_verified_at = datetime.now().isoformat()
+        self.validation_results = validation_results
+    
+    def approve(self, feedback: Optional[str] = None):
+        
+        if not self.state.ai_verified:
+            raise RuntimeError(
+                f"Run {self.run_id} not AI verified. "
+                f"Current status: {self.state.status}. "
+                f"AI must verify before human approval."
+            )
+        
+        self.state.status = RunStatus.HUMAN_APPROVED.value
+        self.human_approved_at = datetime.now().isoformat()
+        self.human_feedback = feedback
+    
+    def reject(self, feedback: Optional[str] = None):
+        
+        if not self.state.ai_verified:
+            raise RuntimeError(
+                f"Run {self.run_id} not AI verified. "
+                f"Current status: {self.state.status}. "
+                f"AI must verify before rejection."
+            )
+        
+        self.state.status = RunStatus.STARTED.value
+        self.ai_verified_at = None
+        self.validation_results = None
+        self.human_feedback = feedback
+    
+    def complete(self):
+        
+        self.state.status = RunStatus.COMPLETED.value
+        self.completed_at = datetime.now().isoformat()
+    
+    def abandon(self, reason: str):
+        
+        self.state.status = RunStatus.ABANDONED.value
+        self.completed_at = datetime.now().isoformat()
+        self.human_feedback = reason
+    
+    def repeat(self, run_history: 'RunHistory') -> 'Run':
+        
+        next_run_number = (self.run_number + 1) if run_history.runs else 1
+        new_run = Run(next_run_number, self.state.status)
+        new_run.step_type = self.step_type
+        new_run.context = self.context.copy() if self.context else {}
+        return new_run
+    
+    def start(self, step_type: str, context: Dict[str, Any] = None) -> str:
+        
+        if context is None:
+            context = {}
+        
+        run_id = f"{step_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.run_id = run_id
+        self.step_type = step_type
+        self.started_at = datetime.now().isoformat()
+        self.context = context
+        self.state.status = RunStatus.STARTED.value
+        return run_id
+    
+    def track_execution_timestamps(self, timestamp_attr: Optional[str] = None, generated: bool = False, validated: bool = False) -> None:
+        if timestamp_attr:
+            if not getattr(self, timestamp_attr, None):
+                setattr(self, timestamp_attr, datetime.now().isoformat())
+            return
+        
+        if generated and not self.generated_at:
+            self.generated_at = datetime.now().isoformat()
+        if validated and not self.validated_at:
+            self.validated_at = datetime.now().isoformat()
+    
+    def get_user_options(self) -> list[str]:
+        return ['repeat', 'next', 'abandon', 'expand']
+    
+    def serialize(self) -> Dict[str, Any]:
+        data = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        data['status'] = self.state.status
+        del data['state']
+        return data
+    
+    @classmethod
+    def deserialize(cls, run_data: Dict[str, Any]) -> 'Run':
+        status = run_data.get("status", RunStatus.STARTED.value)
+        run = cls(run_data.get("run_number", 1), status)
+        for key, value in run_data.items():
+            if key not in ['run_number', 'status'] and hasattr(run, key) and not key.startswith('_'):
+                setattr(run, key, value)
+        return run
 
 
 class RunHistory:
     
     def __init__(self):
         self.runs = []
+    
+    def find_by_number(self, run_number: int) -> Optional['Run']:
+        
+        for run in self.runs:
+            if run.run_number == run_number:
+                return run
+        return None
+    
+    def find_by_id(self, run_id: str) -> Optional['Run']:
+        
+        for run in self.runs:
+            if run.run_id == run_id:
+                return run
+        return None
+    
+    def get_completed_count(self) -> int:
+        
+        return len([r for r in self.runs if r.state.completed])
+    
+    def get_recent_runs(self, limit: int = 5) -> list['Run']:
+        
+        return self.runs[-limit:] if self.runs else []
     
     def extract_lessons(self):
         
@@ -644,6 +759,10 @@ class Command:
             self.base_rule = base_rule
             self.validate_instructions = validate_instructions or "Please validate the content as specified by the rules"
             self.generate_instructions = generate_instructions or "Please generate content according to the rules"
+        
+        # Track execution state
+        self.generated = False
+        self.validated = False
     
     @property
     def principles(self):
@@ -654,13 +773,24 @@ class Command:
         
         instructions = self._build_instructions(self.generate_instructions)
         print(instructions)
+        self.generated = True
         return instructions
     
     def validate(self):
         
         instructions = self._build_instructions(self.validate_instructions)
         print(instructions)
+        self.validated = True
         return instructions
+    
+    def execute(self):
+        
+        if not self.generated:
+            return self.generate()
+        elif not self.validated:
+            return self.validate()
+        else:
+            return self.validate()
     
     def _build_instructions(self, base_instructions):
         
@@ -741,6 +871,10 @@ class CodeAugmentedCommand:
         
         return instructions
     
+    def execute(self):
+        
+        return self._inner_command.execute()
+    
     def _scan_for_violations(self):
         
         self._violations = []
@@ -818,30 +952,36 @@ class SpecializingRuleCommand(Command):
             return specialized.principles
         # Fallback to base rule's principles if no specialized rule found
         return self.base_rule.principles
+    
+    def execute(self):
+        
+        return super().execute()
 
 
 # Constants
 DEFAULT_MAX_SAMPLE_SIZE = 18
+EXPAND_SAMPLE_SIZE = 90
+ALL_WORK_COMPLETE_UNITS = 100
+
 
 class IncrementalCommand:
     
-    def __init__(self, inner_command, base_rule, max_sample_size=DEFAULT_MAX_SAMPLE_SIZE, test_file: Optional[str] = None):
+    def __init__(self, inner_command, base_rule, max_sample_size=DEFAULT_MAX_SAMPLE_SIZE, command_file_path: Optional[str] = None):
         
         self._inner_command = inner_command
         self.base_rule = base_rule
         self.max_sample_size = max_sample_size
-        self.sample_size = None
         self.current_run = None
         self.run_history = RunHistory()
-        self.state = IncrementalState()
+        # Get command file path from content if not provided
+        if not command_file_path and hasattr(inner_command, 'content') and hasattr(inner_command.content, 'file_path'):
+            command_file_path = inner_command.content.file_path
+        self.state = IncrementalState(command_file_path)
         self.completed_work_units = 0
         self._all_work_complete = False
         self._has_more_work = True
-        self._generate_done = False
-        self.test_file = test_file
-        # Load persisted state if test_file provided
-        if test_file:
-            self._load_persisted_state()
+        # Load persisted state
+        self.current_run = self.state.load(self.run_history)
     
     @property
     def content(self):
@@ -849,53 +989,102 @@ class IncrementalCommand:
         return self._inner_command.content
     
     @property
-    def current_run_number(self):
+    def sample_size(self) -> Optional[int]:
         
-        return self.current_run.run_number if self.current_run else 0
+        if self.current_run:
+            return self.current_run.sample_size
+        return None
     
-    @property
-    def run_status(self):
+    def _inject_sample_size(self):
         
-        return self.current_run.status if self.current_run else None
+        sample_size = self.sample_size
+        if not sample_size:
+            return
+        
+        sample_note = f"\n\nNote: Process a sample of {sample_size} items."
+        self._inject_instruction_note(sample_note)
     
-    def run(self):
+    def _inject_instruction_note(self, note: str):
+        if not hasattr(self._inner_command, '_original_generate_instructions'):
+            self._inner_command._original_generate_instructions = self._inner_command.generate_instructions
+        if not hasattr(self._inner_command, '_original_validate_instructions'):
+            self._inner_command._original_validate_instructions = self._inner_command.validate_instructions
         
-        self._ensure_generate_executed()
-        result = self._inner_command.validate()
-        self._create_new_run()
+        self._inner_command.generate_instructions = self._inner_command.generate_instructions + note
+        self._inner_command.validate_instructions = self._inner_command.validate_instructions + note
+    
+    def _restore_instructions(self):
+        
+        if hasattr(self._inner_command, '_original_generate_instructions'):
+            self._inner_command.generate_instructions = self._inner_command._original_generate_instructions
+        if hasattr(self._inner_command, '_original_validate_instructions'):
+            self._inner_command.validate_instructions = self._inner_command._original_validate_instructions
+    
+    def _execute_with_run_tracking(self, command_method_name: str, timestamp_attr: Optional[str] = None):
+        
+        # Ensure run exists
+        if not self.current_run:
+            self._ensure_run_exists()
+        
+        # Inject sample size into instructions
+        self._inject_sample_size()
+        
+        try:
+            # Call the inner command method
+            method = getattr(self._inner_command, command_method_name)
+            result = method()
+        finally:
+            self._restore_instructions()
+        
+        if self.current_run:
+            self.current_run.track_execution_timestamps(
+                timestamp_attr,
+                generated=self._inner_command.generated,
+                validated=self._inner_command.validated
+            )
+        
+        self.state.save(self.run_history, self.current_run)
+        
         return result
     
-    def _ensure_generate_executed(self):
+    def generate(self):
         
-        if not self._generate_done:
-            self._inner_command.generate()
-            self._generate_done = True
+        return self._execute_with_run_tracking('generate', 'generated_at')
+    
+    def execute(self):
+        return self._execute_with_run_tracking('execute')
     
     def _create_new_run(self):
+        if self.current_run:
+            self.current_run.complete()
         
-        next_run_number = self.current_run_number + 1
-        self.current_run = Run(next_run_number, "IN_PROGRESS")
+        next_run_number = (self.current_run.run_number + 1) if self.current_run else 1
+        self.current_run = Run(next_run_number, RunStatus.STARTED.value)
         if self.sample_size:
             self.current_run.sample_size = self.sample_size
         self.run_history.runs.append(self.current_run)
     
+    def _ensure_run_exists(self):
+        if not self.current_run:
+            self._create_new_run()
+    
     def validate(self):
         
-        return self._inner_command.validate()
-    
-    def repeat_run(self):
-        
-        return self._execute_generate_and_validate()
-    
-    def reject_run(self):
-        
-        return self._execute_generate_and_validate()
+        return self._execute_with_run_tracking('validate', 'validated_at')
     
     def expand_to_all_work(self):
+        if not self.current_run:
+            self._ensure_run_exists()
+        self.current_run.sample_size = EXPAND_SAMPLE_SIZE
+        self.completed_work_units = ALL_WORK_COMPLETE_UNITS
         
-        self.sample_size = 90  # Set to 90 as expected by tests
-        self.completed_work_units = 100  # Mark all work as complete
-        return self._execute_generate_and_validate()
+        finish_note = "\n\nPlease finish all remaining work."
+        self._inject_instruction_note(finish_note)
+        
+        try:
+            return self._execute_with_run_tracking('execute')
+        finally:
+            self._restore_instructions()
     
     def is_complete(self):
         
@@ -905,486 +1094,14 @@ class IncrementalCommand:
         
         return self._has_more_work
     
-    def get_user_options(self):
-        
-        return ['repeat', 'next', 'abandon', 'expand']
-    
     def proceed_to_next_run(self):
         
-        next_run_number = self.current_run_number + 1
-        self.current_run = Run(next_run_number, "IN_PROGRESS")
-        if self.sample_size:
-            self.current_run.sample_size = self.sample_size
-        self.run_history.runs.append(self.current_run)
-    
-    def _execute_generate_and_validate(self):
-        
-        self._generate_done = False
-        self._inner_command.generate()
-        self._generate_done = True
-        return self._inner_command.validate()
-    
-    def resume_from_run(self, run_number):
-        
-        run = self._find_run_by_number(run_number)
-        if run:
-            self._restore_run_state(run)
-    
-    def _find_run_by_number(self, run_number):
-        
-        for run in self.run_history.runs:
-            if run.run_number == run_number:
-                return run
-        return None
-    
-    def _restore_run_state(self, run):
-        
-        self.current_run = run
-        self._generate_done = True
+        self._create_new_run()
+        self.state.save(self.run_history, self.current_run)
     
     def __getattr__(self, name):
         
         return getattr(self._inner_command, name)
-    
-    # ============================================================================
-    # PERSISTENCE METHODS
-    # ============================================================================
-    
-    def _get_state_file_path(self) -> Optional[Path]:
-        
-        if not self.test_file:
-            return None
-        test_path = Path(self.test_file)
-        state_dir = test_path.parent / ".bdd-workflow"
-        state_dir.mkdir(exist_ok=True)
-        return state_dir / f"{test_path.stem}.run-state.json"
-    
-    def _load_persisted_state(self):
-        
-        if not self.test_file:
-            return
-        
-        state_file = self._get_state_file_path()
-        if not state_file or not state_file.exists():
-            return
-        
-        try:
-            state_data = json.loads(state_file.read_text(encoding='utf-8'))
-            
-            # Restore runs
-            self.run_history.runs = []
-            for run_data in state_data.get("runs", []):
-                run = Run(run_data.get("run_number", 1), run_data.get("status", "IN_PROGRESS"))
-                run.run_id = run_data.get("run_id")
-                run.step_type = run_data.get("step_type")
-                run.started_at = run_data.get("started_at")
-                run.ai_verified_at = run_data.get("ai_verified_at")
-                run.human_approved_at = run_data.get("human_approved_at")
-                run.validation_results = run_data.get("validation_results")
-                run.human_feedback = run_data.get("human_feedback")
-                run.context = run_data.get("context", {})
-                run.completed_at = run_data.get("completed_at")
-                run.sample_size = run_data.get("sample_size")
-                self.run_history.runs.append(run)
-            
-            # Restore current run
-            current_run_id = state_data.get("current_run_id")
-            if current_run_id:
-                for run in self.run_history.runs:
-                    if run.run_id == current_run_id:
-                        self.current_run = run
-                        break
-        except Exception:
-            # If loading fails, start fresh
-            pass
-    
-    def _save_persisted_state(self):
-        
-        if not self.test_file:
-            return
-        
-        state_file = self._get_state_file_path()
-        if not state_file:
-            return
-        
-        try:
-            # Convert runs to dict format
-            runs_data = []
-            for run in self.run_history.runs:
-                run_dict = {
-                    "run_number": run.run_number,
-                    "status": run.status,
-                    "run_id": run.run_id,
-                    "step_type": run.step_type,
-                    "started_at": run.started_at,
-                    "ai_verified_at": run.ai_verified_at,
-                    "human_approved_at": run.human_approved_at,
-                    "validation_results": run.validation_results,
-                    "human_feedback": run.human_feedback,
-                    "context": run.context,
-                    "completed_at": run.completed_at,
-                    "sample_size": run.sample_size
-                }
-                runs_data.append(run_dict)
-            
-            state_data = {
-                "runs": runs_data,
-                "current_run_id": self.current_run.run_id if self.current_run else None,
-                "created_at": datetime.now().isoformat()
-            }
-            
-            state_file.write_text(
-                json.dumps(state_data, indent=2),
-                encoding='utf-8'
-            )
-        except Exception:
-            # If saving fails, continue without persistence
-            pass
-    
-    # ============================================================================
-    # BDD-SPECIFIC RUN MANAGEMENT METHODS
-    # ============================================================================
-    
-    def start_bdd_run(self, step_type: str, context: Dict[str, Any] = None) -> str:
-        
-        if context is None:
-            context = {}
-        
-        # Check if previous run is complete
-        if self.current_run and self.current_run.status not in [RunStatus.COMPLETED.value, RunStatus.ABANDONED.value]:
-            raise RuntimeError(
-                f"Previous run {self.current_run.run_id} not complete. "
-                f"Status: {self.current_run.status}. "
-                f"Complete or abandon previous run before starting new one."
-            )
-        
-        # Create new run
-        run_id = f"{step_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        next_run_number = self.current_run_number + 1
-        
-        new_run = Run(next_run_number, RunStatus.STARTED.value)
-        new_run.run_id = run_id
-        new_run.step_type = step_type
-        new_run.started_at = datetime.now().isoformat()
-        new_run.context = context
-        
-        self.current_run = new_run
-        self.run_history.runs.append(new_run)
-        self._save_persisted_state()
-        
-        return run_id
-    
-    def record_ai_verification(self, validation_results: Dict[str, Any] = None):
-        
-        if validation_results is None:
-            validation_results = {}
-        
-        if not self.current_run:
-            raise RuntimeError("No current run to verify")
-        
-        if self.current_run.status != RunStatus.STARTED.value:
-            raise RuntimeError(
-                f"Run {self.current_run.run_id} not in STARTED status. "
-                f"Current status: {self.current_run.status}"
-            )
-        
-        self.current_run.status = RunStatus.AI_VERIFIED.value
-        self.current_run.ai_verified_at = datetime.now().isoformat()
-        self.current_run.validation_results = validation_results
-        self._save_persisted_state()
-    
-    def record_human_approval(self, approved: bool, feedback: Optional[str] = None):
-        
-        if not self.current_run:
-            raise RuntimeError("No current run to approve")
-        
-        if self.current_run.status != RunStatus.AI_VERIFIED.value:
-            raise RuntimeError(
-                f"Run {self.current_run.run_id} not AI verified. "
-                f"Current status: {self.current_run.status}. "
-                f"AI must verify before human approval."
-            )
-        
-        if approved:
-            self.current_run.status = RunStatus.HUMAN_APPROVED.value
-            self.current_run.human_approved_at = datetime.now().isoformat()
-        else:
-            # Rejected - back to STARTED
-            self.current_run.status = RunStatus.STARTED.value
-            self.current_run.ai_verified_at = None
-            self.current_run.validation_results = None
-        
-        self.current_run.human_feedback = feedback
-        self._save_persisted_state()
-    
-    def complete_run(self):
-        
-        if not self.current_run:
-            raise RuntimeError("No current run to complete")
-        
-        self.current_run.status = RunStatus.COMPLETED.value
-        self.current_run.completed_at = datetime.now().isoformat()
-        self._save_persisted_state()
-    
-    def abandon_run(self, reason: str):
-        
-        if not self.current_run:
-            raise RuntimeError("No current run to abandon")
-        
-        self.current_run.status = RunStatus.ABANDONED.value
-        self.current_run.completed_at = datetime.now().isoformat()
-        self.current_run.human_feedback = reason
-        self.current_run = None
-        self._save_persisted_state()
-    
-    def get_status_summary(self) -> Dict[str, Any]:
-        
-        current_run = self.current_run
-        can_proceed, reason = self._can_proceed_to_next_step()
-        
-        return {
-            "current_run": current_run.run_id if current_run else None,
-            "status": current_run.status if current_run else "no_active_run",
-            "step_type": current_run.step_type if current_run else None,
-            "can_proceed": can_proceed,
-            "next_action": reason,
-            "total_runs": len(self.run_history.runs),
-            "completed_runs": len([r for r in self.run_history.runs if r.status == RunStatus.COMPLETED.value])
-        }
-    
-    def _can_proceed_to_next_step(self) -> tuple[bool, str]:
-        
-        if not self.current_run:
-            return (True, "No active run, can start new one")
-        
-        status = self.current_run.status
-        
-        if status == RunStatus.COMPLETED.value:
-            return (True, "Current run complete")
-        
-        if status == RunStatus.STARTED.value:
-            return (False, "AI must verify before proceeding")
-        
-        if status == RunStatus.AI_VERIFIED.value:
-            return (False, "Human must review and approve before proceeding")
-        
-        if status == RunStatus.HUMAN_APPROVED.value:
-            return (False, "Run approved but not marked complete. Call complete_run()")
-        
-        return (False, f"Unknown status: {status}")
-    
-    def can_start_run(self) -> bool:
-        
-        if not self.current_run:
-            return True
-        
-        return self.current_run.status in [RunStatus.COMPLETED.value, RunStatus.ABANDONED.value]
-    
-    # ============================================================================
-    # STATIC METHODS FOR CLI OPERATIONS
-    # ============================================================================
-    
-    @staticmethod
-    def show_status(test_file: str):
-        
-        # Create a minimal IncrementalCommand instance to load state
-        # We need inner_command and base_rule, but they're not used for status display
-        from behaviors.common_command_runner.common_command_runner import Command, BaseRule
-        
-        # Create minimal command instance
-        dummy_content = type('Content', (), {'file_path': test_file})()
-        base_rule = BaseRule('bdd-rule.mdc') if BaseRule else None
-        dummy_command = Command(dummy_content, base_rule) if Command and base_rule else None
-        
-        if dummy_command:
-            cmd = IncrementalCommand(dummy_command, base_rule, test_file=test_file)
-        else:
-            # Fallback: create instance without command
-            cmd = IncrementalCommand.__new__(IncrementalCommand)
-            cmd.test_file = test_file
-            cmd.run_history = RunHistory()
-            cmd.current_run = None
-            cmd._load_persisted_state()
-        
-        status = cmd.get_status_summary()
-        current_run = cmd.current_run
-        
-        print("\n" + "="*60)
-        print("BDD WORKFLOW STATUS")
-        print("="*60)
-        
-        print(f"\nFile: {test_file}")
-        print(f"Total runs: {status['total_runs']}")
-        print(f"Completed: {status['completed_runs']}")
-        
-        if current_run:
-            print(f"\n📍 CURRENT RUN")
-            print(f"  ID: {current_run.run_id}")
-            print(f"  Step: {current_run.step_type}")
-            print(f"  Status: {current_run.status}")
-            print(f"  Started: {current_run.started_at}")
-            
-            if current_run.ai_verified_at:
-                print(f"  AI Verified: {current_run.ai_verified_at}")
-            
-            if current_run.human_approved_at:
-                print(f"  Human Approved: {current_run.human_approved_at}")
-            
-            if current_run.validation_results:
-                val = current_run.validation_results
-                if isinstance(val, dict) and 'passed' in val:
-                    print(f"\n  Validation: {'✅ PASSED' if val['passed'] else '❌ FAILED'}")
-            
-            if current_run.human_feedback:
-                print(f"\n  Feedback: {current_run.human_feedback}")
-        else:
-            print(f"\n✅ No active run - ready to start new work")
-        
-        print(f"\n{'✅' if status['can_proceed'] else '⚠️'} Can proceed: {status['can_proceed']}")
-        print(f"Next action: {status['next_action']}")
-        
-        # Show recent runs
-        if cmd.run_history.runs:
-            print(f"\n📜 RECENT RUNS (last 5):")
-            for run in cmd.run_history.runs[-5:]:
-                status_icon = {
-                    RunStatus.COMPLETED.value: '✅',
-                    RunStatus.AI_VERIFIED.value: '🔍',
-                    RunStatus.HUMAN_APPROVED.value: '👍',
-                    RunStatus.STARTED.value: '🚧',
-                    RunStatus.ABANDONED.value: '❌'
-                }.get(run.status, '❓')
-                
-                print(f"  {status_icon} {run.step_type or 'N/A':20} | {run.status:15} | {run.run_id or 'N/A'}")
-        
-        print("="*60)
-    
-    @staticmethod
-    def approve_run(test_file: str, feedback: str = None):
-        
-        from behaviors.common_command_runner.common_command_runner import Command, BaseRule
-        
-        dummy_content = type('Content', (), {'file_path': test_file})()
-        base_rule = BaseRule('bdd-rule.mdc') if BaseRule else None
-        dummy_command = Command(dummy_content, base_rule) if Command and base_rule else None
-        
-        if dummy_command:
-            cmd = IncrementalCommand(dummy_command, base_rule, test_file=test_file)
-        else:
-            cmd = IncrementalCommand.__new__(IncrementalCommand)
-            cmd.test_file = test_file
-            cmd.run_history = RunHistory()
-            cmd.current_run = None
-            cmd._load_persisted_state()
-        
-        current_run = cmd.current_run
-        
-        if not current_run:
-            print("\n❌ No active run to approve")
-            return False
-        
-        print(f"\n=== Approving Run: {current_run.run_id} ===")
-        print(f"Step: {current_run.step_type}")
-        print(f"Status: {current_run.status}")
-        
-        if current_run.status != RunStatus.AI_VERIFIED.value:
-            print(f"\n❌ Cannot approve - run not AI verified")
-            print(f"Current status: {current_run.status}")
-            print("AI must run /bdd-validate first")
-            return False
-        
-        # Record approval
-        cmd.record_human_approval(approved=True, feedback=feedback)
-        
-        # Mark as complete
-        cmd.complete_run()
-        
-        print(f"\n✅ Run approved and completed")
-        if feedback:
-            print(f"Feedback: {feedback}")
-        
-        print("\n🎯 Ready to proceed to next step")
-        return True
-    
-    @staticmethod
-    def reject_run(test_file: str, feedback: str):
-        
-        from behaviors.common_command_runner.common_command_runner import Command, BaseRule
-        
-        dummy_content = type('Content', (), {'file_path': test_file})()
-        base_rule = BaseRule('bdd-rule.mdc') if BaseRule else None
-        dummy_command = Command(dummy_content, base_rule) if Command and base_rule else None
-        
-        if dummy_command:
-            cmd = IncrementalCommand(dummy_command, base_rule, test_file=test_file)
-        else:
-            cmd = IncrementalCommand.__new__(IncrementalCommand)
-            cmd.test_file = test_file
-            cmd.run_history = RunHistory()
-            cmd.current_run = None
-            cmd._load_persisted_state()
-        
-        current_run = cmd.current_run
-        
-        if not current_run:
-            print("\n❌ No active run to reject")
-            return False
-        
-        print(f"\n=== Rejecting Run: {current_run.run_id} ===")
-        print(f"Step: {current_run.step_type}")
-        print(f"Reason: {feedback}")
-        
-        # Record rejection
-        cmd.record_human_approval(approved=False, feedback=feedback)
-        
-        print(f"\n⚠️ Run rejected - sent back to AI")
-        print(f"AI must fix issues and re-validate")
-        return True
-    
-    @staticmethod
-    def abandon_run(test_file: str, reason: str):
-        
-        from behaviors.common_command_runner.common_command_runner import Command, BaseRule
-        
-        dummy_content = type('Content', (), {'file_path': test_file})()
-        base_rule = BaseRule('bdd-rule.mdc') if BaseRule else None
-        dummy_command = Command(dummy_content, base_rule) if Command and base_rule else None
-        
-        if dummy_command:
-            cmd = IncrementalCommand(dummy_command, base_rule, test_file=test_file)
-        else:
-            cmd = IncrementalCommand.__new__(IncrementalCommand)
-            cmd.test_file = test_file
-            cmd.run_history = RunHistory()
-            cmd.current_run = None
-            cmd._load_persisted_state()
-        
-        current_run = cmd.current_run
-        
-        if not current_run:
-            print("\n❌ No active run to abandon")
-            return False
-        
-        print(f"\n=== Abandoning Run: {current_run.run_id} ===")
-        print(f"Step: {current_run.step_type}")
-        print(f"Status: {current_run.status}")
-        print(f"Reason: {reason}")
-        
-        # Confirm
-        print("\n⚠️  This will abandon the current run and allow starting fresh.")
-        print("Continue? (y/n): ", end='')
-        response = input().strip().lower()
-        
-        if response != 'y':
-            print("❌ Cancelled")
-            return False
-        
-        # Abandon
-        cmd.abandon_run(reason)
-        
-        print(f"\n✅ Run abandoned")
-        print(f"Ready to start new run")
-        return True
 
 
 class Workflow:
@@ -1529,6 +1246,12 @@ class WorkflowPhaseCommand:
         
         return self.phase_number
     
+    def start(self):
+        
+        self._execute_phase_callback()
+        self.phase_state.phase_status = "IN_PROGRESS"
+        self._start_called = True
+    
     def approve(self):
         
         self.phase_state.phase_status = "APPROVED"
@@ -1539,6 +1262,11 @@ class WorkflowPhaseCommand:
         if self._has_next_phase():
             self._advance_to_next_phase()
     
+    def block_execution(self, reason):
+        
+        self.can_execute = False
+        self.phase_state.phase_status = "BLOCKED"
+    
     def _has_next_phase(self):
         
         return self.phase_number + 1 < len(self.workflow.phases)
@@ -1547,17 +1275,6 @@ class WorkflowPhaseCommand:
         
         self.workflow.current_phase_number = self.phase_number + 1
         self.workflow.start_next_phase()
-    
-    def block_execution(self, reason):
-        
-        self.can_execute = False
-        self.phase_state.phase_status = "BLOCKED"
-    
-    def start(self):
-        
-        self._execute_phase_callback()
-        self.phase_state.phase_status = "IN_PROGRESS"
-        self._start_called = True
     
     def _execute_phase_callback(self):
         
@@ -1575,14 +1292,6 @@ class WorkflowPhaseCommand:
         # In real implementation, would load from file
         self._start_called = True
     
-    def check_completion(self):
-        
-        return ['proceed_to_next_phase', 'verify', 'redo']
-    
-    def save_state_to_disk(self):
-        
-        self.phase_state.persist_to_disk()
-    
     def __getattr__(self, name):
         
         return getattr(self._inner_command, name)
@@ -1590,10 +1299,62 @@ class WorkflowPhaseCommand:
 
 class IncrementalState:
     
-    def __init__(self, current_run=1):
-        self.current_run = current_run
+    def __init__(self, command_file_path: Optional[str] = None):
+        self.command_file_path = command_file_path
         self.persisted_at = None
     
-    def persist_to_disk(self):
+    def get_state_file_path(self) -> Optional[Path]:
         
-        self.persisted_at = "now"  # Simplified - would save to actual file
+        if not self.command_file_path:
+            return None
+        
+        command_path = Path(self.command_file_path)
+        state_dir = command_path.parent / ".incremental-state"
+        state_dir.mkdir(exist_ok=True)
+        return state_dir / f"{command_path.stem}.state.json"
+    
+    def load(self, run_history: 'RunHistory') -> Optional['Run']:
+        
+        state_file = self.get_state_file_path()
+        if not state_file or not state_file.exists():
+            return None
+        
+        try:
+            state_data = json.loads(state_file.read_text(encoding='utf-8'))
+            
+            run_history.runs = []
+            for run_data in state_data.get("runs", []):
+                run = Run.deserialize(run_data)
+                run_history.runs.append(run)
+            
+            current_run_id = state_data.get("current_run_id")
+            if current_run_id:
+                return run_history.find_by_id(current_run_id)
+        except (FileNotFoundError, IOError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            logger.error(f"Failed to load state from {state_file}: {e}")
+            raise
+        
+        return None
+    
+    def save(self, run_history: 'RunHistory', current_run: Optional['Run']) -> None:
+        state_file = self.get_state_file_path()
+        if not state_file:
+            return
+        
+        try:
+            runs_data = [run.serialize() for run in run_history.runs]
+            
+            state_data = {
+                "runs": runs_data,
+                "current_run_id": current_run.run_id if current_run else None,
+                "created_at": datetime.now().isoformat()
+            }
+            
+            state_file.write_text(
+                json.dumps(state_data, indent=2),
+                encoding='utf-8'
+            )
+            self.persisted_at = datetime.now().isoformat()
+        except (IOError, OSError, TypeError) as e:
+            logger.error(f"Failed to save state to {state_file}: {e}")
+            raise

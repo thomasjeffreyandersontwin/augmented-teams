@@ -1,5 +1,5 @@
 {
-  "deployed": true,
+  "deployed": false,
   "feature": "code-agent-behavior",
   "description": "Code agent behavior structure, validation, sync, and indexing system"
 }
