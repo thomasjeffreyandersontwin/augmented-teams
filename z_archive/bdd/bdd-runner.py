@@ -343,401 +343,6 @@ class BDDRule(FrameworkSpecializingRule):
             
             return violations if violations else None
 
-class BDDScaffoldBaseHeuristic(CodeHeuristic):
-    """Base class for scaffold heuristics - provides common scaffold parsing and domain map utilities"""
-    
-    def __init__(self, detection_pattern: str):
-        super().__init__(detection_pattern)
-        self._scaffold_structure_cache = None
-        self._domain_map_cache = None
-    
-    def _validate_content(self, content):
-        """Common validation check for scaffold content"""
-        if not hasattr(content, '_content_lines') or not content._content_lines:
-            return False
-        return True
-    
-    def _get_scaffold_file_path(self, content):
-        """Get the scaffold hierarchy file path from content file path"""
-        if not content or not hasattr(content, 'file_path'):
-            return None
-        
-        test_path = Path(content.file_path)
-        hierarchy_file = test_path.parent / f"{test_path.stem}-hierarchy.txt"
-        return hierarchy_file
-    
-    def _load_scaffold_file(self, content):
-        """Load scaffold hierarchy file content if it exists"""
-        hierarchy_file = self._get_scaffold_file_path(content)
-        if hierarchy_file and hierarchy_file.exists():
-            return hierarchy_file.read_text(encoding='utf-8')
-        return None
-    
-    def _parse_scaffold_structure(self, content):
-        """Parse scaffold structure into a common format: describe blocks and it statements with hierarchy"""
-        if self._scaffold_structure_cache is not None:
-            return self._scaffold_structure_cache
-        
-        if not self._validate_content(content):
-            return None
-        
-        structure = {
-            'describe_blocks': [],
-            'it_statements': [],
-            'max_depth': 0
-        }
-        
-        describe_blocks = []
-        
-        for i, line in enumerate(content._content_lines, 1):
-            stripped = line.lstrip()
-            if not stripped:
-                continue
-            
-            indent_level = len(line) - len(stripped)
-            structure['max_depth'] = max(structure['max_depth'], indent_level)
-            
-            # Check if this is a describe block
-            if re.match(r'^\s*describe\s+', line, re.IGNORECASE):
-                has_that = 'that' in stripped.lower()
-                block_info = {
-                    'line': i,
-                    'indent': indent_level,
-                    'has_that': has_that,
-                    'has_it_child': False,
-                    'text': stripped,
-                    'children': []
-                }
-                describe_blocks.append(block_info)
-                structure['describe_blocks'].append(block_info)
-            
-            # Check if this is an it statement
-            elif re.match(r'^\s*it\s+', line, re.IGNORECASE):
-                it_info = {
-                    'line': i,
-                    'indent': indent_level,
-                    'text': stripped,
-                    'parent': None
-                }
-                
-                # Find the parent describe block (closest describe with less indent)
-                for desc in reversed(describe_blocks):
-                    if desc['indent'] < indent_level:
-                        desc['has_it_child'] = True
-                        desc['children'].append(it_info)
-                        it_info['parent'] = desc
-                        break
-                
-                structure['it_statements'].append(it_info)
-        
-        self._scaffold_structure_cache = structure
-        return structure
-    
-    def _discover_domain_maps(self, content):
-        """Discover and load domain maps from the test file directory"""
-        if self._domain_map_cache is not None:
-            return self._domain_map_cache
-        
-        if not content or not hasattr(content, 'file_path'):
-            return {"found": False, "domain_map": None, "domain_interactions": None}
-        
-        test_path = Path(content.file_path)
-        test_dir = test_path.parent
-        
-        domain_map = None
-        domain_interactions = None
-        
-        for file_path in test_dir.glob("*domain-map*.txt"):
-            domain_map = {
-                "path": str(file_path),
-                "content": file_path.read_text(encoding='utf-8'),
-                "lines": file_path.read_text(encoding='utf-8').split('\n')
-            }
-            break
-        
-        for file_path in test_dir.glob("*domain-interactions*.txt"):
-            domain_interactions = {
-                "path": str(file_path),
-                "content": file_path.read_text(encoding='utf-8')
-            }
-            break
-        
-        result = {
-            "found": domain_map is not None or domain_interactions is not None,
-            "domain_map": domain_map,
-            "domain_interactions": domain_interactions
-        }
-        
-        self._domain_map_cache = result
-        return result
-    
-    def _calculate_domain_map_depth(self, domain_map):
-        """Calculate maximum nesting depth of domain map"""
-        if not domain_map or not domain_map.get('lines'):
-            return 0
-        
-        max_depth = 0
-        for line in domain_map['lines']:
-            if not line.strip():
-                continue
-            indent_level = len(line) - len(line.lstrip())
-            max_depth = max(max_depth, indent_level)
-        
-        return max_depth
-    
-    def _calculate_scaffold_depth(self, scaffold_structure):
-        """Calculate maximum nesting depth of scaffold"""
-        if not scaffold_structure:
-            return 0
-        return scaffold_structure.get('max_depth', 0)
-
-class BDDScaffoldCodeSyntaxHeuristic(BDDScaffoldBaseHeuristic):
-    """Heuristic for §7: Plain English with Test Structure Keywords - detects code syntax violations"""
-    def __init__(self):
-        super().__init__("bdd_scaffold_code_syntax")
-    
-    def detect_violations(self, content):
-        """Detect code syntax violations in scaffold files"""
-        violations = []
-        if not self._validate_content(content):
-            return None
-        
-        # Scaffolding should include `describe` and `it` keywords (without parentheses)
-        # But should NOT include function call syntax, arrow functions, etc.
-        code_syntax_patterns = [
-            r'=>',    # Arrow functions
-            r'describe\s*\(',  # Function call syntax (describe() - forbidden)
-            r'it\s*\(',  # Function call syntax (it() - forbidden)
-            r'function\s+\w+\s*\(',  # Function declarations
-            r'const\s+\w+\s*=\s*\(',  # Arrow function assignments
-            r'class\s+\w+',  # Class declarations
-            r'\w+\s*\([^)]*\)\s*=>',  # Arrow function calls
-            r'\{\s*\}',  # Empty code blocks
-            r'\w+\([^)]*\)\s*\{',  # Function calls with blocks
-        ]
-        # Note: `describe` and `it` keywords WITHOUT parentheses are allowed (e.g., "describe Character", "it should have stats")
-        
-        for i, line in enumerate(content._content_lines, 1):
-            for pattern in code_syntax_patterns:
-                if re.search(pattern, line):
-                    violations.append(Violation(i, "Scaffold contains code syntax - must be plain English only"))
-                    break
-        
-        return violations if violations else None
-
-class BDDScaffoldStructureHeuristic(BDDScaffoldBaseHeuristic):
-    """Heuristic for §7: Plain English with Test Structure Keywords - detects describe blocks without it statements"""
-    def __init__(self):
-        super().__init__("bdd_scaffold_structure")
-    
-    def detect_violations(self, content):
-        """Detect describe blocks without it statements"""
-        violations = []
-        if not self._validate_content(content):
-            return None
-        
-        # Use common scaffold structure parsing
-        scaffold_structure = self._parse_scaffold_structure(content)
-        if not scaffold_structure:
-            return None
-        
-        # Check for describe blocks without it statements
-        for desc in scaffold_structure['describe_blocks']:
-            if not desc['has_it_child']:
-                message = f"Describe block without it statement: '{desc['text']}'"
-                if desc['has_that']:
-                    message += " (CRITICAL: describe blocks with 'that' statements MUST have at least one it statement)"
-                violations.append(Violation(desc['line'], message))
-        
-        return violations if violations else None
-
-class BDDScaffoldStateOrientedHeuristic(BDDScaffoldBaseHeuristic):
-    """Heuristic for §7: Output Format - detects action-oriented test names (should be state-oriented)"""
-    def __init__(self):
-        super().__init__("bdd_scaffold_state_oriented")
-    
-    def detect_violations(self, content):
-        """Detect action-oriented test names (should be state-oriented)"""
-        violations = []
-        if not self._validate_content(content):
-            return None
-        
-        # Pattern: "should [verb]" or "should [verb] [noun]" - action-oriented (FORBIDDEN)
-        action_oriented_patterns = [
-            r'^\s*it\s+should\s+[a-z]+\s+[a-z]+',  # "should roll dice", "should calculate damage"
-            r'^\s*it\s+should\s+[a-z]+(?!\s+have|\s+be)',  # "should validate", "should create" (but not "should have" or "should be")
-        ]
-        
-        for i, line in enumerate(content._content_lines, 1):
-            # Only check it statements
-            if re.match(r'^\s*it\s+', line, re.IGNORECASE):
-                # Check for action-oriented patterns
-                for pattern in action_oriented_patterns:
-                    if re.search(pattern, line, re.IGNORECASE):
-                        violations.append(Violation(i, "Test name is action-oriented - must be state-oriented (e.g., 'should have [noun] [past participle]' or 'should be [state]')"))
-                        break
-        
-        return violations if violations else None
-
-class BDDScaffoldSubjectHeuristic(BDDScaffoldBaseHeuristic):
-    """Heuristic for §2: Subject Clarity - detects missing subjects in test names"""
-    def __init__(self):
-        super().__init__("bdd_scaffold_subject")
-    
-    def detect_violations(self, content):
-        """Detect missing subject in test names"""
-        violations = []
-        if not self._validate_content(content):
-            return None
-        
-        # Pattern: lines that start with "should" without a preceding subject
-        missing_subject_pattern = r'^\s*it\s+should\s+'
-        for i, line in enumerate(content._content_lines, 1):
-            if re.search(missing_subject_pattern, line, re.IGNORECASE):
-                # Check if there's a subject indicator in the line
-                # Simple heuristic: if line starts with "it should" and doesn't have "that" or linking words
-                if not re.search(r'(that|which|who|when|where)', line, re.IGNORECASE):
-                    # Check if previous line is a describe block (which provides the subject)
-                    if i > 1:
-                        prev_line = content._content_lines[i-2] if i > 1 else ""
-                        if not re.match(r'^\s*describe\s+', prev_line, re.IGNORECASE):
-                            violations.append(Violation(i, "Test name missing subject - should include domain concept (e.g., 'Character that has been created should...')"))
-        
-        return violations if violations else None
-
-class BDDScaffoldTechnicalJargonHeuristic(BDDScaffoldBaseHeuristic):
-    """Heuristic for §1: Business Readable Language - detects technical jargon in scaffold files"""
-    def __init__(self):
-        super().__init__("bdd_scaffold_technical_jargon")
-    
-    def detect_violations(self, content):
-        """Detect technical jargon (function/module names) in scaffold files"""
-        violations = []
-        if not self._validate_content(content):
-            return None
-        
-        # Detect technical jargon (function/module names as describes)
-        technical_patterns = [
-            r'[A-Z][a-z]+\w*\(',  # Function names like PowerItem()
-            r'get[A-Z]\w+\(',  # Getter functions
-            r'set[A-Z]\w+\(',  # Setter functions
-        ]
-        
-        for i, line in enumerate(content._content_lines, 1):
-            for pattern in technical_patterns:
-                if re.search(pattern, line):
-                    violations.append(Violation(i, "Scaffold uses technical function/module names - use domain concepts instead"))
-                    break
-        
-        return violations if violations else None
-
-class BDDScaffoldDomainMapAlignmentHeuristic(BDDScaffoldBaseHeuristic):
-    """Heuristic for §7: Domain Map Preservation - detects scaffold misalignment with domain map"""
-    def __init__(self):
-        super().__init__("bdd_scaffold_domain_map_alignment")
-    
-    def detect_violations(self, content):
-        """Detect scaffold misalignment with domain map (nesting depth, concepts)"""
-        violations = []
-        if not self._validate_content(content):
-            return None
-        
-        # Discover domain maps
-        domain_maps = self._discover_domain_maps(content)
-        if not domain_maps['found'] or not domain_maps['domain_map']:
-            # No domain map found - this is a warning but not a violation
-            # (scaffold can be created without domain map, but it's better to have one)
-            return None
-        
-        domain_map = domain_maps['domain_map']
-        
-        # Parse scaffold structure
-        scaffold_structure = self._parse_scaffold_structure(content)
-        if not scaffold_structure:
-            return None
-        
-        # Check nesting depth alignment
-        domain_map_depth = self._calculate_domain_map_depth(domain_map)
-        scaffold_depth = self._calculate_scaffold_depth(scaffold_structure)
-        
-        if scaffold_depth < domain_map_depth:
-            violations.append(Violation(1, f"Scaffold nesting depth ({scaffold_depth}) is less than domain map depth ({domain_map_depth}) - scaffold may be flattened"))
-        elif scaffold_depth > domain_map_depth:
-            violations.append(Violation(1, f"Scaffold nesting depth ({scaffold_depth}) exceeds domain map depth ({domain_map_depth}) - scaffold may have extra nesting"))
-        
-        # Check concept alignment (simplified - could be enhanced)
-        # Extract domain concepts from domain map (lines that are not empty and not indented too much)
-        domain_concepts = []
-        for line in domain_map['lines']:
-            stripped = line.strip()
-            if stripped and not stripped.startswith('#'):
-                indent = len(line) - len(line.lstrip())
-                if indent == 0:  # Top-level concepts
-                    domain_concepts.append(stripped)
-        
-        # Extract scaffold concepts (top-level describe blocks)
-        scaffold_concepts = []
-        for desc in scaffold_structure['describe_blocks']:
-            if desc['indent'] == 0:  # Top-level describe blocks
-                # Extract concept name (remove "describe" keyword)
-                concept_text = desc['text']
-                concept_match = re.match(r'describe\s+(.+?)(?:\s+that|$)', concept_text, re.IGNORECASE)
-                if concept_match:
-                    scaffold_concepts.append(concept_match.group(1).strip())
-        
-        # Check if scaffold concepts match domain concepts
-        if domain_concepts and scaffold_concepts:
-            domain_set = set(concept.lower() for concept in domain_concepts)
-            scaffold_set = set(concept.lower() for concept in scaffold_concepts)
-            
-            missing_in_scaffold = domain_set - scaffold_set
-            extra_in_scaffold = scaffold_set - domain_set
-            
-            if missing_in_scaffold:
-                violations.append(Violation(1, f"Scaffold missing domain concepts: {', '.join(missing_in_scaffold)}"))
-            if extra_in_scaffold:
-                violations.append(Violation(1, f"Scaffold has extra concepts not in domain map: {', '.join(extra_in_scaffold)}"))
-        
-        return violations if violations else None
-
-class BDDScaffoldRule(BDDRule):
-    """BDD Rule specifically for scaffolding - injects scaffold-specific heuristics into principles"""
-    
-    def __init__(self, base_rule_file_name: str = 'bdd-rule.mdc'):
-        super().__init__(base_rule_file_name)
-        self._inject_scaffold_heuristics()
-    
-    def _inject_scaffold_heuristics(self):
-        """Inject scaffold-specific heuristics into the appropriate principles"""
-        # Map heuristics to principle numbers
-        # Section 1: Business Readable Language - add scaffold-specific technical jargon heuristic
-        # Section 2: Fluency, Hierarchy, and Storytelling - add scaffold-specific subject heuristic
-        # Section 7: Principles Especially Important for Scaffolding - add scaffold-specific heuristics
-        
-        for principle in self.base_rule.principles:
-            if principle.principle_number == 1:
-                # Section 1: Add scaffold-specific technical jargon heuristic
-                if not hasattr(principle, 'heuristics') or not principle.heuristics:
-                    principle.heuristics = []
-                principle.heuristics.append(BDDScaffoldTechnicalJargonHeuristic())
-            
-            elif principle.principle_number == 2:
-                # Section 2: Add scaffold-specific subject clarity heuristic
-                if not hasattr(principle, 'heuristics') or not principle.heuristics:
-                    principle.heuristics = []
-                principle.heuristics.append(BDDScaffoldSubjectHeuristic())
-            
-            elif principle.principle_number == 7:
-                # Section 7: Add all scaffold-specific heuristics
-                if not hasattr(principle, 'heuristics') or not principle.heuristics:
-                    principle.heuristics = []
-                principle.heuristics.extend([
-                    BDDScaffoldCodeSyntaxHeuristic(),
-                    BDDScaffoldStructureHeuristic(),
-                    BDDScaffoldStateOrientedHeuristic(),
-                    BDDScaffoldDomainMapAlignmentHeuristic(),  # Domain map preservation validation
-                ])
-
 class BDDCommand(CodeAugmentedCommand):
     
     def __init__(self, content: Content, base_rule_file_name: str = 'bdd-rule.mdc'):
@@ -754,44 +359,18 @@ class BDDCommand(CodeAugmentedCommand):
             3: BDDDuplicateCodeHeuristic,
             4: BDDLayerFocusHeuristic,
             5: BDDFrontEndHeuristic,
-            # Note: Scaffold-specific heuristics are injected by BDDScaffoldRule, not mapped here
-        }
-
-class BDDScaffoldCommand(BDDCommand):
-    """BDD Command specifically for scaffolding - uses BDDScaffoldRule instead of BDDRule"""
-    
-    def __init__(self, content: Content, base_rule_file_name: str = 'bdd-rule.mdc'):
-        # Use BDDScaffoldRule instead of BDDRule
-        self.rule = BDDScaffoldRule(base_rule_file_name)
-        
-        inner_command = Command(content, self.rule.base_rule)
-        
-        # Call CodeAugmentedCommand directly (not BDDCommand) to avoid double initialization
-        CodeAugmentedCommand.__init__(self, inner_command, self.rule.base_rule)
-    
-    def _get_heuristic_map(self):
-        # BDDScaffoldRule injects heuristics directly into principles, so we don't need a heuristic map here
-        # But we still need the base heuristics for non-scaffold validation
-        return {
-            1: BDDJargonHeuristic,
-            2: BDDComprehensiveHeuristic,
-            3: BDDDuplicateCodeHeuristic,
-            4: BDDLayerFocusHeuristic,
-            5: BDDFrontEndHeuristic,
-            # Scaffold-specific heuristics are injected by BDDScaffoldRule._inject_scaffold_heuristics()
         }
     
     def discover_domain_maps(self) -> Dict[str, Any]:
-        """Discover domain maps and domain interaction files in the test file directory"""
+        """Discover domain maps in the test file directory"""
         if not self.content or not hasattr(self.content, 'file_path'):
-            return {"found": False, "domain_map": None, "interaction_map": None, "domain_interactions": None}
+            return {"found": False, "domain_map": None, "interaction_map": None}
         
         test_path = Path(self.content.file_path)
         test_dir = test_path.parent
         
         domain_map = None
         interaction_map = None
-        domain_interactions = None
         
         for file_path in test_dir.glob("*domain-map*.txt"):
             domain_map = {
@@ -807,25 +386,17 @@ class BDDScaffoldCommand(BDDCommand):
             }
             break
         
-        for file_path in test_dir.glob("*domain-interactions*.txt"):
-            domain_interactions = {
-                "path": str(file_path),
-                "content": file_path.read_text(encoding='utf-8')
-            }
-            break
-        
         return {
-            "found": domain_map is not None or interaction_map is not None or domain_interactions is not None,
+            "found": domain_map is not None or interaction_map is not None,
             "domain_map": domain_map,
-            "interaction_map": interaction_map,
-            "domain_interactions": domain_interactions
+            "interaction_map": interaction_map
         }
 
 
 class BDDIncrementalCommand(IncrementalCommand):
     
     def __init__(self, inner_command, base_rule, test_file: str, max_sample_size: int = 18):
-        super().__init__(inner_command, base_rule, max_sample_size, command_file_path=test_file)
+        super().__init__(inner_command, base_rule, max_sample_size, test_file=test_file)
         
         self.test_file = test_file
         self.max_sample_size = max_sample_size
@@ -1102,20 +673,7 @@ class BDDWorkflow(Workflow):
         """Create a phase command with phase-specific instructions"""
         specializing_command = SpecializingRuleCommand(content, base_rule, specializing_rule, generate_instructions=generate_instructions)
         
-        # For Phase 0 (Domain Scaffolding), use BDDScaffoldCommand which loads BDDScaffoldRule
-        # BDDScaffoldRule injects scaffold-specific heuristics into principles
-        if phase_number == 0:
-            # Create BDDScaffoldRule which injects scaffold heuristics into principles
-            scaffold_rule = BDDScaffoldRule(base_rule_file_name='bdd-rule.mdc')
-            # Use BDDScaffoldCommand with the specializing command
-            code_augmented_command = BDDScaffoldCommand(content, base_rule_file_name='bdd-rule.mdc')
-            # Replace the inner command to use our specializing command
-            code_augmented_command._inner_command = specializing_command
-            # Update the base_rule to use scaffold_rule's base_rule (which has heuristics injected)
-            code_augmented_command.base_rule = scaffold_rule.base_rule
-        else:
-            # For other phases, use standard CodeAugmentedCommand
-            code_augmented_command = CodeAugmentedCommand(specializing_command, base_rule)
+        code_augmented_command = CodeAugmentedCommand(specializing_command, base_rule)
         
         incremental_command = BDDIncrementalCommand(code_augmented_command, base_rule, test_file, max_sample_size)
         incremental_command.name = phase_name
@@ -1134,24 +692,11 @@ class BDDWorkflow(Workflow):
 
 Create plain English hierarchy text file: {hierarchy_file.name}
 
-Discover domain maps and domain interaction files:
-- Look for *domain-map*.txt files (provides structure and hierarchy)
-- Look for *domain-interactions*.txt files (if present, can enhance with sequencing and function hints)
-
 Write plain English hierarchy following patterns:
 - NO code syntax (), =>, {{}} - just plain English text
 - NEVER flatten - preserve ALL nesting from domain map
 - Follow temporal lifecycle progression (created → played → edited → saved)
 - Use complete end-to-end behaviors
-
-If domain interaction files are present, you can leverage them to enhance:
-- Test ordering: Use scenario order to determine test ordering (scenarios provide correct storytelling sequence)
-- Test sequence: Use flow steps to determine test sequence within describe blocks (flow shows order of domain concept interactions)
-- Test cases: Use business rules to generate specific it blocks (each rule becomes a test case)
-- Function hints: Use transformations and lookups to inform what individual it blocks should test (transformations tell you what object functions will be)
-- Concept relationships: Use actors to identify concept relationships and co-testing opportunities
-
-Domain map provides primary structure; domain interactions enhance with sequencing and function hints when present.
 
 This is a TEXT file (.txt), separate from the test code file.
 Run /bdd-domain-scaffold-verify when ready."""

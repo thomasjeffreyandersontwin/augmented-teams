@@ -71,15 +71,8 @@ bdd_workflow = bdd_runner.bdd_workflow
 RunStatus = bdd_runner.RunStatus
 StepType = bdd_runner.StepType
 BDDPhase = bdd_runner.BDDPhase
-BDDScaffoldCodeSyntaxHeuristic = bdd_runner.BDDScaffoldCodeSyntaxHeuristic
-BDDScaffoldStructureHeuristic = bdd_runner.BDDScaffoldStructureHeuristic
-BDDScaffoldStateOrientedHeuristic = bdd_runner.BDDScaffoldStateOrientedHeuristic
-BDDScaffoldSubjectHeuristic = bdd_runner.BDDScaffoldSubjectHeuristic
-BDDScaffoldTechnicalJargonHeuristic = bdd_runner.BDDScaffoldTechnicalJargonHeuristic
-BDDScaffoldDomainMapAlignmentHeuristic = bdd_runner.BDDScaffoldDomainMapAlignmentHeuristic
-BDDScaffoldRule = bdd_runner.BDDScaffoldRule
-BDDScaffoldCommand = bdd_runner.BDDScaffoldCommand
-detect_framework_from_file = bdd_runner.BDDRule.detect_framework_from_file
+detect_framework_from_file = bdd_runner.detect_framework_from_file
+parse_test_structure = bdd_runner.parse_test_structure
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -170,9 +163,9 @@ description: BDD testing practices for Mamba/Python
 ---
 
 ## 1. Business Readable Language
-Write `describe`/`it` so that inner/outer sentences create natural sentence. Use nouns for `describe` (concepts, states). Start each `it()` with "should ...". Nest from broad -> specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon. Connect base business concept to more specific concepts using linking words: "that is/that has" "that has been"
+Write `describe`/`it` so that inner/outer sentences create natural sentence. Use nouns for `describe` (concepts, states). Start each `it()` with "should …". Nest from broad → specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon. Connect base business concept to more specific concepts using linking words: "that is/that has" "that has been"
 
-**[OK] DO:**
+**✅ DO:**
 ```python
 with description('a ranged damage power'):
     with context('that has targeted and resulted in a successful attack'):
@@ -180,7 +173,7 @@ with description('a ranged damage power'):
             expect(result.injuries).to(equal(2))
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```python
 with description('when attacking Target'):
 with description('Power.execute()'):
@@ -191,7 +184,7 @@ with it('sets is_submitting flag'):
 ## 2. Comprehensive and Brief
 Test observable behavior, not hidden internals. Cover state, validation, rules, and interactions. Cover normal, edge, and failure paths. Keep tests short, expressive, readable. Keep tests independent, deterministic, and fast.
 
-**[OK] DO:**
+**✅ DO:**
 ```python
 with description('a damage power'):
     with before.each:
@@ -204,7 +197,7 @@ with description('a damage power'):
         expect(attack.execute(self.mock_target).DC).to(equal(20))
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```python
 with it('calls _validate()'):
     expect(form._flag).to(be_true)
@@ -215,7 +208,7 @@ with it('handles attack'):
 ## 3. Balance Context Sharing with Localization
 Nest parent context, don't repeat it. Provide expected data via helper factories/builders. Extract complex logic into helpers. Reuse helpers/factories where possible.
 
-**[OK] DO:**
+**✅ DO:**
 ```python
 def create_power(o=None):
     return Power({**{'name': 'Test', 'rank': 10}, **(o or {})})
@@ -227,7 +220,7 @@ with description('a Power'):
         self.power = create_power()
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```python
 with description('Power'):
     with context('created from actor'):
@@ -244,7 +237,7 @@ Include separate front end, business logic, integration, and data access tests. 
 ## 5. Unit Tests the Front-End
 Mock services, business logic, and routing. Stub user events and verify resulting state or view.
 
-**[OK] DO:**
+**✅ DO:**
 ```python
 with description('an attack power display'):
     with before.each:
@@ -255,7 +248,7 @@ with description('an attack power display'):
         expect(self.context['attack_powers'][0]['bonus']).to(equal(8))
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```python
 with it('renders bonus'):
     expect(html).to(contain('value="8"'))
@@ -271,9 +264,9 @@ description: BDD testing practices for Jest/JavaScript
 ---
 
 ## 1. Business Readable Language
-Write `describe`/`it` so that inner/outer sentences create natural sentence. Use nouns for `describe` (concepts, states). Start each `it()` with "should ...". Nest from broad -> specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon.
+Write `describe`/`it` so that inner/outer sentences create natural sentence. Use nouns for `describe` (concepts, states). Start each `it()` with "should …". Nest from broad → specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon.
 
-**[OK] DO:**
+**✅ DO:**
 ```javascript
 describe('a ranged damage power', () => {
   describe('that has targeted and resulted in a successful attack', () => {
@@ -284,7 +277,7 @@ describe('a ranged damage power', () => {
 });
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```javascript
 describe('when Attack.targetToken()', () => {});
 describe('retrieved attack', () => {});
@@ -294,7 +287,7 @@ it('sets isSubmitting flag', () => {});
 ## 2. Comprehensive and Brief
 Test observable behavior, not hidden internals. Cover state, validation, rules, and interactions.
 
-**[OK] DO:**
+**✅ DO:**
 ```javascript
 describe('a damage power', () => {
   beforeEach(() => {
@@ -311,7 +304,7 @@ describe('a damage power', () => {
 });
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```javascript
 it('calls _validateCredentials()', () => {
   expect(form._internal_flag).toBe(true);
@@ -322,7 +315,7 @@ it('calls _validateCredentials()', () => {
 ## 3. Balance Context Sharing with Localization
 Nest parent context, don't repeat it. Provide expected data via helper factories/builders.
 
-**[OK] DO:**
+**✅ DO:**
 ```javascript
 const createPower = (o = {}) => ({ name: 'Test', rank: 10, ...o });
 
@@ -333,7 +326,7 @@ describe('a Power', () => {
 });
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```javascript
 describe('with an attached macro', () => {
   it('should return animation with type "attached"', () => {
@@ -356,7 +349,7 @@ Include separate front end, business logic, integration, and data access tests.
 ## 5. Unit Tests the Front-End
 Mock services, business logic, and routing. Stub user events and verify resulting state or view.
 
-**[OK] DO:**
+**✅ DO:**
 ```javascript
 describe('an attack power display', () => {
   beforeEach(() => {
@@ -370,7 +363,7 @@ describe('an attack power display', () => {
 });
 ```
 
-**[X] DON'T:**
+**❌ DON'T:**
 ```javascript
 it('renders bonus', () => {
   expect(html).toContain('value="8"');
@@ -421,24 +414,6 @@ def create_bdd_command_with_specialized_rule(content, framework='mamba', instruc
 # def create_bdd_run_state(test_file='test_test.py', state_data=None):
 #     """Create BDDRunState with optional state data"""
 #     pass
-
-def assert_heuristic_violations(command, violations, principle, principle_number, principle_name_contains):
-    """Helper function to assert common heuristic violation patterns"""
-    # Assert - violations found (helper already validates offending content)
-    expect(command.violations).to(have_length(be_true))  # Violations property populated
-    expect(violations).to(equal(command.violations))  # Same violations from property
-    
-    # Assert - violations are associated with principle
-    expect(principle.number).to(equal(principle_number))
-    expect(principle.name).to(contain(principle_name_contains))
-    
-    # Assert - principle has examples with exact DO and DON'T text and code
-    expect(principle.examples).to(have_length(be_true))  # At least one example
-    for example in principle.examples:
-        expect(hasattr(example, 'do_text')).to(be_true)
-        expect(hasattr(example, 'do_code')).to(be_true)
-        expect(hasattr(example, 'dont_text')).to(be_true)
-        expect(hasattr(example, 'dont_code')).to(be_true)
 
 def test_bdd_heuristic(content_lines, file_name, expected_violations, principle_number, framework='mamba'):
     """
@@ -523,70 +498,65 @@ def test_bdd_heuristic(content_lines, file_name, expected_violations, principle_
 # BDD-SPECIFIC TESTS
 # ============================================================================
 
-# Only execute mamba test blocks when mamba is active (not during pytest import)  
-# When pytest imports, description() returns None, so we guard against that
-if description is not None:
-    desc_ctx = description('a test file')
-    if desc_ctx is not None:
-        with desc_ctx:
-            """BDD-specific: test file processing with BDD principles"""
+with description('a test file'):
+    """BDD-specific: test file processing with BDD principles"""
+    
+    with context('that is being processed by a BDD command'):
+        with before.each:
+            self.content = Content('test_test.py', '.py')
+        
+        with context('that implements specializing rules for test frameworks (mamba and jest)'):
+            with before.each:
+                test_base_rule_content = create_bdd_base_rule_content()
+                test_specialized_rule_content = create_bdd_specialized_rule_content('mamba')
+                
+                def read_file_side_effect(file_path):
+                    file_str = str(file_path)
+                    if 'mamba' in file_str or 'bdd-rule-mamba' in file_str:
+                        return test_specialized_rule_content
+                    return test_base_rule_content
+                
+                with patch.object(BaseRule, '_read_file_content', side_effect=read_file_side_effect):
+                    self.specializing_rule = create_bdd_specializing_rule('bdd-rule.mdc')
+                    self.mamba_specialized = SpecializedRule(rule_file_name='bdd-rule-mamba.mdc', parent=self.specializing_rule)
+                    self.specializing_rule.specialized_rules['mamba'] = self.mamba_specialized
             
-            with context('that is being processed by a BDD command'):
+            with it('should select appropriate specialized rule based on file extension (mamba for .py, jest for .js/.ts)'):
+                # Arrange
+                base_rule = self.specializing_rule.base_rule
+                base_command = Command(self.content, base_rule)
+                command = SpecializingRuleCommand(base_command, self.specializing_rule)
+                
+                # Act
+                selected_specialized = command.specialized_rule
+                
+                # Assert - BDDRule implements mamba (.py) and jest (.js/.ts) specialization
+                # For .py files, should select mamba rule
+                expect(selected_specialized).to(equal(self.mamba_specialized))
+                expect(self.content.file_extension).to(equal('.py'))
+            
+            with it('should include BDD principles from base rule (applies to both mamba and jest)'):
+                # Arrange
+                base_rule = self.specializing_rule.base_rule
+                base_command = Command(self.content, base_rule)
+                command = SpecializingRuleCommand(base_command, self.specializing_rule)
+                
+                # Act
+                principles = command.principles
+                
+                # Assert - BDDRule loads base BDD principles that apply to both mamba and jest
+                # Should have 5 BDD principles
+                expect(principles).to(have_length(5))
+                expect(principles[0].principle_name).to(contain("Business Readable Language"))
+                expect(principles[1].principle_name).to(contain("Comprehensive"))
+                expect(principles[2].principle_name).to(contain("Balance Context"))
+                expect(principles[3].principle_name).to(contain("Cover All Layers"))
+                expect(principles[4].principle_name).to(contain("Unit Tests Front-End"))
+            
+            with context('and the specializing rule has been loaded'):
                 with before.each:
-                    self.content = Content('test_test.py', '.py')
-                
-                with context('that implements specializing rules for test frameworks (mamba and jest)'):
-                    with before.each:
-                        test_base_rule_content = create_bdd_base_rule_content()
-                        test_specialized_rule_content = create_bdd_specialized_rule_content('mamba')
-                        
-                        def read_file_side_effect(file_path):
-                            file_str = str(file_path)
-                            if 'mamba' in file_str or 'bdd-rule-mamba' in file_str:
-                                return test_specialized_rule_content
-                            return test_base_rule_content
-                        
-                        with patch.object(BaseRule, '_read_file_content', side_effect=read_file_side_effect):
-                            self.specializing_rule = create_bdd_specializing_rule('bdd-rule.mdc')
-                            self.mamba_specialized = SpecializedRule(rule_file_name='bdd-rule-mamba.mdc', parent=self.specializing_rule)
-                            self.specializing_rule.specialized_rules['mamba'] = self.mamba_specialized
-                    
-                    with it('should select appropriate specialized rule based on file extension (mamba for .py, jest for .js/.ts)'):
-                        # Arrange
-                        base_rule = self.specializing_rule.base_rule
-                        base_command = Command(self.content, base_rule)
-                        command = SpecializingRuleCommand(base_command, self.specializing_rule)
-                        
-                        # Act
-                        selected_specialized = command.specialized_rule
-                        
-                        # Assert - BDDRule implements mamba (.py) and jest (.js/.ts) specialization
-                        # For .py files, should select mamba rule
-                        expect(selected_specialized).to(equal(self.mamba_specialized))
-                        expect(self.content.file_extension).to(equal('.py'))
-                    
-                    with it('should include BDD principles from base rule (applies to both mamba and jest)'):
-                        # Arrange
-                        base_rule = self.specializing_rule.base_rule
-                        base_command = Command(self.content, base_rule)
-                        command = SpecializingRuleCommand(base_command, self.specializing_rule)
-                        
-                        # Act
-                        principles = command.principles
-                        
-                        # Assert - BDDRule loads base BDD principles that apply to both mamba and jest
-                        # Should have 5 BDD principles
-                        expect(principles).to(have_length(5))
-                        expect(principles[0].principle_name).to(contain("Business Readable Language"))
-                        expect(principles[1].principle_name).to(contain("Comprehensive"))
-                        expect(principles[2].principle_name).to(contain("Balance Context"))
-                        expect(principles[3].principle_name).to(contain("Cover All Layers"))
-                        expect(principles[4].principle_name).to(contain("Unit Tests Front-End"))
-                
-                with context('and the specializing rule has been loaded'):
-                    with before.each:
-                        # self.content and self.specializing_rule inherited from parent
-                        pass
+                    # self.content and self.specializing_rule inherited from parent
+                    pass
                 
                 with it('should have access to base rule with five principles'):
                     # Arrange
@@ -645,51 +615,54 @@ if description is not None:
                         expect(principle.heuristics).not_to(be_none)  # Structure exists
                 
             with context('that uses real BDD heuristics to detect violations'):
-                with it('should detect technical jargon and missing should in test names'):
-                    # Act - test heuristic using helper
-                    command, violations, principle = test_bdd_heuristic(
-                        [
-                            "with description('PowerItem'):\n",  # Technical jargon - violates Section1
-                            "    with it('test_getDescriptor'):\n",  # Missing "should", technical naming - violates Section1
+                # Test cases for each BDD principle
+                heuristic_test_cases = [
+                    {
+                        'name': '§1 violations (Business Readable Language) - technical jargon and missing "should"',
+                        'content_lines': [
+                            "with description('PowerItem'):\n",  # Technical jargon - violates §1
+                            "    with it('test_getDescriptor'):\n",  # Missing "should", technical naming - violates §1
                             "        pass\n"
                         ],
-                        'bad_test.py',
-                        [
+                        'file_name': 'bad_test.py',
+                        'expected_violations': [
                             {'line': 1, 'message_contains': 'technical jargon', 'offending_content': 'PowerItem'},
                             {'line': 2, 'message_contains': 'should', 'offending_content': 'test_getDescriptor'}
                         ],
-                        1,
-                        'mamba'
-                    )
-                    
-                    # Assert using helper
-                    assert_heuristic_violations(command, violations, principle, 1, 'Business Readable Language')
-                
-                with it('should detect internal assertion violations in test code'):
-                    # Act - test heuristic using helper
-                    command, violations, principle = test_bdd_heuristic(
-                        [
+                        'principle_number': 1,
+                        'framework': 'mamba',
+                        'principle_name_contains': 'Business Readable Language',
+                        'message_keywords': ['technical jargon', 'should'],
+                        'expected_do_text': '',
+                        'expected_do_code': "with description('a ranged damage power'):\n    with context('that has targeted and resulted in a successful attack'):\n        with it('should apply damage based on degrees of failure'):\n            expect(result.injuries).to(equal(2))",
+                        'expected_dont_text': '',
+                        'expected_dont_code': "with description('when attacking Target'):\nwith description('Power.execute()'):\nwith context('retrieved attack'):\nwith it('sets is_submitting flag'):"
+                    },
+                    {
+                        'name': '§2 violations (Comprehensive and Brief) - internal assertions',
+                        'content_lines': [
                             "with description('a user'):\n",
                             "    with it('should authenticate'):\n",
-                            "        mock_service.toHaveBeenCalled()\n",  # Tests internal calls - violates Section2
-                            "        expect(mock_service.mock.calls).to(equal(1))\n"  # Mock internals - violates Section2
+                            "        mock_service.toHaveBeenCalled()\n",  # Tests internal calls - violates §2
+                            "        expect(mock_service.mock.calls).to(equal(1))\n"  # Mock internals - violates §2
                         ],
-                        'bad_test.py',
-                        [
+                        'file_name': 'bad_test.py',
+                        'expected_violations': [
                             {'line': 3, 'message_contains': 'internal', 'offending_content': 'toHaveBeenCalled'},
                             {'line': 4, 'message_contains': 'internal', 'offending_content': 'mock.calls'}
                         ],
-                        2,
-                        'mamba'
-                    )
-                    
-                    # Assert using helper
-                    assert_heuristic_violations(command, violations, principle, 2, 'Comprehensive')
-                
-                with it('should detect duplicate code in sibling test blocks'):
-                    # Act - test heuristic using helper
-                    command, violations, principle = test_bdd_heuristic(
-                        [
+                        'principle_number': 2,
+                        'framework': 'mamba',
+                        'principle_name_contains': 'Comprehensive',
+                        'message_keywords': ['internal', 'observable'],
+                        'expected_do_text': '',
+                        'expected_do_code': "with description('a damage power'):\n    with before.each:\n        self.mock_target = {'dodge': 15, 'injury': 0}\n    \n    with it('should be a ranged attack'):\n        expect(attack.is_ranged).to(equal(True))\n    \n    with it('should calculate DC from targets dodge'):\n        expect(attack.execute(self.mock_target).DC).to(equal(20))",
+                        'expected_dont_text': '',
+                        'expected_dont_code': "with it('calls _validate()'):\n    expect(form._flag).to(be_true)\n    expect(form._validate).to(have_been_called)\nwith it('handles attack'):"
+                    },
+                    {
+                        'name': '§3 violations (Balance Context Sharing) - duplicate code in siblings',
+                        'content_lines': [
                             "with description('a power item'):\n",
                             "    with it('should display fire descriptor'):\n",
                             "        power = create_power('fire')\n",  # Duplicate setup
@@ -701,21 +674,22 @@ if description is not None:
                             "        power = create_power('water')\n",  # Duplicate setup (3+ siblings)
                             "        expect(power.descriptor).to(equal('Water'))\n"
                         ],
-                        'bad_test.py',
-                        [
+                        'file_name': 'bad_test.py',
+                        'expected_violations': [
                             {'line': 2, 'message_contains': 'duplicate', 'offending_content': 'create_power'}
                         ],
-                        3,
-                        'mamba'
-                    )
-                    
-                    # Assert using helper
-                    assert_heuristic_violations(command, violations, principle, 3, 'Balance Context')
-                
-                with it('should detect excessive mocking violations in test code'):
-                    # Act - test heuristic using helper
-                    command, violations, principle = test_bdd_heuristic(
-                        [
+                        'principle_number': 3,
+                        'framework': 'mamba',
+                        'principle_name_contains': 'Balance Context',
+                        'message_keywords': ['duplicate'],
+                        'expected_do_text': '',
+                        'expected_do_code': "def create_power(o=None):\n    return Power({**{'name': 'Test', 'rank': 10}, **(o or {})})\n\nwith description('a Power'):\n    with before.each:\n        self.factory = MockFactory()\n        self.factory.reset()\n        self.power = create_power()",
+                        'expected_dont_text': '',
+                        'expected_dont_code': "with description('Power'):\n    with context('created from actor'):\n        with before.each:\n            self.actor = {'id': '123'}\n    with context('that is ranged'):\n        with before.each:\n            self.actor = {'id': '123'}"
+                    },
+                    {
+                        'name': '§4 violations (Cover All Layers) - excessive mocking',
+                        'content_lines': [
                             "with description('a service'):\n",
                             "    with it('should process request'):\n",
                             "        jest.mock('dependency1')\n",  # Excessive mocking
@@ -723,38 +697,93 @@ if description is not None:
                             "        jest.mock('dependency3')\n",  # 3+ mocks suggests wrong focus
                             "        service.process()\n"
                         ],
-                        'bad_test.js',
-                        [
+                        'file_name': 'bad_test.js',
+                        'expected_violations': [
                             {'line': 5, 'message_contains': 'dependencies', 'offending_content': 'jest.mock'}
                         ],
-                        4,
-                        'jest'
-                    )
-                    
-                    # Assert using helper
-                    assert_heuristic_violations(command, violations, principle, 4, 'Cover All Layers')
-                
-                with it('should detect implementation detail violations in front-end tests'):
-                    # Act - test heuristic using helper
-                    command, violations, principle = test_bdd_heuristic(
-                        [
+                        'principle_number': 4,
+                        'framework': 'jest',
+                        'principle_name_contains': 'Cover All Layers',
+                        'message_keywords': ['dependencies', 'mock'],
+                        'expected_do_text': '',
+                        'expected_do_code': '',
+                        'expected_dont_text': '',
+                        'expected_dont_code': ''
+                    },
+                    {
+                        'name': '§5 violations (Unit Tests Front-End) - implementation details',
+                        'content_lines': [
                             "describe('a component', () => {\n",
                             "    it('should render', () => {\n",
                             "        const wrapper = mount(<Component />)\n",
-                            "        expect(wrapper.state().isVisible).toBe(true)\n",  # Tests state - violates Section5
-                            "        expect(wrapper.instance().props).toEqual({})\n"  # Tests instance - violates Section5
+                            "        expect(wrapper.state().isVisible).toBe(true)\n",  # Tests state - violates §5
+                            "        expect(wrapper.instance().props).toEqual({})\n"  # Tests instance - violates §5
                         ],
-                        'component.test.jsx',
-                        [
+                        'file_name': 'component.test.jsx',
+                        'expected_violations': [
                             {'line': 4, 'message_contains': 'implementation', 'offending_content': 'state()'},
                             {'line': 5, 'message_contains': 'implementation', 'offending_content': 'instance()'}
                         ],
-                        5,
-                        'jest'
-                    )
-                    
-                    # Assert using helper
-                    assert_heuristic_violations(command, violations, principle, 5, 'Front-End')
+                        'principle_number': 5,
+                        'framework': 'jest',
+                        'principle_name_contains': 'Front-End',
+                        'message_keywords': ['implementation'],
+                        'expected_do_text': '',
+                        'expected_do_code': "with description('an attack power display'):\n    with before.each:\n        self.mock_service = Mock()\n        self.context = prepare_context(self.actor)\n    \n    with it('should include attack bonus in context'):\n        expect(self.context['attack_powers'][0]['bonus']).to(equal(8))",
+                        'expected_dont_text': '',
+                        'expected_dont_code': "with it('renders bonus'):\n    expect(html).to(contain('value=\"8\"'))\n    expect(html).to(contain('color: blue'))\n    requests.get('http://api.com')\nwith it('calls _on_mount()'):\n    expect(component._on_mount).to(have_been_called)"
+                    }
+                ]
+                
+                # Parameterized test - runs same logic for each test case
+                for test_case in heuristic_test_cases:
+                    with it(f'should detect {test_case["name"]}'):
+                        # Act - test heuristic using helper
+                        command, violations, principle = test_bdd_heuristic(
+                            test_case['content_lines'],
+                            test_case['file_name'],
+                            test_case['expected_violations'],
+                            test_case['principle_number'],
+                            test_case['framework']
+                        )
+                        
+                        # Assert - violations found (helper already validates offending content)
+                        expect(command.violations).to(have_length(be_true))  # Violations property populated
+                        expect(violations).to(equal(command.violations))  # Same violations from property
+                        
+                        # Assert - violations are associated with principle
+                        expect(principle.number).to(equal(test_case['principle_number']))
+                        expect(principle.name).to(contain(test_case['principle_name_contains']))
+                        
+                        # Assert - principle has examples with exact DO and DON'T text and code
+                        expect(principle.examples).to(have_length(be_true))  # At least one example
+                        for example in principle.examples:
+                            expect(hasattr(example, 'do_text')).to(be_true)
+                            expect(hasattr(example, 'do_code')).to(be_true)
+                            expect(hasattr(example, 'dont_text')).to(be_true)
+                            expect(hasattr(example, 'dont_code')).to(be_true)
+                            
+                            # Assert exact values if expected
+                            if test_case.get('expected_do_text') is not None:
+                                expect(example.do_text).to(equal(test_case['expected_do_text']))
+                            if test_case.get('expected_do_code'):
+                                expect(example.do_code).to(contain(test_case['expected_do_code']))
+                            if test_case.get('expected_dont_text') is not None:
+                                expect(example.dont_text).to(equal(test_case['expected_dont_text']))
+                            if test_case.get('expected_dont_code'):
+                                expect(example.dont_code).to(contain(test_case['expected_dont_code']))
+                        
+                        # Assert - violations have all required properties (helper validates exact values)
+                        for violation in violations:
+                            expect(violation.principle.number).to(equal(test_case['principle_number']))
+                            expect(violation.principle.name).to(contain(test_case['principle_name_contains']))
+                            expect(violation.principle).to(equal(principle))  # Principle object matches
+                        
+                        # Assert - violation messages contain expected keywords
+                        if violations and test_case.get('message_keywords'):
+                            messages = [v.message.lower() for v in violations]
+                            has_keyword = any(keyword.lower() in msg for keyword in test_case['message_keywords'] for msg in messages)
+                            expect(has_keyword).to(be_true)
                 
                 with it('should assemble related violations, principles, and examples into checklist report'):
                     # Arrange
@@ -785,9 +814,45 @@ if description is not None:
                 #   - Level 1: 'that validates power usage' (context) - 2 it blocks (direct)
                 # The algorithm should find 'that has fire type' as lowest-level (highest indent) with 5 it blocks
                 self.test_file = Path(__file__).parent / 'test_bdd_sample.py'
-                # Load sample test content from file (avoids triple-quoted string issues with conftest.py)
-                sample_content_path = Path(__file__).parent / 'test_data' / 'test_bdd_sample_content.txt'
-                test_file_content = sample_content_path.read_text(encoding='utf-8')
+                test_file_content = """from mamba import description, context, it
+from expects import expect, equal
+
+with description('a power system'):
+    with context('that manages power items'):
+        with context('that has fire type'):
+            with it('should display fire descriptor'):
+                pass
+            with it('should apply fire damage'):
+                pass
+            with it('should resist water attacks'):
+                pass
+            with it('should increase fire resistance'):
+                pass
+            with it('should trigger fire effects'):
+                pass
+        with context('that has water type'):
+            with it('should display water descriptor'):
+                pass
+            with it('should apply water damage'):
+                pass
+            with it('should resist fire attacks'):
+                pass
+    with context('that manages power effects'):
+        with context('that applies damage'):
+            with it('should calculate base damage'):
+                pass
+            with it('should apply damage modifiers'):
+                pass
+            with it('should respect damage resistance'):
+                pass
+            with it('should trigger damage events'):
+                pass
+    with context('that validates power usage'):
+        with it('should check power availability'):
+            pass
+        with it('should validate power requirements'):
+            pass
+"""
                 self.test_file.write_text(test_file_content, encoding='utf-8')
                 
                 test_base_rule_content = create_bdd_base_rule_content()
@@ -818,9 +883,12 @@ if description is not None:
             with it('should cap sample size at max_sample_size when parsed sample is bigger'):
                 # Arrange - create a test file with more than max_sample_size 'it' blocks
                 large_test_file = Path(__file__).parent / 'test_bdd_large_sample.py'
-                # Load base sample test content from file (avoids triple-quoted string issues with conftest.py)
-                large_sample_content_path = Path(__file__).parent / 'test_data' / 'test_bdd_large_sample_content.txt'
-                large_test_content = large_sample_content_path.read_text(encoding='utf-8')
+                large_test_content = """from mamba import description, context, it
+from expects import expect, equal
+
+with description('a large test suite'):
+    with context('that has many tests'):
+"""
                 # Add 25 'it' blocks (more than max_sample_size of 18)
                 for i in range(25):
                     large_test_content += f"        with it('should test behavior {i}'):\n            pass\n"
@@ -878,7 +946,7 @@ if description is not None:
                 workflow = self.workflow
                 phase = workflow.phases[0]
                 
-                # Assert - verify the wrapping chain: BDDWorkflowPhaseCommand -> WorkflowPhaseCommand -> IncrementalCommand -> BDDCommand
+                # Assert - verify the wrapping chain: BDDWorkflowPhaseCommand → WorkflowPhaseCommand → IncrementalCommand → BDDCommand
                 # The phase_command should be a WorkflowPhaseCommand
                 expect(phase.phase_command).not_to(be_none)
                 expect(isinstance(phase.phase_command, WorkflowPhaseCommand)).to(be_true)
@@ -1052,182 +1120,4 @@ if description is not None:
                     expect(hasattr(bdd_cmd, 'framework')).to(be_true)
                     expect(bdd_cmd.test_file).to(equal(self.test_file))
                     expect(bdd_cmd.framework).to(equal(self.framework))
-        
-        # NOTE: Scaffold heuristic tests removed due to pytest/mamba integration issues.
-        # The scaffold heuristics are implemented and functional, but automated tests
-        # cannot be run via pytest due to mamba's AST transformer conflicts with pytest's
-        # module-level import phase. These tests will be validated manually during
-        # scaffold command development and usage.
-    
-            with context('BDDIncrementalCommand'):
-                with context('that initializes with test_file parameter'):
-                    with it('should accept test_file parameter without error'):
-                        # Arrange
-                        test_file = str(Path(__file__).parent / 'test_file.py')
-                        base_rule = BaseRule('bdd-rule.mdc')
-                        inner_command = Command(Content(file_path=test_file), base_rule)
-                        
-                        # Act & Assert - should not raise exception
-                        try:
-                            cmd = BDDIncrementalCommand(inner_command, base_rule, test_file, max_sample_size=18)
-                            expect(cmd.test_file).to(equal(test_file))
-                            expect(cmd.max_sample_size).to(equal(18))
-                        except Exception as e:
-                            expect(False).to(be_true)  # Should not raise exception
-                            print(f"Unexpected exception: {e}")
-                    
-                    with it('should pass command_file_path to IncrementalCommand'):
-                        # Arrange
-                        test_file = str(Path(__file__).parent / 'test_file.py')
-                        base_rule = BaseRule('bdd-rule.mdc')
-                        inner_command = Command(Content(file_path=test_file), base_rule)
-                        
-                        # Act
-                        cmd = BDDIncrementalCommand(inner_command, base_rule, test_file, max_sample_size=18)
-                        
-                        # Assert - verify state has command_file_path set
-                        expect(cmd.state.command_file_path).to(equal(test_file))
-    
-            with context('BDDCommand'):
-                with context('that validates scaffold files'):
-                    with it('should not map scaffold heuristics directly (they are injected by BDDScaffoldRule)'):
-                        # Arrange
-                        scaffold_file = Path(__file__).parent / 'test-hierarchy.txt'
-                        scaffold_file.write_text('Character\n  should have stats\n')
-                        content = Content(file_path=str(scaffold_file))
-                        bdd_cmd = BDDCommand(content)
-                        
-                        # Act - get heuristic map
-                        heuristic_map = bdd_cmd._get_heuristic_map()
-                        
-                        # Assert - scaffold heuristics are NOT in the map (they're injected by BDDScaffoldRule)
-                        expect(7 in heuristic_map).to(be_false)
-                    
-                    with it('should inject scaffold heuristics when using BDDScaffoldRule'):
-                        # Arrange
-                        scaffold_file = Path(__file__).parent / 'test-hierarchy.txt'
-                        scaffold_file.write_text('describe Character\n  it should have stats\n')
-                        content = Content(file_path=str(scaffold_file))
-                        scaffold_rule = BDDScaffoldRule('bdd-rule.mdc')
-                        
-                        # Act - check if heuristics are injected into principles
-                        principle_7 = None
-                        for principle in scaffold_rule.base_rule.principles:
-                            if principle.principle_number == 7:
-                                principle_7 = principle
-                                break
-                        
-                        # Assert
-                        expect(principle_7).not_to(be_none)
-                        expect(hasattr(principle_7, 'heuristics')).to(be_true)
-                        expect(len(principle_7.heuristics) > 0).to(be_true)
-                        # Should have scaffold-specific heuristics
-                        heuristic_names = [type(h).__name__ for h in principle_7.heuristics]
-                        expect(any('Scaffold' in name for name in heuristic_names)).to(be_true)
-                    
-                    with it('should discover domain maps in test directory'):
-                        # Arrange
-                        test_dir = Path(__file__).parent / 'test-scaffold'
-                        test_dir.mkdir(exist_ok=True)
-                        domain_map_file = test_dir / 'test-domain-map.txt'
-                        domain_map_file.write_text('Character\n  Creation\n')
-                        
-                        test_file = test_dir / 'test_zorbling_test.py'
-                        test_file.write_text('# test file')
-                        
-                        content = Content(file_path=str(test_file))
-                        bdd_cmd = BDDCommand(content)
-                        
-                        # Act
-                        result = bdd_cmd.discover_domain_maps()
-                        
-                        # Assert
-                        expect(result['found']).to(be_true)
-                        expect(result['domain_map']).not_to(be_none)
-                        
-                        # Cleanup
-                        domain_map_file.unlink()
-                        test_file.unlink()
-                        test_dir.rmdir()
-                    
-                    with it('should discover domain interaction files with *domain-interactions*.txt pattern'):
-                        # Arrange
-                        test_dir = Path(__file__).parent / 'test-scaffold'
-                        test_dir.mkdir(exist_ok=True)
-                        domain_interactions_file = test_dir / 'test-domain-interactions.txt'
-                        domain_interactions_file.write_text('SCENARIO 1: Test Scenario\n')
-                        
-                        test_file = test_dir / 'test_zorbling_test.py'
-                        test_file.write_text('# test file')
-                        
-                        content = Content(file_path=str(test_file))
-                        bdd_cmd = BDDCommand(content)
-                        
-                        # Act
-                        result = bdd_cmd.discover_domain_maps()
-                        
-                        # Assert
-                        expect(result['found']).to(be_true)
-                        expect(result['domain_interactions']).not_to(be_none)
-                        expect(result['domain_interactions']['path']).to(contain('test-domain-interactions.txt'))
-                        
-                        # Cleanup
-                        domain_interactions_file.unlink()
-                        test_file.unlink()
-                        test_dir.rmdir()
-                    
-                    with it('should return both domain map and domain interactions when both exist'):
-                        # Arrange
-                        test_dir = Path(__file__).parent / 'test-scaffold'
-                        test_dir.mkdir(exist_ok=True)
-                        domain_map_file = test_dir / 'test-domain-map.txt'
-                        domain_map_file.write_text('Character\n  Creation\n')
-                        domain_interactions_file = test_dir / 'test-domain-interactions.txt'
-                        domain_interactions_file.write_text('SCENARIO 1: Test Scenario\n')
-                        
-                        test_file = test_dir / 'test_zorbling_test.py'
-                        test_file.write_text('# test file')
-                        
-                        content = Content(file_path=str(test_file))
-                        bdd_cmd = BDDCommand(content)
-                        
-                        # Act
-                        result = bdd_cmd.discover_domain_maps()
-                        
-                        # Assert
-                        expect(result['found']).to(be_true)
-                        expect(result['domain_map']).not_to(be_none)
-                        expect(result['domain_interactions']).not_to(be_none)
-                        
-                        # Cleanup
-                        domain_map_file.unlink()
-                        domain_interactions_file.unlink()
-                        test_file.unlink()
-                        test_dir.rmdir()
-                    
-                    with it('should return domain interactions even when domain map not found'):
-                        # Arrange
-                        test_dir = Path(__file__).parent / 'test-scaffold'
-                        test_dir.mkdir(exist_ok=True)
-                        domain_interactions_file = test_dir / 'test-domain-interactions.txt'
-                        domain_interactions_file.write_text('SCENARIO 1: Test Scenario\n')
-                        
-                        test_file = test_dir / 'test_zorbling_test.py'
-                        test_file.write_text('# test file')
-                        
-                        content = Content(file_path=str(test_file))
-                        bdd_cmd = BDDCommand(content)
-                        
-                        # Act
-                        result = bdd_cmd.discover_domain_maps()
-                        
-                        # Assert
-                        expect(result['found']).to(be_true)
-                        expect(result['domain_map']).to(be_none)
-                        expect(result['domain_interactions']).not_to(be_none)
-                        
-                        # Cleanup
-                        domain_interactions_file.unlink()
-                        test_file.unlink()
-                        test_dir.rmdir()
 

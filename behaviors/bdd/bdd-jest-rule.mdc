@@ -1,0 +1,205 @@
+---
+description: BDD testing practices for Jest/JavaScript
+globs: ["**/*test*.js", "**/*test*.ts", "**/*test*.jsx", "**/*test*.tsx", "**/*spec*.js", "**/*spec*.ts", "**/*spec*.jsx", "**/*spec*.tsx"]
+alwaysApply: false
+---
+**When** practicing BDD testing with Jest/JavaScript,
+**then** follow these Jest-specific patterns.
+
+This rule extends `bdd-rule.mdc` — all base BDD principles apply throughout.
+
+**Executing Commands:**
+* `/bdd-validate` — Validate BDD test files against these principles
+* `/bdd-workflow` — Execute BDD workflow phases (Domain Scaffold, Signatures, RED, GREEN, REFACTOR)
+
+## Conventions
+
+Naming conventions, file locations, and structural conventions for Jest/JavaScript BDD tests (what the rules apply to, not the rule files themselves).
+
+* Test file naming: Use `*test*.js`, `*test*.ts`, `*test*.jsx`, `*test*.tsx`, `*spec*.js`, `*spec*.ts`, `*spec*.jsx`, or `*spec*.tsx` patterns
+* Test file location: Place test files alongside source code or in dedicated test directories following JavaScript/TypeScript/Jest conventions
+* Framework syntax: Use Jest framework syntax: `describe()`, `it()`, `beforeEach()`, `expect()`
+* Code examples: Use JavaScript/TypeScript syntax with Jest-specific patterns
+
+## 1. Business Readable Language
+
+Write `describe`/`it` so that inner/outer sentences create natural sentence. Use nouns for `describe` (concepts, states). Start each `it()` with "should …". Nest from broad → specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon.
+
+**[DO]:**
+* Use `describe()` for top-level concepts and nested contexts
+* Use `it()` for individual behaviors
+* Create natural sentences when reading describe → it
+* Use nouns for describe blocks (concepts, states)
+* Start each it() with "should" to describe expected behavior
+
+```javascript
+describe('a ranged damage power', () => {
+  describe('that has targeted and resulted in a successful attack', () => {
+    it('should apply damage based on degrees of failure', () => {
+      expect(result.injuries).toBe(2);
+    });
+  });
+});
+```
+
+**[DON'T]:**
+* Use verbs for describe blocks
+* Omit "should" from it() blocks
+* Use technical jargon or class names
+* Flatten hierarchy unnecessarily
+* Use implementation-focused language
+
+```javascript
+describe('when Attack.targetToken()', () => {});
+describe('retrieved attack', () => {});
+it('sets isSubmitting flag', () => {});
+```
+
+## 2. Comprehensive and Brief
+
+Test observable behavior, not hidden internals. Cover state, validation, rules, and interactions. Cover normal, edge, and failure paths. Keep tests short, expressive, readable. Keep tests independent, deterministic, and fast.
+
+**[DO]:**
+* Test observable outcomes and state changes
+* Use `expect()` assertions for clear expectations
+* Set up test data in `beforeEach()` blocks
+* Write focused tests for each distinct behavior
+* Keep test bodies concise and readable
+
+```javascript
+describe('a damage power', () => {
+  beforeEach(() => {
+    mockTarget = { dodge: 15, injury: 0 };
+  });
+  
+  it('should be a ranged attack', () => {
+    expect(attack.isRanged).toBe(true);
+  });
+  
+  it('should calculate DC from targets dodge', () => {
+    expect(attack.execute(mockTarget).DC).toBe(20);
+  });
+});
+```
+
+**[DON'T]:**
+* Test internal methods or private attributes
+* Assert on mock internals or framework internals
+* Write overly broad tests
+* Create tests that depend on execution order
+* Access implementation details
+
+```javascript
+it('calls _validateCredentials()', () => {
+  expect(form._internal_flag).toBe(true);
+  expect(form._validateCredentials).toHaveBeenCalled();
+});
+```
+
+## 3. Balance Context Sharing with Localization
+
+Nest parent context, don't repeat it. Provide expected data via helper factories/builders. Extract complex logic into helpers. Reuse helpers/factories where possible. Move shared Arrange code to `beforeEach()` in parent context.
+
+**[DO]:**
+* Move shared setup to `beforeEach()` in parent describe blocks
+* Use factory functions for creating test data
+* Extract complex setup logic into reusable helpers
+* Nest contexts to avoid repetition
+* Balance shared context with test-specific setup
+
+```javascript
+const createPower = (o = {}) => ({ name: 'Test', rank: 10, ...o });
+
+describe('a Power', () => {
+  beforeEach(() => {
+    power = createPower();
+  });
+});
+```
+
+**[DON'T]:**
+* Duplicate setup code across sibling tests
+* Repeat parent context setup unnecessarily
+* Create overly complex setup in individual tests
+* Mix shared and test-specific setup without clear separation
+* Leave duplicate Arrange code in sibling tests
+
+```javascript
+describe('with an attached macro', () => {
+  it('should return animation with type "attached"', () => {
+    const mockMacro = { name: 'Custom', execute: jest.fn() };
+    const mockItem = createMockItem({ getFlag: jest.fn().mockReturnValue('id') });
+    const powerItem = new PowerItem(mockItem);
+  });
+  
+  it('should provide macro name as animation name', () => {
+    const mockMacro = { name: 'Custom', execute: jest.fn() };
+    const mockItem = createMockItem({ getFlag: jest.fn().mockReturnValue('id') });
+    const powerItem = new PowerItem(mockItem);  // Duplicate setup
+  });
+});
+```
+
+## 4. Cover All Layers of the System
+
+Include separate front end, business logic, integration, and data access tests. Isolate across architecture boundaries with mocks and stubs.
+
+**[DO]:**
+* Write separate test files for each architectural layer
+* Use `jest.mock()` to isolate layers
+* Test business logic independently of data access
+* Create integration tests for cross-layer behavior
+* Use appropriate mocking strategies for each layer
+
+**[DON'T]:**
+* Mix concerns from different layers in the same test
+* Test dependencies instead of the code under test
+* Create tests that require multiple layers to be running
+* Over-mock to the point where tests don't verify real behavior
+* Skip testing important layers
+
+## 5. Unit Tests the Front-End
+
+Mock services, business logic, and routing. Stub user events and verify resulting state or view. Test user-visible behavior, not internal component state or methods.
+
+**[DO]:**
+* Mock backend services and business logic
+* Test user-visible outcomes and interactions
+* Verify component rendering and user interactions
+* Focus on what users see and experience
+* Use mocks to isolate front-end from backend
+
+```javascript
+describe('an attack power display', () => {
+  beforeEach(() => {
+    mockService = jest.fn();
+    context = prepareContext(actor);
+  });
+  
+  it('should include attack bonus in context', () => {
+    expect(context.attackPowers[0].bonus).toBe(8);
+  });
+});
+```
+
+**[DON'T]:**
+* Test internal component state or methods
+* Assert on HTML rendering details or CSS
+* Make real HTTP requests in unit tests
+* Access component internals directly (e.g., `.state`, `.props`, `.instance()`)
+* Test framework internals or implementation details
+
+```javascript
+it('renders bonus', () => {
+  expect(html).toContain('value="8"');
+  expect(html).toContain('color: blue');
+  await fetch('http://api.com');
+});
+it('calls _onMount()', () => {
+  expect(component._onMount).toHaveBeenCalled();
+});
+```
+
+## Commands
+
+Commands that implement or use this rule. Currently, no commands are implemented for this rule.

@@ -54,7 +54,12 @@ A **Rule** (`.mdc` file) defines principles and guidelines for when and how beha
 * Include frontmatter with `description`, `globs`, `alwaysApply`
 * Start with `**When** <context>, **then** <behavior>.` statement
 * Include `**Executing Commands:**` section listing commands that use this rule
-* Include numbered principles (## 1. Principle Name) with **[DO]:** and **[DON'T]:** examples
+* Include `## Conventions` section (before principles) with naming conventions, file locations, and structural conventions
+* Include numbered principles (## 1. Principle Name) with **[DO]:** and **[DON'T]:** bullet points
+* Include `## Templates` section (after principles) if the rule uses or references specific templates
+* Include `## Commands` section (at end) listing all commands that implement or use this rule
+* **Base rules**: Use bullet points only, NO code examples (framework-agnostic guidance)
+* **Specialized rules**: Include framework-specific code examples in code blocks
 * Reference parent rules for specializing/specialized rules
 * Use appropriate template based on rule type
 
@@ -74,22 +79,35 @@ A **Rule** (`.mdc` file) defines principles and guidelines for when and how beha
 **Rule Types:**
 There are three types of rules that form a hierarchy:
 
-* **Base Rules** - Define general principles applicable across contexts. Use template: `base_rule_template.mdc`. Name: `<feature-name>-rule.mdc` or `<rule-name>-rule.mdc`. Example: `code-agent-rule.mdc`.
+* **Base Rules** - Define general principles applicable across contexts. Use template: `base_rule_template.mdc`. Name: `<feature-name>-rule.mdc` or `<rule-name>-rule.mdc`. Example: `code-agent-rule.mdc`. **Important**: Base rules should contain bullet points only, NO code examples (code examples are framework-specific and belong in specialized rules).
 
 * **Specializing Rules** - Extend base rules for specific aspects or workflows. Use template: `specializing_rule_template.mdc`. Must reference parent rule: `This rule extends and references `<parent-rule-name>.mdc` — all <parent-rule> principles apply throughout.` Name: `<aspect-name>-rule.mdc` (e.g., `workflow-rule.mdc`). Never duplicate principles from parent rule.
 
 * **Specialized Rules** - Extend specializing rules for framework/language-specific implementations. Use template: `specialized_rule_template.mdc`. Must reference both parent specializing rule and base rule. Include framework/language-specific globs in frontmatter. Name: `<rule-type>-<framework>-rule.mdc` (e.g., `bdd-jest-rule.mdc`). Never duplicate principles from parent rules.
 
+**Rule Structure:**
+Rules follow a standard structure:
+1. Frontmatter (YAML): `description`, `globs`, `alwaysApply`
+2. When/then statement: Context and behavior description
+3. Rule overview: Explanation of the rule
+4. **Executing Commands:** Quick reference to commands (at top)
+5. **Conventions:** Naming conventions, file locations, structural conventions (before principles)
+6. **Principles:** Numbered principles (## 1. Principle Name) with DO/DON'T examples
+7. **Templates:** Templates used for generating files (after principles, if applicable)
+8. **Commands:** Detailed list of commands that implement or use this rule (at end)
+
 **Validation:**
 * Frontmatter has required fields: `description`, `globs`, `alwaysApply`
 * Has `**When**` and `**then**` statement
 * Has `**Executing Commands:**` section
+* Has `## Conventions` section (before principles)
 * Has principles section with DO/DON'T examples
+* Has `## Commands` section (at end)
 * Rule instances can load examples
 * Parent rule references are valid (for specializing/specialized rules)
 
 **Relationships:**
-* **Rule ↔ Command:** Rules list commands in `**Executing Commands:**` section; commands reference rules via `**[Rule]:**` section
+* **Rule ↔ Command:** Rules list commands in `** Commands:**` section; commands reference rules via `**[Rule]:**` section
 * **Rule ↔ Feature:** Each feature has a main rule file that defines principles for all commands in the feature
 * Keep relationships bidirectional - update both sides when adding new commands
 
@@ -125,6 +143,7 @@ A **Command** (`.md` file) defines executable steps that implement a rule. Comma
 * Specify performer in each step: **User**, **AI Agent**, **Runner**, or **Code**
 * Create delegate commands for generate and validate actions
 * Use template: `command_template.md` for main command files
+* **When creating command runners with prompts (generate_instructions, validate_instructions, etc.) that rely on templates: Reference the template file path, do NOT repeat the template structure in the prompt**
 
 **[DON'T]:**
 * Create commands without rule reference
@@ -133,6 +152,7 @@ A **Command** (`.md` file) defines executable steps that implement a rule. Comma
 * Duplicate main command logic in delegate commands
 * Skip required sections
 * Use inconsistent naming patterns
+* **Repeat template structure in prompts - always reference the template file instead of duplicating its content**
 
 **Templates:**
 * `command_template.md` - For main command files
@@ -143,6 +163,24 @@ A **Command** (`.md` file) defines executable steps that implement a rule. Comma
 * `<command-name>-validate-cmd.md` - Almost always present, delegates to validate action
 * `<command-name>-plan-cmd.md` - Sometimes present, delegates to plan action (optional)
 * Commands can be extended with custom delegate commands for bespoke needs
+
+**Workflow Commands:**
+For features with multi-phase workflows, there are two types of commands:
+
+1. **Phase-Specific Commands** - Execute a specific workflow phase/state:
+   * Main command: `/<feature-name>-<phase-name>` (e.g., `/bdd-scaffold`)
+   * Generate delegate: `/<feature-name>-<phase-name>-generate`
+   * Validate delegate: `/<feature-name>-<phase-name>-validate`
+   * Contains full business logic for the phase
+   * Files: `<phase-name>-cmd.md`, `<phase-name>-generate-cmd.md`, `<phase-name>-validate-cmd.md`
+
+2. **Workflow Orchestrator Commands** - Lightweight dispatcher that delegates to phase-specific commands:
+   * Main command: `/<feature-name>-workflow` (e.g., `/bdd-workflow`)
+   * Generate delegate: `/<feature-name>-workflow-generate`
+   * Validate delegate: `/<feature-name>-workflow-validate`
+   * **CRITICAL**: Workflow orchestrator commands should be VERY LIGHTWEIGHT and VERY SMALL - they simply delegate to the right phase-specific command to do its job. They do NOT contain complex logic or duplicate phase command functionality.
+   * Files: `workflow/workflow-cmd.md`, `workflow/workflow-generate-cmd.md`, `workflow/workflow-validate-cmd.md`
+   * Architecture pattern: Workflow orchestrator = lightweight dispatcher that delegates to phase commands. Phase commands = full implementation with business logic.
 
 **Command Steps Structure:**
 Each step must specify the performer:
@@ -160,7 +198,7 @@ Each step must specify the performer:
 * All required files exist
 
 **Relationships:**
-* **Command ↔ Rule:** Commands reference rules via `**[Rule]:**` section; rules list commands via `**Executing Commands:**` section
+* **Command ↔ Rule:** Commands reference rules via `**[Rule]:**` section; rules list commands via `**Commands:**` section
 * **Command ↔ Feature:** Commands belong to a feature and are organized in command subdirectory of feature directory
 * **Command ↔ Runner:** Each command has corresponding command classes in runner file (inner command class and outer wrapper class)
 * Keep relationships bidirectional - update both sides when adding new commands
@@ -208,6 +246,7 @@ Commands use wrapper/decorator patterns that can be chained together:
 * Use guard clauses to reduce nesting
 * Maximize reuse of base classes and wrappers
 * Import from `common_command_runner`: `Content`, `BaseRule`, `Command`, `CodeAugmentedCommand`, `IncrementalCommand`, `WorkflowPhaseCommand`, `SpecializingRuleCommand`
+* **When creating prompts (generate_instructions, validate_instructions, etc.) that rely on templates: Reference the template file path, do NOT repeat the template structure in the prompt**
 
 **[DON'T]:**
 * Create commands without outer wrapper classes
@@ -218,6 +257,7 @@ Commands use wrapper/decorator patterns that can be chained together:
 * Duplicate logic that exists in base classes or wrappers
 * Mix command logic with CLI handling
 * Create monolithic command classes
+* **Repeat template structure in prompts - always reference the template file instead of duplicating its content**
 
 **Command Class Pattern:**
 * **Inner Command Class:** Extends `Command` or feature-specific base, implements `generate()` and `validate()` methods, uses templates, delegates to helper classes, contains core business logic

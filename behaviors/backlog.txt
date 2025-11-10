@@ -3,3 +3,6 @@ commands are shown in prompt and as a step is executedits highlightewrs in proim
 Way bettercommand line executionespecially foul movement it's really slow and it really sucks
 
 estart whewn a commandfails
+
+
+I need a very quick and convenient way to make a code agent changewhether it's an exampleA change to the templateor a change to the prompt it's usually one of these that needs to change quite rapidly

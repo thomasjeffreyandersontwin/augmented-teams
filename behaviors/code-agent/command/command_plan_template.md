@@ -21,12 +21,39 @@
 
 ## AI Analysis Required
 
+**CRITICAL: Workflow Command Detection**
 
+**If this is a workflow-related command (purpose contains "workflow", "phase", "stage", "scaffold", "signature", "red", "green", "refactor", or command name indicates workflow):**
+
+**You MUST plan for BOTH command categories:**
+
+1. **Phase-Specific Commands** (if this is a phase-specific command):
+   - Main command: `/{feature_name}-{command_name}` (e.g., `/bdd-scaffold`)
+   - Generate delegate: `/{feature_name}-{command_name}-generate`
+   - Validate delegate: `/{feature_name}-{command_name}-validate`
+   - Files: `{command_name}-cmd.md`, `{command_name}-generate-cmd.md`, `{command_name}-validate-cmd.md`
+   - Purpose: Execute specific workflow phase/state
+
+2. **Workflow Orchestrator Commands** (if workflow orchestrator doesn't exist or needs updating):
+   - Main command: `/{feature_name}-workflow` (e.g., `/bdd-workflow`)
+   - Generate delegate: `/{feature_name}-workflow-generate`
+   - Validate delegate: `/{feature_name}-workflow-validate`
+   - Files: `workflow/workflow-cmd.md`, `workflow/workflow-generate-cmd.md`, `workflow/workflow-validate-cmd.md`
+   - Purpose: **Lightweight orchestrator** that delegates to appropriate phase-specific commands
+   - **CRITICAL**: Workflow orchestrator commands should be VERY LIGHTWEIGHT and VERY SMALL - they simply delegate to the right phase-specific command to do its job. They do NOT contain complex logic or duplicate phase command functionality.
+
+**Determine:**
+- Is this a phase-specific command or workflow orchestrator?
+- If phase-specific: Plan phase-specific commands AND check if workflow orchestrator needs creation/update
+- If workflow orchestrator: Plan orchestrator commands AND identify which phase-specific commands it orchestrates
+- Both follow standard pattern: main command + generate delegate + validate delegate
+- **Architecture Pattern**: Workflow orchestrator = lightweight dispatcher that delegates to phase commands. Phase commands = full implementation with business logic.
 
 1. **Command Architecture**: 
    - What exact command classes will be needed? (We are not certain - AI must determine based on purpose)
    - What wrapping patterns are appropriate? (CodeAugmentedCommand, IncrementalCommand, WorkflowPhaseCommand, SpecializingRuleCommand, etc.)
    - How should commands be composed and layered?
+   - **If workflow command**: What is the relationship between phase-specific and orchestrator commands?
 
 2. **Algorithms and Logic**:
    - What exact algorithms are needed for generation? (We are not certain - AI must determine)
@@ -53,9 +80,18 @@ Create `/{feature_name}-{command_name}` command that generates all files needed 
 ## Files to Create
 
 ### 1. Command Definition Files
-- `behaviors/{feature_name}/{command_name}/{command_name}-cmd.md` - Main command definition
-- `behaviors/{feature_name}/{command_name}/{command_name}-generate-cmd.md` - Generate sub-command
-- `behaviors/{feature_name}/{command_name}/{command_name}-validate-cmd.md` - Validate sub-command
+
+**Phase-Specific Commands** (if this is a phase-specific workflow command):
+- `behaviors/{feature_name}/{command_name}/{command_name}-cmd.md` - Main phase-specific command definition
+- `behaviors/{feature_name}/{command_name}/{command_name}-generate-cmd.md` - Generate delegate (delegates to main command generate action)
+- `behaviors/{feature_name}/{command_name}/{command_name}-validate-cmd.md` - Validate delegate (delegates to main command validate action)
+
+**Workflow Orchestrator Commands** (if workflow orchestrator needs to be created/updated):
+- `behaviors/{feature_name}/workflow/workflow-cmd.md` - Main workflow orchestrator command definition
+- `behaviors/{feature_name}/workflow/workflow-generate-cmd.md` - Generate delegate (delegates to main workflow command generate action)
+- `behaviors/{feature_name}/workflow/workflow-validate-cmd.md` - Validate delegate (delegates to main workflow command validate action)
+
+**Note**: If this is NOT a workflow command, only create the phase-specific command files above.
 
 ### 2. Templates
 - Use existing `behaviors/{feature_name}/command/command_template.md` as base template for generating `{command_name}-cmd.md` files (modify if needed)

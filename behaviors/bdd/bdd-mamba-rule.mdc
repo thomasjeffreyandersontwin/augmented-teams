@@ -1,0 +1,189 @@
+---
+description: BDD testing practices for Mamba/Python
+globs: ["**/*test*.py", "**/*_test.py", "**/test_*.py", "**/*spec*.py"]
+alwaysApply: false
+---
+**When** practicing BDD testing with Mamba/Python,
+**then** follow these Mamba-specific patterns.
+
+This rule extends `bdd-rule.mdc` — all base BDD principles apply throughout.
+
+**Executing Commands:**
+* `/bdd-validate` — Validate BDD test files against these principles
+* `/bdd-workflow` — Execute BDD workflow phases (Domain Scaffold, Signatures, RED, GREEN, REFACTOR)
+
+## Conventions
+
+Naming conventions, file locations, and structural conventions for Mamba/Python BDD tests (what the rules apply to, not the rule files themselves).
+
+* Test file naming: Use `*test*.py`, `*_test.py`, `test_*.py`, or `*spec*.py` patterns
+* Test file location: Place test files alongside source code or in dedicated test directories following Python/Mamba conventions
+* Framework syntax: Use Mamba framework syntax: `with description()`, `with context()`, `with it()`, `with before.each`
+* Code examples: Use Python syntax with Mamba-specific patterns
+
+## 1. Business Readable Language
+
+Write `description`/`context`/`it` so that inner/outer sentences create natural sentence. Use nouns for `description` (concepts, states). Start each `it()` with "should …". Nest from broad → specific; each child adds context. Use plain behavioral language. Prefer domain terms over technical jargon. Connect base business concept to more specific concepts using linking words: "that is/that has" "that has been"
+
+**[DO]:**
+* Use `with description()` for top-level concepts
+* Use `with context()` for nested contexts that add detail
+* Use `with it()` for individual behaviors
+* Create natural sentences when reading description → context → it
+* Use linking words like "that is", "that has", "that has been" to connect concepts
+
+```python
+with description('a ranged damage power'):
+    with context('that has targeted and resulted in a successful attack'):
+        with it('should apply damage based on degrees of failure'):
+            expect(result.injuries).to(equal(2))
+```
+
+**[DON'T]:**
+* Use verbs for description blocks
+* Omit "should" from it() blocks
+* Use technical jargon or class names
+* Flatten hierarchy unnecessarily
+* Use implementation-focused language
+
+```python
+with description('when attacking Target'):
+with description('Power.execute()'):
+with context('retrieved attack'):
+with it('sets is_submitting flag'):
+```
+
+## 2. Comprehensive and Brief
+
+Test observable behavior, not hidden internals. Cover state, validation, rules, and interactions. Cover normal, edge, and failure paths. Keep tests short, expressive, readable. Keep tests independent, deterministic, and fast.
+
+**[DO]:**
+* Test observable outcomes and state changes
+* Use `expect()` assertions for clear expectations
+* Set up test data in `with before.each` blocks
+* Write focused tests for each distinct behavior
+* Keep test bodies concise and readable
+
+```python
+with description('a damage power'):
+    with before.each:
+        self.mock_target = {'dodge': 15, 'injury': 0}
+    
+    with it('should be a ranged attack'):
+        expect(attack.is_ranged).to(equal(True))
+    
+    with it('should calculate DC from targets dodge'):
+        expect(attack.execute(self.mock_target).DC).to(equal(20))
+```
+
+**[DON'T]:**
+* Test internal methods or private attributes
+* Assert on mock internals or framework internals
+* Write overly broad tests
+* Create tests that depend on execution order
+* Access implementation details
+
+```python
+with it('calls _validate()'):
+    expect(form._flag).to(be_true)
+    expect(form._validate).to(have_been_called)
+with it('handles attack'):
+```
+
+## 3. Balance Context Sharing with Localization
+
+Nest parent context, don't repeat it. Provide expected data via helper factories/builders. Extract complex logic into helpers. Reuse helpers/factories where possible. **Note:** Mamba does NOT support moving `before.each` to parent `describe` blocks. Extract duplicate setup to a helper function and call it in each test.
+
+**[DO]:**
+* Create helper functions for common setup
+* Use factory functions for creating test data
+* Call helper functions in each test that needs them
+* Extract complex setup logic into reusable helpers
+* Use `with before.each` for setup shared within a single context
+
+```python
+def create_power(o=None):
+    return Power({**{'name': 'Test', 'rank': 10}, **(o or {})})
+
+with description('a Power'):
+    with before.each:
+        self.factory = MockFactory()
+        self.factory.reset()
+        self.power = create_power()
+```
+
+**[DON'T]:**
+* Duplicate setup code across sibling tests
+* Repeat parent context setup unnecessarily
+* Try to move `before.each` to parent contexts (Mamba limitation)
+* Create overly complex setup in individual tests
+* Mix shared and test-specific setup without clear separation
+
+```python
+with description('Power'):
+    with context('created from actor'):
+        with before.each:
+            self.actor = {'id': '123'}
+    with context('that is ranged'):
+        with before.each:
+            self.actor = {'id': '123'}  # Duplicate setup
+```
+
+## 4. Cover All Layers of the System
+
+Include separate front end, business logic, integration, and data access tests. Isolate across architecture boundaries with mocks and stubs.
+
+**[DO]:**
+* Write separate test files for each architectural layer
+* Use `unittest.mock` or `mamba` mocks to isolate layers
+* Test business logic independently of data access
+* Create integration tests for cross-layer behavior
+* Use appropriate mocking strategies for each layer
+
+**[DON'T]:**
+* Mix concerns from different layers in the same test
+* Test dependencies instead of the code under test
+* Create tests that require multiple layers to be running
+* Over-mock to the point where tests don't verify real behavior
+* Skip testing important layers
+
+## 5. Unit Tests the Front-End
+
+Mock services, business logic, and routing. Stub user events and verify resulting state or view. Test user-visible behavior, not internal component state or methods.
+
+**[DO]:**
+* Mock backend services and business logic
+* Test user-visible outcomes and interactions
+* Verify context data and view state
+* Focus on what users see and experience
+* Use mocks to isolate front-end from backend
+
+```python
+with description('an attack power display'):
+    with before.each:
+        self.mock_service = Mock()
+        self.context = prepare_context(self.actor)
+    
+    with it('should include attack bonus in context'):
+        expect(self.context['attack_powers'][0]['bonus']).to(equal(8))
+```
+
+**[DON'T]:**
+* Test internal component state or methods
+* Assert on HTML rendering details
+* Make real HTTP requests in unit tests
+* Access component internals directly
+* Test framework internals or implementation details
+
+```python
+with it('renders bonus'):
+    expect(html).to(contain('value="8"'))
+    expect(html).to(contain('color: blue'))
+    requests.get('http://api.com')
+with it('calls _on_mount()'):
+    expect(component._on_mount).to(have_been_called)
+```
+
+## Commands
+
+Commands that implement or use this rule. Currently, no commands are implemented for this rule.

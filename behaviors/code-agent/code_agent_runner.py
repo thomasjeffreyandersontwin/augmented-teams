@@ -319,14 +319,64 @@ class CommandCommand(CodeAgentCommand):
             command_class_name=command_class_name
         )
     
+    def _is_workflow_command(self) -> bool:
+        """Detect if this is a workflow-related command"""
+        if not self.command_purpose:
+            return False
+        
+        purpose_lower = self.command_purpose.lower()
+        command_lower = (self.command_name or "").lower()
+        
+        # Check if command purpose or name indicates workflow
+        workflow_indicators = [
+            'workflow', 'phase', 'stage', 'scaffold', 'signature', 
+            'red', 'green', 'refactor', 'orchestrat'
+        ]
+        
+        return any(indicator in purpose_lower or indicator in command_lower 
+                  for indicator in workflow_indicators)
+    
     def _build_plan_instructions(self, command_class_name: str) -> str:
         """Build AI instructions for updating the plan template"""
+        is_workflow = self._is_workflow_command()
+        
+        workflow_section = ""
+        if is_workflow:
+            workflow_section = f"""
+
+### Critical: Workflow Command Detection
+
+**This command has been detected as a WORKFLOW-RELATED command.**
+
+**You MUST plan for BOTH command categories:**
+
+1. **Phase-Specific Commands** (if this is a phase-specific command like `/bdd-scaffold`):
+   - Main command: `/{self.feature_name}-{self.command_name}`
+   - Generate delegate: `/{self.feature_name}-{self.command_name}-generate`
+   - Validate delegate: `/{self.feature_name}-{self.command_name}-validate`
+   - Files: `{self.command_name}-cmd.md`, `{self.command_name}-generate-cmd.md`, `{self.command_name}-validate-cmd.md`
+
+2. **Workflow Orchestrator Commands** (if workflow orchestrator doesn't exist yet):
+   - Main command: `/{self.feature_name}-workflow`
+   - Generate delegate: `/{self.feature_name}-workflow-generate`
+   - Validate delegate: `/{self.feature_name}-workflow-validate`
+   - Files: `workflow/workflow-cmd.md`, `workflow/workflow-generate-cmd.md`, `workflow/workflow-validate-cmd.md`
+   - **CRITICAL**: Workflow orchestrator commands should be VERY LIGHTWEIGHT and VERY SMALL - they simply delegate to the right phase-specific command to do its job. They do NOT contain complex logic or duplicate phase command functionality.
+
+**Determine:**
+- Is this a phase-specific command (e.g., `/bdd-scaffold`) or workflow orchestrator (e.g., `/bdd-workflow`)?
+- If phase-specific: Plan for phase-specific commands AND check if workflow orchestrator needs to be created/updated
+- If workflow orchestrator: Plan for orchestrator commands AND identify which phase-specific commands it orchestrates
+- Both command types follow standard pattern: main command + generate delegate + validate delegate
+- **Architecture Pattern**: Workflow orchestrator = lightweight dispatcher that delegates to phase commands. Phase commands = full implementation with business logic.
+"""
+        
         return f"""
 
 ## AI Instructions: Update the Plan Template
 
 **The plan above is a template with variables filled in. Your task is to update it with concrete, determined values.**
-
+{workflow_section}
 ### Critical: Incorporate BDD and Clean Code Rules
 
 **Before updating the plan, review and incorporate principles from:**
@@ -1955,29 +2005,57 @@ class RuleCommand(CodeAgentCommand):
         content = Content(file_path=str(Path(rule_location)))
         
         template_name = self._get_template_name_for_type(config.rule_type)
-        generate_instructions = f"""Generate or update rule '{config.rule_name}' for feature '{config.feature_name}' following the template structure and principles in {rule_name_for_base}.
+        template_path = f"behaviors/code-agent/rule/{template_name}"
+        
+        generate_instructions = f"""Generate or update rule '{config.rule_name}' for feature '{config.feature_name}' following the template and principles in {rule_name_for_base}.
 
-**Template-Based Generation:** 
-- Template to use: {template_name} (located in behaviors/code-agent/rule/)
+**Template Reference:**
+- Use the attached template file: {template_path}
 - Rule type: {config.rule_type} (base/specializing/specialized)
+- Read the template file to understand the required structure and format
+
+**Rule Structure (from template):**
+The template defines the following sections in order:
+1. Frontmatter (YAML): description, globs, alwaysApply
+2. When/then statement: Context and behavior description
+3. Rule overview: Explanation of the rule
+4. **Executing Commands:** Quick reference to commands (at top)
+5. **Conventions:** Naming conventions, file locations, structural conventions for the CODE/ARTIFACTS that follow this rule (NOT conventions about the rule file itself) - before principles
+6. **Principles:** Numbered principles (## 1. Principle Name) with DO/DON'T examples
+7. **Templates:** Templates used for generating files (after principles, if applicable)
+8. **Commands:** Detailed list of commands that implement or use this rule (at end)
+
+**Generation Guidelines:**
 - If rule file already exists: Read its current content and enhance it based on the template structure while preserving valuable existing content (principles, examples, custom text)
 - If rule file doesn't exist: Generate from template with proper frontmatter, principles, and examples
-
-**Template Structure:**
-- Frontmatter (YAML): description, globs, alwaysApply
-- When/then statement: Context and behavior description  
-- Rule overview: Explanation of the rule
-- Executing Commands: List of commands that use this rule
-- Principles section: Numbered principles (## 1. Principle Name) with DO/DON'T examples
-- Rule references: For specializing/specialized rules, reference parent rules
-
-**Rule Analysis:** Examine the attached rule file ({rule_name_for_base}) for applicable principles. Extract code heuristics from these principles for validation. Integrate heuristics into the CodeAugmentedCommand wrapper pattern.
-
-**Content Handling:**
+- Follow the template structure exactly as defined in {template_path}
+- Include all sections: Conventions (before principles), Principles, Templates (if applicable), Commands (at end)
 - Preserve existing principles and examples when updating
 - Enhance structure to match template format
 - Add missing sections based on template
-- Maintain consistency with BDD rule patterns"""
+
+**Section Guidelines:**
+- **Conventions:** Include naming patterns, file locations, directory structures, organizational patterns for the CODE/ARTIFACTS that follow this rule (NOT conventions about the rule file itself). This section describes what developers should follow when applying the rule, not how rule files are structured.
+  - **Base rules:** Must be framework-agnostic - do NOT include framework-specific conventions (file naming patterns, framework syntax, etc.). Framework-specific conventions belong in specialized rules only.
+  - **Specialized rules:** Should include framework-specific conventions that extend the base rule's framework-agnostic conventions.
+- **Templates:** Only include if the rule uses or references specific templates (can be omitted if not applicable)
+- **Commands:** List all commands that implement or use this rule (duplicates the **Executing Commands** section but provides more detail)
+
+**Example Verification (CRITICAL STEP):**
+After creating or updating examples in the **[DO]** and **[DON'T]** sections, you MUST verify all examples against ALL principles in the rule:
+1. **Read all examples** in the rule file (both DO and DON'T examples across all principles)
+2. **Check each example** against every principle in the rule to ensure:
+   - DO examples follow all principles (not just the principle they're under)
+   - DON'T examples correctly violate only the intended principle(s)
+   - Examples don't violate other principles unintentionally
+   - Examples use state-oriented language when required (if applicable to the rule)
+   - Examples follow all conventions and patterns defined in the rule
+3. **Update examples** that violate any principles - fix violations immediately
+4. **Repeat verification** until all examples comply with all principles
+
+This verification ensures examples are accurate, consistent, and serve as reliable guidance for developers following the rule.
+
+**Rule Analysis:** Examine the attached rule file ({rule_name_for_base}) for applicable principles. Extract code heuristics from these principles for validation. Integrate heuristics into the CodeAugmentedCommand wrapper pattern."""
         
         validate_instructions = f"""Validate the generated rule files comply with {rule_name_for_base} principles.
 
