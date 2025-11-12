@@ -823,7 +823,18 @@ class CommandParams:
     def __init__(self, content, base_rule, validate_instructions=None, generate_instructions=None):
         self.content = content
         self.base_rule = base_rule
-        self.validate_instructions = validate_instructions or "Please validate the content as specified by the rules"
+        self.validate_instructions = validate_instructions or """YOU MUST actively validate the content against ALL principles specified in the rules.
+
+DO NOT only review the code heuristic violations - those are just automated checks.
+
+YOUR VALIDATION MUST:
+1. Read and understand ALL principles in the rules
+2. Check if the content follows EACH principle
+3. Identify violations that code heuristics might have missed
+4. Validate meaning, flow, and context - not just syntax
+5. Report ALL violations you find, even if not in the heuristic report
+
+The heuristics provide initial findings. YOU must validate comprehensively against the full principles."""
         self.generate_instructions = generate_instructions or "Please generate content according to the rules"
 
 
@@ -839,7 +850,18 @@ class Command:
         else:
             self.content = content
             self.base_rule = base_rule
-            self.validate_instructions = validate_instructions or "Please validate the content as specified by the rules"
+            self.validate_instructions = validate_instructions or """YOU MUST actively validate the content against ALL principles specified in the rules.
+
+DO NOT only review the code heuristic violations - those are just automated checks.
+
+YOUR VALIDATION MUST:
+1. Read and understand ALL principles in the rules
+2. Check if the content follows EACH principle
+3. Identify violations that code heuristics might have missed
+4. Validate meaning, flow, and context - not just syntax
+5. Report ALL violations you find, even if not in the heuristic report
+
+The heuristics provide initial findings. YOU must validate comprehensively against the full principles."""
             self.generate_instructions = generate_instructions or "Please generate content according to the rules"
         
         # Track execution state
@@ -855,14 +877,24 @@ class Command:
     def generate(self):
         
         instructions = self._build_instructions(self.generate_instructions)
-        print(instructions)
+        # Handle Unicode encoding for Windows console
+        try:
+            print(instructions)
+        except UnicodeEncodeError:
+            # Fallback: print without emojis/special characters
+            print(instructions.encode('ascii', 'ignore').decode('ascii'))
         self.generated = True
         return instructions
     
     def validate(self):
         
         instructions = self._build_instructions(self.validate_instructions)
-        print(instructions)
+        # Handle Unicode encoding for Windows console
+        try:
+            print(instructions)
+        except UnicodeEncodeError:
+            # Fallback: print without emojis/special characters
+            print(instructions.encode('ascii', 'ignore').decode('ascii'))
         self.validated = True
         return instructions
     
@@ -1118,10 +1150,29 @@ class CodeAugmentedCommand:
     
     def _scan_for_violations(self):
         
+        # CRITICAL: Ensure content is loaded before scanning for violations
+        if hasattr(self.content, '_ensure_content_loaded'):
+            self.content._ensure_content_loaded()
+        
+        # DEBUG: Check content loading
+        if hasattr(self.content, '_content_lines'):
+            print(f"[DEBUG] Content loaded: {len(self.content._content_lines) if self.content._content_lines else 0} lines")
+        else:
+            print("[DEBUG] Content has no _content_lines attribute")
+        
+        # DEBUG: Check principles
+        print(f"[DEBUG] Scanning {len(self.principles)} principles")
+        
         self._violations = []
         for principle in self.principles:
+            print(f"[DEBUG] Principle {principle.principle_number}: {len(principle.heuristics) if hasattr(principle, 'heuristics') and principle.heuristics else 0} heuristics")
+            if not hasattr(principle, 'heuristics') or not principle.heuristics:
+                continue
             for heuristic in principle.heuristics:
+                heuristic_name = getattr(heuristic, 'name', type(heuristic).__name__)
+                print(f"[DEBUG] Running heuristic: {heuristic_name}")
                 heuristic_violations = heuristic.scan_content(self.content)
+                print(f"[DEBUG]   Found {len(heuristic_violations)} violations")
                 # Enhance violations with principle info and code snippets
                 for violation in heuristic_violations:
                     # Attach principle to violation
@@ -1132,6 +1183,8 @@ class CodeAugmentedCommand:
                     if not violation.code_snippet:
                         violation.code_snippet = self.content.get_code_snippet(violation.line_number) if hasattr(self.content, 'get_code_snippet') else None
                     self._violations.append(violation)
+        
+        print(f"[DEBUG] Total violations collected: {len(self._violations)}")
     
     def _format_violations(self, report_format):
         

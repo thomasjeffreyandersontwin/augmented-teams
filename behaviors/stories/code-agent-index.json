@@ -1,0 +1,246 @@
+{
+  "last_updated": "Wed Nov 12 14:54:05 2025",
+  "total_behaviors": 30,
+  "behaviors": [
+    {
+      "feature": "stories",
+      "file": "stories-rule.mdc",
+      "type": ".mdc",
+      "path": "behaviors\\stories\\stories-rule.mdc",
+      "modified_timestamp": 1762977240.4019036,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "feature-outline.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\feature-outline.md",
+      "modified_timestamp": 1762878850.53,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-arrange-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\arrange\\story-arrange-cmd.md",
+      "modified_timestamp": 1762967879.1486912,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-arrange-correct-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\arrange\\story-arrange-correct-cmd.md",
+      "modified_timestamp": 1762972202.9975636,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-arrange-generate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\arrange\\story-arrange-generate-cmd.md",
+      "modified_timestamp": 1762972203.0072455,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-arrange-validate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\arrange\\story-arrange-validate-cmd.md",
+      "modified_timestamp": 1762972202.985289,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "consolidation-checklist.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\discovery\\consolidation-checklist.md",
+      "modified_timestamp": 1762969408.2969332,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-discovery-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\discovery\\story-discovery-cmd.md",
+      "modified_timestamp": 1762972203.2740386,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-discovery-generate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\discovery\\story-discovery-generate-cmd.md",
+      "modified_timestamp": 1762972203.2640738,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-discovery-prompts.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\discovery\\story-discovery-prompts.md",
+      "modified_timestamp": 1762972203.2559278,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-discovery-validate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\discovery\\story-discovery-validate-cmd.md",
+      "modified_timestamp": 1762972203.2826054,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "ac-consolidation-prompts.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\exploration\\ac-consolidation-prompts.md",
+      "modified_timestamp": 1762972203.5320108,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-explore-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\exploration\\story-explore-cmd.md",
+      "modified_timestamp": 1762977243.9821477,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-explore-correct-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\exploration\\story-explore-correct-cmd.md",
+      "modified_timestamp": 1762976401.093506,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-explore-generate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\exploration\\story-explore-generate-cmd.md",
+      "modified_timestamp": 1762973300.4723382,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-explore-validate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\exploration\\story-explore-validate-cmd.md",
+      "modified_timestamp": 1762975055.6521187,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-shape-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\shape\\story-shape-cmd.md",
+      "modified_timestamp": 1762968183.4891062,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-shape-generate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\shape\\story-shape-generate-cmd.md",
+      "modified_timestamp": 1762898637.065,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-shape-prompts.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\shape\\story-shape-prompts.md",
+      "modified_timestamp": 1762972203.1748803,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-shape-validate-cmd.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\shape\\story-shape-validate-cmd.md",
+      "modified_timestamp": 1762898637.065,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "epic-doc-template.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\templates\\epic-doc-template.md",
+      "modified_timestamp": 1762977211.887286,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "feature-doc-template.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\templates\\feature-doc-template.md",
+      "modified_timestamp": 1762977232.312968,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-doc-template.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\templates\\story-doc-template.md",
+      "modified_timestamp": 1762976401.093506,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-map-decomposition-template.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\templates\\story-map-decomposition-template.md",
+      "modified_timestamp": 1762972203.1490233,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "story-map-increments-template.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\templates\\story-map-increments-template.md",
+      "modified_timestamp": 1762973071.2284248,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "sub-epic-doc-template.md",
+      "type": ".md",
+      "path": "behaviors\\stories\\templates\\sub-epic-doc-template.md",
+      "modified_timestamp": 1762977236.8967793,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "stories_runner.py",
+      "type": ".py",
+      "path": "behaviors\\stories\\stories_runner.py",
+      "modified_timestamp": 1762973001.623358,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "stories_runner_test.py",
+      "type": ".py",
+      "path": "behaviors\\stories\\stories_runner_test.py",
+      "modified_timestamp": 1762926736.0390022,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "test_heuristics.py",
+      "type": ".py",
+      "path": "behaviors\\stories\\test_heuristics.py",
+      "modified_timestamp": 1762897041.544,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    },
+    {
+      "feature": "stories",
+      "file": "stories_runner_test-before-reorganization-20251112-002154.py",
+      "type": ".py",
+      "path": "behaviors\\stories\\z_archive\\stories_runner_test-before-reorganization-20251112-002154.py",
+      "modified_timestamp": 1762924682.4049306,
+      "purpose": "[AI should update this purpose after reviewing the file]"
+    }
+  ]
+}

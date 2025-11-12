@@ -113,15 +113,14 @@ When scaffolding tests from domain maps, preserve the domain map hierarchy struc
     * "that is being [verb]" - ongoing states (e.g., "that is being retrieved", "that is being executed", "that is being converted", "that is using")
     * "that is [adjective/noun]" - current states (e.g., "that is active", "that is in combat")
     * "that has [noun]" - possession states (e.g., "that has invalid data")
-* **Domain Behavior** → `it` block (e.g., "should have initial stats", "should have dice rolled")
+* **Domain Behavior** → `it` block (e.g., "should have initial stats", "should extract epic names", "should create folders")
   * **CRITICAL**: Every `describe` block MUST have at least one `it` block as a child
-  * **State-oriented test names (REQUIRED):**
-    * ✅ "should have [noun] [past participle]" (e.g., "should have damage calculated", "should have dice rolled", "should have input validated")
+  * **Valid test name patterns:**
+    * ✅ "should [verb]" (e.g., "should extract", "should create", "should validate")
+    * ✅ "should [verb] [noun]" (e.g., "should calculate damage", "should select weapon", "should display count")
+    * ✅ "should have [noun] [past participle]" (e.g., "should have damage calculated", "should have dice rolled")
     * ✅ "should be [state]" (e.g., "should be active", "should be valid")
     * ✅ "should have [noun]" (e.g., "should have initial stats", "should have error returned")
-  * **Action-oriented test names (FORBIDDEN):**
-    * ❌ "should [verb]" (e.g., "should roll dice", "should validate input", "should create")
-    * ❌ "should [verb] [noun]" (e.g., "should calculate damage", "should select weapon")
 * **Domain Sub-Concept** → nested `describe` block (preserve nesting depth)
 
 When domain interaction files (`*-domain-interactions.txt`) are present, you can leverage them to enhance the mapping:
@@ -359,13 +358,31 @@ These principles apply throughout all BDD stages, but are especially critical du
   * "that is being [verb]" - ongoing states (e.g., "that is being retrieved", "that is using", "that is validating")
   * "that is [adjective/noun]" - current states (e.g., "that is active")
   * "that has [noun]" - possession states (e.g., "that has invalid data")
+  * "with [noun]" - context sharing (e.g., "with Epics", "with Features") - connects child to parent context
+  * "that have been [past participle]" - plural states (e.g., "that have been added", "that have been removed")
   * "Scenario N: [Description]" - acceptable fallback when state-oriented language is difficult (e.g., "Scenario 1: Test File Validation")
   
-  **Test names must be state-oriented (REQUIRED):**
-  * ✅ "should have [noun] [past participle]" (e.g., "should have selected", "should have extracted", "should have generated")
+  **Context Sharing with "with":**
+  When grouping related concepts under a parent, use "with" to connect without requiring direct it statements:
+  ```
+  describe Story Map File that has changes being arranged    ← Parent state
+    describe with Epics                                      ← "with" shares parent context
+      describe that have been added                          ← Plural state (Epics that have been added)
+        it should have epic folder created
+      describe that have been removed                        ← Plural state (Epics that have been removed)
+        it should have epic folder archived
+    describe with Features                                   ← "with" shares parent context
+      describe that have been added                          ← Plural state (Features that have been added)
+        it should have feature folder created
+  ```
+  Note: "with [noun]" describes do NOT require direct it statements - they inherit context from parent and pass to children
+  
+  **Valid test name patterns:**
+  * ✅ "should [verb]" (e.g., "should extract", "should generate", "should validate")
+  * ✅ "should [verb] [noun]" (e.g., "should extract epic names", "should display count")
+  * ✅ "should have [noun] [past participle]" (e.g., "should have selected", "should have extracted")
   * ✅ "should be [state]" (e.g., "should be valid")
   * ✅ "should have [noun]" (e.g., "should have initial stats")
-  * ❌ "should [verb]" - action-oriented (FORBIDDEN)
   
   When domain interactions are present: scenario order determines test ordering (prefer state-oriented describe blocks, but "Scenario N:" format is acceptable fallback), flow steps determine sequence (shown as states like "using Specializing Behavior"), business rules become test cases (state-oriented: "should have selected"), and transformations/lookups provide function hints (state-oriented: "should have extracted", "should have generated").
 
@@ -373,6 +390,27 @@ These principles apply throughout all BDD stages, but are especially critical du
   * Target approximately 18 describe blocks per scaffold/signature phase
   * Focus on the lowest-level describe blocks and their associated `it` blocks
   * This provides comprehensive coverage without overwhelming scope
+
+**User-Oriented Flow and External State Changes:**
+
+When scaffolding, structure tests around user actions and external state changes, not internal operations:
+
+* **External Triggers First** - Start with what causes the behavior:
+  * User actions: "Story Map Generation that has all questions answered"
+  * Context state: "Generated Story Map File that has changes"
+  * External events: "Epic that has been added to map"
+
+* **Domain State Changes** - Focus on WHAT changed externally:
+  * ✅ "Epic that has been added to map" (external change)
+  * ✅ "Feature that has been removed from map" (external change)
+  * ✅ "Story that has been moved to different feature" (external change)
+  * ❌ "Parser that is extracting epics" (internal operation)
+  * ❌ "Folder Creator that is creating folders" (internal operation)
+
+* **System Responses** - Then describe what the system does in response:
+  * ✅ "Epic that has been added should have folder created"
+  * ✅ "Feature that has been removed should have folder archived"
+  * ❌ "Folder Generator that is creating folders" (internal focus)
 
 **Temporal Lifecycle Progression:**
 
@@ -412,13 +450,12 @@ When scaffolding from domain maps, preserve the complete domain map structure (s
       * "that is [adjective/noun]" - current states
       * "that has [noun]" - possession states
   * Domain behaviors → it blocks ("should ...")
-    * **State-oriented test names (REQUIRED):**
+    * **Valid test name patterns:**
+      * ✅ "should [verb]" (e.g., "should roll dice", "should validate", "should extract")
+      * ✅ "should [verb] [noun]" (e.g., "should calculate damage", "should create folders")
       * ✅ "should have [noun] [past participle]" (e.g., "should have damage calculated")
       * ✅ "should be [state]" (e.g., "should be valid")
       * ✅ "should have [noun]" (e.g., "should have initial stats")
-    * **Action-oriented test names (FORBIDDEN):**
-      * ❌ "should [verb]" (e.g., "should roll dice", "should validate")
-      * ❌ "should [verb] [noun]" (e.g., "should calculate damage")
   * Domain sub-concepts → nested describe blocks
   * When domain interaction files (`*-domain-interactions.txt`) are present, you can leverage them to enhance:
     * Business Rules → `it` blocks (each rule becomes a test case)
@@ -441,10 +478,11 @@ When validating scaffold output, check:
 4. ✅ Domain concepts aligned (scaffold concepts match domain map) AND when domain interaction files are present: domain interaction flows aligned (test sequence matches flow step order)
 5. ✅ Natural language fluency (reads aloud clearly)
 6. ✅ Clear subject in every test name
-7. ✅ Temporal progression follows lifecycle (if applicable)
-8. ✅ Complete end-to-end behaviors (not fragmented) AND when domain interaction files are present: domain interaction business rules covered (each rule has corresponding `it` block)
-9. ✅ Sample size appropriate (~18 describe blocks)
-10. ✅ When domain interaction files are present: domain interaction transformations/lookups inform test descriptions (function hints present)
+7. ✅ **User-oriented flow** - Structure around external triggers and state changes, not internal operations
+8. ✅ Temporal progression follows lifecycle (if applicable)
+9. ✅ Complete end-to-end behaviors (not fragmented) AND when domain interaction files are present: domain interaction business rules covered (each rule has corresponding `it` block)
+10. ✅ Sample size appropriate (~18 describe blocks)
+11. ✅ When domain interaction files are present: domain interaction transformations/lookups inform test descriptions (function hints present)
 
 **Reference to Core Principles:**
 
