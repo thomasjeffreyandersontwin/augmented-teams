@@ -49,6 +49,7 @@ OR
    - `/stories-rule.mdc` Section 0 for universal principles
    - `/stories-rule.mdc` Section 0.5 for hierarchy structure
    - `/stories-rule.mdc` Section 1 for Story Shaping principles
+   - `/stories-rule.mdc` Section 1.7.1 for End-to-End Value Increments (CRITICAL for increment planning)
 
 4. **Runner** (`StoryShapeCommand.generate()`) generates instructions for AI agent:
    - **Location Structure** (MANDATORY):
@@ -75,6 +76,10 @@ OR
    - Use story counting (~X stories) at feature level
    - When showing example stories (2-3), add final line "└─ 📝 ~X more stories" showing remaining count
    - Identify marketable value increments
+   - **CRITICAL: Design increments as VERTICAL SLICES** (end-to-end flows across multiple epics/features, NOT horizontal layers)
+   - Each increment MUST deliver complete working flow from start to finish
+   - Include PARTIAL features from MULTIPLE epics in each increment
+   - Layer increments: simple first (basic user, happy path), then add complexity (more users, edge cases)
    - Use "Value Increment" (not "MVI") with NOW/NEXT/LATER priorities
    - Include relative sizing notes for increments
    - Require fine-grained balanced with testable/valuable
@@ -118,6 +123,7 @@ OR
    - NO individual increment documents (created in Discovery)
    - NO epic/feature documents (created in Discovery/Exploration)
    - NO epic/feature folder structure yet (created by `/story-arrange` inside `map/`)
+   - NO story stub files yet (created by `/story-specification` when writing scenarios)
    - Next steps (review content, proceed to `/story-arrange` then `/story-discovery`)
 
 **Action 2: GENERATE FEEDBACK**
@@ -146,6 +152,7 @@ OR
 
 2. **AI Agent** references rule files to validate story map:
    - `/stories-rule.mdc` Section 1 for Story Shaping validation criteria
+   - `/stories-rule.mdc` Section 1.7.1 for End-to-End Value Increments validation (CRITICAL)
 
 3. **Runner** (`CodeAugmentedStoryShapeCommand.validate()`) validates story map:
    - Checks files exist:

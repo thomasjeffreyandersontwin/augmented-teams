@@ -26,9 +26,21 @@
   - Apply §1.4 Story Counting (~X stories for unexplored, 10-20% identified)
   - Apply §1.5 7±2 Sizing (Epic: 4-9 features, Feature: 4-9 stories)
   - Use tree characters: │ ├─ └─ for hierarchy
+  - **CRITICAL**: Continuation lines (details after stories) must use `&nbsp;` for spacing
+    - Example: `│  │ &nbsp;&nbsp;&nbsp; - STR, STA, AGL, DEX` (NOT regular spaces)
+    - Markdown preview collapses regular spaces; use `&nbsp;` to preserve indentation
+    - Apply to ANY line with `-` that comes after a story line (📝)
   
 - `{increments_organized}`: Identify marketable value increments
-  - Apply §1.5 Marketable Increments
+  - Apply §1.7 Marketable Increments
+  - **Apply §1.7.1 End-to-End Value Increments (Vertical Slices)** - CRITICAL
+  - **VERTICAL SLICES ACROSS FEATURES/EPICS** (NOT horizontal feature-by-feature completion)
+  - Design increments as thin end-to-end flows that touch multiple epics/features
+  - Each increment MUST deliver complete working flow from start to finish
+  - Include PARTIAL features from MULTIPLE epics in each increment
+  - Each increment demonstrates: data entry → processing → validation → persistence → display
+  - Layer increments: Start simple (basic user, happy path) → Add complexity (more users, edge cases, variations)
+  - Think: "What's the thinnest slice that demonstrates the entire system working together?"
   - Use NOW/NEXT/LATER priorities
   - Include relative sizing notes (compared to previous work)
   - Format: 🚀 **Value Increment X: [Name] - [Priority]**
@@ -100,6 +112,13 @@
 - Are potential increments organized in `increments/[product-name]-story-map-increments.md`?
 - Are increments using NOW/NEXT/LATER priorities?
 - Does `docs/stories/increments/` folder exist (contains story-map-increments.md, individual increment docs added in Discovery)?
+- **CRITICAL: Are increments VERTICAL SLICES** (end-to-end flows across multiple epics/features)?
+- **CRITICAL: NOT horizontal layers** (one complete epic/feature, then another)?
+- Does each increment deliver complete working end-to-end flow (even if thin)?
+- Do increments include PARTIAL features from MULTIPLE epics (not complete epics)?
+- Does each increment demonstrate full flow: input → process → validate → persist → display?
+- Do increments layer complexity (simple first, then add users/scenarios/edge cases)?
+- Can you actually demo working software after Increment 1 (not just partial capability)?
 
 ---
 
@@ -114,6 +133,12 @@
 - Missing "~X more stories" line when showing example stories within feature
 - Using "MVI" instead of "Value Increment"
 - Increments using High/Medium/Low instead of NOW/NEXT/LATER
+- **🚨 CRITICAL: Increments as horizontal layers** (complete one epic/feature, then another)
+- **🚨 CRITICAL: Increments that don't deliver end-to-end flow** (only touch one area of system)
+- **🚨 CRITICAL: Completing entire features before starting others** (should include partial features from multiple areas)
+- **🚨 CRITICAL: Can't demo working software after first increment** (no end-to-end capability)
+- Increments without save/load capability (can't persist work)
+- Increments that focus on one user type completely before touching others
 - Using "Epic:", "Feature:", "Story:" prefixes anywhere
 - Sub-Epics not using verb/noun format
 - Missing tree characters or emojis

@@ -1,5 +1,7 @@
 # 📝 {story_name}
 
+**Navigation:** [📋 Story Map]({story_map_filename}) | [⚙️ Feature Overview]({feature_overview_filename})
+
 **Epic:** {epic_name}
 **Feature:** {feature_name}
 

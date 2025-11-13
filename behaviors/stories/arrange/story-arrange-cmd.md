@@ -40,7 +40,7 @@
      ```
    - **Parse Story Map**: Extract epic and feature names from story map document
    - **Create Folders**: Create `🎯 Epic Name/⚙️ Feature Name/` folder structure INSIDE `map/` directory
-   - **Create Story Files**: Create `📝 Story Name.md` files inside feature folders with basic template
+   - **Story Files Deferred**: Story stub files NOT created (will be created during `/story-specification` phase)
    - **Archive Old Folders**: Move obsolete folders to `map/z_archive/[timestamp]/` (NEVER delete)
    - **Move Files**: Move existing files to new folder locations if hierarchy changed
    - **Detect Merge Candidates**: If multiple files exist for same entity, archive ALL to `map/z_archive/[timestamp]/`

@@ -369,7 +369,7 @@ with description('Stories System'):
 - **New Feature Two**
 """
                         
-                        with it('should have epic folders created with emoji prefix and Title Case'):
+                        with it('should have epic folders created with Title Case'):
                             # Arrange
                             if not stories_runner or not hasattr(stories_runner, 'StoryArrangeCommand'):
                                 expect(True).to(be_false)
@@ -439,7 +439,7 @@ with description('Stories System'):
                 
                 with context('with Features'):
                     with context('that have been added to epic'):
-                        with it('should have feature folders created with emoji prefix and Title Case'):
+                        with it('should have feature folders created with Title Case'):
                             # Arrange
                             with patch('pathlib.Path.mkdir') as mock_mkdir:
                                 # Act - Would create feature folder
@@ -508,11 +508,11 @@ with description('Stories System'):
                                     # Assert
                                     expect(True).to(be_true)
                         
-                        with it('should have story files use emoji prefix and Title Case'):
+                        with it('should have story files use Title Case'):
                             # Arrange
                             with patch('pathlib.Path.exists', return_value=False):
                                 with patch('builtins.open', mock_open()):
-                                    # Act - Verify filename has emoji and Title Case
+                                    # Act - Verify filename has Title Case
                                     # Assert
                                     expect(True).to(be_true)
                         
@@ -625,7 +625,7 @@ with description('Stories System'):
                 with it('should have naming violations list returned'):
                     # Arrange
                     mock_folder = Mock()
-                    mock_folder.name = 'invalid-name-no-emoji'
+                    mock_folder.name = 'invalid-name'
                     with patch('pathlib.Path.iterdir', return_value=[mock_folder]):
                         # Act
                         # Assert
@@ -674,11 +674,11 @@ with description('Stories System'):
                     # Assert - Result contains archive path
                     expect(True).to(be_true)
                 
-                with it('should have Unicode encoding errors handled gracefully in output'):
+                with it('should have encoding errors handled gracefully in output'):
                     # Arrange - Mock print to test encoding
                     with patch('builtins.print') as mock_print:
-                        # Act - Generate handles emoji paths
-                        # Assert - No UnicodeEncodeError raised
+                        # Act - Generate handles special characters in paths
+                        # Assert - No encoding errors raised
                         expect(True).to(be_true)
             
     with context('Validation'):

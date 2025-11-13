@@ -348,18 +348,33 @@ print("PASS: Test passed")
 print("SUCCESS: All assertions correct")
 print("Next step:")
 expect(result).to(contain("correct the error"))
+# Describe emojis in comments if needed for clarity
+# EPIC Create Character, FEATURE Establish Identity, STORY User enters name
 ```
 
 **[DON'T]:**
 Unicode characters crash on Windows console:
 ```python
-print("✓ Test passed")
-print("✅ All assertions correct")
-print("→ Next step")
-expect(result).to(contain("→"))
+print("✓ Test passed")  # Unicode checkmark
+print("✅ All assertions correct")  # Emoji checkmark
+print("→ Next step")  # Unicode arrow
+expect(result).to(contain("→"))  # Unicode in assertion
+
+# Emojis in test data/strings cause encoding errors
+story_map_content = """🎯 **Create Character**
+⚙️ **Establish Identity**  
+📝 User enters name"""  # FAILS on Windows
 ```
 
 **Error:** `UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 0`
+
+**Validation:** The BDDUnicodeHeuristic detects ALL non-ASCII characters (ord > 127) including:
+- Unicode symbols: ✓, ✅, ❌, →, •, etc.
+- Emojis: 🎯, ⚙️, 📝, 🔥, etc.
+- Tree characters: │, ├, └, ─
+- Accented letters: é, ñ, ü, etc.
+
+Use ASCII alternatives: EPIC, FEATURE, STORY, PASS, FAIL, ERROR, or describe in comments.
 
 ## Commands
 

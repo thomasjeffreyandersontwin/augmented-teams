@@ -1,10 +1,15 @@
 # Story Map: MM3E Online Character Creator
 
+**Navigation:** [📊 Increments](../increments/mm3e-character-creator-story-map-increments.md)
+
 **File Name**: `mm3e-character-creator-story-map.md`
 **Location**: `demo/mm3e/docs/stories/map/mm3e-character-creator-story-map.md`
 
+> **CRITICAL MARKDOWN FORMATTING**: All tree structure lines MUST end with TWO SPACES (  ) for proper line breaks. Without two spaces, markdown will wrap lines together into one long line, breaking the visual tree structure.
+
 ## System Purpose
-An online character creator for Mutants & Masterminds 3rd Edition that guides users through building superhero characters according to game rules, calculating point costs automatically, validating prerequisites, and exporting characters for gameplay use.
+
+Enable players to create, manage, and share superhero characters for Mutants & Masterminds 3E tabletop RPG sessions. The system guides users through character creation following M&M 3E rules (handbook pages 23-54), validates character legality with "warn don't prevent" philosophy, manages point budgets with real-time calculations, and provides tools for character management during gameplay.
 
 ---
 
@@ -18,271 +23,310 @@ An online character creator for Mutants & Masterminds 3rd Edition that guides us
 
 ## Story Map Structure
 
-🎯 **Create Character** (8 features, ~75 stories)
-│   *Relative Size: Similar to D&D character builder complexity*
-│
-├─ ⚙️ **Establish Identity** (~8 stories)
-│  ├─ 📝 User enters character name
-│  │   - and system saves to character sheet
-│  ├─ 📝 User enters character concept
-│  │   - and system saves as descriptor
-│  ├─ 📝 User selects power level
-│  │   - and system calculates and displays total point budget
-│  └─ 📝 ~5 more stories
-│
-├─ ⚙️ **Allocate Abilities** (~12 stories)
-│  ├─ 📝 User increases ability rank
-│  │   - and system calculates point cost and updates budget
-│  ├─ 📝 User decreases ability rank
-│  │   - and system refunds points and updates budget
-│  ├─ 📝 System updates dependent values when ability changes
-│  │   - Updates skills, attacks, damage, and defenses
-│  └─ 📝 ~9 more stories
-│
-├─ ⚙️ **Purchase Skills** (~15 stories)
-│  ├─ 📝 User adds ranks to untrained skill
-│  │   - and system calculates cost and displays total modifier
-│  ├─ 📝 User adds ranks to trained-only skill
-│  │   - and system validates training requirement
-│  ├─ 📝 User adds ranks to ability-based skill
-│  │   - and system applies ability modifier to total
-│  └─ 📝 ~12 more stories
-│
-├─ ⚙️ **Select Advantages** (~14 stories)
-│  ├─ 📝 User selects advantage without prerequisites
-│  │   - and system adds to sheet and deducts cost
-│  ├─ 📝 User selects ranked advantage
-│  │   - and system prompts for rank selection
-│  ├─ 📝 System validates advantage prerequisites
-│  │   - Checks ability, skill, power, or other advantage requirements
-│  └─ 📝 ~11 more stories
-│
-├─ ⚙️ **Build Powers** (~18 stories)
-│  ├─ 📝 User selects base power effect
-│  │   - and system displays base cost and available modifiers
-│  ├─ 📝 User adds extra to power
-│  │   - and system increases power cost
-│  ├─ 📝 User adds flaw to power
-│  │   - and system decreases power cost
-│  └─ 📝 ~15 more stories
-│
-├─ ⚙️ **Calculate Defenses** (~6 stories)
-│  ├─ 📝 System calculates dodge defense
-│  │   - Based on ability modifier and purchased ranks
-│  ├─ 📝 System calculates toughness defense
-│  │   - Based on ability modifier only
-│  ├─ 📝 User purchases defense ranks
-│  │   - and system updates defense value and point cost
-│  └─ 📝 ~3 more stories
-│
-└─ ⚙️ ~2 more features
+🎯 **Establish Character Foundation** (5 features, ~30 stories)  
+│  
+├─ [⚙️ **Enter Basic Identity**](./%F0%9F%8E%AF%20Establish%20Character%20Foundation/%E2%9A%99%EF%B8%8F%20Enter%20Basic%20Identity/%E2%9A%99%EF%B8%8F%20Enter%20Basic%20Identity%20-%20Feature%20Overview.md)  
+│  ├─ 📝 User enters character name  
+│  └─ 📝 User enters identity fields  
+├─ │  
+├─ [⚙️ **Select Power Level**](./%F0%9F%8E%AF%20Establish%20Character%20Foundation/%E2%9A%99%EF%B8%8F%20Select%20Power%20Level/%E2%9A%99%EF%B8%8F%20Select%20Power%20Level%20-%20Feature%20Overview.md)  
+│  ├─ 📝 System displays power level options  
+│  ├─ 📝 User selects power level  
+│  ├─ 📝 System displays point budget  
+│  ├─ 📝 System displays power level caps summary  
+│  └─ 📝 System stores selected power level  
+├─ │  
+├─ [⚙️ **Configure Abilities**](./%F0%9F%8E%AF%20Establish%20Character%20Foundation/%E2%9A%99%EF%B8%8F%20Configure%20Abilities/%E2%9A%99%EF%B8%8F%20Configure%20Abilities%20-%20Feature%20Overview.md)   
+│  ├─ 📝 User sets ability rank for any of 8 abilities  
+│  │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and system calculates point cost (rank × 2)  
+│  ├─ 📝 System displays all 8 abilities with current ranks  
+│  │ &nbsp;&nbsp;&nbsp; - STR, STA, AGL, DEX, FGT, INT, AWE, PRE  
+│  ├─ 📝 System calculates total ability points spent  
+│  │ &nbsp;&nbsp;&nbsp; - sum of all ability costs  
+│  ├─ 📝 System updates remaining point budget  
+│  │ &nbsp;&nbsp;&nbsp; - total points - spent points  
+│  └─ 📝 System updates dependent defenses when linked ability changes  
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - AGL→Dodge, FGT→Parry, STA→Fortitude+Toughness, AWE→Will  
+│  
+├─ [⚙️ **Calculate Defenses**](./%F0%9F%8E%AF%20Establish%20Character%20Foundation/%E2%9A%99%EF%B8%8F%20Calculate%20Defenses/%E2%9A%99%EF%B8%8F%20Calculate%20Defenses%20-%20Feature%20Overview.md)  
+│  ├─ 📝 System calculates active defenses from abilities  
+│  ├─ 📝 System calculates resistance defenses from abilities  
+│  └─ 📝 System displays all 5 defense values  
+├─ │  
+└─ [⚙️ **Purchase Defense Ranks**](./%F0%9F%8E%AF%20Establish%20Character%20Foundation/%E2%9A%99%EF%B8%8F%20Purchase%20Defense%20Ranks/%E2%9A%99%EF%B8%8F%20Purchase%20Defense%20Ranks%20-%20Feature%20Overview.md)   
+   └─ 📝 User purchases additional defense ranks  
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and system adds to base value (Dodge, Parry, Fortitude, Will only), deducts cost (1 pp/rank), prevents Toughness purchase  
 
----
+🎯 **Build Character Skills** (4 features, ~25 stories)  
+│  
+├─ ⚙️ **Purchase Skill Ranks** (6 stories)  
+│  ├─ 📝 User increases skill rank  
+│  ├─ 📝 System calculates skill bonus from linked ability  
+│  ├─ 📝 System displays skill total (ability + skill rank)  
+│  ├─ 📝 User decreases skill rank  
+│  ├─ 📝 System calculates total skill points spent  
+│  └─ 📝 System updates remaining point budget  
+├─ │  
+├─ ⚙️ **Manage Skill Organization** (~6 stories)  
+│  ├─ 📝 System groups skills by linked ability  
+│  ├─ 📝 User searches skills by name  
+│  ├─ 📝 User filters trained vs untrained skills  
+│  └─ 📝 ~3 more stories  
+│  
+├─ ⚙️ **Validate Skill Limits** (~6 stories)  
+│  ├─ 📝 System validates skill modifier against PL cap (PL + 10)  
+│  │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and displays warning if exceeded  
+│  └─ 📝 ~5 more stories  
+│  
+└─ ⚙️ **Update Skills When Ability Changes** (~5 stories)  
+   ├─ 📝 System recalculates all linked skill bonuses when ability changes  
+   └─ 📝 ~4 more stories  
 
-🎯 **Manage Attacks** (6 features, ~45 stories)
-│   *Relative Size: Complex combat calculation system*
-│
-├─ ⚙️ **Create Standard Attacks** (~8 stories)
-│  ├─ 📝 User creates close combat attack
-│  │   - and system calculates attack bonus from ability
-│  ├─ 📝 User creates ranged combat attack
-│  │   - and system calculates attack bonus from ability
-│  ├─ 📝 User sets attack damage value
-│  │   - and system validates against power level limits
-│  └─ 📝 ~5 more stories
-│
-├─ ⚙️ **Create Power Attacks** (~9 stories)
-│  ├─ 📝 User creates attack from damaging power
-│  │   - and system derives attack bonus and damage from power
-│  ├─ 📝 User creates attack from affliction power
-│  │   - and system sets resistance check and conditions
-│  ├─ 📝 System validates power attack against PL limits
-│  │   - Checks attack + damage vs trade-off rules
-│  └─ 📝 ~6 more stories
-│
-├─ ⚙️ **Apply Attack Modifiers** (~7 stories)
-│  ├─ 📝 User applies circumstance modifier
-│  │   - and system adjusts attack bonus
-│  ├─ 📝 User applies power attack trade-off
-│  │   - and system decreases attack, increases damage
-│  └─ 📝 ~5 more stories
-│
-└─ ⚙️ ~3 more features
+🎯 **Configure Advantages** (4 features, ~20 stories)  
+│  
+├─ ⚙️ **Select Standard Advantages** (6 stories)  
+│  ├─ 📝 User selects advantage  
+│  ├─ 📝 System displays advantage list organized by type  
+│  ├─ 📝 User searches advantages by name  
+│  ├─ 📝 User filters advantages by type (Combat, Fortune, General, Skill)  
+│  ├─ 📝 System calculates total advantage points spent  
+│  └─ 📝 System displays advantage descriptions  
+├─ │  
+├─ ⚙️ **Select Ranked Advantages** (5 stories)  
+│  ├─ 📝 User selects ranked advantage  
+│  ├─ 📝 System calculates cost (1 point per rank)  
+│  ├─ 📝 User adjusts advantage ranks  
+│  ├─ 📝 System displays examples of ranked advantages (Equipment, Benefit)  
+│  └─ 📝 User removes ranked advantage  
+├─ │  
+├─ ⚙️ **Validate Prerequisites** (3 stories)  
+│  ├─ 📝 System validates advantage prerequisites  
+│  ├─ 📝 System displays prerequisite requirements before selection  
+│  └─ 📝 System allows selection despite unmet prerequisites (warn don't prevent)  
+├─ │  
+└─ ⚙️ **Manage Advantage List** (~4 stories)  
+   ├─ 📝 User removes advantage  
+   │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and system refunds points  
+   └─ 📝 ~3 more stories  
 
----
+🎯 **Build Character Powers** (6 features, ~35 stories)  
+│  
+├─ ⚙️ **Select Power Effects** (7 stories)  
+│  ├─ 📝 User selects base power effect  
+│  ├─ 📝 User sets effect rank  
+│  ├─ 📝 System displays effect catalog organized by type  
+│  ├─ 📝 User searches effects by name  
+│  ├─ 📝 System displays effect descriptions and examples  
+│  ├─ 📝 System calculates total power points spent  
+│  └─ 📝 System updates remaining point budget  
+├─ │  
+├─ ⚙️ **Apply Power Extras** (6 stories)  
+│  ├─ 📝 User adds Extra modifier to effect  
+│  ├─ 📝 System recalculates effect total cost  
+│  ├─ 📝 System displays available Extras for effect type  
+│  ├─ 📝 User removes Extra modifier  
+│  ├─ 📝 System validates Extra compatibility with effect  
+│  └─ 📝 System displays Extra descriptions  
+├─ │  
+├─ ⚙️ **Apply Power Flaws** (6 stories)  
+│  ├─ 📝 User adds Flaw modifier to effect  
+│  ├─ 📝 System recalculates effect total cost  
+│  ├─ 📝 System displays available Flaws for effect type  
+│  ├─ 📝 User removes Flaw modifier  
+│  ├─ 📝 System validates Flaw compatibility with effect  
+│  └─ 📝 System displays Flaw descriptions  
+├─ │  
+├─ ⚙️ **Create Power Arrays** (6 stories)  
+│  ├─ 📝 User creates power array  
+│  ├─ 📝 User adds alternate effect to array  
+│  ├─ 📝 System calculates array total cost (base + alternates)  
+│  ├─ 📝 User removes alternate effect  
+│  ├─ 📝 System validates alternate effects ≤ base effect cost  
+│  └─ 📝 System displays array structure visually  
+├─ │  
+├─ ⚙️ **Validate Power Limits** (5 stories)  
+│  ├─ 📝 System validates effect rank against PL caps  
+│  ├─ 📝 System validates attack effect rank ≤ PL  
+│  ├─ 📝 System validates resistance effect rank ≤ PL  
+│  ├─ 📝 System displays power validation warnings  
+│  └─ 📝 System allows save despite power warnings (warn don't prevent)  
+├─ │  
+└─ ⚙️ **Manage Power List** (~5 stories)  
+   ├─ 📝 User removes power effect  
+   │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and system refunds points  
+   └─ 📝 ~4 more stories  
 
-🎯 **Validate Character** (5 features, ~28 stories)
-│   *Relative Size: Rules validation engine*
-│
-├─ ⚙️ **Validate Point Expenditure** (~6 stories)
-│  ├─ 📝 System validates total points at or under budget
-│  │   - Flags overspend errors to user
-│  ├─ 📝 System validates point allocation per category
-│  │   - Checks abilities, skills, advantages, powers, defenses
-│  ├─ 📝 System calculates unspent points
-│  │   - and displays available points by category
-│  └─ 📝 ~3 more stories
-│
-├─ ⚙️ **Validate Power Level Limits** (~7 stories)
-│  ├─ 📝 System validates attack + damage vs PL cap
-│  │   - Flags attacks exceeding PL × 2
-│  ├─ 📝 System validates dodge + toughness vs PL cap
-│  │   - Flags defenses exceeding PL × 2
-│  ├─ 📝 System validates ability scores vs PL
-│  │   - Flags abilities exceeding PL + 10
-│  └─ 📝 ~4 more stories
-│
-├─ ⚙️ **Validate Prerequisites** (~6 stories)
-│  ├─ 📝 System validates advantage prerequisites
-│  │   - Checks required abilities, skills, powers, advantages
-│  ├─ 📝 System validates power prerequisites
-│  │   - Checks required effects or descriptors
-│  └─ 📝 ~4 more stories
-│
-└─ ⚙️ ~2 more features
+🎯 **Validate Character** (5 features, ~25 stories)  
+│  
+├─ ⚙️ **Calculate Point Totals** (1 stories)  
+│  └─ 📝 System includes powers in point breakdown  
+├─ │  
+├─ ⚙️ **Validate Power Level Caps** (4 stories)  
+│  ├─ 📝 System validates Parry + Toughness ≤ PL × 2  
+│  ├─ 📝 System displays all PL cap validations together  
+│  ├─ 📝 System highlights exceeded caps in red  
+│  └─ 📝 System explains PL cap formulas in tooltips  
+├─ │  
+├─ ⚙️ **Validate Point Budget** (3 stories)  
+│  ├─ 📝 System validates total spent ≤ starting points  
+│  ├─ 📝 System displays overspend amount  
+│  └─ 📝 System allows save despite overspend (warn don't prevent)  
+├─ │  
+├─ ⚙️ **Display Validation Warnings** (~4 stories)  
+│  ├─ 📝 System displays validation warnings  
+│  │ &nbsp;&nbsp;&nbsp; - grouped by category (PL caps, budget, prerequisites)  
+│  └─ 📝 ~3 more stories  
+│  
+└─ ⚙️ **Allow Save Despite Warnings** (~3 stories)  
+   ├─ 📝 System allows save with validation warnings present  
+   │ &nbsp;&nbsp;&nbsp; - displaying "Warn Don't Prevent" message  
+   └─ 📝 ~2 more stories  
 
----
+🎯 **Manage Characters** (5 features, ~22 stories)  
+│  
+├─ [⚙️ **Save Character**](./%F0%9F%8E%AF%20Manage%20Characters/%E2%9A%99%EF%B8%8F%20Save%20Character/%E2%9A%99%EF%B8%8F%20Save%20Character%20-%20Feature%20Overview.md)  
+│  └─ 📝 System auto-saves periodically  
+├─ │  
+├─ [⚙️ **Load Character**](./%F0%9F%8E%AF%20Manage%20Characters/%E2%9A%99%EF%B8%8F%20Load%20Character/%E2%9A%99%EF%B8%8F%20Load%20Character%20-%20Feature%20Overview.md)  
+│  ├─ 📝 System displays load errors  
+│  └─ 📝 System restores UI state from saved character  
+├─ │  
+├─ ⚙️ **List Characters** (5 stories)  
+│  ├─ 📝 User views character list  
+│  ├─ 📝 User sorts character list  
+│  ├─ 📝 User filters character list by PL  
+│  ├─ 📝 User searches characters by name  
+│  └─ 📝 System displays character count  
+├─ │  
+├─ ⚙️ **Delete Character** (4 stories)  
+│  ├─ 📝 User deletes character  
+│  ├─ 📝 System displays delete confirmation dialog  
+│  ├─ 📝 System removes character from list  
+│  └─ 📝 System handles delete errors gracefully  
+├─ │  
+└─ ⚙️ **Duplicate Character** (~4 stories)  
+   ├─ 📝 User duplicates character  
+   │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and system creates copy with "(Copy)" suffix  
+   └─ 📝 ~3 more stories  
 
-🎯 **Manage Equipment** (7 features, ~35 stories)
-│   *Relative Size: Item catalog and inventory system*
-│
-├─ ⚙️ **Select Standard Equipment** (~6 stories)
-│  ├─ 📝 User selects equipment from catalog
-│  │   - and system deducts equipment points
-│  ├─ 📝 User removes equipment from character
-│  │   - and system refunds equipment points
-│  └─ 📝 ~4 more stories
-│
-├─ ⚙️ **Create Custom Equipment** (~7 stories)
-│  ├─ 📝 User defines custom equipment properties
-│  │   - and system calculates equipment point cost
-│  ├─ 📝 User adds features to custom equipment
-│  │   - and system updates total cost
-│  └─ 📝 ~5 more stories
-│
-└─ ⚙️ ~5 more features
+🎯 **Configure Complications** (3 features, ~12 stories)  
+│  
+├─ ⚙️ **Select Complication Types** (5 stories)  
+│  ├─ 📝 User selects complication type  
+│  ├─ 📝 System displays complication type list (Motivation, Identity, Relationship, etc.)  
+│  ├─ 📝 User enters complication description  
+│  ├─ 📝 System displays complication examples  
+│  └─ 📝 User selects multiple complications  
+├─ │  
+├─ ⚙️ **Manage Complication List** (4 stories)  
+│  ├─ 📝 User removes complication  
+│  ├─ 📝 User edits complication description  
+│  ├─ 📝 System displays complication count (recommend 2+)  
+│  └─ 📝 System displays selected complications summary  
+├─ │  
+└─ ⚙️ **Display Complication Reminders** (~3 stories)  
+   ├─ 📝 System displays complication reminders during character use  
+   └─ 📝 ~2 more stories  
 
----
+🎯 **Export Characters** (4 features, ~18 stories)  
+│  
+├─ ⚙️ **Export Character Sheet** (6 stories)  
+│  ├─ 📝 User exports character to PDF  
+│  ├─ 📝 System formats abilities section  
+│  ├─ 📝 System formats skills section  
+│  ├─ 📝 System formats powers section  
+│  ├─ 📝 System formats complications section  
+│  └─ 📝 System includes all calculated values  
+├─ │  
+├─ ⚙️ **Print Character Sheet** (5 stories)  
+│  ├─ 📝 User prints character sheet  
+│  ├─ 📝 System formats for print layout  
+│  ├─ 📝 System includes print-friendly styling  
+│  ├─ 📝 User previews before printing  
+│  └─ 📝 System handles multi-page characters  
+├─ │  
+├─ ⚙️ **Share Character** (4 stories)  
+│  ├─ 📝 User generates share link  
+│  ├─ 📝 System displays shareable link  
+│  ├─ 📝 User copies link to clipboard  
+│  └─ 📝 System displays shared character as read-only  
+├─ │  
+└─ ⚙️ **Import Character** (~3 stories)  
+   ├─ 📝 User imports character from file  
+   └─ 📝 ~2 more stories  
 
-🎯 **Persist Character Data** (4 features, ~22 stories)
-│   *Relative Size: Standard CRUD with export formats*
-│
-├─ ⚙️ **Save Character** (~6 stories)
-│  ├─ 📝 User saves character to cloud storage
-│  │   - and system validates data before saving
-│  ├─ 📝 System auto-saves character during editing
-│  │   - Saves draft every N minutes
-│  ├─ 📝 User saves character revision
-│  │   - and system creates version history entry
-│  └─ 📝 ~3 more stories
-│
-├─ ⚙️ **Load Character** (~5 stories)
-│  ├─ 📝 User loads character from storage
-│  │   - and system populates all character fields
-│  ├─ 📝 User loads character from previous version
-│  │   - and system restores historical state
-│  └─ 📝 ~3 more stories
-│
-├─ ⚙️ **Export Character** (~7 stories)
-│  ├─ 📝 User exports character as PDF
-│  │   - and system generates formatted character sheet
-│  ├─ 📝 User exports character as JSON
-│  │   - and system serializes all character data
-│  ├─ 📝 User exports character for virtual tabletop
-│  │   - and system formats for specific VTT platform
-│  └─ 📝 ~4 more stories
-│
-└─ ⚙️ ~1 more feature
-
----
-
-🎯 **Support User Experience** (6 features, ~32 stories)
-│   *Relative Size: Standard UI/UX patterns*
-│
-├─ ⚙️ **Provide Rule Guidance** (~6 stories)
-│  ├─ 📝 User views tooltip for game term
-│  │   - and system displays definition and examples
-│  ├─ 📝 User accesses help panel for section
-│  │   - and system shows relevant rules text
-│  └─ 📝 ~4 more stories
-│
-├─ ⚙️ **Navigate Character Sections** (~5 stories)
-│  ├─ 📝 User switches between character tabs
-│  │   - and system saves current section state
-│  ├─ 📝 User uses quick navigation menu
-│  │   - and system jumps to requested section
-│  └─ 📝 ~3 more stories
-│
-├─ ⚙️ **Visualize Character Progress** (~6 stories)
-│  ├─ 📝 System displays point budget visualization
-│  │   - Shows spent vs available by category
-│  ├─ 📝 System displays completion indicators
-│  │   - Shows required vs completed sections
-│  └─ 📝 ~4 more stories
-│
-└─ ⚙️ ~3 more features
-
----
-
-## Notes
-
-### Format (Shaping Phase)
-- **Hierarchy**: 🎯 Epic → 📂 Sub-Epic → ⚙️ Feature → 📝 Story
-- **Naming**: All levels use [Verb] [Noun] *[optional clarifier]* format
-- **Story Counts**: Use (~X stories) for unexplored areas
-- **Detail Level**: Only 10-20% of stories identified (critical/unique/architecturally significant)
-- **Tree Characters**: Use │ ├─ └─ to show hierarchy
-- **Emojis**: Visual indicators for quick scanning (NO "Epic:", "Feature:", "Story:" prefixes)
-- **Estimates and Status**: Added in Discovery phase
-- **NO Acceptance Criteria**: Added later in Explore phase
-
-### Story Format (CRITICAL)
-- **Story Title**: "User [verb] [noun]" or "System [verb] [noun] when [trigger]"
-- **Single "and" clause**: "- and system [immediate response]" (shows user action + system response = ONE story)
-- **NO extra notes during Shaping**: NO examples, NO data lists (save details for discovery/exploration)
-- **NO separate system stories**: User action + immediate system response = ONE story, not two
-- **Remaining Stories Format**: When showing example stories, add final line: "└─ 📝 ~X more stories" (shows approximate remaining count)
-- **Remaining Features Format**: When showing example features within epic/sub-epic, add final line: "└─ ⚙️ ~X more features" (shows approximate remaining count)
-
-### Shaping Decomposition Approach
-- **Light touch**: Only decompose 10-20% of stories (critical/unique/architecturally significant)
-- **Story counts**: Use (~X stories) at feature level, show approximate remaining at story level
-- **Representative samples**: Show 2-3 example features/stories, then add "~X more features/stories" line
-- **Extrapolate scope**: Enough to estimate but not exhaustive
-- **Save exhaustive decomposition for Discovery**: Full permutation enumeration happens in Discovery phase
-
+🎯 **Support Gameplay** (4 features, ~20 stories)  
+│  
+├─ ⚙️ **Track Hero Points** (5 stories)  
+│  ├─ 📝 User adjusts hero points  
+│  ├─ 📝 System displays current hero points  
+│  ├─ 📝 User resets hero points to maximum (1 per session)  
+│  ├─ 📝 System tracks hero point usage history  
+│  └─ 📝 User adds notes to hero point changes  
+├─ │  
+├─ ⚙️ **Track Conditions** (6 stories)  
+│  ├─ 📝 User applies condition to character  
+│  ├─ 📝 User removes condition  
+│  ├─ 📝 System displays active conditions list  
+│  ├─ 📝 System calculates penalties from conditions  
+│  ├─ 📝 User adds custom condition  
+│  └─ 📝 System validates condition compatibility  
+├─ │  
+├─ ⚙️ **Track Damage** (5 stories)  
+│  ├─ 📝 User records damage penalty  
+│  ├─ 📝 User clears damage penalties  
+│  ├─ 📝 System displays current damage level  
+│  ├─ 📝 System calculates effects on abilities  
+│  └─ 📝 User applies recovery  
+├─ │  
+└─ ⚙️ **Roll Checks** (4 stories)  
+   ├─ 📝 User rolls d20 for check  
+   ├─ 📝 System displays roll breakdown  
+   ├─ 📝 User selects check type (skill, attack, save)  
+   └─ 📝 System highlights critical success or failure  
+└─ │  
 
 ---
 
 ## Source Material
 
-**Primary Source**: Mutants & Masterminds 3rd Edition - Hero's Handbook
-- Location: `demo/mm3e/HeroesHandbook.pdf`
-- Sections Referenced (Shaping): 
-  - Chapter 1: Character Creation (pages 16-28)
-  - Chapter 2: Abilities (pages 29-33)
-  - Chapter 3: Skills (pages 34-63)
-  - Chapter 4: Advantages (pages 64-77)
-  - Chapter 5: Powers (pages 78-147)
-  - Chapter 6: Gadgets & Gear (pages 148-167)
-  - Chapter 7: Combat (pages 168-187)
-- Date Generated: November 12, 2025
+**Primary Source**: M&M 3E Heroes Handbook (demo/mm3e/HeroesHandbook.pdf)
+- Location: Extracted to `demo/mm3e/docs/mm3e-handbook-reference.txt` (27,362 lines, 321 pages)
+- Domain Concepts: Documented in `demo/mm3e/docs/mm3e-domain-concepts.md`
+- Key Sections Referenced:
+  - Chapter 2: Secret Origins (Character Creation) - Pages 23-54
+  - Chapter 3: Abilities - Pages 107-112
+  - Chapter 4: Skills - Pages 113-131
+  - Chapter 5: Advantages - Pages 132-142
+  - Chapter 6: Powers - Pages 143+
+  - Basic Trait Costs Table - Page 26
+  - Power Level Limits - Pages 26-27
+  - Character Examples (The Rook, Princess) - Pages 51-54
+- Date Generated: Thursday, November 13, 2025
 
-**Discovery Refinements**: November 12, 2025
-- **Increment in Focus**: Increment 1 - Core Character Creation (NOW)
-- **Additional Sections Referenced**:
-  - Chapter 2: Abilities (pages 29-33) - Detailed ability modifier calculations, negative ranks, cascade update patterns
-  - Chapter 3: Skills (pages 34-63) - Trained vs untrained skill distinctions, cost formulas (0.5 vs 1.0 points/rank), skill grouping by abilities
-  - Chapter 4: Advantages (pages 64-77) - Exhaustive prerequisite types (ability, skill, advantage, power), AND/OR logic patterns, ranked advantages
-  - Chapter 1: Character Creation (pages 16-28) - Point budget formula (15 × PL), category-based point tracking, validation rules
+**Discovery Refinements**: Thursday, November 13, 2025
+- **Increment in Focus**: Increment 1 - Minimal Playable Character (Walking Skeleton)
+- **Additional Sections Referenced**: 
+  - Chapter 3: Abilities (pages 107-112) - All 8 ability definitions and dependencies
+  - Defense mechanics (pages 110-111) - Active vs Resistance defense formulas
+  - Point costs table (page 26) - Confirmed ability cost (2 pp/rank), defense cost (1 pp/rank)
 - **Areas Elaborated**: 
-  - Increment 1 features fully decomposed (53 stories across 8 features)
-  - Consolidation applied based on logic similarity (text fields, calculations, cascade patterns)
-  - Separated by different algorithms (prerequisite types, cost formulas, UI patterns)
-- **Consolidation Rationale**:
-  - Same logic, different data → CONSOLIDATED (e.g., text input fields, unspent point calculations)
-  - Different formulas/algorithms → SEPARATE (e.g., untrained vs trained skills, prerequisite types)
-  - Category-specific UI work → SEPARATE (e.g., validation displays per category)
+  - All 7 features in Increment 1 exhaustively decomposed (24 stories total)
+  - Ability-to-defense dependency mappings documented
+  - Defense calculation patterns identified (active: 10+ability, resistance: ability only)
+  - Save/load operations split into create vs update flows
+- **Consolidation Decisions**:
+  - Consolidated: Ability cost calculations (same formula for all 8)
+  - Consolidated: Defense calculations by type (active vs resistance patterns)
+  - Consolidated: Defense rank purchasing (same operation for all 4 purchasable)
+  - Consolidated: Identity fields with same validation pattern
+  - Split: Save create vs update (different database operations)
+  - Confirmed: Active defenses (Dodge, Parry) = 10 + ability (opponent rolls against)
+  - Confirmed: Resistance defenses (Fortitude, Will, Toughness) = ability only (you roll with them + d20)
 
-**Context for Exploration**: When writing acceptance criteria, reference sections above for domain rules and behavioral details. Key formulas documented in Discovery Refinements.
-
+**Context for Exploration**: When writing acceptance criteria for Increment 1, reference:
+- Defense formulas and active vs resistance distinction
+- Ability-to-defense cascade mappings (which abilities update which defenses)
+- Point budget calculations (PL × 15 total, 2 pp/ability rank, 1 pp/defense rank)
+- "Warn don't prevent" philosophy for validation (allow saves despite warnings)
+- Toughness special rule (cannot purchase ranks, only improved via advantages/powers)

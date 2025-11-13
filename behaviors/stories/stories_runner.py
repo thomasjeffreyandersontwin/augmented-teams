@@ -38,6 +38,1171 @@ spec_bdd.loader.exec_module(bdd_runner)
 
 BDDScaffoldStateOrientedHeuristic = bdd_runner.BDDScaffoldStateOrientedHeuristic
 
+# HELPER FUNCTIONS
+# Helper function to connect story maps to story documents via hyperlinks
+def connect_story_maps_to_documents(story_map_path: Path, verbose=True):
+    """
+    Automatically add markdown hyperlinks from story map/increment files to actual documents.
+    
+    Converts:
+        🎯 **Epic Name** → [🎯 **Epic Name**](./🎯 Epic Name/🎯 Epic Name - Epic Overview.md)
+        ⚙️ **Feature Name** → [⚙️ **Feature Name**](./🎯 Epic/⚙️ Feature Name/⚙️ Feature Name - Feature Overview.md)
+        📝 Story Name → [📝 Story Name](./🎯 Epic/⚙️ Feature/📝 Story Name.md)
+    
+    Args:
+        story_map_path: Path to story map file (story-map.md or increments.md)
+        verbose: Print status messages
+    
+    Returns:
+        Tuple of (epic_links, feature_links, story_links)
+    """
+    import re
+    
+    if not story_map_path.exists():
+        if verbose:
+            print(f"Story map not found: {story_map_path}")
+        return (0, 0, 0)
+    
+    # Read story map content
+    with open(story_map_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Determine base path for relative links
+    # If this is an increments file, links go up one level then to map/
+    # If this is a story-map file, links are relative to same directory
+    is_increments = 'increments' in story_map_path.name or 'increments' in str(story_map_path.parent)
+    
+    if is_increments:
+        # increments/file.md -> ../map/
+        map_base = story_map_path.parent.parent / "map"
+        link_prefix = "../map/"
+    else:
+        # map/file.md -> ./
+        map_base = story_map_path.parent
+        link_prefix = "./"
+    
+    # Patterns to match different hierarchy levels
+    epic_pattern = r'^(\s*[│├└─\s]*)(🎯\s+)(\*\*)([^\*\[]+)(\*\*)'
+    feature_pattern = r'^(\s*[│├└─\s]*)(⚙️\s+)(\*\*)([^\*\[]+)(\*\*)'
+    story_pattern = r'^(\s*[│├└─\s]*)(📝\s+)([^\[\n]+?)(\s*$)'
+    
+    lines = content.split('\n')
+    modified_lines = []
+    epic_links = 0
+    feature_links = 0
+    story_links = 0
+    
+    # Track current epic and feature from context
+    current_epic = None
+    current_feature = None
+    
+    for line in lines:
+        # Check for EPIC line (🎯 **Epic Name**)
+        epic_match = re.match(epic_pattern, line)
+        if epic_match:
+            indent = epic_match.group(1)
+            emoji = epic_match.group(2)  # 🎯 
+            star1 = epic_match.group(3)  # **
+            epic_name_raw = epic_match.group(4).strip()
+            star2 = epic_match.group(5)  # **
+            
+            # Remove parenthetical info like (8 features, ~75 stories) or (PARTIAL - 4 of 8 features)
+            epic_name = re.sub(r'\s*\([^)]*\)', '', epic_name_raw).strip()
+            current_epic = epic_name
+            current_feature = None
+            
+            # Check if already a link
+            if '[🎯' in line:
+                modified_lines.append(line)
+                continue
+            
+            # Check if Epic Overview exists
+            epic_folder = map_base / f"🎯 {epic_name}"
+            epic_overview_file = epic_folder / f"🎯 {epic_name} - Epic Overview.md"
+            
+            if epic_overview_file.exists():
+                # Build relative path
+                if is_increments:
+                    relative_path = f"{link_prefix}🎯 {epic_name}/🎯 {epic_name} - Epic Overview.md"
+                else:
+                    relative_path = f"{link_prefix}🎯 {epic_name}/🎯 {epic_name} - Epic Overview.md"
+                
+                # URL-encode
+                import urllib.parse
+                encoded_path = urllib.parse.quote(relative_path, safe='/.#-_')
+                
+                # Create link: [🎯 **Epic Name**](path) with two trailing spaces for markdown line breaks
+                linked_epic = f"{indent}[{emoji}{star1}{epic_name}{star2}]({encoded_path}) {epic_name_raw.replace(epic_name, '').strip()}  "
+                modified_lines.append(linked_epic)
+                epic_links += 1
+            else:
+                modified_lines.append(line)
+            continue
+        
+        # Check for FEATURE line (⚙️ **Feature Name**)
+        feature_match = re.match(feature_pattern, line)
+        if feature_match:
+            indent = feature_match.group(1)
+            emoji = feature_match.group(2)  # ⚙️ 
+            star1 = feature_match.group(3)  # **
+            feature_name_raw = feature_match.group(4).strip()
+            star2 = feature_match.group(5)  # **
+            
+            # Remove parenthetical info like (5 stories) or (~8 stories)
+            feature_name = re.sub(r'\s*\([^)]*\)', '', feature_name_raw).strip()
+            current_feature = feature_name
+            
+            # Check if already a link
+            if '[⚙️' in line:
+                modified_lines.append(line)
+                continue
+            
+            # Check if Feature Overview exists
+            if current_epic:
+                feature_folder = map_base / f"🎯 {current_epic}" / f"⚙️ {feature_name}"
+                feature_overview_file = feature_folder / f"⚙️ {feature_name} - Feature Overview.md"
+                
+                if feature_overview_file.exists():
+                    # Build relative path
+                    if is_increments:
+                        relative_path = f"{link_prefix}🎯 {current_epic}/⚙️ {feature_name}/⚙️ {feature_name} - Feature Overview.md"
+                    else:
+                        relative_path = f"{link_prefix}🎯 {current_epic}/⚙️ {feature_name}/⚙️ {feature_name} - Feature Overview.md"
+                    
+                    # URL-encode
+                    import urllib.parse
+                    encoded_path = urllib.parse.quote(relative_path, safe='/.#-_')
+                    
+                    # Create link: [⚙️ **Feature Name**](path) with two trailing spaces for markdown line breaks
+                    linked_feature = f"{indent}[{emoji}{star1}{feature_name}{star2}]({encoded_path}) {feature_name_raw.replace(feature_name, '').strip()}  "
+                    modified_lines.append(linked_feature)
+                    feature_links += 1
+                else:
+                    modified_lines.append(line)
+            else:
+                modified_lines.append(line)
+            continue
+        
+        # Check for STORY line (📝 Story Name)
+        story_match = re.match(story_pattern, line)
+        
+        if story_match and current_epic and current_feature:
+            indent = story_match.group(1)  # Preserve indentation and tree chars
+            emoji = story_match.group(2)   # 📝 
+            story_name = story_match.group(3).strip()  # Story Name
+            
+            # Check if already a link
+            if story_name.startswith('['):
+                modified_lines.append(line)
+                continue
+            
+            # Build path to story file
+            story_filename = f"📝 {story_name}.md"
+            story_path = map_base / f"🎯 {current_epic}" / f"⚙️ {current_feature}" / story_filename
+            
+            # Check if story file exists
+            if story_path.exists():
+                # Build relative path from story map to story file
+                if is_increments:
+                    relative_path = f"{link_prefix}🎯 {current_epic}/⚙️ {current_feature}/{story_filename}"
+                else:
+                    relative_path = f"{link_prefix}🎯 {current_epic}/⚙️ {current_feature}/{story_filename}"
+                
+                # URL-encode the path for markdown compatibility (handles emojis and spaces)
+                import urllib.parse
+                encoded_path = urllib.parse.quote(relative_path, safe='/.#-_')
+                
+                # Create markdown link with encoded path and preserve two trailing spaces for markdown line breaks
+                linked_story = f"[{emoji}{story_name}]({encoded_path})"
+                modified_line = f"{indent}{linked_story}  "
+                modified_lines.append(modified_line)
+                story_links += 1
+            else:
+                # Story file doesn't exist yet, keep original
+                modified_lines.append(line)
+        else:
+            # Not an epic/feature/story line, keep original
+            modified_lines.append(line)
+    
+    # Write back modified content
+    total_links = epic_links + feature_links + story_links
+    if total_links > 0:
+        modified_content = '\n'.join(modified_lines)
+        with open(story_map_path, 'w', encoding='utf-8') as f:
+            f.write(modified_content)
+        
+        if verbose:
+            link_summary = []
+            if epic_links > 0:
+                link_summary.append(f"{epic_links} epic")
+            if feature_links > 0:
+                link_summary.append(f"{feature_links} feature")
+            if story_links > 0:
+                link_summary.append(f"{story_links} story")
+            print(f"✅ Connected {', '.join(link_summary)} links in {story_map_path.name}")
+    
+    return (epic_links, feature_links, story_links)
+
+
+def sync_stories_from_increments_to_map(solution_dir: Path, verbose=True):
+    """
+    Copy story lines from increments to map, replacing ~X with actual stories. Avoid duplicates.
+    
+    Simple algorithm:
+    1. Find features in increments with detailed stories (no ~X)
+    2. In map, replace (~X stories) placeholder lines with actual story lines from increments
+    3. Use text comparison to avoid adding duplicates
+    
+    Args:
+        solution_dir: Path to solution directory
+        verbose: Print status messages
+    
+    Returns:
+        Number of features updated
+    """
+    import re
+    
+    stories_dir = solution_dir / "docs" / "stories"
+    map_file = None
+    inc_file = None
+    
+    for f in (stories_dir / "map").glob("*story-map.md"):
+        if "increments" not in f.name and "shaping" not in f.name and "discovery" not in f.name:
+            map_file = f
+            break
+    
+    for f in (stories_dir / "increments").glob("*increments.md"):
+        if "shaping" not in f.name and "discovery" not in f.name:
+            inc_file = f
+            break
+    
+    if not map_file or not inc_file:
+        return 0
+    
+    # Read both files as lines
+    with open(inc_file, 'r', encoding='utf-8') as f:
+        inc_lines = f.readlines()
+    with open(map_file, 'r', encoding='utf-8') as f:
+        map_lines = f.readlines()
+    
+    # Build map of feature → story lines from increments (where stories are detailed, not ~X)
+    inc_features = {}  # {(epic, feature): [story_lines]}
+    current_epic = None
+    current_feature = None
+    collecting = False
+    buffer = []
+    
+    for line in inc_lines:
+        if '🎯' in line and '**' in line:
+            m = re.search(r'🎯\s+\*\*([^*]+)\*\*', line)
+            if m:
+                current_epic = re.sub(r'\s*\([^)]*\)', '', m.group(1)).strip()
+                current_feature = None
+                collecting = False
+        elif '⚙️' in line and '**' in line and current_epic:
+            m = re.search(r'⚙️\s+\*\*([^*]+)\*\*', line)
+            if m:
+                # Save previous buffer
+                if current_feature and buffer and '~' not in ''.join(buffer):
+                    inc_features[(current_epic, current_feature)] = buffer[:]
+                
+                current_feature = re.sub(r'\s*\([^)]*\)', '', m.group(1)).strip()
+                buffer = []
+                collecting = True
+        elif collecting and '📝' in line and '~' not in line:
+            buffer.append(line.rstrip())
+    
+    # Save last buffer
+    if current_feature and buffer and '~' not in ''.join(buffer):
+        inc_features[(current_epic, current_feature)] = buffer[:]
+    
+    # Update map: replace ~X story sections with actual stories from increments
+    new_lines = []
+    current_epic = None
+    current_feature = None
+    skip_until_next_feature = False
+    features_synced = 0
+    i = 0
+    
+    while i < len(map_lines):
+        line = map_lines[i]
+        
+        if '🎯' in line and '**' in line:
+            m = re.search(r'🎯\s+\*\*([^*]+)\*\*', line)
+            if m:
+                current_epic = re.sub(r'\s*\([^)]*\)', '', m.group(1)).strip()
+                current_feature = None
+                skip_until_next_feature = False
+        
+        elif '⚙️' in line and '**' in line and current_epic:
+            m = re.search(r'⚙️\s+\*\*([^*]+)\*\*', line)
+            if m:
+                current_feature = re.sub(r'\s*\([^)]*\)', '', m.group(1)).strip()
+                skip_until_next_feature = False
+                
+                # Do we have detailed stories for this feature?
+                key = (current_epic, current_feature)
+                if key in inc_features:
+                    # Update count and add two trailing spaces for markdown line break
+                    count = len(inc_features[key])
+                    line = re.sub(r'\(~?\d+\s+stories?\)', f'({count} stories)', line.rstrip()) + '  \n'
+                    new_lines.append(line)
+                    
+                    # Skip old stories (lines with 📝 and ~X placeholder)
+                    i += 1
+                    while i < len(map_lines) and ('📝' in map_lines[i] or (map_lines[i].strip() and '│' in map_lines[i] and not '⚙️' in map_lines[i] and not '🎯' in map_lines[i])):
+                        i += 1
+                    
+                    # Add stories from increments
+                    for story_line in inc_features[key]:
+                        new_lines.append(story_line + '  \n')
+                    
+                    # Add tree spacer
+                    new_lines.append(re.match(r'^(\s*[│├└─\s]*)', line).group(1) + '│  \n')
+                    
+                    features_synced += 1
+                    if verbose:
+                        print(f"  ✓ {current_feature}: {count} stories")
+                    continue
+        
+        new_lines.append(line)
+        i += 1
+    
+    # Write if changed
+    if features_synced > 0:
+        with open(map_file, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+        if verbose:
+            print(f"✅ Synced {features_synced} features")
+    
+    return features_synced
+
+
+def sync_story_counts_to_main_map(story_map_path: Path, verbose=True):
+    """
+    Sync actual story counts from detailed decomposition back to main story map.
+    
+    When features are fully decomposed (no ~X notation), update the main story map
+    to show actual story count instead of estimate.
+    
+    Args:
+        story_map_path: Path to main story map file
+        verbose: Print status messages
+    
+    Returns:
+        Number of features updated with actual counts
+    """
+    import re
+    
+    if not story_map_path.exists():
+        if verbose:
+            print(f"Story map not found: {story_map_path}")
+        return 0
+    
+    # Read story map
+    with open(story_map_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    lines = content.split('\n')
+    modified_lines = []
+    updates_made = 0
+    
+    current_epic = None
+    current_feature = None
+    feature_story_count = 0
+    counting_stories = False
+    feature_line_index = None
+    
+    epic_pattern = r'🎯\s+\*\*(.+?)\*\*'
+    feature_pattern = r'(^\s*[│├└─\s]*)(⚙️\s+\*\*)(.+?)(\*\*)(\s*\(~?\d+\s+stories?\))?(.*)$'
+    story_pattern = r'^\s*[│├└─\s]*📝\s+'
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        
+        # Track current epic
+        epic_match = re.search(epic_pattern, line)
+        if epic_match:
+            epic_name = epic_match.group(1)
+            # Remove parenthetical info
+            epic_name = re.sub(r'\s*\([^)]*\)', '', epic_name).strip()
+            if epic_name not in ['Epic', 'Feature', 'Story', 'Sub-Epic']:
+                current_epic = epic_name
+                current_feature = None
+                feature_story_count = 0
+                counting_stories = False
+        
+        # Check for feature line
+        feature_match = re.match(feature_pattern, line)
+        if feature_match and current_epic:
+            indent = feature_match.group(1)
+            emoji_stars = feature_match.group(2)  # ⚙️ **
+            feature_name_raw = feature_match.group(3)
+            end_stars = feature_match.group(4)  # **
+            count_part = feature_match.group(5)  # (~X stories) or None
+            rest = feature_match.group(6)  # any remaining text
+            
+            # Remove parenthetical from name
+            feature_name = re.sub(r'\s*\([^)]*\)', '', feature_name_raw).strip()
+            
+            # Skip placeholders
+            if not (feature_name.startswith('~') or 'more features' in feature_name.lower()):
+                current_feature = feature_name
+                feature_line_index = i
+                feature_story_count = 0
+                counting_stories = True
+                
+                # Continue to next line to start counting
+                modified_lines.append(line)
+                i += 1
+                continue
+        
+        # Count stories under current feature
+        if counting_stories and current_feature:
+            story_match = re.match(story_pattern, line)
+            
+            if story_match:
+                # This is a story line
+                story_text = line.strip()
+                # Skip placeholder stories
+                if not (story_text.startswith('~') or 'more stories' in story_text.lower()):
+                    feature_story_count += 1
+            elif line.strip().startswith('⚙️') or line.strip().startswith('🎯'):
+                # Hit next feature/epic, update previous feature if needed
+                if feature_story_count > 0 and feature_line_index is not None:
+                    # Update the feature line with actual count
+                    old_feature_line = modified_lines[feature_line_index]
+                    old_match = re.match(feature_pattern, old_feature_line)
+                    
+                    if old_match:
+                        indent = old_match.group(1)
+                        emoji_stars = old_match.group(2)
+                        feature_name_raw = old_match.group(3)
+                        end_stars = old_match.group(4)
+                        old_count = old_match.group(5)  # (~X stories) or (X stories)
+                        rest = old_match.group(6)
+                        
+                        # Check if it was an estimate (~X) or if count changed
+                        if old_count and '~' in old_count:
+                            # Was an estimate, replace with actual
+                            new_count = f" ({feature_story_count} {'story' if feature_story_count == 1 else 'stories'})"
+                            new_feature_line = f"{indent}{emoji_stars}{feature_name_raw}{end_stars}{new_count}{rest}"
+                            modified_lines[feature_line_index] = new_feature_line
+                            updates_made += 1
+                            if verbose:
+                                print(f"  ✓ Updated {current_feature}: ~X → {feature_story_count} stories")
+                
+                # Reset for next feature
+                counting_stories = False
+                current_feature = None
+                feature_story_count = 0
+                feature_line_index = None
+        
+        modified_lines.append(line)
+        i += 1
+    
+    # Handle last feature if at end of file
+    if counting_stories and feature_story_count > 0 and feature_line_index is not None:
+        old_feature_line = modified_lines[feature_line_index]
+        old_match = re.match(feature_pattern, old_feature_line)
+        
+        if old_match:
+            indent = old_match.group(1)
+            emoji_stars = old_match.group(2)
+            feature_name_raw = old_match.group(3)
+            end_stars = old_match.group(4)
+            old_count = old_match.group(5)
+            rest = old_match.group(6)
+            
+            if old_count and '~' in old_count:
+                new_count = f" ({feature_story_count} {'story' if feature_story_count == 1 else 'stories'})"
+                new_feature_line = f"{indent}{emoji_stars}{feature_name_raw}{end_stars}{new_count}{rest}"
+                modified_lines[feature_line_index] = new_feature_line
+                updates_made += 1
+                if verbose:
+                    print(f"  ✓ Updated {current_feature}: ~X → {feature_story_count} stories")
+    
+    # Write back if changes made
+    if updates_made > 0:
+        modified_content = '\n'.join(modified_lines)
+        with open(story_map_path, 'w', encoding='utf-8') as f:
+            f.write(modified_content)
+        
+        if verbose:
+            print(f"✅ Updated {updates_made} features with actual story counts in main story map")
+    elif verbose:
+        print("✅ Story map already has actual counts (no ~X estimates found)")
+    
+    return updates_made
+
+
+def validate_story_map_links(story_map_path: Path, verbose=True):
+    """
+    Validate that all markdown links in story map point to existing files.
+    
+    Args:
+        story_map_path: Path to story map file (story-map.md or increments.md)
+        verbose: Print status messages
+    
+    Returns:
+        List of tuples (line_number, link_text, expected_path, issue_description)
+    """
+    import re
+    
+    if not story_map_path.exists():
+        if verbose:
+            print(f"Story map not found: {story_map_path}")
+        return []
+    
+    # Read story map content
+    with open(story_map_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    lines = content.split('\n')
+    broken_links = []
+    
+    # Pattern to match markdown links: [text](path)
+    link_pattern = r'\[(📝[^\]]+)\]\(([^)]+)\)'
+    
+    for line_num, line in enumerate(lines, start=1):
+        # Find all markdown links in line
+        for match in re.finditer(link_pattern, line):
+            link_text = match.group(1)  # The display text
+            link_path = match.group(2)  # The file path
+            
+            # Resolve relative path from story map location
+            absolute_path = (story_map_path.parent / link_path).resolve()
+            
+            # Check if file exists
+            if not absolute_path.exists():
+                broken_links.append((
+                    line_num,
+                    link_text,
+                    str(absolute_path),
+                    f"Link target does not exist: {link_path}"
+                ))
+    
+    if verbose and broken_links:
+        print(f"⚠️  Found {len(broken_links)} broken links in {story_map_path.name}")
+        for line_num, text, path, issue in broken_links:
+            print(f"  Line {line_num}: {text} -> {issue}")
+    elif verbose:
+        print(f"✅ All story links valid in {story_map_path.name}")
+    
+    return broken_links
+
+
+def correct_story_map_links(story_map_path: Path, verbose=True):
+    """
+    Correct broken links in story map by finding the actual story files.
+    
+    This function:
+    1. Detects broken links
+    2. Searches for the story file in the expected location or nearby
+    3. Updates the link with the correct path
+    
+    Args:
+        story_map_path: Path to story map file (story-map.md or increments.md)
+        verbose: Print status messages
+    
+    Returns:
+        Number of links corrected
+    """
+    import re
+    
+    if not story_map_path.exists():
+        if verbose:
+            print(f"Story map not found: {story_map_path}")
+        return 0
+    
+    # First validate to find broken links
+    broken_links = validate_story_map_links(story_map_path, verbose=False)
+    
+    if not broken_links:
+        if verbose:
+            print(f"✅ No broken links to correct in {story_map_path.name}")
+        return 0
+    
+    # Read story map content
+    with open(story_map_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    lines = content.split('\n')
+    corrections_made = 0
+    
+    # Determine base path for links
+    is_increments = 'increments' in story_map_path.name or 'increments' in str(story_map_path.parent)
+    
+    if is_increments:
+        map_base = story_map_path.parent.parent / "map"
+        link_prefix = "../map/"
+    else:
+        map_base = story_map_path.parent
+        link_prefix = "./"
+    
+    # Track current epic and feature from context
+    current_epic = None
+    current_feature = None
+    
+    # Pattern to match markdown links: [text](path)
+    link_pattern = r'\[(📝\s+[^\]]+)\]\(([^)]+)\)'
+    
+    modified_lines = []
+    
+    for line_num, line in enumerate(lines, start=1):
+        # Track epic context
+        epic_match = re.match(r'.*🎯\s+\*\*([^*]+)\*\*', line)
+        if epic_match:
+            current_epic = epic_match.group(1).strip()
+            current_feature = None
+        
+        # Track feature context
+        feature_match = re.match(r'.*⚙️\s+\*\*([^*]+)\*\*', line)
+        if feature_match:
+            current_feature = feature_match.group(1).strip()
+        
+        # Check if this line has any broken links from our validation
+        line_has_broken_link = any(bl[0] == line_num for bl in broken_links)
+        
+        if line_has_broken_link and current_epic and current_feature:
+            # Try to fix the link
+            def replace_broken_link(match):
+                nonlocal corrections_made
+                link_text = match.group(1)  # [📝 Story Name]
+                old_path = match.group(2)   # (old/path.md)
+                
+                # Extract story name from link text
+                story_name_match = re.search(r'📝\s+(.+)', link_text)
+                if story_name_match:
+                    story_name = story_name_match.group(1).strip()
+                    
+                    # Build expected path
+                    story_filename = f"📝 {story_name}.md"
+                    expected_path = map_base / f"🎯 {current_epic}" / f"⚙️ {current_feature}" / story_filename
+                    
+                    # Check if file exists at expected location
+                    if expected_path.exists():
+                        # Build correct relative path
+                        if is_increments:
+                            correct_path = f"{link_prefix}🎯 {current_epic}/⚙️ {current_feature}/{story_filename}"
+                        else:
+                            correct_path = f"{link_prefix}🎯 {current_epic}/⚙️ {current_feature}/{story_filename}"
+                        
+                        # URL-encode the path for markdown compatibility (handles emojis and spaces)
+                        import urllib.parse
+                        encoded_path = urllib.parse.quote(correct_path, safe='/.#-_')
+                        
+                        corrections_made += 1
+                        if verbose:
+                            print(f"  ✅ Fixed: Line {line_num}: {story_name}")
+                        return f"[{link_text}]({encoded_path})"
+                
+                # If we can't fix it, return original
+                return match.group(0)
+            
+            # Replace broken links in this line
+            modified_line = re.sub(link_pattern, replace_broken_link, line)
+            modified_lines.append(modified_line)
+        else:
+            modified_lines.append(line)
+    
+    # Write back corrected content
+    if corrections_made > 0:
+        corrected_content = '\n'.join(modified_lines)
+        with open(story_map_path, 'w', encoding='utf-8') as f:
+            f.write(corrected_content)
+        
+        if verbose:
+            print(f"✅ Corrected {corrections_made} broken links in {story_map_path.name}")
+    
+    return corrections_made
+
+
+def add_navigation_breadcrumbs_to_story_maps(solution_dir: Path, verbose=True):
+    """
+    Add navigation breadcrumbs to story map and increments files.
+    
+    Story Map gets: **Navigation:** [📊 Increments](../increments/increments.md)
+    Increments gets: **Navigation:** [📋 Story Map](../map/story-map.md)
+    
+    Args:
+        solution_dir: Path to solution directory (e.g., demo/mm3e/)
+        verbose: Print status messages
+    
+    Returns:
+        Number of files updated
+    """
+    import urllib.parse
+    
+    stories_dir = solution_dir / "docs" / "stories"
+    if not stories_dir.exists():
+        if verbose:
+            print(f"Stories directory not found: {stories_dir}")
+        return 0
+    
+    files_updated = 0
+    
+    # Find main story map and increments files (exclude shaping/discovery versions)
+    map_dir = stories_dir / "map"
+    increments_dir = stories_dir / "increments"
+    
+    story_map_file = None
+    increments_file = None
+    
+    if map_dir.exists():
+        for candidate in map_dir.glob("*story-map.md"):
+            if "increments" not in candidate.name and "shaping" not in candidate.name and "discovery" not in candidate.name:
+                story_map_file = candidate
+                break
+    
+    if increments_dir.exists():
+        for candidate in increments_dir.glob("*increments.md"):
+            if "shaping" not in candidate.name and "discovery" not in candidate.name:
+                increments_file = candidate
+                break
+    
+    # Add navigation to story map file
+    if story_map_file and increments_file:
+        with open(story_map_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        if '**Navigation:**' not in content:
+            # Build navigation line
+            encoded_inc_path = urllib.parse.quote(f"../increments/{increments_file.name}", safe='/.#-_')
+            nav_line = f"**Navigation:** [📊 Increments]({encoded_inc_path})"
+            
+            # Insert after title
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if line.startswith('# Story Map:') or line.startswith('# Story Map -'):
+                    lines.insert(i + 1, '')
+                    lines.insert(i + 2, nav_line)
+                    break
+            
+            with open(story_map_file, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(lines))
+            
+            files_updated += 1
+            if verbose:
+                print(f"  ✓ Added navigation to: {story_map_file.name}")
+    
+    # Add navigation to increments file
+    if increments_file and story_map_file:
+        with open(increments_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        if '**Navigation:**' not in content:
+            # Build navigation line
+            encoded_map_path = urllib.parse.quote(f"../map/{story_map_file.name}", safe='/.#-_')
+            nav_line = f"**Navigation:** [📋 Story Map]({encoded_map_path})"
+            
+            # Insert after title
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if line.startswith('# Story Map Increments:') or line.startswith('# Story Map Increments -'):
+                    lines.insert(i + 1, '')
+                    lines.insert(i + 2, nav_line)
+                    break
+            
+            with open(increments_file, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(lines))
+            
+            files_updated += 1
+            if verbose:
+                print(f"  ✓ Added navigation to: {increments_file.name}")
+    
+    if verbose and files_updated > 0:
+        print(f"✅ Added navigation breadcrumbs to {files_updated} story map files")
+    elif verbose:
+        print("Story map files already have navigation breadcrumbs")
+    
+    return files_updated
+
+
+def add_navigation_breadcrumbs_to_feature_overviews(solution_dir: Path, verbose=True):
+    """
+    Add navigation breadcrumbs to all Feature Overview files that don't have them.
+    
+    Adds at top of file:
+    **Navigation:** [📋 Story Map](../../story-map.md) | [📊 Increments](../../../increments/increments.md)
+    
+    Args:
+        solution_dir: Path to solution directory (e.g., demo/mm3e/)
+        verbose: Print status messages
+    
+    Returns:
+        Number of files updated
+    """
+    import urllib.parse
+    
+    stories_dir = solution_dir / "docs" / "stories"
+    map_dir = stories_dir / "map"
+    
+    if not map_dir.exists():
+        if verbose:
+            print(f"Stories map directory not found: {map_dir}")
+        return 0
+    
+    # Find story map and increments filenames
+    story_map_file = None
+    increments_file = None
+    
+    for candidate in map_dir.glob("*story-map.md"):
+        if "increments" not in candidate.name and "shaping" not in candidate.name and "discovery" not in candidate.name:
+            story_map_file = candidate.name
+            break
+    
+    increments_dir = stories_dir / "increments"
+    if increments_dir.exists():
+        for candidate in increments_dir.glob("*increments.md"):
+            if "shaping" not in candidate.name and "discovery" not in candidate.name:
+                increments_file = candidate.name
+                break
+    
+    if not story_map_file:
+        story_map_file = "story-map.md"  # fallback
+    if not increments_file:
+        increments_file = "story-map-increments.md"  # fallback
+    
+    files_updated = 0
+    
+    # Process all Feature Overview files
+    for epic_dir in map_dir.iterdir():
+        if not epic_dir.is_dir() or not (epic_dir.name.startswith('🎯') or epic_dir.name.startswith('epic-')):
+            continue
+        
+        for feature_dir in epic_dir.iterdir():
+            if not feature_dir.is_dir() or not (feature_dir.name.startswith('⚙️') or feature_dir.name.startswith('feature-')):
+                continue
+            
+            # Find Feature Overview file
+            for feature_file in feature_dir.glob("*Feature Overview*.md"):
+                # Read file
+                with open(feature_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Check if navigation breadcrumbs already exist
+                if '**Navigation:**' in content:
+                    continue
+                
+                # Build navigation line with URL-encoded paths
+                encoded_map_path = urllib.parse.quote(f"../../{story_map_file}", safe='/.#-_')
+                encoded_inc_path = urllib.parse.quote(f"../../../increments/{increments_file}", safe='/.#-_')
+                nav_line = f"**Navigation:** [📋 Story Map]({encoded_map_path}) | [📊 Increments]({encoded_inc_path})"
+                
+                # Find the title line (starts with # ⚙️)
+                lines = content.split('\n')
+                for i, line in enumerate(lines):
+                    if line.startswith('# ⚙️'):
+                        # Insert navigation after title and blank line
+                        lines.insert(i + 1, '')
+                        lines.insert(i + 2, nav_line)
+                        break
+                
+                # Write back
+                new_content = '\n'.join(lines)
+                with open(feature_file, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                
+                files_updated += 1
+                if verbose:
+                    print(f"  ✓ Added navigation to: {feature_file.name}")
+    
+    if verbose and files_updated > 0:
+        print(f"✅ Added navigation breadcrumbs to {files_updated} feature overview files")
+    elif verbose:
+        print("All feature overview files already have navigation breadcrumbs")
+    
+    return files_updated
+
+
+def fix_continuation_line_spacing(file_path: Path) -> int:
+    """
+    Replace regular spaces with &nbsp; in continuation lines for markdown preview.
+    
+    Continuation lines are any lines that:
+    - Have tree characters (│├└) or just spaces at start
+    - Have a dash (- ) in them
+    - DON'T have a story emoji (📝)
+    
+    Args:
+        file_path: Path to story map or increments file
+    
+    Returns:
+        Number of lines fixed
+    """
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    lines = content.split('\n')
+    new_lines = []
+    fixed_count = 0
+    
+    for line in lines:
+        # Skip story lines (have 📝)
+        if '📝' in line:
+            new_lines.append(line)
+            continue
+        
+        # Check if this line has a dash and could be a continuation
+        if ' - ' in line or line.lstrip().startswith('- '):
+            # Skip if already has &nbsp;
+            if '&nbsp;' in line:
+                new_lines.append(line)
+                continue
+            
+            # This is a continuation line - fix the spacing
+            # Find where the dash is
+            dash_pos = line.find(' - ')
+            if dash_pos == -1:
+                dash_pos = line.find('- ')
+            
+            if dash_pos > 0:
+                # Get prefix (everything before dash)
+                prefix = line[:dash_pos]
+                suffix = line[dash_pos:]
+                
+                # Find last non-space character in prefix
+                last_nonspace = -1
+                for i, char in enumerate(prefix):
+                    if char not in ' ':
+                        last_nonspace = i
+                
+                if last_nonspace >= 0:
+                    # Split into: tree chars + spaces
+                    before_spaces = prefix[:last_nonspace + 1]
+                    spaces = prefix[last_nonspace + 1:]
+                    space_count = len(spaces)
+                    
+                    # Replace with nbsp (keep 1 regular space)
+                    if space_count > 1:
+                        new_prefix = before_spaces + ' ' + '&nbsp;' * (space_count - 1)
+                        line = new_prefix + suffix
+                        fixed_count += 1
+        
+        new_lines.append(line)
+    
+    # Write back
+    new_content = '\n'.join(new_lines)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    
+    return fixed_count
+
+
+def fix_all_story_maps_in_solution(solution_dir: Path, verbose=True) -> int:
+    """
+    Fix continuation line spacing in all story maps in a solution.
+    
+    Markdown preview collapses multiple regular spaces into one.
+    This function replaces regular spaces with &nbsp; entities in
+    continuation lines (lines with dashes after story lines) to
+    preserve visual indentation alignment.
+    
+    Args:
+        solution_dir: Path to solution directory (e.g., demo/mm3e/)
+        verbose: Print status messages
+    
+    Returns:
+        Total number of lines fixed across all files
+    """
+    stories_dir = solution_dir / "docs" / "stories"
+    
+    if not stories_dir.exists():
+        if verbose:
+            print(f"Stories directory not found: {stories_dir}")
+        return 0
+    
+    total_fixed = 0
+    
+    # Fix story map
+    map_dir = stories_dir / "map"
+    for map_file in map_dir.glob("*story-map.md"):
+        if "increments" not in map_file.name:
+            fixed = fix_continuation_line_spacing(map_file)
+            total_fixed += fixed
+            if verbose and fixed > 0:
+                print(f"  ✓ Fixed {fixed} continuation lines in {map_file.name}")
+    
+    # Fix increments
+    inc_dir = stories_dir / "increments"
+    for inc_file in inc_dir.glob("*increments.md"):
+        fixed = fix_continuation_line_spacing(inc_file)
+        total_fixed += fixed
+        if verbose and fixed > 0:
+            print(f"  ✓ Fixed {fixed} continuation lines in {inc_file.name}")
+    
+    if verbose and total_fixed > 0:
+        print(f"✅ Fixed {total_fixed} total continuation lines")
+    elif verbose:
+        print("All continuation lines already properly formatted")
+    
+    return total_fixed
+
+
+def add_navigation_breadcrumbs_to_stories(solution_dir: Path, verbose=True):
+    """
+    Add navigation breadcrumbs to all story files that don't have them.
+    
+    Adds at top of file:
+    **Navigation:** [📋 Story Map](../../story-map.md) | [⚙️ Feature Overview](./feature-overview.md)
+    
+    Args:
+        solution_dir: Path to solution directory (e.g., demo/mm3e/)
+        verbose: Print status messages
+    
+    Returns:
+        Number of files updated
+    """
+    import re
+    import urllib.parse
+    
+    stories_dir = solution_dir / "docs" / "stories"
+    map_dir = stories_dir / "map"
+    
+    if not map_dir.exists():
+        if verbose:
+            print(f"Stories map directory not found: {map_dir}")
+        return 0
+    
+    # Find story map filename
+    story_map_file = None
+    for candidate in map_dir.glob("*story-map.md"):
+        if "increments" not in candidate.name and "shaping" not in candidate.name and "discovery" not in candidate.name:
+            story_map_file = candidate.name
+            break
+    
+    if not story_map_file:
+        story_map_file = "story-map.md"  # fallback
+    
+    files_updated = 0
+    
+    # Process all story files
+    for epic_dir in map_dir.iterdir():
+        if not epic_dir.is_dir() or not (epic_dir.name.startswith('🎯') or epic_dir.name.startswith('epic-')):
+            continue
+        
+        for feature_dir in epic_dir.iterdir():
+            if not feature_dir.is_dir() or not (feature_dir.name.startswith('⚙️') or feature_dir.name.startswith('feature-')):
+                continue
+            
+            # Find feature overview file
+            feature_overview_file = None
+            for candidate in feature_dir.glob("*Feature Overview*.md"):
+                feature_overview_file = candidate.name
+                break
+            
+            if not feature_overview_file:
+                feature_overview_file = f"{feature_dir.name} - Feature Overview.md"
+            
+            # Process each story file
+            for story_file in feature_dir.glob("📝*.md"):
+                if "Feature Overview" in story_file.name:
+                    continue
+                
+                # Read file
+                with open(story_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Check if navigation breadcrumbs already exist
+                if '**Navigation:**' in content:
+                    continue
+                
+                # Build navigation line with URL-encoded paths
+                encoded_map_path = urllib.parse.quote(f"../../{story_map_file}", safe='/.#-_')
+                encoded_feature_path = urllib.parse.quote(f"./{feature_overview_file}", safe='/.#-_')
+                nav_line = f"\n**Navigation:** [📋 Story Map]({encoded_map_path}) | [⚙️ Feature Overview]({encoded_feature_path})\n"
+                
+                # Find the title line (starts with # 📝)
+                lines = content.split('\n')
+                for i, line in enumerate(lines):
+                    if line.startswith('# 📝'):
+                        # Insert navigation after title and blank line
+                        lines.insert(i + 1, '')
+                        lines.insert(i + 2, nav_line.strip())
+                        break
+                
+                # Write back
+                new_content = '\n'.join(lines)
+                with open(story_file, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                
+                files_updated += 1
+                if verbose:
+                    print(f"  ✓ Added navigation to: {story_file.name}")
+    
+    if verbose and files_updated > 0:
+        print(f"✅ Added navigation breadcrumbs to {files_updated} story files")
+    elif verbose:
+        print("All story files already have navigation breadcrumbs")
+    
+    return files_updated
+
+
+def connect_all_story_maps_in_solution(solution_dir: Path, verbose=True):
+    """
+    Find and connect links in all story map files within a solution directory.
+    
+    This is a convenience function that:
+    1. Finds all story map files (map/*story-map*.md)
+    2. Finds all increment files (increments/*increments*.md)
+    3. Calls connect_story_maps_to_documents() on each
+    
+    Args:
+        solution_dir: Path to solution directory (e.g., demo/mm3e/)
+        verbose: Print status messages
+    
+    Returns:
+        Total number of links created across all files
+    """
+    if not solution_dir.exists():
+        if verbose:
+            print(f"Solution directory not found: {solution_dir}")
+        return 0
+    
+    total_epic_links = 0
+    total_feature_links = 0
+    total_story_links = 0
+    
+    # Find stories directory
+    stories_dir = solution_dir / "docs" / "stories"
+    if not stories_dir.exists():
+        if verbose:
+            print(f"Stories directory not found: {stories_dir}")
+        return 0
+    
+    # Link main story map files
+    map_dir = stories_dir / "map"
+    if map_dir.exists():
+        for story_map_file in map_dir.glob("*story-map*.md"):
+            if verbose:
+                print(f"Processing: {story_map_file.name}")
+            epic_links, feature_links, story_links = connect_story_maps_to_documents(story_map_file, verbose=verbose)
+            total_epic_links += epic_links
+            total_feature_links += feature_links
+            total_story_links += story_links
+    
+    # Link increments files
+    increments_dir = stories_dir / "increments"
+    if increments_dir.exists():
+        for increments_file in increments_dir.glob("*increments*.md"):
+            if verbose:
+                print(f"Processing: {increments_file.name}")
+            epic_links, feature_links, story_links = connect_story_maps_to_documents(increments_file, verbose=verbose)
+            total_epic_links += epic_links
+            total_feature_links += feature_links
+            total_story_links += story_links
+    
+    total_links = total_epic_links + total_feature_links + total_story_links
+    
+    if verbose and total_links > 0:
+        print(f"✅ Total links connected: {total_links} (epics: {total_epic_links}, features: {total_feature_links}, stories: {total_story_links})")
+    elif verbose:
+        print("No new links created (all items already linked or don't exist yet)")
+    
+    return total_links
+
 # 1. STORY SHAPING COMMANDS
 # 1.1 Story Shape Command
 # 1.1.1 Generate story map instructions
@@ -74,10 +1239,24 @@ APPLY PRINCIPLES (for {epic_hierarchy} and {increments_organized}):
 - §1.5 Marketable Increments (NOW/NEXT/LATER priorities)
 - §1.6 Relative Sizing (compare to previous work)
 
+CRITICAL MARKDOWN FORMATTING:
+- **TWO SPACES at end of EVERY tree structure line** (│, ├─, └─, etc.) - MANDATORY for proper line breaks
+- Without two spaces, markdown wraps lines together into one long unreadable line
+- Example: "│  ├─ ⚙️ **Feature Name**  " (note two spaces after last **)
+- Example: "│  │  ├─ 📝 Story name  " (note two spaces after story name)
+- EVERY line in tree structure hierarchy needs two trailing spaces
+
 CRITICAL:
 - NO folder creation during Shape - folders created by /story-arrange
 - NO story estimates during Shape - added in Discovery
 - NO discovery status during Shape - added in Discovery
+
+AFTER GENERATION:
+- Call connect_all_story_maps_in_solution(solution_dir) to add hyperlinks from story names to story files
+- This automatically finds and processes all story-map.md and increments.md files
+- Converts story references like "📝 Story Name" to clickable markdown links "[📝 Story Name](path/to/story.md)"
+- Links are only added for stories where the actual .md file exists
+- Note: Links may not be created during Shape since story files don't exist yet - that's fine, they'll be created during Arrange
 
 Templates define structure and formatting.
 YOU define content following principles."""
@@ -117,6 +1296,9 @@ YOU define content following principles."""
             result += "\n- Validate increment organization (NOW/NEXT/LATER)"
         if '7' not in result_lower and 'sizing' not in result_lower:
             result += "\n- Check 7±2 sizing thresholds (Epic: 4-9 features, Feature: 4-9 stories)"
+        if 'link' not in result_lower:
+            result += "\n- Call validate_story_map_links() to check all story hyperlinks point to existing files"
+            result += "\n- Report any broken links found (link text, target path, issue)"
         if 'violation' not in result_lower and 'validation' not in result_lower:
             result += "\n- Return violations list with line numbers and messages if found"
         return result
@@ -195,11 +1377,26 @@ class StoryArrangeCommand(Command):
 Request the following:
 - Parse story map document to extract epic and feature names
 - Create epic-[name]/feature-[name]/ folder structure
+- Create story files from template with navigation breadcrumbs (links back to story map and feature overview)
+- URL-encode all navigation paths for markdown compatibility (emojis and spaces)
 - Archive obsolete folders to archive/[timestamp]/ (NEVER delete)
 - Move existing files to new locations if hierarchy changed
 - Detect merge candidates (multiple files for same entity)
 - Generate merge-list.md with AI prompts for merging
 - Report folders created, moved, archived, and merges needed
+
+AFTER GENERATION:
+- Call sync_stories_from_increments_to_map(solution_dir) to sync detailed stories from increments to main story map (both files must match exactly)
+- Call add_navigation_breadcrumbs_to_feature_overviews() to add breadcrumbs to feature overview files
+- Call connect_all_story_maps_in_solution() to create/update hyperlinks in story maps
+- Call fix_all_story_maps_in_solution() to fix continuation line spacing (&nbsp; for markdown preview)
+- NOTE: Story stub files NOT created during arrange (deferred to /story-specification phase)
+
+CORRECTION ACTION:
+- When correct is called, run sync_stories_from_increments_to_map() to sync story lists
+- Run add_navigation_breadcrumbs_to_stories() to fix missing breadcrumbs
+- Run connect_all_story_maps_in_solution() to reconnect any broken links
+- Apply any other corrections from chat context
 
 Include principles from the rule file."""
         super().__init__(content, base_rule, generate_instructions=generate_instructions)
@@ -217,15 +1414,29 @@ Include principles from the rule file."""
             print(f"Error: Story map file not found: {story_map_path}")
             return f"Error: Story map file not found: {story_map_path}"
         
+        # Sync stories from increments FIRST (before parsing map for file operations)
+        base_dir = story_map_path.parent
+        solution_dir = base_dir.parent.parent.parent
+        
+        print("\n" + "="*60)
+        print("SYNC: Increments → Story Map")
+        print("="*60)
+        features_synced = sync_stories_from_increments_to_map(solution_dir, verbose=True)
+        
+        print("\n" + "="*60)
+        print("ARRANGE: Create Folder Structure")
+        print("="*60)
+        
         # Read story map content
         with open(story_map_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Extract epic, feature, and story names from story map
-        # Format: 🎯 **Epic Name** or ⚙️ **Feature Name** or 📝 Story Name
+        # Format: 🎯 **Epic Name** or ⚙️ **Feature Name** or 📝 Story Name (may have markdown links)
         epic_pattern = r'🎯\s+\*\*(.+?)\*\*'
         feature_pattern = r'⚙️\s+\*\*(.+?)\*\*'
-        story_pattern = r'📝\s+(.+?)(?:\s+\(|$)'
+        # Match either [📝 Story Name](...) or just 📝 Story Name
+        story_pattern = r'(?:\[📝\s+([^\]]+)\]|📝\s+([^\n\[\(]+?))\s*(?:$|\(|\[)'
         
         epics = {}
         current_epic = None
@@ -273,13 +1484,19 @@ Include principles from the rule file."""
             
             story_match = re.search(story_pattern, line)
             if story_match and current_epic and current_feature:
-                story_name = story_match.group(1).strip()
+                # Pattern has two groups: group(1) for [📝 Story] links, group(2) for plain 📝 Story
+                story_name = (story_match.group(1) or story_match.group(2) or "").strip()
+                
                 # Skip single-word entries like "Story" from legend
                 if story_name in ['Epic', 'Feature', 'Story', 'Sub-Epic']:
                     continue
                 # Skip placeholder stories (e.g., "~X more stories")
                 if story_name.startswith('~') or 'more stories' in story_name.lower() or 'more features' in story_name.lower():
                     continue
+                # Skip empty
+                if not story_name:
+                    continue
+                
                 epics[current_epic][current_feature].append(story_name)
         
         # Determine base directory (inside map folder)
@@ -313,12 +1530,19 @@ Include principles from the rule file."""
                     existing_epic_folders.add(item.name)
         
         # Create folder structure
-        print("\n" + "="*60)
-        print("STORY MAP FOLDER STRUCTURE GENERATION")
-        print("="*60)
         print(f"\nStory Map: {story_map_path}")
         print(f"Base Directory: {base_dir}")
         print(f"\nFound {len(epics)} epics with features")
+        
+        # Debug: show what was parsed
+        for epic_name, features in epics.items():
+            print(f"  Epic: {epic_name}")
+            for feature_name, stories in features.items():
+                print(f"    Feature: {feature_name} ({len(stories)} stories)")
+                for story in stories[:3]:  # Show first 3
+                    print(f"      - {story}")
+                if len(stories) > 3:
+                    print(f"      ... and {len(stories) - 3} more")
         
         # Track all story files from map for orphan detection
         map_story_files = {}  # {story_filename: (epic_path, feature_path)}
@@ -360,63 +1584,63 @@ Include principles from the rule file."""
                     # Track this story file
                     map_story_files[story_filename] = (epic_path, feature_path)
                     
-                    # Create story file if doesn't exist
-                    if not story_path.exists():
-                        # Load and fill story template
-                        template_path = Path(__file__).parent / "templates" / "story-doc-template.md"
-                        story_content = self.load_and_fill_template(
-                            str(template_path),
-                            story_name=story_name,
-                            epic_name=epic_name,
-                            feature_name=feature_name
-                        )
-                        with open(story_path, 'w', encoding='utf-8') as f:
-                            f.write(story_content)
-                        created_stories.append(str(story_path.relative_to(base_dir)))
+                    # STORY FILE CREATION DISABLED
+                    # Story stub files are not needed until specification stage
+                    # They create noise and clutter during discovery/exploration phases
+                    # Feature Overview files contain all AC - that's what matters
+                    # Story files will be created during /story-specification when scenarios are written
+                    # 
+                    # Commented out story file creation:
+                    # if not story_path.exists():
+                    #     ... create story stub file ...
         
-        # Find and archive orphaned story files (stories in folders not in map)
-        for epic_path in base_dir.iterdir():
-            if not epic_path.is_dir():
-                continue
-            if epic_path.name in ['z_archive']:
-                continue
-            if not (epic_path.name.startswith('🎯') or epic_path.name.startswith('epic-')):
-                continue
-                
-            for feature_path in epic_path.iterdir():
-                if not feature_path.is_dir():
-                    continue
-                if not (feature_path.name.startswith('⚙️') or feature_path.name.startswith('feature-')):
-                    continue
-                
-                # Check all markdown files in feature folder
-                for story_file in feature_path.glob('*.md'):
-                    story_filename = story_file.name
-                    
-                    # If story not in map, it's orphaned
-                    if story_filename not in map_story_files:
-                        # Create archive directory if needed
-                        if not archive_dir.exists():
-                            archive_dir.mkdir(parents=True, exist_ok=True)
-                        
-                        # Create same epic/feature structure in archive
-                        archive_epic_path = archive_dir / epic_path.name
-                        archive_feature_path = archive_epic_path / feature_path.name
-                        archive_feature_path.mkdir(parents=True, exist_ok=True)
-                        
-                        # Move story to archive
-                        archive_story_path = archive_feature_path / story_filename
-                        shutil.move(str(story_file), str(archive_story_path))
-                        archived_stories.append(f"{story_filename} -> z_archive/{timestamp}/{epic_path.name}/{feature_path.name}/")
-                    
-                    # Check if story moved to different feature
-                    elif map_story_files[story_filename] != (epic_path, feature_path):
-                        target_epic_path, target_feature_path = map_story_files[story_filename]
-                        target_story_path = target_feature_path / story_filename
-                        
-                        # Move story to new location
-                        shutil.move(str(story_file), str(target_story_path))
-                        moved_stories.append(f"{story_filename}: {epic_path.name}/{feature_path.name}/ -> {target_epic_path.name}/{target_feature_path.name}/")
+        # DISABLED: Archiving logic is too aggressive and archives valid files
+        # TODO: Fix orphan detection to not archive files that should exist
+        # For now, only archive if explicitly obsolete epic folders exist
+        
+        # # Find and archive orphaned story files (stories in folders not in map)
+        # for epic_path in base_dir.iterdir():
+        #     if not epic_path.is_dir():
+        #         continue
+        #     if epic_path.name in ['z_archive']:
+        #         continue
+        #     if not (epic_path.name.startswith('🎯') or epic_path.name.startswith('epic-')):
+        #         continue
+        #         
+        #     for feature_path in epic_path.iterdir():
+        #         if not feature_path.is_dir():
+        #             continue
+        #         if not (feature_path.name.startswith('⚙️') or feature_path.name.startswith('feature-')):
+        #             continue
+        #         
+        #         # Check all markdown files in feature folder
+        #         for story_file in feature_path.glob('*.md'):
+        #             story_filename = story_file.name
+        #             
+        #             # If story not in map, it's orphaned
+        #             if story_filename not in map_story_files:
+        #                 # Create archive directory if needed
+        #                 if not archive_dir.exists():
+        #                     archive_dir.mkdir(parents=True, exist_ok=True)
+        #                 
+        #                 # Create same epic/feature structure in archive
+        #                 archive_epic_path = archive_dir / epic_path.name
+        #                 archive_feature_path = archive_epic_path / feature_path.name
+        #                 archive_feature_path.mkdir(parents=True, exist_ok=True)
+        #                 
+        #                 # Move story to archive
+        #                 archive_story_path = archive_feature_path / story_filename
+        #                 shutil.move(str(story_file), str(archive_story_path))
+        #                 archived_stories.append(f"{story_filename} -> z_archive/{timestamp}/{epic_path.name}/{feature_path.name}/")
+        #             
+        #             # Check if story moved to different feature
+        #             elif map_story_files[story_filename] != (epic_path, feature_path):
+        #                 target_epic_path, target_feature_path = map_story_files[story_filename]
+        #                 target_story_path = target_feature_path / story_filename
+        #                 
+        #                 # Move story to new location
+        #                 shutil.move(str(story_file), str(target_story_path))
+        #                 moved_stories.append(f"{story_filename}: {epic_path.name}/{feature_path.name}/ -> {target_epic_path.name}/{target_feature_path.name}/")
         
         # Archive obsolete epic folders
         if existing_epic_folders:
@@ -462,6 +1686,8 @@ Include principles from the rule file."""
                     print(f"   + {story_ascii}")
             if len(created_stories) > 10:
                 print(f"   ... and {len(created_stories) - 10} more")
+        else:
+            print(f"\n[*] Story stub files not created (created during /story-specification phase)")
         
         if existing_folders:
             print(f"\n[*] {len(existing_folders)} epics already existed (no changes needed)")
@@ -506,6 +1732,23 @@ Include principles from the rule file."""
         print("GENERATION COMPLETE")
         print("="*60)
         
+        # Calculate solution directory
+        solution_dir = base_dir.parent.parent.parent
+        
+        print("\nAdding navigation breadcrumbs...")
+        map_breadcrumbs = add_navigation_breadcrumbs_to_story_maps(solution_dir, verbose=True)
+        feature_breadcrumbs = add_navigation_breadcrumbs_to_feature_overviews(solution_dir, verbose=True)
+        story_breadcrumbs = add_navigation_breadcrumbs_to_stories(solution_dir, verbose=True)
+        total_breadcrumbs = map_breadcrumbs + feature_breadcrumbs + story_breadcrumbs
+        
+        # Connect story map links after folder/file creation
+        print("\nConnecting story map links...")
+        total_links = connect_all_story_maps_in_solution(solution_dir, verbose=True)
+        
+        # Fix continuation line spacing for markdown preview
+        print("\nFixing continuation line spacing...")
+        fix_all_story_maps_in_solution(solution_dir, verbose=True)
+        
         # Mark as generated
         self.generated = True
         
@@ -516,6 +1759,8 @@ Created: {len(created_folders)} folders, {len(created_stories)} story files
 Existing: {len(existing_folders)} epics (unchanged)
 Moved: {len(moved_stories)} stories
 Archived: {len(archived_folders)} obsolete folders, {len(archived_stories)} orphaned stories
+Navigation: {total_breadcrumbs} files updated with breadcrumbs (maps: {map_breadcrumbs}, features: {feature_breadcrumbs}, stories: {story_breadcrumbs})
+Story links: {total_links} hyperlinks connected
 
 Next steps:
 1. Review the folder structure and story files
@@ -537,6 +1782,11 @@ Next steps:
             result += "\n- Check for missing folders (in story map, not in filesystem)"
         if 'extra' not in result_lower:
             result += "\n- Check for extra folders (in filesystem, not in story map)"
+        if 'breadcrumb' not in result_lower and 'navigation' not in result_lower:
+            result += "\n- Check that all story files have navigation breadcrumbs at top"
+            result += "\n- Validate breadcrumbs link to story map and feature overview"
+        if 'link' not in result_lower:
+            result += "\n- Call validate_story_map_links() to check all hyperlinks are valid"
         return result
 
 # 1.2.2 Wrap StoryArrangeCommand with code augmentation
@@ -577,6 +1827,13 @@ CRITICAL - SOURCE TRACEABILITY:
    - List additional sections/pages referenced
    - List areas elaborated exhaustively
 
+CRITICAL MARKDOWN FORMATTING:
+- **TWO SPACES at end of EVERY tree structure line** (│, ├─, └─, etc.) - MANDATORY for proper line breaks
+- Without two spaces, markdown wraps lines together into one long unreadable line
+- Example: "│  ├─ ⚙️ **Feature Name**  " (note two spaces after last **)
+- Example: "│  │  ├─ 📝 Story name  " (note two spaces after story name)
+- EVERY line in tree structure hierarchy needs two trailing spaces
+
 FOLDER STRUCTURE:
 - Story map: <solution-folder>/docs/stories/map/[product-name]-story-map.md
 - Increments: <solution-folder>/docs/stories/increments/[product-name]-story-map-increments.md
@@ -595,6 +1852,10 @@ Request the following:
 - DO NOT add "Status: DISCOVERY" lines
 - DO NOT add day estimates - estimates require human entry and comparison
 - DO NOT create separate increment files
+
+AFTER GENERATION/CORRECTION:
+- Call sync_stories_from_increments_to_map(solution_dir) to sync detailed story enumeration from increments file to main story map
+- This ensures both files match exactly - if stories are enumerated in increments, they must be enumerated identically in story map
 
 Include principles from the rule file (Section 2: Discovery Principles)."""
         super().__init__(content, base_rule, generate_instructions=generate_instructions)
@@ -708,6 +1969,89 @@ class CodeAugmentedStoryDiscoveryCommand(CodeAugmentedCommand):
             self.generate()
         result = self.validate()
         return result
+    
+    def correct(self, chat_context: str = ""):
+        """Correct story map based on validation results and sync from increments"""
+        from pathlib import Path
+        
+        # Get solution directory from content path
+        content_path = Path(self._inner_command.content.file_path)
+        
+        if content_path.name.endswith('-story-map.md'):
+            # This is the main story map in map/ folder
+            # Path structure: <solution>/docs/stories/map/story-map.md
+            # So go up 4 levels: file -> map -> stories -> docs -> solution
+            solution_dir = content_path.parent.parent.parent.parent
+        else:
+            # Try to find solution dir
+            solution_dir = content_path.parent
+            while solution_dir.name != 'stories' and solution_dir.parent != solution_dir:
+                solution_dir = solution_dir.parent
+            if solution_dir.name == 'stories':
+                solution_dir = solution_dir.parent.parent
+        
+        # NOTE: Automated sync is complex and fragile due to tree structure parsing.
+        # AI Agent is better suited for this task as it understands context and intent.
+        # 
+        # Commented out automated sync - AI agent will handle manually:
+        # features_synced = sync_stories_from_increments_to_map(solution_dir, verbose=True)
+        
+        # Return prompt for AI agent to manually sync
+        map_file = solution_dir / "docs" / "stories" / "map"
+        inc_file = solution_dir / "docs" / "stories" / "increments"
+        
+        # Find the actual files
+        map_path = None
+        inc_path = None
+        for f in map_file.glob("*story-map.md"):
+            if "increments" not in f.name:
+                map_path = f
+                break
+        for f in inc_file.glob("*increments.md"):
+            inc_path = f
+            break
+        
+        prompt = f"""
+================================================================================
+STORY DISCOVERY CORRECTION - Manual Sync Required
+================================================================================
+
+The discovery phase has generated exhaustive story decomposition in the increments 
+document. Both documents need to be IN SYNC for the increment(s) in focus.
+
+FILES TO SYNC:
+1. Story Map (hierarchical): {map_path}
+2. Increments (value-organized): {inc_path}
+
+TASK FOR AI AGENT:
+Update the STORY MAP document to match the INCREMENTS document for all features 
+in the increment(s) marked with "EXHAUSTIVE" or "100% identified":
+
+1. READ both documents
+2. IDENTIFY features in increments marked as "EXHAUSTIVE" or with explicit story lists
+3. UPDATE story map to replace (~X more stories) with actual enumerated stories
+4. ENSURE both documents have identical story lists for exhaustive features
+5. PRESERVE (~X stories) notation for features NOT in focus (other increments)
+6. UPDATE "Source Material" section with Discovery Refinements (if not present)
+7. ADD consolidation decisions to Source Material section
+
+CONSOLIDATION RULES:
+- Same logic/formula/algorithm → Consolidate into ONE story
+- Different logic/rules/state → Keep as SEPARATE stories
+- Use domain expert confirmation for unclear cases
+
+CRITICAL:
+- Both documents must list identical stories for exhaustive features
+- Story map shows ALL epics/features (hierarchical view)
+- Increments show only increment-organized view (subset by value increment)
+- Maintain tree structure formatting (│ ├─ └─ with two trailing spaces)
+- Preserve "and system..." continuation lines
+
+{chat_context if chat_context else ""}
+================================================================================
+"""
+        print(prompt)
+        return prompt
 
 # 1.4 Story Exploration Command
 # 1.4.1 Write acceptance criteria for stories with exhaustive AC decomposition

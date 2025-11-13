@@ -23,6 +23,27 @@ Once context is established, guide the discovery process:
 - Have priorities changed for any increments?
 - Are there dependencies between increments that affect order?
 
+### Markdown Formatting for Continuation Lines
+**CRITICAL: Use `&nbsp;` for continuation line spacing:**
+
+Continuation lines (detail/sub-items after stories) MUST use `&nbsp;` entities instead of regular spaces:
+- Story line: `│  ├─ 📝 User enters ability rank`
+- Continuation: `│  │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- and system calculates cost`
+- Detail line: `│  │ &nbsp;&nbsp;&nbsp; - STR, STA, AGL, DEX`
+
+**Why**: Markdown preview collapses multiple regular spaces into one. Use `&nbsp;` to preserve visual indentation.
+**Apply to**: ANY line with a dash (`-`) that comes AFTER a story line (📝) and is NOT itself a story.
+
+### Increment Vertical Slice Validation
+**CRITICAL: Validate increments remain end-to-end flows:**
+
+- Does this increment deliver a **complete working flow** from start to finish?
+- Does it include **PARTIAL features from MULTIPLE epics** (not complete epics)?
+- Can you demonstrate working software after this increment (input → process → validate → persist → display)?
+- Are we building **vertical slices** (thin end-to-end) or **horizontal layers** (one complete feature at a time)?
+- Does this increment touch multiple areas of the system to create integration?
+- If focusing on one area, what minimal stories from other areas enable end-to-end demo?
+
 ### Story Refinement Prompts
 Identify stories that need attention (based on description, NOT day estimates):
 

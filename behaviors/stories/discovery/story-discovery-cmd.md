@@ -4,7 +4,8 @@
 Guide through discovery stage for next market increment. Refine marketable increments on story map, apply story mapping practices, and groom stories for next increment.
 
 **[Rule]:**
-`behaviors/stories/stories-rule.mdc` - Section 2: Discovery Principles
+* `behaviors/stories/stories-rule.mdc` - Section 2: Discovery Principles
+* `behaviors/stories/stories-rule.mdc` - Section 1.7.1: End-to-End Value Increments (CRITICAL for refining increments)
 
 **Runner:**
 * CLI: `python behaviors/stories/stories_runner.py story-discovery generate [story-map-file]` — Generate discovery refinements for increment
@@ -44,6 +45,8 @@ Guide through discovery stage for next market increment. Refine marketable incre
    - Approves consolidation decisions
 8. **[AI Agent]** Applies user's consolidation decisions and generates final discovery:
    - Refines marketable increments on story map
+   - **ENSURES increments remain VERTICAL SLICES** (end-to-end flows across multiple epics/features)
+   - Validates each increment delivers complete working flow from start to finish
    - Updates story map based on discovery insights and user input
    - Applies story mapping practices (from principles)
    - Grooms stories (identifies ambiguous/complex stories, suggests splits)

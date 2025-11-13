@@ -354,24 +354,29 @@ class BDDRule(FrameworkSpecializingRule):
             if not hasattr(content, '_content_lines') or not content._content_lines:
                 return None
             
-            # Common unicode symbols that cause problems
-            unicode_symbols = ['✓', '✅', '❌', '→', '←', '↓', '↑', '⚠', '✔', '✖', '►', '◄', '•', '‣', 
-                             '🎯', '📂', '⚙️', '📝', '│', '├', '└', '─']  # Added emojis and tree chars
-            
             for i, line in enumerate(content._content_lines, 1):
+                # Skip file encoding declaration line
+                if i <= 5 and ('# -*- coding:' in line or '# coding:' in line or 'utf-8' in line.lower()):
+                    continue
+                
                 # Skip comments that are just explaining domain concepts (not actual test code)
                 if line.strip().startswith('#') and 'Example:' in line:
                     continue
                 
-                # Check for any unicode symbols in the line
-                for symbol in unicode_symbols:
-                    if symbol in line:
+                # Check for ANY non-ASCII characters (char code > 127)
+                for char_idx, char in enumerate(line):
+                    if ord(char) > 127:  # Non-ASCII character
+                        # Get context around the character
+                        start = max(0, char_idx - 10)
+                        end = min(len(line), char_idx + 20)
+                        context = line[start:end].strip()
+                        
                         violations.append(Violation(
                             line_number=i,
-                            message=f"Unicode character '{symbol}' in test code (use ASCII alternatives like PASS, SUCCESS, ERROR, Next, or describe in comments not literals)",
+                            message=f"Non-ASCII character '{char}' (U+{ord(char):04X}) in test code at column {char_idx}. Context: '{context}'. Use ASCII alternatives: emojis cause encoding errors on Windows. Replace with text like EPIC, FEATURE, STORY, or describe in comments.",
                             principle=None
                         ))
-                        break  # Only report once per line
+                        break  # Only report first non-ASCII char per line
             
             return violations if violations else None
 
@@ -2634,6 +2639,50 @@ if __name__ == "__main__":
                 print(f"[INFO] Scaffold file: {scaffold_file}")
             else:
                 print("[ERROR] Correct method not available on BDDScaffoldCommand")
+                sys.exit(1)
+                
+        except Exception as e:
+            print(f"ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+    
+    elif command == "correct-test":
+        # Guard check (and remove --no-guard from argv if present)
+        if '--no-guard' in sys.argv:
+            sys.argv.remove('--no-guard')
+        else:
+            require_command_invocation("bdd-test-correct")
+        
+        if len(sys.argv) < 3:
+            print("Usage: python bdd-runner.py correct-test <test-file-path> [chat-context]")
+            sys.exit(1)
+        
+        test_file = sys.argv[2]
+        chat_context = sys.argv[3] if len(sys.argv) > 3 else "User requested test correction based on current chat context"
+        
+        if not Path(test_file).exists():
+            print(f"[ERROR] File not found: {test_file}")
+            sys.exit(1)
+        
+        try:
+            # Create content and BDD rule
+            content = Content(test_file)
+            rule_file = Path(__file__).parent / "bdd-rule.mdc"
+            
+            if not rule_file.exists():
+                print(f"[ERROR] Rule file not found: {rule_file}")
+                sys.exit(1)
+            
+            # Create BDDCommand with rule file path string (BDDCommand handles BDDRule creation)
+            cmd = BDDCommand(content, str(rule_file))
+            if hasattr(cmd, 'correct'):
+                result = cmd.correct(chat_context)
+                print(result)
+                print("\n[INFO] Review the corrections above and update the test file if needed.")
+                print(f"[INFO] Test file: {test_file}")
+            else:
+                print("[ERROR] Correct method not available on BDDCommand")
                 sys.exit(1)
                 
         except Exception as e:
