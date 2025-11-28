@@ -1,10 +1,14 @@
 """
-DrawIO Story Map Synchronizer for Story Bot Prioritization Behavior
+DrawIO Story Map Synchronizer for Story Bot (Shared)
 
-Synchronizes story graph structure and increments from DrawIO story map diagrams.
+Synchronizes story graph structure from DrawIO story map diagrams.
 The DrawIO file is the source of truth - this synchronizer reads-only.
 
-Pattern: DrawIO (story-map.drawio) → synchronizer → story-graph-drawio-extracted.json → merge → story_graph.json
+Supports two modes:
+- Outline mode (shaping): No increments, preserves layout, detects large deletions
+- Increments mode (prioritization): Includes increments for marketable releases
+
+Pattern: DrawIO → synchronizer → story-graph-drawio-extracted.json → merge → story_graph.json
 """
 
 from pathlib import Path
@@ -169,12 +173,21 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
     }
 
 
-def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], features: List[Dict]) -> Dict[str, Any]:
+def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], features: List[Dict], 
+                                     return_layout: bool = False) -> Dict[str, Any]:
     """
     Go through each epic and feature, and build all stories.
+    Preserves layout and spacing from DrawIO.
+    
+    Args:
+        drawio_path: Path to DrawIO file
+        epics: List of epic dictionaries
+        features: List of feature dictionaries
+        return_layout: If True, also return layout data (X/Y coordinates) for stories
     
     Returns:
-        Dictionary with epics containing features containing stories
+        Dictionary with epics containing features containing stories.
+        If return_layout=True, also includes 'layout' key with story coordinates.
     """
     tree = ET.parse(drawio_path)
     root = tree.getroot()
@@ -296,8 +309,14 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
             if last_users:
                 stories_with_users[story['id']] = last_users.copy()
         else:
-            # Story has users, update last_users for next story
-            last_users = stories_with_users[story['id']].copy()
+            # Story has users, deduplicate
+            current_users = stories_with_users[story['id']]
+            deduplicated = []
+            for user in current_users:
+                if user not in deduplicated:
+                    deduplicated.append(user)
+            stories_with_users[story['id']] = deduplicated
+            last_users = deduplicated.copy()
     
     # Assign sequential order to epics (left to right)
     sorted_epics = sorted(epics, key=lambda x: (x['x'], x['epic_num']))
@@ -370,6 +389,24 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
             epic_data['features'].append(feature_data)
         
         result['epics'].append(epic_data)
+    
+    # Build layout data if requested
+    if return_layout:
+        layout_data = {}
+        for story in all_stories:
+            # Create key: epic_name|feature_name|story_name
+            epic = next((e for e in sorted_epics if e['epic_num'] == story['epic_num']), None)
+            if epic:
+                epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
+                                      key=lambda x: (x['x'], x.get('feat_num', 0)))
+                feature = next((f for f in epic_features if f.get('feat_num') == story.get('feat_num')), None)
+                if feature:
+                    key = f"{epic['name']}|{feature['name']}|{story['name']}"
+                    layout_data[key] = {
+                        'x': story['x'],
+                        'y': story['y']
+                    }
+        result['layout'] = layout_data
     
     return result
 
@@ -636,6 +673,156 @@ def build_stories_for_increments(drawio_path: Path, increments: List[Dict],
         result.append(inc_data)
     
     return result
+
+
+def _detect_large_deletions(
+    original_data: Dict[str, Any],
+    extracted_data: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Detect large deletions (entire epics or features missing).
+    Returns a report of potential accidental deletions.
+    """
+    deletions = {
+        'missing_epics': [],
+        'missing_features': [],
+        'epics_with_many_missing_stories': [],
+        'features_with_many_missing_stories': []
+    }
+    
+    # Build maps for comparison
+    original_epics = {epic['name']: epic for epic in original_data.get('epics', [])}
+    extracted_epics = {epic['name']: epic for epic in extracted_data.get('epics', [])}
+    
+    # Find missing epics
+    for epic_name, epic in original_epics.items():
+        if epic_name not in extracted_epics:
+            original_story_count = sum(
+                len(f.get('stories', [])) 
+                for f in epic.get('features', [])
+            )
+            deletions['missing_epics'].append({
+                'name': epic_name,
+                'story_count': original_story_count,
+                'feature_count': len(epic.get('features', []))
+            })
+    
+    # Find missing features and epics with many missing stories
+    for epic_name, original_epic in original_epics.items():
+        if epic_name in extracted_epics:
+            extracted_epic = extracted_epics[epic_name]
+            
+            original_features = {f['name']: f for f in original_epic.get('features', [])}
+            extracted_features = {f['name']: f for f in extracted_epic.get('features', [])}
+            
+            # Find missing features
+            for feat_name, feature in original_features.items():
+                if feat_name not in extracted_features:
+                    deletions['missing_features'].append({
+                        'epic': epic_name,
+                        'name': feat_name,
+                        'story_count': len(feature.get('stories', []))
+                    })
+            
+            # Check for epics with many missing stories
+            original_story_count = sum(
+                len(f.get('stories', [])) 
+                for f in original_epic.get('features', [])
+            )
+            extracted_story_count = sum(
+                len(f.get('stories', [])) 
+                for f in extracted_epic.get('features', [])
+            )
+            
+            if original_story_count > 0:
+                missing_ratio = (original_story_count - extracted_story_count) / original_story_count
+                if missing_ratio > 0.5:  # More than 50% missing
+                    deletions['epics_with_many_missing_stories'].append({
+                        'name': epic_name,
+                        'original_count': original_story_count,
+                        'extracted_count': extracted_story_count,
+                        'missing_count': original_story_count - extracted_story_count,
+                        'missing_ratio': missing_ratio
+                    })
+            
+            # Check for features with many missing stories
+            for feat_name, original_feature in original_features.items():
+                if feat_name in extracted_features:
+                    extracted_feature = extracted_features[feat_name]
+                    orig_stories = len(original_feature.get('stories', []))
+                    extr_stories = len(extracted_feature.get('stories', []))
+                    
+                    if orig_stories > 0:
+                        missing_ratio = (orig_stories - extr_stories) / orig_stories
+                        if missing_ratio > 0.5:  # More than 50% missing
+                            deletions['features_with_many_missing_stories'].append({
+                                'epic': epic_name,
+                                'name': feat_name,
+                                'original_count': orig_stories,
+                                'extracted_count': extr_stories,
+                                'missing_count': orig_stories - extr_stories,
+                                'missing_ratio': missing_ratio
+                            })
+    
+    return deletions
+
+
+def _display_large_deletions(deletions: Dict[str, Any]) -> None:
+    """Display large deletion warnings in a prominent format."""
+    has_warnings = False
+    
+    if deletions.get('missing_epics'):
+        has_warnings = True
+        print("\n" + "!"*80)
+        print("WARNING: ENTIRE EPICS MISSING FROM DRAWIO")
+        print("!"*80)
+        for epic in deletions['missing_epics']:
+            print(f"  MISSING EPIC: {epic['name']}")
+            print(f"    - {epic['feature_count']} features")
+            print(f"    - {epic['story_count']} stories")
+            print(f"    - This may be an accidental deletion!")
+        print("!"*80)
+    
+    if deletions.get('missing_features'):
+        has_warnings = True
+        print("\n" + "!"*80)
+        print("WARNING: ENTIRE FEATURES MISSING FROM DRAWIO")
+        print("!"*80)
+        for feature in deletions['missing_features']:
+            print(f"  MISSING FEATURE: {feature['epic']} > {feature['name']}")
+            print(f"    - {feature['story_count']} stories")
+            print(f"    - This may be an accidental deletion!")
+        print("!"*80)
+    
+    if deletions.get('epics_with_many_missing_stories'):
+        has_warnings = True
+        print("\n" + "-"*80)
+        print("WARNING: EPICS WITH MANY MISSING STORIES (>50%)")
+        print("-"*80)
+        for epic in deletions['epics_with_many_missing_stories']:
+            print(f"  EPIC: {epic['name']}")
+            print(f"    - Original: {epic['original_count']} stories")
+            print(f"    - Extracted: {epic['extracted_count']} stories")
+            print(f"    - Missing: {epic['missing_count']} stories ({epic['missing_ratio']:.1%})")
+        print("-"*80)
+    
+    if deletions.get('features_with_many_missing_stories'):
+        has_warnings = True
+        print("\n" + "-"*80)
+        print("WARNING: FEATURES WITH MANY MISSING STORIES (>50%)")
+        print("-"*80)
+        for feature in deletions['features_with_many_missing_stories']:
+            print(f"  FEATURE: {feature['epic']} > {feature['name']}")
+            print(f"    - Original: {feature['original_count']} stories")
+            print(f"    - Extracted: {feature['extracted_count']} stories")
+            print(f"    - Missing: {feature['missing_count']} stories ({feature['missing_ratio']:.1%})")
+        print("-"*80)
+    
+    if has_warnings:
+        print("\n" + "="*80)
+        print("RECOMMENDATION: Review these deletions carefully before merging.")
+        print("Large batches of deleted stories may indicate accidental deletion.")
+        print("="*80 + "\n")
 
 
 def _flatten_stories_from_original(original_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -907,7 +1094,7 @@ def merge_story_graphs(
                     merged_users = list(extracted_users | original_users)
                     story['users'] = merged_users
     
-    # Merge increments
+    # Merge increments (if present)
     for increment in merged_data.get('increments', []):
         for epic in increment.get('epics', []):
             epic_name = epic.get('name', '')
@@ -986,6 +1173,10 @@ def display_merge_report(report: Dict[str, Any]) -> None:
         if len(report['removed_stories']) > 10:
             print(f"  ... and {len(report['removed_stories']) - 10} more")
     
+    # Display large deletions if present
+    if 'large_deletions' in report:
+        _display_large_deletions(report['large_deletions'])
+    
     print("\n" + "="*80)
     print("NEXT STEPS:")
     print("1. Review fuzzy matches above")
@@ -994,21 +1185,90 @@ def display_merge_report(report: Dict[str, Any]) -> None:
     print("="*80 + "\n")
 
 
-def synchronize_story_map_from_drawio(
+def synchronize_story_graph_from_drawio_outline(
     drawio_path: Path,
     output_path: Optional[Path] = None,
     original_path: Optional[Path] = None
 ) -> Dict[str, Any]:
     """
-    Synchronize story graph structure from DrawIO file and optionally generate merge report.
+    Synchronize story graph structure from DrawIO outline (shaping behavior).
+    No increments - just epics, features, and stories.
+    Preserves layout and spacing to maintain visual clarity.
+    Detects and flags large deletions (entire epics/features missing).
     
     Args:
-        drawio_path: Path to DrawIO story map file
+        drawio_path: Path to DrawIO story map outline file (story-map-outline.drawio)
+        output_path: Optional path to write extracted JSON
+        original_path: Optional path to original story graph for merge report and deletion detection
+        
+    Returns:
+        Dictionary with extracted story graph structure (epics only, no increments)
+    """
+    # Step 1: Get epics and features
+    epics_features = get_epics_features_and_boundaries(drawio_path)
+    epics = epics_features['epics']
+    features = epics_features['features']
+    
+    # Step 2: Build stories for epics/features (preserves layout)
+    epics_with_stories = build_stories_for_epics_features(drawio_path, epics, features, return_layout=True)
+    
+    result = {
+        'epics': epics_with_stories['epics']
+        # No increments for outline
+    }
+    
+    layout_data = epics_with_stories.get('layout', {})
+    
+    # Write extracted JSON
+    if output_path:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        
+        # Write separate layout JSON file
+        layout_path = output_path.parent / f"{output_path.stem}-layout.json"
+        with open(layout_path, 'w', encoding='utf-8') as f:
+            json.dump(layout_data, f, indent=2, ensure_ascii=False)
+        print(f"Layout data saved to: {layout_path}")
+        
+        # Generate merge report and detect large deletions if original path provided
+        if original_path and original_path.exists():
+            report_path = output_path.parent / f"{output_path.stem}-merge-report.json"
+            report = generate_merge_report(output_path, original_path, report_path)
+            
+            # Detect large deletions
+            with open(original_path, 'r', encoding='utf-8') as f:
+                original_data = json.load(f)
+            deletions = _detect_large_deletions(original_data, result)
+            report['large_deletions'] = deletions
+            
+            # Write updated report with deletion info
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            
+            display_merge_report(report)
+            print(f"\nMerge report saved to: {report_path}")
+    
+    return result
+
+
+def synchronize_story_graph_from_drawio_increments(
+    drawio_path: Path,
+    output_path: Optional[Path] = None,
+    original_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Synchronize story graph structure from DrawIO with increments (prioritization behavior).
+    Includes both epics/features/stories AND increments.
+    
+    Args:
+        drawio_path: Path to DrawIO story map file (story-map.drawio)
         output_path: Optional path to write extracted JSON
         original_path: Optional path to original story graph for merge report
         
     Returns:
-        Dictionary with extracted story graph structure
+        Dictionary with extracted story graph structure (epics and increments)
     """
     # Step 1: Get increments
     increments = get_increments_and_boundaries(drawio_path)
@@ -1046,6 +1306,20 @@ def synchronize_story_map_from_drawio(
     return result
 
 
+# Keep the original function for backward compatibility
+# It now delegates to the increments version
+def synchronize_story_map_from_drawio(
+    drawio_path: Path,
+    output_path: Optional[Path] = None,
+    original_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Synchronize story graph structure from DrawIO file (backward compatibility).
+    Delegates to synchronize_story_graph_from_drawio_increments.
+    """
+    return synchronize_story_graph_from_drawio_increments(drawio_path, output_path, original_path)
+
+
 if __name__ == "__main__":
     """Command-line interface for synchronizing story maps from DrawIO."""
     import argparse
@@ -1058,6 +1332,7 @@ if __name__ == "__main__":
     parser.add_argument('--merge', action='store_true', help='Merge extracted with original based on report')
     parser.add_argument('--report', type=Path, help='Path to merge report JSON (required for --merge)')
     parser.add_argument('--merged-output', type=Path, help='Output path for merged JSON (default: overwrites original)')
+    parser.add_argument('--outline', action='store_true', help='Use outline mode (no increments, for shaping)')
     
     args = parser.parse_args()
     
@@ -1097,7 +1372,8 @@ if __name__ == "__main__":
             
             print(f"\nSuccessfully merged story graphs!")
             print(f"  Epics: {len(merged.get('epics', []))}")
-            print(f"  Increments: {len(merged.get('increments', []))}")
+            if 'increments' in merged:
+                print(f"  Increments: {len(merged.get('increments', []))}")
             print(f"  Merged output written to: {output_path}")
             sys.exit(0)
         
@@ -1113,10 +1389,17 @@ if __name__ == "__main__":
             args.output = temp_dir / f"story-graph-extracted-{timestamp}.json"
             print(f"Using temporary file: {args.output}")
         
-        result = synchronize_story_map_from_drawio(args.drawio_path, args.output, args.original)
-        print(f"\nSuccessfully synchronized story map from DrawIO")
+        # Choose function based on mode or file name
+        if args.outline or 'outline' in str(args.drawio_path).lower():
+            result = synchronize_story_graph_from_drawio_outline(args.drawio_path, args.output, args.original)
+            print(f"\nSuccessfully synchronized story map outline from DrawIO")
+        else:
+            result = synchronize_story_graph_from_drawio_increments(args.drawio_path, args.output, args.original)
+            print(f"\nSuccessfully synchronized story map from DrawIO")
+        
         print(f"Epics: {len(result['epics'])}")
-        print(f"Increments: {len(result['increments'])}")
+        if 'increments' in result:
+            print(f"Increments: {len(result['increments'])}")
         print(f"Output written to: {args.output}")
         
         if args.original:

@@ -41,6 +41,13 @@ class DrawIOStoryShapeRenderer:
         with open(story_graph_path, 'r', encoding='utf-8') as f:
             story_graph = json.load(f)
         
+        # Load layout JSON if it exists (for outline mode)
+        layout_data = {}
+        layout_path = story_graph_path.parent / f"{story_graph_path.stem}-layout.json"
+        if layout_path.exists():
+            with open(layout_path, 'r', encoding='utf-8') as f:
+                layout_data = json.load(f)
+        
         # Determine output path
         if output_path is None:
             output_path = story_graph_path.parent / "story-map.drawio"
@@ -50,7 +57,7 @@ class DrawIOStoryShapeRenderer:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Generate diagram
-        xml_output = self._generate_diagram(story_graph)
+        xml_output = self._generate_diagram(story_graph, layout_data)
         
         # Write output
         output_path.write_text(xml_output, encoding='utf-8')
@@ -63,8 +70,16 @@ class DrawIOStoryShapeRenderer:
             }
         }
     
-    def _generate_diagram(self, story_graph: Dict[str, Any]) -> str:
-        """Generate DrawIO XML from story graph."""
+    def _generate_diagram(self, story_graph: Dict[str, Any], layout_data: Dict[str, Dict[str, float]] = None) -> str:
+        """
+        Generate DrawIO XML from story graph.
+        
+        Args:
+            story_graph: Story graph JSON data
+            layout_data: Optional layout data with story coordinates (key: "epic_name|feature_name|story_name")
+        """
+        if layout_data is None:
+            layout_data = {}
         root = ET.Element('mxfile', host='65bd71144e')
         diagram = ET.SubElement(root, 'diagram', id='story-map', name='Story Map')
         graph_model = ET.SubElement(diagram, 'mxGraphModel', 
@@ -253,13 +268,25 @@ class DrawIOStoryShapeRenderer:
                         else:
                             # Base story (integer sequential_order) - store its position and users
                             if base_seq not in base_story_positions:
-                                position = seq_to_position[seq_order]
-                                base_story_positions[base_seq] = {
-                                    'x': feat_x + position * self.STORY_SPACING_X + 2,
-                                    'y': self.STORY_START_Y,
-                                    'seq_order': seq_order,
-                                    'users': set(story.get('users', []))  # Store base story users for comparison
-                                }
+                                # Check if layout data exists for this story
+                                layout_key = f"{epic['name']}|{feature['name']}|{story['name']}"
+                                if layout_key in layout_data:
+                                    # Use layout coordinates
+                                    base_story_positions[base_seq] = {
+                                        'x': layout_data[layout_key]['x'],
+                                        'y': layout_data[layout_key]['y'],
+                                        'seq_order': seq_order,
+                                        'users': set(story.get('users', []))  # Store base story users for comparison
+                                    }
+                                else:
+                                    # Use calculated position
+                                    position = seq_to_position[seq_order]
+                                    base_story_positions[base_seq] = {
+                                        'x': feat_x + position * self.STORY_SPACING_X + 2,
+                                        'y': self.STORY_START_Y,
+                                        'seq_order': seq_order,
+                                        'users': set(story.get('users', []))  # Store base story users for comparison
+                                    }
                 
                 # Second pass: render base stories first (integer sequential_order only)
                 for seq_order in sorted(stories_by_seq.keys()):
@@ -276,9 +303,21 @@ class DrawIOStoryShapeRenderer:
                     
                     for story in stories_in_seq:
                         # Render base story
-                        base_pos = base_story_positions[base_seq]
-                        story_x = base_pos['x']
-                        story_y = base_pos['y']
+                        # Check if layout data exists for this story (may override initial position)
+                        layout_key = f"{epic['name']}|{feature['name']}|{story['name']}"
+                        if layout_key in layout_data:
+                            # Use layout coordinates from DrawIO
+                            story_x = layout_data[layout_key]['x']
+                            story_y = layout_data[layout_key]['y']
+                            # Update base_story_positions for nested stories
+                            if base_seq in base_story_positions:
+                                base_story_positions[base_seq]['x'] = story_x
+                                base_story_positions[base_seq]['y'] = story_y
+                        else:
+                            # Use calculated position
+                            base_pos = base_story_positions[base_seq]
+                            story_x = base_pos['x']
+                            story_y = base_pos['y']
                         
                         # Collect users for this story (if not already shown)
                         story_users = story.get('users', [])
@@ -346,15 +385,23 @@ class DrawIOStoryShapeRenderer:
                     cumulative_vertical_offset = 0
                     
                     for nest_idx, (seq_order, story) in enumerate(nested_stories, 1):
-                        story_users = set(story.get('users', []))
-                        has_different_users = (story_users != base_users)
-                        
-                        # If different users, add extra spacing for user cards above this story
-                        if has_different_users:
-                            cumulative_vertical_offset += self.USER_LABEL_OFFSET  # Extra space for user cards
-                        
-                        story_x = base_x  # Same X as base story
-                        story_y = base_y + cumulative_vertical_offset + nest_idx * self.STORY_SPACING_Y  # Below base story
+                        # Check if layout data exists for this nested story
+                        layout_key = f"{epic['name']}|{feature['name']}|{story['name']}"
+                        if layout_key in layout_data:
+                            # Use layout coordinates from DrawIO
+                            story_x = layout_data[layout_key]['x']
+                            story_y = layout_data[layout_key]['y']
+                        else:
+                            # Use calculated position
+                            story_users = set(story.get('users', []))
+                            has_different_users = (story_users != base_users)
+                            
+                            # If different users, add extra spacing for user cards above this story
+                            if has_different_users:
+                                cumulative_vertical_offset += self.USER_LABEL_OFFSET  # Extra space for user cards
+                            
+                            story_x = base_x  # Same X as base story
+                            story_y = base_y + cumulative_vertical_offset + nest_idx * self.STORY_SPACING_Y  # Below base story
                         
                         # Collect users for this story (if not already shown)
                         story_users_list = story.get('users', [])

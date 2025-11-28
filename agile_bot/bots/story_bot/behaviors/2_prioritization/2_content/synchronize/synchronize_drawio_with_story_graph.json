@@ -4,7 +4,7 @@
   "scripts": [
     {
       "name": "extract_and_report",
-      "script": "story_map_drawio_synchronizer.py",
+      "script": "../../../../src/story_map_drawio_synchronizer.py",
       "description": "Synchronize story graph from DrawIO and generate merge report",
       "parameters": {
         "drawio_path": "{project_path}/docs/stories/story-map.drawio",
