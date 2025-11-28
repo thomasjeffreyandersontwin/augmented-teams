@@ -3,5 +3,5 @@
   "path": "docs/stories",
   "template": "story-map.drawio",
   "renderer": "story_map_drawio_renderer.py",
-  "output": "story-map.drawio"
+  "output": "story-map-outline.drawio"
 }
