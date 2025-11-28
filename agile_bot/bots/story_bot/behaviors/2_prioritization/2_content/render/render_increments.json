@@ -1,5 +1,6 @@
 {
-  "name": "increments",
+  "name": "render_increments",
   "path": "docs/stories/increments",
   "template": "story-map-increments-template.md"
 }
+

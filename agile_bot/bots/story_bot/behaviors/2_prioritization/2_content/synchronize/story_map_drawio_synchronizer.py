@@ -1,0 +1,1132 @@
+"""
+DrawIO Story Map Synchronizer for Story Bot Prioritization Behavior
+
+Synchronizes story graph structure and increments from DrawIO story map diagrams.
+The DrawIO file is the source of truth - this synchronizer reads-only.
+
+Pattern: DrawIO (story-map.drawio) → synchronizer → story-graph-drawio-extracted.json → merge → story_graph.json
+"""
+
+from pathlib import Path
+from typing import Dict, Any, Optional, List, Tuple
+import json
+import xml.etree.ElementTree as ET
+import re
+import sys
+import difflib
+from datetime import datetime
+
+
+def get_cell_value(cell) -> str:
+    """Extract text value from a cell, handling HTML entities."""
+    value = cell.get('value', '')
+    value = value.replace('&amp;', '&').replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>')
+    value = re.sub(r'<[^>]+>', '', value)
+    return value.strip()
+
+
+def extract_geometry(cell) -> Optional[Dict[str, float]]:
+    """Extract geometry information from a cell."""
+    geom = cell.find('mxGeometry')
+    if geom is None:
+        return None
+    x = float(geom.get('x', 0))
+    y = float(geom.get('y', 0))
+    width = float(geom.get('width', 0))
+    height = float(geom.get('height', 0))
+    return {'x': x, 'y': y, 'width': width, 'height': height}
+
+
+def get_increments_and_boundaries(drawio_path: Path) -> List[Dict[str, Any]]:
+    """
+    Get all increment squares (white squares on the left) and their boundaries.
+    
+    Returns:
+        List of increment dictionaries with id, name, x, y, width, height
+    """
+    tree = ET.parse(drawio_path)
+    root = tree.getroot()
+    cells = root.findall('.//mxCell')
+    
+    increments = []
+    
+    for cell in cells:
+        cell_id = cell.get('id', '')
+        style = cell.get('style', '')
+        geom = extract_geometry(cell)
+        
+        # Check for increment squares: white squares (strokeColor=#f8f7f7) positioned on the left (negative X)
+        if 'strokeColor=#f8f7f7' in style and geom and geom['x'] < 0:
+            value = get_cell_value(cell)
+            if value:  # Only include if it has a name
+                increments.append({
+                    'id': cell_id,
+                    'name': value,
+                    'x': geom['x'],
+                    'y': geom['y'],
+                    'width': geom['width'],
+                    'height': geom['height']
+                })
+    
+    # Sort by Y position (top to bottom)
+    increments.sort(key=lambda x: x['y'])
+    
+    return increments
+
+
+def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
+    """
+    Get all epics and features with their boundaries (x, y, width, height).
+    
+    Returns:
+        Dictionary with 'epics' and 'features' lists
+    """
+    tree = ET.parse(drawio_path)
+    root = tree.getroot()
+    cells = root.findall('.//mxCell')
+    
+    epics = []
+    features = []
+    
+    for cell in cells:
+        cell_id = cell.get('id', '')
+        style = cell.get('style', '')
+        value = get_cell_value(cell)
+        geom = extract_geometry(cell)
+        
+        if geom is None:
+            continue
+        
+        # Epics: purple boxes (fillColor=#e1d5e7)
+        if 'fillColor=#e1d5e7' in style and cell_id.startswith('epic'):
+            match = re.match(r'epic(\d+)', cell_id)
+            if match:
+                epic_num = int(match.group(1))
+                epics.append({
+                    'id': cell_id,
+                    'name': value,
+                    'epic_num': epic_num,
+                    'x': geom['x'],
+                    'y': geom['y'],
+                    'width': geom['width'],
+                    'height': geom['height']
+                })
+        
+        # Features: green boxes (fillColor=#d5e8d4)
+        elif 'fillColor=#d5e8d4' in style:
+            # Check for standard e#f# pattern
+            match = re.match(r'e(\d+)f(\d+)', cell_id)
+            if match:
+                epic_num = int(match.group(1))
+                feat_num = int(match.group(2))
+                features.append({
+                    'id': cell_id,
+                    'name': value,
+                    'epic_num': epic_num,
+                    'feat_num': feat_num,
+                    'x': geom['x'],
+                    'y': geom['y'],
+                    'width': geom['width'],
+                    'height': geom['height']
+                })
+            else:
+                # Feature without standard ID pattern - determine epic from X position
+                features.append({
+                    'id': cell_id,
+                    'name': value,
+                    'epic_num': None,  # Will assign later
+                    'feat_num': None,
+                    'x': geom['x'],
+                    'y': geom['y'],
+                    'width': geom['width'],
+                    'height': geom['height']
+                })
+    
+    # Sort epics by epic_num
+    epics.sort(key=lambda x: x['epic_num'])
+    
+    # Assign epic_num to features without standard ID pattern
+    for feature in features:
+        if feature['epic_num'] is None:
+            # Find which epic this feature belongs to based on X position
+            for epic in epics:
+                if feature['x'] >= epic['x']:
+                    feature['epic_num'] = epic['epic_num']
+                else:
+                    break
+            # If still None, assign to last epic
+            if feature['epic_num'] is None and epics:
+                feature['epic_num'] = epics[-1]['epic_num']
+    
+    # Sort features by epic_num, then feat_num, then x
+    features.sort(key=lambda x: (x['epic_num'] if x['epic_num'] is not None else 999, 
+                                  x['feat_num'] if x['feat_num'] is not None else 999, 
+                                  x['x']))
+    
+    return {
+        'epics': epics,
+        'features': features
+    }
+
+
+def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], features: List[Dict]) -> Dict[str, Any]:
+    """
+    Go through each epic and feature, and build all stories.
+    
+    Returns:
+        Dictionary with epics containing features containing stories
+    """
+    tree = ET.parse(drawio_path)
+    root = tree.getroot()
+    cells = root.findall('.//mxCell')
+    
+    # Extract all stories
+    all_stories = []
+    user_cells = []
+    
+    for cell in cells:
+        cell_id = cell.get('id', '')
+        style = cell.get('style', '')
+        value = get_cell_value(cell)
+        geom = extract_geometry(cell)
+        
+        if geom is None:
+            continue
+        
+        # Stories: yellow boxes (fillColor=#fff2cc)
+        if 'fillColor=#fff2cc' in style and re.match(r'e\d+f\d+s\d+', cell_id):
+            match = re.match(r'e(\d+)f(\d+)s(\d+)', cell_id)
+            if match:
+                epic_num = int(match.group(1))
+                feat_num = int(match.group(2))
+                story_num = int(match.group(3))
+                all_stories.append({
+                    'id': cell_id,
+                    'name': value,
+                    'epic_num': epic_num,
+                    'feat_num': feat_num,
+                    'story_num': story_num,
+                    'x': geom['x'],
+                    'y': geom['y'],
+                    'width': geom['width'],
+                    'height': geom['height']
+                })
+        
+        # Also capture stories without standard ID pattern
+        elif 'fillColor=#fff2cc' in style and not re.match(r'e\d+f\d+s\d+', cell_id):
+            # Story without standard pattern - determine epic/feature from position
+            all_stories.append({
+                'id': cell_id,
+                'name': value,
+                'epic_num': None,  # Will assign later
+                'feat_num': None,
+                'story_num': None,
+                'x': geom['x'],
+                'y': geom['y'],
+                'width': geom['width'],
+                'height': geom['height']
+            })
+        
+        # Users: blue boxes (fillColor=#dae8fc)
+        elif 'fillColor=#dae8fc' in style:
+            user_name = value
+            if user_name:
+                user_cells.append({
+                    'id': cell_id,
+                    'name': user_name,
+                    'x': geom['x'],
+                    'y': geom['y']
+                })
+    
+    # Assign epic/feature to stories without standard ID pattern
+    for story in all_stories:
+        if story['epic_num'] is None:
+            # Find which epic this story belongs to based on X position
+            for epic in epics:
+                if story['x'] >= epic['x']:
+                    story['epic_num'] = epic['epic_num']
+                else:
+                    break
+            if story['epic_num'] is None and epics:
+                story['epic_num'] = epics[-1]['epic_num']
+            
+            # Find which feature this story belongs to based on X position
+            epic_features = [f for f in features if f['epic_num'] == story['epic_num']]
+            for feature in epic_features:
+                if story['x'] >= feature['x']:
+                    story['feat_num'] = feature.get('feat_num', 0)
+                else:
+                    break
+    
+    # Match users to stories based on X position alignment
+    stories_with_users = {}
+    for story in all_stories:
+        story_x = story['x']
+        story_y = story['y']
+        tolerance = 25  # pixels
+        
+        story_users = []
+        for user_cell in user_cells:
+            user_x = user_cell['x']
+            user_y = user_cell['y']
+            
+            # Check if user is horizontally aligned with story (within tolerance) and above the story
+            if abs(user_x - story_x) <= tolerance and user_y < story_y:
+                user_name = user_cell['name']
+                # Only add if not already in list (remove duplicates)
+                if user_name not in story_users:
+                    story_users.append(user_name)
+        
+        stories_with_users[story['id']] = story_users
+    
+    # Assign sequential order based on left-to-right position and vertical stacking
+    _assign_sequential_order(all_stories)
+    
+    # Inherit users from previous story if current story has no users
+    # Sort all stories by sequential_order to process in order
+    sorted_stories = sorted(all_stories, key=lambda s: (
+        s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
+        s['x'], s['y']
+    ))
+    
+    last_users = []
+    for story in sorted_stories:
+        if not stories_with_users.get(story['id']):
+            # No users assigned, inherit from previous story
+            if last_users:
+                stories_with_users[story['id']] = last_users.copy()
+        else:
+            # Story has users, update last_users for next story
+            last_users = stories_with_users[story['id']].copy()
+    
+    # Assign sequential order to epics (left to right)
+    sorted_epics = sorted(epics, key=lambda x: (x['x'], x['epic_num']))
+    for idx, epic in enumerate(sorted_epics, 1):
+        epic['sequential_order'] = idx
+    
+    # Assign sequential order to features (left to right within each epic)
+    for epic in sorted_epics:
+        epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
+                               key=lambda x: (x['x'], x.get('feat_num', 0)))
+        for idx, feature in enumerate(epic_features, 1):
+            feature['sequential_order'] = idx
+    
+    # Build epic/feature/story hierarchy
+    result = {'epics': []}
+    
+    for epic in sorted_epics:
+        epic_data = {
+            'name': epic['name'],
+            'users': [],
+            'sequential_order': epic['sequential_order'],
+            'features': []
+        }
+        
+        # Get epic-level users (from first story in epic)
+        epic_stories = [s for s in all_stories if s['epic_num'] == epic['epic_num']]
+        if epic_stories:
+            first_story = min(epic_stories, key=lambda s: (
+                s.get('feat_num') if s.get('feat_num') is not None else 999,
+                s['x'], s['y']
+            ))
+            if first_story['id'] in stories_with_users:
+                epic_data['users'] = stories_with_users[first_story['id']]
+        
+        # Get features for this epic, sorted by X position
+        epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
+                               key=lambda x: (x['x'], x.get('feat_num', 0)))
+        
+        for feature in epic_features:
+            feature_data = {
+                'name': feature['name'],
+                'users': [],
+                'sequential_order': feature['sequential_order'],
+                'stories': []
+            }
+            
+            # Get feature-level users
+            feat_stories = [s for s in epic_stories 
+                          if s['epic_num'] == epic['epic_num'] and s['feat_num'] == feature.get('feat_num')]
+            if feat_stories:
+                first_story = min(feat_stories, key=lambda s: (s['x'], s['y']))
+                if first_story['id'] in stories_with_users:
+                    feature_data['users'] = stories_with_users[first_story['id']]
+            
+            # Get stories for this feature, sorted by sequential_order
+            feat_stories.sort(key=lambda s: (
+                s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
+                s['x']
+            ))
+            
+            for story in feat_stories:
+                story_data = {
+                    'name': story['name'],
+                    'users': stories_with_users.get(story['id'], [])
+                }
+                if 'sequential_order' in story:
+                    story_data['sequential_order'] = story['sequential_order']
+                feature_data['stories'].append(story_data)
+            
+            epic_data['features'].append(feature_data)
+        
+        result['epics'].append(epic_data)
+    
+    return result
+
+
+def _assign_sequential_order(all_stories: List[Dict]):
+    """
+    Assign sequential_order to stories based on left-to-right position.
+    When a story is below another story (higher Y), use num.num format.
+    Sequential order is global across all stories in the map.
+    """
+    # Sort all stories by X position (left to right), then by Y position (top to bottom)
+    all_stories.sort(key=lambda x: (x['x'], x['y']))
+    
+    # Tolerance for considering stories at the same X position (for vertical stacking)
+    x_tolerance = 30  # pixels
+    
+    stories_by_x_group = {}
+    
+    # Group stories by X position (within tolerance)
+    for story in all_stories:
+        story_x = story['x']
+        
+        # Find if this story belongs to an existing X group
+        found_group = False
+        for group_x, group_stories in stories_by_x_group.items():
+            if abs(story_x - group_x) <= x_tolerance:
+                # Add to existing group
+                group_stories.append(story)
+                found_group = True
+                break
+        
+        if not found_group:
+            # Create new X group
+            stories_by_x_group[story_x] = [story]
+    
+    # Sort X groups by X position
+    sorted_x_groups = sorted(stories_by_x_group.items(), key=lambda x: x[0])
+    
+    # Assign sequential order globally
+    current_order = 1
+    for group_x, group_stories in sorted_x_groups:
+        # Sort stories in this group by Y position (top to bottom)
+        group_stories.sort(key=lambda x: x['y'])
+        
+        if len(group_stories) == 1:
+            # Single story - just assign order number
+            group_stories[0]['sequential_order'] = current_order
+            current_order += 1
+        else:
+            # Multiple stories stacked vertically - use num.num format
+            base_order = current_order
+            for idx, story in enumerate(group_stories):
+                if idx == 0:
+                    # First story in stack gets base order
+                    story['sequential_order'] = base_order
+                else:
+                    # Subsequent stories get base_order.idx format
+                    story['sequential_order'] = float(f"{base_order}.{idx}")
+            current_order += 1
+
+
+def build_stories_for_increments(drawio_path: Path, increments: List[Dict], 
+                                 epics: List[Dict], features: List[Dict]) -> List[Dict[str, Any]]:
+    """
+    Build stories for each increment based on Y position alignment with increment squares.
+    
+    Returns:
+        List of increment dictionaries with epics, features, and stories
+    """
+    tree = ET.parse(drawio_path)
+    root = tree.getroot()
+    cells = root.findall('.//mxCell')
+    
+    # Extract all stories
+    all_stories = []
+    user_cells = []
+    
+    for cell in cells:
+        cell_id = cell.get('id', '')
+        style = cell.get('style', '')
+        value = get_cell_value(cell)
+        geom = extract_geometry(cell)
+        
+        if geom is None:
+            continue
+        
+        # Stories: yellow boxes
+        if 'fillColor=#fff2cc' in style:
+            if re.match(r'e\d+f\d+s\d+', cell_id):
+                match = re.match(r'e(\d+)f(\d+)s(\d+)', cell_id)
+                if match:
+                    all_stories.append({
+                        'id': cell_id,
+                        'name': value,
+                        'epic_num': int(match.group(1)),
+                        'feat_num': int(match.group(2)),
+                        'story_num': int(match.group(3)),
+                        'x': geom['x'],
+                        'y': geom['y']
+                    })
+            else:
+                # Story without standard pattern
+                all_stories.append({
+                    'id': cell_id,
+                    'name': value,
+                    'epic_num': None,
+                    'feat_num': None,
+                    'story_num': None,
+                    'x': geom['x'],
+                    'y': geom['y']
+                })
+        
+        # Users: blue boxes
+        elif 'fillColor=#dae8fc' in style:
+            user_name = value
+            if user_name:
+                user_cells.append({
+                    'id': cell_id,
+                    'name': user_name,
+                    'x': geom['x'],
+                    'y': geom['y']
+                })
+    
+    # Assign epic/feature to stories without standard ID pattern
+    for story in all_stories:
+        if story['epic_num'] is None:
+            for epic in epics:
+                if story['x'] >= epic['x']:
+                    story['epic_num'] = epic['epic_num']
+                else:
+                    break
+            if story['epic_num'] is None and epics:
+                story['epic_num'] = epics[-1]['epic_num']
+            
+            epic_features = [f for f in features if f['epic_num'] == story['epic_num']]
+            for feature in epic_features:
+                if story['x'] >= feature['x']:
+                    story['feat_num'] = feature.get('feat_num', 0)
+                else:
+                    break
+    
+    # Match users to stories
+    stories_with_users = {}
+    for story in all_stories:
+        story_x = story['x']
+        story_y = story['y']
+        tolerance = 25
+        
+        story_users = []
+        for user_cell in user_cells:
+            user_x = user_cell['x']
+            user_y = user_cell['y']
+            if abs(user_x - story_x) <= tolerance and user_y < story_y:
+                user_name = user_cell['name']
+                # Only add if not already in list (remove duplicates)
+                if user_name not in story_users:
+                    story_users.append(user_name)
+        stories_with_users[story['id']] = story_users
+    
+    # Assign sequential order
+    _assign_sequential_order(all_stories)
+    
+    # Inherit users from previous story if current story has no users
+    # Sort all stories by sequential_order to process in order
+    sorted_stories = sorted(all_stories, key=lambda s: (
+        s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
+        s['x'], s['y']
+    ))
+    
+    last_users = []
+    for story in sorted_stories:
+        if not stories_with_users.get(story['id']):
+            # No users assigned, inherit from previous story
+            if last_users:
+                stories_with_users[story['id']] = last_users.copy()
+        else:
+            # Story has users, deduplicate and update last_users for next story
+            current_users = stories_with_users[story['id']]
+            # Remove duplicates while preserving order
+            deduplicated = []
+            for user in current_users:
+                if user not in deduplicated:
+                    deduplicated.append(user)
+            stories_with_users[story['id']] = deduplicated
+            last_users = deduplicated.copy()
+    
+    # Assign stories to increments based on Y position
+    # Stories belong to increment if their Y is close to increment's Y (within tolerance)
+    increment_tolerance = 100  # pixels - stories within this Y distance belong to increment
+    
+    result = []
+    for inc_idx, increment in enumerate(increments, 1):
+        inc_data = {
+            'name': increment['name'],
+            'priority': inc_idx,
+            'epics': []
+        }
+        
+        # Find stories that belong to this increment
+        inc_stories = []
+        for story in all_stories:
+            # Check if story Y is within tolerance of increment Y
+            if abs(story['y'] - increment['y']) <= increment_tolerance:
+                inc_stories.append(story)
+        
+        # Build epic/feature/story structure for this increment
+        inc_epics = {}
+        for story in inc_stories:
+            epic_num = story['epic_num']
+            feat_num = story['feat_num']
+            
+            if epic_num not in inc_epics:
+                epic = next((e for e in epics if e['epic_num'] == epic_num), None)
+                epic_name = epic['name'] if epic else f'Epic {epic_num}'
+                epic_order = epic.get('sequential_order', epic_num) if epic else epic_num
+                inc_epics[epic_num] = {
+                    'name': epic_name,
+                    'users': [],
+                    'sequential_order': epic_order,
+                    'features': {}
+                }
+            
+            if feat_num not in inc_epics[epic_num]['features']:
+                feature = next((f for f in features 
+                                if f['epic_num'] == epic_num and f.get('feat_num') == feat_num), None)
+                feat_name = feature['name'] if feature else f'Feature {feat_num}'
+                feat_order = feature.get('sequential_order', feat_num) if feature else feat_num
+                inc_epics[epic_num]['features'][feat_num] = {
+                    'name': feat_name,
+                    'users': [],
+                    'sequential_order': feat_order,
+                    'stories': []
+                }
+            
+            story_data = {
+                'name': story['name'],
+                'users': stories_with_users.get(story['id'], [])
+            }
+            if 'sequential_order' in story:
+                story_data['sequential_order'] = story['sequential_order']
+            inc_epics[epic_num]['features'][feat_num]['stories'].append(story_data)
+        
+        # Convert to list format and sort by sequential_order
+        sorted_inc_epics = sorted(
+            inc_epics.items(),
+            key=lambda x: (x[1].get('sequential_order', 999), x[0])
+        )
+        for epic_num, epic_data in sorted_inc_epics:
+            # Sort features by sequential_order
+            sorted_features = sorted(
+                epic_data['features'].items(),
+                key=lambda x: (x[1].get('sequential_order', 999) if isinstance(x[1].get('sequential_order'), (int, float)) else 999,
+                              x[0] if x[0] is not None else 999)
+            )
+            # Sort stories by sequential_order within each feature
+            for feat_num, feat_data in sorted_features:
+                feat_data['stories'].sort(key=lambda s: (
+                    s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
+                    s.get('sequential_order', '') if isinstance(s.get('sequential_order'), str) else ''
+                ))
+            epic_data['features'] = [feat_data for feat_num, feat_data in sorted_features]
+            inc_data['epics'].append(epic_data)
+        
+        result.append(inc_data)
+    
+    return result
+
+
+def _flatten_stories_from_original(original_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten all stories from original story graph into a list with context."""
+    stories = []
+    
+    for epic in original_data.get('epics', []):
+        epic_name = epic.get('name', '')
+        for feature in epic.get('features', []):
+            feature_name = feature.get('name', '')
+            for story in feature.get('stories', []):
+                story_data = {
+                    'name': story.get('name', ''),
+                    'users': story.get('users', []),
+                    'Steps': story.get('Steps', []),
+                    'epic_name': epic_name,
+                    'feature_name': feature_name
+                }
+                stories.append(story_data)
+    
+    return stories
+
+
+def _flatten_stories_from_extracted(extracted_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten all stories from extracted story graph into a list with context."""
+    stories = []
+    
+    for epic in extracted_data.get('epics', []):
+        epic_name = epic.get('name', '')
+        for feature in epic.get('features', []):
+            feature_name = feature.get('name', '')
+            for story in feature.get('stories', []):
+                story_data = {
+                    'name': story.get('name', ''),
+                    'users': story.get('users', []),
+                    'sequential_order': story.get('sequential_order'),
+                    'epic_name': epic_name,
+                    'feature_name': feature_name
+                }
+                stories.append(story_data)
+    
+    return stories
+
+
+def _fuzzy_match_story(extracted_story: Dict[str, Any], original_stories: List[Dict[str, Any]], 
+                       threshold: float = 0.7) -> Optional[Tuple[Dict[str, Any], float]]:
+    """
+    Find best matching story from original using fuzzy matching.
+    
+    Returns:
+        Tuple of (matched_story, similarity_score) or None if no match above threshold
+    """
+    extracted_name = extracted_story['name'].lower()
+    best_match = None
+    best_score = 0.0
+    
+    for orig_story in original_stories:
+        orig_name = orig_story['name'].lower()
+        
+        # Calculate similarity
+        similarity = difflib.SequenceMatcher(None, extracted_name, orig_name).ratio()
+        
+        # Bonus for same epic/feature context
+        context_bonus = 0.0
+        if extracted_story.get('epic_name') == orig_story.get('epic_name'):
+            context_bonus += 0.1
+        if extracted_story.get('feature_name') == orig_story.get('feature_name'):
+            context_bonus += 0.1
+        
+        # Bonus for user overlap
+        extracted_users = set(u.lower() for u in extracted_story.get('users', []))
+        orig_users = set(u.lower() for u in orig_story.get('users', []))
+        if extracted_users and orig_users:
+            user_overlap = len(extracted_users & orig_users) / max(len(extracted_users), len(orig_users))
+            context_bonus += user_overlap * 0.1
+        
+        total_score = min(1.0, similarity + context_bonus)
+        
+        if total_score > best_score:
+            best_score = total_score
+            best_match = orig_story
+    
+    if best_score >= threshold:
+        return (best_match, best_score)
+    return None
+
+
+def generate_merge_report(
+    extracted_path: Path,
+    original_path: Path,
+    report_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Generate a merge report comparing extracted and original story graphs.
+    
+    Args:
+        extracted_path: Path to extracted story graph JSON
+        original_path: Path to original story graph JSON
+        report_path: Optional path to write report JSON
+        
+    Returns:
+        Dictionary containing merge report data
+    """
+    # Load both JSON files
+    with open(extracted_path, 'r', encoding='utf-8') as f:
+        extracted_data = json.load(f)
+    
+    with open(original_path, 'r', encoding='utf-8') as f:
+        original_data = json.load(f)
+    
+    # Flatten stories for comparison
+    extracted_stories = _flatten_stories_from_extracted(extracted_data)
+    original_stories = _flatten_stories_from_original(original_data)
+    
+    # Match stories
+    exact_matches = []
+    fuzzy_matches = []
+    new_stories = []
+    unmatched_original = []
+    
+    matched_original_indices = set()
+    
+    for ext_story in extracted_stories:
+        # Try exact match first
+        exact_match = None
+        for idx, orig_story in enumerate(original_stories):
+            if (ext_story['name'].lower() == orig_story['name'].lower() and
+                idx not in matched_original_indices):
+                exact_match = (orig_story, idx)
+                break
+        
+        if exact_match:
+            orig_story, idx = exact_match
+            exact_matches.append({
+                'extracted': ext_story,
+                'original': orig_story,
+                'match_type': 'exact',
+                'confidence': 1.0
+            })
+            matched_original_indices.add(idx)
+        else:
+            # Try fuzzy match
+            fuzzy_result = _fuzzy_match_story(ext_story, original_stories)
+            if fuzzy_result:
+                orig_story, score = fuzzy_result
+                # Find index of matched story
+                for idx, o in enumerate(original_stories):
+                    if o['name'] == orig_story['name'] and idx not in matched_original_indices:
+                        fuzzy_matches.append({
+                            'extracted': ext_story,
+                            'original': orig_story,
+                            'match_type': 'fuzzy',
+                            'confidence': score
+                        })
+                        matched_original_indices.add(idx)
+                        break
+            else:
+                # New story in extracted
+                new_stories.append(ext_story)
+    
+    # Find unmatched original stories
+    for idx, orig_story in enumerate(original_stories):
+        if idx not in matched_original_indices:
+            unmatched_original.append(orig_story)
+    
+    # Build report
+    report = {
+        'timestamp': datetime.now().isoformat(),
+        'extracted_file': str(extracted_path),
+        'original_file': str(original_path),
+        'summary': {
+            'total_extracted_stories': len(extracted_stories),
+            'total_original_stories': len(original_stories),
+            'exact_matches': len(exact_matches),
+            'fuzzy_matches': len(fuzzy_matches),
+            'new_stories': len(new_stories),
+            'removed_stories': len(unmatched_original)
+        },
+        'exact_matches': exact_matches,
+        'fuzzy_matches': fuzzy_matches,
+        'new_stories': new_stories,
+        'removed_stories': unmatched_original
+    }
+    
+    # Write report if path provided
+    if report_path:
+        report_path = Path(report_path)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(report_path, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+    
+    return report
+
+
+def merge_story_graphs(
+    extracted_path: Path,
+    original_path: Path,
+    report_path: Path,
+    output_path: Path
+) -> Dict[str, Any]:
+    """
+    Merge extracted story graph with original, preserving Steps from original.
+    
+    Args:
+        extracted_path: Path to extracted story graph JSON
+        original_path: Path to original story graph JSON
+        report_path: Path to merge report JSON
+        output_path: Path to write merged story graph JSON
+        
+    Returns:
+        Dictionary containing merged story graph
+    """
+    # Load files
+    with open(extracted_path, 'r', encoding='utf-8') as f:
+        extracted_data = json.load(f)
+    
+    with open(original_path, 'r', encoding='utf-8') as f:
+        original_data = json.load(f)
+    
+    with open(report_path, 'r', encoding='utf-8') as f:
+        report = json.load(f)
+    
+    # Create a lookup map for original stories by epic/feature/name
+    original_story_map = {}
+    for epic in original_data.get('epics', []):
+        epic_name = epic.get('name', '')
+        for feature in epic.get('features', []):
+            feature_name = feature.get('name', '')
+            for story in feature.get('stories', []):
+                story_name = story.get('name', '')
+                key = f"{epic_name}|{feature_name}|{story_name}"
+                original_story_map[key] = story
+    
+    # Create a map of matches from report
+    match_map = {}
+    for match in report.get('exact_matches', []):
+        ext_story = match['extracted']
+        orig_story = match['original']
+        key = f"{ext_story['epic_name']}|{ext_story['feature_name']}|{ext_story['name']}"
+        match_map[key] = orig_story
+    
+    for match in report.get('fuzzy_matches', []):
+        ext_story = match['extracted']
+        orig_story = match['original']
+        key = f"{ext_story['epic_name']}|{ext_story['feature_name']}|{ext_story['name']}"
+        match_map[key] = orig_story
+    
+    # Merge: start with extracted structure, add Steps from matches
+    merged_data = json.loads(json.dumps(extracted_data))  # Deep copy
+    
+    # Merge epics
+    for epic in merged_data.get('epics', []):
+        epic_name = epic.get('name', '')
+        for feature in epic.get('features', []):
+            feature_name = feature.get('name', '')
+            for story in feature.get('stories', []):
+                story_name = story.get('name', '')
+                key = f"{epic_name}|{feature_name}|{story_name}"
+                
+                # If we have a match, copy Steps and merge users
+                if key in match_map:
+                    orig_story = match_map[key]
+                    if 'Steps' in orig_story:
+                        story['Steps'] = orig_story['Steps']
+                    # Merge users (keep extracted users, but add any from original)
+                    extracted_users = set(story.get('users', []))
+                    original_users = set(orig_story.get('users', []))
+                    # Prefer extracted users, but add any missing from original
+                    merged_users = list(extracted_users | original_users)
+                    story['users'] = merged_users
+    
+    # Merge increments
+    for increment in merged_data.get('increments', []):
+        for epic in increment.get('epics', []):
+            epic_name = epic.get('name', '')
+            for feature in epic.get('features', []):
+                feature_name = feature.get('name', '')
+                for story in feature.get('stories', []):
+                    story_name = story.get('name', '')
+                    key = f"{epic_name}|{feature_name}|{story_name}"
+                    
+                    # If we have a match, copy Steps and merge users
+                    if key in match_map:
+                        orig_story = match_map[key]
+                        if 'Steps' in orig_story:
+                            story['Steps'] = orig_story['Steps']
+                        # Merge users
+                        extracted_users = set(story.get('users', []))
+                        original_users = set(orig_story.get('users', []))
+                        merged_users = list(extracted_users | original_users)
+                        story['users'] = merged_users
+    
+    # Write merged result
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(merged_data, f, indent=2, ensure_ascii=False)
+    
+    return merged_data
+
+
+def display_merge_report(report: Dict[str, Any]) -> None:
+    """Display merge report in a human-readable format."""
+    print("\n" + "="*80)
+    print("STORY GRAPH MERGE REPORT")
+    print("="*80)
+    print(f"Generated: {report['timestamp']}")
+    print(f"Extracted: {report['extracted_file']}")
+    print(f"Original: {report['original_file']}")
+    print("\n" + "-"*80)
+    print("SUMMARY")
+    print("-"*80)
+    summary = report['summary']
+    print(f"Total Extracted Stories: {summary['total_extracted_stories']}")
+    print(f"Total Original Stories: {summary['total_original_stories']}")
+    print(f"Exact Matches: {summary['exact_matches']}")
+    print(f"Fuzzy Matches: {summary['fuzzy_matches']}")
+    print(f"New Stories (in extracted): {summary['new_stories']}")
+    print(f"Removed Stories (in original only): {summary['removed_stories']}")
+    
+    if report['fuzzy_matches']:
+        print("\n" + "-"*80)
+        print("FUZZY MATCHES (Require Review)")
+        print("-"*80)
+        for match in report['fuzzy_matches']:
+            print(f"\nExtracted: {match['extracted']['name']}")
+            print(f"  Epic: {match['extracted']['epic_name']} | Feature: {match['extracted']['feature_name']}")
+            print(f"Original: {match['original']['name']}")
+            print(f"  Epic: {match['original']['epic_name']} | Feature: {match['original']['feature_name']}")
+            print(f"Confidence: {match['confidence']:.2%}")
+            print(f"Has Steps: {'Yes' if match['original'].get('Steps') else 'No'}")
+    
+    if report['new_stories']:
+        print("\n" + "-"*80)
+        print("NEW STORIES (No match in original)")
+        print("-"*80)
+        for story in report['new_stories'][:10]:  # Show first 10
+            print(f"  - {story['name']} ({story['epic_name']} > {story['feature_name']})")
+        if len(report['new_stories']) > 10:
+            print(f"  ... and {len(report['new_stories']) - 10} more")
+    
+    if report['removed_stories']:
+        print("\n" + "-"*80)
+        print("REMOVED STORIES (In original but not in extracted)")
+        print("-"*80)
+        for story in report['removed_stories'][:10]:  # Show first 10
+            print(f"  - {story['name']} ({story['epic_name']} > {story['feature_name']})")
+        if len(report['removed_stories']) > 10:
+            print(f"  ... and {len(report['removed_stories']) - 10} more")
+    
+    print("\n" + "="*80)
+    print("NEXT STEPS:")
+    print("1. Review fuzzy matches above")
+    print("2. Confirm which matches are correct")
+    print("3. Run merge command to apply changes")
+    print("="*80 + "\n")
+
+
+def synchronize_story_map_from_drawio(
+    drawio_path: Path,
+    output_path: Optional[Path] = None,
+    original_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Synchronize story graph structure from DrawIO file and optionally generate merge report.
+    
+    Args:
+        drawio_path: Path to DrawIO story map file
+        output_path: Optional path to write extracted JSON
+        original_path: Optional path to original story graph for merge report
+        
+    Returns:
+        Dictionary with extracted story graph structure
+    """
+    # Step 1: Get increments
+    increments = get_increments_and_boundaries(drawio_path)
+    
+    # Step 2: Get epics and features
+    epics_features = get_epics_features_and_boundaries(drawio_path)
+    epics = epics_features['epics']
+    features = epics_features['features']
+    
+    # Step 3: Build stories for epics/features
+    epics_with_stories = build_stories_for_epics_features(drawio_path, epics, features)
+    
+    # Step 4: Build stories for increments
+    increments_with_stories = build_stories_for_increments(drawio_path, increments, epics, features)
+    
+    result = {
+        'epics': epics_with_stories['epics'],
+        'increments': increments_with_stories
+    }
+    
+    # Write extracted JSON
+    if output_path:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        
+        # Generate merge report if original path provided
+        if original_path and original_path.exists():
+            report_path = output_path.parent / f"{output_path.stem}-merge-report.json"
+            report = generate_merge_report(output_path, original_path, report_path)
+            display_merge_report(report)
+            print(f"\nMerge report saved to: {report_path}")
+    
+    return result
+
+
+if __name__ == "__main__":
+    """Command-line interface for synchronizing story maps from DrawIO."""
+    import argparse
+    import tempfile
+    
+    parser = argparse.ArgumentParser(description='Synchronize story graph from DrawIO story map')
+    parser.add_argument('drawio_path', type=Path, nargs='?', help='Path to DrawIO story map file')
+    parser.add_argument('--output', type=Path, help='Output path for extracted JSON')
+    parser.add_argument('--original', type=Path, help='Path to original story graph JSON for merge report')
+    parser.add_argument('--merge', action='store_true', help='Merge extracted with original based on report')
+    parser.add_argument('--report', type=Path, help='Path to merge report JSON (required for --merge)')
+    parser.add_argument('--merged-output', type=Path, help='Output path for merged JSON (default: overwrites original)')
+    
+    args = parser.parse_args()
+    
+    try:
+        # Handle merge operation
+        if args.merge:
+            if not args.report:
+                print("Error: --report is required when using --merge", file=sys.stderr)
+                sys.exit(1)
+            
+            if not args.original:
+                print("Error: --original is required when using --merge", file=sys.stderr)
+                sys.exit(1)
+            
+            # Determine output path
+            if args.merged_output:
+                output_path = args.merged_output
+            else:
+                output_path = args.original  # Overwrite original by default
+            
+            # Find extracted file from report
+            with open(args.report, 'r', encoding='utf-8') as f:
+                report = json.load(f)
+            extracted_path = Path(report['extracted_file'])
+            
+            if not extracted_path.exists():
+                print(f"Error: Extracted file not found: {extracted_path}", file=sys.stderr)
+                sys.exit(1)
+            
+            print(f"Merging story graphs...")
+            print(f"  Extracted: {extracted_path}")
+            print(f"  Original: {args.original}")
+            print(f"  Report: {args.report}")
+            print(f"  Output: {output_path}")
+            
+            merged = merge_story_graphs(extracted_path, args.original, args.report, output_path)
+            
+            print(f"\nSuccessfully merged story graphs!")
+            print(f"  Epics: {len(merged.get('epics', []))}")
+            print(f"  Increments: {len(merged.get('increments', []))}")
+            print(f"  Merged output written to: {output_path}")
+            sys.exit(0)
+        
+        # Handle extraction operation
+        if not args.drawio_path:
+            parser.print_help()
+            sys.exit(1)
+        
+        # If no output specified, create temp file
+        if not args.output:
+            temp_dir = Path(tempfile.gettempdir())
+            timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+            args.output = temp_dir / f"story-graph-extracted-{timestamp}.json"
+            print(f"Using temporary file: {args.output}")
+        
+        result = synchronize_story_map_from_drawio(args.drawio_path, args.output, args.original)
+        print(f"\nSuccessfully synchronized story map from DrawIO")
+        print(f"Epics: {len(result['epics'])}")
+        print(f"Increments: {len(result['increments'])}")
+        print(f"Output written to: {args.output}")
+        
+        if args.original:
+            report_path = args.output.parent / f"{args.output.stem}-merge-report.json"
+            print("\nMerge report generated. Review the report above before proceeding with merge.")
+            print(f"\nTo merge, run:")
+            print(f"  python {Path(__file__).name} --merge --report {report_path} --original {args.original} --merged-output {args.original}")
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+

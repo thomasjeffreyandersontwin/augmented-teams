@@ -1,5 +1,5 @@
 {
-  "name": "knowledge_graph",
+  "name": "build_story_graph_outline",
   "path": "docs/stories/map",
   "template": "story-graph-outline.json",
   "output": "story-graph.json"

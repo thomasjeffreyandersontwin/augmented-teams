@@ -3,18 +3,24 @@
     {
       "name": "",
       "users": [],
+      "sequential_order": 1,
       "sub_epics": [
         {
           "name": "",
           "users": [],
+          "sequential_order": 1,
           "features": [
             {
               "name": "",
               "users": [],
+              "sequential_order": 1,
               "stories": [
                 {
                   "name": "",
-                  "users": []
+                  "users": [],
+                  "sequential_order": 1,
+                  "optional": false,
+                  "priority": 1
                 }
               ]
             }
@@ -25,10 +31,14 @@
         {
           "name": "",
           "users": [],
+          "sequential_order": 1,
           "stories": [
             {
               "name": "",
-              "users": []
+              "users": [],
+              "sequential_order": 1,
+              "optional": false,
+              "priority": 1
             }
           ]
         }

@@ -1,0 +1,27 @@
+{
+  "name": "synchronize_drawio_with_story_graph",
+  "description": "Synchronize extracted DrawIO story graph with original story graph, preserving Steps from original",
+  "scripts": [
+    {
+      "name": "extract_and_report",
+      "script": "story_map_drawio_synchronizer.py",
+      "description": "Synchronize story graph from DrawIO and generate merge report",
+      "parameters": {
+        "drawio_path": "{project_path}/docs/stories/story-map.drawio",
+        "output": "{project_path}/docs/stories/story-graph-drawio-extracted.json",
+        "original": "{project_path}/docs/stories/story_graph.json"
+      },
+      "output": "{project_path}/docs/stories/story-graph-drawio-extracted-merge-report.json"
+    }
+  ],
+  "templates": [],
+  "instructions": [
+    "1. Run extract_and_report script to synchronize DrawIO story map and generate merge report",
+    "2. Review merge report showing exact matches, fuzzy matches, new stories, and removed stories",
+    "3. AI waits for user instructions to proceed with merge based on report",
+    "4. Merge preserves Steps from original stories where matches are found",
+    "5. New stories in extracted will have empty Steps array",
+    "6. User confirms merge before applying changes to story_graph.json"
+  ]
+}
+

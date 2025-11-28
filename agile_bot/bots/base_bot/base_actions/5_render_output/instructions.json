@@ -37,7 +37,18 @@
     "Transform the structured content into rendered artifacts using available templates or builders.",
     "",
     "**Output Instructions:**",
-    "{{output_instructions}}  --> load from all {bot}/behaviors/{behavior}/content/{output_name}.json"
+    "{{output_instructions}}  --> load from all {bot}/behaviors/{behavior}/content/{output_name}.json",
+    "",
+    "**SYNCHRONIZATION SCRIPTS - MANDATORY:**",
+    "After rendering is complete and user confirms ready to proceed:",
+    "1. Check for synchronization scripts in {bot}/behaviors/{behavior}/content/synchronize/",
+    "2. Load synchronize/output.json (if exists) to identify sync scripts/templates",
+    "3. For each sync script/template defined in output.json:",
+    "   - Execute sync scripts (Python files) with appropriate parameters",
+    "   - Run sync templates (markdown, JSON, etc.) if specified",
+    "   - Follow the pattern: sync config → project data → sync output",
+    "4. Wait for user confirmation that render is complete before running sync scripts",
+    "5. Report sync results to user"
   ]
 }
 

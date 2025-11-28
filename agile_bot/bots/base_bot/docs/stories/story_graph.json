@@ -2,15 +2,34 @@
   "epics": [
     {
       "name": "Build Agile Bots",
-      "users": ["Human", "Agile Bot", "MCP Bot Server Generator", "MCP Bot Server", "Bot Config"],
+      "users": [
+        "Human"
+      ],
+      "sequential_order": 1,
       "features": [
         {
-          "name": "Generate MCP Bot Server And Tools",
-          "users": ["Human", "Agile Bot", "MCP Bot Server Generator", "MCP Bot Server", "Bot Config"],
+          "name": "Generate Bot Server And Tools",
+          "users": [
+            "Human"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
+              "name": "Provides Context of New Bot",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 1
+            },
+            {
               "name": "Generate MCP Bot Server",
-              "users": ["Human", "Agile Bot", "MCP Bot Server Generator", "Bot Config"],
+              "users": [
+                "Human",
+                "MCP Bot Server Generator",
+                "Bot Config",
+                "Agile Bot"
+              ],
+              "sequential_order": 1.1,
               "Steps": [
                 "Human tells Bot to generate server",
                 "Agile Bot triggers MCP Bot Server Generator",
@@ -19,8 +38,21 @@
               ]
             },
             {
+              "name": "Drop Bot Builder Behavior into Chat",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 2
+            },
+            {
               "name": "Generate Bot Tools",
-              "users": ["MCP Bot Server Generator", "Bot Config", "MCP Bot Server"],
+              "users": [
+                "MCP Bot Server",
+                "Agile Bot",
+                "MCP Bot Server Generator",
+                "Bot Config"
+              ],
+              "sequential_order": 2.1,
               "Steps": [
                 "MCP Bot Server Generator reads Bot Config",
                 "MCP Bot Server Generator creates Bot Tool with trigger words in tool description docstring, and tool name",
@@ -28,8 +60,20 @@
               ]
             },
             {
+              "name": "Bot Scaffolding Created",
+              "users": [
+                "Agile Bot"
+              ],
+              "sequential_order": 3
+            },
+            {
               "name": "Generate Behavior Tools",
-              "users": ["MCP Bot Server Generator", "Bot Config", "MCP Bot Server"],
+              "users": [
+                "MCP Bot Server",
+                "MCP Bot Server Generator",
+                "Bot Config"
+              ],
+              "sequential_order": 3.1,
               "Steps": [
                 "MCP Bot Server Generator reads Bot Config",
                 "MCP Bot Server Generator creates Behavior Tool for each Bot Behavior with trigger words in tool description docstring, and tool name",
@@ -38,7 +82,12 @@
             },
             {
               "name": "Generate Behavior Action Tools",
-              "users": ["MCP Bot Server Generator", "Bot Config", "MCP Bot Server"],
+              "users": [
+                "MCP Bot Server",
+                "MCP Bot Server Generator",
+                "Bot Config"
+              ],
+              "sequential_order": 4,
               "Steps": [
                 "MCP Bot Server Generator reads Bot Config",
                 "MCP Bot Server Generator creates Behavior Action Tool for each Bot Behavior-Action combination with aggregated trigger words in tool description docstring, and tool name",
@@ -47,7 +96,11 @@
             },
             {
               "name": "Deploy MCP BOT Server",
-              "users": ["MCP Bot Server"],
+              "users": [
+                "MCP Bot Server",
+                "Bot Config"
+              ],
+              "sequential_order": 5,
               "Steps": [
                 "Bot MCP Server exposes Bot Tool via FastMCP",
                 "Bot MCP Server exposes Behavior Tools via FastMCP",
@@ -61,86 +114,61 @@
     },
     {
       "name": "Invoke MCP Bot Server",
-      "users": ["Human", "AI Chat", "MCP Bot Server", "Project", "Agile Bot"],
+      "users": [
+        "Human"
+      ],
+      "sequential_order": 2,
       "features": [
         {
-          "name": "New Project",
-          "users": ["Human", "AI Chat", "MCP Bot Server", "Project", "Project Bot State"],
+          "name": "Init Project",
+          "users": [
+            "Human"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
-              "name": "Human Triggers Agile Bot Tool for New",
-              "users": ["Human", "AI Chat", "MCP Bot Server", "Project"],
-              "Steps": [
-                "MCP Bot Server Intercept with a Project Check",
-                "Project Determines Project Location From Context",
-                "Project checks project_area parameter if provided in context (ex: \"C:\\dev\\augmented-teams\\agents\\base\")",
-                "Project stores project_area and bot_name",
-                "MCP Bot Server returns Project Location to AI for confirmation Instructions"
-              ]
-            },
-            {
-              "name": "Human Confirms Project Location",
-              "users": ["Human", "AI Chat", "Project"],
+              "name": "Shares Context and Project Location",
+              "users": [
+                "Project",
+                "Human",
+                "AI Chat"
+              ],
+              "sequential_order": 6,
               "Steps": [
                 "AI Chat presents discovered Project Location to Human",
                 "Human confirms or provides different Project Location"
               ]
             },
             {
-              "name": "Project Generates Project Scaffold",
-              "users": ["Project", "Project Bot State", "File System"],
-              "Steps": [
-                "Project creates project folder structure in project location",
-                "Project creates Bot activity subfolder (docs/activity/{bot_name}/)",
-                "Project Bot State stores Project Area and Bot Name to File System",
-                "MCP Bot Server Routes to MCP Tool based on trigger words"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Resume Existing Project",
-          "users": ["Human", "AI Chat", "MCP Bot Server", "Project", "Project Bot State"],
-          "stories": [
-            {
-              "name": "Human Triggers Agile Bot Tool for Existing",
-              "users": ["Human", "AI Chat", "MCP Bot Server", "Project"],
-              "Steps": [
-                "MCP Bot Server Intercept with a Project Check",
-                "Project validates project exists in current directory  (looks for Project Bot State files in folder)"
-              ]
+              "name": "Speaks Trigger Words For Project Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 6.1
             },
             {
-              "name": "Project Locates Existing Project Bot State",
-              "users": ["Project", "Project Bot State", "MCP Bot Server", "AI Chat"],
-              "Steps": [
-                "Project checks project_area parameter if provided in context (ex: \"C:\\dev\\augmented-teams\\agents\\base\")",
-                "Project checks current directory for Project Bot State files (docs/activity/{bot_name}/agent_state.json)",
-                "MCP Bot Server returns existing Project Location to AI for display purposes",
-                "MCP Bot Server Routes to MCP Tool based on trigger words"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Invoke Bot Tool",
-          "users": ["Human", "AI Chat", "MCP Bot Server", "Agile Bot", "Project", "Workflow State"],
-          "stories": [
-            {
-              "name": "Initialize Bot For Project",
-              "users": ["MCP Bot Server", "Agile Bot", "Project", "Bot Config", "Workflow"],
-              "Steps": [
-                "MCP Bot Server instantiates Bot if not done before",
-                "Agile Bot loads Workflow from Bot Config (ordered Behavior and Actions)",
-                "Agile Bot loads Project and tells it to initialize",
-                "Project now knows current Project and Workflow State",
-                "Agile Bot loads Behaviors from Bot Config",
-                "Agile Bot loads Action steps for each Behavior"
-              ]
+              "name": "Speaks Trigger Words For Bot Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 6.2
             },
             {
-              "name": "Invoke Bot Behavior Action Tool",
-              "users": ["Human", "AI Chat", "MCP Bot Server", "Behavior Action Tool"],
+              "name": "Speaks Trigger Words For Bot Behavior Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 6.3
+            },
+            {
+              "name": "Speaks Trigger Words For Bot Behavior Action Tool",
+              "users": [
+                "Behavior Action Tool",
+                "Human",
+                "AI Chat",
+                "MCP Bot Server"
+              ],
+              "sequential_order": 6.4,
               "Steps": [
                 "Human speaks to AI Chat with trigger words including Bot Behavior and Bot Action (ex: \"start shaping for project xx\"), including context",
                 "AI Chat detects trigger words and routes to Behavior Action Tool via Bot MCP Server",
@@ -148,8 +176,140 @@
               ]
             },
             {
-              "name": "Invoke Behavior Tool",
-              "users": ["Human", "AI Chat", "MCP Bot Server", "Behavior Tool"],
+              "name": "AI  Route To Project Tool",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 7
+            },
+            {
+              "name": "Injects Project  Move Instructions",
+              "users": [
+                "Project Tool"
+              ],
+              "sequential_order": 8.1
+            },
+            {
+              "name": "Injects Project  Folder Create Instructions",
+              "users": [
+                "Project Tool"
+              ],
+              "sequential_order": 8.2
+            },
+            {
+              "name": "Generates Project Scaffold",
+              "users": [
+                "File System",
+                "Project",
+                "Project Tool",
+                "BotProject",
+                "Project Bot State"
+              ],
+              "sequential_order": 8.3,
+              "Steps": [
+                "Project creates project folder structure in project location",
+                "Project creates Bot activity subfolder (docs/activity/{bot_name}/)",
+                "Project Bot State stores Project Area and Bot Name to File System",
+                "MCP Bot Server Routes to MCP Tool based on trigger words"
+              ]
+            },
+            {
+              "name": "Confirm Location",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 9
+            },
+            {
+              "name": "Create Project Folder",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 10
+            },
+            {
+              "name": "Move to Project",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 10.1
+            },
+            {
+              "name": "Speaks Trigger Words For Bot Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 12.1
+            }
+          ]
+        },
+        {
+          "name": "Invoke Bot Tool",
+          "users": [
+            "Human"
+          ],
+          "sequential_order": 2,
+          "stories": [
+            {
+              "name": "Drops Behavior Folder in Chat w/ relevant Bot Config",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 12
+            },
+            {
+              "name": "Speaks Trigger Words For Bot Behavior Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 12.2
+            },
+            {
+              "name": "Speaks Trigger Words For Bot Behavior Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 12.3
+            },
+            {
+              "name": "Speaks Trigger Words For Bot Behavior Action Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 12.4
+            },
+            {
+              "name": "Speaks Trigger Words For Bot Behavior Action Tool",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 12.5
+            },
+            {
+              "name": "AI  Route To MCP BotTool",
+              "users": [
+                "Bot Tool",
+                "Human",
+                "AI Chat",
+                "MCP Bot Server",
+                "Workflow State"
+              ],
+              "sequential_order": 13,
+              "Steps": [
+                "Human speaks to AI Chat with trigger words for Bot but no Bot Behavior (ex: \"start stories for project xx\"), including context",
+                "AI Chat detects trigger words and routes to Bot Tool via Bot MCP Server",
+                "Bot Tool receives invocation with context and determines active Bot Behavior from Workflow State"
+              ]
+            },
+            {
+              "name": "Route To MCP Behavior  Tool",
+              "users": [
+                "Human",
+                "AI Chat",
+                "Behavior Tool",
+                "MCP Bot Server"
+              ],
+              "sequential_order": 13.1,
               "Steps": [
                 "Human speaks to AI Chat with trigger words including Bot Behavior but no Bot Action (ex: \"start stories for project xx\"), including context",
                 "AI Chat routes request to Behavior Tool via Bot MCP Server",
@@ -158,37 +318,121 @@
               ]
             },
             {
-              "name": "Invoke Bot Tool",
-              "users": ["Human", "AI Chat", "MCP Bot Server", "Bot Tool", "Workflow State"],
-              "Steps": [
-                "Human speaks to AI Chat with trigger words for Bot but no Bot Behavior (ex: \"start stories for project xx\"), including context",
-                "AI Chat detects trigger words and routes to Bot Tool via Bot MCP Server",
-                "Bot Tool receives invocation with context and determines active Bot Behavior from Workflow State"
-              ]
+              "name": "Route To Behavior and  Action",
+              "users": [
+                "Bot Tool"
+              ],
+              "sequential_order": 14
             },
             {
-              "name": "Bot Tool Determines Active Step To Invoke",
-              "users": ["Bot Tool", "Project", "Workflow", "Workflow State"],
-              "Steps": [
-                "Bot Tool asks Bot Project if current action is done",
-                "Bot Tool asks Bot Project to move to next Workflow step (Behavior or Action)",
-                "Project determines next Behavior or Action from Workflow",
-                "If no next action in current behavior, moves to next behavior",
-                "If no next behavior, workflow is complete",
-                "Project stores updated Workflow State to File System",
-                "Bot sets current step to Behavior-Action"
-              ]
+              "name": "Invokes Correct Behavior Action (We Hope)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 15
             },
             {
-              "name": "Requests Project State",
-              "users": ["Human", "AI Chat", "MCP Bot Server", "Project State Tool", "Project"],
-              "Steps": [
-                "Human asks for project state via AI Chat",
-                "AI Chat detects request and routes to Project State Tool via Bot MCP Server",
-                "Project State Tool routes to Bot Project which gets Bot Project State and Workflow State",
-                "Project State Tool returns current state (project_area, bot_name, current_behavior, current_action) to AI Chat",
-                "AI Chat presents project state information to Human"
-              ]
+              "name": "Route To Action",
+              "users": [
+                "Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 15.1
+            },
+            {
+              "name": "Routes To Behavior Action",
+              "users": [
+                "Behavior Action Tool"
+              ],
+              "sequential_order": 16
+            },
+            {
+              "name": "Invoke Action In Behavior",
+              "users": [
+                "BotBehavior"
+              ],
+              "sequential_order": 17
+            }
+          ]
+        },
+        {
+          "name": "Perform Behavior Action",
+          "users": [
+            "BotBehavior"
+          ],
+          "sequential_order": 3,
+          "stories": [
+            {
+              "name": "Injects Instructions",
+              "users": [
+                "BotBehavior"
+              ],
+              "sequential_order": 18
+            },
+            {
+              "name": "Folllows Instructionsfrom Folder configs (We Hope)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 20
+            },
+            {
+              "name": "Inject Next behavor-Action to Instructions",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 20.1
+            },
+            {
+              "name": "Correct, Feedback, Proceed",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 21
+            },
+            {
+              "name": "Proceeds to Instructionsfrom next Action in Folder (We Hope)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 22
+            },
+            {
+              "name": "Folllows Injected Instructions",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 22.1
+            },
+            {
+              "name": "Submit Content Changes to Tools for Saving",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 22.2
+            },
+            {
+              "name": "Calls Next MCP Behavior Action Tool",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 23
+            },
+            {
+              "name": "Saves Content",
+              "users": [
+                "Bot Behavior",
+                "AI Chat"
+              ],
+              "sequential_order": 23.1
+            },
+            {
+              "name": "Saves Behavior State",
+              "users": [
+                "Bot Behavior",
+                "AI Chat"
+              ],
+              "sequential_order": 24
             }
           ]
         }
@@ -196,646 +440,1001 @@
     },
     {
       "name": "Execute Behavior Actions",
-      "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior Content"],
+      "users": [
+        "AI Chat",
+        "Project Tool"
+      ],
+      "sequential_order": 3,
       "features": [
         {
-          "name": "Initialize Project Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow"],
+          "name": "Gather Context",
+          "users": [
+            "AI Chat",
+            "Gather Context Behavor Tool"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
-              "name": "Human Provides Input for Initialize Project",
-              "users": ["Human"],
+              "name": "Displays Gather Context Instructions (we hope)",
+              "users": [
+                "Action",
+                "AI Chat"
+              ],
+              "sequential_order": 25,
               "Steps": []
             },
             {
-              "name": "MCP Tool Invokes Initialize Project Action",
-              "users": ["MCP Tool", "Action"],
+              "name": "Injects Gather Context Instructions",
+              "users": [
+                "AI Chat",
+                "Gather Context Behavor Tool"
+              ],
+              "sequential_order": 25.1
+            },
+            {
+              "name": "RetrievesQuestiins And Evidence from Chat(hope)",
+              "users": [
+                "AI Chat",
+                "Gather Context Behavor Tool"
+              ],
+              "sequential_order": 26
+            },
+            {
+              "name": "Loads Questions and Evidence",
+              "users": [
+                "Gather Context Behavor"
+              ],
+              "sequential_order": 26.1
+            },
+            {
+              "name": "Answers Questions and Evidence from Context (hope)",
+              "users": [
+                "AI Chat",
+                "Gather Context Behavor"
+              ],
+              "sequential_order": 27,
               "Steps": []
             },
             {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
+              "name": "Answers Questions and Evidence from Context",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 27.1
+            },
+            {
+              "name": "Pauses we hope",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 28
+            },
+            {
+              "name": "Pauses",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 28.1
+            },
+            {
+              "name": "Correct, Feedback, Proceed",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 29
+            },
+            {
+              "name": "Submit Answers and Evidence to Tools for Saving",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 29.1
+            },
+            {
+              "name": "Updates Final Answers and Evidence (hope)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 30
+            },
+            {
+              "name": "Updates Final Answers and Evidence",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 30.1
+            },
+            {
+              "name": "Calls Behavior Planning Tool",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 31,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
-              "Steps": []
+              "name": "Saves Answers and Evidence",
+              "users": [
+                "Gather Context Tool"
+              ],
+              "sequential_order": 31.1
             },
             {
-              "name": "Project Validates or Determines Project Location",
-              "users": ["Project"],
-              "Steps": []
-            },
-            {
-              "name": "Action Accesses Initialize Project Instructions Template",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Generates Instructions with Project Area Confirmation",
-              "users": ["Action", "Project"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Receives Instructions and Presents Project Area to Human",
-              "users": ["AI Chat", "Human", "Project"],
-              "Steps": []
-            },
-            {
-              "name": "Human Confirms or Provides Project Location",
-              "users": ["Human", "Project"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Calls Agent Store Method with Project Area",
-              "users": ["AI Chat", "Project"],
-              "Steps": []
-            },
-            {
-              "name": "Project Updates Project Area and Creates Directory Structure",
-              "users": ["Project"],
-              "Steps": []
-            },
-            {
-              "name": "Project Saves Project Area to Agent State File",
-              "users": ["Project"],
-              "Steps": []
-            },
-            {
-              "name": "Project Tracks Activity for Initialize Project Action",
-              "users": ["Project"],
-              "Steps": []
-            }
-          ]
-        },
-        {
-          "name": "Gather Context Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior"],
-          "stories": [
-            {
-              "name": "Human Provides Input for Gather Context",
-              "users": ["Human"],
-              "Steps": []
-            },
-            {
-              "name": "MCP Tool Invokes Gather Context Action",
-              "users": ["MCP Tool", "Action"],
-              "Steps": []
-            },
-            {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
-              "Steps": []
-            },
-            {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
-              "Steps": []
-            },
-            {
-              "name": "Behavior Accesses GuardRails Required Context Configuration",
-              "users": ["Behavior"],
-              "Steps": []
-            },
-            {
-              "name": "Action Accesses Gather Context Instructions Template",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Loads Key Questions from GuardRails Configuration",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Loads Evidence Requirements from GuardRails Configuration",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Generates Instructions with Key Questions and Evidence",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Receives Instructions and Reviews Available Context",
-              "users": ["AI Chat"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Answers Key Questions Based on Context",
-              "users": ["AI Chat"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Presents Questions and Answers to Human",
-              "users": ["AI Chat", "Human"],
-              "Steps": []
-            },
-            {
-              "name": "Human Reviews and Confirms or Corrects Answers",
-              "users": ["Human"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Calls Agent Store Clarification Method",
-              "users": ["AI Chat"],
-              "Steps": []
-            },
-            {
-              "name": "Project Stores Clarification Data to File System",
-              "users": ["Project", "File System"],
-              "Steps": []
-            },
-            {
-              "name": "Project Tracks Activity for Gather Context Action",
-              "users": ["Project"],
-              "Steps": []
+              "name": "Proceeds to follow planning (we Hope)",
+              "users": [
+                "Gather Context Tool"
+              ],
+              "sequential_order": 32
             }
           ]
         },
         {
           "name": "Decide Planning Criteria Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior"],
+          "users": [
+            "BotProject"
+          ],
+          "sequential_order": 2,
           "stories": [
             {
-              "name": "Human Provides Input for Decide Planning Criteria",
-              "users": ["Human"],
+              "name": "Loads Next Behavior and Action from Workflow State",
+              "users": [
+                "Workflow",
+                "BotProject",
+                "Agile Bot",
+                "Workflow State",
+                "Action"
+              ],
+              "sequential_order": 19,
               "Steps": []
             },
             {
-              "name": "MCP Tool Invokes Decide Planning Criteria Action",
-              "users": ["MCP Tool", "Action"],
+              "name": "Displays Planning Instructions from Conffig (we hope)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 33
+            },
+            {
+              "name": "Injects Planning Instructions",
+              "users": [
+                "MCP Tool",
+                "Planning Behavior Tool",
+                "Action",
+                "AI Chat"
+              ],
+              "sequential_order": 33.1,
               "Steps": []
             },
             {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
+              "name": "Retrieves Decsion Criteria and Evidence Frm Chat",
+              "users": [
+                "Human",
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 34,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
+              "name": "Loads Decsion Criteria and Evidence",
+              "users": [
+                "Planning Behavior",
+                "Action"
+              ],
+              "sequential_order": 34.1,
               "Steps": []
             },
             {
-              "name": "Behavior Accesses GuardRails Planning Configuration",
-              "users": ["Behavior"],
+              "name": "Makes Assumptions and Decisions from Context (hope)",
+              "users": [
+                "Planning Behavior",
+                "Human"
+              ],
+              "sequential_order": 35,
               "Steps": []
             },
             {
-              "name": "Action Loads Clarification Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Makes Assumptions and Decisions from Context",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 35.1
+            },
+            {
+              "name": "Pauses we hope",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 36
+            },
+            {
+              "name": "Pauses",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 36.1
+            },
+            {
+              "name": "Correct, Feedback, Proceed",
+              "users": [
+                "Human"
+              ],
+              "sequential_order": 37
+            },
+            {
+              "name": "Updates Assumpions and Decisions (hopr)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 38
+            },
+            {
+              "name": "Updates Assumpions and Decisions",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 38.1
+            },
+            {
+              "name": "Submits Final Assumptions andDecsions",
+              "users": [
+                "Action",
+                "AI Chat"
+              ],
+              "sequential_order": 38.2,
               "Steps": []
             },
             {
-              "name": "Action Loads Previous Planning Data from Project",
-              "users": ["Action", "Project"],
-              "Steps": []
+              "name": "Proceeds to follow planning (we Hope)",
+              "users": [
+                "AI Chat"
+              ],
+              "sequential_order": 39
             },
             {
-              "name": "Action Accesses Decide Planning Criteria Instructions Template",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Loads Typical Assumptions from GuardRails Configuration",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Loads Decision Criteria from GuardRails Configuration",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "Action Generates Instructions with Assumptions and Decision Criteria",
-              "users": ["Action"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Receives Instructions and Presents Assumptions to Human",
-              "users": ["AI Chat", "Human"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Presents Decision Criteria Options to Human",
-              "users": ["AI Chat", "Human"],
-              "Steps": []
-            },
-            {
-              "name": "Human Reviews Assumptions and Selects Decision Criteria Options",
-              "users": ["Human"],
-              "Steps": []
-            },
-            {
-              "name": "AI Chat Calls Agent Store Planning Method",
-              "users": ["AI Chat"],
-              "Steps": []
-            },
-            {
-              "name": "Project Stores Planning Data to File System",
-              "users": ["Project", "File System"],
-              "Steps": []
-            },
-            {
-              "name": "Project Tracks Activity for Decide Planning Criteria Action",
-              "users": ["Project"],
-              "Steps": []
+              "name": "Saves Final Assumptions  and Decisions",
+              "users": [
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 39.1
             }
           ]
         },
         {
-          "name": "Build Knowledge Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior", "Behavior Content", "Bot Config"],
+          "name": "Build Knowledge",
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 3,
           "stories": [
             {
-              "name": "Human Provides Input for Build Knowledge",
-              "users": ["Human"],
+              "name": "Provides Input for Build Knowledge",
+              "users": [
+                "Human",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 40,
               "Steps": []
             },
             {
-              "name": "MCP Tool Invokes Build Knowledge Action",
-              "users": ["MCP Tool", "Action"],
+              "name": "Invokes Build Knowledge Action",
+              "users": [
+                "MCP Tool",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 41,
               "Steps": []
             },
             {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
+              "name": "Intercepts Tool Call With Project Check",
+              "users": [
+                "Project",
+                "MCP Bot Server",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 42,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
+              "name": "Loads Behavior and Action from Workflow State",
+              "users": [
+                "Workflow",
+                "Workflow State",
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 43,
               "Steps": []
             },
             {
-              "name": "Behavior Accesses Content Configuration",
-              "users": ["Behavior"],
+              "name": "Accesses Content Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 44,
               "Steps": []
             },
             {
-              "name": "Action Loads Clarification Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 45,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 46,
               "Steps": []
             },
             {
-              "name": "Action Loads Agent Rules from Bot Config",
-              "users": ["Action", "Bot Config"],
+              "name": "Loads Agent Rules from Bot Config",
+              "users": [
+                "Planning Behavior Tool",
+                "Action",
+                "Bot Config"
+              ],
+              "sequential_order": 47,
               "Steps": []
             },
             {
-              "name": "Action Loads Behavior Rules from Behavior Configuration",
-              "users": ["Action", "Behavior"],
+              "name": "Loads Behavior Rules from Behavior Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 48,
               "Steps": []
             },
             {
-              "name": "Action Accesses Build Knowledge Instructions Template",
-              "users": ["Action"],
+              "name": "Accesses Build Knowledge Instructions Template",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 49,
               "Steps": []
             },
             {
-              "name": "Action Accesses Structured Content Schema from Content Configuration",
-              "users": ["Action"],
+              "name": "Accesses Structured Content Schema from Content Configuration",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 50,
               "Steps": []
             },
             {
-              "name": "Action Accesses Builder Method Reference from Content Configuration",
-              "users": ["Action"],
+              "name": "Accesses Builder Method Reference from Content Configuration",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 51,
               "Steps": []
             },
             {
-              "name": "Action Generates Instructions with Rules Schema and Builder",
-              "users": ["Action"],
+              "name": "Generates Instructions with Rules Schema and Builder",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 52,
               "Steps": []
             },
             {
-              "name": "AI Chat Receives Instructions and Generates Structured Content",
-              "users": ["AI Chat"],
+              "name": "Receives Instructions and Generates Structured Content",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 53,
               "Steps": []
             },
             {
-              "name": "AI Chat Calls Agent Store Method with Structured Content",
-              "users": ["AI Chat"],
+              "name": "Calls Agent Store Method with Structured Content",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 54,
               "Steps": []
             },
             {
-              "name": "Behavior Content Stores Structured Content",
-              "users": ["Behavior Content"],
+              "name": "Stores Structured Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 55,
               "Steps": []
             },
             {
-              "name": "Project Stores Structured Content to File System",
-              "users": ["Project", "File System"],
+              "name": "Stores Structured Content to File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 56,
               "Steps": []
             },
             {
-              "name": "Project Creates Traceability Link",
-              "users": ["Project"],
+              "name": "Creates Traceability Link",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 57,
               "Steps": []
             },
             {
-              "name": "Project Tracks Activity for Build Knowledge Action",
-              "users": ["Project"],
+              "name": "Tracks Activity for Build Knowledge Action",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 58,
               "Steps": []
             }
           ]
         },
         {
           "name": "Render Output Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior", "Behavior Content"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 4,
           "stories": [
             {
-              "name": "Human Provides Input for Render Output",
-              "users": ["Human"],
+              "name": "Provides Input for Render Output",
+              "users": [
+                "Human",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 59,
               "Steps": []
             },
             {
-              "name": "MCP Tool Invokes Render Output Action",
-              "users": ["MCP Tool", "Action"],
+              "name": "Invokes Render Output Action",
+              "users": [
+                "MCP Tool",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 60,
               "Steps": []
             },
             {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
+              "name": "Intercepts Tool Call With Project Check",
+              "users": [
+                "Project",
+                "MCP Bot Server",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 61,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
+              "name": "Loads Behavior and Action from Workflow State",
+              "users": [
+                "Workflow",
+                "Workflow State",
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 62,
               "Steps": []
             },
             {
-              "name": "Behavior Accesses Content Configuration",
-              "users": ["Behavior"],
+              "name": "Accesses Content Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 63,
               "Steps": []
             },
             {
-              "name": "Action Loads Clarification Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 64,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 65,
               "Steps": []
             },
             {
-              "name": "Action Loads Structured Content from Behavior Content",
-              "users": ["Action", "Behavior Content"],
+              "name": "Loads Structured Content from Behavior Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 66,
               "Steps": []
             },
             {
-              "name": "Action Accesses Render Output Instructions Template",
-              "users": ["Action"],
+              "name": "Accesses Render Output Instructions Template",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 67,
               "Steps": []
             },
             {
-              "name": "Action Accesses Output Templates from Content Configuration",
-              "users": ["Action"],
+              "name": "Accesses Output Templates from Content Configuration",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 68,
               "Steps": []
             },
             {
-              "name": "Action Accesses Transformer Method References from Content Configuration",
-              "users": ["Action"],
+              "name": "Accesses Transformer Method References from Content Configuration",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 69,
               "Steps": []
             },
             {
-              "name": "Action Executes Output Builders if Configured",
-              "users": ["Action"],
+              "name": "Executes Output Builders if Configured",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 70,
               "Steps": []
             },
             {
-              "name": "Action Generates Instructions with Templates and Transformers",
-              "users": ["Action"],
+              "name": "Generates Instructions with Templates and Transformers",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 71,
               "Steps": []
             },
             {
-              "name": "AI Chat Receives Instructions and Transforms Structured Content",
-              "users": ["AI Chat"],
+              "name": "Receives Instructions and Transforms Structured Content",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 72,
               "Steps": []
             },
             {
-              "name": "AI Chat Calls Agent Store Method with Rendered Content",
-              "users": ["AI Chat"],
+              "name": "Calls Agent Store Method with Rendered Content",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 73,
               "Steps": []
             },
             {
-              "name": "Behavior Content Stores Rendered Content",
-              "users": ["Behavior Content"],
+              "name": "Stores Rendered Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 74,
               "Steps": []
             },
             {
-              "name": "Project Stores Rendered Content to File System",
-              "users": ["Project", "File System"],
+              "name": "Stores Rendered Content to File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 75,
               "Steps": []
             },
             {
-              "name": "Project Creates Traceability Link",
-              "users": ["Project"],
+              "name": "Creates Traceability Link",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 76,
               "Steps": []
             },
             {
-              "name": "Project Tracks Activity for Render Output Action",
-              "users": ["Project"],
+              "name": "Tracks Activity for Render Output Action",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 77,
               "Steps": []
             }
           ]
         },
         {
           "name": "Validate Rules Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior", "Behavior Content", "Bot Config"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 5,
           "stories": [
             {
-              "name": "Human Provides Input for Validate Rules",
-              "users": ["Human"],
+              "name": "Provides Input for Validate Rules",
+              "users": [
+                "Human",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 78,
               "Steps": []
             },
             {
-              "name": "MCP Tool Invokes Validate Rules Action",
-              "users": ["MCP Tool", "Action"],
+              "name": "Invokes Validate Rules Action",
+              "users": [
+                "MCP Tool",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 79,
               "Steps": []
             },
             {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
+              "name": "Intercepts Tool Call With Project Check",
+              "users": [
+                "Project",
+                "MCP Bot Server",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 80,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
+              "name": "Loads Behavior and Action from Workflow State",
+              "users": [
+                "Workflow",
+                "Workflow State",
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 81,
               "Steps": []
             },
             {
-              "name": "Behavior Accesses Rules Configuration",
-              "users": ["Behavior"],
+              "name": "Accesses Rules Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 82,
               "Steps": []
             },
             {
-              "name": "Action Loads Clarification Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 83,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 84,
               "Steps": []
             },
             {
-              "name": "Action Loads Structured Content from Behavior Content",
-              "users": ["Action", "Behavior Content"],
+              "name": "Loads Structured Content from Behavior Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 85,
               "Steps": []
             },
             {
-              "name": "Action Loads Rendered Content from Behavior Content",
-              "users": ["Action", "Behavior Content"],
+              "name": "Loads Rendered Content from Behavior Content",
+              "users": [
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 86
+            },
+            {
+              "name": "Loads Agent Rules from Bot Config",
+              "users": [
+                "Planning Behavior Tool",
+                "Action",
+                "Bot Config"
+              ],
+              "sequential_order": 87,
               "Steps": []
             },
             {
-              "name": "Action Loads Agent Rules from Bot Config",
-              "users": ["Action", "Bot Config"],
+              "name": "Loads Behavior Rules from Behavior Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 88,
               "Steps": []
             },
             {
-              "name": "Action Loads Behavior Rules from Behavior Configuration",
-              "users": ["Action", "Behavior"],
+              "name": "Executes Code Diagnostics for Violations",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 89,
               "Steps": []
             },
             {
-              "name": "Action Executes Code Diagnostics for Violations",
-              "users": ["Action"],
+              "name": "Accesses Validate Rules Instructions Template",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 90,
               "Steps": []
             },
             {
-              "name": "Action Accesses Validate Rules Instructions Template",
-              "users": ["Action"],
+              "name": "Generates Instructions with Rules Examples and Violations",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 91,
               "Steps": []
             },
             {
-              "name": "Action Generates Instructions with Rules Examples and Violations",
-              "users": ["Action"],
+              "name": "Receives Instructions and Evaluates Content Against Rules",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 92,
               "Steps": []
             },
             {
-              "name": "AI Chat Receives Instructions and Evaluates Content Against Rules",
-              "users": ["AI Chat"],
+              "name": "Generates Validation Report",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 93,
               "Steps": []
             },
             {
-              "name": "AI Chat Generates Validation Report",
-              "users": ["AI Chat"],
+              "name": "Presents Validation Report to Human",
+              "users": [
+                "Human",
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 94,
               "Steps": []
             },
             {
-              "name": "AI Chat Presents Validation Report to Human",
-              "users": ["AI Chat", "Human"],
-              "Steps": []
-            },
-            {
-              "name": "Project Tracks Activity for Validate Rules Action",
-              "users": ["Project"],
+              "name": "Tracks Activity for Validate Rules Action",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 95,
               "Steps": []
             }
           ]
         },
         {
           "name": "Correct Bot Action",
-          "users": ["Human", "AI Chat", "MCP Tool", "MCP Bot Server", "Agile Bot", "Project", "Action", "Workflow State", "Workflow", "Behavior", "Behavior Content"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 6,
           "stories": [
             {
-              "name": "Human Provides Input for Correct Bot",
-              "users": ["Human"],
+              "name": "Provides Input for Correct Bot",
+              "users": [
+                "Human",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 96,
               "Steps": []
             },
             {
-              "name": "MCP Tool Invokes Correct Bot Action",
-              "users": ["MCP Tool", "Action"],
+              "name": "Invokes Correct Bot Action",
+              "users": [
+                "MCP Tool",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 97,
               "Steps": []
             },
             {
-              "name": "MCP Bot Server Intercepts Tool Call With Project Check",
-              "users": ["MCP Bot Server", "Project"],
+              "name": "Intercepts Tool Call With Project Check",
+              "users": [
+                "Project",
+                "MCP Bot Server",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 98,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behavior and Action from Workflow State",
-              "users": ["Agile Bot", "Workflow State", "Workflow", "Action"],
+              "name": "Loads Behavior and Action from Workflow State",
+              "users": [
+                "Workflow",
+                "Workflow State",
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 99,
               "Steps": []
             },
             {
-              "name": "Behavior Accesses Rules Configuration",
-              "users": ["Behavior"],
+              "name": "Accesses Rules Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 100,
               "Steps": []
             },
             {
-              "name": "Action Loads Clarification Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 101,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 102,
               "Steps": []
             },
             {
-              "name": "Action Loads Validation Violations from Previous Action",
-              "users": ["Action"],
+              "name": "Loads Validation Violations from Previous Action",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 103,
               "Steps": []
             },
             {
-              "name": "Action Loads User Feedback from Context",
-              "users": ["Action"],
+              "name": "Loads User Feedback from Context",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 104,
               "Steps": []
             },
             {
-              "name": "Action Loads Original Content from Behavior Content",
-              "users": ["Action", "Behavior Content"],
+              "name": "Loads Original Content from Behavior Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 105,
               "Steps": []
             },
             {
-              "name": "Action Accesses Correct Bot Instructions Template",
-              "users": ["Action"],
+              "name": "Accesses Correct Bot Instructions Template",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 106,
               "Steps": []
             },
             {
-              "name": "Action Generates Instructions with Violations and Feedback",
-              "users": ["Action"],
+              "name": "Generates Instructions with Violations and Feedback",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 107,
               "Steps": []
             },
             {
-              "name": "AI Chat Receives Instructions and Applies Corrections",
-              "users": ["AI Chat"],
+              "name": "Receives Instructions and Applies Corrections",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 108,
               "Steps": []
             },
             {
-              "name": "AI Chat Calls Agent Store Method with Corrected Content",
-              "users": ["AI Chat"],
+              "name": "Calls Agent Store Method with Corrected Content",
+              "users": [
+                "Planning Behavior Tool",
+                "AI Chat"
+              ],
+              "sequential_order": 109,
               "Steps": []
             },
             {
-              "name": "Behavior Content Stores Corrected Content",
-              "users": ["Behavior Content"],
+              "name": "Stores Corrected Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 110,
               "Steps": []
             },
             {
-              "name": "Project Stores Corrected Content to File System",
-              "users": ["Project", "File System"],
+              "name": "Stores Corrected Content to File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 111,
               "Steps": []
             },
             {
-              "name": "Project Creates Traceability Link",
-              "users": ["Project"],
+              "name": "Creates Traceability Link",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 112,
               "Steps": []
             },
             {
-              "name": "Project Tracks Activity for Correct Bot Action",
-              "users": ["Project"],
+              "name": "Tracks Activity for Correct Bot Action",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 113,
               "Steps": []
             }
           ]
@@ -844,72 +1443,133 @@
     },
     {
       "name": "Manage Workflow State",
-      "users": ["Bot Tool", "Behavior Tool", "Behavior Action Tool", "Project", "Workflow State", "Workflow"],
+      "users": [
+        "Planning Behavior Tool"
+      ],
+      "sequential_order": 4,
       "features": [
         {
           "name": "Determine Active Behavior and Action",
-          "users": ["Bot Tool", "Behavior Tool", "Behavior Action Tool", "Workflow State", "Workflow"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
-              "name": "Bot Tool Determines Active Behavior from Workflow State",
-              "users": ["Bot Tool", "Workflow State"],
+              "name": "Determines Active Behavior from Workflow State",
+              "users": [
+                "Bot Tool",
+                "Workflow State",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 114,
               "Steps": []
             },
             {
-              "name": "Behavior Tool Determines Active or Next Action from Workflow State",
-              "users": ["Behavior Tool", "Workflow State", "Workflow"],
+              "name": "Determines Active or Next Action from Workflow State",
+              "users": [
+                "Behavior Tool",
+                "Workflow State",
+                "Workflow",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 115,
               "Steps": []
             },
             {
-              "name": "Behavior Action Tool Uses Specific Behavior and Action from Context",
-              "users": ["Behavior Action Tool"],
+              "name": "Uses Specific Behavior and Action from Context",
+              "users": [
+                "Behavior Action Tool",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 116,
               "Steps": []
             }
           ]
         },
         {
           "name": "Validate Workflow State",
-          "users": ["Bot Tool", "Project", "Workflow State"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 2,
           "stories": [
             {
-              "name": "Bot Tool Validates Current Action is Complete",
-              "users": ["Bot Tool", "Action"],
+              "name": "Validates Current Action is Complete",
+              "users": [
+                "Bot Tool",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 117,
               "Steps": []
             },
             {
-              "name": "Project Checks if Action Can Advance",
-              "users": ["Project", "Action"],
+              "name": "Checks if Action Can Advance",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 118,
               "Steps": []
             },
             {
-              "name": "Project Checks if Behavior Can Advance",
-              "users": ["Project", "Behavior"],
+              "name": "Checks if Behavior Can Advance",
+              "users": [
+                "Project",
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 119,
               "Steps": []
             }
           ]
         },
         {
           "name": "Transition Workflow State",
-          "users": ["Bot Tool", "Project", "Workflow State", "Workflow"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 3,
           "stories": [
             {
-              "name": "Bot Tool Moves to Next Action if Current Action Done",
-              "users": ["Bot Tool", "Workflow"],
+              "name": "Moves to Next Action if Current Action Done",
+              "users": [
+                "Bot Tool",
+                "Workflow",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 120,
               "Steps": []
             },
             {
-              "name": "Bot Tool Moves to Next Behavior if Current Behavior Done",
-              "users": ["Bot Tool", "Workflow"],
+              "name": "Moves to Next Behavior if Current Behavior Done",
+              "users": [
+                "Bot Tool",
+                "Workflow",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 121,
               "Steps": []
             },
             {
-              "name": "Project Updates Workflow State in File System",
-              "users": ["Project", "File System"],
+              "name": "Updates Workflow State in File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 122,
               "Steps": []
             },
             {
-              "name": "Project Saves Workflow State to Agent State File",
-              "users": ["Project"],
+              "name": "Saves Workflow State to Agent State File",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 123,
               "Steps": []
             }
           ]
@@ -918,83 +1578,144 @@
     },
     {
       "name": "Manage Project State",
-      "users": ["Project", "Project Bot State", "File System"],
+      "users": [
+        "Planning Behavior Tool"
+      ],
+      "sequential_order": 5,
       "features": [
         {
           "name": "Store Project State",
-          "users": ["Project", "Project Bot State"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
-              "name": "Project Stores Project Area to Agent State File",
-              "users": ["Project"],
+              "name": "Stores Project Area to Agent State File",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 124,
               "Steps": []
             },
             {
-              "name": "Project Stores Bot Name to Agent State File",
-              "users": ["Project"],
+              "name": "Stores Bot Name to Agent State File",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 125,
               "Steps": []
             },
             {
-              "name": "Project Stores Activity Area to Agent State File",
-              "users": ["Project"],
+              "name": "Stores Activity Area to Agent State File",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 126,
               "Steps": []
             }
           ]
         },
         {
           "name": "Store Workflow State",
-          "users": ["Project", "Workflow State"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 2,
           "stories": [
             {
-              "name": "Project Stores Current Behavior Name to Workflow State File",
-              "users": ["Project", "Workflow State"],
+              "name": "Stores Current Behavior Name to Workflow State File",
+              "users": [
+                "Project",
+                "Workflow State",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 127,
               "Steps": []
             },
             {
-              "name": "Project Stores Current Action Name to Workflow State File",
-              "users": ["Project", "Workflow State"],
-              "Steps": []
+              "name": "Stores Current Action Name to Workflow State File",
+              "users": [
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 128
             }
           ]
         },
         {
           "name": "Store Activity Data",
-          "users": ["Project"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 3,
           "stories": [
             {
-              "name": "Project Tracks Activity with Status and Behavior Name",
-              "users": ["Project"],
+              "name": "Tracks Activity with Status and Behavior Name",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 129,
               "Steps": []
             },
             {
-              "name": "Project Creates Activity Entry in Activity Log",
-              "users": ["Project"],
+              "name": "Creates Activity Entry in Activity Log",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 130,
               "Steps": []
             },
             {
-              "name": "Project Saves Activity Log to File System",
-              "users": ["Project", "File System"],
+              "name": "Saves Activity Log to File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 131,
               "Steps": []
             }
           ]
         },
         {
           "name": "Store Output Data",
-          "users": ["Project", "File System"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 4,
           "stories": [
             {
-              "name": "Project Stores Structured Content to File System",
-              "users": ["Project", "File System"],
+              "name": "Stores Structured Content to File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 132,
               "Steps": []
             },
             {
-              "name": "Project Stores Rendered Content to File System",
-              "users": ["Project", "File System"],
+              "name": "Stores Rendered Content to File System",
+              "users": [
+                "Project",
+                "File System",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 133,
               "Steps": []
             },
             {
-              "name": "Project Creates Traceability Links Between Activity and Output",
-              "users": ["Project"],
+              "name": "Creates Traceability Links Between Activity and Output",
+              "users": [
+                "Project",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 134,
               "Steps": []
             }
           ]
@@ -1003,108 +1724,198 @@
     },
     {
       "name": "Load Configuration",
-      "users": ["Agile Bot", "Bot Config", "Behavior", "Action"],
+      "users": [
+        "Planning Behavior Tool"
+      ],
+      "sequential_order": 6,
       "features": [
         {
           "name": "Load Bot Config",
-          "users": ["Agile Bot", "Bot Config"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
-              "name": "Agile Bot Loads Bot Config from Agent JSON File",
-              "users": ["Agile Bot", "Bot Config"],
+              "name": "Loads Bot Config from Agent JSON File",
+              "users": [
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Bot Config"
+              ],
+              "sequential_order": 135,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Behaviors from Bot Config",
-              "users": ["Agile Bot", "Bot Config"],
+              "name": "Loads Behaviors from Bot Config",
+              "users": [
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Bot Config"
+              ],
+              "sequential_order": 136,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Agent Rules from Bot Config",
-              "users": ["Agile Bot", "Bot Config"],
+              "name": "Loads Agent Rules from Bot Config",
+              "users": [
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Bot Config"
+              ],
+              "sequential_order": 137,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Trigger Words from Bot Config",
-              "users": ["Agile Bot", "Bot Config"],
+              "name": "Loads Trigger Words from Bot Config",
+              "users": [
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Bot Config"
+              ],
+              "sequential_order": 138,
               "Steps": []
             }
           ]
         },
         {
           "name": "Load Behavior Configuration",
-          "users": ["Agile Bot", "Bot Config", "Behavior"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 2,
           "stories": [
             {
-              "name": "Agile Bot Loads Behavior Order from Bot Config",
-              "users": ["Agile Bot", "Bot Config"],
+              "name": "Loads Behavior Order from Bot Config",
+              "users": [
+                "Agile Bot",
+                "Planning Behavior Tool",
+                "Bot Config"
+              ],
+              "sequential_order": 139,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads GuardRails from Behavior Configuration",
-              "users": ["Agile Bot", "Behavior"],
+              "name": "Loads GuardRails from Behavior Configuration",
+              "users": [
+                "Agile Bot",
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 140,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Rules from Behavior Configuration",
-              "users": ["Agile Bot", "Behavior"],
+              "name": "Loads Rules from Behavior Configuration",
+              "users": [
+                "Agile Bot",
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 141,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Actions from Behavior Configuration",
-              "users": ["Agile Bot", "Behavior", "Action"],
+              "name": "Loads Actions from Behavior Configuration",
+              "users": [
+                "Agile Bot",
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 142,
               "Steps": []
             },
             {
-              "name": "Agile Bot Loads Content Configuration from Behavior Configuration",
-              "users": ["Agile Bot", "Behavior"],
+              "name": "Loads Content Configuration from Behavior Configuration",
+              "users": [
+                "Agile Bot",
+                "Behavior",
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 143,
               "Steps": []
             }
           ]
         },
         {
           "name": "Load Action Instructions",
-          "users": ["Action"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 3,
           "stories": [
             {
-              "name": "Action Loads Instructions Template from Base Actions",
-              "users": ["Action"],
+              "name": "Loads Instructions Template from Base Actions",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 144,
               "Steps": []
             },
             {
-              "name": "Action Loads Instructions Template from Behavior Actions",
-              "users": ["Action"],
-              "Steps": []
+              "name": "Loads Instructions Template from Behavior Actions",
+              "users": [
+                "Planning Behavior Tool"
+              ],
+              "sequential_order": 145
             },
             {
-              "name": "Action Substitutes Template Variables with Project Data",
-              "users": ["Action", "Project"],
+              "name": "Substitutes Template Variables with Project Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 146,
               "Steps": []
             }
           ]
         },
         {
           "name": "Load Templates and Rules",
-          "users": ["Action", "Bot Config", "Behavior"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 4,
           "stories": [
             {
-              "name": "Action Loads Output Templates from Content Configuration",
-              "users": ["Action"],
+              "name": "Loads Output Templates from Content Configuration",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 147,
               "Steps": []
             },
             {
-              "name": "Action Loads Agent Rules from Bot Config",
-              "users": ["Action", "Bot Config"],
+              "name": "Loads Agent Rules from Bot Config",
+              "users": [
+                "Planning Behavior Tool",
+                "Action",
+                "Bot Config"
+              ],
+              "sequential_order": 148,
               "Steps": []
             },
             {
-              "name": "Action Loads Behavior Rules from Behavior Configuration",
-              "users": ["Action", "Behavior"],
+              "name": "Loads Behavior Rules from Behavior Configuration",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 149,
               "Steps": []
             },
             {
-              "name": "Action Loads Examples from Rules Configuration",
-              "users": ["Action"],
+              "name": "Loads Examples from Rules Configuration",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 150,
               "Steps": []
             }
           ]
@@ -1113,153 +1924,2795 @@
     },
     {
       "name": "Generate Instructions",
-      "users": ["Action", "Project", "Behavior", "MCP Tool"],
+      "users": [
+        "Planning Behavior Tool"
+      ],
+      "sequential_order": 7,
       "features": [
         {
           "name": "Generate Action Instructions",
-          "users": ["Action", "Project", "Behavior", "MCP Tool"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 1,
           "stories": [
             {
-              "name": "Action Accesses Instructions Template",
-              "users": ["Action"],
+              "name": "Accesses Instructions Template",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 151,
               "Steps": []
             },
             {
-              "name": "Action Loads Required Data from Project",
-              "users": ["Action", "Project"],
+              "name": "Loads Required Data from Project",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 152,
               "Steps": []
             },
             {
-              "name": "Action Loads Required Data from Behavior",
-              "users": ["Action", "Behavior"],
+              "name": "Loads Required Data from Behavior",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 153,
               "Steps": []
             },
             {
-              "name": "Action Substitutes Template Variables",
-              "users": ["Action"],
+              "name": "Substitutes Template Variables",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 154,
               "Steps": []
             },
             {
-              "name": "Action Prepends Common Instructions",
-              "users": ["Action"],
+              "name": "Prepends Common Instructions",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 155,
               "Steps": []
             },
             {
-              "name": "Action Returns Instructions to MCP Tool",
-              "users": ["Action", "MCP Tool"],
+              "name": "Returns Instructions to MCP Tool",
+              "users": [
+                "MCP Tool",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 156,
               "Steps": []
             }
           ]
         },
         {
           "name": "Generate Build Instructions",
-          "users": ["Action", "Project", "Bot Config", "Behavior"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 2,
           "stories": [
             {
-              "name": "Action Loads Clarification Data",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 157,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 158,
               "Steps": []
             },
             {
-              "name": "Action Loads Agent Rules",
-              "users": ["Action", "Bot Config"],
+              "name": "Loads Agent Rules",
+              "users": [
+                "Planning Behavior Tool",
+                "Action",
+                "Bot Config"
+              ],
+              "sequential_order": 159,
               "Steps": []
             },
             {
-              "name": "Action Loads Behavior Rules",
-              "users": ["Action", "Behavior"],
+              "name": "Loads Behavior Rules",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 160,
               "Steps": []
             },
             {
-              "name": "Action Loads Structured Content Schema",
-              "users": ["Action"],
+              "name": "Loads Structured Content Schema",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 161,
               "Steps": []
             },
             {
-              "name": "Action Assembles Build Instructions",
-              "users": ["Action"],
+              "name": "Assembles Build Instructions",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 162,
               "Steps": []
             }
           ]
         },
         {
           "name": "Generate Transform Instructions",
-          "users": ["Action", "Project", "Behavior Content"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 3,
           "stories": [
             {
-              "name": "Action Loads Clarification Data",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 163,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 164,
               "Steps": []
             },
             {
-              "name": "Action Loads Structured Content",
-              "users": ["Action", "Behavior Content"],
+              "name": "Loads Structured Content",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 165,
               "Steps": []
             },
             {
-              "name": "Action Loads Output Templates",
-              "users": ["Action"],
+              "name": "Loads Output Templates",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 166,
               "Steps": []
             },
             {
-              "name": "Action Loads Transformer Methods",
-              "users": ["Action"],
+              "name": "Loads Transformer Methods",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 167,
               "Steps": []
             },
             {
-              "name": "Action Assembles Transform Instructions",
-              "users": ["Action"],
+              "name": "Assembles Transform Instructions",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 168,
               "Steps": []
             }
           ]
         },
         {
           "name": "Generate Validation Instructions",
-          "users": ["Action", "Project", "Behavior Content", "Bot Config", "Behavior"],
+          "users": [
+            "Planning Behavior Tool"
+          ],
+          "sequential_order": 4,
           "stories": [
             {
-              "name": "Action Loads Clarification Data",
-              "users": ["Action", "Project"],
+              "name": "Loads Clarification Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 169,
               "Steps": []
             },
             {
-              "name": "Action Loads Planning Data",
-              "users": ["Action", "Project"],
+              "name": "Loads Planning Data",
+              "users": [
+                "Project",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 170,
               "Steps": []
             },
             {
-              "name": "Action Loads Content Data",
-              "users": ["Action", "Behavior Content"],
+              "name": "Loads Content Data",
+              "users": [
+                "Behavior Content",
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 171,
               "Steps": []
             },
             {
-              "name": "Action Loads Rules and Examples",
-              "users": ["Action", "Bot Config", "Behavior"],
+              "name": "Loads Rules and Examples",
+              "users": [
+                "Behavior",
+                "Planning Behavior Tool",
+                "Action",
+                "Bot Config"
+              ],
+              "sequential_order": 172,
               "Steps": []
             },
             {
-              "name": "Action Executes Code Diagnostics",
-              "users": ["Action"],
+              "name": "Executes Code Diagnostics",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 173,
               "Steps": []
             },
             {
-              "name": "Action Assembles Validation Instructions",
-              "users": ["Action"],
+              "name": "Assembles Validation Instructions",
+              "users": [
+                "Planning Behavior Tool",
+                "Action"
+              ],
+              "sequential_order": 174,
               "Steps": []
             }
           ]
         }
       ]
+    }
+  ],
+  "increments": [
+    {
+      "name": "Not Prioritized",
+      "priority": 1,
+      "epics": [
+        {
+          "name": "Execute Behavior Actions",
+          "users": [],
+          "sequential_order": 3,
+          "features": [
+            {
+              "name": "Build Knowledge",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Provides Input for Build Knowledge",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 40,
+                  "Steps": []
+                },
+                {
+                  "name": "Invokes Build Knowledge Action",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 41,
+                  "Steps": []
+                },
+                {
+                  "name": "Intercepts Tool Call With Project Check",
+                  "users": [
+                    "Project",
+                    "MCP Bot Server",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 42,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior and Action from Workflow State",
+                  "users": [
+                    "Workflow",
+                    "Workflow State",
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 43,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Content Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 44,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Clarification Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 45,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 46,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Agent Rules from Bot Config",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 47,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior Rules from Behavior Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 48,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Build Knowledge Instructions Template",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 49,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Structured Content Schema from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 50,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Builder Method Reference from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 51,
+                  "Steps": []
+                },
+                {
+                  "name": "Generates Instructions with Rules Schema and Builder",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 52,
+                  "Steps": []
+                },
+                {
+                  "name": "Receives Instructions and Generates Structured Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 53,
+                  "Steps": []
+                },
+                {
+                  "name": "Calls Agent Store Method with Structured Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 54,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Structured Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 55,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Structured Content to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 56,
+                  "Steps": []
+                },
+                {
+                  "name": "Creates Traceability Link",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 57,
+                  "Steps": []
+                },
+                {
+                  "name": "Tracks Activity for Build Knowledge Action",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 58,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Render Output Action",
+              "users": [],
+              "sequential_order": 4,
+              "stories": [
+                {
+                  "name": "Provides Input for Render Output",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 59,
+                  "Steps": []
+                },
+                {
+                  "name": "Invokes Render Output Action",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 60,
+                  "Steps": []
+                },
+                {
+                  "name": "Intercepts Tool Call With Project Check",
+                  "users": [
+                    "Project",
+                    "MCP Bot Server",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 61,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior and Action from Workflow State",
+                  "users": [
+                    "Workflow",
+                    "Workflow State",
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 62,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Content Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 63,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Clarification Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 64,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 65,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Structured Content from Behavior Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 66,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Render Output Instructions Template",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 67,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Output Templates from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 68,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Transformer Method References from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 69,
+                  "Steps": []
+                },
+                {
+                  "name": "Executes Output Builders if Configured",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 70,
+                  "Steps": []
+                },
+                {
+                  "name": "Generates Instructions with Templates and Transformers",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 71,
+                  "Steps": []
+                },
+                {
+                  "name": "Receives Instructions and Transforms Structured Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 72,
+                  "Steps": []
+                },
+                {
+                  "name": "Calls Agent Store Method with Rendered Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 73,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Rendered Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 74,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Rendered Content to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 75,
+                  "Steps": []
+                },
+                {
+                  "name": "Creates Traceability Link",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 76,
+                  "Steps": []
+                },
+                {
+                  "name": "Tracks Activity for Render Output Action",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 77,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Validate Rules Action",
+              "users": [],
+              "sequential_order": 5,
+              "stories": [
+                {
+                  "name": "Provides Input for Validate Rules",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 78,
+                  "Steps": []
+                },
+                {
+                  "name": "Invokes Validate Rules Action",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 79,
+                  "Steps": []
+                },
+                {
+                  "name": "Intercepts Tool Call With Project Check",
+                  "users": [
+                    "Project",
+                    "MCP Bot Server",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 80,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior and Action from Workflow State",
+                  "users": [
+                    "Workflow",
+                    "Workflow State",
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 81,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Rules Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 82,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Clarification Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 83,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 84,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Structured Content from Behavior Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 85,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Rendered Content from Behavior Content",
+                  "users": [
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 86
+                },
+                {
+                  "name": "Loads Agent Rules from Bot Config",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 87,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior Rules from Behavior Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 88,
+                  "Steps": []
+                },
+                {
+                  "name": "Executes Code Diagnostics for Violations",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 89,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Validate Rules Instructions Template",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 90,
+                  "Steps": []
+                },
+                {
+                  "name": "Generates Instructions with Rules Examples and Violations",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 91,
+                  "Steps": []
+                },
+                {
+                  "name": "Receives Instructions and Evaluates Content Against Rules",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 92,
+                  "Steps": []
+                },
+                {
+                  "name": "Generates Validation Report",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 93,
+                  "Steps": []
+                },
+                {
+                  "name": "Presents Validation Report to Human",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 94,
+                  "Steps": []
+                },
+                {
+                  "name": "Tracks Activity for Validate Rules Action",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 95,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Correct Bot Action",
+              "users": [],
+              "sequential_order": 6,
+              "stories": [
+                {
+                  "name": "Provides Input for Correct Bot",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 96,
+                  "Steps": []
+                },
+                {
+                  "name": "Invokes Correct Bot Action",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 97,
+                  "Steps": []
+                },
+                {
+                  "name": "Intercepts Tool Call With Project Check",
+                  "users": [
+                    "Project",
+                    "MCP Bot Server",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 98,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior and Action from Workflow State",
+                  "users": [
+                    "Workflow",
+                    "Workflow State",
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 99,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Rules Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 100,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Clarification Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 101,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 102,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Validation Violations from Previous Action",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 103,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads User Feedback from Context",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 104,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Original Content from Behavior Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 105,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Correct Bot Instructions Template",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 106,
+                  "Steps": []
+                },
+                {
+                  "name": "Generates Instructions with Violations and Feedback",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 107,
+                  "Steps": []
+                },
+                {
+                  "name": "Receives Instructions and Applies Corrections",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 108,
+                  "Steps": []
+                },
+                {
+                  "name": "Calls Agent Store Method with Corrected Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 109,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Corrected Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 110,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Corrected Content to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 111,
+                  "Steps": []
+                },
+                {
+                  "name": "Creates Traceability Link",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 112,
+                  "Steps": []
+                },
+                {
+                  "name": "Tracks Activity for Correct Bot Action",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 113,
+                  "Steps": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Manage Workflow State",
+          "users": [],
+          "sequential_order": 4,
+          "features": [
+            {
+              "name": "Determine Active Behavior and Action",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Determines Active Behavior from Workflow State",
+                  "users": [
+                    "Bot Tool",
+                    "Workflow State",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 114,
+                  "Steps": []
+                },
+                {
+                  "name": "Determines Active or Next Action from Workflow State",
+                  "users": [
+                    "Behavior Tool",
+                    "Workflow State",
+                    "Workflow",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 115,
+                  "Steps": []
+                },
+                {
+                  "name": "Uses Specific Behavior and Action from Context",
+                  "users": [
+                    "Behavior Action Tool",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 116,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Validate Workflow State",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Validates Current Action is Complete",
+                  "users": [
+                    "Bot Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 117,
+                  "Steps": []
+                },
+                {
+                  "name": "Checks if Action Can Advance",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 118,
+                  "Steps": []
+                },
+                {
+                  "name": "Checks if Behavior Can Advance",
+                  "users": [
+                    "Project",
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 119,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Transition Workflow State",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Moves to Next Action if Current Action Done",
+                  "users": [
+                    "Bot Tool",
+                    "Workflow",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 120,
+                  "Steps": []
+                },
+                {
+                  "name": "Moves to Next Behavior if Current Behavior Done",
+                  "users": [
+                    "Bot Tool",
+                    "Workflow",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 121,
+                  "Steps": []
+                },
+                {
+                  "name": "Updates Workflow State in File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 122,
+                  "Steps": []
+                },
+                {
+                  "name": "Saves Workflow State to Agent State File",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 123,
+                  "Steps": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Manage Project State",
+          "users": [],
+          "sequential_order": 5,
+          "features": [
+            {
+              "name": "Store Project State",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Stores Project Area to Agent State File",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 124,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Bot Name to Agent State File",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 125,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Activity Area to Agent State File",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 126,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Store Workflow State",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Stores Current Behavior Name to Workflow State File",
+                  "users": [
+                    "Project",
+                    "Workflow State",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 127,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Current Action Name to Workflow State File",
+                  "users": [
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 128
+                }
+              ]
+            },
+            {
+              "name": "Store Activity Data",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Tracks Activity with Status and Behavior Name",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 129,
+                  "Steps": []
+                },
+                {
+                  "name": "Creates Activity Entry in Activity Log",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 130,
+                  "Steps": []
+                },
+                {
+                  "name": "Saves Activity Log to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 131,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Store Output Data",
+              "users": [],
+              "sequential_order": 4,
+              "stories": [
+                {
+                  "name": "Stores Structured Content to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 132,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Rendered Content to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 133,
+                  "Steps": []
+                },
+                {
+                  "name": "Creates Traceability Links Between Activity and Output",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 134,
+                  "Steps": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Load Configuration",
+          "users": [],
+          "sequential_order": 6,
+          "features": [
+            {
+              "name": "Load Bot Config",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Loads Bot Config from Agent JSON File",
+                  "users": [
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 135,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behaviors from Bot Config",
+                  "users": [
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 136,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Agent Rules from Bot Config",
+                  "users": [
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 137,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Trigger Words from Bot Config",
+                  "users": [
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 138,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Load Behavior Configuration",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Loads Behavior Order from Bot Config",
+                  "users": [
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 139,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads GuardRails from Behavior Configuration",
+                  "users": [
+                    "Agile Bot",
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 140,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Rules from Behavior Configuration",
+                  "users": [
+                    "Agile Bot",
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 141,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Actions from Behavior Configuration",
+                  "users": [
+                    "Agile Bot",
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 142,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Content Configuration from Behavior Configuration",
+                  "users": [
+                    "Agile Bot",
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 143,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Load Action Instructions",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Loads Instructions Template from Base Actions",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 144,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Instructions Template from Behavior Actions",
+                  "users": [
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 145
+                },
+                {
+                  "name": "Substitutes Template Variables with Project Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 146,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Load Templates and Rules",
+              "users": [],
+              "sequential_order": 4,
+              "stories": [
+                {
+                  "name": "Loads Output Templates from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 147,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Agent Rules from Bot Config",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 148,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior Rules from Behavior Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 149,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Examples from Rules Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 150,
+                  "Steps": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Generate Instructions",
+          "users": [],
+          "sequential_order": 7,
+          "features": [
+            {
+              "name": "Generate Action Instructions",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Accesses Instructions Template",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 151,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Required Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 152,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Required Data from Behavior",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 153,
+                  "Steps": []
+                },
+                {
+                  "name": "Substitutes Template Variables",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 154,
+                  "Steps": []
+                },
+                {
+                  "name": "Prepends Common Instructions",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 155,
+                  "Steps": []
+                },
+                {
+                  "name": "Returns Instructions to MCP Tool",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 156,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Generate Build Instructions",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Loads Clarification Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 157,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 158,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Agent Rules",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 159,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior Rules",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 160,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Structured Content Schema",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 161,
+                  "Steps": []
+                },
+                {
+                  "name": "Assembles Build Instructions",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 162,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Generate Transform Instructions",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Loads Clarification Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 163,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 164,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Structured Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 165,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Output Templates",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 166,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Transformer Methods",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 167,
+                  "Steps": []
+                },
+                {
+                  "name": "Assembles Transform Instructions",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 168,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Generate Validation Instructions",
+              "users": [],
+              "sequential_order": 4,
+              "stories": [
+                {
+                  "name": "Loads Clarification Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 169,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 170,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Content Data",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 171,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Rules and Examples",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 172,
+                  "Steps": []
+                },
+                {
+                  "name": "Executes Code Diagnostics",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 173,
+                  "Steps": []
+                },
+                {
+                  "name": "Assembles Validation Instructions",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 174,
+                  "Steps": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User Manually Drops Config In to AI Chat",
+      "priority": 2,
+      "epics": [
+        {
+          "name": "Build Agile Bots",
+          "users": [],
+          "sequential_order": 1,
+          "features": [
+            {
+              "name": "Generate Bot Server And Tools",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Provides Context of New Bot",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Drop Bot Builder Behavior into Chat",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 2
+                },
+                {
+                  "name": "Bot Scaffolding Created",
+                  "users": [
+                    "Agile Bot"
+                  ],
+                  "sequential_order": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Invoke MCP Bot Server",
+          "users": [],
+          "sequential_order": 2,
+          "features": [
+            {
+              "name": "Init Project",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Shares Context and Project Location",
+                  "users": [
+                    "Project",
+                    "Human",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 6,
+                  "Steps": [
+                    "AI Chat presents discovered Project Location to Human",
+                    "Human confirms or provides different Project Location"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Invoke Bot Tool",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Drops Behavior Folder in Chat w/ relevant Bot Config",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 12
+                },
+                {
+                  "name": "Invokes Correct Behavior Action (We Hope)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 15
+                }
+              ]
+            },
+            {
+              "name": "Perform Behavior Action",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Folllows Instructionsfrom Folder configs (We Hope)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 20
+                },
+                {
+                  "name": "Correct, Feedback, Proceed",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 21
+                },
+                {
+                  "name": "Proceeds to Instructionsfrom next Action in Folder (We Hope)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 22
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Execute Behavior Actions",
+          "users": [],
+          "sequential_order": 3,
+          "features": [
+            {
+              "name": "Gather Context",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Displays Gather Context Instructions (we hope)",
+                  "users": [
+                    "Action",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 25,
+                  "Steps": []
+                },
+                {
+                  "name": "RetrievesQuestiins And Evidence from Chat(hope)",
+                  "users": [
+                    "AI Chat",
+                    "Gather Context Behavor Tool"
+                  ],
+                  "sequential_order": 26
+                },
+                {
+                  "name": "Answers Questions and Evidence from Context (hope)",
+                  "users": [
+                    "AI Chat",
+                    "Gather Context Behavor"
+                  ],
+                  "sequential_order": 27,
+                  "Steps": []
+                },
+                {
+                  "name": "Pauses we hope",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 28
+                },
+                {
+                  "name": "Correct, Feedback, Proceed",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 29
+                },
+                {
+                  "name": "Updates Final Answers and Evidence (hope)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 30
+                },
+                {
+                  "name": "Proceeds to follow planning (we Hope)",
+                  "users": [
+                    "Gather Context Tool"
+                  ],
+                  "sequential_order": 32
+                }
+              ]
+            },
+            {
+              "name": "Decide Planning Criteria Action",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Displays Planning Instructions from Conffig (we hope)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 33
+                },
+                {
+                  "name": "Retrieves Decsion Criteria and Evidence Frm Chat",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 34,
+                  "Steps": []
+                },
+                {
+                  "name": "Makes Assumptions and Decisions from Context (hope)",
+                  "users": [
+                    "Planning Behavior",
+                    "Human"
+                  ],
+                  "sequential_order": 35,
+                  "Steps": []
+                },
+                {
+                  "name": "Pauses we hope",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 36
+                },
+                {
+                  "name": "Correct, Feedback, Proceed",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 37
+                },
+                {
+                  "name": "Updates Assumpions and Decisions (hopr)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 38
+                },
+                {
+                  "name": "Proceeds to follow planning (we Hope)",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 39
+                }
+              ]
+            },
+            {
+              "name": "Build Knowledge",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Provides Input for Build Knowledge",
+                  "users": [
+                    "Human",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 40,
+                  "Steps": []
+                },
+                {
+                  "name": "Invokes Build Knowledge Action",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 41,
+                  "Steps": []
+                },
+                {
+                  "name": "Intercepts Tool Call With Project Check",
+                  "users": [
+                    "Project",
+                    "MCP Bot Server",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 42,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior and Action from Workflow State",
+                  "users": [
+                    "Workflow",
+                    "Workflow State",
+                    "Agile Bot",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 43,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Content Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 44,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Clarification Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 45,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Planning Data from Project",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 46,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Agent Rules from Bot Config",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 47,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Behavior Rules from Behavior Configuration",
+                  "users": [
+                    "Behavior",
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 48,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Build Knowledge Instructions Template",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 49,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Structured Content Schema from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 50,
+                  "Steps": []
+                },
+                {
+                  "name": "Accesses Builder Method Reference from Content Configuration",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 51,
+                  "Steps": []
+                },
+                {
+                  "name": "Generates Instructions with Rules Schema and Builder",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "Action"
+                  ],
+                  "sequential_order": 52,
+                  "Steps": []
+                },
+                {
+                  "name": "Receives Instructions and Generates Structured Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 53,
+                  "Steps": []
+                },
+                {
+                  "name": "Calls Agent Store Method with Structured Content",
+                  "users": [
+                    "Planning Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 54,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Structured Content",
+                  "users": [
+                    "Behavior Content",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 55,
+                  "Steps": []
+                },
+                {
+                  "name": "Stores Structured Content to File System",
+                  "users": [
+                    "Project",
+                    "File System",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 56,
+                  "Steps": []
+                },
+                {
+                  "name": "Creates Traceability Link",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 57,
+                  "Steps": []
+                },
+                {
+                  "name": "Tracks Activity for Build Knowledge Action",
+                  "users": [
+                    "Project",
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 58,
+                  "Steps": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bot Uses MCP Tool with Smart Instruction Injection",
+      "priority": 3,
+      "epics": [
+        {
+          "name": "Build Agile Bots",
+          "users": [],
+          "sequential_order": 1,
+          "features": [
+            {
+              "name": "Generate Bot Server And Tools",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Provides Context of New Bot",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Generate MCP Bot Server",
+                  "users": [
+                    "Human",
+                    "MCP Bot Server Generator",
+                    "Bot Config",
+                    "Agile Bot"
+                  ],
+                  "sequential_order": 1.1,
+                  "Steps": [
+                    "Human tells Bot to generate server",
+                    "Agile Bot triggers MCP Bot Server Generator",
+                    "MCP Bot Server Generator reads Bot Config from Bot Config file (agent.json)",
+                    "MCP Bot Server Generator creates MCP Bot Server Class from Bot Config"
+                  ]
+                },
+                {
+                  "name": "Drop Bot Builder Behavior into Chat",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 2
+                },
+                {
+                  "name": "Generate Bot Tools",
+                  "users": [
+                    "MCP Bot Server",
+                    "Agile Bot",
+                    "MCP Bot Server Generator",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 2.1,
+                  "Steps": [
+                    "MCP Bot Server Generator reads Bot Config",
+                    "MCP Bot Server Generator creates Bot Tool with trigger words in tool description docstring, and tool name",
+                    "MCP Bot Server Generates code that routes to active or next behavior and action of agent"
+                  ]
+                },
+                {
+                  "name": "Bot Scaffolding Created",
+                  "users": [
+                    "Agile Bot"
+                  ],
+                  "sequential_order": 3
+                },
+                {
+                  "name": "Generate Behavior Tools",
+                  "users": [
+                    "MCP Bot Server",
+                    "MCP Bot Server Generator",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 3.1,
+                  "Steps": [
+                    "MCP Bot Server Generator reads Bot Config",
+                    "MCP Bot Server Generator creates Behavior Tool for each Bot Behavior with trigger words in tool description docstring, and tool name",
+                    "MCP Bot Server Generates code that routes to active or next action of Bot Behavior"
+                  ]
+                },
+                {
+                  "name": "Generate Behavior Action Tools",
+                  "users": [
+                    "MCP Bot Server",
+                    "MCP Bot Server Generator",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 4,
+                  "Steps": [
+                    "MCP Bot Server Generator reads Bot Config",
+                    "MCP Bot Server Generator creates Behavior Action Tool for each Bot Behavior-Action combination with aggregated trigger words in tool description docstring, and tool name",
+                    "MCP Bot Server Generates code that routes to specific Bot Behavior and Bot Action"
+                  ]
+                },
+                {
+                  "name": "Deploy MCP BOT Server",
+                  "users": [
+                    "MCP Bot Server",
+                    "Bot Config"
+                  ],
+                  "sequential_order": 5,
+                  "Steps": [
+                    "Bot MCP Server exposes Bot Tool via FastMCP",
+                    "Bot MCP Server exposes Behavior Tools via FastMCP",
+                    "Bot MCP Server exposes Behavior Action Tools via FastMCP",
+                    "Bot MCP Server exposes Project State Tool via FastMCP"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Invoke MCP Bot Server",
+          "users": [],
+          "sequential_order": 2,
+          "features": [
+            {
+              "name": "Init Project",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Speaks Trigger Words For Project Tool",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 6.1
+                },
+                {
+                  "name": "AI  Route To Project Tool",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 7
+                },
+                {
+                  "name": "Confirm Location",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 9
+                },
+                {
+                  "name": "Create Project Folder",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 10
+                },
+                {
+                  "name": "Speaks Trigger Words For Bot Tool",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 12.1
+                }
+              ]
+            },
+            {
+              "name": "Invoke Bot Tool",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "AI  Route To MCP BotTool",
+                  "users": [
+                    "Bot Tool",
+                    "Human",
+                    "AI Chat",
+                    "MCP Bot Server",
+                    "Workflow State"
+                  ],
+                  "sequential_order": 13,
+                  "Steps": [
+                    "Human speaks to AI Chat with trigger words for Bot but no Bot Behavior (ex: \"start stories for project xx\"), including context",
+                    "AI Chat detects trigger words and routes to Bot Tool via Bot MCP Server",
+                    "Bot Tool receives invocation with context and determines active Bot Behavior from Workflow State"
+                  ]
+                },
+                {
+                  "name": "Route To MCP Behavior  Tool",
+                  "users": [
+                    "Human",
+                    "AI Chat",
+                    "Behavior Tool",
+                    "MCP Bot Server"
+                  ],
+                  "sequential_order": 13.1,
+                  "Steps": [
+                    "Human speaks to AI Chat with trigger words including Bot Behavior but no Bot Action (ex: \"start stories for project xx\"), including context",
+                    "AI Chat routes request to Behavior Tool via Bot MCP Server",
+                    "Behavior Tool determines active or next Behavior/Action",
+                    "Behavior Tool receives invocation with context"
+                  ]
+                },
+                {
+                  "name": "Route To Behavior and  Action",
+                  "users": [
+                    "Bot Tool"
+                  ],
+                  "sequential_order": 14
+                },
+                {
+                  "name": "Route To Action",
+                  "users": [
+                    "Behavior Tool",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 15.1
+                },
+                {
+                  "name": "Invoke Action In Behavior",
+                  "users": [
+                    "BotBehavior"
+                  ],
+                  "sequential_order": 17
+                }
+              ]
+            },
+            {
+              "name": "Perform Behavior Action",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Injects Instructions",
+                  "users": [
+                    "BotBehavior"
+                  ],
+                  "sequential_order": 18
+                },
+                {
+                  "name": "Inject Next behavor-Action to Instructions",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 20.1
+                },
+                {
+                  "name": "Folllows Injected Instructions",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 22.1
+                },
+                {
+                  "name": "Calls Next MCP Behavior Action Tool",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 23
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Execute Behavior Actions",
+          "users": [],
+          "sequential_order": 3,
+          "features": [
+            {
+              "name": "Feature 1",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Injects Project  Confirmation Instructions",
+                  "users": [
+                    "Project Tool"
+                  ],
+                  "sequential_order": 8
+                }
+              ]
+            },
+            {
+              "name": "Gather Context",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Injects Gather Context Instructions",
+                  "users": [
+                    "AI Chat",
+                    "Gather Context Behavor Tool"
+                  ],
+                  "sequential_order": 25.1
+                },
+                {
+                  "name": "Loads Questions and Evidence",
+                  "users": [
+                    "Gather Context Behavor"
+                  ],
+                  "sequential_order": 26.1
+                },
+                {
+                  "name": "Answers Questions and Evidence from Context",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 27.1
+                },
+                {
+                  "name": "Pauses",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 28.1
+                },
+                {
+                  "name": "Updates Final Answers and Evidence",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 30.1
+                },
+                {
+                  "name": "Calls Behavior Planning Tool",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 31,
+                  "Steps": []
+                }
+              ]
+            },
+            {
+              "name": "Decide Planning Criteria Action",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Loads Next Behavior and Action from Workflow State",
+                  "users": [
+                    "Workflow",
+                    "BotProject",
+                    "Agile Bot",
+                    "Workflow State",
+                    "Action"
+                  ],
+                  "sequential_order": 19,
+                  "Steps": []
+                },
+                {
+                  "name": "Injects Planning Instructions",
+                  "users": [
+                    "MCP Tool",
+                    "Planning Behavior Tool",
+                    "Action",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 33.1,
+                  "Steps": []
+                },
+                {
+                  "name": "Loads Decsion Criteria and Evidence",
+                  "users": [
+                    "Planning Behavior",
+                    "Action"
+                  ],
+                  "sequential_order": 34.1,
+                  "Steps": []
+                },
+                {
+                  "name": "Makes Assumptions and Decisions from Context",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 35.1
+                },
+                {
+                  "name": "Pauses",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 36.1
+                },
+                {
+                  "name": "Updates Assumpions and Decisions",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 38.1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bot Stores and loads all State and Content",
+      "priority": 4,
+      "epics": [
+        {
+          "name": "Invoke MCP Bot Server",
+          "users": [],
+          "sequential_order": 2,
+          "features": [
+            {
+              "name": "Init Project",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Speaks Trigger Words For Bot Tool",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 6.2
+                },
+                {
+                  "name": "Speaks Trigger Words For Bot Behavior Tool",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 6.3
+                },
+                {
+                  "name": "Injects Project  Folder Create Instructions",
+                  "users": [
+                    "Project Tool"
+                  ],
+                  "sequential_order": 8.2
+                },
+                {
+                  "name": "Generates Project Scaffold",
+                  "users": [
+                    "File System",
+                    "Project",
+                    "Project Tool",
+                    "BotProject",
+                    "Project Bot State"
+                  ],
+                  "sequential_order": 8.3,
+                  "Steps": [
+                    "Project creates project folder structure in project location",
+                    "Project creates Bot activity subfolder (docs/activity/{bot_name}/)",
+                    "Project Bot State stores Project Area and Bot Name to File System",
+                    "MCP Bot Server Routes to MCP Tool based on trigger words"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Feature 2",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Locates Existing Project Bot State",
+                  "users": [
+                    "Project Tool",
+                    "BotProject"
+                  ],
+                  "sequential_order": 8.4
+                }
+              ]
+            },
+            {
+              "name": "Invoke Bot Tool",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Speaks Trigger Words For Bot Behavior Action Tool",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 12.4
+                },
+                {
+                  "name": "Speaks Trigger Words For Bot Behavior Action Tool",
+                  "users": [
+                    "Human"
+                  ],
+                  "sequential_order": 12.5
+                },
+                {
+                  "name": "Routes To Behavior Action",
+                  "users": [
+                    "Behavior Action Tool"
+                  ],
+                  "sequential_order": 16
+                }
+              ]
+            },
+            {
+              "name": "Perform Behavior Action",
+              "users": [],
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "Submit Content Changes to Tools for Saving",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 22.2
+                },
+                {
+                  "name": "Saves Content",
+                  "users": [
+                    "Bot Behavior",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 23.1
+                },
+                {
+                  "name": "Saves Behavior State",
+                  "users": [
+                    "Bot Behavior",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 24
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Execute Behavior Actions",
+          "users": [],
+          "sequential_order": 3,
+          "features": [
+            {
+              "name": "Feature 1",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Intercepts Tool Call With Project Check",
+                  "users": [
+                    "AI Chat",
+                    "Project Tool"
+                  ],
+                  "sequential_order": 7.1
+                },
+                {
+                  "name": "Saves Project State to Agent State File",
+                  "users": [
+                    "AI Chat",
+                    "BotProject"
+                  ],
+                  "sequential_order": 10.2
+                },
+                {
+                  "name": "Updates Project Area and Creates Directory Structure",
+                  "users": [
+                    "AI Chat",
+                    "BotProject"
+                  ],
+                  "sequential_order": 10.3
+                },
+                {
+                  "name": "Stores Activity for Initialize Project Action",
+                  "users": [
+                    "AI Chat",
+                    "BotProject"
+                  ],
+                  "sequential_order": 11
+                }
+              ]
+            },
+            {
+              "name": "Gather Context",
+              "users": [],
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Submit Answers and Evidence to Tools for Saving",
+                  "users": [
+                    "AI Chat"
+                  ],
+                  "sequential_order": 29.1
+                },
+                {
+                  "name": "Saves Answers and Evidence",
+                  "users": [
+                    "Gather Context Tool"
+                  ],
+                  "sequential_order": 31.1
+                }
+              ]
+            },
+            {
+              "name": "Decide Planning Criteria Action",
+              "users": [],
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "Submits Final Assumptions andDecsions",
+                  "users": [
+                    "Action",
+                    "AI Chat"
+                  ],
+                  "sequential_order": 38.2,
+                  "Steps": []
+                },
+                {
+                  "name": "Saves Final Assumptions  and Decisions",
+                  "users": [
+                    "Planning Behavior Tool"
+                  ],
+                  "sequential_order": 39.1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Increment 4",
+      "priority": 5,
+      "epics": []
     }
   ]
 }
