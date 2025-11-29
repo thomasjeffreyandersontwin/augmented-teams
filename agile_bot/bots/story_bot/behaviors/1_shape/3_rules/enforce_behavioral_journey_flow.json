@@ -1,0 +1,57 @@
+{
+  "description": "CRITICAL: Stories must show user/system journey flow, not just list operations. Stories must include context (when/why actions happen) and connect logically. Order by user journey, not technical sequential_order.",
+  "examples": [
+    {
+      "do": {
+        "description": "Show user/system journey with context and flow",
+        "content": [
+          "Stories must show WHEN and WHY actions happen, not just WHAT",
+          "Story maps must show logical flow: Initialize → Validate → Process → Confirm → Complete",
+          "Each story must connect to previous/next stories in the journey",
+          "Order stories by user journey flow, not by technical sequential_order",
+          "",
+          "Correct Examples (with journey context - Payment Domain):",
+          "- Epic: 'Process Payment' → Feature: 'Process Card Payment' → Story: 'User invokes process payment command' → 'System validates payment details' → 'System authorizes payment' → 'System processes payment transaction' → 'System confirms payment and sends notification'",
+          "- Epic: 'Refund Payment' → Feature: 'Process Refund' → Story: 'User invokes refund payment command' → 'System validates refund eligibility' → 'System processes refund transaction' → 'System confirms refund and sends notification'",
+          "- Epic: 'Process Payment' → Feature: 'Validate Payment' → Story: 'User submits payment request' → 'System validates card number' → 'System validates amount' → 'System validates currency' → 'System returns validation result'",
+          "",
+          "Note: Individual stories like 'Authorize Payment with Processor' are correct story format (verb-noun, specific), but they need to be part of a journey. Stories should NOT include actors in the name (actors are documented separately).",
+          "",
+          "Correct Individual Stories (but need journey context):",
+          "- 'Authorize Payment with Processor' (correct story format, but needs: when? why? what happens next?)",
+          "- 'Validate Payment Details' (correct story format, but needs: when? why? what triggers this?)",
+          "- 'Process Payment Transaction' (correct story format, but needs: when? why? what happens before/after?)",
+          "",
+          "Journey Flow Requirements:",
+          "- Start with initialization/entry point",
+          "- Show logical progression through operations",
+          "- Include error handling and alternative paths",
+          "- End with completion/save operations",
+          "- Connect stories logically (this leads to that)"
+        ]
+      },
+      "dont": {
+        "description": "Don't create isolated sets of functions that don't make sense linearly",
+        "content": [
+          "Don't group unrelated operations together that don't form a logical journey",
+          "Don't create story maps with random functions that have no linear relationship",
+          "Don't mix unrelated operations from different domains or contexts",
+          "",
+          "Wrong Examples (isolated sets of functions, no linear sense - Payment Domain):",
+          "- Epic: 'Payment Operations' → Features: 'Process Payment', 'Generate Invoice', 'Send Email', 'Update Inventory', 'Calculate Tax' (unrelated operations, no linear flow - why does email come after payment? why inventory? no journey)",
+          "- Epic: 'Payment System' → Features: 'Authorize Payment', 'Create User Account', 'Process Refund', 'Generate Report', 'Delete Transaction' (random operations, no logical sequence - account creation doesn't follow authorization, deletion doesn't follow processing)",
+          "- Epic: 'Payment Flow' → Stories: 'Validate Payment' → 'Send Notification' → 'Authorize Payment' → 'Update Database' → 'Process Payment' (wrong order, no linear sense - notification before authorization? database update before processing?)",
+          "",
+          "What Makes It NOT a Linear Journey:",
+          "- Unrelated operations grouped together (payment + inventory + email + tax - why together?)",
+          "- Operations from different contexts mixed (payment + user account + reporting - different domains)",
+          "- No logical sequence (why does X come before Y? no reason)",
+          "- Operations can be in any order (no dependencies, no flow)",
+          "- Random collection of functions (like a function library, not a journey)",
+          "- No user/system goal that connects them (what are we trying to accomplish?)"
+        ]
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,74 @@
+RULES vs DECISION CRITERIA ANALYSIS
+====================================
+
+GENERIC RULES (Always Apply - Not Strategy-Based)
+--------------------------------------------------
+These rules apply regardless of decision criteria choices:
+
+- focus_real_actions_on_domain_concepts.json - Verb-noun format, real actions
+- use_active_behavioral_language.json - Active language
+- avoid_noun_redundancy.json - Avoid redundancy
+- use_outcome_verbs_not_communication_verbs.json - Outcome verbs
+- prevent_generic_capabilities.json - Prevent generic capabilities
+- avoid_technical_stories.json - Avoid technical stories (unless needed)
+- identify_system_stories.json - Identify system stories properly
+- create_lightweight_precise_docs.json - Lightweight docs
+
+
+STRATEGY-BASED RULES (Tied to Decision Criteria)
+--------------------------------------------------
+
+1. DRILL-DOWN APPROACH → Rules:
+   - extract_story_map_from_code.json - Find outermost layer (supports "Dig deep on system interactions/architectural pieces")
+   - enforce_behavioral_journey_flow.json - Journey flow (supports "Dig deep on user workflows/behavioral complexity")
+   - focus_user_and_system_activities.json - User/system focus (supports "Dig deep on user workflows")
+
+2. DEPTH OF SHAPING → Rules:
+   - balance_fine_grained_testable_stories.json - Balance granularity (supports "Testable" depth)
+   - size_stories_3_to_12_days.json - Story sizing (supports "Estimates" vs "Decompose" depth)
+
+3. DRILL-DOWN LIMITS → Rules:
+   - apply_7_plus_minus_2_hierarchy.json - Hierarchy limits (supports story/feature limits)
+
+4. FLOW SCOPE AND GRANULARITY → Rules:
+   - enforce_behavioral_journey_flow.json - Journey flow (supports "Journey level")
+   - map_sequential_spine_vs_optional_paths.json - Spine vs optional (supports "End-to-end" vs "Journey level")
+   - establish_spine_vs_optional_enhanced_behavior.json - Spine establishment (supports flow mapping)
+
+
+MISSING RULES TO MAXIMIZE EACH DECISION CRITERIA
+=================================================
+
+FOR DRILL_DOWN_APPROACH:
+-------------------------
+- "Prioritize drill-down areas based on architectural uncertainty, business complexity, uniqueness risk, integration complexity, or variable user behavior"
+- "Skip deep drill-down for well-established patterns (standard CRUD, familiar workflows, proven integrations)"
+
+FOR DEPTH_OF_SHAPING:
+---------------------
+- "Apply 'Estimates' depth (story_count only) for non-drill-down areas to maintain high-level view"
+- "Apply 'Decompose' depth (all stories listed) for drill-down areas to enable detailed planning"
+- "Apply 'Happy Path' depth for drill-down areas when extensive scenarios would exceed limits"
+- "Apply 'Extensive' depth (all scenarios) only when business complexity or uniqueness risk is high"
+
+FOR DRILL_DOWN_LIMITS:
+---------------------
+- "Respect story/feature limits during shaping to prevent over-detailing and maintain focus"
+- "When approaching limits, prioritize drill-down on highest-value or highest-risk areas first"
+
+FOR FLOW_SCOPE_AND_GRANULARITY:
+-------------------------------
+- "For 'Journey level' scope: Map complete user journey across multiple touchpoints, systems, and interactions"
+- "For 'End-to-end user-system behavior' scope: Focus on one user interaction followed by one system response"
+- "For 'Integration boundary level' scope: Focus on system-to-system integration points and data flow across boundaries"
+- "For 'Domain boundary level' scope: Map flows by business domain boundaries, showing how domains interact"
+- "For 'Intra-system level' scope: Focus on interactions within a single system, useful for significant backend/service flows"
+
+FOR TYPICAL_ASSUMPTIONS:
+------------------------
+- "Focus on user flow over internal systems when mapping stories"
+- "Cover end-to-end scenario when establishing story journey"
+- "Prioritize customer-facing features when selecting drill-down areas"
+- "Assume stories should be independently testable when sizing and decomposing"
+- "Assume each story delivers user value when establishing spine vs optional paths"
+

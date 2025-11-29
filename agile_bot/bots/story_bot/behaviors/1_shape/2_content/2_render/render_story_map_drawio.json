@@ -1,7 +1,0 @@
-{
-  "name": "render_story_map_drawio",
-  "path": "docs/stories",
-  "template": "story-map.drawio",
-  "renderer": "story_map_drawio_renderer.py",
-  "output": "story-map-outline.drawio"
-}

@@ -12,8 +12,7 @@ Domain analysis identifies core business concepts, their relationships, organizi
 * `/ddd-structure` — Analyze file/code/text to extract domain structure
 * `/ddd-interaction` — Document domain concept interactions and business flows
 
----
-
+--
 ## Conventions
 
 Naming conventions, file locations, and structural conventions for domain analysis outputs:

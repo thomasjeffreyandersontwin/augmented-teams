@@ -4,15 +4,17 @@
   "scripts": [
     {
       "name": "extract_and_report",
-      "script": "../../../../src/story_map_drawio_synchronizer.py",
+      "renderer": "story_io",
+      "renderer_command": "synchronize",
       "description": "Synchronize story graph outline from DrawIO and generate merge report with large deletion detection",
       "parameters": {
-        "drawio_path": "{project_path}/docs/stories/story-map-outline.drawio",
-        "output": "{project_path}/docs/stories/story-graph-drawio-extracted.json",
-        "original": "{project_path}/docs/stories/story_graph.json",
-        "outline": true
-      },
-      "output": "{project_path}/docs/stories/story-graph-drawio-extracted-merge-report.json"
+        "drawio_file": "{project_path}/docs/stories/map/story-map-outline.drawio",
+        "output": "{project_path}/docs/stories/map/story-graph-drawio-extracted.json",
+        "original": "{project_path}/docs/stories/map/story-io-story-graph.json",
+        "type": "outline",
+        "generate_report": true,
+        "report": "{project_path}/docs/stories/map/story-graph-drawio-extracted-merge-report.json"
+      }
     }
   ],
   "templates": [],
@@ -23,7 +25,7 @@
     "4. AI waits for user instructions to proceed with merge based on report",
     "5. Merge preserves Steps from original stories where matches are found",
     "6. New stories in extracted will have empty Steps array",
-    "7. User confirms merge before applying changes to story_graph.json"
+    "7. User confirms merge before applying changes to story-io-story-graph.json"
   ]
 }
 

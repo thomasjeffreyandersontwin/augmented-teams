@@ -1,0 +1,13 @@
+{
+  "name": "render_exploration_acceptance_criteria_drawio",
+  "description": "Render exploration acceptance criteria to DrawIO diagram. Supports multiple scopes.",
+  "path": "docs/stories",
+  "template": "story_graph_increments.json",
+  "renderer": "story_io",
+  "renderer_command": "render-exploration",
+  "output": "story-map-acceptance-criteria-{scope}.drawio",
+  "parameters": {
+    "scope": "{scope}"
+  }
+}
+

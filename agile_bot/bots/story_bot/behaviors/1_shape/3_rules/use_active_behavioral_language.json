@@ -10,8 +10,20 @@
           "Favor active behavioral language over functional/capability breakup",
           "Use story maps to outline user and system behavior (NOT tasks)",
           "Use action verbs: submits, views, validates, sends, displays",
-          "Describe behaviors: [Actor] [action] [object]",
-          "Use active behavior language: Place order (active behavior), Validate payment (active behavior)"
+          "Describe behaviors: [Actor] [action] [object] - but actor NOT in name",
+          "Use active behavior language: Place order (active behavior), Validate payment (active behavior)",
+          "",
+          "CRITICAL NAMING RULE - Actor NOT in Name:",
+          "- Epic/Feature/Story names must be Verb-Noun format: '[Verb] [Noun]'",
+          "- Actor is documented separately, NOT included in the name",
+          "- Examples: Epic 'Places Order' (actor: Customer, documented separately)",
+          "- Examples: Feature 'Validates Payment' (actor: PaymentValidator, documented separately)",
+          "- Examples: Story 'Updates Stock' (actor: InventoryManager, documented separately)",
+          "",
+          "ACTOR SELECTION (documented separately, not in name):",
+          "- For user/system stories: Use human/system actors (User, System, Developer, Customer)",
+          "- For technical stories (deep internal): Domain concepts can be actors (OrderProcessor, PaymentValidator, InventoryManager, Cart, Product)",
+          "- Actor is implicit or explicitly documented, but NOT in the name string"
         ]
       },
       "dont": {
@@ -26,7 +38,15 @@
           "Wrong Examples:",
           "- Order Management, Payment Processing (capability nouns)",
           "- Focus on tasks instead of behaviors",
-          "- Order Management (capability), Implement order placement (task)"
+          "- Order Management (capability), Implement order placement (task)",
+          "",
+          "Wrong Examples (actor in name):",
+          "- Epic: 'Customer Places Order' (actor in name - WRONG)",
+          "- Feature: 'OrderProcessor Validates Payment' (actor in name - WRONG)",
+          "- Feature: 'Cart Adds Product' (actor in name - WRONG)",
+          "- Story: 'InventoryManager Updates Stock' (actor in name - WRONG)",
+          "",
+          "Correct: Name is Verb-Noun only, actor documented separately"
         ]
       }
     }
