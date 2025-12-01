@@ -1,5 +1,11 @@
 """
-Test extraction only from DrawIO file.
+Debug utility: Extract story graph from DrawIO file only.
+
+This is a utility script for debugging extraction. It's not part of the main
+test workflow but can be useful for troubleshooting extraction issues.
+
+Usage: Run this script to extract JSON from a DrawIO file without running
+the full render-sync-render workflow.
 """
 import sys
 from pathlib import Path

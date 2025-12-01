@@ -1,10 +1,13 @@
 """
-Test render-sync-render round-trip for complex_story_graph.
+Test orchestrator for couple_of stories_with_acceptance_criteria scenario.
 
-Given -> When -> Then workflow:
-1. Given: Story graph JSON
-2. When: Render to DrawIO, sync back to JSON, render again
-3. Then: Assert JSONs match and DrawIO layout is preserved
+Follows Given-When-Then (BDD) structure:
+- GIVEN: Setup and test data from 1_given/
+- WHEN: Execute workflow from 2_when/
+- THEN: Assert results from 3_then/
+
+Workflow: Render story graph → Sync from DrawIO → Render again
+Validates: JSON round-trip, DrawIO elements, layout preservation
 """
 import sys
 from pathlib import Path
@@ -18,12 +21,12 @@ src_dir = story_io_dir.parent
 sys.path.insert(0, str(src_dir))
 
 def main():
-    """Run the complete test workflow."""
+    """Run the complete test workflow following Given-When-Then pattern."""
     print(f"\n{'='*80}")
-    print("COMPLEX STORY GRAPH ROUND-TRIP TEST")
+    print("COUPLE OF STORIES WITH ACCEPTANCE CRITERIA - ROUND-TRIP TEST")
     print(f"{'='*80}")
     
-    # Step 1: Given - verify input data exists
+    # GIVEN: Verify input data exists
     print("\nGIVEN: Verify input data exists...")
     given_dir = test_dir / "1_given"
     story_graph_path = given_dir / "story-graph-complex.json"
@@ -32,10 +35,17 @@ def main():
         print(f"[ERROR] Story graph not found: {story_graph_path}")
         return False
     
+    # Verify load script exists
+    load_script = given_dir / "load_story_graph_data.py"
+    if not load_script.exists():
+        print(f"[WARN] Load script not found: {load_script}")
+    else:
+        print(f"   [OK] Load script: {load_script}")
+    
     print(f"   [OK] Story graph: {story_graph_path}")
     
-    # Step 2: When - run workflow script
-    print("\nWHEN: Run workflow script (render -> sync -> render)...")
+    # WHEN: Execute workflow script
+    print("\nWHEN: Execute workflow (render -> sync -> render)...")
     when_dir = test_dir / "2_when"
     workflow_script = when_dir / "render_then_sync_then_render_graph.py"
     
@@ -43,6 +53,7 @@ def main():
         print(f"[ERROR] Workflow script not found: {workflow_script}")
         return False
     
+    print(f"   [INFO] Running: {workflow_script.name}")
     result = subprocess.run(
         [sys.executable, str(workflow_script)],
         cwd=str(when_dir),
@@ -53,17 +64,26 @@ def main():
         print(f"[FAIL] Workflow script failed with exit code {result.returncode}")
         return False
     
-    print("   [OK] Workflow script completed")
+    print("   [OK] Workflow completed - outputs written to 3_then/")
     
-    # Step 3: Then - run assertions
-    print("\nTHEN: Run assertions...")
+    # THEN: Run assertions
+    print("\nTHEN: Assert expected matches actual...")
     then_dir = test_dir / "3_then"
-    assert_script = then_dir / "assert_story_graph_round_trip.py"
+    assert_script = then_dir / "assert_json_drawio_round_trip_validation.py"
     
     if not assert_script.exists():
         print(f"[ERROR] Assertion script not found: {assert_script}")
         return False
     
+    # Verify expected files exist
+    expected_drawio = then_dir / "expected.drawio"
+    expected_json = then_dir / "expected-extracted-story-graph.json"
+    if not expected_drawio.exists():
+        print(f"[WARN] Expected DrawIO not found: {expected_drawio}")
+    if not expected_json.exists():
+        print(f"[WARN] Expected JSON not found: {expected_json}")
+    
+    print(f"   [INFO] Running: {assert_script.name}")
     result = subprocess.run(
         [sys.executable, str(assert_script)],
         cwd=str(then_dir),

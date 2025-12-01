@@ -1,13 +1,15 @@
 """
-Assert story graph round-trip preservation.
+Assert JSON and DrawIO round-trip validation.
 
 THEN: Assert expected matches actual (both JSON and DrawIO)
 
-UNIQUE TO THIS ASSERTION:
-- Asserts render → sync → render workflow (round-trip test)
-- Asserts JSONs match: expected vs synced, expected vs extracted from renders
-- Asserts DrawIOs match: rendered1 vs rendered2 (layout preservation)
-- Validates that story graph data is preserved through round-trip
+This assertion validates:
+1. Expected extracted JSON matches synced JSON (from DrawIO extraction)
+2. DrawIO elements validation (stories and acceptance criteria counts)
+3. Overlap detection (no overlapping sub_epics or stories)
+4. Layout preservation (first render matches second render)
+
+Validates the complete round-trip: JSON → DrawIO → JSON → DrawIO
 """
 import sys
 from pathlib import Path
@@ -320,8 +322,15 @@ def check_drawio_overlaps(drawio_path: Path) -> dict:
     except Exception as e:
         return {'valid': False, 'errors': [f'Error checking overlaps: {e}']}
 
-def assert_story_graph_round_trip():
-    """Assert that story graph is preserved through render → sync → render round-trip."""
+def assert_json_drawio_round_trip_validation():
+    """Assert JSON and DrawIO round-trip validation.
+    
+    Validates:
+    - Expected extracted JSON matches synced JSON
+    - DrawIO contains correct number of stories and AC boxes
+    - No overlapping elements in DrawIO
+    - Layout preservation between renders
+    """
     print(f"\n{'='*80}")
     print("THEN: Assert expected matches actual (JSON and DrawIO)")
     print(f"{'='*80}")
@@ -332,8 +341,7 @@ def assert_story_graph_round_trip():
     expected_extracted_json_path = then_dir / "expected-extracted-story-graph.json"
     
     # Actual files
-    when_dir = scenario_dir / "2_when"
-    synced_json_path = when_dir / "synced-story-graph.json"
+    synced_json_path = then_dir / "actual-synced-story-graph.json"
     rendered1_path = then_dir / "actual-first-render.drawio"
     rendered2_path = then_dir / "actual-second-render.drawio"
     
@@ -443,7 +451,7 @@ def assert_story_graph_round_trip():
 
 if __name__ == '__main__':
     try:
-        success = assert_story_graph_round_trip()
+        success = assert_json_drawio_round_trip_validation()
         sys.exit(0 if success else 1)
     except Exception as e:
         print(f"\n[FAIL] Assertion failed: {e}")

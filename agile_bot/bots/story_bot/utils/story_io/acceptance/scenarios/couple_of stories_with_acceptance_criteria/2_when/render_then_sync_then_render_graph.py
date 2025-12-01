@@ -45,7 +45,7 @@ def render_then_sync_then_render_graph():
     # Output files
     then_dir.mkdir(parents=True, exist_ok=True)
     rendered1_path = then_dir / "actual-first-render.drawio"
-    synced_json_path = when_dir / "synced-story-graph.json"
+    synced_json_path = then_dir / "actual-synced-story-graph.json"
     rendered2_path = then_dir / "actual-second-render.drawio"
     
     print(f"\n{'='*80}")
