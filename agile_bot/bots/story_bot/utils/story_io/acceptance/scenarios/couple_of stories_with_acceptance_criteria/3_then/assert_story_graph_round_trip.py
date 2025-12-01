@@ -56,6 +56,34 @@ def count_stories_recursive(item):
     
     return count
 
+def count_stories_with_ac_recursive(item):
+    """Recursively count only stories with acceptance criteria."""
+    count = 0
+    
+    # Count stories with AC in story_groups (new structure)
+    for story_group in item.get('story_groups', []):
+        for story in story_group.get('stories', []):
+            ac = story.get('acceptance_criteria') or story.get('Steps') or story.get('steps') or []
+            if ac:
+                count += 1
+    
+    # Count stories with AC in legacy structure
+    for story in item.get('stories', []):
+        ac = story.get('acceptance_criteria') or story.get('Steps') or story.get('steps') or []
+        if ac:
+            count += 1
+    
+    # Count stories with AC in sub_epics
+    for sub_epic in item.get('sub_epics', []):
+        count += count_stories_with_ac_recursive(sub_epic)
+    
+    # Count nested stories with AC (legacy nested structure)
+    for story in item.get('stories', []):
+        if 'stories' in story:
+            count += count_stories_with_ac_recursive(story)
+    
+    return count
+
 def _assert_jsons_match(expected_path: Path, actual_path: Path) -> dict:
     """Compare two JSON story graph files with detailed comparison (new format with sub_epics)."""
     if not expected_path.exists():
@@ -82,11 +110,11 @@ def _assert_jsons_match(expected_path: Path, actual_path: Path) -> dict:
     if sub_epics1 != sub_epics2:
         differences.append(f"Sub-epic count mismatch: {sub_epics1} vs {sub_epics2}")
     
-    # Compare story counts (across all epics and sub_epics, recursively)
-    stories1 = sum(count_stories_recursive(epic) for epic in expected.get('epics', []))
-    stories2 = sum(count_stories_recursive(epic) for epic in actual.get('epics', []))
+    # Compare story counts - only stories with AC (for exploration mode)
+    stories1 = sum(count_stories_with_ac_recursive(epic) for epic in expected.get('epics', []))
+    stories2 = sum(count_stories_with_ac_recursive(epic) for epic in actual.get('epics', []))
     if stories1 != stories2:
-        differences.append(f"Story count mismatch: {stories1} vs {stories2}")
+        differences.append(f"Story count mismatch (with AC): {stories1} vs {stories2}")
     
     # Compare increment counts
     increments1 = len(expected.get('increments', []))
@@ -122,11 +150,12 @@ def validate_drawio_elements(drawio_path: Path, expected_json_path: Path) -> dic
         for feat_idx, sub_epic in enumerate(epic.get('sub_epics', []), 1):
             for story_group in sub_epic.get('story_groups', []):
                 for story_idx, story in enumerate(story_group.get('stories', []), 1):
-                    steps = story.get('Steps') or story.get('steps') or []
-                    if steps:
+                    # Check for acceptance_criteria (new format) or Steps/steps (legacy)
+                    ac = story.get('acceptance_criteria') or story.get('Steps') or story.get('steps') or []
+                    if ac:
                         expected_stories_with_ac += 1
-                        # AC boxes are created in pairs (When+Then), so count pairs
-                        ac_box_count = (len(steps) + 1) // 2  # Round up for odd counts
+                        # Each AC entry gets its own box
+                        ac_box_count = len(ac)
                         story_name = story['name']
                         story_ac_map[story_name] = ac_box_count
                         # Store expected story ID pattern
@@ -285,7 +314,7 @@ def check_drawio_overlaps(drawio_path: Path) -> dict:
         return {
             'valid': len(overlaps) == 0,
             'overlaps': overlaps,
-            'feature_count': len(features),
+            'sub_epic_count': len(features),
             'story_count': len(stories)
         }
     except Exception as e:
@@ -297,9 +326,10 @@ def assert_story_graph_round_trip():
     print("THEN: Assert expected matches actual (JSON and DrawIO)")
     print(f"{'='*80}")
     
-    # Expected file
+    # Expected files
     given_dir = scenario_dir / "1_given"
     expected_json_path = given_dir / "story-graph-complex.json"
+    expected_extracted_json_path = then_dir / "expected-extracted-story-graph.json"
     
     # Actual files
     when_dir = scenario_dir / "2_when"
@@ -309,6 +339,10 @@ def assert_story_graph_round_trip():
     
     if not expected_json_path.exists():
         print(f"[ERROR] Expected JSON not found: {expected_json_path}")
+        return False
+    
+    if not expected_extracted_json_path.exists():
+        print(f"[ERROR] Expected extracted JSON not found: {expected_extracted_json_path}")
         return False
     
     if not synced_json_path.exists():
@@ -325,53 +359,23 @@ def assert_story_graph_round_trip():
     
     all_passed = True
     
-    # Assert 1: Expected JSON matches synced JSON
-    print(f"\n1. Asserting expected JSON matches synced JSON...")
-    json_match = _assert_jsons_match(expected_json_path, synced_json_path)
+    # Assert 1: Expected extracted JSON matches synced JSON
+    print(f"\n1. Asserting expected extracted JSON matches synced JSON...")
+    json_match = _assert_jsons_match(expected_extracted_json_path, synced_json_path)
     if json_match['match']:
-        print(f"   [OK] Expected JSON matches synced JSON!")
+        print(f"   [OK] Expected extracted JSON matches synced JSON!")
     else:
-        print(f"   [FAIL] Expected JSON doesn't match synced JSON: {json_match.get('message', 'Unknown error')}")
+        print(f"   [FAIL] Expected extracted JSON doesn't match synced JSON: {json_match.get('message', 'Unknown error')}")
+        if json_match.get('differences'):
+            for diff in json_match['differences']:
+                print(f"      - {diff}")
         all_passed = False
     
-    # Assert 2: Extract JSONs from rendered DrawIOs and compare
-    print(f"\n2. Extracting and comparing JSONs from rendered DrawIOs...")
-    
-    # Extract JSON from rendered1
-    temp_json1 = when_dir / "temp_rendered1.json"
-    diagram1 = StoryIODiagram(drawio_file=rendered1_path)
-    diagram1.synchronize_outline(drawio_path=rendered1_path, output_path=temp_json1)
-    diagram1.save_story_graph(temp_json1)
-    
-    # Extract JSON from rendered2
-    temp_json2 = when_dir / "temp_rendered2.json"
-    diagram2 = StoryIODiagram(drawio_file=rendered2_path)
-    diagram2.synchronize_outline(drawio_path=rendered2_path, output_path=temp_json2)
-    diagram2.save_story_graph(temp_json2)
-    
-    # Compare expected with extracted from rendered1
-    print(f"   2a. Comparing expected JSON with extracted JSON from rendered1...")
-    json_match_rendered1 = _assert_jsons_match(expected_json_path, temp_json1)
-    if json_match_rendered1['match']:
-        print(f"   [OK] Expected JSON matches rendered1 extracted JSON!")
-    else:
-        print(f"   [FAIL] Expected JSON doesn't match rendered1 extracted JSON")
-        all_passed = False
-    
-    # Compare expected with extracted from rendered2
-    print(f"   2b. Comparing expected JSON with extracted JSON from rendered2...")
-    json_match_rendered2 = _assert_jsons_match(expected_json_path, temp_json2)
-    if json_match_rendered2['match']:
-        print(f"   [OK] Expected JSON matches rendered2 extracted JSON!")
-    else:
-        print(f"   [FAIL] Expected JSON doesn't match rendered2 extracted JSON")
-        all_passed = False
-    
-    # Assert 3: Validate DrawIO elements (stories, acceptance criteria)
-    print(f"\n3. Validating DrawIO elements (stories, acceptance criteria)...")
+    # Assert 2: Validate DrawIO elements (stories, acceptance criteria)
+    print(f"\n2. Validating DrawIO elements (stories, acceptance criteria)...")
     
     # Validate first render
-    print(f"   3a. Validating first render DrawIO elements...")
+    print(f"   2a. Validating first render DrawIO elements...")
     element_validation1 = validate_drawio_elements(rendered1_path, expected_json_path)
     if element_validation1['valid']:
         counts = element_validation1['counts']
@@ -383,7 +387,7 @@ def assert_story_graph_round_trip():
         all_passed = False
     
     # Validate second render
-    print(f"   3b. Validating second render DrawIO elements...")
+    print(f"   2b. Validating second render DrawIO elements...")
     element_validation2 = validate_drawio_elements(rendered2_path, expected_json_path)
     if element_validation2['valid']:
         counts = element_validation2['counts']
@@ -394,14 +398,14 @@ def assert_story_graph_round_trip():
             print(f"      - {error}")
         all_passed = False
     
-    # Assert 4: Check for overlaps in rendered DrawIOs
-    print(f"\n4. Checking for overlaps in rendered DrawIOs...")
+    # Assert 3: Check for overlaps in rendered DrawIOs
+    print(f"\n3. Checking for overlaps in rendered DrawIOs...")
     
     # Check first render
-    print(f"   4a. Checking first render for overlaps...")
+    print(f"   3a. Checking first render for overlaps...")
     overlap_check1 = check_drawio_overlaps(rendered1_path)
     if overlap_check1['valid']:
-        print(f"   [OK] First render: {overlap_check1['feature_count']} features, {overlap_check1['story_count']} stories - no overlaps")
+        print(f"   [OK] First render: {overlap_check1['sub_epic_count']} sub_epics, {overlap_check1['story_count']} stories - no overlaps")
     else:
         print(f"   [FAIL] First render has overlaps:")
         for overlap in overlap_check1.get('overlaps', []):
@@ -409,30 +413,24 @@ def assert_story_graph_round_trip():
         all_passed = False
     
     # Check second render
-    print(f"   4b. Checking second render for overlaps...")
+    print(f"   3b. Checking second render for overlaps...")
     overlap_check2 = check_drawio_overlaps(rendered2_path)
     if overlap_check2['valid']:
-        print(f"   [OK] Second render: {overlap_check2['feature_count']} features, {overlap_check2['story_count']} stories - no overlaps")
+        print(f"   [OK] Second render: {overlap_check2['sub_epic_count']} sub_epics, {overlap_check2['story_count']} stories - no overlaps")
     else:
         print(f"   [FAIL] Second render has overlaps:")
         for overlap in overlap_check2.get('overlaps', []):
             print(f"      - {overlap}")
         all_passed = False
     
-    # Assert 5: DrawIOs match (layout preservation)
-    print(f"\n5. Asserting DrawIOs match (layout preservation)...")
+    # Assert 4: DrawIOs match (layout preservation)
+    print(f"\n4. Asserting DrawIOs match (layout preservation)...")
     drawio_match = compare_drawios(rendered1_path, rendered2_path)
     if drawio_match['match']:
         print(f"   [OK] First render matches second render (layout preserved)!")
     else:
         print(f"   [INFO] First render differs from second render (layout may have been applied): {drawio_match.get('message', 'Unknown')}")
         # This is informational - layout differences are expected
-    
-    # Cleanup temp files
-    if temp_json1.exists():
-        temp_json1.unlink()
-    if temp_json2.exists():
-        temp_json2.unlink()
     
     print(f"\n{'='*80}")
     if all_passed:

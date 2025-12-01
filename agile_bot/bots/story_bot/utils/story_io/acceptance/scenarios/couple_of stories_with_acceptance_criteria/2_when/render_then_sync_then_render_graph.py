@@ -75,7 +75,8 @@ def render_then_sync_then_render_graph():
         output_path=synced_json_path,
         generate_report=True
     )
-    diagram.save_story_graph(synced_json_path)
+    # Note: synchronize_outline already writes the file, so we don't need save_story_graph
+    # (save_story_graph would overwrite with diagram.render() which uses internal structure)
     print(f"   [OK] Synced story graph saved to: {synced_json_path}")
     
     # Load extracted layout (layout file is generated during sync)

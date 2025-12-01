@@ -354,8 +354,10 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
         
         if is_ac_box:
             # This is an acceptance criteria box
-            # Extract step text from value (handles "When ... Then ..." format)
-            ac_text = value
+            # Extract raw value to preserve <br> tags for splitting
+            raw_value = cell.get('value', '')
+            # Decode XML entities but keep HTML tags (especially <br>)
+            ac_text = raw_value.replace('&amp;', '&').replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>')
             acceptance_criteria_cells.append({
                 'id': cell_id,
                 'text': ac_text,
@@ -812,58 +814,73 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                     'y': story_y   # Store y position for sorting
                 }
                 
-                # Match acceptance criteria to this story (wider boxes below story)
+                # Match acceptance criteria to this story based on position and shape
+                # AC boxes are wider (width > 100) and positioned below stories
                 story_ac = []
-                
-                # Find acceptance criteria boxes below this story
-                # Acceptance criteria should be:
-                # - Below the story (y > story_y + story_height)
-                # - Horizontally aligned (within tolerance of story_x)
-                # - Not already assigned to another story
                 tolerance_x = 100  # Increased tolerance for AC boxes (they can be wider than stories)
                 story_height = 50  # Approximate story height
+                story_width = story.get('width', 50)
+                story_right = story_x + story_width
                 
                 # Find all AC boxes that belong to this story
-                # AC boxes are positioned below the story, sorted by Y position
+                # AC boxes are:
+                # - Below the story (y > story_y + story_height)
+                # - Horizontally aligned (within tolerance or overlapping)
+                # - Wider than stories (width > 100)
+                # - Not already assigned to another story
                 for ac in acceptance_criteria_cells:
                     if ac['id'] in assigned_ac_ids:
                         continue  # Skip already assigned AC boxes
                     
                     ac_x = ac['x']
                     ac_y = ac['y']
-                    ac_right = ac_x + ac['width']
-                    story_right = story_x + story.get('width', 100)  # Approximate story width
+                    ac_width = ac['width']
+                    ac_height = ac['height']
+                    ac_right = ac_x + ac_width
                     
-                    # Check if acceptance criteria is below story and aligned
-                    # AC boxes can be wider than stories, so check if they overlap horizontally
-                    # Also check if AC is not too far below (within reasonable distance)
+                    # Check if AC box is wider than story (AC boxes are typically 250px wide, stories are 50px)
+                    is_wider = ac_width > 100
+                    
+                    # Check if acceptance criteria is below story
                     is_below = ac_y > story_y + story_height
-                    max_distance_below = story_y + story_height + 500  # Max 500px below story
+                    
+                    # Check if AC is not too far below (within reasonable distance, max 500px)
+                    max_distance_below = story_y + story_height + 500
                     is_within_range = ac_y < max_distance_below
+                    
+                    # Check horizontal alignment/overlap
+                    # AC boxes can be wider than stories, so check if they overlap horizontally
                     is_aligned = (abs(ac_x - story_x) < tolerance_x or 
                                  (ac_x <= story_x <= ac_right) or 
                                  (story_x <= ac_x <= story_right))
                     
-                    # Also check if there's a closer story that this AC might belong to
-                    # (We'll match to the closest story if multiple stories are candidates)
-                    if is_below and is_within_range and is_aligned:
-                        # Extract step from acceptance criteria text
-                        step_text = extract_step_from_acceptance_criteria(ac['text'])
-                        if step_text:
-                            # Extract user from AC if present (format: "User --> Description")
-                            ac_user = ""
-                            if '-->' in step_text:
-                                parts = step_text.split('-->', 1)
-                                ac_user = parts[0].strip()
-                                step_text = parts[1].strip()
-                            
+                    # Match if: wider, below, within range, and aligned
+                    # OR if AC box ID matches this story's ID pattern (more reliable)
+                    ac_id = ac['id']
+                    story_id_pattern = story['id']  # e.g., "e1f1s1"
+                    
+                    # Check if AC box ID contains this story's ID (format: ac_e1f1s1_0)
+                    ac_matches_story = ac_id.startswith(f'ac_{story_id_pattern}_')
+                    
+                    if (is_wider and is_below and is_within_range and is_aligned) or ac_matches_story:
+                        # Extract all text from AC box - keep as one entry (don't split by <br>)
+                        import re
+                        ac_text = ac['text']
+                        # Replace <br> tags with newlines to preserve line breaks
+                        ac_text_clean = ac_text.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+                        ac_text_clean = re.sub(r'<[^>]+>', '', ac_text_clean)  # Remove HTML tags
+                        # Normalize whitespace but preserve newlines
+                        ac_text_clean = re.sub(r'[ \t]+', ' ', ac_text_clean)  # Normalize spaces/tabs
+                        ac_text_clean = re.sub(r' *\n *', '\n', ac_text_clean)  # Clean up around newlines
+                        ac_text_clean = ac_text_clean.strip()  # Remove leading/trailing whitespace
+                        
+                        if ac_text_clean:
                             story_ac.append({
-                                'description': step_text,
-                                'sequential_order': len(story_ac) + 1,
-                                'connector': None,  # Default to 'and' (not shown)
-                                'user': ac_user
+                                'description': ac_text_clean,
+                                'sequential_order': len(story_ac) + 1
                             })
-                            assigned_ac_ids.add(ac['id'])  # Mark this AC as assigned
+                        
+                        assigned_ac_ids.add(ac['id'])  # Mark this AC as assigned
                 
                 # Add acceptance_criteria only if found
                 if story_ac:
@@ -1021,22 +1038,30 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                              (ac_x <= story_x <= ac_right) or 
                              (story_x <= ac_x <= story_right))
                 
-                if is_below and is_within_range and is_aligned:
-                    step_text = extract_step_from_acceptance_criteria(ac['text'])
-                    if step_text:
-                        ac_user = ""
-                        if '-->' in step_text:
-                            parts = step_text.split('-->', 1)
-                            ac_user = parts[0].strip()
-                            step_text = parts[1].strip()
-                        
+                # Check if AC box ID matches this story's ID pattern (more reliable than position)
+                ac_id = ac['id']
+                story_id_pattern = story['id']  # e.g., "e1f1s1"
+                ac_matches_story = ac_id.startswith(f'ac_{story_id_pattern}_')
+                
+                if (is_below and is_within_range and is_aligned) or ac_matches_story:
+                    # Extract all text from AC box - keep as one entry (don't split by <br>)
+                    import re
+                    ac_text = ac['text']
+                    # Replace <br> tags with newlines to preserve line breaks
+                    ac_text_clean = ac_text.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+                    ac_text_clean = re.sub(r'<[^>]+>', '', ac_text_clean)  # Remove HTML tags
+                    # Normalize whitespace but preserve newlines
+                    ac_text_clean = re.sub(r'[ \t]+', ' ', ac_text_clean)  # Normalize spaces/tabs
+                    ac_text_clean = re.sub(r' *\n *', '\n', ac_text_clean)  # Clean up around newlines
+                    ac_text_clean = ac_text_clean.strip()  # Remove leading/trailing whitespace
+                    
+                    if ac_text_clean:
                         story_ac.append({
-                            'description': step_text,
-                            'sequential_order': len(story_ac) + 1,
-                            'connector': None,
-                            'user': ac_user
+                            'description': ac_text_clean,
+                            'sequential_order': len(story_ac) + 1
                         })
-                        assigned_ac_ids.add(ac['id'])
+                    
+                    assigned_ac_ids.add(ac['id'])
             
             if story_ac:
                 story_data['acceptance_criteria'] = story_ac
@@ -1574,7 +1599,7 @@ def _display_large_deletions(deletions: Dict[str, Any]) -> None:
         print("!"*80)
         for epic in deletions['missing_epics']:
             print(f"  MISSING EPIC: {epic['name']}")
-            print(f"    - {epic['feature_count']} features")
+            print(f"    - {epic['sub_epic_count']} sub_epics")
             print(f"    - {epic['story_count']} stories")
             print(f"    - This may be an accidental deletion!")
         print("!"*80)
@@ -2014,6 +2039,32 @@ def display_merge_report(report: Dict[str, Any]) -> None:
     print("="*80 + "\n")
 
 
+def is_exploration_mode(drawio_path: Path) -> bool:
+    """
+    Detect if DrawIO file is in exploration mode (has acceptance criteria boxes).
+    
+    Args:
+        drawio_path: Path to DrawIO file
+        
+    Returns:
+        True if exploration mode (has AC boxes), False otherwise
+    """
+    try:
+        tree = ET.parse(drawio_path)
+        root = tree.getroot()
+        cells = root.findall('.//mxCell')
+        
+        for cell in cells:
+            cell_id = cell.get('id', '')
+            # Check for AC boxes (IDs starting with 'ac_')
+            if cell_id.startswith('ac_'):
+                return True
+        
+        return False
+    except Exception:
+        return False
+
+
 def synchronize_story_graph_from_drawio_outline(
     drawio_path: Path,
     output_path: Optional[Path] = None,
@@ -2039,6 +2090,7 @@ def synchronize_story_graph_from_drawio_outline(
     features = epics_features['features']
     
     # Step 2: Build stories for epics/features (preserves layout)
+    # AC extraction is based on position and shape (wider boxes below stories), works for both regular and exploration mode
     epics_with_stories = build_stories_for_epics_features(drawio_path, epics, features, return_layout=True)
     
     result = {

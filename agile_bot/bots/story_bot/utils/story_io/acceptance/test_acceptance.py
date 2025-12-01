@@ -321,10 +321,10 @@ class AcceptanceTestRunner:
                 'synced': synced_epics
             })
         
-        # Feature count check
+        # Sub-epic count check
         if original_features != synced_features:
             differences.append({
-                'type': 'feature_count_mismatch',
+                'type': 'sub_epic_count_mismatch',
                 'original': original_features,
                 'synced': synced_features
             })

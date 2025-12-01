@@ -23,18 +23,12 @@
                     "Human"
                   ],
                   "story_type": "user",
-                  "Steps": [
+                  "acceptance_criteria": [
                     {
-                      "description": "Given user is on registration page",
-                      "type": "Given"
+                      "description": "When user enters registration details\nThen account is created"
                     },
                     {
-                      "description": "When user enters email and password",
-                      "type": "When"
-                    },
-                    {
-                      "description": "Then account is created",
-                      "type": "Then"
+                      "description": "When user verifies email\nThen account is activated"
                     }
                   ]
                 },
@@ -69,18 +63,12 @@
                     "Human"
                   ],
                   "story_type": "user",
-                  "Steps": [
+                  "acceptance_criteria": [
                     {
-                      "description": "Given user is on login page",
-                      "type": "Given"
+                      "description": "When user enters login credentials\nThen user is authenticated"
                     },
                     {
-                      "description": "When user enters credentials",
-                      "type": "When"
-                    },
-                    {
-                      "description": "Then user is authenticated",
-                      "type": "Then"
+                      "description": "When user clicks logout\nThen user session ends"
                     }
                   ]
                 },
@@ -164,18 +152,12 @@
                     "Admin"
                   ],
                   "story_type": "user",
-                  "Steps": [
+                  "acceptance_criteria": [
                     {
-                      "description": "Given admin is on content page",
-                      "type": "Given"
+                      "description": "When admin edits content\nThen content is updated"
                     },
                     {
-                      "description": "When admin clicks edit",
-                      "type": "When"
-                    },
-                    {
-                      "description": "Then content is updated",
-                      "type": "Then"
+                      "description": "When admin saves changes\nThen changes are persisted"
                     }
                   ]
                 },
