@@ -1650,24 +1650,22 @@ def _flatten_stories_from_original(original_data: Dict[str, Any]) -> List[Dict[s
     """Flatten all stories from original story graph into a list with context."""
     stories = []
     
-    # Helper to get sub_epics (supports both formats)
-    def get_sub_epics(epic):
-        return epic.get('sub_epics', []) or epic.get('features', [])
-    
     for epic in original_data.get('epics', []):
         epic_name = epic.get('name', '')
-        for sub_epic in get_sub_epics(epic):
+        for sub_epic in epic.get('sub_epics', []):
             sub_epic_name = sub_epic.get('name', '')
-            for story in sub_epic.get('stories', []):
-                story_data = {
-                    'name': story.get('name', ''),
-                    'users': story.get('users', []),
-                    'Steps': story.get('Steps', []),
-                    'acceptance_criteria': story.get('acceptance_criteria', []),
-                    'epic_name': epic_name,
-                    'sub_epic_name': sub_epic_name
-                }
-                stories.append(story_data)
+            # Only use story_groups (no legacy direct stories support)
+            for story_group in sub_epic.get('story_groups', []):
+                for story in story_group.get('stories', []):
+                    story_data = {
+                        'name': story.get('name', ''),
+                        'users': story.get('users', []),
+                        'Steps': story.get('Steps', []),
+                        'acceptance_criteria': story.get('acceptance_criteria', []),
+                        'epic_name': epic_name,
+                        'sub_epic_name': sub_epic_name
+                    }
+                    stories.append(story_data)
     
     return stories
 
@@ -1676,25 +1674,23 @@ def _flatten_stories_from_extracted(extracted_data: Dict[str, Any]) -> List[Dict
     """Flatten all stories from extracted story graph into a list with context."""
     stories = []
     
-    # Helper to get sub_epics (supports both formats)
-    def get_sub_epics(epic):
-        return epic.get('sub_epics', []) or epic.get('features', [])
-    
     for epic in extracted_data.get('epics', []):
         epic_name = epic.get('name', '')
-        for sub_epic in get_sub_epics(epic):
+        for sub_epic in epic.get('sub_epics', []):
             sub_epic_name = sub_epic.get('name', '')
-            for story in sub_epic.get('stories', []):
-                story_data = {
-                    'name': story.get('name', ''),
-                    'users': story.get('users', []),
-                    'sequential_order': story.get('sequential_order'),
-                    'epic_name': epic_name,
-                    'sub_epic_name': sub_epic_name
-                }
-                if 'story_type' in story and story.get('story_type') != 'user':
-                    story_data['story_type'] = story['story_type']
-                stories.append(story_data)
+            # Only use story_groups (no legacy direct stories support)
+            for story_group in sub_epic.get('story_groups', []):
+                for story in story_group.get('stories', []):
+                    story_data = {
+                        'name': story.get('name', ''),
+                        'users': story.get('users', []),
+                        'sequential_order': story.get('sequential_order'),
+                        'epic_name': epic_name,
+                        'sub_epic_name': sub_epic_name
+                    }
+                    if 'story_type' in story and story.get('story_type') != 'user':
+                        story_data['story_type'] = story['story_type']
+                    stories.append(story_data)
     
     return stories
 
@@ -1880,86 +1876,102 @@ def merge_story_graphs(
     with open(report_path, 'r', encoding='utf-8') as f:
         report = json.load(f)
     
-    # Helper to get sub_epics (supports both formats)
-    def get_sub_epics(epic):
-        return epic.get('sub_epics', []) or epic.get('features', [])
+    # Create maps for matches: key -> extracted story and original story
+    # This allows us to update original stories with extracted data
+    extracted_story_map = {}  # Maps key -> extracted story data
+    original_story_map = {}   # Maps key -> original story data
     
-    # Create a lookup map for original stories by epic/sub_epic/name
-    original_story_map = {}
-    for epic in original_data.get('epics', []):
-        epic_name = epic.get('name', '')
-        for sub_epic in get_sub_epics(epic):
-            sub_epic_name = sub_epic.get('name', '')
-            for story in sub_epic.get('stories', []):
-                story_name = story.get('name', '')
-                key = f"{epic_name}|{sub_epic_name}|{story_name}"
-                original_story_map[key] = story
-    
-    # Create a map of matches from report (support both old and new format keys)
-    match_map = {}
     for match in report.get('exact_matches', []):
         ext_story = match['extracted']
         orig_story = match['original']
-        # Support both 'feature_name' (old) and 'sub_epic_name' (new)
-        feature_name = ext_story.get('feature_name') or ext_story.get('sub_epic_name', '')
-        key = f"{ext_story['epic_name']}|{feature_name}|{ext_story['name']}"
-        match_map[key] = orig_story
+        # Only use sub_epic_name (no legacy feature_name support)
+        sub_epic_name = ext_story.get('sub_epic_name', '')
+        key = f"{ext_story['epic_name']}|{sub_epic_name}|{ext_story['name']}"
+        extracted_story_map[key] = ext_story
+        original_story_map[key] = orig_story
     
     for match in report.get('fuzzy_matches', []):
         ext_story = match['extracted']
         orig_story = match['original']
-        # Support both 'feature_name' (old) and 'sub_epic_name' (new)
-        feature_name = ext_story.get('feature_name') or ext_story.get('sub_epic_name', '')
-        key = f"{ext_story['epic_name']}|{feature_name}|{ext_story['name']}"
-        match_map[key] = orig_story
+        # Only use sub_epic_name (no legacy feature_name support)
+        sub_epic_name = ext_story.get('sub_epic_name', '')
+        key = f"{ext_story['epic_name']}|{sub_epic_name}|{ext_story['name']}"
+        extracted_story_map[key] = ext_story
+        original_story_map[key] = orig_story
     
-    # Merge: start with extracted structure, add acceptance_criteria/Steps from matches
-    merged_data = json.loads(json.dumps(extracted_data))  # Deep copy
+    # Merge: start with original structure to preserve all stories, then update extracted stories
+    # This ensures the merged file has the full structure, not just extracted stories
+    merged_data = json.loads(json.dumps(original_data))  # Deep copy of original
     
-    # Merge epics
+    # Also need to get the actual extracted story objects (not just flattened data)
+    # Create a map of extracted stories by key for updating
+    extracted_full_story_map = {}
+    for epic in extracted_data.get('epics', []):
+        epic_name = epic.get('name', '')
+        for sub_epic in epic.get('sub_epics', []):
+            sub_epic_name = sub_epic.get('name', '')
+            # Only use story_groups (no legacy direct stories support)
+            for story_group in sub_epic.get('story_groups', []):
+                for story in story_group.get('stories', []):
+                    story_name = story.get('name', '')
+                    key = f"{epic_name}|{sub_epic_name}|{story_name}"
+                    extracted_full_story_map[key] = story
+    
+    # Merge epics - only use story_groups (no legacy direct stories support)
     for epic in merged_data.get('epics', []):
         epic_name = epic.get('name', '')
-        for sub_epic in get_sub_epics(epic):
+        for sub_epic in epic.get('sub_epics', []):
             sub_epic_name = sub_epic.get('name', '')
-            for story in sub_epic.get('stories', []):
-                story_name = story.get('name', '')
-                key = f"{epic_name}|{sub_epic_name}|{story_name}"
-                
-                # If we have a match, copy acceptance_criteria/Steps and use extracted users (DrawIO is source of truth)
-                if key in match_map:
-                    orig_story = match_map[key]
-                    # Copy acceptance_criteria (new format)
-                    if 'acceptance_criteria' in orig_story:
-                        story['acceptance_criteria'] = orig_story['acceptance_criteria']
-                    # Copy Steps (legacy format)
-                    if 'Steps' in orig_story:
-                        story['Steps'] = orig_story['Steps']
-                    # Use extracted users only (DrawIO is source of truth for user associations)
-                    # Extracted users are already set in story, so no need to merge
-                    pass
-    
-    # Merge increments (if present)
-    for increment in merged_data.get('increments', []):
-        for epic in increment.get('epics', []):
-            epic_name = epic.get('name', '')
-            for sub_epic in get_sub_epics(epic):
-                sub_epic_name = sub_epic.get('name', '')
-                for story in sub_epic.get('stories', []):
+            
+            # Merge stories in story_groups
+            for story_group in sub_epic.get('story_groups', []):
+                for story in story_group.get('stories', []):
                     story_name = story.get('name', '')
                     key = f"{epic_name}|{sub_epic_name}|{story_name}"
                     
-                    # If we have a match, copy acceptance_criteria/Steps and use extracted users (DrawIO is source of truth)
-                    if key in match_map:
-                        orig_story = match_map[key]
-                        # Copy acceptance_criteria (new format)
-                        if 'acceptance_criteria' in orig_story:
-                            story['acceptance_criteria'] = orig_story['acceptance_criteria']
-                        # Copy Steps (legacy format)
-                        if 'Steps' in orig_story:
-                            story['Steps'] = orig_story['Steps']
-                        # Use extracted users only (DrawIO is source of truth for user associations)
-                        # Extracted users are already set in story, so no need to merge
-                        pass
+                    # If we have a match, update story with extracted data (users, connector, etc.)
+                    # but preserve acceptance_criteria from original
+                    if key in extracted_full_story_map:
+                        ext_story = extracted_full_story_map[key]
+                        # Update with extracted data (users, connector, sequential_order, etc.)
+                        if 'users' in ext_story:
+                            story['users'] = ext_story['users']
+                        if 'connector' in ext_story:
+                            story['connector'] = ext_story['connector']
+                        if 'sequential_order' in ext_story:
+                            story['sequential_order'] = ext_story['sequential_order']
+                        if 'story_type' in ext_story:
+                            story['story_type'] = ext_story['story_type']
+                        # Preserve acceptance_criteria from original (don't overwrite)
+                        # The original AC is already in the story since we started with original
+    
+    # Merge increments (if present) - only use story_groups (no legacy direct stories support)
+    for increment in merged_data.get('increments', []):
+        for epic in increment.get('epics', []):
+            epic_name = epic.get('name', '')
+            for sub_epic in epic.get('sub_epics', []):
+                sub_epic_name = sub_epic.get('name', '')
+                
+                # Merge stories in story_groups
+                for story_group in sub_epic.get('story_groups', []):
+                    for story in story_group.get('stories', []):
+                        story_name = story.get('name', '')
+                        key = f"{epic_name}|{sub_epic_name}|{story_name}"
+                        
+                        # If we have a match, update story with extracted data (users, connector, etc.)
+                        # but preserve acceptance_criteria from original
+                        if key in extracted_full_story_map:
+                            ext_story = extracted_full_story_map[key]
+                            # Update with extracted data (users, connector, sequential_order, etc.)
+                            if 'users' in ext_story:
+                                story['users'] = ext_story['users']
+                            if 'connector' in ext_story:
+                                story['connector'] = ext_story['connector']
+                            if 'sequential_order' in ext_story:
+                                story['sequential_order'] = ext_story['sequential_order']
+                            if 'story_type' in ext_story:
+                                story['story_type'] = ext_story['story_type']
+                            # Preserve acceptance_criteria from original (don't overwrite)
     
     # Write merged result
     output_path = Path(output_path)

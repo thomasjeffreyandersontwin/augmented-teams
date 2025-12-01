@@ -37,24 +37,17 @@ def count_sub_epics_recursive(item):
     return count
 
 def count_stories_recursive(item):
-    """Recursively count all stories in an epic, sub_epic, or story."""
+    """Recursively count all stories in an epic or sub_epic."""
     count = 0
     
-    # Count stories in story_groups (new structure)
+    # Only sub_epics have story_groups, not stories
+    # Count stories in story_groups (sub_epics only)
     for story_group in item.get('story_groups', []):
         count += len(story_group.get('stories', []))
     
-    # Count stories in legacy structure
-    count += len(item.get('stories', []))
-    
-    # Count stories in sub_epics
+    # Count stories in sub_epics (recursively)
     for sub_epic in item.get('sub_epics', []):
         count += count_stories_recursive(sub_epic)
-    
-    # Count nested stories (legacy nested structure)
-    for story in item.get('stories', []):
-        if 'stories' in story:
-            count += count_stories_recursive(story)
     
     return count
 
@@ -62,27 +55,17 @@ def count_stories_with_ac_recursive(item):
     """Recursively count only stories with acceptance criteria."""
     count = 0
     
-    # Count stories with AC in story_groups (new structure)
+    # Only sub_epics have story_groups, not stories
+    # Count stories with AC in story_groups (sub_epics only)
     for story_group in item.get('story_groups', []):
         for story in story_group.get('stories', []):
             ac = story.get('acceptance_criteria') or story.get('Steps') or story.get('steps') or []
             if ac:
                 count += 1
     
-    # Count stories with AC in legacy structure
-    for story in item.get('stories', []):
-        ac = story.get('acceptance_criteria') or story.get('Steps') or story.get('steps') or []
-        if ac:
-            count += 1
-    
-    # Count stories with AC in sub_epics
+    # Count stories with AC in sub_epics (recursively)
     for sub_epic in item.get('sub_epics', []):
         count += count_stories_with_ac_recursive(sub_epic)
-    
-    # Count nested stories with AC (legacy nested structure)
-    for story in item.get('stories', []):
-        if 'stories' in story:
-            count += count_stories_with_ac_recursive(story)
     
     return count
 
@@ -342,6 +325,8 @@ def assert_json_drawio_round_trip_validation():
     
     # Actual files
     synced_json_path = then_dir / "actual-synced-story-graph.json"
+    # Merged original file (original file updated with merge)
+    merged_original_path = then_dir / "story-graph-complex.json"
     rendered1_path = then_dir / "actual-first-render.drawio"
     rendered2_path = then_dir / "actual-second-render.drawio"
     
@@ -377,6 +362,23 @@ def assert_json_drawio_round_trip_validation():
         if json_match.get('differences'):
             for diff in json_match['differences']:
                 print(f"      - {diff}")
+        all_passed = False
+    
+    # Assert 1b: Merged original file matches original given JSON (round-trip validation)
+    # After merging, the original file (updated with merge) should match the original given JSON
+    if merged_original_path.exists():
+        print(f"\n1b. Asserting merged original file matches original given JSON (round-trip validation)...")
+        merge_match = _assert_jsons_match(expected_json_path, merged_original_path)
+        if merge_match['match']:
+            print(f"   [OK] Merged original file matches original given JSON (merge successful - round-trip preserved)!")
+        else:
+            print(f"   [FAIL] Merged original file doesn't match original given JSON: {merge_match.get('message', 'Unknown error')}")
+            if merge_match.get('differences'):
+                for diff in merge_match['differences']:
+                    print(f"      - {diff}")
+            all_passed = False
+    else:
+        print(f"\n1b. Skipping merge validation (merged original file not found: {merged_original_path})")
         all_passed = False
     
     # Assert 2: Validate DrawIO elements (stories, acceptance criteria)

@@ -571,23 +571,29 @@ The story graph follows this hierarchy:
 **To Map:**
 - **Epic 1 "Build Agile Bots"**: x=20, y=130, width=940, height=60
   - **Sub-epic 1 "Generate Bot Server And Tools"**: x=20, y=200, width=520, height=70
-    - Story "Provides Context of New Bot": x=32, y=337, width=50, height=50 (yellow, user story)
-    - Story "Generates Project Scaffold": x=92, y=337, width=50, height=50 (yellow, user story)
+    - **Story Group 1** (type="and", connector=null): x=20, y=337, width=120, height=50
+      - Story "Provides Context of New Bot": x=32, y=337, width=50, height=50 (yellow, user story)
+      - Story "Generates Project Scaffold": x=92, y=337, width=50, height=50 (yellow, user story)
       - User "Human": x=30, y=277, width=50, height=50 (only above first story with Human)
-    - Story "Save Project State": x=152, y=402, width=50, height=50 (dark blue, system story, optional)
+    - **Story Group 2** (type="and", connector="opt"): x=152, y=402, width=50, height=50
+      - Story "Save Project State": x=152, y=402, width=50, height=50 (dark blue, system story, optional)
       - User "Bot Project": x=150, y=290, width=50, height=50
-    - Story "Intercepts Tool Call": x=212, y=404.75, width=50, height=50 (yellow, alternative)
+    - **Story Group 3** (type="and", connector="or"): x=212, y=404.75, width=110, height=50
+      - Story "Intercepts Tool Call": x=212, y=404.75, width=50, height=50 (yellow, alternative)
+      - Story "Route To Project Tool": x=272, y=404.75, width=50, height=50 (dark blue, in same story group)
       - User "AI Chat": x=210, y=290, width=50, height=50
-    - Story "Route To Project Tool": x=272, y=404.75, width=50, height=50 (dark blue, in same story group as Intercepts Tool Call)
   - **Sub-epic 2 "Init Project"**: x=540, y=200, width=420, height=70
-    - Story "Create Project Structure": x=552, y=337, width=50, height=50 (yellow)
+    - **Story Group 1** (type="and", connector=null): x=540, y=337, width=50, height=50
+      - Story "Create Project Structure": x=552, y=337, width=50, height=50 (yellow)
       - User "Human": x=550, y=277, width=50, height=50 (shown again because user changed)
-    - Story "Validate Configuration": x=612, y=404.75, width=50, height=50 (dark blue, alternative)
+    - **Story Group 2** (type="and", connector="or"): x=612, y=404.75, width=50, height=50
+      - Story "Validate Configuration": x=612, y=404.75, width=50, height=50 (dark blue, alternative)
       - User "System": x=610, y=290, width=50, height=50
 
 - **Epic 2 "Invoke MCP Bot Server"**: x=960, y=130, width=420, height=60
   - **Sub-epic "MCP Integration"**: x=960, y=200, width=420, height=70
-    - Story "Connect to MCP Server": x=972, y=337, width=50, height=50 (black, technical story)
+    - **Story Group 1** (type="and", connector=null): x=960, y=337, width=50, height=50
+      - Story "Connect to MCP Server": x=972, y=337, width=50, height=50 (black, technical story)
       - User "Bot Server": x=970, y=277, width=50, height=50
 
 **ASCII Art Visualization:**

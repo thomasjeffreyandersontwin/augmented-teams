@@ -162,3 +162,4 @@ with open('validation_report.txt', 'w', encoding='utf-8') as f:
 print('\n'.join(report))
 
 
+

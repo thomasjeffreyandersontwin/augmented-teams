@@ -40,3 +40,4 @@ def get_story_graph_path() -> Path:
         Path to story graph JSON file
     """
     return given_dir / "story-graph.json"
+

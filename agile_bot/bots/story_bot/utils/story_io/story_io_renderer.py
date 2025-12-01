@@ -245,7 +245,7 @@ class DrawIORenderer:
         has_acceptance_criteria = False
         for epic in story_graph.get('epics', []):
             for sub_epic in get_sub_epics(epic):
-                # Check in story_groups (new structure)
+                # Only check story_groups (no legacy direct stories support)
                 for story_group in sub_epic.get('story_groups', []):
                     for story in story_group.get('stories', []):
                         if story.get('acceptance_criteria'):
@@ -253,12 +253,6 @@ class DrawIORenderer:
                             break
                     if has_acceptance_criteria:
                         break
-                # Also check legacy stories structure
-                if not has_acceptance_criteria:
-                    for story in sub_epic.get('stories', []):
-                        if story.get('acceptance_criteria'):
-                            has_acceptance_criteria = True
-                            break
                 if has_acceptance_criteria:
                     break
             if has_acceptance_criteria:
@@ -433,11 +427,6 @@ class DrawIORenderer:
                         filtered_feature = feature.copy()
                         filtered_feature['story_groups'] = filtered_groups
                         filtered_features.append(filtered_feature)
-                else:
-                    # Legacy structure: check stories directly
-                    stories = feature.get('stories', [])
-                    if any(has_acceptance_criteria(s) for s in stories):
-                        filtered_features.append(feature)
             
             # Skip epic if no features have stories with AC
             if not filtered_features:
@@ -461,16 +450,11 @@ class DrawIORenderer:
             epic_max_x = epic_x
             
             for feat_idx, feature in enumerate(filtered_features, 1):
-                # Get filtered story groups
+                # Get filtered story groups (only story_groups structure, no legacy)
                 story_groups = feature.get('story_groups', [])
                 if not story_groups:
-                    # Legacy structure: create a single group from stories
-                    stories = [s for s in feature.get('stories', []) if has_acceptance_criteria(s)]
-                    if not stories:
-                        continue
-                    story_groups = [{'type': 'and', 'connector': None, 'stories': stories}]
-                else:
-                    story_groups = filter_story_groups(story_groups)
+                    continue  # Skip features without story_groups
+                story_groups = filter_story_groups(story_groups)
                 
                 if not story_groups:
                     continue
@@ -725,25 +709,20 @@ class DrawIORenderer:
             if is_exploration:
                 filtered_features = []
                 for feature in features:
-                    # Check if feature has any stories with AC
+                    # Check if feature has any stories with AC (only story_groups structure)
                     story_groups = feature.get('story_groups', [])
-                    if story_groups:
-                        # Check story_groups structure
-                        has_story_with_ac = False
-                        for group in story_groups:
-                            for story in group.get('stories', []):
-                                if story.get('acceptance_criteria'):
-                                    has_story_with_ac = True
-                                    break
-                            if has_story_with_ac:
+                    if not story_groups:
+                        continue  # Skip features without story_groups
+                    
+                    # Check story_groups structure
+                    has_story_with_ac = False
+                    for group in story_groups:
+                        for story in group.get('stories', []):
+                            if story.get('acceptance_criteria'):
+                                has_story_with_ac = True
                                 break
-                    else:
-                        # Check legacy structure
-                        stories = feature.get('stories', [])
-                        has_story_with_ac = any(
-                            s.get('acceptance_criteria')
-                            for s in stories
-                        )
+                        if has_story_with_ac:
+                            break
                     
                     if has_story_with_ac:
                         filtered_features.append(feature)
@@ -810,30 +789,22 @@ class DrawIORenderer:
                     feat_height = 60
                     use_feature_layout = False
                 
-                # Support both story_groups (new) and stories (legacy)
+                # Only use story_groups (no legacy direct stories support)
                 story_groups = feature.get('story_groups', [])
-                if story_groups:
-                    # New structure: process story groups
-                    # Flatten stories from all groups for processing
-                    stories = []
-                    for group in story_groups:
-                        group_stories = group.get('stories', [])
-                        # In exploration mode: filter to only stories with AC
-                        if is_exploration:
-                            group_stories = [
-                                s for s in group_stories
-                                if s.get('acceptance_criteria')
-                            ]
-                        stories.extend(group_stories)
-                else:
-                    # Legacy structure: use stories directly
-                    stories = feature.get('stories', [])
+                if not story_groups:
+                    continue  # Skip features without story_groups
+                
+                # Process story groups - flatten stories from all groups
+                stories = []
+                for group in story_groups:
+                    group_stories = group.get('stories', [])
                     # In exploration mode: filter to only stories with AC
                     if is_exploration:
-                        stories = [
-                            s for s in stories
+                        group_stories = [
+                            s for s in group_stories
                             if s.get('acceptance_criteria')
                         ]
+                    stories.extend(group_stories)
                 
                 # Skip feature if no stories after filtering (in exploration mode)
                 if is_exploration and len(stories) == 0:

@@ -10,6 +10,7 @@ UNIQUE TO THIS WORKFLOW:
 - Tests round-trip preservation of story graph data
 """
 import sys
+import json
 from pathlib import Path
 
 # Add parent directories to path
@@ -47,6 +48,9 @@ def render_then_sync_then_render_graph():
     rendered1_path = then_dir / "actual-first-render.drawio"
     synced_json_path = then_dir / "actual-synced-story-graph.json"
     rendered2_path = then_dir / "actual-second-render.drawio"
+    merge_report_path = then_dir / "actual-synced-story-graph-merge-report.json"
+    # Merge writes back to original file (as a copy in then_dir for testing)
+    merged_original_path = then_dir / story_graph_path.name
     
     print(f"\n{'='*80}")
     print("WHEN: Render story graph to DrawIO, sync back to JSON, then render again")
@@ -88,8 +92,28 @@ def render_then_sync_then_render_graph():
     else:
         print(f"   [WARN] Layout file not found, rendering without layout")
     
-    # Step 3: Render synced JSON to DrawIO again (with layout)
-    print(f"\n3. Rendering synced JSON to DrawIO again (with layout)...")
+    # Step 3: Merge synced JSON with original given JSON
+    # Merge alters the original file to reflect the merge
+    print(f"\n3. Merging synced JSON with original given JSON (merge alters original file)...")
+    if not merge_report_path.exists():
+        print(f"   [ERROR] Merge report not found: {merge_report_path}")
+        return False
+    
+    # Copy original to then_dir so we can merge into it (preserving given file)
+    import shutil
+    shutil.copy2(story_graph_path, merged_original_path)
+    
+    diagram = StoryIODiagram()
+    merged_data = diagram.merge_story_graphs(
+        extracted_path=synced_json_path,
+        original_path=merged_original_path,  # Merge into the copy of original
+        report_path=merge_report_path,
+        output_path=merged_original_path  # Merge writes back to original file
+    )
+    print(f"   [OK] Merged story graph saved to: {merged_original_path} (original file updated with merge)")
+    
+    # Step 4: Render synced JSON to DrawIO again (with layout)
+    print(f"\n4. Rendering synced JSON to DrawIO again (with layout)...")
     synced_graph = load_story_graph(synced_json_path)
     
     StoryIODiagram.render_outline_from_graph(
@@ -100,10 +124,11 @@ def render_then_sync_then_render_graph():
     print(f"   [OK] Second render saved to: {rendered2_path}")
     
     print(f"\n{'='*80}")
-    print("[OK] Workflow execution completed")
+    print("[OK] Full round-trip workflow execution completed")
     print(f"{'='*80}")
     print(f"First render:  {rendered1_path}")
     print(f"Synced JSON:   {synced_json_path}")
+    print(f"Merged original: {merged_original_path} (original file updated with merge)")
     print(f"Second render: {rendered2_path}")
     
     return True
