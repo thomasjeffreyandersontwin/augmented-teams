@@ -107,6 +107,124 @@
   - **AND** Bot.Behavior compiles and returns instructions 
   - **AND**  MCP tool Injects instructions into AI Chat context
 
+---
+
+## Story 5: Inject Behavior Action Instructions
+
+**User:** Bot Behavior  
+**Sequential Order:** 5  
+**Story Type:** system
+
+### Acceptance Criteria
+- **WHEN** Tool invokes Bot.Behavior.Action method
+- **THEN** Behavior Action loads instructions from `{bot}/behaviors/{behavior}/{action}/instructions.json`
+- **AND** Behavior Action loads instructions from `base_bot/base_actions/{action}/instructions.json`
+- **AND** Action merges base instructions with behavior-specific instructions
+- **AND** Compiled instructions returned for injection into AI Chat
+- **AND** Behavior Action compiles instructions with behavior-specific context
+- **AND** Behavior Action returns compiled instructions to tool
+
+---
+
+## Story 6: Inject Guardrails as Part of Clarify Requirements
+
+**User:** Bot Behavior  
+**Sequential Order:** 6  
+**Story Type:** system
+
+### Acceptance Criteria
+
+- **WHEN** MCP Specifc Behavior Action Tool invokes Gather Context Action (2_gather_context)
+- **THEN** Action checks for guardrails in `{bot}/behaviors/{behavior}/guardrails/required_context/`
+- **WHEN** guardrails exist, 
+- **THEN**Action loads key_questions.json and evidence.json
+- **AND** Action injects guardrails into clarify requirements section of compiled instructions
+- **WHEN** no guardrails exist, 
+- **THEN** Action injects base clarification instructions only
+
+---
+
+## Story 7: Inject Planning Criteria Into Instructions
+
+**User:** Bot Behavior  
+**Sequential Order:** 7  
+**Story Type:** system
+
+### Acceptance Criteria
+
+- **WHEN** MCP Specific Behavior Action Tool invokes Planning Action (3_decide_planning_criteria)
+- **THEN** Action checks for guardrails in `{bot}/behaviors/{behavior}/guardrails/planning/`
+- **WHEN** guardrails exist,
+- **THEN** Action loads typical_assumptions.json and decision_criteria/*.json files
+- **AND** Action injects planning guardrails into planning section of compiled instructions
+- **WHEN** no guardrails exist,
+- **THEN** Action injects base planning instructions only
+
+---
+
+## Story 8: Inject Knowledge Graph Template for Build Knowledge
+
+**User:** Bot Behavior  
+**Sequential Order:** 8  
+**Story Type:** system
+
+### Acceptance Criteria
+
+- **WHEN** MCP Specific Behavior Action Tool invokes Build Knowledge Action (4_build_knowledge)
+- **THEN** Action loads knowledge graph template from `{bot}/behaviors/{behavior}/content/knowledge_graph/`
+- **AND** Action loads build instructions from knowledge graph spec files
+- **AND** Action injects knowledge graph template path and build instructions into compiled instructions
+- **AND** Action injects validation rules reference (see Story 10: Inject Validation Rules)
+
+---
+
+## Story 9: Inject Render Templates and Transformers
+
+**User:** Bot Behavior  
+**Sequential Order:** 9  
+**Story Type:** system
+
+### Acceptance Criteria
+
+- **WHEN** MCP Specific Behavior Action Tool invokes Render Output Action (5_render_output)
+- **THEN** Action loads render templates from `{bot}/behaviors/{behavior}/content/render/templates/`
+- **AND** Action loads transformer methods from `{bot}/behaviors/{behavior}/content/render/transformers/`
+- **AND** Action loads render spec from behavior content configuration
+- **AND** Action injects template path, transformer path, and spec path into compiled instructions
+
+---
+
+## Story 10: Inject Validation Rules for Validate Rules Action
+
+**User:** Bot Behavior  
+**Sequential Order:** 10  
+**Story Type:** system
+
+### Acceptance Criteria
+
+- **WHEN** MCP Specific Behavior Action Tool invokes Validate Rules Action (7_validate_rules)
+- **THEN** Action loads common bot rules from `base_bot/rules/`
+- **AND** Action loads behavior-specific rules from `{bot}/behaviors/{behavior}/rules/`
+- **AND** Action merges common and behavior-specific rules
+- **AND** Action injects rules into validation section of compiled instructions
+- **AND** Rules define validation criteria for generated content
+
+---
+
+## Story 11: Load Correct Bot Instructions
+
+**User:** Bot Behavior  
+**Sequential Order:** 11  
+**Story Type:** system
+
+### Acceptance Criteria
+
+- **WHEN** MCP Specific Behavior Action Tool invokes Correct Bot Action (6_correct_bot)
+- **THEN** Action loads correct bot instructions from `base_bot/base_actions/6_correct_bot/instructions.json`
+- **AND** Action injects correction instructions into compiled instructions
+- **AND** Instructions guide how to review and correct generated content
+
+---
 
 ## Folder Structure
 
