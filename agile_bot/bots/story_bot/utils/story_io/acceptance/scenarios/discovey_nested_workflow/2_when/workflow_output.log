@@ -2,20 +2,20 @@
 ================================================================================
 WHEN: Render story graph to DrawIO, sync back to JSON, then render again
 ================================================================================
-Story graph: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\1_given\story-graph.json
+Story graph: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\1_given\story-graph.json
 
 1. Rendering story graph to DrawIO (first render, no layout)...
-   [OK] First render saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\3_then\actual-first-render.drawio
+   [OK] First render saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\3_then\actual-first-render.drawio
 
 2. Syncing from DrawIO back to JSON...
-Layout data saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\2_when\synced-story-graph-layout.json
+Layout data saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\2_when\synced-story-graph-layout.json
 
 ================================================================================
 STORY GRAPH MERGE REPORT
 ================================================================================
-Generated: 2025-12-01T21:12:03.700496
-Extracted: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\2_when\synced-story-graph.json
-Original: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\1_given\story-graph.json
+Generated: 2025-12-01T22:37:00.290708
+Extracted: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\2_when\synced-story-graph.json
+Original: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\1_given\story-graph.json
 
 --------------------------------------------------------------------------------
 SUMMARY
@@ -35,16 +35,16 @@ NEXT STEPS:
 ================================================================================
 
 
-Merge report saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\2_when\synced-story-graph-merge-report.json
-   [OK] Synced story graph saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\2_when\synced-story-graph.json
+Merge report saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\2_when\synced-story-graph-merge-report.json
+   [OK] Synced story graph saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\2_when\synced-story-graph.json
    [OK] Layout file deleted (not preserving layout for this test)
 
 3. Rendering synced JSON to DrawIO again (with default layout)...
-   [OK] Second render saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\3_then\actual-second-render.drawio
+   [OK] Second render saved to: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\3_then\actual-second-render.drawio
 
 ================================================================================
 [OK] Workflow execution completed
 ================================================================================
-First render:  C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\3_then\actual-first-render.drawio
-Synced JSON:   C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\2_when\synced-story-graph.json
-Second render: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\nested_workflow\3_then\actual-second-render.drawio
+First render:  C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\3_then\actual-first-render.drawio
+Synced JSON:   C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\2_when\synced-story-graph.json
+Second render: C:\dev\augmented-teams\agile_bot\bots\story_bot\utils\story_io\acceptance\scenarios\discovey_nested_workflow\3_then\actual-second-render.drawio

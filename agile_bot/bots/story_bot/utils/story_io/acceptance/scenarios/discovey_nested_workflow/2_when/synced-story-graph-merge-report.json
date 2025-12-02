@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-12-01T21:12:03.700496",
-  "extracted_file": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\utils\\story_io\\acceptance\\scenarios\\nested_workflow\\2_when\\synced-story-graph.json",
-  "original_file": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\utils\\story_io\\acceptance\\scenarios\\nested_workflow\\1_given\\story-graph.json",
+  "timestamp": "2025-12-01T22:37:00.290708",
+  "extracted_file": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\utils\\story_io\\acceptance\\scenarios\\discovey_nested_workflow\\2_when\\synced-story-graph.json",
+  "original_file": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\utils\\story_io\\acceptance\\scenarios\\discovey_nested_workflow\\1_given\\story-graph.json",
   "summary": {
     "total_extracted_stories": 22,
     "total_original_stories": 22,

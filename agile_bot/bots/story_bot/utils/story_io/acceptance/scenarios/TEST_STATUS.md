@@ -39,3 +39,4 @@ This suggests that when extracting JSON from the second render (with layout appl
 3. Update test assertions if needed to account for acceptable differences
 4. Fix any actual bugs in the render/sync/extract cycle
 
+

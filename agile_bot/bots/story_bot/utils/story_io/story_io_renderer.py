@@ -413,47 +413,46 @@ class DrawIORenderer:
         for epic_idx, epic in enumerate(story_graph.get('epics', []), 1):
             features = get_sub_epics(epic)
             
-            # Filter features to only those with stories that have AC
+            # Filter features - keep all features, but filter their story groups to only those with AC
             filtered_features = []
             for feature in features:
                 story_groups = feature.get('story_groups', [])
+                filtered_feature = feature.copy()
                 if story_groups:
                     filtered_groups = filter_story_groups(story_groups)
-                    if filtered_groups:
-                        filtered_feature = feature.copy()
-                        filtered_feature['story_groups'] = filtered_groups
-                        filtered_features.append(filtered_feature)
+                    filtered_feature['story_groups'] = filtered_groups
+                else:
+                    filtered_feature['story_groups'] = []
+                # Always include the feature (even if no story_groups or no AC)
+                filtered_features.append(filtered_feature)
             
-            # Skip epic if no features have stories with AC
+            # Skip epic if no features at all
             if not filtered_features:
                 continue
             
-            # Render epic
+            # Render epic - always full height (60px), don't change
+            epic_height = 60
             epic_cell = ET.SubElement(root_elem, 'mxCell',
                                      id=f'e{epic_idx}',
                                      value=epic['name'],
                                      style='rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;',
                                      parent='1', vertex='1')
             epic_geom = ET.SubElement(epic_cell, 'mxGeometry', x=str(epic_x), y=str(self.EPIC_Y),
-                                     width='100', height='60')
+                                     width='100', height=str(epic_height))
             epic_geom.set('as', 'geometry')
             
             # Render features horizontally (side by side)
-            feature_x = epic_x  # Features align with epic left edge (no offset)
-            feature_y = self.FEATURE_Y
-            feature_spacing = 0  # Will be calculated based on actual feature widths
+            feature_y = self.FEATURE_Y  # Use standard feature Y position
+            feature_spacing = 10  # Spacing between features
+            current_feature_x = epic_x  # Start at epic left edge
             epic_rightmost_ac_x = None
             epic_max_x = epic_x
             
             for feat_idx, feature in enumerate(filtered_features, 1):
-                # Get filtered story groups (only story_groups structure, no legacy)
+                feature_x = current_feature_x  # Each feature gets its own x position
+                # Get filtered story groups (already filtered to only those with AC in filtered_features)
                 story_groups = feature.get('story_groups', [])
-                if not story_groups:
-                    continue  # Skip features without story_groups
-                story_groups = filter_story_groups(story_groups)
-                
-                if not story_groups:
-                    continue
+                # Render feature even if no story_groups (sub-epics without sub-sub)
                 
                 # Initialize story_positions for this feature
                 story_positions = {}  # Maps story name -> {'x': x, 'y': y, 'width': width, 'height': height}
@@ -481,6 +480,9 @@ class DrawIORenderer:
                 feature_min_x = feature_x
                 feature_max_x = feature_x
                 story_idx = 1
+                
+                # Track shown users at feature/column level - each user should only appear once per column
+                feature_shown_users = set()
                 
                 for group_idx, group in enumerate(story_groups):
                     group_type = group.get('type', 'and')
@@ -532,20 +534,14 @@ class DrawIORenderer:
                             story_x = group_x
                             story_y = group_y + story_idx_in_group * self.STORY_SPACING_Y
                         
-                        # Render users - only when user set changes
+                        # Render users - only show each user once per column/feature
                         story_users = set(story.get('users', []))
                         new_story_users = []
-                        if story_idx_in_group == 0:
-                            # First story: render all users
-                            for user in story_users:
+                        # Only render users that haven't been shown in this feature/column yet
+                        for user in story_users:
+                            if user not in feature_shown_users:
                                 new_story_users.append(user)
-                                shown_users.add(user)
-                        elif story_users != previous_story_users:
-                            # User set changed: render all NEW users (in current but not in previous set)
-                            new_users = story_users - previous_story_users
-                            for user in new_users:
-                                new_story_users.append(user)
-                                shown_users.add(user)
+                                feature_shown_users.add(user)
                         previous_story_users = story_users
                         
                         if new_story_users:
@@ -690,6 +686,9 @@ class DrawIORenderer:
                 # Update epic bounds
                 epic_max_x = max(epic_max_x, feature_max_x)
                 
+                # Move to next feature position (side by side)
+                current_feature_x = feature_max_x + feature_spacing
+                
                 # Position next feature
                 feature_x = feature_max_x + self.FEATURE_SPACING_X
                 
@@ -805,17 +804,18 @@ class DrawIORenderer:
                 epic_x = layout_data[epic_key]['x']
                 epic_y = layout_data[epic_key]['y']
                 epic_width = layout_data[epic_key].get('width', 0)
-                epic_height = layout_data[epic_key].get('height', 60)
+                epic_height = 60  # Always 60px, don't use layout_data height
                 use_epic_layout = True
             else:
                 # Use calculated positions
                 epic_x = x_pos
                 epic_y = self.EPIC_Y
                 epic_width = 0
-                epic_height = 60
+                epic_height = 60  # Always 60px
                 use_epic_layout = False
             
             feature_x = epic_x + 10 if use_epic_layout else x_pos + 10
+            feature_y = epic_y + epic_height  # Features directly below epic
             
             # Pre-calculate which features have AC cards to adjust positioning
             feature_has_ac = {}
@@ -833,9 +833,42 @@ class DrawIORenderer:
             # Otherwise, start features 10px from epic left edge
             feature_x_offset = 0 if is_exploration else 10
             current_feature_x = epic_x + feature_x_offset
-            # When AC is present, features stack vertically; otherwise horizontal
-            current_feature_y = self.FEATURE_Y  # Start Y position for first feature
-            for feat_idx, feature in enumerate(features):
+            # Features positioned directly below epic
+            current_feature_y = epic_y + epic_height  # Start Y position for first feature (below epic)
+            # Helper function to recursively collect nested sub-epics with story_groups, maintaining order
+            def collect_nested_with_stories(sub_epics, collected):
+                """Recursively collect all nested sub-epics that have story_groups, in order"""
+                # Sort by sequential_order to maintain order
+                sorted_sub_epics = sorted(sub_epics, key=lambda x: x.get('sequential_order', 999))
+                for sub_epic in sorted_sub_epics:
+                    sub_story_groups = sub_epic.get('story_groups', [])
+                    sub_nested = sub_epic.get('sub_epics', [])
+                    if sub_story_groups and len(sub_story_groups) > 0:
+                        # This sub-epic has story_groups - add it to collected list
+                        collected.append(sub_epic)
+                    elif sub_nested:
+                        # This sub-epic has nested sub_epics - recurse
+                        collect_nested_with_stories(sub_nested, collected)
+            
+            # Build features_to_render list, replacing middle-level features with their nested sub-epics
+            features_to_render = []
+            for feature in features:
+                feature_story_groups = feature.get('story_groups', [])
+                nested_sub_epics = feature.get('sub_epics', [])
+                
+                if feature_story_groups and len(feature_story_groups) > 0:
+                    # This feature has story_groups - render it
+                    features_to_render.append(feature)
+                elif nested_sub_epics and (not feature_story_groups or len(feature_story_groups) == 0):
+                    # This is a middle-level sub-epic - replace it with its nested sub-epics that have story_groups
+                    nested_with_stories = []
+                    collect_nested_with_stories(nested_sub_epics, nested_with_stories)
+                    # Add nested sub-epics in the position where the parent would have been
+                    features_to_render.extend(nested_with_stories)
+                # Features with no story_groups and no nested sub_epics are skipped
+            
+            for feat_idx, feature in enumerate(features_to_render, 1):
+                
                 # Check if layout data has coordinates for this feature
                 feature_key = f"FEATURE|{epic['name']}|{feature['name']}"
                 if feature_key in layout_data:
@@ -853,7 +886,7 @@ class DrawIORenderer:
                         feat_x = epic_x
                     else:
                         feat_x = current_feature_x
-                    feat_y = self.FEATURE_Y  # Same Y for all features
+                    feat_y = current_feature_y  # Features directly below epic (epic_y + epic_height)
                     feat_width = 0
                     feat_height = 60
                     use_feature_layout = False
@@ -876,9 +909,12 @@ class DrawIORenderer:
                 # Skip feature if no stories AND no estimated_stories (in exploration mode, skip if no stories with AC)
                 if is_exploration and len(stories) == 0:
                     continue
-                # In outline mode: render features with estimated_stories even if no story_groups
+                # In outline mode: render features with estimated_stories OR nested sub_epics even if no story_groups
                 elif not is_exploration and not story_groups and not feature.get('estimated_stories'):
-                    continue  # Skip features without story_groups and without estimated_stories
+                    # Check if feature has nested sub_epics - if so, render it
+                    nested_sub_epics = feature.get('sub_epics', [])
+                    if not nested_sub_epics:
+                        continue  # Skip features without story_groups, without estimated_stories, and without nested sub_epics
                 
                 # Group stories by sequential_order and create a mapping to position index
                 stories_by_seq = {}
@@ -1298,9 +1334,13 @@ class DrawIORenderer:
                 
                 # All features now use story_groups structure
                 feature_story_groups = feature.get('story_groups', [])
-                if not feature_story_groups:
-                    # Skip features without story_groups
+                nested_sub_epics = feature.get('sub_epics', [])
+                if not feature_story_groups and not nested_sub_epics:
+                    # Skip features without story_groups and without nested sub_epics
                     continue
+                
+                # Track actual bottom of feature (including all groups and stories) - initialize BEFORE story groups loop
+                actual_feature_bottom_y = feat_y + feat_height
                 
                 if True:  # Always use story_groups path
                     # NEW STRUCTURE: Process story groups
@@ -1331,6 +1371,9 @@ class DrawIORenderer:
                     previous_group_has_users = False  # Track if previous group has users (for spacing with "or" connector)
                     previous_story_users = None
                     rendered_positions = []  # Track all rendered element positions (x, y, width, height) for collision detection
+                    
+                    # Track shown users at feature/column level - each user should only appear once per column
+                    feature_shown_users = set()
                     
                     for group_idx, group in enumerate(feature_story_groups):
                         group_type = group.get('type', 'and')  # 'and' = horizontal, 'or' = vertical
@@ -1517,21 +1560,14 @@ class DrawIORenderer:
                                 story_x = group_start_x
                                 story_y = group_start_y + story_idx_in_group * self.STORY_SPACING_Y
                             
-                            # Render users for this story - only when user set changes
+                            # Render users for this story - only show each user once per column/feature
                             story_users = set(story.get('users', []))
                             new_story_users = []
-                            
-                            if story_idx_in_group == 0:
-                                # First story: render all users
-                                for user in story_users:
+                            # Only render users that haven't been shown in this feature/column yet
+                            for user in story_users:
+                                if user not in feature_shown_users:
                                     new_story_users.append(user)
-                                    shown_users.add(user)
-                            elif story_users != previous_story_users:
-                                # User set changed: render all NEW users (in current but not in previous set)
-                                new_users = story_users - previous_story_users
-                                for user in new_users:
-                                    new_story_users.append(user)
-                                    shown_users.add(user)
+                                    feature_shown_users.add(user)
                             
                             previous_story_users = story_users
                             
@@ -1545,12 +1581,12 @@ class DrawIORenderer:
                                         user_x = layout_data[user_key]['x']
                                         layout_user_y = layout_data[user_key]['y']
                                         if layout_user_y < 50:
-                                            user_x = story_x + user_idx * self.STORY_SPACING_X
+                                            user_x = story_x  # Align user with story's x position
                                             user_y = initial_user_y
                                         else:
                                             user_y = layout_user_y
                                     else:
-                                        user_x = story_x + user_idx * self.STORY_SPACING_X
+                                        user_x = story_x  # Align user with story's x position
                                         user_y = initial_user_y
                                     
                                     # Check for collision with any rendered element and adjust position if needed
@@ -1722,6 +1758,10 @@ class DrawIORenderer:
                             if feat_idx not in feature_bottom_y:
                                 feature_bottom_y[feat_idx] = feat_y + feat_height
                             feature_bottom_y[feat_idx] = max(feature_bottom_y[feat_idx], group_bottom_y + 20)
+                        
+                        # Update actual feature bottom (for nested sub-epic positioning)
+                        # This tracks the bottommost story group - group_bottom_y already includes story height
+                        actual_feature_bottom_y = max(actual_feature_bottom_y, group_bottom_y)
                     
                     # Render grey background rectangles for story groups (non-exploration mode only)
                     if feature_story_groups and story_positions and not is_exploration:
@@ -1775,36 +1815,36 @@ class DrawIORenderer:
                             
                             bg_rectangles_to_insert.append((bg_rect_id, bg_rect))
                             bg_rect_id += 1
-                    
-                    # Insert background rectangles into XML (behind everything, so insert before first story/user)
-                    # In DrawIO XML, elements that appear earlier are drawn behind later elements
-                    # Insert right after the sub-epic cell, before any users or stories
-                    if bg_rectangles_to_insert:
-                        # Find the sub-epic cell for this feature
-                        feature_cell_id = f'e{epic_idx}f{feat_idx}'
-                        children = list(root_elem)
-                        feature_cell = None
-                        for child in children:
-                            if child.get('id') == feature_cell_id:
-                                feature_cell = child
-                                break
                         
-                        if feature_cell is not None:
-                            # Insert backgrounds right after the sub-epic cell
-                            feature_index = children.index(feature_cell)
-                            # Insert in reverse order so first group is at the back
-                            for bg_rect_id, bg_rect in reversed(bg_rectangles_to_insert):
-                                root_elem.insert(feature_index + 1, bg_rect)
-                        elif first_story_cell_ref is not None:
-                            # Fallback: insert before first story/user cell
-                            try:
-                                first_story_index = children.index(first_story_cell_ref)
+                        # Insert background rectangles into XML (behind everything, so insert before first story/user)
+                        # In DrawIO XML, elements that appear earlier are drawn behind later elements
+                        # Insert right after the sub-epic cell, before any users or stories
+                        if bg_rectangles_to_insert:
+                            # Find the sub-epic cell for this feature
+                            feature_cell_id = f'e{epic_idx}f{feat_idx}'
+                            children = list(root_elem)
+                            feature_cell = None
+                            for child in children:
+                                if child.get('id') == feature_cell_id:
+                                    feature_cell = child
+                                    break
+                            
+                            if feature_cell is not None:
+                                # Insert backgrounds right after the sub-epic cell
+                                feature_index = children.index(feature_cell)
+                                # Insert in reverse order so first group is at the back
                                 for bg_rect_id, bg_rect in reversed(bg_rectangles_to_insert):
-                                    root_elem.insert(first_story_index, bg_rect)
-                            except ValueError:
-                                # Last resort: append at end
-                                for bg_rect_id, bg_rect in bg_rectangles_to_insert:
-                                    root_elem.append(bg_rect)
+                                    root_elem.insert(feature_index + 1, bg_rect)
+                            elif first_story_cell_ref is not None:
+                                # Fallback: insert before first story/user cell
+                                try:
+                                    first_story_index = children.index(first_story_cell_ref)
+                                    for bg_rect_id, bg_rect in reversed(bg_rectangles_to_insert):
+                                        root_elem.insert(first_story_index, bg_rect)
+                                except ValueError:
+                                    # Last resort: append at end
+                                    for bg_rect_id, bg_rect in bg_rectangles_to_insert:
+                                        root_elem.append(bg_rect)
                     elif bg_rectangles_to_insert:
                         # No stories rendered, just append backgrounds
                         for bg_rect_id, bg_rect in bg_rectangles_to_insert:

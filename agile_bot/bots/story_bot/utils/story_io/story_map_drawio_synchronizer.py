@@ -413,15 +413,28 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
             parent_right = parent_x + parent_width
             parent_bottom = parent_y + parent_height
             
-            # Check if this feature is contained within parent feature
-            # Feature must be completely inside parent (with some tolerance)
+            # Check if this feature is nested below parent feature
+            # Nested features are positioned BELOW the parent and horizontally aligned/overlapping
+            # They don't need to be completely inside - they're typically below the parent
             tolerance = 10  # Allow small overlap/offset
-            is_contained = (
-                parent_x - tolerance <= feature_x and
-                feature_right <= parent_right + tolerance and
-                parent_y - tolerance <= feature_y and
-                feature_bottom <= parent_bottom + tolerance
+            parent_bottom = parent_y + parent_height
+            
+            # Check horizontal alignment/overlap
+            horizontal_overlap = (
+                (parent_x - tolerance <= feature_x <= parent_right + tolerance) or
+                (parent_x - tolerance <= feature_right <= parent_right + tolerance) or
+                (feature_x <= parent_x and feature_right >= parent_right)  # Feature spans parent
             )
+            
+            # Check if feature is below parent (not above)
+            is_below = feature_y >= parent_bottom - tolerance
+            
+            # Check if feature is not too far below (within reasonable distance, max 200px)
+            max_distance_below = parent_bottom + 200
+            is_within_range = feature_y < max_distance_below
+            
+            # Feature is nested if it's horizontally aligned and below parent
+            is_contained = horizontal_overlap and is_below and is_within_range
             
             if is_contained:
                 # Calculate containment score (prefer smaller, more specific parents)
@@ -633,6 +646,49 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                     if story['feat_num'] is None:
                         closest_feature = min(epic_features, key=lambda f: abs(f['x'] - story_x))
                         story['feat_num'] = closest_feature.get('feat_num', 0)
+    
+    # After initial assignment, reassign stories to the deepest nested feature that contains them
+    # This ensures stories belong to child features, not parent features
+    for story in all_stories:
+        if story.get('epic_num') is None or story.get('feat_num') is None:
+            continue
+        
+        story_x = story['x']
+        story_y = story['y']
+        story_center_x = story_x + story.get('width', 50) / 2
+        
+        # Find all features in the same epic that contain this story
+        epic_num = story['epic_num']
+        containing_features = []
+        
+        for feature in features:
+            if feature.get('epic_num') != epic_num:
+                continue
+            
+            feature_x = feature['x']
+            feature_y = feature['y']
+            feature_width = feature.get('width', 0)
+            feature_height = feature.get('height', 0)
+            feature_right = feature_x + feature_width
+            feature_bottom = feature_y + feature_height
+            
+            # Check if story is contained within this feature (horizontal containment)
+            # Allow some vertical tolerance for stories below features
+            tolerance = 50
+            if (feature_x <= story_center_x <= feature_right and 
+                feature_y - tolerance <= story_y <= feature_bottom + 200):
+                containing_features.append(feature)
+        
+        # If multiple features contain this story, prefer the deepest nested one (child over parent)
+        if containing_features:
+            # Sort by depth: features with parent_feat_num (nested) come first
+            # Among nested features, prefer the one with the smallest area (most specific)
+            containing_features.sort(key=lambda f: (
+                0 if f.get('parent_feat_num') is not None else 1,  # Nested first
+                f.get('width', 0) * f.get('height', 0)  # Smaller area = more specific
+            ))
+            best_feature = containing_features[0]
+            story['feat_num'] = best_feature.get('feat_num')
     
     # Match users to stories based on cell ID pattern (user_e{epic}f{feat}s{story}_{user})
     # Fallback to position-based matching: match each user to the CLOSEST story below it
@@ -852,6 +908,11 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 assigned_story_ids, assigned_ac_ids
             )
             sub_epic_data['sub_epics'].append(nested_sub_epic)
+        
+        # If this feature has nested sub_epics (child features), it should NOT have any stories
+        # All stories should belong to the nested sub_epics
+        if child_features:
+            return sub_epic_data  # Return without processing stories
         
         # Get stories for this sub_epic - only stories that belong to this feature
         # and are NOT contained within any child feature
@@ -1087,13 +1148,13 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 
                 previous_x = story_x
                 previous_y = story_y
-            
-            # Group stories by Y position (rows) within this sub-epic
-            # Traversal logic: Go left to right, capture sequence of "and" stories (first row)
-            # If there's a next row, add stories to nested children of first story in first row
-            y_tolerance_row = 20  # Tolerance for grouping stories into rows (increased to handle slight Y variations)
-            stories_by_row = {}
-            for story in feat_stories:
+        
+        # Group stories by Y position (rows) within this sub-epic
+        # Traversal logic: Go left to right, capture sequence of "and" stories (first row)
+        # If there's a next row, add stories to nested children of first story in first row
+        y_tolerance_row = 20  # Tolerance for grouping stories into rows (increased to handle slight Y variations)
+        stories_by_row = {}
+        for story in feat_stories:
                 story_y = story['y']
                 # Find which row this story belongs to (group by similar Y)
                 row_key = None
@@ -1106,18 +1167,18 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 if row_key not in stories_by_row:
                     stories_by_row[row_key] = []
                 stories_by_row[row_key].append(story)
-            
-            # Sort rows by Y position (top to bottom)
-            sorted_rows = sorted(stories_by_row.items())
-            first_row_y = sorted_rows[0][0] if sorted_rows else None
-            
-            # Process stories row by row
-            # No nested stories - all stories are flat within story groups
-            # Initialize temp_stories before processing stories
-            if 'temp_stories' not in sub_epic_data:
-                sub_epic_data['temp_stories'] = {}  # Maps group_id -> list of story_data
-            
-            for story_idx, story in enumerate(feat_stories):
+        
+        # Sort rows by Y position (top to bottom)
+        sorted_rows = sorted(stories_by_row.items())
+        first_row_y = sorted_rows[0][0] if sorted_rows else None
+        
+        # Process stories row by row
+        # No nested stories - all stories are flat within story groups
+        # Initialize temp_stories before processing stories
+        if 'temp_stories' not in sub_epic_data:
+            sub_epic_data['temp_stories'] = {}  # Maps group_id -> list of story_data
+        
+        for story_idx, story in enumerate(feat_stories):
                 # Skip if this story has already been assigned to another sub_epic (prevent duplicates)
                 if story['id'] in assigned_story_ids:
                     continue
@@ -1233,9 +1294,9 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                     sub_epic_data['temp_stories'][story_group_id] = []
                 sub_epic_data['temp_stories'][story_group_id].append(story_data)
                 assigned_story_ids.add(story['id'])  # Mark this story as assigned
-            
-            # Now organize stories into story groups and determine group type based on story layout
-            for group_idx, group_id in enumerate(sorted_group_ids, 1):
+        
+        # Now organize stories into story groups and determine group type based on story layout
+        for group_idx, group_id in enumerate(sorted_group_ids, 1):
                 group_stories = sub_epic_data['temp_stories'].get(group_id, [])
                 if group_stories:
                     # Determine group TYPE based on how stories are laid out within the group
@@ -1310,10 +1371,10 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                         'stories': group_stories
                     }
                     sub_epic_data['story_groups'].append(story_group_data)
-            
-            # Clean up temp data
-            if 'temp_stories' in sub_epic_data:
-                del sub_epic_data['temp_stories']
+        
+        # Clean up temp data
+        if 'temp_stories' in sub_epic_data:
+            del sub_epic_data['temp_stories']
         
         # Return the completed sub_epic_data with nested sub_epics and story_groups
         return sub_epic_data
