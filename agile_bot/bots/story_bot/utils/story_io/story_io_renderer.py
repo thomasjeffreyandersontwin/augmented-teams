@@ -851,10 +851,12 @@ class DrawIORenderer:
                         collect_nested_with_stories(sub_nested, collected)
             
             # Build features_to_render list, replacing middle-level features with their nested sub-epics
+            # We need to preserve parent's sequential_order when replacing with nested sub-epics
             features_to_render = []
             for feature in features:
                 feature_story_groups = feature.get('story_groups', [])
                 nested_sub_epics = feature.get('sub_epics', [])
+                parent_order = feature.get('sequential_order', 999)
                 
                 if feature_story_groups and len(feature_story_groups) > 0:
                     # This feature has story_groups - render it
@@ -863,12 +865,19 @@ class DrawIORenderer:
                     # This is a middle-level sub-epic - replace it with its nested sub-epics that have story_groups
                     nested_with_stories = []
                     collect_nested_with_stories(nested_sub_epics, nested_with_stories)
-                    # Add nested sub-epics in the position where the parent would have been
+                    # Sort nested sub-epics by their sequential_order (relative to parent)
+                    nested_with_stories.sort(key=lambda x: x.get('sequential_order', 999))
+                    # Assign parent's sequential_order to nested sub-epics so they maintain parent's position
+                    # Use a fractional offset based on their relative order to maintain sorting within parent
+                    for idx, nested in enumerate(nested_with_stories):
+                        # Create a composite order: parent_order + fractional offset based on relative position
+                        # This ensures nested sub-epics appear where parent would be, in correct relative order
+                        nested['_render_order'] = parent_order + (nested.get('sequential_order', 999) / 10000.0)
                     features_to_render.extend(nested_with_stories)
                 # Features with no story_groups and no nested sub_epics are skipped
             
-            # Sort all features by sequential_order to maintain correct order (parent then children)
-            features_to_render.sort(key=lambda x: x.get('sequential_order', 999))
+            # Sort all features by _render_order if present, otherwise by sequential_order
+            features_to_render.sort(key=lambda x: x.get('_render_order', x.get('sequential_order', 999)))
             
             for feat_idx, feature in enumerate(features_to_render, 1):
                 
