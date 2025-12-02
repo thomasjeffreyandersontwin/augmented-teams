@@ -373,6 +373,7 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                 feature['epic_num'] = closest_epic['epic_num']
     
     # Assign feat_num to features by position/order within each epic (left to right)
+    # Also detect nested features (features inside other features) for N-level nesting
     for epic in epics:
         epic_features = [f for f in features if f['epic_num'] == epic['epic_num']]
         # Sort by X position to get order
@@ -382,10 +383,66 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
             if feature.get('feat_num') is None:
                 feature['feat_num'] = idx
     
-    # Sort features by epic_num, then feat_num, then x
-    features.sort(key=lambda x: (x['epic_num'] if x['epic_num'] is not None else 999, 
-                                  x['feat_num'] if x['feat_num'] is not None else 999, 
-                                  x['x']))
+    # Detect nested features (features inside other features) for N-level nesting
+    # A feature is nested if it's contained within another feature's bounds
+    for feature in features:
+        feature['parent_feat_num'] = None  # Track parent feature for nesting
+        feature['parent_epic_num'] = feature.get('epic_num')  # Track which epic it belongs to
+        
+        feature_x = feature['x']
+        feature_y = feature['y']
+        feature_width = feature.get('width', 0)
+        feature_height = feature.get('height', 0)
+        feature_right = feature_x + feature_width
+        feature_bottom = feature_y + feature_height
+        
+        # Check if this feature is nested inside another feature
+        # Look for features in the same epic that contain this feature
+        same_epic_features = [f for f in features 
+                             if f.get('epic_num') == feature.get('epic_num') 
+                             and f.get('id') != feature.get('id')]
+        
+        best_parent = None
+        best_score = float('inf')
+        
+        for parent_feature in same_epic_features:
+            parent_x = parent_feature['x']
+            parent_y = parent_feature['y']
+            parent_width = parent_feature.get('width', 0)
+            parent_height = parent_feature.get('height', 0)
+            parent_right = parent_x + parent_width
+            parent_bottom = parent_y + parent_height
+            
+            # Check if this feature is contained within parent feature
+            # Feature must be completely inside parent (with some tolerance)
+            tolerance = 10  # Allow small overlap/offset
+            is_contained = (
+                parent_x - tolerance <= feature_x and
+                feature_right <= parent_right + tolerance and
+                parent_y - tolerance <= feature_y and
+                feature_bottom <= parent_bottom + tolerance
+            )
+            
+            if is_contained:
+                # Calculate containment score (prefer smaller, more specific parents)
+                parent_area = parent_width * parent_height
+                score = parent_area  # Smaller area = better (more specific parent)
+                
+                if score < best_score:
+                    best_score = score
+                    best_parent = parent_feature
+        
+        if best_parent:
+            feature['parent_feat_num'] = best_parent.get('feat_num')
+            feature['parent_epic_num'] = best_parent.get('epic_num')
+    
+    # Sort features by epic_num, then parent_feat_num (None first), then feat_num, then x
+    features.sort(key=lambda x: (
+        x['epic_num'] if x['epic_num'] is not None else 999, 
+        x['parent_feat_num'] if x['parent_feat_num'] is not None else 0,  # Features without parents come first
+        x['feat_num'] if x['feat_num'] is not None else 999, 
+        x['x']
+    ))
     
     return {
         'epics': epics,
@@ -578,25 +635,21 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                         story['feat_num'] = closest_feature.get('feat_num', 0)
     
     # Match users to stories based on cell ID pattern (user_e{epic}f{feat}s{story}_{user})
-    # Fallback to position-based matching only if user cell doesn't match a different story
+    # Fallback to position-based matching: match each user to the CLOSEST story below it
     stories_with_users = {}
     # Build set of all story IDs for quick lookup
     all_story_ids = {story['id'] for story in all_stories}
     
+    # First pass: match users by cell ID pattern
     for story in all_stories:
         story_id = story['id']  # e.g., "e1f1s4"
-        story_x = story['x']
-        story_y = story['y']
-        tolerance = 25  # pixels
-        
         story_users = []
+        
         for user_cell in user_cells:
             user_cell_id = user_cell['id']  # e.g., "user_e1f1s4_User A"
             user_name = user_cell['name']
-            user_x = user_cell['x']
-            user_y = user_cell['y']
             
-            # First try: match by cell ID pattern (user_e{epic}f{feat}s{story}_{user})
+            # Match by cell ID pattern (user_e{epic}f{feat}s{story}_{user})
             if user_cell_id.startswith('user_') and story_id:
                 # Extract story pattern from user cell ID: user_e1f1s4_User C -> e1f1s4
                 # Pattern is: user_{story_id}_{user_name}
@@ -604,38 +657,139 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                     # Exact match by ID - this user belongs to this story
                     if user_name not in story_users:
                         story_users.append(user_name)
-                    continue  # Skip position-based matching
-                
-                # Check if this user cell ID matches a DIFFERENT story - if so, skip position matching
-                # Extract potential story ID from user cell: user_e1f1s1_User A -> e1f1s1
-                if '_' in user_cell_id:
-                    parts = user_cell_id.split('_', 2)  # ['user', 'e1f1s1', 'User A']
-                    if len(parts) >= 2:
-                        potential_story_id = parts[1]  # e1f1s1
-                        if potential_story_id in all_story_ids and potential_story_id != story_id:
-                            # This user cell belongs to a different story - don't match by position
-                            continue
-            
-            # Fallback: position-based matching (horizontally aligned and above story)
-            # Only use this if user cell doesn't have a story ID or doesn't match any story
-            if abs(user_x - story_x) <= tolerance and user_y < story_y:
-                if user_name not in story_users:
-                    story_users.append(user_name)
         
         stories_with_users[story['id']] = story_users
     
-    # Assign sequential order based on left-to-right position and vertical stacking
-    _assign_sequential_order(all_stories)
+    # Second pass: Simple left-to-right, top-to-bottom algorithm
+    # Parse diagram left to right, top to bottom
+    # When you see a user sticky:
+    #   - Go DOWN: assign to all stories below until you see another user sticky → stop
+    #   - Go RIGHT: if you see a user sticky → stop, otherwise continue assigning
+    # Next row: go down, go right, overwrite previous assignment
+    column_tolerance = 100  # pixels - for grouping into columns
+    y_tolerance = 50  # pixels - for checking if users are at same row level
     
-    # Deduplicate users (but don't inherit - stories only get users explicitly assigned in DrawIO)
+    # Get all user cells that aren't already matched by ID
+    unmatched_users = []
+    for user_cell in user_cells:
+        user_cell_id = user_cell['id']
+        
+        # Skip if already matched by ID pattern
+        if user_cell_id.startswith('user_'):
+            already_assigned = False
+            if '_' in user_cell_id:
+                parts = user_cell_id.split('_', 2)
+                if len(parts) >= 2:
+                    potential_story_id = parts[1]
+                    if potential_story_id in all_story_ids:
+                        already_assigned = True
+            
+            if already_assigned:
+                continue
+        
+        unmatched_users.append({
+            'x': user_cell['x'],
+            'y': user_cell['y'],
+            'name': user_cell['name']
+        })
+    
+    # Sort users by y (top to bottom), then by x (left to right)
+    unmatched_users.sort(key=lambda u: (u['y'], u['x']))
+    
+    # Process each user sticky in order (top to bottom, left to right)
+    for i, user_info in enumerate(unmatched_users):
+        user_name = user_info['name']
+        user_x = user_info['x']
+        user_y = user_info['y']
+        
+        # Step 1: Go DOWN - assign to all stories below in same column until you see another user sticky
+        # Find the next user sticky below in the same column
+        next_user_below_y = float('inf')
+        for j in range(i + 1, len(unmatched_users)):
+            other_user = unmatched_users[j]
+            if abs(other_user['x'] - user_x) <= column_tolerance and other_user['y'] > user_y:
+                next_user_below_y = other_user['y']
+                break
+        
+        # Assign this user to all stories in same column below it
+        for story in all_stories:
+            story_id = story['id']
+            story_x = story['x']
+            story_y = story['y']
+            
+            # Check if story is in same column and below user, above next user
+            # Story must be within tolerance AND not clearly to the left of user
+            # (stories to the left belong to a different column)
+            if (abs(story_x - user_x) <= column_tolerance and 
+                story_x >= user_x - column_tolerance/2 and  # Don't match stories clearly to the left
+                story_y > user_y and story_y < next_user_below_y):
+                # Overwrite previous assignment (simple overwrite rule)
+                stories_with_users[story_id] = [user_name]
+        
+        # Step 2: Go RIGHT - check next column to the RIGHT, if ANY user sticky there, STOP
+        # Find the next column to the RIGHT (must be > user_x, not left)
+        next_column_x = None
+        for story in all_stories:
+            if story['x'] > user_x:  # Only columns to the RIGHT
+                if next_column_x is None or story['x'] < next_column_x:
+                    next_column_x = story['x']
+        
+        if next_column_x is not None:
+            # Check if there's ANY user sticky in the next column (anywhere in that column)
+            has_user_in_next_column = False
+            for other_user in unmatched_users:
+                if abs(other_user['x'] - next_column_x) <= column_tolerance:
+                    has_user_in_next_column = True
+                    break
+            
+            # If no user sticky in next column, continue assigning to stories in that column
+            if not has_user_in_next_column:
+                # Assign to all stories in next column below user (only to the RIGHT)
+                for story in all_stories:
+                    story_id = story['id']
+                    story_x = story['x']
+                    story_y = story['y']
+                    
+                    # Check if story is in next column (to the RIGHT) and below user
+                    if (story_x > user_x and  # Must be to the RIGHT
+                        abs(story_x - next_column_x) <= column_tolerance and 
+                        story_y > user_y):
+                        # Overwrite previous assignment
+                        stories_with_users[story_id] = [user_name]
+    
+    # Final resolution: if a story has multiple users, keep the one with closest column (smallest x distance)
     for story in all_stories:
         if story['id'] in stories_with_users:
             current_users = stories_with_users[story['id']]
-            deduplicated = []
-            for user in current_users:
-                if user not in deduplicated:
-                    deduplicated.append(user)
-            stories_with_users[story['id']] = deduplicated
+            if len(current_users) > 1:
+                # Multiple users assigned - keep the one with closest x position
+                story_x = story['x']
+                best_user = None
+                min_x_distance = float('inf')
+                for user_name in current_users:
+                    # Find this user's x position
+                    for user_info in unmatched_users:
+                        if user_info['name'] == user_name:
+                            x_distance = abs(story_x - user_info['x'])
+                            if x_distance < min_x_distance:
+                                min_x_distance = x_distance
+                                best_user = user_name
+                            break
+                if best_user:
+                    stories_with_users[story['id']] = [best_user]
+                else:
+                    # Fallback: keep first user
+                    stories_with_users[story['id']] = [current_users[0]]
+            else:
+                # Single user - just deduplicate
+                deduplicated = []
+                for user in current_users:
+                    if user not in deduplicated:
+                        deduplicated.append(user)
+                stories_with_users[story['id']] = deduplicated
+    
+    # Assign sequential order based on left-to-right position and vertical stacking
+    _assign_sequential_order(all_stories)
     
     # Assign sequential order to epics (left to right)
     sorted_epics = sorted(epics, key=lambda x: (x['x'], x['epic_num']))
@@ -657,50 +811,108 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
     # Track which acceptance criteria boxes have been assigned to prevent duplicates
     assigned_ac_ids = set()
     
-    for epic in sorted_epics:
-        epic_data = {
-            'name': epic['name'],
-            'sequential_order': epic['sequential_order'],
-            'estimated_stories': epic.get('estimated_stories'),  # Include even if null
+    def build_sub_epic_recursive(feature, parent_epic_num, all_features, all_stories, background_rectangles, 
+                                  stories_with_users, acceptance_criteria_cells, assigned_story_ids, assigned_ac_ids):
+        """
+        Recursively build a sub_epic and its nested sub_epics.
+        
+        Args:
+            feature: Feature dictionary to build sub_epic from
+            parent_epic_num: Epic number this feature belongs to
+            all_features: List of all features
+            all_stories: List of all stories
+            background_rectangles: List of background rectangles
+            stories_with_users: Dictionary mapping story IDs to users
+            acceptance_criteria_cells: List of acceptance criteria cells
+            assigned_story_ids: Set of already assigned story IDs (modified in place)
+            assigned_ac_ids: Set of already assigned AC IDs (modified in place)
+        
+        Returns:
+            Dictionary representing the sub_epic with nested sub_epics
+        """
+        sub_epic_data = {
+            'name': feature['name'],
+            'sequential_order': feature['sequential_order'],
+            'estimated_stories': feature.get('estimated_stories'),  # Include even if null
             'sub_epics': [],
-            'stories': []
+            'story_groups': []
         }
         
-        # Get features for this epic, sorted by X position (these become sub_epics)
-        epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
-                               key=lambda x: (x['x'], x.get('feat_num', 0)))
+        # Get child features (nested sub_epics) - features that have this feature as parent
+        child_features = [f for f in all_features 
+                         if f.get('parent_feat_num') == feature.get('feat_num') 
+                         and f.get('epic_num') == parent_epic_num]
+        child_features.sort(key=lambda x: (x['x'], x.get('feat_num', 0)))
         
-        for feature in epic_features:
-            sub_epic_data = {
-                'name': feature['name'],
-                'sequential_order': feature['sequential_order'],
-                'estimated_stories': feature.get('estimated_stories'),  # Include even if null
-                'sub_epics': [],
-                'story_groups': []  # Changed from 'stories' to 'story_groups'
-            }
+        # Recursively build nested sub_epics
+        for child_feature in child_features:
+            nested_sub_epic = build_sub_epic_recursive(
+                child_feature, parent_epic_num, all_features, all_stories, 
+                background_rectangles, stories_with_users, acceptance_criteria_cells,
+                assigned_story_ids, assigned_ac_ids
+            )
+            sub_epic_data['sub_epics'].append(nested_sub_epic)
+        
+        # Get stories for this sub_epic - only stories that belong to this feature
+        # and are NOT contained within any child feature
+        epic_stories = [s for s in all_stories if s['epic_num'] == parent_epic_num]
+        feat_stories = [s for s in epic_stories 
+                       if s.get('feat_num') == feature.get('feat_num')]
+        
+        # Filter out stories that belong to child features (nested sub_epics)
+        # A story belongs to a child feature if it's contained within that feature's bounds
+        feature_x = feature['x']
+        feature_y = feature['y']
+        feature_width = feature.get('width', 0)
+        feature_height = feature.get('height', 0)
+        feature_right = feature_x + feature_width
+        feature_bottom = feature_y + feature_height
+        
+        stories_for_this_feature = []
+        for story in feat_stories:
+            story_x = story['x']
+            story_y = story['y']
+            story_center_x = story_x + story.get('width', 50) / 2
+            story_center_y = story_y + story.get('height', 50) / 2
             
-            # Get stories for this sub_epic based on feat_num (assigned by position earlier)
-            epic_stories = [s for s in all_stories if s['epic_num'] == epic['epic_num']]
-            feat_stories = [s for s in epic_stories 
-                          if s['epic_num'] == epic['epic_num'] and s.get('feat_num') == feature.get('feat_num')]
+            # Check if story is contained within any child feature
+            belongs_to_child = False
+            for child_feature in child_features:
+                child_x = child_feature['x']
+                child_y = child_feature['y']
+                child_width = child_feature.get('width', 0)
+                child_height = child_feature.get('height', 0)
+                child_right = child_x + child_width
+                child_bottom = child_y + child_height
+                
+                # Check if story is contained within child feature
+                if (child_x <= story_center_x <= child_right and
+                    child_y <= story_center_y <= child_bottom):
+                    belongs_to_child = True
+                    break
             
-            # Get stories for this sub_epic, sorted by sequential_order
-            feat_stories.sort(key=lambda s: (
-                s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
-                s['x']
-            ))
-            
-            # Group stories by background rectangles (story groups)
-            # Match stories to background rectangles based on containment
-            story_groups = {}  # Maps group_id -> list of stories
-            group_rectangles = {}  # Maps group_id -> rectangle info
-            
-            # Filter background rectangles that belong to this feature (horizontally aligned)
-            feature_left = feature['x']
-            feature_right = feature['x'] + feature.get('width', 0)
-            feature_bottom = feature['y'] + feature.get('height', 0)
-            
-            for bg_rect in background_rectangles:
+            # Only add story if it doesn't belong to a child feature
+            if not belongs_to_child:
+                stories_for_this_feature.append(story)
+        
+        # Get stories for this sub_epic, sorted by sequential_order
+        feat_stories = stories_for_this_feature
+        feat_stories.sort(key=lambda s: (
+            s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
+            s['x']
+        ))
+        
+        # Group stories by background rectangles (story groups)
+        # Match stories to background rectangles based on containment
+        story_groups = {}  # Maps group_id -> list of stories
+        group_rectangles = {}  # Maps group_id -> rectangle info
+        
+        # Filter background rectangles that belong to this feature (horizontally aligned)
+        feature_left = feature['x']
+        feature_right = feature['x'] + feature.get('width', 0)
+        feature_bottom = feature['y'] + feature.get('height', 0)
+        
+        for bg_rect in background_rectangles:
                 bg_x = bg_rect['x']
                 bg_y = bg_rect['y']
                 bg_width = bg_rect['width']
@@ -720,12 +932,12 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                         'width': bg_width,
                         'height': bg_height
                     }
-            
-            # Assign ALL stories to groups based on containment
-            # No nested stories - all stories are flat within story groups
-            ungrouped_stories = []
-            
-            for story in feat_stories:
+        
+        # Assign ALL stories to groups based on containment
+        # No nested stories - all stories are flat within story groups
+        ungrouped_stories = []
+        
+        for story in feat_stories:
                 story_x = story['x']
                 story_y = story['y']
                 story_center_x = story_x + story.get('width', 50) / 2
@@ -747,95 +959,95 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 
                 if not assigned:
                     ungrouped_stories.append(story)
+        
+        # Sort groups by Y position (top to bottom), then X position (left to right)
+        sorted_group_ids = sorted(group_rectangles.keys(), 
+                                 key=lambda gid: (group_rectangles[gid]['y'], group_rectangles[gid]['x']))
+        
+        # Determine group types and connectors based on relative positioning
+        # Group TYPE: Groups at same Y level (horizontal) = "and" type, groups at different Y levels (vertical) = "or" type
+        # Group CONNECTOR: How this group connects to the previous group
+        y_tolerance = 20  # Tolerance for grouping groups into rows
+        base_story_y = 337
+        opt_story_y = 402
+        or_story_y_start = 404.75
+        
+        group_types = {}  # Group's own type (and/or based on positioning)
+        group_connectors = {}  # How group connects to previous group
+        previous_group_y = None
+        
+        for group_id in sorted_group_ids:
+            group_y = group_rectangles[group_id]['y']
             
-            # Sort groups by Y position (top to bottom), then X position (left to right)
-            sorted_group_ids = sorted(group_rectangles.keys(), 
-                                     key=lambda gid: (group_rectangles[gid]['y'], group_rectangles[gid]['x']))
-            
-            # Determine group types and connectors based on relative positioning
-            # Group TYPE: Groups at same Y level (horizontal) = "and" type, groups at different Y levels (vertical) = "or" type
-            # Group CONNECTOR: How this group connects to the previous group
-            y_tolerance = 20  # Tolerance for grouping groups into rows
-            base_story_y = 337
-            opt_story_y = 402
-            or_story_y_start = 404.75
-            
-            group_types = {}  # Group's own type (and/or based on positioning)
-            group_connectors = {}  # How group connects to previous group
-            previous_group_y = None
-            
-            for group_id in sorted_group_ids:
-                group_y = group_rectangles[group_id]['y']
-                
-                if previous_group_y is None:
-                    # First group - determine type based on absolute Y position
-                    if abs(group_y - base_story_y) <= 10:
-                        group_types[group_id] = 'and'  # Horizontal group
-                    elif abs(group_y - opt_story_y) <= 10:
-                        group_types[group_id] = 'opt'  # Optional group
-                    else:
-                        group_types[group_id] = 'or'  # Vertical group
-                    # First group has no connector (it's the first)
-                    group_connectors[group_id] = None
+            if previous_group_y is None:
+                # First group - determine type based on absolute Y position
+                if abs(group_y - base_story_y) <= 10:
+                    group_types[group_id] = 'and'  # Horizontal group
+                elif abs(group_y - opt_story_y) <= 10:
+                    group_types[group_id] = 'opt'  # Optional group
                 else:
-                    # Determine type based on Y position relative to base row
-                    if abs(group_y - base_story_y) <= 10:
-                        group_types[group_id] = 'and'  # Horizontal group
-                    elif abs(group_y - opt_story_y) <= 10:
-                        group_types[group_id] = 'opt'  # Optional group
-                    elif abs(group_y - previous_group_y) <= y_tolerance:
-                        group_types[group_id] = 'and'  # Same Y as previous = horizontal
-                    else:
-                        group_types[group_id] = 'or'  # Different Y = vertical
-                    
-                    # Determine connector: how this group connects to previous group
-                    if abs(group_y - previous_group_y) <= y_tolerance:
-                        # Same Y level (horizontal) - "and" connector
-                        group_connectors[group_id] = 'and'
-                    else:
-                        # Different Y level (vertical) - "or" connector
-                        group_connectors[group_id] = 'or'
+                    group_types[group_id] = 'or'  # Vertical group
+                # First group has no connector (it's the first)
+                group_connectors[group_id] = None
+            else:
+                # Determine type based on Y position relative to base row
+                if abs(group_y - base_story_y) <= 10:
+                    group_types[group_id] = 'and'  # Horizontal group
+                elif abs(group_y - opt_story_y) <= 10:
+                    group_types[group_id] = 'opt'  # Optional group
+                elif abs(group_y - previous_group_y) <= y_tolerance:
+                    group_types[group_id] = 'and'  # Same Y as previous = horizontal
+                else:
+                    group_types[group_id] = 'or'  # Different Y = vertical
                 
-                previous_group_y = group_y
+                # Determine connector: how this group connects to previous group
+                if abs(group_y - previous_group_y) <= y_tolerance:
+                    # Same Y level (horizontal) - "and" connector
+                    group_connectors[group_id] = 'and'
+                else:
+                    # Different Y level (vertical) - "or" connector
+                    group_connectors[group_id] = 'or'
             
-            # Process ungrouped stories - create a default group for them
+            previous_group_y = group_y
+        
+        # Process ungrouped stories - create a default group for them
+        if ungrouped_stories:
+            # Sort ungrouped stories by Y, then X
+            ungrouped_stories.sort(key=lambda s: (s['y'], s['x']))
+            # Create a default group for ungrouped top-level stories
+            default_group_id = 'ungrouped'
+            story_groups[default_group_id] = ungrouped_stories
+            # Determine type and connector for default group based on first story's Y
             if ungrouped_stories:
-                # Sort ungrouped stories by Y, then X
-                ungrouped_stories.sort(key=lambda s: (s['y'], s['x']))
-                # Create a default group for ungrouped top-level stories
-                default_group_id = 'ungrouped'
-                story_groups[default_group_id] = ungrouped_stories
-                # Determine type and connector for default group based on first story's Y
-                if ungrouped_stories:
-                    first_ungrouped_y = ungrouped_stories[0]['y']
-                    if abs(first_ungrouped_y - base_story_y) <= y_tolerance:
-                        group_types[default_group_id] = 'and'
-                    elif abs(first_ungrouped_y - opt_story_y) <= y_tolerance:
-                        group_types[default_group_id] = 'opt'
-                    else:
-                        group_types[default_group_id] = 'or'
-                    # Default group has no connector (it's ungrouped, so no previous group)
-                    group_connectors[default_group_id] = None
-                sorted_group_ids.append(default_group_id)
-            
-            # Determine connectors for stories based on Y position and X position
-            # According to story-map-construction-rules.mdc:
-            # - Sequential stories (connector="and"): Y-position = Base story row (y=337)
-            # - Optional stories (connector="opt"): Y-position = y=402 (65px below base row)
-            # - Alternative stories (connector="or"): Y-position = Below sequential stories (y=404.75+)
-            # So: Stories at y=337 (base row) should be "and" (sequential)
-            #     Stories at y=402 should be "opt" (optional)
-            #     Stories at y=404.75+ should be "or" (alternatives)
-            base_story_y = 337
-            opt_story_y = 402  # Optional stories start at y=402
-            or_story_y_start = 404.75  # Alternative stories start at y=404.75+
-            y_tolerance = 10  # pixels tolerance for base row
-            x_tolerance = 10  # pixels tolerance for same X position
-            story_connectors = {}
-            previous_x = None
-            previous_y = None
-            
-            for story in feat_stories:
+                first_ungrouped_y = ungrouped_stories[0]['y']
+                if abs(first_ungrouped_y - base_story_y) <= y_tolerance:
+                    group_types[default_group_id] = 'and'
+                elif abs(first_ungrouped_y - opt_story_y) <= y_tolerance:
+                    group_types[default_group_id] = 'opt'
+                else:
+                    group_types[default_group_id] = 'or'
+                # Default group has no connector (it's ungrouped, so no previous group)
+                group_connectors[default_group_id] = None
+            sorted_group_ids.append(default_group_id)
+        
+        # Determine connectors for stories based on Y position and X position
+        # According to story-map-construction-rules.mdc:
+        # - Sequential stories (connector="and"): Y-position = Base story row (y=337)
+        # - Optional stories (connector="opt"): Y-position = y=402 (65px below base row)
+        # - Alternative stories (connector="or"): Y-position = Below sequential stories (y=404.75+)
+        # So: Stories at y=337 (base row) should be "and" (sequential)
+        #     Stories at y=402 should be "opt" (optional)
+        #     Stories at y=404.75+ should be "or" (alternatives)
+        base_story_y = 337
+        opt_story_y = 402  # Optional stories start at y=402
+        or_story_y_start = 404.75  # Alternative stories start at y=404.75+
+        y_tolerance = 10  # pixels tolerance for base row
+        x_tolerance = 10  # pixels tolerance for same X position
+        story_connectors = {}
+        previous_x = None
+        previous_y = None
+        
+        for story in feat_stories:
                 story_x = story['x']
                 story_y = story['y']
                 
@@ -1102,7 +1314,33 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
             # Clean up temp data
             if 'temp_stories' in sub_epic_data:
                 del sub_epic_data['temp_stories']
-            
+        
+        # Return the completed sub_epic_data with nested sub_epics and story_groups
+        return sub_epic_data
+    
+    # Main loop: build epic hierarchy using recursive function
+    for epic in sorted_epics:
+        epic_data = {
+            'name': epic['name'],
+            'sequential_order': epic['sequential_order'],
+            'estimated_stories': epic.get('estimated_stories'),  # Include even if null
+            'sub_epics': [],
+            'stories': []
+        }
+        
+        # Get top-level features for this epic (features without a parent feature)
+        epic_features = sorted([f for f in features 
+                               if f['epic_num'] == epic['epic_num'] 
+                               and f.get('parent_feat_num') is None], 
+                               key=lambda x: (x['x'], x.get('feat_num', 0)))
+        
+        # Build each top-level feature recursively (which will include nested sub_epics)
+        for feature in epic_features:
+            sub_epic_data = build_sub_epic_recursive(
+                feature, epic['epic_num'], features, all_stories, 
+                background_rectangles, stories_with_users, acceptance_criteria_cells,
+                assigned_story_ids, assigned_ac_ids
+            )
             epic_data['sub_epics'].append(sub_epic_data)
         
         # Epics don't have direct stories - only through sub_epics -> story_groups (legacy code removed)
