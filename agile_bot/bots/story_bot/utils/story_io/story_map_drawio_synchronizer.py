@@ -577,22 +577,48 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                         closest_feature = min(epic_features, key=lambda f: abs(f['x'] - story_x))
                         story['feat_num'] = closest_feature.get('feat_num', 0)
     
-    # Match users to stories based on X position alignment
+    # Match users to stories based on cell ID pattern (user_e{epic}f{feat}s{story}_{user})
+    # Fallback to position-based matching only if user cell doesn't match a different story
     stories_with_users = {}
+    # Build set of all story IDs for quick lookup
+    all_story_ids = {story['id'] for story in all_stories}
+    
     for story in all_stories:
+        story_id = story['id']  # e.g., "e1f1s4"
         story_x = story['x']
         story_y = story['y']
         tolerance = 25  # pixels
         
         story_users = []
         for user_cell in user_cells:
+            user_cell_id = user_cell['id']  # e.g., "user_e1f1s4_User A"
+            user_name = user_cell['name']
             user_x = user_cell['x']
             user_y = user_cell['y']
             
-            # Check if user is horizontally aligned with story (within tolerance) and above the story
+            # First try: match by cell ID pattern (user_e{epic}f{feat}s{story}_{user})
+            if user_cell_id.startswith('user_') and story_id:
+                # Extract story pattern from user cell ID: user_e1f1s4_User C -> e1f1s4
+                # Pattern is: user_{story_id}_{user_name}
+                if user_cell_id.startswith(f'user_{story_id}_'):
+                    # Exact match by ID - this user belongs to this story
+                    if user_name not in story_users:
+                        story_users.append(user_name)
+                    continue  # Skip position-based matching
+                
+                # Check if this user cell ID matches a DIFFERENT story - if so, skip position matching
+                # Extract potential story ID from user cell: user_e1f1s1_User A -> e1f1s1
+                if '_' in user_cell_id:
+                    parts = user_cell_id.split('_', 2)  # ['user', 'e1f1s1', 'User A']
+                    if len(parts) >= 2:
+                        potential_story_id = parts[1]  # e1f1s1
+                        if potential_story_id in all_story_ids and potential_story_id != story_id:
+                            # This user cell belongs to a different story - don't match by position
+                            continue
+            
+            # Fallback: position-based matching (horizontally aligned and above story)
+            # Only use this if user cell doesn't have a story ID or doesn't match any story
             if abs(user_x - story_x) <= tolerance and user_y < story_y:
-                user_name = user_cell['name']
-                # Only add if not already in list (remove duplicates)
                 if user_name not in story_users:
                     story_users.append(user_name)
         
@@ -1376,20 +1402,48 @@ def build_stories_for_increments(drawio_path: Path, increments: List[Dict],
                         closest_feature = min(epic_features, key=lambda f: abs(f['x'] - story_x))
                         story['feat_num'] = closest_feature.get('feat_num', 0)
     
-    # Match users to stories
+    # Match users to stories based on cell ID pattern (user_e{epic}f{feat}s{story}_{user})
+    # Fallback to position-based matching only if user cell doesn't match a different story
     stories_with_users = {}
+    # Build set of all story IDs for quick lookup
+    all_story_ids = {story['id'] for story in all_stories}
+    
     for story in all_stories:
         story_x = story['x']
         story_y = story['y']
         tolerance = 25
         
         story_users = []
+        story_id = story['id']  # e.g., "e1f1s4"
         for user_cell in user_cells:
+            user_cell_id = user_cell['id']  # e.g., "user_e1f1s4_User A"
+            user_name = user_cell['name']
             user_x = user_cell['x']
             user_y = user_cell['y']
+            
+            # First try: match by cell ID pattern (user_e{epic}f{feat}s{story}_{user})
+            if user_cell_id.startswith('user_') and story_id:
+                # Extract story pattern from user cell ID: user_e1f1s4_User C -> e1f1s4
+                # Pattern is: user_{story_id}_{user_name}
+                if user_cell_id.startswith(f'user_{story_id}_'):
+                    # Exact match by ID - this user belongs to this story
+                    if user_name not in story_users:
+                        story_users.append(user_name)
+                    continue  # Skip position-based matching
+                
+                # Check if this user cell ID matches a DIFFERENT story - if so, skip position matching
+                # Extract potential story ID from user cell: user_e1f1s1_User A -> e1f1s1
+                if '_' in user_cell_id:
+                    parts = user_cell_id.split('_', 2)  # ['user', 'e1f1s1', 'User A']
+                    if len(parts) >= 2:
+                        potential_story_id = parts[1]  # e1f1s1
+                        if potential_story_id in all_story_ids and potential_story_id != story_id:
+                            # This user cell belongs to a different story - don't match by position
+                            continue
+            
+            # Fallback: position-based matching (horizontally aligned and above story)
+            # Only use this if user cell doesn't have a story ID or doesn't match any story
             if abs(user_x - story_x) <= tolerance and user_y < story_y:
-                user_name = user_cell['name']
-                # Only add if not already in list (remove duplicates)
                 if user_name not in story_users:
                     story_users.append(user_name)
         stories_with_users[story['id']] = story_users

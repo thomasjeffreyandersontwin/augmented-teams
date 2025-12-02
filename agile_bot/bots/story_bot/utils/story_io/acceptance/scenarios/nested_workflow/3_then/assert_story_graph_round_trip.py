@@ -142,6 +142,8 @@ def assert_story_graph_round_trip():
         expected_drawio_path = then_dir / "expected-rendered-story-map-outline.drawio"
     if not expected_drawio_path.exists():
         expected_drawio_path = then_dir / "expected.drawio"
+    if not expected_drawio_path.exists():
+        expected_drawio_path = then_dir / "expected-workflow.drawio"
     
     # Actual files - renders in then_dir, intermediate synced JSON in when_dir
     when_dir = scenario_dir / "2_when"

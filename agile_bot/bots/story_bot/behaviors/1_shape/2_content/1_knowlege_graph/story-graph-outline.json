@@ -1,7 +1,7 @@
 {
   "_explanation": {
-    "hierarchical": "sub_epics can contain: nested sub_epics or stories. Stories can contain nested stories (story_groups). sequential_order is always an integer (1, 2, 3, 4) - unique within parent, no decimals.",
-    "connector": "Stories only: 'and' or 'or' (null for first item). Epics and sub_epics don't have connectors."
+    "hierarchical": "sub_epics can contain: nested sub_epics or story_groups. sequential_order is always an integer (1, 2, 3, 4) - unique within parent, no decimals.",
+    "connector": "Story groups: 'and' or 'or' (null for first group). Stories within groups: 'and' or 'or' (null for first story). Epics and sub_epics don't have connectors."
   },
   "epics": [
     {
@@ -13,63 +13,68 @@
           "name": "",
           "sequential_order": 1,
           "estimated_stories": null,
-          "sub_epics": [
+          "sub_epics": [],
+          "story_groups": [
             {
-              "name": "",
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "sub_epics": [],
-              "stories": []
-            }
-          ],
-          "stories": [
-            {
-              "name": "",
-              "sequential_order": 1,
+              "type": "and",
               "connector": null,
-              "users": [],
-              "story_type": "user",
-              "flag": false
-            },
-            {
-              "name": "",
-              "sequential_order": 2,
-              "connector": "and",
-              "users": [],
-              "story_type": "user",
-              "flag": false
-            },
-            {
-              "name": "",
-              "sequential_order": 3,
-              "connector": "or",
-              "users": [],
-              "story_type": "user",
-              "flag": true,
+              "sequential_order": 1,
               "stories": [
                 {
                   "name": "",
                   "sequential_order": 1,
                   "connector": null,
                   "users": [],
-                  "story_type": "user",
-                  "flag": false
+                  "story_type": "user"
                 },
                 {
                   "name": "",
                   "sequential_order": 2,
                   "connector": "and",
                   "users": [],
-                  "story_type": "user",
-                  "flag": false
+                  "story_type": "user"
+                }
+              ]
+            },
+            {
+              "type": "and",
+              "connector": "or",
+              "sequential_order": 2,
+              "stories": [
+                {
+                  "name": "",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": [],
+                  "story_type": "user"
+                },
+                {
+                  "name": "",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": [],
+                  "story_type": "user"
                 },
                 {
                   "name": "",
                   "sequential_order": 3,
                   "connector": "and",
                   "users": [],
-                  "story_type": "user",
-                  "flag": false
+                  "story_type": "user"
+                }
+              ]
+            },
+            {
+              "type": "or",
+              "connector": "or",
+              "sequential_order": 3,
+              "stories": [
+                {
+                  "name": "",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": [],
+                  "story_type": "user"
                 }
               ]
             }

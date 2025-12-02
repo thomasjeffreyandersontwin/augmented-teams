@@ -532,14 +532,20 @@ class DrawIORenderer:
                             story_x = group_x
                             story_y = group_y + story_idx_in_group * self.STORY_SPACING_Y
                         
-                        # Render users
+                        # Render users - only when user set changes
                         story_users = set(story.get('users', []))
                         new_story_users = []
-                        if story_idx_in_group == 0 or story_users != previous_story_users:
+                        if story_idx_in_group == 0:
+                            # First story: render all users
                             for user in story_users:
                                 new_story_users.append(user)
-                                if user not in shown_users:
-                                    shown_users.add(user)
+                                shown_users.add(user)
+                        elif story_users != previous_story_users:
+                            # User set changed: render all NEW users (in current but not in previous set)
+                            new_users = story_users - previous_story_users
+                            for user in new_users:
+                                new_story_users.append(user)
+                                shown_users.add(user)
                         previous_story_users = story_users
                         
                         if new_story_users:
@@ -760,8 +766,6 @@ class DrawIORenderer:
         
         x_pos = 20
         shown_users = set()  # Track which users have been shown
-        previous_epic_rightmost_x = None  # Track rightmost position of previous epic's features
-        previous_epic_right_edge = None  # Track right edge of previous epic (group or epic cell) for next epic positioning
         
         for epic_idx, epic in enumerate(story_graph.get('epics', []), 1):
             features = get_sub_epics(epic)  # Get sub_epics (or features for backwards compatibility)
@@ -805,12 +809,7 @@ class DrawIORenderer:
                 use_epic_layout = True
             else:
                 # Use calculated positions
-                # For Epic 2+, use previous_epic_right_edge if available (more accurate than x_pos)
-                # Use same gap as features (FEATURE_SPACING_X)
-                if epic_idx > 1 and previous_epic_right_edge is not None:
-                    epic_x = previous_epic_right_edge + self.FEATURE_SPACING_X
-                else:
-                    epic_x = x_pos
+                epic_x = x_pos
                 epic_y = self.EPIC_Y
                 epic_width = 0
                 epic_height = 60
@@ -833,20 +832,10 @@ class DrawIORenderer:
             # In exploration mode, features align with epics (no offset)
             # Otherwise, start features 10px from epic left edge
             feature_x_offset = 0 if is_exploration else 10
-            # For the first epic, start at epic_x + offset
-            # For subsequent epics, start after the previous epic's rightmost feature
-            if epic_idx == 1:
-                current_feature_x = epic_x + feature_x_offset
-            else:
-                # Start after previous epic's rightmost feature
-                # Use previous_epic_rightmost_x if available, otherwise fall back to x_pos
-                if previous_epic_rightmost_x is not None:
-                    current_feature_x = previous_epic_rightmost_x + self.FEATURE_SPACING_X
-                else:
-                    current_feature_x = max(x_pos, epic_x + feature_x_offset)
+            current_feature_x = epic_x + feature_x_offset
             # When AC is present, features stack vertically; otherwise horizontal
             current_feature_y = self.FEATURE_Y  # Start Y position for first feature
-            for feature in features:
+            for feat_idx, feature in enumerate(features):
                 # Check if layout data has coordinates for this feature
                 feature_key = f"FEATURE|{epic['name']}|{feature['name']}"
                 if feature_key in layout_data:
@@ -859,7 +848,11 @@ class DrawIORenderer:
                 else:
                     # Use calculated positions
                     # Always use horizontal layout: features side-by-side
-                    feat_x = current_feature_x
+                    # First feature aligns with epic's left edge (no offset)
+                    if feat_idx == 0:
+                        feat_x = epic_x
+                    else:
+                        feat_x = current_feature_x
                     feat_y = self.FEATURE_Y  # Same Y for all features
                     feat_width = 0
                     feat_height = 60
@@ -883,7 +876,9 @@ class DrawIORenderer:
                 # Skip feature if no stories AND no estimated_stories (in exploration mode, skip if no stories with AC)
                 if is_exploration and len(stories) == 0:
                     continue
-                # In outline mode: always render features (even if no story_groups) - only skip in exploration mode
+                # In outline mode: render features with estimated_stories even if no story_groups
+                elif not is_exploration and not story_groups and not feature.get('estimated_stories'):
+                    continue  # Skip features without story_groups and without estimated_stories
                 
                 # Group stories by sequential_order and create a mapping to position index
                 stories_by_seq = {}
@@ -953,8 +948,7 @@ class DrawIORenderer:
                     'height': feat_height,
                     'stories_by_seq': stories_by_seq,
                     'seq_to_position': seq_to_position,
-                    'use_layout': use_feature_layout,
-                    'has_estimated_stories': feature.get('estimated_stories') is not None
+                    'use_layout': use_feature_layout
                 })
                 
                 # Calculate next feature X position (horizontal layout)
@@ -995,9 +989,9 @@ class DrawIORenderer:
                 epic_width = 100  # Minimum epic width (will be expanded based on actual content)
             
             # Track actual bounds for shrinking epics/features after layout
-            # Initialize with epic_x so we track from the epic's starting position
+            # Initialize epic_min_x to epic_x (first feature aligns to epic, so epic_min_x should start at epic_x)
             epic_min_x = epic_x
-            epic_max_x = epic_x
+            epic_max_x = -float('inf')
             feature_geometries = []  # Store feature geometries to update later
             
             # Collect epic-level users (will be rendered above the epic box)
@@ -1037,13 +1031,13 @@ class DrawIORenderer:
                 epic_group_cell = ET.SubElement(root_elem, 'mxCell', id=str(epic_idx + 100), value='', 
                                                style='group', vertex='1', connectable='0', parent='1')
                 # Calculate group geometry (epic width + space for text box)
-                # Group width should match epic width (no extra padding)
+                # Group width should match epic width (no extra padding needed)
                 group_width = epic_width
                 group_height = epic_height + 8  # Add space for text box above
-                # Group y position: expected shows group at y=120, epic cell at y=8 relative
-                # So group y = epic_y (which is EPIC_Y = 120), not epic_y - 8
+                # Group y position: epic cell is at y=8 relative to group, so group y = epic_y - 8
+                # But we want epic cell absolute y to be EPIC_Y, so group y = EPIC_Y - 8
                 epic_group_geom = ET.SubElement(epic_group_cell, 'mxGeometry', 
-                                               x=str(epic_x), y=str(epic_y), 
+                                               x=str(epic_x), y=str(epic_y - 8), 
                                                width=str(group_width), height=str(group_height))
                 epic_group_geom.set('as', 'geometry')
                 
@@ -1066,9 +1060,8 @@ class DrawIORenderer:
                                               style='text;whiteSpace=wrap;html=1;align=right;verticalAlign=middle;fontColor=default;labelBackgroundColor=none;',
                                               vertex='1', parent=str(epic_idx + 100))
                 # Position text box at top right of epic (relative to group)
-                # Align with epic's right edge: epic is at x=0 relative to group, width=epic_width
-                # Text box width is 60, so position at epic_width - 60 to align right edge
-                estimated_x = epic_width - 60  # Align right edge of text box with right edge of epic
+                # Position it near the right edge of the epic, at y=0 (top of group)
+                estimated_x = max(10, epic_width - 60)  # Position near right edge, but at least 10px from left
                 estimated_geom = ET.SubElement(estimated_cell, 'mxGeometry', 
                                               x=str(estimated_x), y='0', 
                                               width='60', height='30')
@@ -1232,38 +1225,14 @@ class DrawIORenderer:
                 # Use updated X position from feat_data if it was updated by previous feature
                 actual_feat_x = feat_data.get('x', feat_x)
                 
-                # For the first feature of an epic, align left edge with epic's left edge
-                # Epic group (if exists) is positioned at epic_x, so use epic_x directly
-                if feat_idx == 0:
-                    actual_feat_x = epic_x
-                
-                # If previous feature was in a group, update current_feature_x to use group's right edge
-                # This ensures proper spacing when a feature with no stories (but has estimated_stories) is in a group
-                if feat_idx > 0:
-                    prev_feature = features[feat_idx - 1]
-                    if prev_feature.get('estimated_stories') and not is_increments:
-                        # Previous feature was in a group - need to find its group and use its right edge
-                        prev_group_id = (epic_idx * 1000 + (feat_idx - 1) * 100)
-                        prev_group = root_elem.find(f'.//mxCell[@id="{prev_group_id}"]')
-                        if prev_group is not None:
-                            prev_group_geom = prev_group.find('mxGeometry')
-                            if prev_group_geom is not None:
-                                prev_group_x = float(prev_group_geom.get('x', 0))
-                                prev_group_width = float(prev_group_geom.get('width', 0))
-                                prev_group_right = prev_group_x + prev_group_width
-                                current_feature_x = prev_group_right + self.FEATURE_SPACING_X
-                                actual_feat_x = current_feature_x
-                
                 # Create group for sub-epic if it has estimated_stories
                 if feature_has_estimated_stories and not is_increments:
                     # Create group cell
                     feature_group_cell = ET.SubElement(root_elem, 'mxCell', id=str(epic_idx * 1000 + feat_idx * 100), value='', 
                                                        style='group', vertex='1', connectable='0', parent='1')
                     # Calculate group geometry (feature width + space for text box)
-                    # Group width should match feature width (no extra padding needed)
-                    group_width = feat_width
+                    group_width = feat_width + 5  # Add some padding
                     group_height = feat_height + 8  # Add space for text box above
-                    # Group y position: feature cell is at y=3 relative to group, so group y = feat_y - 3
                     feature_group_geom = ET.SubElement(feature_group_cell, 'mxGeometry', 
                                                        x=str(actual_feat_x), y=str(feat_y - 3), 
                                                        width=str(group_width), height=str(group_height))
@@ -1304,9 +1273,6 @@ class DrawIORenderer:
                                                       x=str(estimated_x), y='-3', 
                                                       width='60', height='30')
                         estimated_geom.set('as', 'geometry')
-                    # Update next feature X position - when feature is in a group, use group's right edge
-                    group_right_edge = actual_feat_x + group_width
-                    current_feature_x = group_right_edge + self.FEATURE_SPACING_X
                 else:
                     # No estimated stories - render feature normally
                     feature_cell = ET.SubElement(root_elem, 'mxCell', 
@@ -1332,8 +1298,9 @@ class DrawIORenderer:
                 
                 # All features now use story_groups structure
                 feature_story_groups = feature.get('story_groups', [])
-                # In outline mode: render all features (even if no story_groups)
-                # In exploration mode: skip features without story_groups (handled earlier in filtered_features)
+                if not feature_story_groups:
+                    # Skip features without story_groups
+                    continue
                 
                 if True:  # Always use story_groups path
                     # NEW STRUCTURE: Process story groups
@@ -1359,7 +1326,11 @@ class DrawIORenderer:
                     current_group_x = feat_x + 2  # Start position for first group
                     current_group_y = feat_y + feat_height + self.STORY_OFFSET_FROM_FEATURE
                     previous_group_bottom_y = None  # Track bottom of previous group
+                    previous_group_rightmost_x = None  # Track rightmost X of previous group
+                    previous_group_start_x = None  # Track start X of previous group (for "or" connector alignment)
+                    previous_group_has_users = False  # Track if previous group has users (for spacing with "or" connector)
                     previous_story_users = None
+                    rendered_positions = []  # Track all rendered element positions (x, y, width, height) for collision detection
                     
                     for group_idx, group in enumerate(feature_story_groups):
                         group_type = group.get('type', 'and')  # 'and' = horizontal, 'or' = vertical
@@ -1377,16 +1348,100 @@ class DrawIORenderer:
                         elif group_connector == 'and':
                             # Horizontal connector - position to the right of previous group
                             group_start_x = current_group_x
-                            group_start_y = current_group_y  # Same Y as previous group
+                            group_start_y = current_group_y  # Same Y as previous group (stories align)
+                            
+                            # Check if this group has users and if any user would collide with existing boxes
+                            current_group_has_users = any(story.get('users') for story in group_stories)
+                            if current_group_has_users:
+                                # Check all users in this group for collisions
+                                collision = False
+                                for check_story_idx, story in enumerate(group_stories):
+                                    if story.get('users'):
+                                        story_x = group_start_x + check_story_idx * self.STORY_SPACING_X
+                                        story_y = group_start_y
+                                        user_y = story_y - self.USER_LABEL_OFFSET
+                                        
+                                        for user_idx, user in enumerate(story.get('users', [])):
+                                            user_x = story_x + user_idx * self.STORY_SPACING_X
+                                            
+                                            # Check for collision with any rendered element
+                                            for (rx, ry, rw, rh) in rendered_positions:
+                                                if (user_x < rx + rw and user_x + 50 > rx and
+                                                    user_y < ry + rh and user_y + 50 > ry):
+                                                    collision = True
+                                                    break
+                                            if collision:
+                                                break
+                                    if collision:
+                                        break
+                                
+                                if collision:
+                                    group_start_y = current_group_y + 20  # Move down to avoid collision
+                                    current_group_y = group_start_y  # Update for next group
                         elif group_connector == 'or':
                             # Vertical connector - position below previous group
-                            group_start_x = feat_x + 2  # Reset X to left edge
+                            # "Sticky" X position: align with previous group's start X (not rightmost + spacing)
+                            if previous_group_start_x is not None:
+                                group_start_x = previous_group_start_x  # Align with previous group's start X
+                            else:
+                                group_start_x = feat_x + 2  # Fallback to feature start
+                            
+                            # Check if this group has users and if there's a collision
+                            current_group_has_users = any(story.get('users') for story in group_stories)
+                            extra_spacing = 0
+                            
+                            if current_group_has_users:
+                                # Check if any user in this group would collide with any existing box
+                                # Calculate where each story with users would be positioned
+                                collision = False
+                                for check_story_idx, story in enumerate(group_stories):
+                                    if story.get('users'):
+                                        # Calculate story position based on group type
+                                        if group_type == 'and':
+                                            story_x = group_start_x + check_story_idx * self.STORY_SPACING_X
+                                        else:  # group_type == 'or'
+                                            story_x = group_start_x
+                                        
+                                        if previous_group_bottom_y is not None:
+                                            if group_type == 'and':
+                                                story_y = previous_group_bottom_y + self.STORY_SPACING_Y
+                                            else:  # group_type == 'or'
+                                                story_y = previous_group_bottom_y + self.STORY_SPACING_Y + check_story_idx * self.STORY_SPACING_Y
+                                        else:
+                                            if group_type == 'and':
+                                                story_y = current_group_y + self.STORY_SPACING_Y
+                                            else:  # group_type == 'or'
+                                                story_y = current_group_y + self.STORY_SPACING_Y + check_story_idx * self.STORY_SPACING_Y
+                                        
+                                        # Check each user for this story
+                                        for user_idx, user in enumerate(story.get('users', [])):
+                                            user_x = story_x + user_idx * self.STORY_SPACING_X
+                                            user_y = story_y - self.USER_LABEL_OFFSET
+                                            
+                                            # Check for collision with any rendered element
+                                            for (rx, ry, rw, rh) in rendered_positions:
+                                                # Check if user box (50x50) overlaps with existing element
+                                                if (user_x < rx + rw and user_x + 50 > rx and
+                                                    user_y < ry + rh and user_y + 50 > ry):
+                                                    collision = True
+                                                    break
+                                            
+                                            if collision:
+                                                break
+                                    
+                                    if collision:
+                                        break
+                                
+                                if collision:
+                                    extra_spacing = 20  # Move down to avoid collision
+                            
                             if previous_group_bottom_y is not None:
-                                # Position below previous group's bottom with more spacing to avoid overlap
-                                group_start_y = previous_group_bottom_y + self.STORY_SPACING_Y + 50
+                                # Position below previous group's bottom, with extra spacing only if collision detected
+                                # Small gap (15px) between groups connected with "or"
+                                group_start_y = previous_group_bottom_y + 15 + extra_spacing
                             else:
                                 # Fallback: use current_group_y
-                                group_start_y = current_group_y + self.STORY_SPACING_Y + 70
+                                group_start_y = current_group_y + 15 + extra_spacing
                             current_group_y = group_start_y  # Update for next group
                         
                         # Track the bottom of this group for positioning next group
@@ -1394,6 +1449,57 @@ class DrawIORenderer:
                         
                         # Sort stories by sequential_order to preserve left-to-right order
                         sorted_group_stories = sorted(group_stories, key=lambda s: s.get('sequential_order', 999))
+                        
+                        # First pass: Check for user collisions and calculate maximum adjustment needed for group
+                        max_group_adjustment = 0
+                        for story_idx_in_group, story in enumerate(sorted_group_stories):
+                            # Calculate story position based on group type
+                            if group_type == 'and':
+                                story_x = group_start_x + story_idx_in_group * self.STORY_SPACING_X
+                                story_y = group_start_y
+                            else:  # group_type == 'or'
+                                story_x = group_start_x
+                                story_y = group_start_y + story_idx_in_group * self.STORY_SPACING_Y
+                            
+                            # Check if this story has users that would collide
+                            story_users = set(story.get('users', []))
+                            if story_users:
+                                # Check first user (users are only rendered when set changes, so check first one)
+                                initial_user_y = story_y - self.USER_LABEL_OFFSET
+                                user_width = self.STORY_WIDTH
+                                user_height = self.STORY_HEIGHT
+                                
+                                # Check for collision with any rendered element
+                                collision_detected = True
+                                test_user_y = initial_user_y
+                                while collision_detected:
+                                    collision_detected = False
+                                    for (rx, ry, rw, rh) in rendered_positions:
+                                        # Check if user box would overlap with existing element
+                                        if (group_start_x < rx + rw and group_start_x + user_width > rx and
+                                            test_user_y < ry + rh and test_user_y + user_height > ry):
+                                            collision_detected = True
+                                            test_user_y += 10
+                                            break
+                                
+                                # Calculate adjustment needed
+                                adjustment = test_user_y - initial_user_y
+                                if adjustment > 0:
+                                    # User would need to move down, so story needs to move down too
+                                    # Calculate new story position: user_bottom + 10px gap
+                                    new_user_bottom = test_user_y + user_height
+                                    new_story_y = new_user_bottom + 10
+                                    story_adjustment = new_story_y - story_y
+                                    max_group_adjustment = max(max_group_adjustment, story_adjustment)
+                        
+                        # Adjust group_start_y if any story needs to move down
+                        if max_group_adjustment > 0:
+                            group_start_y += max_group_adjustment
+                            # Recalculate group_bottom_y
+                            if group_type == 'and':
+                                group_bottom_y = group_start_y
+                            else:  # group_type == 'or'
+                                group_bottom_y = group_start_y + (len(sorted_group_stories) - 1) * self.STORY_SPACING_Y
                         
                         # Position stories within group based on group type
                         story_x = group_start_x
@@ -1411,33 +1517,56 @@ class DrawIORenderer:
                                 story_x = group_start_x
                                 story_y = group_start_y + story_idx_in_group * self.STORY_SPACING_Y
                             
-                            # Render users for this story
+                            # Render users for this story - only when user set changes
                             story_users = set(story.get('users', []))
                             new_story_users = []
                             
-                            if story_idx_in_group == 0 or story_users != previous_story_users:
+                            if story_idx_in_group == 0:
+                                # First story: render all users
                                 for user in story_users:
                                     new_story_users.append(user)
-                                    if user not in shown_users:
-                                        shown_users.add(user)
+                                    shown_users.add(user)
+                            elif story_users != previous_story_users:
+                                # User set changed: render all NEW users (in current but not in previous set)
+                                new_users = story_users - previous_story_users
+                                for user in new_users:
+                                    new_story_users.append(user)
+                                    shown_users.add(user)
                             
                             previous_story_users = story_users
                             
                             # Render users
+                            user_bottom_y = None  # Track the bottom of the rightmost/lowest user
                             if new_story_users:
                                 for user_idx, user in enumerate(new_story_users):
                                     user_key = f"{epic['name']}|{feature['name']}|{story['name']}|{user}"
+                                    initial_user_y = story_y - self.USER_LABEL_OFFSET
                                     if user_key in layout_data:
                                         user_x = layout_data[user_key]['x']
                                         layout_user_y = layout_data[user_key]['y']
                                         if layout_user_y < 50:
                                             user_x = story_x + user_idx * self.STORY_SPACING_X
-                                            user_y = story_y - self.USER_LABEL_OFFSET
+                                            user_y = initial_user_y
                                         else:
                                             user_y = layout_user_y
                                     else:
                                         user_x = story_x + user_idx * self.STORY_SPACING_X
-                                        user_y = story_y - self.USER_LABEL_OFFSET
+                                        user_y = initial_user_y
+                                    
+                                    # Check for collision with any rendered element and adjust position if needed
+                                    user_width = self.STORY_WIDTH
+                                    user_height = self.STORY_HEIGHT
+                                    collision_detected = True
+                                    while collision_detected:
+                                        collision_detected = False
+                                        for (rx, ry, rw, rh) in rendered_positions:
+                                            # Check if user box overlaps with existing element
+                                            if (user_x < rx + rw and user_x + user_width > rx and
+                                                user_y < ry + rh and user_y + user_height > ry):
+                                                collision_detected = True
+                                                # Move user down by 10px to avoid collision
+                                                user_y += 10
+                                                break
                                     
                                     user_label = ET.SubElement(root_elem, 'mxCell',
                                                               id=f'user_e{epic_idx}f{feat_idx}s{story_idx}_{user}',
@@ -1449,8 +1578,20 @@ class DrawIORenderer:
                                                              width=str(self.STORY_WIDTH), height=str(self.STORY_HEIGHT))
                                     user_geom.set('as', 'geometry')
                                     
+                                    # Track user position for collision detection
+                                    rendered_positions.append((user_x, user_y, self.STORY_WIDTH, self.STORY_HEIGHT))
+                                    
+                                    # Track the bottom of the rightmost/lowest user
+                                    if user_bottom_y is None or user_y + user_height > user_bottom_y:
+                                        user_bottom_y = user_y + user_height
+                                    
                                     feature_min_x = min(feature_min_x, user_x)
                                     feature_max_x = max(feature_max_x, user_x + self.STORY_WIDTH)
+                            
+                            # Adjust story position if user was moved down (user_bottom_y is below the expected story position)
+                            if user_bottom_y is not None and user_bottom_y > story_y:
+                                # User moved down due to collision - position story below user with proper spacing
+                                story_y = user_bottom_y + 10  # 10px gap below user
                             
                             # Render story
                             story_cell = ET.SubElement(root_elem, 'mxCell',
@@ -1462,6 +1603,9 @@ class DrawIORenderer:
                                                        x=str(story_x), y=str(story_y),
                                                        width=str(self.STORY_WIDTH), height=str(self.STORY_HEIGHT))
                             story_geom.set('as', 'geometry')
+                            
+                            # Track story position for collision detection
+                            rendered_positions.append((story_x, story_y, self.STORY_WIDTH, self.STORY_HEIGHT))
                             
                             # Track first story cell for inserting background rectangles before it
                             if first_story_cell_ref is None:
@@ -1541,22 +1685,36 @@ class DrawIORenderer:
                             # Vertical group - rightmost is just the story width
                             group_rightmost_x = group_start_x + self.STORY_WIDTH
                         
-                        # Update current_group_x and previous_group_bottom_y for next group
+                        # Check if this group has users (for spacing with next group if it has "or" connector)
+                        group_has_users = any(story.get('users') for story in group_stories)
+                        
+                        # Update current_group_x, previous_group_bottom_y, previous_group_rightmost_x, previous_group_start_x, and previous_group_has_users for next group
                         if group_connector == 'and':
                             # Horizontal connector - position next group to the right
-                            current_group_x = group_rightmost_x + self.STORY_SPACING_X
+                            # Use smaller spacing for group-to-group horizontal spacing
+                            current_group_x = group_rightmost_x + self.FEATURE_SPACING_X
                             # Keep same Y for next group
                             previous_group_bottom_y = group_bottom_y
+                            previous_group_rightmost_x = group_rightmost_x
+                            previous_group_start_x = group_start_x  # Track start X for potential "or" connector
+                            previous_group_has_users = group_has_users  # Track if this group has users
                         elif group_connector == 'or':
-                            # Vertical connector - reset X for next group
-                            current_group_x = feat_x + 2
+                            # Vertical connector - next group goes below, but maintain X position
+                            # Don't reset current_group_x - it will be used if next group has connector 'and'
                             # Update Y for next group based on this group's bottom
-                            # Add extra spacing to prevent overlap (account for group height)
-                            previous_group_bottom_y = group_bottom_y + 20
+                            previous_group_bottom_y = group_bottom_y
+                            previous_group_rightmost_x = group_rightmost_x
+                            previous_group_start_x = group_start_x  # Track start X for potential "or" connector
+                            previous_group_has_users = group_has_users  # Track if this group has users
                         else:  # group_connector is None (first group)
                             # First group - update for next group
-                            current_group_x = group_rightmost_x + self.STORY_SPACING_X
+                            # Use smaller spacing for group-to-group horizontal spacing
+                            current_group_x = group_rightmost_x + self.FEATURE_SPACING_X
                             previous_group_bottom_y = group_bottom_y
+                            previous_group_rightmost_x = group_rightmost_x
+                            previous_group_start_x = group_start_x  # Track start X for potential "or" connector
+                            previous_group_has_users = group_has_users  # Track if this group has users
+                            previous_group_start_x = group_start_x  # Track start X for potential "or" connector
                         
                         # Track feature bottom Y (including all groups and AC boxes) for vertical stacking
                         if is_exploration:
@@ -1812,65 +1970,7 @@ class DrawIORenderer:
                                 calculated_feature_x = feature_min_x - 10  # Adjust X to align with stories
                         actual_feature_x = max(feat_x, calculated_feature_x)  # Ensure we don't move left
                     feature_geometries[-1]['geom'].set('width', str(actual_feature_width))
-                    # Only set x if feature is NOT in a group (if parent is not a group ID like "1100", "1200")
-                    # Find the feature cell to check its parent
-                    feature_cell_found = root_elem.find(f'.//mxCell[@id="e{epic_idx}f{feat_idx}"]')
-                    if feature_cell_found is not None:
-                        feature_parent = feature_cell_found.get('parent', '')
-                        # Group IDs for features with estimated_stories are like "1100", "1200" (epic_idx * 1000 + feat_idx * 100)
-                        # If parent is a group ID (numeric string matching epic_idx * 1000 + feat_idx * 100), don't set x - it's relative to group
-                        expected_group_id = str(epic_idx * 1000 + feat_idx * 100)
-                        if feature_parent == expected_group_id:
-                            # Feature is in a group - don't set x, it's relative to group
-                            # Update group width to match finalized feature width
-                            group_cell = root_elem.find(f'.//mxCell[@id="{expected_group_id}"]')
-                            if group_cell is not None:
-                                group_geom = group_cell.find('mxGeometry')
-                                if group_geom is not None:
-                                    group_geom.set('width', str(actual_feature_width))
-                                    # Also update feature cell width and estimated stories text box position
-                                    feature_geom = feature_cell_found.find('mxGeometry')
-                                    if feature_geom is not None:
-                                        feature_geom.set('width', str(actual_feature_width))
-                                    # Update estimated stories text box position to align with feature's right edge
-                                    estimated_cell = root_elem.find(f'.//mxCell[@id="{epic_idx * 1000 + feat_idx * 100 + 10}"]')
-                                    if estimated_cell is not None and estimated_cell.get('parent') == expected_group_id:
-                                        estimated_geom = estimated_cell.find('mxGeometry')
-                                        if estimated_geom is not None:
-                                            # Align right edge of text box with feature's right edge
-                                            # Feature is at x=0 relative to group, width=actual_feature_width
-                                            # Text box width is 60, so position at actual_feature_width - 60
-                                            estimated_x = actual_feature_width - 60
-                                            estimated_geom.set('x', str(estimated_x))
-                                    # Update position of next feature if it exists (to account for updated group width)
-                                    if feat_idx + 1 < len(features):
-                                        next_feature = features[feat_idx + 1]
-                                        if next_feature.get('estimated_stories') and not is_increments:
-                                            # Next feature is also in a group - update its position
-                                            next_group_id = str(epic_idx * 1000 + (feat_idx + 1) * 100)
-                                            next_group = root_elem.find(f'.//mxCell[@id="{next_group_id}"]')
-                                            if next_group is not None:
-                                                next_group_geom = next_group.find('mxGeometry')
-                                                if next_group_geom is not None:
-                                                    # Position next feature after this feature's group
-                                                    group_x = float(group_geom.get('x', 0))
-                                                    group_right = group_x + actual_feature_width
-                                                    next_group_geom.set('x', str(group_right + self.FEATURE_SPACING_X))
-                                        else:
-                                            # Next feature is not in a group - update its position if it exists
-                                            next_feature_cell = root_elem.find(f'.//mxCell[@id="e{epic_idx}f{feat_idx + 1}"]')
-                                            if next_feature_cell is not None:
-                                                next_feature_geom = next_feature_cell.find('mxGeometry')
-                                                if next_feature_geom is not None:
-                                                    group_x = float(group_geom.get('x', 0))
-                                                    group_right = group_x + actual_feature_width
-                                                    next_feature_geom.set('x', str(group_right + self.FEATURE_SPACING_X))
-                        else:
-                            # Feature is not in a group - set absolute x
-                            feature_geometries[-1]['geom'].set('x', str(actual_feature_x))
-                    else:
-                        # Fallback: set x if we can't find the cell
-                        feature_geometries[-1]['geom'].set('x', str(actual_feature_x))
+                    feature_geometries[-1]['geom'].set('x', str(actual_feature_x))
                     
                     # Update previous_feature_rightmost_x with actual rightmost position (including AC cards)
                     # This will be used to position the next feature
@@ -1914,45 +2014,14 @@ class DrawIORenderer:
                 constrained_ac_x = min(epic_rightmost_ac_x, max_feature_right + 100)  # Allow some AC expansion but cap it
                 epic_max_x = max(epic_max_x, constrained_ac_x)
             
-            # Track the leftmost and rightmost positions of all features in this epic
-            # Epic should align with leftmost feature's left edge and extend to rightmost feature's right edge
-            epic_leftmost_x = float('inf')
-            epic_rightmost_x = -float('inf')
-            for feat_idx, feat_data in enumerate(feature_positions, 1):
-                if feat_data.get('has_estimated_stories'):
-                    # Feature is in a group - find the group
-                    group_id = epic_idx * 1000 + feat_idx * 100
-                    group = root_elem.find(f'.//mxCell[@id="{group_id}"]')
-                    if group is not None:
-                        group_geom = group.find('mxGeometry')
-                        if group_geom is not None:
-                            group_x = float(group_geom.get('x', 0))
-                            group_width = float(group_geom.get('width', 0))
-                            group_right = group_x + group_width
-                            epic_leftmost_x = min(epic_leftmost_x, group_x)
-                            epic_rightmost_x = max(epic_rightmost_x, group_right)
-                else:
-                    # Feature is not in a group - use feature position
-                    feat_x = feat_data.get('x', 0)
-                    feat_width = feat_data.get('width', 0)
-                    feat_right = feat_x + feat_width
-                    epic_leftmost_x = min(epic_leftmost_x, feat_x)
-                    epic_rightmost_x = max(epic_rightmost_x, feat_right)
-            
-            # Store rightmost position for next epic's features (don't track parent epic position)
-            previous_epic_rightmost_x = epic_rightmost_x
-            
             # Shrink epic to fit actual feature bounds (with padding) - only if not using layout
             if use_epic_layout:
                 # Use stored epic coordinates and dimensions - don't shrink
-                # But still update x_pos for next epic using the tracked rightmost feature position
-                # This ensures features from different epics don't overlap
-                x_pos = epic_rightmost_x + self.FEATURE_SPACING_X
-            else:
-                # Update x_pos for next epic to start after this epic's rightmost feature
-                x_pos = epic_rightmost_x + self.FEATURE_SPACING_X
-            
-            if not use_epic_layout and epic_min_x != float('inf') and epic_max_x != -float('inf'):
+                # Update x_pos for next epic using stored epic width
+                # In exploration mode, use 30px spacing between epics to match expected layout
+                epic_spacing = 30 if is_exploration else 20
+                x_pos = epic_x + epic_width + epic_spacing
+            elif epic_min_x != float('inf') and epic_max_x != -float('inf'):
                 # In exploration mode, epic should span from epic_x to rightmost AC box + padding
                 # Otherwise, calculate from min/max feature bounds
                 if is_exploration and epic_rightmost_ac_x is not None:
@@ -1968,97 +2037,26 @@ class DrawIORenderer:
                     actual_epic_x = epic_x
                 else:
                     # Calculate width from actual rendered bounds
-                    # Epic should align with leftmost feature's left edge and extend to rightmost feature's right edge
-                    if epic_leftmost_x != float('inf') and epic_rightmost_x != -float('inf'):
-                        actual_epic_x = epic_leftmost_x
-                        actual_epic_width = epic_rightmost_x - epic_leftmost_x
-                    else:
-                        # Fallback: use epic_x and epic_rightmost_x
-                        actual_epic_x = epic_x
-                        actual_epic_width = epic_rightmost_x - epic_x
-                    # No minimum width - epic width should exactly match feature bounds
+                    # epic_min_x starts at epic_x, epic_max_x tracks rightmost content
+                    # When sub_epics (features) are present, epic width should be exactly the width of its sub-epics (no padding)
+                    # This prevents epics from becoming too wide when "or" connector nested stories extend horizontally
+                    actual_epic_width = epic_max_x - epic_min_x  # No padding - epic should match sub-epic width exactly
+                    actual_epic_x = epic_x  # Keep epic at its original position (first feature aligns to epic, not vice versa)
+                    # Ensure minimum width
+                    if actual_epic_width < 100:
+                        actual_epic_width = 100
                 epic_geom.set('width', str(actual_epic_width))
-                # Only set x if epic is NOT in a group (if parent is not a group ID like "101", "102")
-                # Find the epic cell to check its parent
-                epic_cell_found = root_elem.find(f'.//mxCell[@id="epic{epic_idx}"]')
-                if epic_cell_found is not None:
-                    epic_parent = epic_cell_found.get('parent', '')
-                    # Group IDs for epics with estimated_stories are like "101", "102" (epic_idx + 100)
-                    # If parent is a group ID (numeric string matching epic_idx + 100), don't set x - it's relative to group
-                    expected_group_id = str(epic_idx + 100)
-                    if epic_parent == expected_group_id:
-                        # Epic is in a group - don't set x, it's relative to group
-                        # Update group width to match finalized epic width
-                        group_cell = root_elem.find(f'.//mxCell[@id="{expected_group_id}"]')
-                        if group_cell is not None:
-                            group_geom = group_cell.find('mxGeometry')
-                            if group_geom is not None:
-                                group_geom.set('width', str(actual_epic_width))
-                                # Also update estimated stories text box position to align with epic's right edge
-                                estimated_cell = root_elem.find(f'.//mxCell[@id="{epic_idx + 200}"]')
-                                if estimated_cell is not None and estimated_cell.get('parent') == expected_group_id:
-                                    estimated_geom = estimated_cell.find('mxGeometry')
-                                    if estimated_geom is not None:
-                                        estimated_x = actual_epic_width - 60  # Align right edge of text with epic right edge
-                                        estimated_geom.set('x', str(estimated_x))
-                                # Update epic group position to align with leftmost feature
-                                if epic_leftmost_x != float('inf'):
-                                    group_geom.set('x', str(epic_leftmost_x))
-                                # Store epic group's right edge for next epic positioning
-                                updated_group_x = float(group_geom.get('x', 0))
-                                previous_epic_right_edge = updated_group_x + actual_epic_width
-                                # Update Epic 2+ epic group position if it was already created
-                                if epic_idx < len(story_graph.get('epics', [])):
-                                    next_epic_idx = epic_idx + 1
-                                    next_epic = story_graph.get('epics', [])[next_epic_idx - 1] if next_epic_idx - 1 < len(story_graph.get('epics', [])) else None
-                                    if next_epic and 'estimated_stories' in next_epic and next_epic.get('estimated_stories') and not is_increments:
-                                        next_epic_group_id = str(next_epic_idx + 100)
-                                        next_epic_group = root_elem.find(f'.//mxCell[@id="{next_epic_group_id}"]')
-                                        if next_epic_group is not None:
-                                            next_epic_group_geom = next_epic_group.find('mxGeometry')
-                                            if next_epic_group_geom is not None:
-                                                # Use same gap as features (FEATURE_SPACING_X)
-                                                next_epic_x = previous_epic_right_edge + self.FEATURE_SPACING_X
-                                                next_epic_group_geom.set('x', str(next_epic_x))
-                                                # Update next epic's first feature position
-                                                # Group IDs are: epic_idx * 1000 + feat_idx * 100, where feat_idx is 0-based
-                                                # First feature has feat_idx=0, so group ID = next_epic_idx * 1000 + 0 * 100 = next_epic_idx * 1000
-                                                # But looking at actual IDs, 2100 = 2*1000 + 1*100, so feat_idx=1
-                                                # This means features are 1-indexed in the group ID calculation
-                                                # So first feature (index 0 in list) has group ID = next_epic_idx * 1000 + 1 * 100
-                                                # Actually, let me find the leftmost feature group for next epic
-                                                next_epic_features = get_sub_epics(next_epic)
-                                                if next_epic_features:
-                                                    # Find the leftmost feature group for next epic
-                                                    min_x = float('inf')
-                                                    leftmost_group = None
-                                                    for feat_idx, feature in enumerate(next_epic_features):
-                                                        if feature.get('estimated_stories'):
-                                                            feat_group_id = next_epic_idx * 1000 + (feat_idx + 1) * 100
-                                                            feat_group = root_elem.find(f'.//mxCell[@id="{feat_group_id}"]')
-                                                            if feat_group is not None:
-                                                                feat_group_geom = feat_group.find('mxGeometry')
-                                                                if feat_group_geom is not None:
-                                                                    feat_group_x = float(feat_group_geom.get('x', 0))
-                                                                    if feat_group_x < min_x:
-                                                                        min_x = feat_group_x
-                                                                        leftmost_group = feat_group_geom
-                                                    if leftmost_group is not None:
-                                                        leftmost_group.set('x', str(next_epic_x))
-                    else:
-                        # Epic is not in a group - set absolute x
-                        epic_geom.set('x', str(actual_epic_x))
-                        # Store epic's right edge for next epic positioning
-                        previous_epic_right_edge = actual_epic_x + actual_epic_width
-                else:
-                    # Fallback: set x if we can't find the cell
+                # Only set x if epic is NOT in a group (if parent is not a group ID)
+                epic_parent = epic_cell.get('parent', '')
+                if not epic_parent or epic_parent == '1' or epic_parent == 'epic-group':
+                    # Epic is not in a group - set absolute x
                     epic_geom.set('x', str(actual_epic_x))
-                    # Store epic's right edge for next epic positioning
-                    previous_epic_right_edge = actual_epic_x + actual_epic_width
+                # If epic is in a group (parent is like "101", "102"), don't set x - it's relative to group
                 
                 # Update x_pos for next epic using actual epic width
-                # Use same gap as features (FEATURE_SPACING_X)
-                x_pos = actual_epic_x + actual_epic_width + self.FEATURE_SPACING_X
+                # In exploration mode, use 30px spacing between epics to match expected layout
+                epic_spacing = 30 if is_exploration else 20
+                x_pos = actual_epic_x + actual_epic_width + epic_spacing
             else:
                 # Fallback to original calculation
                 x_pos += epic_width + 20

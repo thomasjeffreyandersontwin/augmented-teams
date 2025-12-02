@@ -113,21 +113,20 @@ def render_then_sync_then_render_graph():
     
     # Load extracted layout (layout file is generated during sync)
     extracted_layout_path = find_extracted_layout(synced_json_path)
-    layout_data = None
-    if extracted_layout_path:
-        layout_data = load_layout_data(extracted_layout_path)
-        print(f"   [OK] Extracted layout from: {extracted_layout_path}")
-    else:
-        print(f"   [WARN] Layout file not found, rendering without layout")
     
-    # Step 3: Render synced JSON to DrawIO again (with layout)
-    print(f"\n3. Rendering synced JSON to DrawIO again (with layout)...")
+    # Delete layout file immediately after sync to prevent layout preservation for this test
+    if extracted_layout_path and extracted_layout_path.exists():
+        extracted_layout_path.unlink()
+        print(f"   [OK] Layout file deleted (not preserving layout for this test)")
+    
+    # Step 3: Render synced JSON to DrawIO again (without layout - default layout)
+    print(f"\n3. Rendering synced JSON to DrawIO again (with default layout)...")
     synced_graph = load_story_graph(synced_json_path)
     
     StoryIODiagram.render_outline_from_graph(
         story_graph=synced_graph,
         output_path=rendered2_path,
-        layout_data=layout_data
+        layout_data=None
     )
     print(f"   [OK] Second render saved to: {rendered2_path}")
     
