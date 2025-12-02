@@ -1,25 +1,24 @@
 {
   "name": "synchronize_txt_with_story_graph",
-  "description": "Synchronize parsed story map text file with original story graph, preserving acceptance_criteria and nested stories from original. Detects and flags large deletions.",
-  "scripts": [
-    {
-      "name": "render_text",
-      "description": "Render story graph JSON to text format",
-      "command": "python agile_bot/bots/story_bot/behaviors/1_shape/2_content/2_render/render_story_map_txt.py {project_path}/docs/stories/story-graph.json {project_path}/docs/stories/story-map.txt"
-    },
-    {
-      "name": "synchronize_text",
-      "description": "Parse text file and synchronize with story graph (future - not yet implemented)",
-      "command": "python -m agile_bot.bots.story_bot.utils.story_io.story_io_cli sync-text --text-file {project_path}/docs/stories/story-map.txt --output {project_path}/docs/stories/story-graph-txt-extracted.json --original {project_path}/docs/stories/story-graph.json"
-    }
-  ],
+  "description": "Review text story map and infer changes to story graph JSON. AI reads text, identifies differences, and proposes updates to story-graph.json with report.",
   "templates": [
     "templates/story-map-template.txt"
   ],
   "instructions": [
-    "**RENDER:** Run render_text script to generate story-map.txt from story-graph.json",
-    "**SYNCHRONIZE:** Text parsing not yet implemented - use DrawIO sync instead",
-    "**FORMAT:** See templates/story-map-template.txt for text format rules"
+    "1. User provides story-map.txt (text format story map)",
+    "2. AI reads both story-map.txt and story-graph.json",
+    "3. AI compares text with JSON structure, identifying:",
+    "   - New stories, epics, or sub-epics in text",
+    "   - Removed items (in JSON but not in text)",
+    "   - Changed user assignments, connectors, or sequential order",
+    "   - Changed story group types or connectors",
+    "   - New, update, remove increments and story assignment to increments",
+    "4. AI generates a report showing all differences",
+    "5. AI proposes specific changes to story-graph.json",
+    "6. User reviews and approves changes",
+    "7. AI updates story-graph.json preserving acceptance_criteria",
+    "",
+    "**TEXT FORMAT:** See templates/story-map-template.txt for format rules"
   ]
 }
 
