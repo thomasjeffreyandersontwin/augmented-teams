@@ -16,7 +16,10 @@
     "   - Specific examples from the Content Data that violate rules",
     "   - Any missing requirements from clarification.json or planning.json (including stage-specific decisions/assumptions)",
     "   - Recommendations for fixing violations",
-    "7. If no violations found, confirm that Content Data follows all rules and incorporates all requirements"
+    "7. If no violations found, confirm that Content Data follows all rules and incorporates all requirements",
+    "",
+    "**MANDATORY: PAUSE FOR HUMAN FEEDBACK**",
+    "When this action is complete, AI MUST pause and wait for human feedback. When human says 'done' or confirms completion, the workflow is complete for this behavior (no automatic next step)."
   ],
   "templates": {
     "validation_results": {

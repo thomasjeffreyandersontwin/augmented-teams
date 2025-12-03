@@ -43,6 +43,8 @@ Base Action
     Inject Instructions: Behavior  #must be overridden
     Load Relevant Content + Inject Into Instructions: Content  #must be overridden
     Save content changes: Content #must be overriden
+    Loads Action Configuration: Action Configuration, File System
+    Injects Next Action Instructions (if workflow: true and next_action exists): Action Configuration, AI Chat
 
 GatherContextAction (Action 2)
     Inject gather context instructions: Behavior, Guardrails, Required Clarifications
@@ -136,12 +138,36 @@ Rule
         Dont: Example, Description
     Specialized examples: Language, Framework, Pattern
 
+Action Configuration
+    Specifies Action Name
+    Specifies Workflow Flag: true/false
+    Specifies Order In Workflow Sequence: Workflow
+    Specifies Next Action In Sequence: Workflow, Base Action
+    Stored In action_config.json Per Action Folder: File System
+
+Router
+    Checks Workflow State For Current Behavior: Workflow State
+    Loads workflow_state.json From Project Area: Workflow State, File System
+    Extracts current_behavior And current_action From State: Workflow State
+    Routes To Current Behavior's MCP Tool: MCP Bot Server, Behavior Tool
+    Forwards To Bot.Behavior[current_behavior].Action[current_action]: Bot Behavior, Base Action
+    Defaults To First Behavior/Action If No State Exists: Bot Behavior, Base Action
+
+Activity Log
+    Records Action Execution With Timestamp: Base Action, File System
+    Stores Behavior And Action Names: Bot Behavior, Base Action
+    Stores Violations Count For Validation: ValidateRulesAction
+    Links Action To Generated Content File Path: Base Action, File System
+    Provides Audit Trail: Project
+    Persists To activity_log.json: File System, Project
+
 Workflow State
-    Track current action: Action
-    Track completed actions: Action, Activity Log
-    Determine next action: Action, Behavior
-    Pause workflow: Human, AI Chat
-    Resume workflow: Human, AI Chat
+    Stores Current Behavior Name: Behavior
+    Stores Current Action Name: Action
+    Stores Action State (started/completed)
+    Stores Completed Actions List
+    Stores Timestamp
+    Enables Workflow Resumption
 
 ---
 

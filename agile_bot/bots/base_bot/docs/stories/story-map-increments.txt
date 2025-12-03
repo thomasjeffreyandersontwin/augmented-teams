@@ -179,6 +179,19 @@
         (S) Bot-Behavior --> Submit Content to Tool for Saving
 
 
+Gather Context
+    Provide Answers and Evidence
+        Behavior --> Tracks Activity for Gather Context Action
+        AI--> Chat Calls Behavior Planning Tool For Current Behavior
+
+Decide Planning Criteria Action
+    Make Decisons and Assumptions
+        ...
+
+
+
+
+
 ## Increment 4: Inject Content
 
 (E) Invoke MCP Bot Server

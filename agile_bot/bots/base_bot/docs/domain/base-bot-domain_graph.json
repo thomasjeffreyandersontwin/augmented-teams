@@ -121,6 +121,64 @@
       ]
     },
     {
+      "name": "Router",
+      "responsibilities": [
+        {
+          "name": "Checks Workflow State For Current Behavior",
+          "collaborators": ["Workflow State"]
+        },
+        {
+          "name": "Loads workflow_state.json From Project Area",
+          "collaborators": ["Workflow State", "File System"]
+        },
+        {
+          "name": "Extracts current_behavior And current_action From State",
+          "collaborators": ["Workflow State"]
+        },
+        {
+          "name": "Routes To Current Behavior's MCP Tool",
+          "collaborators": ["MCP Bot Server", "Behavior Tool"]
+        },
+        {
+          "name": "Forwards To Bot.Behavior[current_behavior].Action[current_action]",
+          "collaborators": ["Bot Behavior", "Base Action"]
+        },
+        {
+          "name": "Defaults To First Behavior/Action If No State Exists",
+          "collaborators": ["Bot Behavior", "Base Action"]
+        }
+      ]
+    },
+    {
+      "name": "Activity Log",
+      "responsibilities": [
+        {
+          "name": "Records Action Execution With Timestamp",
+          "collaborators": ["Base Action", "File System"]
+        },
+        {
+          "name": "Stores Behavior And Action Names",
+          "collaborators": ["Bot Behavior", "Base Action"]
+        },
+        {
+          "name": "Stores Violations Count For Validation",
+          "collaborators": ["ValidateRulesAction"]
+        },
+        {
+          "name": "Links Action To Generated Content File Path",
+          "collaborators": ["Base Action", "File System"]
+        },
+        {
+          "name": "Provides Audit Trail",
+          "collaborators": ["Project"]
+        },
+        {
+          "name": "Persists To activity_log.json",
+          "collaborators": ["File System", "Project"]
+        }
+      ]
+    },
+    {
       "name": "MCP Bot Server Generator",
       "responsibilities": [
         {
@@ -128,12 +186,28 @@
           "collaborators": ["Bot Config", "MCP Bot Server"]
         },
         {
+          "name": "Discovers Actions From base_actions Folder",
+          "collaborators": ["File System", "Action Configuration"]
+        },
+        {
+          "name": "Reads action_config.json From Each Action Folder",
+          "collaborators": ["Action Configuration", "File System"]
+        },
+        {
+          "name": "Identifies Workflow Actions (workflow: true)",
+          "collaborators": ["Action Configuration"]
+        },
+        {
+          "name": "Identifies Independent Actions (workflow: false)",
+          "collaborators": ["Action Configuration"]
+        },
+        {
           "name": "Generates Bot Tools",
           "collaborators": ["Bot Config", "MCP Bot Server", "Bot Tool", "Trigger Words"]
         },
         {
-          "name": "Generates Behavior Tools",
-          "collaborators": ["Bot Config", "MCP Bot Server", "Behavior Tool", "Bot Behavior", "Behavior Trigger Words"]
+          "name": "Generates Behavior Tools With Workflow Awareness",
+          "collaborators": ["Bot Config", "MCP Bot Server", "Behavior Tool", "Bot Behavior", "Action Configuration"]
         },
         {
           "name": "Generates Behavior Action Tools",
@@ -288,6 +362,31 @@
       ]
     },
     {
+      "name": "Action Configuration",
+      "responsibilities": [
+        {
+          "name": "Specifies Action Name",
+          "collaborators": []
+        },
+        {
+          "name": "Specifies Workflow Flag (true/false)",
+          "collaborators": []
+        },
+        {
+          "name": "Specifies Order In Workflow Sequence",
+          "collaborators": ["Workflow"]
+        },
+        {
+          "name": "Specifies Next Action In Sequence",
+          "collaborators": ["Workflow", "Base Action"]
+        },
+        {
+          "name": "Stored In action_config.json Per Action Folder",
+          "collaborators": ["File System"]
+        }
+      ]
+    },
+    {
       "name": "Base Action",
       "responsibilities": [
         {
@@ -301,6 +400,14 @@
         {
           "name": "Returns Compiled Instructions",
           "collaborators": ["Bot Behavior"]
+        },
+        {
+          "name": "Loads Action Configuration",
+          "collaborators": ["Action Configuration", "File System"]
+        },
+        {
+          "name": "Injects Next Action Instructions (if workflow: true and next_action exists)",
+          "collaborators": ["Action Configuration", "AI Chat"]
         }
       ]
     },

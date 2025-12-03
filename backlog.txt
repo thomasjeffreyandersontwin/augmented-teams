@@ -19,3 +19,10 @@ need simple runs
 
 new base action - simple run 
 story--> ac --> scenario -->  test --> code --> deploys
+
+include rpe-exting work inproject to answer your questrions first
+
+add cocneot of domakn sync and one knwledge graph across two 
+
+confirm stroy scope of taks before strtting
+eg explorarin cxonfoirmed tese arfe the stroies correct?

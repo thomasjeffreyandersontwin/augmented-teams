@@ -3128,7 +3128,15 @@
                   "users": [
                     "MCP Server Generator"
                   ],
-                  "story_type": "user"
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN MCP Server Generator scans base_actions/ folder",
+                    "THEN Generator discovers actions by reading each action folder",
+                    "AND Generator reads action_config.json from each action folder",
+                    "AND action_config.json specifies: name, workflow (true/false), order, next_action",
+                    "AND Generator creates tools for all discovered actions",
+                    "AND Tools include workflow state awareness based on action_config.workflow flag"
+                  ]
                 },
                 {
                   "name": "Generate Behavior Tools",
@@ -3137,7 +3145,15 @@
                   "users": [
                     "MCP Server Generator"
                   ],
-                  "story_type": "user"
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN Generator enumerates behaviors from Bot Config",
+                    "THEN Generator creates behavior-specific tools for each action in base_actions/",
+                    "AND Generator loads action_config.json from each action folder",
+                    "AND Workflow actions (workflow: true) get automatic transition logic using next_action field",
+                    "AND Independent actions (workflow: false) get no automatic transition logic",
+                    "AND Each behavior tool knows action sequence from ordered action_config.json files"
+                  ]
                 }
               ]
             }
@@ -3159,7 +3175,15 @@
                   "users": [
                     "AI Chat"
                   ],
-                  "story_type": "user"
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN AI Chat invokes bot tool without specifying specific action",
+                    "THEN Router checks Workflow State for current behavior",
+                    "AND Router loads workflow_state.json from {project_area}/workflow_state.json",
+                    "AND Router extracts current_behavior from state",
+                    "AND Router routes to current behavior's MCP tool (not default/first behavior)",
+                    "AND Routing uses saved state to determine correct behavior dynamically"
+                  ]
                 },
                 {
                   "name": "Forward To Behavior and Current Action",
@@ -3168,7 +3192,15 @@
                   "users": [
                     "AI Chat"
                   ],
-                  "story_type": "user"
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN Router receives behavior tool invocation",
+                    "THEN Router loads Workflow State from persistent storage",
+                    "AND Router extracts current_behavior and current_action from state",
+                    "AND Router forwards call to Bot.Behavior[current_behavior].Action[current_action]",
+                    "AND Forwarding ensures user resumes at exact point they left off",
+                    "AND If workflow state file doesn't exist, defaults to first behavior/first action"
+                  ]
                 }
               ]
             },
@@ -3184,7 +3216,15 @@
                   "users": [
                     "Bot Behavior"
                   ],
-                  "story_type": "user"
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN Workflow action completes execution successfully (workflow: true in action_config.json)",
+                    "THEN Action loads its action_config.json and reads next_action field",
+                    "WHEN next_action is not null, THEN Action injects instructions: \"When done, proceed to [next_action_name]\"",
+                    "WHEN next_action is null, THEN Action indicates workflow is complete",
+                    "WHEN action is independent (workflow: false), THEN Action does NOT inject next action instructions",
+                    "AND User doesn't need to remember workflow sequence"
+                  ]
                 },
                 {
                   "name": "Saves Behavior State",
@@ -3193,7 +3233,17 @@
                   "users": [
                     "Bot Behavior"
                   ],
-                  "story_type": "user"
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN Action execution completes",
+                    "THEN Behavior updates Workflow State with current_behavior and current_action",
+                    "AND State persisted to {project_area}/workflow_state.json file",
+                    "AND State includes timestamp of last action execution",
+                    "AND State includes completed_actions list showing full history",
+                    "AND State includes current_behavior name",
+                    "AND State includes current_action name",
+                    "AND Persistence ensures workflow can be resumed after interruption (crash, close chat, etc.)"
+                  ]
                 }
               ]
             }
@@ -3204,32 +3254,167 @@
           "sequential_order": 3,
           "sub_epics": [
             {
+              "name": "Gather Context",
+              "sequential_order": 2,
+              "sub_epics": [],
+              "stories": [
+                {
+                  "name": "Track Activity for Gather Context Action",
+                  "sequential_order": 1,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN GatherContextAction executes",
+                    "THEN Action creates activity entry with timestamp, action name, behavior name",
+                    "AND Activity entry appended to {project_area}/activity_log.json"
+                  ]
+                },
+                {
+                  "name": "Proceed To Decide Planning",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN GatherContextAction completes execution",
+                    "AND Human says action is done",
+                    "THEN GatherContextAction saves Workflow State (per \"Saves Behavior State\" story)",
+                    "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
+                    "AND Workflow proceeds to decide_planning_criteria"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Decide Planning Criteria",
+              "sequential_order": 3,
+              "sub_epics": [],
+              "stories": [
+                {
+                  "name": "Track Activity for Planning Action",
+                  "sequential_order": 1,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN PlanningAction executes",
+                    "THEN Action creates activity entry with timestamp, action name, behavior name",
+                    "AND Activity entry appended to {project_area}/activity_log.json"
+                  ]
+                },
+                {
+                  "name": "Proceed To Build Knowledge",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN PlanningAction completes execution",
+                    "WHEN Human says action is done",
+                    "THEN PlanningAction saves Workflow State (per \"Saves Behavior State\" story)",
+                    "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
+                    "AND Workflow proceeds to build_knowledge"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Build Knowledge",
+              "sequential_order": 4,
+              "sub_epics": [],
+              "stories": [
+                {
+                  "name": "Track Activity for Build Knowledge Action",
+                  "sequential_order": 1,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN BuildKnowledgeAction executes",
+                    "THEN Action creates activity entry with timestamp, action name, behavior name",
+                    "AND Activity entry appended to {project_area}/activity_log.json"
+                  ]
+                },
+                {
+                  "name": "Proceed To Render Output",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN BuildKnowledgeAction completes execution",
+                    "THEN BuildKnowledgeAction saves Workflow State (per \"Saves Behavior State\" story)",
+                    "AND BuildKnowledgeAction submits content for saving",
+                    "AND Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Render Output",
+              "sequential_order": 5,
+              "sub_epics": [],
+              "stories": [
+                {
+                  "name": "Track Activity for Render Output Action",
+                  "sequential_order": 1,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN RenderOutputAction executes",
+                    "THEN Action creates activity entry with timestamp, action name, behavior name",
+                    "AND Activity entry appended to {project_area}/activity_log.json"
+                  ]
+                },
+                {
+                  "name": "Proceed To Validate Rules",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN RenderOutputAction completes execution",
+                    "WHEN Human says action is done",
+                    "THEN RenderOutputAction saves Workflow State (per \"Saves Behavior State\" story)",
+                    "AND RenderOutputAction submits content for saving",
+                    "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
+                    "AND Workflow proceeds to validate_rules"
+                  ]
+                }
+              ]
+            },
+            {
               "name": "Validate Knowledge & Content Against Rules",
               "sequential_order": 16,
               "sub_epics": [],
               "stories": [
                 {
-                  "name": "Call Correct-Bot Action Tool",
+                  "name": "Track Activity for Validate Rules Action",
                   "sequential_order": 1,
                   "connector": "or",
-                  "users": [],
-                  "story_type": "user"
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN ValidateRulesAction executes",
+                    "THEN Action creates activity entry with timestamp, action name, behavior name, violations count",
+                    "AND Activity entry appended to {project_area}/activity_log.json"
+                  ]
                 },
                 {
-                  "name": "Track Activity for Validate Rules Action",
-                  "sequential_order": 4,
+                  "name": "Complete Validate Rules Action",
+                  "sequential_order": 2,
                   "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Submit Content to Tool for Saving",
-                  "sequential_order": 5,
-                  "connector": "or",
-                  "users": [
-                    "Bot-Behavior"
-                  ],
-                  "story_type": "user"
+                  "users": ["Behavior"],
+                  "story_type": "user",
+                  "acceptance_criteria": [
+                    "WHEN ValidateRulesAction completes execution",
+                    "THEN Action presents validation results to user",
+                    "WHEN Human says action is done",
+                    "THEN ValidateRulesAction saves Workflow State (per \"Saves Behavior State\" story)",
+                    "AND validate_rules is terminal action (next_action: null, workflow completes)"
+                  ]
                 }
               ]
             }

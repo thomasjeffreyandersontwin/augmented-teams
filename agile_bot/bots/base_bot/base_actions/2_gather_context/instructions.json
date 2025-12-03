@@ -42,7 +42,10 @@
     "**Required Evidence:**",
     "{{evidence}}  --> load from `{bot}/behaviors/{behavior}/guardrails/required_context/evidence.json`",
     "",
-    "For each question, provide a thoughtful answer based on available context. If the question requires a choice/decision, identify available options and ask the user to choose. If the answer cannot be determined from available context, clearly state \"⚠️ **NOT ENOUGH INFORMATION - REQUIRES USER INPUT\"."
+    "For each question, provide a thoughtful answer based on available context. If the question requires a choice/decision, identify available options and ask the user to choose. If the answer cannot be determined from available context, clearly state \"⚠️ **NOT ENOUGH INFORMATION - REQUIRES USER INPUT\".",
+    "",
+    "**MANDATORY: PAUSE FOR HUMAN FEEDBACK**",
+    "When this action is complete, AI MUST pause and wait for human feedback. When human says 'done' or confirms completion, you MUST proceed to the next step: **decide_planning_criteria** (call the decide_planning_criteria action tool)."
   ],
   "templates": {
     "context_sufficient": {

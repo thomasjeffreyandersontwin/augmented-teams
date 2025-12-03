@@ -14,15 +14,6 @@ from agile_bot.bots.base_bot.src.utils import read_json_file
 class MCPServerGenerator:
     """Generates MCP server instance for a bot."""
     
-    BASE_ACTIONS = [
-        'gather_context',
-        'decide_planning_criteria',
-        'build_knowledge',
-        'render_output',
-        'validate_rules',
-        'correct_bot'
-    ]
-    
     def __init__(self, workspace_root: Path, bot_location: str = None):
         """Initialize MCP Server Generator.
         
@@ -46,6 +37,48 @@ class MCPServerGenerator:
         
         self.bot = None
         self.registered_tools = []
+        
+        # Discover actions from base_actions folder
+        self.workflow_actions = self._discover_workflow_actions()
+        self.independent_actions = self._discover_independent_actions()
+    
+    def _discover_workflow_actions(self) -> list:
+        """Discover workflow actions by scanning base_actions folder for folders with number prefix.
+        
+        Returns:
+            List of action names (without number prefix) in workflow order
+        """
+        base_actions_path = self.workspace_root / self.bot_location / 'base_actions'
+        if not base_actions_path.exists():
+            return []
+        
+        workflow_actions = []
+        for item in base_actions_path.iterdir():
+            if item.is_dir() and item.name[0].isdigit() and '_' in item.name:
+                # Extract action name without number prefix (e.g., '1_gather_context' -> 'gather_context')
+                action_name = item.name.split('_', 1)[1]
+                workflow_actions.append((int(item.name.split('_')[0]), action_name))
+        
+        # Sort by number prefix and return just the action names
+        workflow_actions.sort(key=lambda x: x[0])
+        return [action for _, action in workflow_actions]
+    
+    def _discover_independent_actions(self) -> list:
+        """Discover independent actions by scanning base_actions folder for folders WITHOUT number prefix.
+        
+        Returns:
+            List of independent action names
+        """
+        base_actions_path = self.workspace_root / self.bot_location / 'base_actions'
+        if not base_actions_path.exists():
+            return []
+        
+        independent_actions = []
+        for item in base_actions_path.iterdir():
+            if item.is_dir() and not (item.name[0].isdigit() and '_' in item.name):
+                independent_actions.append(item.name)
+        
+        return independent_actions
     
     def create_server_instance(self) -> FastMCP:
         """Create FastMCP server instance from bot configuration.
@@ -95,8 +128,11 @@ class MCPServerGenerator:
         bot_config = mcp_server.bot_config
         behaviors = bot_config.get('behaviors', [])
         
+        # Register all actions (workflow + independent)
+        all_actions = self.workflow_actions + self.independent_actions
+        
         for behavior in behaviors:
-            for action in self.BASE_ACTIONS:
+            for action in all_actions:
                 self.register_behavior_action_tool(
                     mcp_server=mcp_server,
                     behavior=behavior,

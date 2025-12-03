@@ -17,7 +17,7 @@ MCP Server Generator generates Behavior Action Tools for each (behavior, action)
 
 - **WHEN** Generator processes Bot Config
 - **THEN** Generator creates tool code for each (behavior, action) pair:
-  - **AND** Enumerates all behaviors and actions from Bot Config (2_gather_context, 3_decide_planning_criteria, 4_build_knowledge, 5_render_output, 6_correct_bot, 7_validate_rules)
+  - **AND** Enumerates all behaviors and actions from Bot Config (2_gather_context, 3_decide_planning_criteria, 4_build_knowledge, 5_render_output, correct_bot, 7_validate_rules)
   - **AND** For each pair, generates tool code that:
     - **AND** Has unique name: `{bot_name}_{behavior}_{action}`
     - **AND** Loads trigger words from `{bot}/behaviors/{behavior}/{action}/trigger_words.json`

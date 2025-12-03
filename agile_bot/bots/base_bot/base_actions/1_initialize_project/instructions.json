@@ -51,7 +51,10 @@
     "",
     "**Suggested project area:** `{{example_project_path}}`",
     "",
-    "**User must confirm this location or provide a different path before workflow can proceed.**"
+    "**User must confirm this location or provide a different path before workflow can proceed.**",
+    "",
+    "**MANDATORY: PAUSE FOR HUMAN FEEDBACK**",
+    "When this action is complete, AI MUST pause and wait for human feedback. When human says 'done' or confirms completion, you MUST proceed to the next step: **gather_context** (call the gather_context action tool)."
   ]
 }
 

@@ -15,8 +15,8 @@ Bot Behavior loads and injects correction instructions so that AI Chat can revie
 
 ## Acceptance Criteria
 
-- **WHEN** MCP Specific Behavior Action Tool invokes Correct Bot Action (6_correct_bot)
-- **THEN** Action loads correct bot instructions from `base_bot/base_actions/6_correct_bot/instructions.json`
+- **WHEN** MCP Specific Behavior Action Tool invokes Correct Bot Action (correct_bot)
+- **THEN** Action loads correct bot instructions from `base_bot/base_actions/correct_bot/instructions.json`
 - **AND** Action injects correction instructions into compiled instructions
 - **AND** Instructions guide how to review and correct generated content
 
@@ -41,7 +41,7 @@ And bot has a behavior configured as 'exploration'
 And behavior has action 'correct_bot'
 And validation has produced diagnostic results showing 3 rule violations
 When Tool invokes test_bot.Exploration.CorrectBot() method
-Then Action loads correct bot instructions from exact path: base_bot/base_actions/6_correct_bot/instructions.json
+Then Action loads correct bot instructions from exact path: base_bot/base_actions/correct_bot/instructions.json
 And Action injects correction instructions into compiled instructions
 And Action injects diagnostic results showing 3 violations
 And Instructions guide AI Chat to review violations and suggest corrections
@@ -59,7 +59,7 @@ And behavior has action 'correct_bot'
 And correct bot instructions do NOT exist
 When Tool invokes test_bot.Exploration.CorrectBot() method
 Then Action attempts to load from exact path: base_bot/base_actions/6_correct_bot/instructions.json
-And Action raises FileNotFoundError with message 'Correct bot instructions not found at base_bot/base_actions/6_correct_bot/instructions.json'
+And Action raises FileNotFoundError with message 'Correct bot instructions not found at base_bot/base_actions/correct_bot/instructions.json'
 And Action does not return compiled instructions
 And Tool returns error to AI Chat
 ```

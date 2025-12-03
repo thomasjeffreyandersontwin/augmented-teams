@@ -12,12 +12,12 @@
             or (S) {actor} --> {story_name}
         or  --> second group connector type
             (S) {actor} --> {story_name}
-            and (AC) {actor} --> {acceptance_criteria}   --> and group type
-            and (AC) {actor} --> {acceptance_criteria}
+            (AC) {actor} --> {acceptance_criteria}   --> and group type
+            (AC) {actor} --> {acceptance_criteria}
         and  --> third group connector type
             (S) {actor} --> {story_name}
-            and (AC) {actor} --> {acceptance_criteria}  --> and type
-            and (AC) {actor} --> {acceptance_criteria}  --> and type
+            (AC) {actor} --> {acceptance_criteria}  --> and type
+            (AC) {actor} --> {acceptance_criteria}  --> and type
         or 
             (S) {actor} --> {story_name}
             (AC) {actor} /default group type is and
