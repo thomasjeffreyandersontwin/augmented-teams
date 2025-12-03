@@ -1,0 +1,147 @@
+{
+  "principle": "Bug Fix Test-First Workflow",
+  "description": "When production code breaks, ALWAYS follow the test-first workflow: write/modify failing test, verify failure, fix code, verify success, then test in production. Never fix bugs directly without a failing test first.",
+  "rationale": "Writing a failing test before fixing a bug ensures: (1) we can reproduce the bug, (2) we know when it's truly fixed, (3) we prevent regression, (4) we document the bug for future reference. Skipping the failing test step means we might fix the wrong thing or not really fix it at all.",
+  "rules": [
+    {
+      "rule_id": "BTF-1",
+      "rule": "WHEN production code breaks or a bug is discovered, ALWAYS write or modify a test to reproduce the bug FIRST, before making any fix",
+      "rationale": "A failing test proves we understand the bug and can reproduce it. Without this, we're guessing at the fix.",
+      "examples": [
+        {
+          "scenario": "MCP tool returns 'Bot not initialized' error",
+          "correct": "1) Write test that expects bot to be initialized\n2) Run test - verify it fails with 'Bot not initialized'\n3) Add bot initialization code\n4) Run test - verify it passes\n5) Test MCP tool in production",
+          "incorrect": "1) Add bot initialization code directly\n2) Hope it works\n3) Test in production and discover it still fails"
+        }
+      ]
+    },
+    {
+      "rule_id": "BTF-2",
+      "rule": "ALWAYS run the test BEFORE fixing to confirm it fails for the RIGHT reason",
+      "rationale": "If the test doesn't fail, either: (a) we're testing the wrong thing, (b) the bug doesn't exist in test environment, (c) the test is wrong. We must know the test fails before proceeding.",
+      "examples": [
+        {
+          "scenario": "Test should fail but passes",
+          "action": "STOP. Investigate why test passes when production fails. Fix test first, then proceed with bug fix."
+        }
+      ]
+    },
+    {
+      "rule_id": "BTF-3",
+      "rule": "Make the MINIMAL change to fix the bug - just enough to make the test pass",
+      "rationale": "Minimal fixes reduce risk of introducing new bugs. If more changes are needed, they should be separate commits with their own tests.",
+      "examples": [
+        {
+          "correct": "Change only the line causing 'Bot not initialized' error - add bot instantiation",
+          "incorrect": "While fixing bot initialization, also refactor entire class structure, add new features, change variable names"
+        }
+      ]
+    },
+    {
+      "rule_id": "BTF-4",
+      "rule": "Run ALL related tests after the fix to ensure no regression",
+      "rationale": "A fix in one area might break something else. Running the full test suite catches regressions immediately.",
+      "examples": [
+        {
+          "correct": "After fixing bot initialization: run all 30 bot tests, verify all pass",
+          "incorrect": "Run only the one test that was failing, skip the rest"
+        }
+      ]
+    },
+    {
+      "rule_id": "BTF-5",
+      "rule": "ONLY AFTER tests pass, test the fix in production/real environment",
+      "rationale": "Production testing is expensive (time, risk). Never waste time testing in production until automated tests confirm the fix works.",
+      "workflow": [
+        "1. RED: Write/modify test to reproduce bug (test fails)",
+        "2. Verify test fails for the right reason",
+        "3. GREEN: Make minimal fix to pass the test",
+        "4. Verify test now passes",
+        "5. Run full test suite (verify no regression)",
+        "6. PRODUCTION: Test in real environment (MCP server, actual usage)",
+        "7. If production still fails: repeat from step 1"
+      ]
+    },
+    {
+      "rule_id": "BTF-6",
+      "rule": "If fix works in tests but fails in production, the test is INCOMPLETE - return to step 1",
+      "rationale": "Tests that pass but don't prevent production failures are worse than no tests - they give false confidence. The test must be improved to catch what production caught.",
+      "examples": [
+        {
+          "scenario": "Tests pass but MCP still fails with encoding error",
+          "correct": "1) Add test case for UTF-8 encoding\n2) Verify it fails\n3) Add UTF-8 encoding to code\n4) Verify test passes\n5) Retry in production",
+          "incorrect": "1) Fix UTF-8 in code\n2) Tests still pass (they weren't checking encoding)\n3) Deploy and hope"
+        }
+      ]
+    },
+    {
+      "rule_id": "BTF-7",
+      "rule": "Document the bug and fix in the test name and test scenario",
+      "rationale": "Tests serve as documentation. Future developers should understand what bug was fixed by reading the test.",
+      "examples": [
+        {
+          "good_test_name": "test_server_initializes_bot_instance_to_prevent_not_initialized_error",
+          "bad_test_name": "test_server_works"
+        }
+      ]
+    }
+  ],
+  "anti_patterns": [
+    {
+      "anti_pattern": "Fix first, test later",
+      "why_bad": "Can't prove the fix actually solves the problem. Might fix wrong thing. No way to verify it stays fixed.",
+      "example": "Production MCP fails → directly edit mcp_server_generator.py → restart server → test production → repeat 3 times before finding real fix"
+    },
+    {
+      "anti_pattern": "Skip verifying test fails before fixing",
+      "why_bad": "Test might be wrong or testing the wrong thing. You'll make unnecessary changes or miss the real bug.",
+      "example": "Write test for bot initialization → immediately write fix → run test → passes → deploy → production still fails because test was testing wrong thing"
+    },
+    {
+      "anti_pattern": "Test only in production",
+      "why_bad": "Wastes time (restart servers, wait for changes). Risky (might break production). No automation (will break again).",
+      "example": "Edit code → restart MCP server → test → fail → edit code → restart → test → fail → (repeat 5 times) → finally works but no automated test to prevent regression"
+    },
+    {
+      "anti_pattern": "Make large changes while fixing bug",
+      "why_bad": "Can't tell if the bug fix worked or if new code introduced new bugs. Mixing refactoring with bug fixes leads to confusion.",
+      "example": "While fixing bot initialization, also refactor entire class, rename variables, add new features → which change fixed the bug? Did we introduce new bugs?"
+    }
+  ],
+  "checklist": [
+    "[ ] Written or modified test to reproduce the bug",
+    "[ ] Run test - VERIFIED it fails",
+    "[ ] Confirmed test fails for the RIGHT REASON (not a test bug)",
+    "[ ] Made MINIMAL fix to address the bug",
+    "[ ] Run test - VERIFIED it now passes",
+    "[ ] Run FULL test suite - VERIFIED no regressions",
+    "[ ] Test in production/real environment",
+    "[ ] If production still fails, repeat from step 1 with better test"
+  ],
+  "real_world_example": {
+    "bug": "MCP tool returns 'Bot not initialized' error in production",
+    "workflow_followed": [
+      "1. RED: Saw existing test test_bot_tool_invocation.py exists but uses mocks",
+      "2. RED: Modified test to use real MCPServerGenerator",
+      "3. RED: Ran test - FAILED with 'Bot not initialized' (good!)",
+      "4. GREEN: Added self.bot = Bot(...) to mcp_server_generator.py",
+      "5. GREEN: Ran test - PASSED",
+      "6. Run all 30 tests - ALL PASSED",
+      "7. PRODUCTION: Restarted MCP server, tested - SUCCESS",
+      "8. Found UTF-8 encoding bug in production",
+      "9. RED: Test helper writes JSON without encoding",
+      "10. GREEN: Added encoding='utf-8' to all JSON writes",
+      "11. Run all tests - PASSED",
+      "12. PRODUCTION: Restarted MCP server, tested - SUCCESS"
+    ],
+    "outcome": "Bug fixed correctly, with automated tests preventing regression, and caught additional bug (UTF-8) through the process"
+  }
+}
+
+
+
+
+
+
+
+

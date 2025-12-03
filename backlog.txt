@@ -1,4 +1,21 @@
 direct epric, story, acceptance criteraia read and write navigate, ROA exposed by MCP
-move story io to real pythoin testsd
+move story io to real pythn tests
 
 batch runs
+Mural, somain oriented integrtatin first with drawio 
+
+Asking a questin -- just answer dont do anythinhg
+always trying to save legacy code
+
+
+aito refresh MCP sever chach on update of code 
+
+code stroy code to stroy bot uses cklean code (hack for now)
+
+
+add fix action take in context, and inject "follow rule" when performking them
+
+need simple runs
+
+new base action - simple run 
+story--> ac --> scenario -->  test --> code --> deploys

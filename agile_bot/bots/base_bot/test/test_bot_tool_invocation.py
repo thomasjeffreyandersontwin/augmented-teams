@@ -25,7 +25,7 @@ def create_bot_config_file(workspace: Path, bot_name: str, behaviors: list) -> P
         'name': bot_name,
         'behaviors': behaviors
     }
-    config_file.write_text(json.dumps(config_data))
+    config_file.write_text(json.dumps(config_data), encoding='utf-8')
     return config_file
 
 def create_behavior_action_instructions(workspace: Path, bot_name: str, behavior: str, action: str) -> Path:
@@ -38,19 +38,30 @@ def create_behavior_action_instructions(workspace: Path, bot_name: str, behavior
         'behavior': behavior,
         'instructions': [f'{action} instructions for {behavior}']
     }
-    instructions_file.write_text(json.dumps(instructions_data))
+    instructions_file.write_text(json.dumps(instructions_data), encoding='utf-8')
     return instructions_file
 
 def create_base_action_instructions(workspace: Path, action: str) -> Path:
-    """Helper: Create base action instructions file."""
-    base_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / action
+    """Helper: Create base action instructions file with numbered prefix."""
+    # Map action names to their numbered prefixes
+    action_prefixes = {
+        'gather_context': '2_gather_context',
+        'decide_planning_criteria': '3_decide_planning_criteria',
+        'build_knowledge': '4_build_knowledge',
+        'render_output': '5_render_output',
+        'correct_bot': '6_correct_bot',
+        'validate_rules': '7_validate_rules'
+    }
+    
+    action_folder = action_prefixes.get(action, action)
+    base_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / action_folder
     base_dir.mkdir(parents=True, exist_ok=True)
     instructions_file = base_dir / 'instructions.json'
     instructions_data = {
-        'action': action,
-        'base_instructions': [f'Base {action} instructions']
+        'actionName': action,
+        'instructions': [f'Base {action} instructions']
     }
-    instructions_file.write_text(json.dumps(instructions_data))
+    instructions_file.write_text(json.dumps(instructions_data), encoding='utf-8')
     return instructions_file
 
 def verify_tool_routes_to_behavior(tool_name: str, expected_behavior: str, expected_action: str):
@@ -96,14 +107,22 @@ class TestBotToolInvocation:
         create_behavior_action_instructions(workspace_root, 'test_bot', 'shape', 'gather_context')
         create_base_action_instructions(workspace_root, 'gather_context')
         
-        # When: Tool is invoked (simulated)
-        tool_name = 'test_bot_shape_gather_context'
-        behavior = 'shape'
-        action = 'gather_context'
+        # When: Call REAL Bot API (doesn't exist yet!)
+        from agile_bot.bots.base_bot.src.bot import Bot
+        bot = Bot(
+            bot_name='test_bot',
+            workspace_root=workspace_root,
+            config_path=test_bot_config
+        )
+        result = bot.invoke_tool(
+            tool_name='test_bot_shape_gather_context',
+            parameters={'behavior': 'shape', 'action': 'gather_context'}
+        )
         
-        # Then: Tool routes correctly
-        verify_tool_routes_to_behavior(tool_name, behavior, action)
-        assert test_bot_config.exists()
+        # Then: Tool executed and returned result
+        assert result.status == 'completed'
+        assert result.behavior == 'shape'
+        assert result.action == 'gather_context'
 
     def test_server_preloads_bot_once_at_startup(self, workspace_root, test_bot_config):
         """
@@ -113,15 +132,29 @@ class TestBotToolInvocation:
         THEN: Server instantiates Bot class once and reuses for all invocations
         """
         # Given: Bot config with multiple behaviors
-        config_data = json.loads(test_bot_config.read_text())
-        behaviors = config_data['behaviors']
+        create_behavior_action_instructions(workspace_root, 'test_bot', 'shape', 'gather_context')
+        create_behavior_action_instructions(workspace_root, 'test_bot', 'discovery', 'gather_context')
+        create_base_action_instructions(workspace_root, 'gather_context')
         
-        # When: Server initializes (simulated)
-        bot_instance_created = True
+        # When: Call REAL MCPServer API (doesn't exist yet!)
+        from agile_bot.bots.base_bot.src.mcp_server import MCPServer
+        server = MCPServer(
+            bot_name='test_bot',
+            workspace_root=workspace_root,
+            config_path=test_bot_config
+        )
+        server.start()
         
-        # Then: Bot loaded once
-        assert len(behaviors) == 4
-        assert bot_instance_created
+        # Then: Bot loaded once and cached
+        assert server.bot is not None
+        assert server.bot.name == 'test_bot'
+        assert len(server.bot.behaviors) == 4
+        
+        # Multiple invocations use same bot instance
+        bot_id_1 = id(server.bot)
+        server.invoke_tool('test_bot_shape_gather_context', {})
+        bot_id_2 = id(server.bot)
+        assert bot_id_1 == bot_id_2
 
     def test_tool_routes_to_correct_behavior_action_method(self, workspace_root, test_bot_config):
         """
@@ -134,13 +167,24 @@ class TestBotToolInvocation:
         create_behavior_action_instructions(workspace_root, 'test_bot', 'shape', 'build_knowledge')
         create_behavior_action_instructions(workspace_root, 'test_bot', 'discovery', 'build_knowledge')
         create_behavior_action_instructions(workspace_root, 'test_bot', 'exploration', 'build_knowledge')
+        create_base_action_instructions(workspace_root, 'build_knowledge')
         
-        # When: Specific tool is invoked
-        tool_name = 'test_bot_exploration_build_knowledge'
+        # When: Call REAL Bot API for specific behavior
+        from agile_bot.bots.base_bot.src.bot import Bot
+        bot = Bot(
+            bot_name='test_bot',
+            workspace_root=workspace_root,
+            config_path=test_bot_config
+        )
+        result = bot.invoke_tool(
+            tool_name='test_bot_exploration_build_knowledge',
+            parameters={'behavior': 'exploration', 'action': 'build_knowledge'}
+        )
         
-        # Then: Routes to correct behavior only
-        assert 'exploration' in tool_name
-        assert 'build_knowledge' in tool_name
+        # Then: Routes to exploration behavior only (not shape or discovery)
+        assert result.behavior == 'exploration'
+        assert result.action == 'build_knowledge'
+        assert result.executed_instructions_from == 'exploration/build_knowledge'
 
     def test_tool_raises_error_when_behavior_missing(self, workspace_root, test_bot_config):
         """
@@ -149,32 +193,53 @@ class TestBotToolInvocation:
         WHEN: AI Chat invokes tool for invalid behavior
         THEN: Tool raises AttributeError with clear message
         """
-        # Given: Bot config with limited behaviors
-        config_data = json.loads(test_bot_config.read_text())
-        valid_behaviors = config_data['behaviors']
+        # Given: Bot with valid behaviors only
+        create_base_action_instructions(workspace_root, 'gather_context')
         
-        # When/Then: Invalid behavior raises error
-        invalid_behavior = 'invalid_behavior'
-        assert invalid_behavior not in valid_behaviors
+        # When: Call REAL Bot API with invalid behavior (doesn't exist!)
+        from agile_bot.bots.base_bot.src.bot import Bot
+        bot = Bot(
+            bot_name='test_bot',
+            workspace_root=workspace_root,
+            config_path=test_bot_config
+        )
         
-        # Tool would raise: AttributeError('Behavior invalid_behavior not found in test_bot')
+        # Then: Raises AttributeError with clear message
+        with pytest.raises(AttributeError) as exc_info:
+            bot.invoke_tool(
+                tool_name='test_bot_invalid_behavior_gather_context',
+                parameters={'behavior': 'invalid_behavior', 'action': 'gather_context'}
+            )
+        
+        assert 'Behavior invalid_behavior not found' in str(exc_info.value)
+        assert 'test_bot' in str(exc_info.value)
 
     def test_tool_raises_error_when_action_missing(self, workspace_root, test_bot_config):
         """
         SCENARIO: Tool handles missing action gracefully
         GIVEN: Action 'invalid_action' does not exist in base actions
         WHEN: AI Chat invokes tool for invalid action
-        THEN: Tool raises AttributeError with clear message
+        THEN: Tool raises FileNotFoundError with clear message
         """
-        # Given: Valid behavior exists
-        valid_behavior = 'shape'
-        invalid_action = 'invalid_action'
+        # Given: Valid behavior but invalid action
+        create_behavior_action_instructions(workspace_root, 'test_bot', 'shape', 'gather_context')
         
-        # When/Then: Invalid action path doesn't exist
-        action_path = workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / invalid_action
-        assert not action_path.exists()
+        # When: Call REAL Bot API with invalid action (doesn't exist!)
+        from agile_bot.bots.base_bot.src.bot import Bot
+        bot = Bot(
+            bot_name='test_bot',
+            workspace_root=workspace_root,
+            config_path=test_bot_config
+        )
         
-        # Tool would raise: AttributeError('Action invalid_action not found in base actions')
+        # Then: Raises FileNotFoundError for missing base action
+        with pytest.raises(FileNotFoundError) as exc_info:
+            bot.invoke_tool(
+                tool_name='test_bot_shape_invalid_action',
+                parameters={'behavior': 'shape', 'action': 'invalid_action'}
+            )
+        
+        assert 'Action invalid_action not found in base actions' in str(exc_info.value)
 
 
 class TestBehaviorActionInstructions:
@@ -192,18 +257,24 @@ class TestBehaviorActionInstructions:
         behavior = 'shape'
         action = 'gather_context'
         
+        config_file = create_bot_config_file(workspace_root, bot_name, ['shape'])
         behavior_instructions = create_behavior_action_instructions(workspace_root, bot_name, behavior, action)
         base_instructions = create_base_action_instructions(workspace_root, action)
         
-        # When: Instructions are loaded
-        behavior_data = json.loads(behavior_instructions.read_text())
-        base_data = json.loads(base_instructions.read_text())
+        # When: Call REAL GatherContextAction API to load and merge instructions
+        from agile_bot.bots.base_bot.src.actions.gather_context_action import GatherContextAction
+        action_obj = GatherContextAction(
+            bot_name=bot_name,
+            behavior=behavior,
+            workspace_root=workspace_root
+        )
+        merged_instructions = action_obj.load_and_merge_instructions()
         
-        # Then: Both exist and can be merged
-        assert behavior_data['action'] == action
-        assert base_data['action'] == action
-        assert behavior_instructions.exists()
-        assert base_instructions.exists()
+        # Then: Instructions merged from both sources
+        assert 'base_instructions' in merged_instructions
+        assert 'behavior_instructions' in merged_instructions
+        assert merged_instructions['action'] == action
+        assert merged_instructions['behavior'] == behavior
 
     def test_action_uses_base_only_when_behavior_instructions_missing(self, workspace_root):
         """
@@ -212,17 +283,27 @@ class TestBehaviorActionInstructions:
         WHEN: Action method is invoked
         THEN: Returns base instructions only with info log
         """
-        # Given: Only base instructions exist
+        # Given: Only base instructions exist (no behavior-specific)
+        bot_name = 'test_bot'
+        behavior = 'shape'
         action = 'gather_context'
+        
+        config_file = create_bot_config_file(workspace_root, bot_name, ['shape'])
         base_instructions = create_base_action_instructions(workspace_root, action)
         
-        behavior_path = workspace_root / 'agile_bot' / 'bots' / 'test_bot' / 'behaviors' / 'shape' / action / 'instructions.json'
+        # When: Call REAL GatherContextAction API (behavior instructions missing)
+        from agile_bot.bots.base_bot.src.actions.gather_context_action import GatherContextAction
+        action_obj = GatherContextAction(
+            bot_name=bot_name,
+            behavior=behavior,
+            workspace_root=workspace_root
+        )
+        merged_instructions = action_obj.load_and_merge_instructions()
         
-        # When/Then: Behavior instructions don't exist
-        assert base_instructions.exists()
-        assert not behavior_path.exists()
-        
-        # Action would log: 'No behavior-specific instructions, using base only'
+        # Then: Uses base instructions only
+        assert 'base_instructions' in merged_instructions
+        assert 'behavior_instructions' not in merged_instructions or merged_instructions['behavior_instructions'] is None
+        assert merged_instructions['action'] == action
 
     def test_action_raises_error_when_base_instructions_missing(self, workspace_root):
         """
@@ -231,12 +312,25 @@ class TestBehaviorActionInstructions:
         WHEN: Action method is invoked
         THEN: Raises FileNotFoundError with clear message
         """
-        # Given: Base instructions do not exist
+        # Given: No base instructions (behavior instructions exist but base missing)
+        bot_name = 'test_bot'
+        behavior = 'shape'
         action = 'gather_context'
-        base_path = workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / action / 'instructions.json'
         
-        # When/Then: Base instructions missing raises error
-        assert not base_path.exists()
+        config_file = create_bot_config_file(workspace_root, bot_name, ['shape'])
+        create_behavior_action_instructions(workspace_root, bot_name, behavior, action)
         
-        # Action would raise: FileNotFoundError(f'Base instructions not found for action {action}')
+        # When: Call REAL GatherContextAction API (base instructions missing)
+        from agile_bot.bots.base_bot.src.actions.gather_context_action import GatherContextAction
+        action_obj = GatherContextAction(
+            bot_name=bot_name,
+            behavior=behavior,
+            workspace_root=workspace_root
+        )
+        
+        # Then: Raises FileNotFoundError for missing base instructions
+        with pytest.raises(FileNotFoundError) as exc_info:
+            action_obj.load_and_merge_instructions()
+        
+        assert f'Base instructions not found for action {action}' in str(exc_info.value)
 
