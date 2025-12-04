@@ -64,7 +64,11 @@ Each JSON rule file contains:
 - `isolate_third_party_code.json` - Wrap external APIs behind your interfaces
 - `test_boundary_behavior.json` - Learning tests for third-party dependencies
 
-## Total: 29 Rules
+### 11. Refactoring (2 rules)
+- `refactor_tests_with_production_code.json` - Update tests immediately during refactoring
+- `handle_backward_compatibility.json` - Provide migration paths for interface changes
+
+## Total: 31 Rules
 
 ## Source Material
 
@@ -84,6 +88,7 @@ Files follow snake_case naming pattern:
 - Verb-first for actions: `use_*`, `keep_*`, `maintain_*`, `enforce_*`
 - Clear, descriptive names matching the principle
 - Consistent with story_bot behavior naming structure
+
 
 
 

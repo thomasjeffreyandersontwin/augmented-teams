@@ -20,7 +20,14 @@
           "- Repeated logic extracted into functions",
           "- Common patterns abstracted appropriately",
           "- Configuration/data centralized, not duplicated",
-          "- Tests verify behavior, not implementation details"
+          "- Tests verify behavior, not implementation details",
+          "",
+          "Test Duplication Patterns to Extract:",
+          "- Repeated test setup → create fixtures/factories",
+          "- Common test assertions → create verification helpers (verify_*)",
+          "- Test data creation → create builders or test_helpers",
+          "- Workflow verification → create state helpers",
+          "- Example: verify_action_tracks_start(action, expected_state)"
         ]
       },
       "dont": {
@@ -41,18 +48,24 @@
           "- Repeated patterns across multiple places",
           "- Same business rules in multiple locations",
           "- Identical error handling in many functions",
+          "- Repeated test setup across test files",
+          "- Same assertion patterns in multiple tests",
           "",
           "Refactoring Strategies:",
           "- Extract common logic into shared functions",
           "- Use parameters to handle variations",
           "- Create base classes or mixins for shared behavior",
           "- Use composition over duplication",
-          "- Centralize configuration and business rules"
+          "- Centralize configuration and business rules",
+          "- For tests: Create test_helpers.py with verification functions",
+          "- For tests: Use fixtures for repeated setup",
+          "- For tests: Extract test data builders"
         ]
       }
     }
   ]
 }
+
 
 
 

@@ -25,7 +25,16 @@
           "- Clear variable/function names",
           "- Extracted methods for complex logic",
           "- Descriptive names that explain purpose",
-          "- Code reads like well-written prose"
+          "- Code reads like well-written prose",
+          "",
+          "When Docstrings/Comments ARE Valuable:",
+          "- Test scenarios describing business behavior (GIVEN/WHEN/THEN)",
+          "- Public API documentation for external users",
+          "- Complex algorithms with non-obvious intent",
+          "- Business rules that can't be expressed in code",
+          "- Why something is done (not what/how)",
+          "- Legal requirements, compliance notes",
+          "- Example: SCENARIO: User checkout flow with 3% discount"
         ]
       },
       "dont": {
@@ -61,6 +70,7 @@
     }
   ]
 }
+
 
 
 

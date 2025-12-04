@@ -21,7 +21,14 @@
           "- Business logic independent of infrastructure",
           "- Queries don't modify state",
           "- Commands don't return data (unless created entity)",
-          "- Clear boundaries between layers"
+          "- Clear boundaries between layers",
+          "",
+          "Domain-Based Organization:",
+          "- Group by domain/feature, not by technical type",
+          "- bot/ (orchestration), state/ (data), mcp/ (tools)",
+          "- Each domain has clear boundaries",
+          "- Minimal dependencies between domains",
+          "- Example: src/bot/, src/state/, src/mcp/ vs src/models/, src/views/"
         ]
       },
       "dont": {
@@ -49,12 +56,15 @@
           "- Separate business rules from infrastructure",
           "- Create service layer for orchestration",
           "- Use dependency injection for infrastructure",
-          "- Follow layered architecture (UI → Business → Data)"
+          "- Follow layered architecture (UI → Business → Data)",
+          "- Organize by domain folders, not technical layers",
+          "- Move related concerns into domain-specific modules"
         ]
       }
     }
   ]
 }
+
 
 
 
