@@ -449,11 +449,26 @@ class TestInjectValidationRulesForValidateRulesAction:
 
     def test_action_injects_behavior_specific_and_bot_rules(self, workspace_root):
         """
-        SCENARIO: Action loads and injects validation rules for exploration
-        GIVEN: Common and behavior-specific rules exist
+        SCENARIO: Action loads and injects action instructions plus validation rules
+        GIVEN: Action instructions, common rules, and behavior-specific rules exist
         WHEN: Action method is invoked
-        THEN: Merged rules injected into instructions
+        THEN: Action instructions AND merged rules injected into instructions
         """
+        # Given: Action instructions exist in base_actions
+        base_actions_dir = workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        validate_action_dir = base_actions_dir / '7_validate_rules'
+        validate_action_dir.mkdir(parents=True, exist_ok=True)
+        
+        action_instructions = [
+            "Load and review clarification.json and planning.json",
+            "Evaluate Content Data against all rules",
+            "Generate validation report"
+        ]
+        (validate_action_dir / 'instructions.json').write_text(
+            json.dumps({'actionName': 'validate_rules', 'instructions': action_instructions}),
+            encoding='utf-8'
+        )
+        
         # Given: Both rule files exist
         bot_name = 'test_bot'
         behavior = 'exploration'
@@ -474,8 +489,15 @@ class TestInjectValidationRulesForValidateRulesAction:
         )
         instructions = action_obj.inject_behavior_specific_and_bot_rules()
         
-        # Then: Behavior-specific and bot rules injected into instructions
-        assert 'validation_rules' in instructions
+        # Then: Action instructions AND validation rules injected
+        assert 'action_instructions' in instructions, "Missing action_instructions key"
+        assert 'validation_rules' in instructions, "Missing validation_rules key"
+        
+        # Verify action instructions loaded
+        assert instructions['action_instructions'] == action_instructions
+        assert 'Load and review clarification.json' in instructions['action_instructions'][0]
+        
+        # Verify rules loaded
         rules = instructions['validation_rules']
         assert any('Stories must have title' in str(rule) for rule in rules)
         assert any('Given-When-Then' in str(rule) for rule in rules)
@@ -643,6 +665,57 @@ class TestInjectValidationRulesForValidateRulesAction:
         assert any('validation_rules.json' in str(rule) for rule in rules)
         assert not any('other_rule.json' in str(rule) for rule in rules)
         assert not any('This should be ignored' in str(rule) for rule in rules)
+
+    def test_action_loads_rules_from_numbered_rules_folder(self, workspace_root):
+        """
+        SCENARIO: Action loads rules from numbered rules folder (e.g., 3_rules)
+        GIVEN: Behavior has 3_rules folder (not just rules)
+        WHEN: Action method is invoked
+        THEN: Rules are loaded from 3_rules folder
+        """
+        # Given: Rules in 3_rules folder (like story_bot scenarios behavior)
+        bot_name = 'story_bot'
+        behavior = '6_scenarios'
+        
+        rules_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior / '3_rules'
+        rules_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create individual rule files in 3_rules folder
+        rule1_file = rules_dir / 'given_describes_state_not_actions.json'
+        rule1_file.write_text(json.dumps({
+            'description': 'Given statements describe STATE not actions',
+            'examples': []
+        }), encoding='utf-8')
+        
+        rule2_file = rules_dir / 'write_plain_english_scenarios.json'
+        rule2_file.write_text(json.dumps({
+            'description': 'Write scenarios in plain English',
+            'examples': []
+        }), encoding='utf-8')
+        
+        create_common_rules(workspace_root, ['Common rule'])
+        
+        # When: Call ValidateRulesAction
+        from agile_bot.bots.base_bot.src.actions.validate_rules_action import ValidateRulesAction
+        
+        action_obj = ValidateRulesAction(
+            bot_name=bot_name,
+            behavior=behavior,
+            workspace_root=workspace_root
+        )
+        instructions = action_obj.inject_behavior_specific_and_bot_rules()
+        
+        # Then: Rules loaded from 3_rules folder
+        assert 'validation_rules' in instructions
+        rules = instructions['validation_rules']
+        
+        # Should have common rule + 2 behavior rules from 3_rules folder
+        assert len(rules) >= 3
+        
+        # Verify rule files from 3_rules are included
+        rule_files = [rule.get('rule_file') for rule in rules if isinstance(rule, dict) and 'rule_file' in rule]
+        assert 'given_describes_state_not_actions.json' in rule_files
+        assert 'write_plain_english_scenarios.json' in rule_files
 
 
 # ============================================================================

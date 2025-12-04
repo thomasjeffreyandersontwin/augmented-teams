@@ -49,6 +49,11 @@ class MCPServerGenerator:
             List of action names (without number prefix) in workflow order
         """
         base_actions_path = self.workspace_root / self.bot_location / 'base_actions'
+        
+        # Fallback to base_bot if bot doesn't have its own base_actions
+        if not base_actions_path.exists():
+            base_actions_path = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        
         if not base_actions_path.exists():
             return []
         
@@ -70,6 +75,11 @@ class MCPServerGenerator:
             List of independent action names
         """
         base_actions_path = self.workspace_root / self.bot_location / 'base_actions'
+        
+        # Fallback to base_bot if bot doesn't have its own base_actions
+        if not base_actions_path.exists():
+            base_actions_path = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        
         if not base_actions_path.exists():
             return []
         

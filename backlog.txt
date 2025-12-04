@@ -26,3 +26,18 @@ add cocneot of domakn sync and one knwledge graph across two
 
 confirm stroy scope of taks before strtting
 eg explorarin cxonfoirmed tese arfe the stroies correct?
+
+build a new bot congif and populate based on context
+
+behavior add cuszotma citon
+
+needto add architecture spike after shaping
+
+scenario and examples merge and create strategy arou d embedded examples vs tables
+
+
+synch and render need to be separate Tools
+
+add the idea od ub behaviors (mayne aytinh with a 1_folder is a behavior?)
+
+stories need an auto extractor back to json

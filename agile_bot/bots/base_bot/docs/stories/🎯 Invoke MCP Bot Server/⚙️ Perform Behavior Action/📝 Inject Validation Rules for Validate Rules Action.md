@@ -11,15 +11,17 @@
 
 ## Story Description
 
-Bot Behavior injects validation rules so that AI Chat can validate generated content against common and behavior-specific rules.
+Bot Behavior injects action instructions and validation rules so that AI Chat knows how to validate generated content and has the rules to validate against.
 
 ## Acceptance Criteria
 
 - **WHEN** MCP Specific Behavior Action Tool invokes Validate Rules Action (7_validate_rules)
-- **THEN** Action loads common bot rules from `base_bot/rules/`
-- **AND** Action loads behavior-specific rules from `{bot}/behaviors/{behavior}/rules/`
-- **AND** Action merges common and behavior-specific rules
-- **AND** Action injects rules into validation section of compiled instructions
+- **THEN** Action loads action-specific instructions from `base_actions/7_validate_rules/instructions.json`
+- **AND** Action loads common bot rules from `base_bot/rules/`
+- **AND** Action loads behavior-specific rules from `{bot}/behaviors/{behavior}/rules/` or `{bot}/behaviors/{behavior}/3_rules/`
+- **AND** Action merges action instructions, common rules, and behavior-specific rules
+- **AND** Action injects instructions and rules into compiled instructions
+- **AND** Instructions guide AI on validation process (load clarification.json, planning.json, evaluate against rules)
 - **AND** Rules define validation criteria for generated content
 
 ## Background
@@ -34,22 +36,24 @@ And generated content exists to validate
 
 ## Scenarios
 
-### Scenario: Action loads and injects validation rules for exploration
+### Scenario: Action loads and injects action instructions plus validation rules
 
 **Steps:**
 ```gherkin
 Given a bot with name 'test_bot'
 And bot has a behavior configured as 'exploration'
 And behavior has action 'validate_rules'
+And action instructions exist in base_actions/7_validate_rules/instructions.json
 And action has behavior-specific rules configured
 And common bot rules exist
 When Tool invokes test_bot.Exploration.ValidateRules() method
-Then Action loads common rules from exact path: base_bot/rules/story_structure_rules.json
-And Action loads behavior-specific rules from exact path: agile_bot/bots/test_bot/behaviors/exploration/rules/acceptance_criteria_rules.json
-And Action merges common rules with behavior-specific rules
-And Action injects merged rules into validation section of compiled instructions
-And Instructions guide AI Chat to validate acceptance criteria against all rules
-And Instructions specify validation criteria: format, coverage, testability
+Then Action loads action instructions from base_actions/7_validate_rules/instructions.json
+And Action loads common rules from base_bot/rules/
+And Action loads behavior-specific rules from behaviors/exploration/3_rules/ or behaviors/exploration/rules/
+And Action merges action instructions, common rules, and behavior-specific rules
+And Action injects all content into compiled instructions
+And Instructions guide AI Chat on validation process (load clarification.json, planning.json, evaluate)
+And Instructions include all validation rules for content checking
 ```
 
 ### Scenario: Action uses common rules when behavior-specific rules do not exist
@@ -91,4 +95,5 @@ And Tool returns error to AI Chat
 **Phase**: Specification - Detailed scenario writing from acceptance criteria  
 **Date Generated**: 2025-12-03  
 **Context**: System-centric scenarios focusing on validation rule loading, merging, and injection.
+
 

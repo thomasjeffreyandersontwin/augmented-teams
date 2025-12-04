@@ -8,20 +8,25 @@ AGILE BOT STORY MAP
             or (S) Human --> Drop Bot Builder Behavior into Chat
             or (S) System --> Create Bot Scaffolding
         or
-            (S) MCP Server Generator --> Generate MCP Bot Server
+            (S) Generate MCP Bot Server
             and (AC) WHEN MCP Server Generator receives Bot Config
             and (AC) THEN Generator generates unique MCP Server instance with Unique server name from bot name
             and (AC) AND Generated server includes Bot Config reference
             and (AC) AND Generated server leverages Specific Bot instantiation code
         and
-            (S) MCP Server Generator --> Generate Behavior Action Tools
+            (S) Generate Bot Tools
+            and (AC) Generator creates ONE bot tool per behavior that routes to actions
+            and (AC) Bot tool can determine current behavior/action from workflow state
+            and (AC) Bot tool routes execution based on workflow state or explicit parameters
+        and
+            (S) Generate Behavior Tools
             and (AC) WHEN Generator processes Bot Config
-            and (AC) THEN Generator creates tool code for each (behavior, action) pair
+            and (AC) THEN Generator creates ONE tool per behavior that routes between actions
             and (AC) AND Enumerates all behaviors and actions from Bot Config
-            and (AC) AND For each pair, generates tool code with unique name, trigger words, forwarding logic
+            and (AC) AND Each behavior tool can route to all its actions based on parameters or workflow
             and (AC) AND Tool catalog prepared with all generated tool instances
         and
-            (S) System --> Deploy MCP BOT Server
+            (S) Deploy MCP BOT Server
             and (AC) WHEN Generation Complete
             and (AC) THEN Generator deploys/starts generated MCP Server
             and (AC) AND Server initializes in separate thread
@@ -51,7 +56,7 @@ AGILE BOT STORY MAP
         or
             (S) Human --> Speaks Trigger Words For Bot Tool
     (E) Invoke Bot Tool
-            (S) AI Chat --> Invoke MCP BOT Tool
+            (S) Invoke MCP BOT Tool
             and (AC) WHEN AI Chat invokes any generated tool
             and (AC) THEN Tool uses inherited BaseTool logic to invoke correct behavior action on preloaded bot
             and (AC) AND Bot class preloaded at server startup
@@ -59,7 +64,7 @@ AGILE BOT STORY MAP
             and (AC) AND Bot.Behavior compiles and returns instructions
             and (AC) AND MCP tool injects instructions into AI Chat context
     (E) Perform Behavior Action
-            (S) Bot Behavior --> Inject Behavior Action Instructions
+            (S) Inject Behavior Action Instructions
             and (AC) WHEN Tool invokes Bot.Behavior.Action method
             and (AC) THEN Behavior Action loads instructions from behavior and base_actions
             and (AC) AND Action merges base instructions with behavior-specific instructions
@@ -121,8 +126,8 @@ AGILE BOT STORY MAP
                 (S) Human --> Submit Answers and Evidence to Tools for Saving
                 opt (S) Bot Behavior --> Saves Answers and Evidence
                 opt (S) Bot Behavior --> Calls Behavior Planning Tool
-                opt (S) System --> Tracks Activity for Gather Context Action
-                opt (S) System --> Proceeds to follow planning
+                opt (S) Track Activity for Gather Context Action
+                opt (S) Proceed To Decide Planning
             or
                 (S) Human --> Correct, Feedback, Proceed
                 and (S) Human --> Saves Answers and Evidencein Context
@@ -151,8 +156,8 @@ AGILE BOT STORY MAP
                 (S) System --> Submit Final Assumptions and Decisions to Tools for Saving
                 or (S) Bot Behavior --> Save Final Assumptions and Decisions
                 or (S) Bot Behavior --> Call Build Knowledge Tool
-                or (S) System --> Track Activity for Planning Action
-                or (S) System --> Proceed to Build Knowledge
+                or (S) Track Activity for Planning Action
+                or (S) Proceed To Build Knowledge
         (E) Reviews Clarifications and Planning Responses
                 (S) AI Chat --> Find Key Questions Clarifications from context
                 and (S) AI Chat --> Find Decision Criteria and Assumptions from Context
@@ -183,7 +188,11 @@ AGILE BOT STORY MAP
                 opt (S) Bot-Behavior --> Save Knowledge Graph
                 opt (S) AI Chat --> Call Render Output Tool
             or
-                (S) Bot-Behavior --> Track Activity for Build Knowledge Action
+                (S) Track Activity for Build Knowledge Action
+            or
+                (S) Proceed To Render Output
+            or
+                (S) Proceed To Render Output
         (E) Read Render Output Instructions and Data
                 (S) AI Chat --> Find Render Output Instructions in Context
                 and (S) AI Chat --> Find Transformer Methods in Context
@@ -220,6 +229,10 @@ AGILE BOT STORY MAP
             and
                 (S) System --> Present Rendered Outputs to User
             or
+                (S) Track Activity for Render Output Action
+            or
+                (S) Proceed To Validate Rules
+            or
                 (S) AI Chat --> Render Output Using Injected Componenents
         (E) Load Rendered Content
                 (S) AI Chat --> Find Rendered Content Instructions from Context and Load
@@ -250,7 +263,8 @@ AGILE BOT STORY MAP
         and
             (S) Bot-Behavior --> Submit Content to Tool for Saving
             or (S) Bot-Behavior --> Save Content
-            or (S) System --> Track Activity for Validate Rules Action
+            or (S) Track Activity for Validate Rules Action
+            or (S) Complete Validate Rules Action
             or (S) System --> Call Correct-Bot Action Tool
         and
             (S) Bot-Behavior --> Load + Inject Diagnostics Results, Knowledge, Content Instructions
@@ -278,7 +292,7 @@ AGILE BOT STORY MAP
             (S) System --> Submit Bot Guidance and Rules Changes to Correct-Bot Tool
             or (S) Bot-Behavior --> Save Correcions
     (E) Suggest Bot Corrections
-            (S) Bot-Behavior --> Track Activity for Correct-Bot Action
+            (S) Track Activity for Correct-Bot Action
 
 
 === INCREMENT 2: Simplest MCP ===
@@ -308,7 +322,7 @@ AGILE BOT STORY MAP
 
 (E) Invoke MCP Bot Server
     (E) Invoke Bot Tool
-            (S) AI Chat --> Invoke MCP BOT Tool
+            (S) Invoke MCP BOT Tool
             and (AC) WHEN AI Chat invokes any generated tool
             and (AC) THEN Tool uses inherited BaseTool logic to invoke correct behavior action on preloaded bot
             and (AC) AND Bot class preloaded at server startup
@@ -316,7 +330,7 @@ AGILE BOT STORY MAP
             and (AC) AND Bot.Behavior compiles and returns instructions
             and (AC) AND MCP tool injects instructions into AI Chat context
     (E) Perform Behavior Action
-            (S) Bot Behavior --> Inject Behavior Action Instructions
+            (S) Inject Behavior Action Instructions
             and (AC) WHEN Tool invokes Bot.Behavior.Action method
             and (AC) THEN Behavior Action loads instructions from behavior and base_actions
             and (AC) AND Action merges base instructions with behavior-specific instructions

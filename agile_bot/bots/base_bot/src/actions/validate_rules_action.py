@@ -56,11 +56,29 @@ class ValidateRulesAction:
         }
     
     def inject_behavior_specific_and_bot_rules(self) -> Dict[str, Any]:
-        """Load and merge behavior-specific and common bot rules.
+        """Load and merge action instructions, behavior-specific rules, and common bot rules.
         
         Returns:
-            Instructions with merged validation rules
+            Instructions with merged validation rules and action instructions
         """
+        # Load action-specific instructions from base_actions
+        action_instructions = []
+        base_actions_path = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        
+        # Find the validate_rules action folder (may have number prefix)
+        action_folder = None
+        if base_actions_path.exists():
+            for folder in base_actions_path.iterdir():
+                if folder.is_dir() and 'validate_rules' in folder.name:
+                    action_folder = folder
+                    break
+        
+        if action_folder:
+            instructions_file = action_folder / 'instructions.json'
+            if instructions_file.exists():
+                instructions_data = read_json_file(instructions_file)
+                action_instructions = instructions_data.get('instructions', [])
+        
         # Load common rules - try both paths
         common_rules = []
         common_file = (
@@ -87,7 +105,13 @@ class ValidateRulesAction:
                 self.bot_name,
                 self.behavior
             )
-            behavior_rules_dir = behavior_folder / 'rules'
+            # Try multiple rule folder locations (numbered or not)
+            behavior_rules_dir = None
+            for rules_folder_name in ['3_rules', 'rules']:
+                candidate = behavior_folder / rules_folder_name
+                if candidate.exists():
+                    behavior_rules_dir = candidate
+                    break
         except FileNotFoundError:
             behavior_rules_dir = None
         
@@ -111,6 +135,7 @@ class ValidateRulesAction:
         all_rules = common_rules + behavior_rules
         
         return {
+            'action_instructions': action_instructions,
             'validation_rules': all_rules
         }
 

@@ -119,15 +119,40 @@
 
 ## Increment 3: Workflow
 
-- MCP Server Generator --> Generate Bot Tools
-- MCP Server Generator --> Generate Behavior Tools
-- AI Chat --> Route To MCP Behavior  Tool
-- AI Chat --> Forward To Behavior and Current Action
-- Bot Behavior --> Inject Next behavor-Action to Instructions
-- Bot Behavior --> Saves Behavior State
-- Call Correct-Bot Action Tool
+### Epic: Build Agile Bots
+**Feature: Generate Bot Server And Tools**
+- Generate Bot Tools
+- Generate Behavior Tools
+
+### Epic: Invoke MCP Bot Server
+**Feature: Invoke Bot Tool**
+- Route To MCP Behavior Tool
+- Forward To Behavior and Current Action
+
+**Feature: Perform Behavior Action**
+- Inject Next Behavior-Action
+- Saves Behavior State
+
+### Epic: Execute Behavior Actions
+**Feature: Gather Context**
+- Track Activity for Gather Context Action
+- Proceed To Decide Planning
+
+**Feature: Decide Planning Criteria**
+- Track Activity for Planning Action
+- Proceed To Build Knowledge
+
+**Feature: Build Knowledge**
+- Track Activity for Build Knowledge Action
+- Proceed To Render Output
+
+**Feature: Render Output**
+- Track Activity for Render Output Action
+- Proceed To Validate Rules
+
+**Feature: Validate Knowledge & Content Against Rules**
 - Track Activity for Validate Rules Action
-- Bot-Behavior --> Submit Content to Tool for Saving
+- Complete Validate Rules Action
 
 ## Increment 4: Inject Content
 
