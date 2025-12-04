@@ -7,7 +7,7 @@
     "",
     "**STEP 1: BUILD KNOWLEDGE GRAPH WITH SCENARIOS**",
     "",
-    "Follow all instructions in: 1_knowlege_graph/instructions.json",
+    "Follow all instructions in: 1_knowledge_graph/instructions.json",
     "",
     "**Summary:** Add scenarios (happy_path, edge_case, error_case) to each story in story-graph.json. Generate scenario steps using Gherkin format (Given/When/Then).",
     "",

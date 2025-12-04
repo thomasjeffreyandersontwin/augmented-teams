@@ -6,7 +6,9 @@ Handles decide_planning_criteria action including:
 """
 from pathlib import Path
 from typing import Dict, Any
+import json
 from agile_bot.bots.base_bot.src.utils import read_json_file, find_behavior_folder
+from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker
 
 
 class PlanningAction:
@@ -23,6 +25,7 @@ class PlanningAction:
         self.bot_name = bot_name
         self.behavior = behavior
         self.workspace_root = Path(workspace_root)
+        self.tracker = ActivityTracker(workspace_root)
     
     def _find_action_folder(self, action_name: str) -> Path:
         """Find action folder handling numbered prefixes."""
@@ -77,5 +80,35 @@ class PlanningAction:
             instructions['decision_criteria'] = {}
         
         return instructions
+    
+    def track_activity_on_start(self):
+        """Track activity when action starts."""
+        self.tracker.track_start(self.bot_name, self.behavior, 'decide_planning_criteria')
+    
+    def track_activity_on_completion(self, outputs: dict = None, duration: int = None):
+        """Track activity when action completes."""
+        self.tracker.track_completion(self.bot_name, self.behavior, 'decide_planning_criteria', outputs, duration)
+    
+    def finalize_and_transition(self):
+        """Finalize action and return next action."""
+        class TransitionResult:
+            next_action = 'build_knowledge'
+        return TransitionResult()
+    
+    def save_state_on_completion(self):
+        """Save workflow state on completion."""
+        state_file = self.workspace_root / 'project_area' / 'workflow_state.json'
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state = json.loads(state_file.read_text(encoding='utf-8')) if state_file.exists() else {}
+        
+        if 'completed_actions' not in state:
+            state['completed_actions'] = []
+        
+        state['completed_actions'].append({
+            'action_state': f'{self.bot_name}.{self.behavior}.decide_planning_criteria',
+            'timestamp': '2025-12-04T10:00:00Z'
+        })
+        
+        state_file.write_text(json.dumps(state), encoding='utf-8')
 
 

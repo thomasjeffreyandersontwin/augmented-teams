@@ -1,10 +1,13 @@
 """
 Generate Bot Server And Tools Tests
 
-Tests for all stories in the 'Generate Bot Server And Tools' sub-epic:
-- Generate MCP Bot Server
-- Generate Behavior Action Tools
-- Deploy MCP Bot Server
+Tests for all stories in the 'Generate Bot Server And Tools' sub-epic (in story map order):
+- Generate Bot Tools (Increment 3)
+- Generate Behavior Tools (Increment 3)
+- Generate MCP Bot Server (Increment 2)
+- Generate Behavior Action Tools (Increment 2)
+- Deploy MCP Bot Server (Increment 2)
+- Generate Cursor Awareness Files (Increment 2)
 """
 import pytest
 from pathlib import Path
@@ -23,6 +26,46 @@ def create_bot_config(workspace: Path, bot_name: str, behaviors: list) -> Path:
     config_file = config_dir / 'bot_config.json'
     config_file.write_text(json.dumps({'name': bot_name, 'behaviors': behaviors}), encoding='utf-8')
     return config_file
+
+def create_base_actions_structure(workspace: Path):
+    """Helper: Create base_actions directory structure with 6 workflow actions."""
+    base_actions_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+    
+    actions = [
+        ('1_initialize_project', 'decide_planning_criteria'),
+        ('2_gather_context', 'decide_planning_criteria'),
+        ('3_decide_planning_criteria', 'build_knowledge'),
+        ('4_build_knowledge', 'render_output'),
+        ('5_render_output', 'validate_rules'),
+        ('7_validate_rules', None)
+    ]
+    
+    for order_name, next_action in actions:
+        action_dir = base_actions_dir / order_name
+        action_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create action_config.json
+        config = {
+            'name': order_name.split('_', 1)[1],
+            'workflow': True,
+            'order': int(order_name.split('_')[0])
+        }
+        if next_action:
+            config['next_action'] = next_action
+        
+        (action_dir / 'action_config.json').write_text(json.dumps(config), encoding='utf-8')
+
+def create_base_instructions(workspace: Path):
+    """Helper: Create base instructions for all actions."""
+    actions = ['gather_context', 'decide_planning_criteria', 'build_knowledge', 'render_output', 'validate_rules', 'correct_bot']
+    for action in actions:
+        action_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / action
+        action_dir.mkdir(parents=True, exist_ok=True)
+        instructions_file = action_dir / 'instructions.json'
+        instructions_file.write_text(
+            json.dumps({'action': action, 'instructions': [f'Instruction for {action}']}),
+            encoding='utf-8'
+        )
 
 def create_trigger_words_file(workspace: Path, bot_name: str, behavior: str, action: str, patterns: list) -> Path:
     """Helper: Create trigger words file for behavior action."""
@@ -80,9 +123,67 @@ def generator(workspace_root):
     )
     return gen
 
-# ============================================================================
-# STORY: Generate MCP Bot Server
-# ============================================================================
+class TestGenerateBotTools:
+    """Story: Generate Bot Tools - Tests ONE bot tool with workflow state awareness."""
+
+    def test_generator_creates_bot_tool_for_test_bot(self, workspace_root):
+        """
+        SCENARIO: Generator creates bot tool for test_bot
+        GIVEN: a bot with name 'test_bot'
+        AND: bot has 4 behaviors configured
+        WHEN: Generator processes Bot Config
+        THEN: Generator creates 1 bot tool instance
+        """
+        # Given: a bot with name 'test_bot'
+        bot_config = create_bot_config(
+            workspace_root,
+            'test_bot',
+            ['shape', 'discovery', 'exploration', 'specification']
+        )
+        
+        # When: Generator processes Bot Config
+        from agile_bot.bots.base_bot.src.bot_tool_generator import BotToolGenerator
+        generator = BotToolGenerator(
+            bot_name='test_bot',
+            config_path=bot_config,
+            workspace_root=workspace_root
+        )
+        bot_tool = generator.create_bot_tool()
+        
+        # Then: 1 bot tool instance created
+        assert bot_tool is not None
+
+
+class TestGenerateBehaviorTools:
+    """Story: Generate Behavior Tools - Tests behavior tool generation with action routing."""
+
+    def test_generator_creates_behavior_tools_for_test_bot_with_4_behaviors(self, workspace_root):
+        """
+        SCENARIO: Generator creates behavior tools for test_bot with 4 behaviors
+        GIVEN: a bot with name 'test_bot'
+        AND: bot has 4 behaviors configured
+        WHEN: Generator processes Bot Config
+        THEN: Generator creates 4 behavior tool instances
+        """
+        # Given: a bot with 4 behaviors
+        bot_config = create_bot_config(
+            workspace_root,
+            'test_bot',
+            ['shape', 'discovery', 'exploration', 'specification']
+        )
+        
+        # When: Generator processes Bot Config
+        from agile_bot.bots.base_bot.src.behavior_tool_generator import BehaviorToolGenerator
+        generator = BehaviorToolGenerator(
+            bot_name='test_bot',
+            config_path=bot_config,
+            workspace_root=workspace_root
+        )
+        tools = generator.create_behavior_tools()
+        
+        # Then: 4 behavior tool instances created
+        assert len(tools) == 4
+
 
 class TestGenerateMCPBotServer:
     """Story: Generate MCP Bot Server - Tests MCP server generation using FastMCP."""
@@ -178,10 +279,6 @@ class TestGenerateMCPBotServer:
         # And Generator does not create MCP Server instance (verified by exception)
 
 
-# ============================================================================
-# STORY: Generate Behavior Action Tools
-# ============================================================================
-
 class TestGenerateBehaviorActionTools:
     """Story: Generate Behavior Action Tools - Tests tool generation using FastMCP."""
 
@@ -195,6 +292,7 @@ class TestGenerateBehaviorActionTools:
         # Given: Bot with 4 behaviors configured, each has 6 base actions
         bot_name = 'test_bot'
         behaviors = ['shape', 'discovery', 'exploration', 'specification']
+        create_base_actions_structure(workspace_root)
         config_file = create_bot_config(workspace_root, bot_name, behaviors)
         
         # When: Generator processes Bot Config
@@ -310,8 +408,9 @@ class TestGenerateBehaviorActionTools:
         mcp_server = generator.create_server_instance()
         
         # Mock the bot to verify forwarding
+        from agile_bot.bots.base_bot.src.bot import BotResult
         mock_bot = Mock()
-        mock_bot.shape.gather_context = Mock(return_value={'result': 'success'})
+        mock_bot.shape.gather_context = Mock(return_value=BotResult('completed', 'shape', 'gather_context', {'result': 'success'}))
         generator.bot = mock_bot
         
         generator.register_behavior_action_tool(
@@ -324,17 +423,16 @@ class TestGenerateBehaviorActionTools:
         assert any(t['name'] == 'test_bot_shape_gather_context' for t in generator.registered_tools)
         
         # Test tool invocation through FastMCP client
+        create_base_instructions(workspace_root)
         async with Client(mcp_server) as client:
-            result = await client.call_tool('test_bot_shape_gather_context', {'context': 'test'})
+            result = await client.call_tool('test_bot_shape_gather_context', {})
             
-            # Verify bot's behavior action was called
-            mock_bot.shape.gather_context.assert_called_once()
-            assert result.content[0].text == '{"result": "success"}'
+            # Verify result contains BotResult structure
+            result_dict = json.loads(result.content[0].text)
+            assert result_dict['status'] == 'completed'
+            assert result_dict['behavior'] == 'shape'
+            assert result_dict['action'] == 'gather_context'
 
-
-# ============================================================================
-# STORY: Deploy MCP Bot Server
-# ============================================================================
 
 class TestDeployMCPBotServer:
     """Story: Deploy MCP Bot Server - Tests server deployment."""
@@ -449,10 +547,6 @@ class TestDeployMCPBotServer:
         assert 'Bot Config not found' in deployment_result.error_message
         assert deployment_result.catalog_published is False
 
-
-# ============================================================================
-# STORY: Generate Cursor Awareness Files
-# ============================================================================
 
 class TestGenerateCursorAwarenessFiles:
     """Story: Generate Cursor Awareness Files - Tests awareness file generation."""
@@ -781,10 +875,6 @@ class TestGenerateCursorAwarenessFiles:
             assert 'mcp-test-bot-awareness.mdc' in str(exc_info.value)
 
 
-# ============================================================================
-# INTEGRATION TEST
-# ============================================================================
-
 class TestGenerateAwarenessFilesIntegration:
     """Integration test for full awareness files generation."""
 
@@ -809,11 +899,10 @@ class TestGenerateAwarenessFilesIntegration:
         assert rules_file.exists()
         
         content = rules_file.read_text(encoding='utf-8')
-        assert 'Story Bot Tools' in content
-        assert 'Domain Bot Tools' in content
-        assert 'BDD Bot Tools' in content
-        assert 'Code Agent Tools' in content
+        # Test bot specific content
+        assert 'test_bot' in content.lower()
         assert 'Priority: Check MCP Tools First' in content
+        assert 'Bot: test_bot' in content
         
         # And: Memory created
         mock_update_memory.assert_called_once()

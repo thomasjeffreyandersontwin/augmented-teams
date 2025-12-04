@@ -31,96 +31,106 @@ And Generator is ready to create behavior-specific tools
 
 ## Scenarios
 
-### Scenario: Generator creates behavior tools for all defined behaviors
+### Scenario: Generator creates behavior tools for test_bot with 4 behaviors
 
 **Steps:**
 ```gherkin
-Given Bot Config defines behaviors: ['shape', 'discovery', 'exploration', 'scenarios']
-And base_actions/ contains: gather_context, decide_planning_criteria, build_knowledge, render_output, validate_rules
-When Generator enumerates behaviors from Bot Config
-Then Generator creates 4 behavior tools (ONE tool per behavior)
-And Each behavior tool can route to all 5 actions
-And Tools are named: shape_bot, discovery_bot, exploration_bot, scenarios_bot
-And Each tool routes between actions based on parameters or workflow state
+Given a bot with name 'test_bot'
+And bot has 4 behaviors configured as ['shape', 'discovery', 'exploration', 'specification']
+And each behavior has 6 base actions configured
+When Generator processes Bot Config
+Then Generator enumerates 4 behaviors from Bot Config
+And Generator creates 4 behavior tool instances (ONE tool per behavior)
+And tools 'shape_bot', 'discovery_bot', 'exploration_bot', 'specification_bot' are created
+And each behavior tool includes routing logic to invoke Bot.Behavior.Action
+And Tool catalog contains all 4 generated behavior tool instances
 ```
 
-### Scenario: Generator applies workflow transitions to workflow actions
+### Scenario: Generator loads action configuration for workflow transitions
 
 **Steps:**
 ```gherkin
-Given behavior 'shape' is being processed
-And gather_context/action configuration specifies workflow=true, order=1, next_action='decide_planning_criteria'
-And decide_planning_criteria/action configuration specifies workflow=true, order=2, next_action='build_knowledge'
-When Generator creates shape_bot tool
-Then shape_bot tool knows about all actions and their workflow configuration
-And When shape_bot routes to gather_context, it includes automatic transition logic to decide_planning_criteria
-And When shape_bot routes to decide_planning_criteria, it includes automatic transition logic to build_knowledge
-And Tool uses action configuration to determine transitions
+Given a bot with name 'test_bot'
+And bot has a behavior configured as 'shape'
+And behavior has action 'gather_context'
+And action has action_config.json with workflow=true, order=1, next_action='decide_planning_criteria'
+When Generator creates tool for shape behavior
+Then Generator loads action configuration from exact path: base_actions/gather_context/action_config.json
+And Generated behavior tool is configured with workflow transitions
+And shape_bot includes method to route to gather_context with automatic transition to decide_planning_criteria
+And Tool uses action configuration to determine workflow transitions
 ```
 
-### Scenario: Generator excludes transition logic for independent actions
+### Scenario: Generator handles independent actions without workflow transitions
 
 **Steps:**
 ```gherkin
-Given behavior 'shape' is being processed
-And correct_bot/action configuration specifies workflow=false, order=null, next_action=null
-When Generator creates shape_bot tool
-And shape_bot is invoked with action parameter 'correct_bot'
-Then shape_bot routes to correct_bot action
-And shape_bot does NOT include automatic transition logic for correct_bot
-And shape_bot does NOT inject next action instructions after correct_bot
-And correct_bot is independently invokable via parameter
+Given a bot with name 'test_bot'
+And bot has a behavior configured as 'shape'
+And behavior has action 'correct_bot'
+And action has action_config.json with workflow=false, order=null, next_action=null
+When Generator creates tool for shape behavior
+Then Generator loads action configuration from exact path: base_actions/correct_bot/action_config.json
+And Generated behavior tool detects workflow=false for correct_bot
+And shape_bot does NOT include workflow transition logic for correct_bot
+And Tool is still created with forwarding logic but no workflow transitions
 ```
 
-### Scenario: Generator orders action sequence from action configuration
+### Scenario: Generator creates behavior tool with action routing
 
 **Steps:**
 ```gherkin
-Given behavior 'shape' is being processed
-And action configuration files specify: gather_context(order=1), decide_planning_criteria(order=2), build_knowledge(order=3), render_output(order=4), validate_rules(order=5)
-And correct_bot specifies workflow=false (no order)
-When Generator creates shape_bot tool
-Then shape_bot knows action sequence from action configuration order fields
-And shape_bot workflow sequence is: gather_context → decide_planning_criteria → build_knowledge → render_output → validate_rules
-And shape_bot can route to correct_bot independently (not in workflow sequence)
+Given a bot with name 'test_bot'
+And bot has a behavior configured as 'shape'
+And behavior has actions with order: gather_context(1), decide_planning_criteria(2), build_knowledge(3), render_output(4), validate_rules(5)
+When Generator creates tool 'shape_bot'
+Then Generated behavior tool includes method to route to all 6 actions
+And Generated behavior tool includes method to load action configuration from base_actions/
+And Generated behavior tool includes method to determine action sequence from order fields
+And Tool catalog contains behavior tool with routing capabilities
 ```
 
-### Scenario: Generator handles terminal action in behavior sequence
+### Scenario: Generator handles terminal actions in behavior sequence
 
 **Steps:**
 ```gherkin
-Given behavior 'exploration' is being processed
-And validate_rules/action configuration specifies workflow=true, order=5, next_action=null
-When Generator creates exploration_bot tool
-And exploration_bot routes to validate_rules
-Then exploration_bot recognizes validate_rules specifies next_action=null (terminal)
-And exploration_bot does NOT inject next action instructions after validate_rules
-And exploration_bot indicates workflow completion when validate_rules finishes
+Given a bot with name 'test_bot'
+And bot has a behavior configured as 'exploration'
+And behavior has action 'validate_rules'
+And action has action_config.json with workflow=true, order=5, next_action=null
+When Generator creates tool for exploration behavior
+Then Generated behavior tool detects next_action=null (terminal action)
+And exploration_bot does NOT include transition logic after validate_rules
+And Tool is still created with forwarding logic but indicates workflow completion
 ```
 
-### Scenario: Generator applies auto_progress for seamless transitions
+### Scenario: Generator handles auto_progress for seamless transitions
 
 **Steps:**
 ```gherkin
-Given behavior 'discovery' is being processed
-And build_knowledge/action configuration specifies workflow=true, order=3, next_action='render_output', auto_progress=true
-When Generator creates discovery_bot tool
-And discovery_bot routes to build_knowledge
-Then discovery_bot recognizes auto_progress=true for build_knowledge
-And discovery_bot automatically transitions to render_output without human confirmation
-And discovery_bot automatically invokes render_output after build_knowledge completes
+Given a bot with name 'test_bot'
+And bot has a behavior configured as 'discovery'
+And behavior has action 'build_knowledge'
+And action has action_config.json with workflow=true, order=3, next_action='render_output', auto_progress=true
+When Generator creates tool for discovery behavior
+Then Generated behavior tool detects auto_progress=true for build_knowledge
+And discovery_bot includes method to automatically transition to render_output
+And Tool is still created with forwarding logic and automatic progression
 ```
 
 ### Scenario: Generator handles missing behavior in Bot Config
 
 **Steps:**
 ```gherkin
-Given Bot Config defines behaviors: ['shape', 'discovery']
-And user expects 'exploration' behavior to be available
-When Generator enumerates behaviors from Bot Config
-Then Generator creates tools only for 'shape' and 'discovery' behaviors: shape_bot, discovery_bot
+Given a bot with name 'test_bot'
+And bot has 2 behaviors configured as ['shape', 'discovery']
+And Bot Config does NOT include 'exploration' behavior
+When Generator processes Bot Config
+Then Generator enumerates 2 behaviors from Bot Config
+And Generator creates 2 behavior tool instances (shape_bot, discovery_bot)
 And Generator does NOT create exploration_bot tool
-And Generator warns user that some behaviors may be missing (non-blocking)
+And Generator logs warning 'exploration behavior not configured in Bot Config'
+And Tool catalog contains only configured behavior tools
 ```
 
 ## Generated Artifacts

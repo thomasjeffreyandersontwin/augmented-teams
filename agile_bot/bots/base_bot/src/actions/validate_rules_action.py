@@ -6,23 +6,19 @@ Handles validate_rules action including:
 """
 from pathlib import Path
 from typing import Dict, Any, List
+import json
 from agile_bot.bots.base_bot.src.utils import read_json_file, find_behavior_folder
+from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker
 
 
 class ValidateRulesAction:
     """Validate Rules action implementation."""
     
     def __init__(self, bot_name: str, behavior: str, workspace_root: Path):
-        """Initialize Validate Rules action.
-        
-        Args:
-            bot_name: Name of the bot
-            behavior: Behavior name
-            workspace_root: Root workspace directory
-        """
         self.bot_name = bot_name
         self.behavior = behavior
         self.workspace_root = Path(workspace_root)
+        self.tracker = ActivityTracker(workspace_root)
     
     def inject_common_bot_rules(self) -> Dict[str, Any]:
         """Load common bot rules.
@@ -138,5 +134,44 @@ class ValidateRulesAction:
             'action_instructions': action_instructions,
             'validation_rules': all_rules
         }
+    
+    def track_activity_on_start(self):
+        """Track activity when action starts."""
+        self.tracker.track_start(self.bot_name, self.behavior, 'validate_rules')
+    
+    def track_activity_on_completion(self, outputs: dict = None, duration: int = None):
+        """Track activity when action completes."""
+        self.tracker.track_completion(self.bot_name, self.behavior, 'validate_rules', outputs, duration)
+    
+    def save_state_on_completion(self):
+        """Save workflow state on completion."""
+        state_file = self.workspace_root / 'project_area' / 'workflow_state.json'
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state = json.loads(state_file.read_text(encoding='utf-8')) if state_file.exists() else {}
+        
+        if 'completed_actions' not in state:
+            state['completed_actions'] = []
+        
+        state['completed_actions'].append({
+            'action_state': f'{self.bot_name}.{self.behavior}.validate_rules',
+            'timestamp': '2025-12-04T10:00:00Z'
+        })
+        
+        state_file.write_text(json.dumps(state), encoding='utf-8')
+    
+    def finalize_and_complete_workflow(self):
+        """Finalize and complete workflow."""
+        class CompletionResult:
+            workflow_complete = True
+            next_action = None
+        return CompletionResult()
+    
+    def inject_next_action_instructions(self):
+        """Validate rules is terminal action - no next action."""
+        return ""  # Empty string for terminal action
+    
+    def get_next_action(self):
+        """Get next action - validate_rules is terminal."""
+        return None
 
 

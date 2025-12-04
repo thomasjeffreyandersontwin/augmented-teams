@@ -29,90 +29,96 @@ And action configuration schema is defined with fields: name, workflow, order, n
 
 ## Scenarios
 
-### Scenario: Generator creates ONE bot tool with workflow state awareness
+### Scenario: Generator creates bot tool for test_bot
 
 **Steps:**
 ```gherkin
-Given base_actions/ contains folders: gather_context, decide_planning_criteria, build_knowledge, render_output, validate_rules
-And Bot Config defines behaviors: shape, discovery, exploration, scenarios
-And Action configs specify workflow sequence and transitions
-When Generator creates bot tool
-Then Generator creates ONE bot tool (not separate tools per behavior/action)
-And Bot tool can read workflow_state to determine current behavior/action
-And Bot tool routes to correct behavior/action based on workflow state
-And Bot tool uses action configuration to understand workflow transitions
+Given a bot with name 'test_bot'
+And bot has 4 behaviors configured as ['shape', 'discovery', 'exploration', 'specification']
+And each behavior has 6 base actions configured
+When Generator processes Bot Config
+Then Generator creates 1 bot tool instance (not separate tools per behavior/action)
+And bot tool 'test_bot' is created with workflow state awareness
+And bot tool reads workflow state to determine current behavior/action
+And bot tool routes to correct behavior/action based on workflow state
+And bot tool includes routing logic to invoke Bot.Behavior.Action
 ```
 
-### Scenario: Bot tool routes to workflow actions based on state
+### Scenario: Bot tool loads workflow state to determine routing
 
 **Steps:**
 ```gherkin
-Given bot tool is created
+Given a bot with name 'test_bot'
+And bot tool is created
 And workflow state shows: current_action='story_bot.discovery.build_knowledge'
 And build_knowledge action configuration specifies workflow=true, next_action='render_output'
 When bot tool is invoked
-Then Bot tool reads workflow state
-And Bot tool extracts current behavior and action
-And Bot tool routes to discovery.build_knowledge
-And Bot tool executes build_knowledge with workflow awareness (auto-transition to render_output)
+Then bot tool loads workflow state from exact path: project_area/workflow_state.json
+And bot tool extracts current behavior and action from state
+And bot tool routes invocation to discovery.build_knowledge
+And bot tool includes method to execute build_knowledge with workflow transitions
 ```
 
-### Scenario: Bot tool routes to independent actions via parameter
+### Scenario: Bot tool handles independent actions via parameter
 
 **Steps:**
 ```gherkin
-Given bot tool is created
+Given a bot with name 'test_bot'
+And bot tool is created
 And correct_bot action configuration specifies workflow=false (independent action)
-And user invokes bot tool with parameter action='correct_bot'
-When bot tool is invoked with action parameter
-Then Bot tool routes to correct_bot action
-And Bot tool does NOT use workflow state for routing (parameter overrides)
-And Bot tool executes correct_bot without workflow transitions
-And Independent actions can be invoked any time via parameter
+When bot tool is invoked with parameter action='correct_bot'
+Then bot tool routes to correct_bot action (parameter overrides workflow state)
+And bot tool does NOT use workflow state for routing independent actions
+And bot tool does NOT include workflow transition logic for correct_bot
+And Tool is still created with forwarding logic but no workflow transitions
 ```
 
-### Scenario: Bot tool defaults to first behavior/action when no state exists
+### Scenario: Bot tool handles missing workflow state file
 
 **Steps:**
 ```gherkin
-Given bot tool is created
-And workflow state does NOT exist
+Given a bot with name 'test_bot'
+And bot tool is created
+And workflow state does NOT exist at project_area/workflow_state.json
 And Bot Config first behavior is 'shape' with first action 'gather_context'
 When bot tool is invoked without parameters
-Then Bot tool detects no workflow state
-And Bot tool defaults to first behavior ('shape')
-And Bot tool defaults to first action ('gather_context')
-And Bot tool routes to shape.gather_context
-And Bot tool creates initial workflow state
+Then bot tool attempts to load from exact path: project_area/workflow_state.json
+And bot tool detects file not found
+And bot tool defaults to first behavior ('shape') and first action ('gather_context')
+And bot tool creates initial workflow state
+And Tool is still created with routing logic using default behavior/action
 ```
 
-### Scenario: Bot tool recognizes terminal actions
+### Scenario: Bot tool handles terminal actions with workflow completion
 
 **Steps:**
 ```gherkin
-Given bot tool is created
+Given a bot with name 'test_bot'
+And bot tool is created
 And workflow state shows: current_action='story_bot.exploration.validate_rules'
-And validate_rules action configuration specifies workflow=true, next_action=null (terminal)
+And validate_rules action configuration specifies workflow=true, next_action=null
 When bot tool is invoked
-Then Bot tool reads workflow state
-And Bot tool routes to exploration.validate_rules
-And Bot tool recognizes next_action=null (terminal action)
-And Bot tool does NOT inject next action instructions after validate_rules completes
-And Bot tool indicates workflow is complete
+Then bot tool loads workflow state from exact path: project_area/workflow_state.json
+And bot tool routes invocation to exploration.validate_rules
+And bot tool detects next_action=null (terminal action)
+And bot tool does NOT include transition logic after validate_rules
+And Tool is still created with forwarding logic but indicates workflow completion
 ```
 
-### Scenario: Bot tool handles auto_progress actions
+### Scenario: Bot tool handles auto_progress for seamless transitions
 
 **Steps:**
 ```gherkin
-Given bot tool is created
+Given a bot with name 'test_bot'
+And bot tool is created
 And workflow state shows: current_action='story_bot.discovery.build_knowledge'
 And build_knowledge action configuration specifies auto_progress=true, next_action='render_output'
 When bot tool is invoked
-Then Bot tool routes to discovery.build_knowledge
-And Bot tool recognizes auto_progress=true
-And Bot tool automatically transitions to render_output after build_knowledge completes
-And Bot tool does NOT wait for human confirmation before transitioning
+Then bot tool loads workflow state from exact path: project_area/workflow_state.json
+And bot tool routes invocation to discovery.build_knowledge
+And bot tool detects auto_progress=true
+And bot tool includes method to automatically transition to render_output
+And Tool is still created with forwarding logic and automatic progression
 ```
 
 ## Generated Artifacts

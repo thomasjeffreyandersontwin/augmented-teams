@@ -41,3 +41,27 @@ synch and render need to be separate Tools
 add the idea od ub behaviors (mayne aytinh with a 1_folder is a behavior?)
 
 stories need an auto extractor back to json
+strategies need to connect rulesyes
+simp,le architecture temp,ating for code
+
+connect test classes  to stories, tewst methosd to scenarios  and test files to epics in graph 
+add a rule always plce helpers as locally as you can (test rule)
+
+generator for test easy - creates test file, test classes and test scenario methods
+will help kill nonsnense like 
+
+# ============================================================================
+
+
+# STORY: Generate Bot Tools (Increment 3)
+# ============================================================================
+
+
+givne when then tets one doicstring  > given when then comment above relevant code 
+
+kill docstrings i hate them  
+
+inject principls eg alays simplest code, least bespoke code, dont dsuppor tlegavcy
+
+
+Add manual test to flow - gove steps reqiuried to manually test te systew,

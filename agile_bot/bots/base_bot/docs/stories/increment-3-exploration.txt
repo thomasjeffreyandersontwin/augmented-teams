@@ -22,15 +22,9 @@ Business Outcome: Enable seamless transition from one stage to the next, allowin
 
 (E) Invoke MCP Bot Server
     (F) Invoke Bot Tool
-        (S) AI Chat --> Route To MCP Behavior Tool
-            (AC) WHEN AI Chat invokes bot tool without specifying specific action
-            (AC) THEN Router checks Workflow State for current behavior
-            (AC) AND Router loads workflow_state.json from {project_area}/workflow_state.json
-            (AC) AND Router extracts current_behavior from state
-            (AC) AND Router routes to current behavior's MCP tool (not default/first behavior)
-            (AC) AND Routing uses saved state to determine correct behavior dynamically
-        and
-        (S) Router --> Forward To Behavior and Current Action
+
+        
+        (S) Router --> Forward To Current Action
             (AC) WHEN Router receives behavior tool invocation
             (AC) THEN Router loads Workflow State from persistent storage
             (AC) AND Router extracts current_behavior and current_action from state

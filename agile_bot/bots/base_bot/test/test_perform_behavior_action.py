@@ -419,10 +419,14 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         WHEN: Action method is invoked for action requiring template
         THEN: Raises FileNotFoundError
         """
-        # Given: No knowledge graph template
+        # Given: Behavior folder exists but no template
         bot_name = 'test_bot'
         behavior = 'exploration'
         action = 'build_knowledge'
+        
+        # Create behavior folder without template
+        behavior_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior
+        behavior_dir.mkdir(parents=True, exist_ok=True)
         
         # When: Call REAL BuildKnowledgeAction API (template missing)
         from agile_bot.bots.base_bot.src.actions.build_knowledge_action import BuildKnowledgeAction

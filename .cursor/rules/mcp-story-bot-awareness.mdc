@@ -84,7 +84,7 @@
 ### Tests Behavior
 
 **When user is trying to:** Generate executable test code from scenarios  
-**as indicated by Trigger words:** generate.*test.*code, create.*test.*file, write.*pytest.*tests, implement.*step.*definitions, generate.*acceptance.*tests, create.*bdd.*tests, write.*test.*code, generate.*test.*implementation, create.*test.*cases, implement.*feature.*tests, specification.*tests, test.*code.*generation, bdd.*test.*code
+**as indicated by Trigger words:** generate.*test.*code, create.*test.*file, write.*pytest.*tests, implement.*step.*definitions, generate.*acceptance.*tests, create.*bdd.*tests, write.*test.*code, generate.*test.*implementation, create.*test.*cases, implement.*feature.*tests, specification.*tests, test.*code.*generation, bdd.*test.*code, write.*tests, 
 
 **Then check for:** `story_bot_tests_<action>` tool
 

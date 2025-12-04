@@ -1,0 +1,7 @@
+{
+  "name": "build_{artifact}_graph",
+  "path": "{output_path}",
+  "template": "{template_filename}.json",
+  "output": "{output_filename}.json"
+}
+

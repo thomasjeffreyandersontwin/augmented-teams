@@ -7,7 +7,7 @@
     "",
     "**STEP 1: BUILD KNOWLEDGE GRAPH WITH SCENARIO OUTLINES AND EXAMPLES**",
     "",
-    "Follow all instructions in: 1_knowlege_graph/instructions.json",
+    "Follow all instructions in: 1_knowledge_graph/instructions.json",
     "",
     "**Summary:** Convert appropriate scenarios to Scenario Outlines with Examples tables for data-driven testing. Add scenario_outlines to story-graph.json.",
     "",
