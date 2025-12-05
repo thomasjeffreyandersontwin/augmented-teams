@@ -106,6 +106,9 @@ class MCPServerGenerator:
         # Register close current action tool (marks action complete and transitions)
         self.register_close_current_action_tool(mcp_server)
         
+        # Register restart server tool (terminates processes, clears cache, restarts)
+        self.register_restart_server_tool(mcp_server)
+        
         # Register behavior tools (routes to current action within behavior)
         for behavior in behaviors:
             self.register_behavior_tool(mcp_server, behavior)
@@ -312,6 +315,57 @@ class MCPServerGenerator:
             'name': tool_name,
             'type': 'close_action_tool',
             'description': f'Marks current action complete and transitions to next'
+        })
+    
+    def register_restart_server_tool(self, mcp_server: FastMCP):
+        tool_name = f'{self.bot_name}_restart_server'
+        
+        @mcp_server.tool(name=tool_name, description=f'Restart MCP server for {self.bot_name} - terminates processes, clears cache, and restarts to load code changes')
+        async def restart_server(parameters: dict = None):
+            """
+            Restart the MCP server to load code changes.
+            
+            This will:
+            1. Find and terminate existing MCP server processes
+            2. Clear Python bytecode cache (__pycache__)
+            3. Allow Cursor to restart the server automatically with fresh code
+            
+            Call this after making code changes to bot/workflow/action files.
+            
+            Returns:
+                status: "restarted" or "ready_to_start"
+                previous_pids: List of terminated process IDs
+                cache_cleared: true/false
+                message: Human-readable status
+            """
+            if parameters is None:
+                parameters = {}
+            
+            try:
+                from agile_bot.bots.base_bot.src.mcp.server_restart import restart_mcp_server
+                
+                result = restart_mcp_server(
+                    workspace_root=self.workspace_root,
+                    bot_name=self.bot_name,
+                    bot_location=str(self.bot_location)
+                )
+                
+                return result
+                
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f'Failed to restart MCP server: {e}', exc_info=True)
+                return {
+                    "status": "error",
+                    "error": "Failed to restart server",
+                    "message": str(e)
+                }
+        
+        self.registered_tools.append({
+            'name': tool_name,
+            'type': 'restart_server_tool',
+            'description': f'Restarts MCP server to load code changes'
         })
     
     def register_behavior_tool(self, mcp_server: FastMCP, behavior: str):

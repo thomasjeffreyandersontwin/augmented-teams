@@ -346,6 +346,9 @@ class Behavior:
         )
     
     def forward_to_current_action(self) -> BotResult:
+        # Reload workflow state from file (in case file changed or was deleted)
+        self.workflow.load_state()
+        
         # Workflow knows current state (action)
         current_action = self.workflow.current_state
         
