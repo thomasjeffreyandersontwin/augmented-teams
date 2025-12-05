@@ -3,7 +3,7 @@
     "mutants-and-masterminds-character-helper": {
       "command": "python",
       "args": [
-        "agile_bot/bots/character/code/character_mcp_server.py"
+        "character_mcp_server.py"
       ],
       "cwd": "agile_bot/bots/character/code",
       "env": {},

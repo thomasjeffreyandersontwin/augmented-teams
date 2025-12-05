@@ -161,6 +161,36 @@ class Behavior:
     def proceed(self):
         self.workflow.machine.proceed()
     
+    def execute_action(self, action_name: str, action_class, parameters: Dict[str, Any] = None) -> BotResult:
+        # 1. Set state machine to this action (handles direct calls from behavior-action tools)
+        if self.workflow.current_state != action_name:
+            self.workflow.machine.set_state(action_name)
+        
+        # 2. Save workflow state (sets current_behavior and current_action)
+        self.workflow.save_state()
+        
+        # 3. Instantiate action with standard parameters
+        action = action_class(
+            bot_name=self.bot_name,
+            behavior=self.name,
+            workspace_root=self.workspace_root
+        )
+        
+        # 4. Execute action and get data
+        try:
+            data = action.execute(parameters)
+        except FileNotFoundError:
+            # Some actions (build_knowledge) may not have templates for all behaviors
+            data = {'instructions': {}}
+        
+        # 5. Wrap in BotResult (generic for all actions)
+        return BotResult(
+            status='completed',
+            behavior=self.name,
+            action=action_name,
+            data=data
+        )
+    
     
     def initialize_project(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.initialize_project_action import InitializeProjectAction
@@ -203,147 +233,34 @@ class Behavior:
     
     def gather_context(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.gather_context_action import GatherContextAction
-        
-        # Set workflow to this action (in case called directly, not via forward)
-        if self.workflow.current_state != 'gather_context':
-            self.workflow.machine.set_state('gather_context')
-        
-        # Save workflow state when action is invoked (sets current_behavior and current_action)
-        self.workflow.save_state()
-        
-        action = GatherContextAction(
-            bot_name=self.bot_name,
-            behavior=self.name,
-            workspace_root=self.workspace_root
-        )
-        # Use template method that automatically tracks activity
-        data = action.execute(parameters)
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action='gather_context',
-            data=data
-        )
+        return self.execute_action('gather_context', GatherContextAction, parameters)
     
     def decide_planning_criteria(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.planning_action import PlanningAction
-        
-        # Set workflow to this action (in case called directly, not via forward)
-        if self.workflow.current_state != 'decide_planning_criteria':
-            self.workflow.machine.set_state('decide_planning_criteria')
-        
-        # Save workflow state when action is invoked (sets current_behavior and current_action)
-        self.workflow.save_state()
-        
-        action = PlanningAction(
-            bot_name=self.bot_name,
-            behavior=self.name,
-            workspace_root=self.workspace_root
-        )
-        # Use template method that automatically tracks activity
-        data = action.execute(parameters)
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action='decide_planning_criteria',
-            data=data
-        )
+        return self.execute_action('decide_planning_criteria', PlanningAction, parameters)
     
     def build_knowledge(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.build_knowledge_action import BuildKnowledgeAction
-        
-        # Set workflow to this action (in case called directly, not via forward)
-        if self.workflow.current_state != 'build_knowledge':
-            self.workflow.machine.set_state('build_knowledge')
-        
-        # Save workflow state when action is invoked (sets current_behavior and current_action)
-        self.workflow.save_state()
-        
-        action = BuildKnowledgeAction(
-            bot_name=self.bot_name,
-            behavior=self.name,
-            workspace_root=self.workspace_root
-        )
-        
-        try:
-            # Use template method that automatically tracks activity
-            data = action.execute(parameters)
-        except FileNotFoundError:
-            # Template not required for all behaviors
-            data = {'instructions': {}}
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action='build_knowledge',
-            data=data
-        )
+        return self.execute_action('build_knowledge', BuildKnowledgeAction, parameters)
     
     def render_output(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.render_output_action import RenderOutputAction
-        
-        # Set workflow to this action (in case called directly, not via forward)
-        if self.workflow.current_state != 'render_output':
-            self.workflow.machine.set_state('render_output')
-        
-        # Save workflow state when action is invoked (sets current_behavior and current_action)
-        self.workflow.save_state()
-        
-        action = RenderOutputAction(
-            bot_name=self.bot_name,
-            behavior=self.name,
-            workspace_root=self.workspace_root
-        )
-        # Use template method that automatically tracks activity
-        data = action.execute(parameters)
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action='render_output',
-            data=data
-        )
+        return self.execute_action('render_output', RenderOutputAction, parameters)
     
     def validate_rules(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.validate_rules_action import ValidateRulesAction
-        
-        # Set workflow to this action (in case called directly, not via forward)
-        if self.workflow.current_state != 'validate_rules':
-            self.workflow.machine.set_state('validate_rules')
-        
-        # Save workflow state when action is invoked (sets current_behavior and current_action)
-        self.workflow.save_state()
-        
-        action = ValidateRulesAction(
-            bot_name=self.bot_name,
-            behavior=self.name,
-            workspace_root=self.workspace_root
-        )
-        # Use template method that automatically tracks activity
-        data = action.execute(parameters)
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action='validate_rules',
-            data=data
-        )
+        return self.execute_action('validate_rules', ValidateRulesAction, parameters)
     
     def correct_bot(self, parameters: Dict[str, Any] = None) -> BotResult:
-        # Set workflow to this action (in case called directly, not via forward)
-        if self.workflow.current_state != 'correct_bot':
-            self.workflow.machine.set_state('correct_bot')
+        # correct_bot has no action class yet - just returns empty data
+        # Template will still handle state management and BotResult wrapping
+        class CorrectBotAction:
+            def __init__(self, bot_name, behavior, workspace_root):
+                pass
+            def execute(self, params):
+                return {}
         
-        # Save workflow state when action is invoked (sets current_behavior and current_action)
-        self.workflow.save_state()
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action='correct_bot'
-        )
+        return self.execute_action('correct_bot', CorrectBotAction, parameters)
     
     def forward_to_current_action(self) -> BotResult:
         # Reload workflow state from file (in case file changed or was deleted)

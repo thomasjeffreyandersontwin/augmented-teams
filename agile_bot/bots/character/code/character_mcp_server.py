@@ -61,9 +61,9 @@ _debug_log(f"Python executable: {sys.executable}")
 _debug_log(f"Python version: {sys.version}")
 
 # Add workspace root to path
-# This file is in behaviors/character/code/, so go up 4 levels to workspace root
+# This file is in agile_bot/bots/character/code/, so go up 5 levels to workspace root
 try:
-    workspace_root = Path(__file__).parent.parent.parent.parent
+    workspace_root = Path(__file__).parent.parent.parent.parent.parent
     _debug_log(f"Workspace root: {workspace_root}")
     _debug_log(f"Current file: {__file__}")
     _debug_log(f"Current directory (before change): {Path.cwd()}")
@@ -348,7 +348,7 @@ def character_roll_execute(
         
         # Write to episode if provided
         if episode_id and result.roll_executed:
-            episode_path = workspace_root / f"behaviors/character/characters/{character_name}/episodes/{episode_id}.md"
+            episode_path = workspace_root / f"agile_bot/bots/character/characters/{character_name}/episodes/{episode_id}.md"
             agent.write_roll_results_to_episode(character_name, episode_path, result.roll_results)
         
         # Convert result object to structured dict
@@ -466,7 +466,7 @@ def character_episodes(
         new_response: New response for 'edit' action (required for 'edit')
     """
     try:
-        episodes_dir = workspace_root / f"behaviors/character/characters/{character_name}/episodes"
+        episodes_dir = workspace_root / f"agile_bot/bots/character/characters/{character_name}/episodes"
         episodes_dir.mkdir(parents=True, exist_ok=True)
         
         if action == "start":
@@ -578,14 +578,14 @@ def character_profile_generate(character_name: str) -> str:
         # Create folder structure
         folder_result = create_character_folder_structure(
             validation.trimmed_name,
-            workspace_root / "behaviors/character/characters"
+            workspace_root / "agile_bot/bots/character/characters"
         )
         
         # Copy templates
         template_path = workspace_root / "behaviors/character/behaviors/generate/templates/character_profile_template.md"
         copy_result = copy_character_profile_template(
             validation.trimmed_name,
-            workspace_root / "behaviors/character/characters",
+            workspace_root / "agile_bot/bots/character/characters",
             template_path
         )
         

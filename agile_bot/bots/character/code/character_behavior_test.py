@@ -392,7 +392,7 @@ if description is not None:
                     # Act
                     if 'character_generate' in globals():
                         result = character_generate(character_name)
-                        profile_dir = Path("behaviors/character/characters") / character_name
+                        profile_dir = Path("agile_bot/bots/character/characters") / character_name
                         
                         # Assert
                         expect(profile_dir.exists()).to(be_true)
@@ -484,17 +484,17 @@ if description is not None:
                     assert_error_message_contains("   ", "empty")
             
             with it("should check character name uniqueness"):
-                assert_name_is_unique("TestCharacter", Path("behaviors/character/characters"))
+                assert_name_is_unique("TestCharacter", Path("agile_bot/bots/character/characters"))
             
             with context("that has validated name"):
                 with context("that has character folder that does not exist"):
                     with it("should detect folder does not exist"):
-                        assert_folder_does_not_exist("NewCharacter", Path("behaviors/character/characters"))
+                        assert_folder_does_not_exist("NewCharacter", Path("agile_bot/bots/character/characters"))
                     
                     with it("should proceed with folder creation"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -504,12 +504,12 @@ if description is not None:
                 
                 with context("that has character folder that already exists"):
                     with it("should detect existing folder"):
-                        assert_folder_exists("ExistingCharacter", Path("behaviors/character/characters"))
+                        assert_folder_exists("ExistingCharacter", Path("agile_bot/bots/character/characters"))
                     
                     with it("should report folder conflict error"):
                         # Arrange
                         character_name = "ExistingCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = check_character_name_uniqueness(character_name, characters_dir)
@@ -521,7 +521,7 @@ if description is not None:
                     with it("should not proceed with folder creation"):
                         # Arrange
                         character_name = "ExistingCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -533,7 +533,7 @@ if description is not None:
                     with it("should not proceed with template copying"):
                         # Arrange
                         character_name = "ExistingCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -545,7 +545,7 @@ if description is not None:
                         with it("should detect existing folder with files"):
                             # Arrange
                             character_name = "ExistingCharacterWithFiles"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             result = check_folder_exists(character_name, characters_dir)
@@ -557,7 +557,7 @@ if description is not None:
                         with it("should not overwrite existing files"):
                             # Arrange
                             character_name = "ExistingCharacterWithFiles"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             result = create_character_folder_structure(character_name, characters_dir)
@@ -569,7 +569,7 @@ if description is not None:
                         with it("should detect existing folder even if empty"):
                             # Arrange
                             character_name = "ExistingEmptyCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             result = check_folder_exists(character_name, characters_dir)
@@ -579,12 +579,12 @@ if description is not None:
                             expect(result.has_files).to(be_false)
                         
                         with it("should report folder conflict error"):
-                            assert_name_is_not_unique("ExistingEmptyCharacter", Path("behaviors/character/characters"))
+                            assert_name_is_not_unique("ExistingEmptyCharacter", Path("agile_bot/bots/character/characters"))
                 
                 with it("should create character folder structure"):
                     # Arrange
                     character_name = "NewCharacter"
-                    characters_dir = Path("behaviors/character/characters")
+                    characters_dir = Path("agile_bot/bots/character/characters")
                     
                     # Act
                     result = create_character_folder_structure(character_name, characters_dir)
@@ -598,7 +598,7 @@ if description is not None:
                     with it("should create base character folder"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -610,7 +610,7 @@ if description is not None:
                         with it("should create context subfolder"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             result = create_character_folder_structure(character_name, characters_dir)
@@ -622,7 +622,7 @@ if description is not None:
                             with it("should create episodes subfolder"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 
                                 # Act
                                 result = create_character_folder_structure(character_name, characters_dir)
@@ -633,7 +633,7 @@ if description is not None:
                             with it("should proceed with template file copying"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 
                                 # Act
                                 result = create_character_folder_structure(character_name, characters_dir)
@@ -645,7 +645,7 @@ if description is not None:
                             with it("should detect episodes folder creation failure"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 
                                 # Act - Mock folder creation to fail for episodes
                                 with patch('character_agent_runner.Path.mkdir', side_effect=[None, None, OSError("Permission denied")]):
@@ -657,7 +657,7 @@ if description is not None:
                             with it("should report folder creation error"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 
                                 # Act
                                 with patch('character_agent_runner.Path.mkdir', side_effect=[None, None, OSError("Permission denied")]):
@@ -670,7 +670,7 @@ if description is not None:
                             with it("should not proceed with template copying"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 
                                 # Act
                                 with patch('character_agent_runner.Path.mkdir', side_effect=[None, None, OSError("Permission denied")]):
@@ -683,7 +683,7 @@ if description is not None:
                         with it("should detect context folder creation failure"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act - Mock folder creation to fail for context
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -695,7 +695,7 @@ if description is not None:
                         with it("should report folder creation error"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -707,7 +707,7 @@ if description is not None:
                         with it("should not create episodes subfolder"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -719,7 +719,7 @@ if description is not None:
                         with it("should not proceed with template copying"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -732,7 +732,7 @@ if description is not None:
                     with it("should detect base folder creation failure"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act - Mock base folder creation to fail
                         with patch('character_agent_runner.Path.mkdir', side_effect=OSError("Permission denied")):
@@ -744,7 +744,7 @@ if description is not None:
                     with it("should report folder creation error"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         with patch('character_agent_runner.Path.mkdir', side_effect=OSError("Permission denied")):
@@ -756,7 +756,7 @@ if description is not None:
                     with it("should not create context subfolder"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         with patch('character_agent_runner.Path.mkdir', side_effect=OSError("Permission denied")):
@@ -768,7 +768,7 @@ if description is not None:
                     with it("should not create episodes subfolder"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         with patch('character_agent_runner.Path.mkdir', side_effect=OSError("Permission denied")):
@@ -780,7 +780,7 @@ if description is not None:
                     with it("should not proceed with template copying"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         with patch('character_agent_runner.Path.mkdir', side_effect=OSError("Permission denied")):
@@ -793,7 +793,7 @@ if description is not None:
                     with it("should create context folder"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -805,7 +805,7 @@ if description is not None:
                         with it("should make context folder available for storing context documents"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             result = create_character_folder_structure(character_name, characters_dir)
@@ -818,7 +818,7 @@ if description is not None:
                         with it("should detect folder creation failure"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -830,7 +830,7 @@ if description is not None:
                         with it("should report folder creation error"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -842,7 +842,7 @@ if description is not None:
                         with it("should not proceed with episodes folder creation"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -854,7 +854,7 @@ if description is not None:
                         with it("should not proceed with template copying"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, OSError("Permission denied")]):
@@ -866,7 +866,7 @@ if description is not None:
                     with it("should create episodes folder"):
                         # Arrange
                         character_name = "NewCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -878,7 +878,7 @@ if description is not None:
                         with it("should make episodes folder available for storing episode files"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             result = create_character_folder_structure(character_name, characters_dir)
@@ -891,7 +891,7 @@ if description is not None:
                         with it("should detect folder creation failure"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, None, OSError("Permission denied")]):
@@ -903,7 +903,7 @@ if description is not None:
                         with it("should report folder creation error"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, None, OSError("Permission denied")]):
@@ -915,7 +915,7 @@ if description is not None:
                         with it("should not proceed with template copying"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
                             with patch('character_agent_runner.Path.mkdir', side_effect=[None, None, OSError("Permission denied")]):
@@ -928,7 +928,7 @@ if description is not None:
                         with it("should copy character profile template"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             template_source = Path("behaviors/character/generate/character_profile_template.md")
                             
                             # Act
@@ -944,7 +944,7 @@ if description is not None:
                                 character_name = "NewCharacter"
                                 characters_dir = Path("characters")
                                 if not characters_dir.exists():
-                                    characters_dir = Path("behaviors/character/characters")
+                                    characters_dir = Path("agile_bot/bots/character/characters")
                                 template_source = Path("generate/character_profile_template.md")
                                 if not template_source.exists():
                                     template_source = Path("behaviors/character/generate/character_profile_template.md")
@@ -960,7 +960,7 @@ if description is not None:
                             with it("should detect template copy failure"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 template_source = Path("behaviors/character/generate/character_profile_template.md")
                                 
                                 # Act
@@ -973,7 +973,7 @@ if description is not None:
                             with it("should report template copy error"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 template_source = Path("behaviors/character/generate/character_profile_template.md")
                                 
                                 # Act
@@ -987,7 +987,7 @@ if description is not None:
                             with it("should not create character profile file"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 template_source = Path("behaviors/character/generate/character_profile_template.md")
                                 
                                 # Act
@@ -1001,7 +1001,7 @@ if description is not None:
                                 with it("should detect permission error"):
                                     # Arrange
                                     character_name = "NewCharacter"
-                                    characters_dir = Path("behaviors/character/characters")
+                                    characters_dir = Path("agile_bot/bots/character/characters")
                                     template_source = Path("behaviors/character/generate/character_profile_template.md")
                                     
                                     # Act
@@ -1014,7 +1014,7 @@ if description is not None:
                                 with it("should report template copy error"):
                                     # Arrange
                                     character_name = "NewCharacter"
-                                    characters_dir = Path("behaviors/character/characters")
+                                    characters_dir = Path("agile_bot/bots/character/characters")
                                     template_source = Path("behaviors/character/generate/character_profile_template.md")
                                     
                                     # Act
@@ -1028,7 +1028,7 @@ if description is not None:
                                 with it("should detect read-only error"):
                                     # Arrange
                                     character_name = "NewCharacter"
-                                    characters_dir = Path("behaviors/character/characters")
+                                    characters_dir = Path("agile_bot/bots/character/characters")
                                     template_source = Path("behaviors/character/generate/character_profile_template.md")
                                     
                                     # Act
@@ -1041,7 +1041,7 @@ if description is not None:
                                 with it("should report template copy error"):
                                     # Arrange
                                     character_name = "NewCharacter"
-                                    characters_dir = Path("behaviors/character/characters")
+                                    characters_dir = Path("agile_bot/bots/character/characters")
                                     template_source = Path("behaviors/character/generate/character_profile_template.md")
                                     
                                     # Act
@@ -1056,7 +1056,7 @@ if description is not None:
                             character_name = "NewCharacter"
                             characters_dir = Path("characters")
                             if not characters_dir.exists():
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                             keywords_template_source = Path("generate/character_keywords_template.md")
                             if not keywords_template_source.exists():
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
@@ -1073,7 +1073,7 @@ if description is not None:
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
-                                result = copy_character_keywords_template("NewCharacter", Path("behaviors/character/characters"), keywords_template_source)
+                                result = copy_character_keywords_template("NewCharacter", Path("agile_bot/bots/character/characters"), keywords_template_source)
                                 
                                 # Assert
                                 expect(result.template_exists).to(be_true)
@@ -1081,7 +1081,7 @@ if description is not None:
                             with it("should copy template to character directory"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
@@ -1094,7 +1094,7 @@ if description is not None:
                             with it("should create character-keywords.mdc file with template content"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
@@ -1110,7 +1110,7 @@ if description is not None:
                                 keywords_template_source = Path("behaviors/character/generate/nonexistent_template.md")
                                 
                                 # Act
-                                result = copy_character_keywords_template("NewCharacter", Path("behaviors/character/characters"), keywords_template_source)
+                                result = copy_character_keywords_template("NewCharacter", Path("agile_bot/bots/character/characters"), keywords_template_source)
                                 
                                 # Assert
                                 expect(result.template_exists).to(be_false)
@@ -1120,7 +1120,7 @@ if description is not None:
                                 keywords_template_source = Path("behaviors/character/generate/nonexistent_template.md")
                                 
                                 # Act
-                                result = copy_character_keywords_template("NewCharacter", Path("behaviors/character/characters"), keywords_template_source)
+                                result = copy_character_keywords_template("NewCharacter", Path("agile_bot/bots/character/characters"), keywords_template_source)
                                 
                                 # Assert
                                 expect(result.keywords_file_created).to(be_false)
@@ -1130,7 +1130,7 @@ if description is not None:
                                 keywords_template_source = Path("behaviors/character/generate/nonexistent_template.md")
                                 
                                 # Act
-                                result = copy_character_keywords_template("NewCharacter", Path("behaviors/character/characters"), keywords_template_source)
+                                result = copy_character_keywords_template("NewCharacter", Path("agile_bot/bots/character/characters"), keywords_template_source)
                                 
                                 # Assert
                                 expect(result.generation_completed).to(be_true)
@@ -1139,7 +1139,7 @@ if description is not None:
                             with it("should detect template copy failure"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
@@ -1152,7 +1152,7 @@ if description is not None:
                             with it("should report template copy error"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
@@ -1165,7 +1165,7 @@ if description is not None:
                             with it("should not create character-keywords.mdc file"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
@@ -1178,7 +1178,7 @@ if description is not None:
                             with it("should proceed with character generation completion"):
                                 # Arrange
                                 character_name = "NewCharacter"
-                                characters_dir = Path("behaviors/character/characters")
+                                characters_dir = Path("agile_bot/bots/character/characters")
                                 keywords_template_source = Path("behaviors/character/generate/character_keywords_template.md")
                                 
                                 # Act
@@ -1191,10 +1191,10 @@ if description is not None:
                         with it("should create initial character profile with placeholders"):
                             # Arrange
                             character_name = "NewCharacter"
-                            characters_dir = Path("behaviors/character/characters")
+                            characters_dir = Path("agile_bot/bots/character/characters")
                             
                             # Act
-                            result = copy_character_profile_template(character_name, characters_dir, Path("behaviors/character/generate/character_profile_template.md"))
+                            result = copy_character_profile_template(character_name, characters_dir, Path("agile_bot/bots/character/generate/character_profile_template.md"))
                             
                             # Assert
                             expect(result.profile_file_path.exists()).to(be_true)
@@ -1206,7 +1206,7 @@ if description is not None:
                                     # Arrange - use TestCharacter profile that exists
                                     profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                     if not profile_path.exists():
-                                        profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                        profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                     
                                     # Act
                                     result = populate_character_profile(profile_path)
@@ -1219,7 +1219,7 @@ if description is not None:
                                         # Arrange - use TestCharacter profile that exists
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1233,7 +1233,7 @@ if description is not None:
                                         # Arrange - use TestCharacter profile that exists
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1246,7 +1246,7 @@ if description is not None:
                                         # Arrange - use TestCharacter profile that exists
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1260,7 +1260,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1274,7 +1274,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1287,7 +1287,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1300,7 +1300,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1313,7 +1313,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1327,7 +1327,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1340,7 +1340,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1353,7 +1353,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1367,7 +1367,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = ""
                                         
                                         # Act
@@ -1380,7 +1380,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = ""
                                         
                                         # Act
@@ -1393,7 +1393,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = ""
                                         
                                         # Act
@@ -1406,7 +1406,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = ""
                                         
                                         # Act
@@ -1420,7 +1420,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = ""
                                             
                                             # Act
@@ -1433,7 +1433,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = ""
                                             
                                             # Act
@@ -1447,7 +1447,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "   "
                                             
                                             # Act
@@ -1460,7 +1460,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "   "
                                             
                                             # Act
@@ -1474,7 +1474,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "A hero from the streets"
                                             
                                             # Act
@@ -1487,7 +1487,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "A hero from the streets"
                                             
                                             # Act
@@ -1500,7 +1500,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "A hero from the streets"
                                             
                                             # Act
@@ -1513,7 +1513,7 @@ if description is not None:
                                     # Arrange
                                     profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                     if not profile_path.exists():
-                                        profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                        profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                     background_text = "A hero from the streets"
                                     
                                     # Act
@@ -1527,7 +1527,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1540,7 +1540,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets  "
                                         
                                         # Act
@@ -1554,7 +1554,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1567,7 +1567,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1580,7 +1580,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets"
                                         
                                         # Act
@@ -1594,7 +1594,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets"
                                         
                                         # Act
@@ -1607,7 +1607,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets"
                                         
                                         # Act
@@ -1620,7 +1620,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets"
                                         
                                         # Act
@@ -1634,7 +1634,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets  "
                                         
                                         # Act
@@ -1647,7 +1647,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets  "
                                         
                                         # Act
@@ -1660,7 +1660,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "A hero from the streets  "
                                         
                                         # Act
@@ -1674,7 +1674,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets  "
                                         
                                         # Act
@@ -1687,7 +1687,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets  "
                                         
                                         # Act
@@ -1700,7 +1700,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "  A hero from the streets  "
                                         
                                         # Act
@@ -1714,7 +1714,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "   "
                                         
                                         # Act
@@ -1727,7 +1727,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "   "
                                         
                                         # Act
@@ -1740,7 +1740,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "   "
                                         
                                         # Act
@@ -1753,7 +1753,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "   "
                                         
                                         # Act
@@ -1766,7 +1766,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         background_text = "   "
                                         
                                         # Act
@@ -1780,7 +1780,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "     "
                                             
                                             # Act
@@ -1793,7 +1793,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "     "
                                             
                                             # Act
@@ -1807,7 +1807,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "\t\t\t"
                                             
                                             # Act
@@ -1820,7 +1820,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "\t\t\t"
                                             
                                             # Act
@@ -1834,7 +1834,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "\n\n\n"
                                             
                                             # Act
@@ -1847,7 +1847,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = "\n\n\n"
                                             
                                             # Act
@@ -1861,7 +1861,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = " \t\n "
                                             
                                             # Act
@@ -1874,7 +1874,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             background_text = " \t\n "
                                             
                                             # Act
@@ -1887,7 +1887,7 @@ if description is not None:
                                     # Arrange - use TestCharacter profile that exists
                                     profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                     if not profile_path.exists():
-                                        profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                        profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                     background_text = "A hero from the streets"
                                     
                                     # Act
@@ -1900,7 +1900,7 @@ if description is not None:
                                     # Arrange
                                     profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                     if not profile_path.exists():
-                                        profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                        profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                     updated_content = "Updated profile content"
                                     
                                     # Act
@@ -1914,7 +1914,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -1927,7 +1927,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -1940,7 +1940,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -1953,7 +1953,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -1967,7 +1967,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -1981,7 +1981,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -1995,7 +1995,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -2009,7 +2009,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         original_content = profile_path.read_text() if profile_path.exists() else ""
                                         
@@ -2026,7 +2026,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             updated_content = "Updated profile content"
                                             
                                             # Act
@@ -2040,7 +2040,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             updated_content = "Updated profile content"
                                             
                                             # Act
@@ -2055,7 +2055,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             updated_content = "Updated profile content"
                                             
                                             # Act
@@ -2069,7 +2069,7 @@ if description is not None:
                                             # Arrange
                                             profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                             if not profile_path.exists():
-                                                profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                                profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                             updated_content = "Updated profile content"
                                             
                                             # Act
@@ -2084,7 +2084,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -2097,7 +2097,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -2110,7 +2110,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -2123,7 +2123,7 @@ if description is not None:
                                         # Arrange
                                         profile_path = Path("characters/TestCharacter/character-profile.mdc")
                                         if not profile_path.exists():
-                                            profile_path = Path("behaviors/character/characters/TestCharacter/character-profile.mdc")
+                                            profile_path = Path("agile_bot/bots/character/characters/TestCharacter/character-profile.mdc")
                                         updated_content = "Updated profile content"
                                         
                                         # Act
@@ -2136,7 +2136,7 @@ if description is not None:
                 with it("should detect character folder already exists"):
                     # Arrange
                     character_name = "ExistingCharacter"
-                    characters_dir = Path("behaviors/character/characters")
+                    characters_dir = Path("agile_bot/bots/character/characters")
                     
                     # Act
                     result = check_character_name_uniqueness(character_name, characters_dir)
@@ -2148,7 +2148,7 @@ if description is not None:
                     with it("should detect existing folder with files"):
                         # Arrange
                         character_name = "ExistingCharacterWithFiles"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = check_folder_exists(character_name, characters_dir)
@@ -2160,7 +2160,7 @@ if description is not None:
                     with it("should not overwrite existing files"):
                         # Arrange
                         character_name = "ExistingCharacterWithFiles"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -2172,7 +2172,7 @@ if description is not None:
                     with it("should detect existing folder even if empty"):
                         # Arrange
                         character_name = "ExistingEmptyCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = check_folder_exists(character_name, characters_dir)
@@ -2184,7 +2184,7 @@ if description is not None:
                 with it("should report error when folder exists"):
                     # Arrange
                     character_name = "ExistingCharacter"
-                    characters_dir = Path("behaviors/character/characters")
+                    characters_dir = Path("agile_bot/bots/character/characters")
                     
                     # Act
                     result = check_character_name_uniqueness(character_name, characters_dir)
@@ -2197,7 +2197,7 @@ if description is not None:
                     with it("should provide clear error message indicating which character name conflicts"):
                         # Arrange
                         character_name = "ExistingCharacter"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = check_character_name_uniqueness(character_name, characters_dir)
@@ -2255,7 +2255,7 @@ if description is not None:
                     with it("should not proceed with folder creation"):
                         # Arrange
                         character_name = "Invalid/Character"
-                        characters_dir = Path("behaviors/character/characters")
+                        characters_dir = Path("agile_bot/bots/character/characters")
                         
                         # Act
                         result = create_character_folder_structure(character_name, characters_dir)
@@ -2268,7 +2268,7 @@ if description is not None:
                     template_source = Path("behaviors/character/generate/nonexistent_template.md")
                     
                     # Act
-                    result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                    result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                     
                     # Assert
                     expect(result.template_exists).to(be_false)
@@ -2279,7 +2279,7 @@ if description is not None:
                         template_source = Path("behaviors/character/generate/nonexistent_template.md")
                         
                         # Act
-                        result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                        result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                         
                         # Assert
                         expect(result.template_exists).to(be_false)
@@ -2289,7 +2289,7 @@ if description is not None:
                         template_source = Path("behaviors/character/generate/nonexistent_template.md")
                         
                         # Act
-                        result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                        result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                         
                         # Assert
                         expect(result.error_message).to(contain(str(template_source)))
@@ -2300,7 +2300,7 @@ if description is not None:
                         template_source = Path("behaviors/character/generate/wrong_path_template.md")
                         
                         # Act
-                        result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                        result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                         
                         # Assert
                         expect(result.template_exists).to(be_false)
@@ -2310,7 +2310,7 @@ if description is not None:
                         template_source = Path("behaviors/character/generate/wrong_path_template.md")
                         
                         # Act
-                        result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                        result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                         
                         # Assert
                         expect(result.error_message).to(contain("template"))
@@ -2320,7 +2320,7 @@ if description is not None:
                     template_source = Path("behaviors/character/generate/nonexistent_template.md")
                     
                     # Act
-                    result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                    result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                     
                     # Assert
                     expect(result.error_message).to(contain("template"))
@@ -2331,7 +2331,7 @@ if description is not None:
                         template_source = Path("behaviors/character/generate/nonexistent_template.md")
                         
                         # Act
-                        result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                        result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                         
                         # Assert
                         expect(result.template_copied).to(be_false)
@@ -2341,7 +2341,7 @@ if description is not None:
                         template_source = Path("behaviors/character/generate/nonexistent_template.md")
                         
                         # Act
-                        result = copy_character_profile_template("NewCharacter", Path("behaviors/character/characters"), template_source)
+                        result = copy_character_profile_template("NewCharacter", Path("agile_bot/bots/character/characters"), template_source)
                         
                         # Assert
                         expect(result.profile_file_path).to(be_none)
