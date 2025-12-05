@@ -96,6 +96,12 @@ class Workflow:
                         self.machine.set_state(next_action)
             except Exception as e:
                 logger.warning(f'Failed to load workflow state from {self.file}: {e}', exc_info=True)
+        else:
+            # No workflow state file - reset to first action
+            first_action = self.states[0] if self.states else None
+            if first_action:
+                self.machine.set_state(first_action)
+                logger.info(f'No workflow state found, reset to first action: {first_action}')
     
     def _determine_next_action_from_completed(self, completed_actions: list) -> str:
         """
