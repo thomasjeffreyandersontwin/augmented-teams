@@ -1662,7 +1662,7 @@ def load_behavior_json(behavior_name: str) -> dict:
         FileNotFoundError: If the behavior JSON file doesn't exist
         json.JSONDecodeError: If the JSON file is invalid
     """
-    path = Path(f"behaviors/character/behaviors/{behavior_name}/behavior.json")
+    path = Path(f"agile_bot/bots/character/behaviors/{behavior_name}/behavior.json")
     if not path.exists():
         raise FileNotFoundError(f"Behavior JSON not found: {path}")
     
@@ -1686,7 +1686,7 @@ def merge_behaviors(character_name: str, behavior_name: str) -> dict:
     common = load_behavior_json(behavior_name)
     
     # Try to load character-specific behavior
-    char_specific_path = Path(f"behaviors/character/characters/{character_name}/character-dialogue.json")
+    char_specific_path = Path(f"agile_bot/bots/character/characters/{character_name}/character-dialogue.json")
     if char_specific_path.exists():
         char_content = char_specific_path.read_text(encoding='utf-8')
         char_specific = json.loads(char_content)
@@ -1877,14 +1877,14 @@ class CharacterChatAgent:
         # Try JSON file first
         profile_path = Path(f"characters/{character_name}/character-profile.json")
         if not profile_path.exists():
-            # Try relative to behaviors/character directory
-            profile_path = Path(f"behaviors/character/characters/{character_name}/character-profile.json")
+            # Try relative to agile_bot/bots/character directory
+            profile_path = Path(f"agile_bot/bots/character/characters/{character_name}/character-profile.json")
         
         # Fallback to .mdc for backwards compatibility
         if not profile_path.exists():
             profile_path = Path(f"characters/{character_name}/character-profile.mdc")
             if not profile_path.exists():
-                profile_path = Path(f"behaviors/character/characters/{character_name}/character-profile.mdc")
+                profile_path = Path(f"agile_bot/bots/character/characters/{character_name}/character-profile.mdc")
         
         if not profile_path.exists():
             raise FileNotFoundError(f"Character profile not found: {profile_path}")
@@ -2078,7 +2078,7 @@ class CharacterChatAgent:
     
     def load_context_files(self, character_name: str, user_input: str, context_files: Optional[List[str]] = None) -> str:
         """Load relevant context from context folder based on priority"""
-        context_dir = Path(f"behaviors/character/characters/{character_name}/context")
+        context_dir = Path(f"agile_bot/bots/character/characters/{character_name}/context")
         if not context_dir.exists():
             return ""
         
@@ -2138,7 +2138,7 @@ class CharacterChatAgent:
         # File is at: behaviors/character/code/character_agent_runner.py
         # Template is at: behaviors/character/behaviors/chat/templates/
         template_paths = [
-            Path("behaviors/character/behaviors/chat/templates") / template_name,
+            Path("agile_bot/bots/character/behaviors/chat/templates") / template_name,
             Path(__file__).parent.parent / "behaviors" / "chat" / "templates" / template_name,
         ]
         
@@ -3012,7 +3012,7 @@ class CharacterSheetAgent:
     def _load_tactical_knowledge_base(self) -> Optional[Dict]:
         """Load tactical knowledge base from JSON file"""
         try:
-            kb_path = Path("behaviors/character/behaviors/tactics/tactical_knowledge_base.json")
+            kb_path = Path("agile_bot/bots/character/behaviors/tactics/tactical_knowledge_base.json")
             if kb_path.exists():
                 return json.loads(kb_path.read_text(encoding='utf-8'))
             
@@ -3462,7 +3462,7 @@ def _build_xml_path(character_name: str) -> Path:
     
     # Search in standard locations
     base_paths = [
-        Path("behaviors/character/characters"),
+        Path("agile_bot/bots/character/characters"),
         Path("characters"),
     ]
     
@@ -3598,7 +3598,7 @@ def load_character_sheet_from_xml(character_name: str) -> LoadSheetResult:
 def create_episode_file(character_name: str, episode_title: Optional[str] = None,
                         episode_description: Optional[str] = None) -> EpisodeCreationResult:
     """Create episode file in character episodes folder"""
-    episodes_dir = Path(f"behaviors/character/characters/{character_name}/episodes")
+    episodes_dir = Path(f"agile_bot/bots/character/characters/{character_name}/episodes")
     
     # Create episodes directory if it doesn't exist
     try:
@@ -3624,7 +3624,7 @@ def create_episode_file(character_name: str, episode_title: Optional[str] = None
     
     try:
         # Load template if it exists - try new location first, then fallback
-        template_path = Path("behaviors/character/behaviors/episode/templates/episode_template.md")
+        template_path = Path("agile_bot/bots/character/behaviors/episode/templates/episode_template.md")
         if template_path.exists():
             template_content = template_path.read_text(encoding='utf-8')
             
@@ -3668,7 +3668,7 @@ def list_episodes(character_name: str) -> list[dict]:
     Returns:
         List of dicts with keys: 'filename', 'title', 'path', 'is_current'
     """
-    episodes_dir = Path(f"behaviors/character/characters/{character_name}/episodes")
+    episodes_dir = Path(f"agile_bot/bots/character/characters/{character_name}/episodes")
     
     if not episodes_dir.exists():
         return []
@@ -3722,7 +3722,7 @@ def set_current_episode(character_name: str, episode_filename: str) -> dict:
     Returns:
         Dict with 'success', 'message', and 'episode_path' keys
     """
-    episodes_dir = Path(f"behaviors/character/characters/{character_name}/episodes")
+    episodes_dir = Path(f"agile_bot/bots/character/characters/{character_name}/episodes")
     current_episode_file = episodes_dir / ".current-episode"
     target_episode_path = episodes_dir / episode_filename
     
@@ -3757,7 +3757,7 @@ def get_current_episode_path(character_name: str) -> Optional[Path]:
     Returns:
         Path to current episode file, or None if no current episode
     """
-    episodes_dir = Path(f"behaviors/character/characters/{character_name}/episodes")
+    episodes_dir = Path(f"agile_bot/bots/character/characters/{character_name}/episodes")
     current_episode_file = episodes_dir / ".current-episode"
     
     if not current_episode_file.exists():
@@ -3875,7 +3875,7 @@ def generate_and_write_response(character_name: str, user_input: str,
     episode_path = get_current_episode_path(character_name)
     if not episode_path:
         # No current episode, create a default one
-        episodes_dir = Path(f"behaviors/character/characters/{character_name}/episodes")
+        episodes_dir = Path(f"agile_bot/bots/character/characters/{character_name}/episodes")
         episodes_dir.mkdir(parents=True, exist_ok=True)
         current_date = datetime.now().strftime("%Y-%m-%d")
         default_title = f"Episode {current_date}"
@@ -4276,8 +4276,8 @@ def copy_character_profile_template(character_name: str, characters_dir: Path,
         relative_path = Path("generate/character_profile_template.md")
         if relative_path.exists():
             template_path = relative_path
-        elif Path("behaviors/character/behaviors/generate/templates/character_profile_template.md").exists():
-            template_path = Path("behaviors/character/behaviors/generate/templates/character_profile_template.md")
+        elif Path("agile_bot/bots/character/behaviors/generate/templates/character_profile_template.md").exists():
+            template_path = Path("agile_bot/bots/character/behaviors/generate/templates/character_profile_template.md")
     
     if not template_path.exists():
         return TemplateCopyResult(
@@ -4337,8 +4337,8 @@ def copy_character_keywords_template(character_name: str, characters_dir: Path,
         relative_path = Path("generate/character_keywords_template.md")
         if relative_path.exists():
             template_path = relative_path
-        elif Path("behaviors/character/behaviors/generate/templates/character_keywords_template.md").exists():
-            template_path = Path("behaviors/character/behaviors/generate/templates/character_keywords_template.md")
+        elif Path("agile_bot/bots/character/behaviors/generate/templates/character_keywords_template.md").exists():
+            template_path = Path("agile_bot/bots/character/behaviors/generate/templates/character_keywords_template.md")
     
     template_exists = template_path.exists()
     
@@ -4541,7 +4541,7 @@ def character_generate(character_name: str) -> dict:
     
     Returns dictionary with file path and section fill-in instructions
     """
-    profile_dir = Path("behaviors/character/characters") / character_name
+    profile_dir = Path("agile_bot/bots/character/characters") / character_name
     profile_dir.mkdir(parents=True, exist_ok=True)
     
     return {
