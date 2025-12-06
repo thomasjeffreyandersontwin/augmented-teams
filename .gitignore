@@ -1,6 +1,16 @@
 # Bun runtime and cache directories
 **/.bun/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+*.pyo
+*.pyd
+
 behaviors/.azure/commands/2025-10-27.00-50-52.containerapp_revision_list.7840.log
 behaviors/.azure/commands/2025-10-27.00-50-56.containerapp_revision_list.48388.log
 behaviors/.azure/commands/2025-10-27.12-35-45.containerapp_show.78100.log
