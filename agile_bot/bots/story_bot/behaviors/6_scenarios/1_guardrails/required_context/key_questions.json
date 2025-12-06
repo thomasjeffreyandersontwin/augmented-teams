@@ -12,6 +12,15 @@
     "What external systems or services does this story need to interact with?",
     "What requests, responses, or contracts are involved in those system interactions?",
     "Are there system integration points that require validation or simulation?",
-    "How do we handle failures, timeouts, or retries for those system calls?"
+    "How do we handle failures, timeouts, or retries for those system calls?",
+    "What data variations (e.g., boundary conditions, common examples) are required for test coverage?",
+    "What are the input values needed to test each scenario?",
+    "What are the expected output values for each input?",
+    "Are there formulas or calculations that need multiple data points to validate?",
+    "Are there domain entities with named values that should be tested?",
+    "What are the boundary conditions (min, max, edge cases) for each data point?",
+    "Who is responsible for writing or validating these examples (e.g., BA, Dev, QC)?",
+    "Do scenarios need to be converted to Scenario Outlines with Examples tables?"
+
   ]
 }

@@ -6,6 +6,11 @@
     "Scenarios are written in plain English without variables or test data",
     "Specification drives both design and test — not written after implementation",
     "Scenarios must cover both behavior and domain policy",
-    "Cross-functional review is required before considering the story ready for development"
+    "Examples tables when used must include ALL variables used in scenario steps",
+    "Examples tables when used must have exact values for both input AND output variables",
+    "Every variable when usedin scenario steps must have a corresponding column in Examples table",
+    "Examples tables when usedmust have actual test data, not placeholders",
+    "Output/expected result variables must be included in Examples tables when used",
+    "Examples drive both design and test — not written after implementation"
   ]
 }
