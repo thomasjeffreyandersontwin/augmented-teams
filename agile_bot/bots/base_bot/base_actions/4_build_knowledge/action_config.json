@@ -1,0 +1,44 @@
+{
+  "name": "build_knowledge",
+  "workflow": true,
+  "order": 4,
+  "next_action": "render_output",
+  "auto_progress": true
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
