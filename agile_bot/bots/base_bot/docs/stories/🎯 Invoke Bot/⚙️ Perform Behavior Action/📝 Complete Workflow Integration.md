@@ -58,3 +58,4 @@ WHEN: Step 6: Close discovery.gather_context
 THEN: discovery.gather_context closed, transitioned to decide_planning_criteria
 AND: All completed actions tracked across both behaviors
 ```
+

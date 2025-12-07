@@ -66,3 +66,4 @@ The Validate Rules Action loads and merges:
 - Behavior-specific rules - Rules specific to the current behavior
 
 The merged rules are then injected into the validation section of the instructions provided to the AI for validating knowledge and content.
+

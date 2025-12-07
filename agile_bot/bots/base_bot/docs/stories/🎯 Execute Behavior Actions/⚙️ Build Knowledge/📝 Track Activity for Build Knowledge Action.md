@@ -145,3 +145,4 @@ Activity entries include:
 - Duration (calculated from start to completion timestamps)
 
 The activity log provides a traceable record of the knowledge building process, showing dependencies between actions and metrics of what was produced.
+

@@ -75,3 +75,4 @@ print(f"Total stories: {len(stories_without_tests) + len(stories_with_tests)}")
 print(f"Stories WITH tests: {len(stories_with_tests)}")
 print(f"Stories WITHOUT tests: {len(stories_without_tests)}")
 print(f"\nResults written to manual_count_result.txt")
+

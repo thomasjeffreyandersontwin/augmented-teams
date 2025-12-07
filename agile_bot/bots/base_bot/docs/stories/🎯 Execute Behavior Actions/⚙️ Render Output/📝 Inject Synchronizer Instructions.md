@@ -119,3 +119,4 @@ The Render Output Action handles synchronizer-based renders:
 4. Does NOT include template content for synchronizer-based renders (templates are only for template-only renders)
 
 Synchronizer-based renders use code execution rather than template substitution, so the synchronizer class handles the actual rendering logic.
+
