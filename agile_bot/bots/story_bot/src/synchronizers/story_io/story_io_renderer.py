@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Union, Tuple, List
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import sys
 
 
 class DrawIORenderer:
@@ -217,7 +218,8 @@ class DrawIORenderer:
     
     def render_outline(self, story_graph: Dict[str, Any],
                       output_path: Path,
-                      layout_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                      layout_data: Optional[Dict[str, Any]] = None,
+                      force_outline: bool = False) -> Dict[str, Any]:
         """
         Render story graph as outline (no increments) to DrawIO XML.
         
@@ -225,6 +227,7 @@ class DrawIORenderer:
             story_graph: Story graph dictionary with epics/features/stories
             output_path: Output path for DrawIO file
             layout_data: Optional layout data to preserve positions
+            force_outline: If True, force outline mode (disable auto-exploration mode)
         
         Returns:
             Dictionary with output_path and summary
@@ -237,28 +240,14 @@ class DrawIORenderer:
         def get_sub_epics(epic):
             return epic.get('sub_epics', []) or epic.get('features', [])
         
-        # Check if any story has Steps (acceptance criteria) - if so, render in exploration mode
-        has_acceptance_criteria = False
-        for epic in story_graph.get('epics', []):
-            for sub_epic in get_sub_epics(epic):
-                # Only check story_groups (no legacy direct stories support)
-                for story_group in sub_epic.get('story_groups', []):
-                    for story in story_group.get('stories', []):
-                        if story.get('acceptance_criteria'):
-                            has_acceptance_criteria = True
-                            break
-                    if has_acceptance_criteria:
-                        break
-                if has_acceptance_criteria:
-                    break
-            if has_acceptance_criteria:
-                break
-        
         # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Generate diagram - use exploration mode if stories have acceptance criteria
-        xml_output = self._generate_diagram(story_graph, layout_data, is_increments=False, is_exploration=has_acceptance_criteria)
+        # render_outline always renders in outline mode (no acceptance criteria)
+        # Use render_exploration() if you want acceptance criteria
+            is_exploration = False
+        
+        xml_output = self._generate_diagram(story_graph, layout_data, is_increments=False, is_exploration=is_exploration)
         
         # Write output
         output_path.write_text(xml_output, encoding='utf-8')
@@ -763,6 +752,20 @@ class DrawIORenderer:
         def get_sub_epics(epic):
             return epic.get('sub_epics', []) or epic.get('features', [])
         
+        # Helper to normalize story_groups (supports legacy 'stories' format)
+        def normalize_story_groups(feature_or_sub_epic):
+            """Convert legacy 'stories' format to 'story_groups' format if needed."""
+            story_groups = feature_or_sub_epic.get('story_groups', [])
+            # Legacy support: if no story_groups but has stories directly, convert to story_groups format
+            if not story_groups and feature_or_sub_epic.get('stories'):
+                legacy_stories = feature_or_sub_epic.get('stories', [])
+                # Convert legacy format: wrap stories in a single story_group
+                story_groups = [{
+                    'stories': legacy_stories,
+                    'connector': None  # No connector for legacy format
+                }]
+            return story_groups
+        
         x_pos = 20
         shown_users = set()  # Track which users have been shown
         
@@ -773,8 +776,8 @@ class DrawIORenderer:
             if is_exploration:
                 filtered_features = []
                 for feature in features:
-                    # Check if feature has any stories with AC (only story_groups structure)
-                    story_groups = feature.get('story_groups', [])
+                    # Check if feature has any stories with AC (supports both story_groups and legacy stories)
+                    story_groups = normalize_story_groups(feature)
                     if not story_groups:
                         continue  # Skip features without story_groups
                     
@@ -841,7 +844,7 @@ class DrawIORenderer:
                 # Sort by sequential_order to maintain order
                 sorted_sub_epics = sorted(sub_epics, key=lambda x: x.get('sequential_order', 999))
                 for sub_epic in sorted_sub_epics:
-                    sub_story_groups = sub_epic.get('story_groups', [])
+                    sub_story_groups = normalize_story_groups(sub_epic)
                     sub_nested = sub_epic.get('sub_epics', [])
                     if sub_story_groups and len(sub_story_groups) > 0:
                         # This sub-epic has story_groups - add it to collected list
@@ -854,7 +857,7 @@ class DrawIORenderer:
             # We need to preserve parent's sequential_order when replacing with nested sub-epics
             features_to_render = []
             for feature in features:
-                feature_story_groups = feature.get('story_groups', [])
+                feature_story_groups = normalize_story_groups(feature)
                 nested_sub_epics = feature.get('sub_epics', [])
                 parent_order = feature.get('sequential_order', 999)
                 
@@ -865,6 +868,9 @@ class DrawIORenderer:
                     # This is a middle-level sub-epic - replace it with its nested sub-epics that have story_groups
                     nested_with_stories = []
                     collect_nested_with_stories(nested_sub_epics, nested_with_stories)
+                elif not is_exploration and (not feature_story_groups or len(feature_story_groups) == 0) and not nested_sub_epics:
+                    # In outline mode: render empty features (they're part of the story map structure)
+                    features_to_render.append(feature)
                     # Sort nested sub-epics by their sequential_order (relative to parent)
                     nested_with_stories.sort(key=lambda x: x.get('sequential_order', 999))
                     # Assign parent's sequential_order to nested sub-epics so they maintain parent's position
@@ -903,8 +909,8 @@ class DrawIORenderer:
                     feat_height = 60
                     use_feature_layout = False
                 
-                # Only use story_groups (no legacy direct stories support)
-                story_groups = feature.get('story_groups', [])
+                # Get story_groups (supports legacy 'stories' format)
+                story_groups = normalize_story_groups(feature)
                 
                 # Process story groups - flatten stories from all groups
                 stories = []
@@ -921,12 +927,8 @@ class DrawIORenderer:
                 # Skip feature if no stories AND no estimated_stories (in exploration mode, skip if no stories with AC)
                 if is_exploration and len(stories) == 0:
                     continue
-                # In outline mode: render features with estimated_stories OR nested sub_epics even if no story_groups
-                elif not is_exploration and not story_groups and not feature.get('estimated_stories'):
-                    # Check if feature has nested sub_epics - if so, render it
-                    nested_sub_epics = feature.get('sub_epics', [])
-                    if not nested_sub_epics:
-                        continue  # Skip features without story_groups, without estimated_stories, and without nested sub_epics
+                # In outline mode: always render features (even if empty) - they're part of the story map structure
+                # Only skip if in exploration mode and no stories with AC
                 
                 # Group stories by sequential_order and create a mapping to position index
                 stories_by_seq = {}
@@ -977,6 +979,9 @@ class DrawIORenderer:
                     # If no stories but has estimated_stories, use minimum width
                     if max_position == 0 and not has_optional and feature.get('estimated_stories'):
                         base_width = 100  # Minimum width for features with only estimated_stories
+                    elif max_position == 0 and not has_optional and not stories:
+                        # Empty feature (no stories, no estimated_stories) - use minimum width for feature label
+                        base_width = 100
                     else:
                         base_width = (max_position + 1) * self.STORY_SPACING_X + 20
                     

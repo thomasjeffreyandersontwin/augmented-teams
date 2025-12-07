@@ -1,0 +1,114 @@
+# Cursor Indexing Exclusion File
+# Files and directories listed here will be excluded from Cursor's indexing
+# to improve performance
+
+# ============================================================================
+# Cache and Build Directories
+# ============================================================================
+**/.bun/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.venv/
+**/venv/
+**/env/
+**/dist/
+**/build/
+**/.cache/
+**/cache/
+**/node_modules/
+
+# ============================================================================
+# Log Files
+# ============================================================================
+*.log
+**/*_output.log
+**/workflow_output.log
+**/assert_output.log
+**/test_output.log
+**/traversal_output.txt
+
+# Activity logs (runtime-generated activity tracking)
+**/activity_log.json
+
+# Character MCP server logs
+**/logs/
+agile_bot/bots/character/code/logs/
+
+# Azure logs
+**/.azure/
+
+# ============================================================================
+# Binary and Large Files
+# ============================================================================
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.zip
+*.exe
+*.dll
+*.so
+*.pyc
+*.pyo
+*.pyd
+
+# Diagram files (draw.io XML files can be large)
+*.drawio
+
+# ============================================================================
+# Test Output and Artifacts
+# ============================================================================
+# Test output directories
+**/test/**/*_output.log
+**/test/**/workflow_output.log
+**/test/**/assert_output.log
+**/test/**/traversal_output.txt
+
+# Test artifacts and temporary files
+**/test/**/*-layout.json
+**/test/**/temp_rendered*.json
+**/test/**/actual-*.json
+**/test/**/synced-*.json
+**/test/**/temp-*.json
+**/test/**/extracted-*.json
+
+# Backup directories
+**/* backup/
+**/*_backup/
+
+# ============================================================================
+# IDE and Editor Files
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# OS Files
+# ============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================================
+# Large JSON Files (if not needed for indexing)
+# ============================================================================
+# NOTE: story-graph.json files MUST be indexed - do NOT uncomment the line below
+# Uncomment specific patterns if you have very large JSON config files:
+# **/story-graph*.json
+# **/*-layout.json
+
+# Temporary and generated files (uncomment if not needed)
+# **/temp-*.json
+# **/extracted-*.json
+# **/structured*.json
+
+# ============================================================================
+# Story Map Documentation (temporarily excluded)
+# ============================================================================
+agile_bot/bots/base_bot/docs/stories/map/**/*.md

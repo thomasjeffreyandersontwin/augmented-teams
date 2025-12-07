@@ -3,6 +3,30 @@
     {
       "name": "Build Agile Bots",
       "sequential_order": 1.0,
+      "domain_concepts": [
+        {
+          "name": "Base Bot",
+          "responsibilities": [
+            {"name": "Executes Actions", "collaborators": ["Workflow", "Behavior", "Action"]},
+            {"name": "Track activity", "collaborators": ["Behavior", "Action"]},
+            {"name": "Route to behaviors and actions", "collaborators": ["Router", "Trigger Words"]},
+            {"name": "Persist content", "collaborators": ["Content"]},
+            {"name": "Manage Project State", "collaborators": ["Project"]},
+            {"name": "Render", "collaborators": []}
+          ]
+        },
+        {
+          "name": "Specific Bot",
+          "responsibilities": [
+            {"name": "Provide Behavior config", "collaborators": ["Bot Config", "Behavior"]},
+            {"name": "Provide MCP config", "collaborators": ["MCP Config"]},
+            {"name": "Provide Renderers", "collaborators": []},
+            {"name": "Provide Extractors", "collaborators": []},
+            {"name": "Provide Synchronizer", "collaborators": []},
+            {"name": "Provide Trigger Words", "collaborators": []}
+          ]
+        }
+      ],
       "sub_epics": [
         {
           "name": "Generate MCP Tools",
@@ -166,38 +190,59 @@
       ]
     },
     {
-      "name": "Invoke MCP Bot Server",
+      "name": "Invoke Bot",
       "sequential_order": 2.0,
+      "domain_concepts": [
+        {
+          "name": "Router",
+          "responsibilities": [
+            {"name": "Match trigger patterns", "collaborators": ["Trigger Words", "Route"]},
+            {"name": "Route to MCP bot tool", "collaborators": ["Base Bot", "Trigger Words"]},
+            {"name": "Route to behavior tool", "collaborators": ["Behavior", "Trigger Words"]},
+            {"name": "Route to action tool", "collaborators": ["Action", "Trigger Words"]},
+            {"name": "Forward to behavior", "collaborators": ["Behavior", "Base Bot"]},
+            {"name": "Forward to action", "collaborators": ["Action", "Behavior"]},
+            {"name": "Forward to current behavior and action", "collaborators": ["Behavior", "Action", "Base Bot"]}
+          ]
+        },
+        {
+          "name": "Base Bot",
+          "responsibilities": [
+            {"name": "Executes Actions", "collaborators": ["Workflow", "Behavior", "Action"]},
+            {"name": "Track activity", "collaborators": ["Behavior", "Action"]},
+            {"name": "Route to behaviors and actions", "collaborators": ["Router", "Trigger Words"]},
+            {"name": "Persist content", "collaborators": ["Content"]},
+            {"name": "Manage Project State", "collaborators": ["Project"]},
+            {"name": "Render", "collaborators": []}
+          ]
+        },
+        {
+          "name": "Workflow State",
+          "responsibilities": [
+            {"name": "Track current action", "collaborators": ["Action"]},
+            {"name": "Track completed actions", "collaborators": ["Action", "Activity Log"]},
+            {"name": "Determine next action", "collaborators": ["Action", "Behavior"]},
+            {"name": "Pause workflow", "collaborators": ["Human", "AI Chat"]},
+            {"name": "Resume workflow", "collaborators": ["Human", "AI Chat"]}
+          ]
+        }
+      ],
       "sub_epics": [
         {
           "name": "Init Project",
           "sequential_order": 1.0,
+          "domain_concepts": [
+            {
+              "name": "Project",
+              "responsibilities": [
+                {"name": "Move project to working area", "collaborators": ["Working Directory"]},
+                {"name": "Save project in context", "collaborators": ["Working Directory", "Workflow State"]},
+                {"name": "Update project area", "collaborators": ["Working Directory", "Content"]}
+              ]
+            }
+          ],
           "test_file": "test_init_project.py",
           "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "stories": [
-                {
-                  "name": "Shares Context and Project Location",
-                  "sequential_order": 1,
-                  "connector": "or",
-                  "users": [
-                    "Human"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Drops Behavior Folder in Chat w/ relevant Bot Config",
-                  "sequential_order": 2,
-                  "connector": "or",
-                  "users": [
-                    "Human"
-                  ],
-                  "story_type": "user"
-                }
-              ]
-            },
             {
               "type": "and",
               "connector": "or",
@@ -315,15 +360,6 @@
                   ]
                 },
                 {
-                  "name": "Intercepts Tool Call With Project Check",
-                  "sequential_order": 3,
-                  "connector": "or",
-                  "users": [
-                    "Bot"
-                  ],
-                  "story_type": "user"
-                },
-                {
                   "name": "Guards Prevent Writes Without Project",
                   "sequential_order": 4,
                   "connector": "or",
@@ -387,9 +423,6 @@
                   ]
                 },
                 {
-                  "name": "Move to Project"
-                },
-                {
                   "name": "Stores Activity for Initialize Project Action",
                   "sequential_order": 6,
                   "connector": "or",
@@ -403,6 +436,20 @@
         {
           "name": "Invoke Bot Tool",
           "sequential_order": 2.0,
+          "domain_concepts": [
+            {
+              "name": "Router",
+              "responsibilities": [
+                {"name": "Match trigger patterns", "collaborators": ["Trigger Words", "Route"]},
+                {"name": "Route to MCP bot tool", "collaborators": ["Base Bot", "Trigger Words"]},
+                {"name": "Route to behavior tool", "collaborators": ["Behavior", "Trigger Words"]},
+                {"name": "Route to action tool", "collaborators": ["Action", "Trigger Words"]},
+                {"name": "Forward to behavior", "collaborators": ["Behavior", "Base Bot"]},
+                {"name": "Forward to action", "collaborators": ["Action", "Behavior"]},
+                {"name": "Forward to current behavior and action", "collaborators": ["Behavior", "Action", "Base Bot"]}
+              ]
+            }
+          ],
           "test_file": "test_invoke_bot_tool.py",
           "sub_epics": [
             {
@@ -730,6 +777,27 @@
         {
           "name": "Perform Behavior Action",
           "sequential_order": 3.0,
+          "domain_concepts": [
+            {
+              "name": "Behavior",
+              "responsibilities": [
+                {"name": "Perform Configured Actions", "collaborators": ["Actions"]},
+                {"name": "Invoke On Trigger Words", "collaborators": ["List"]},
+                {"name": "Inject Instructions", "collaborators": ["Text"]},
+                {"name": "Provide Guardrails", "collaborators": ["GuardRails"]},
+                {"name": "Provide Rules", "collaborators": ["Rule", "Validation"]},
+                {"name": "Provide Content Specs", "collaborators": ["Content"]}
+              ]
+            },
+            {
+              "name": "Base Action",
+              "responsibilities": [
+                {"name": "Inject Instructions", "collaborators": ["Behavior"], "note": "must be overridden"},
+                {"name": "Load Relevant Content + Inject Into Instructions", "collaborators": ["Content"], "note": "must be overridden"},
+                {"name": "Save content changes", "collaborators": ["Content"], "note": "must be overridden"}
+              ]
+            }
+          ],
           "story_groups": [
             {
               "type": "and",
@@ -760,10 +828,36 @@
     {
       "name": "Execute Behavior Actions",
       "sequential_order": 3.0,
+      "domain_concepts": [
+        {
+          "name": "Behavior Workflow",
+          "responsibilities": [
+            {"name": "Determine next Action", "collaborators": ["Behavior", "Action", "State"]},
+            {"name": "Track state", "collaborators": ["Behavior", "Action", "State"]}
+          ]
+        }
+      ],
       "sub_epics": [
         {
           "name": "Gather Context",
           "sequential_order": 1.0,
+          "domain_concepts": [
+            {
+              "name": "GatherContextAction",
+              "responsibilities": [
+                {"name": "Inject gather context instructions", "collaborators": ["Behavior", "Guardrails", "Required Clarifications"]},
+                {"name": "Inject questions and evidence", "collaborators": ["Behavior", "Guardrails", "Key Questions", "Evidence"]}
+              ]
+            },
+            {
+              "name": "Guardrails",
+              "responsibilities": [
+                {"name": "Provide required context", "collaborators": ["Key Questions", "Evidence"]},
+                {"name": "Guide planning decisions", "collaborators": ["Decision Criteria", "Assumptions"]},
+                {"name": "Define recommended human activity", "collaborators": ["Human", "Instructions"]}
+              ]
+            }
+          ],
           "test_file": "test_gather_context.py",
           "sub_epics": [
             {
@@ -774,35 +868,12 @@
                   "type": "and",
                   "connector": null,
                   "stories": [
-                    {
-                      "name": "Answers Questions and Evidence from Context",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Presents Answers and Evidence to User",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [],
-                      "story_type": "user"
-                    }
                   ]
                 },
                 {
                   "type": "and",
                   "connector": "and",
                   "stories": [
-                    {
-                      "name": "Injects Gather Context Instructions",
-                      "sequential_order": 1,
-                      "connector": "opt",
-                      "users": [
-                        "Bot  Behavor"
-                      ],
-                      "story_type": "user"
-                    },
                     {
                       "name": "Inject Guardrails as Part of Clarify Requirements",
                       "sequential_order": 2,
@@ -859,39 +930,8 @@
                       ],
                       "story_type": "user"
                     },
-                    {
-                      "name": "Inject  Questions and Evidence",
-                      "sequential_order": 4,
-                      "connector": "opt",
-                      "users": [
-                        "Bot  Behavor"
-                      ],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Answers Questions and Evidence",
-                      "sequential_order": 5,
-                      "connector": "opt",
-                      "users": [],
-                      "story_type": "user"
-                    }
                   ]
                 },
-                {
-                  "type": "or",
-                  "connector": null,
-                  "stories": [
-                    {
-                      "name": "Load + inject Questions and Evidence",
-                      "sequential_order": 2,
-                      "connector": "or",
-                      "users": [
-                        "Bot  Behavor"
-                      ],
-                      "story_type": "user"
-                    }
-                  ]
-                }
               ]
             },
             {
@@ -899,38 +939,9 @@
               "sequential_order": 2.0,
               "story_groups": [
                 {
-                  "type": "or",
-                  "connector": null,
-                  "stories": [
-                    {
-                      "name": "Pause based on context",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Pauses",
-                      "sequential_order": 2,
-                      "connector": "opt",
-                      "users": [],
-                      "story_type": "user"
-                    }
-                  ]
-                },
-                {
                   "type": "and",
                   "connector": "or",
                   "stories": [
-                    {
-                      "name": "Submit Answers and Evidence to Tools for Saving",
-                      "sequential_order": 1,
-                      "connector": "opt",
-                      "users": [
-                        "Human"
-                      ],
-                      "story_type": "user"
-                    },
                     {
                       "name": "Saves Answers and Evidence",
                       "sequential_order": 2,
@@ -949,46 +960,8 @@
                       ],
                       "story_type": "user"
                     },
-                    {
-                      "name": "Tracks Activity for Gather Context Action",
-                      "sequential_order": 4,
-                      "connector": "opt",
-                      "users": [],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Proceeds to follow planning",
-                      "sequential_order": 5,
-                      "connector": "opt",
-                      "users": [],
-                      "story_type": "user"
-                    }
                   ]
                 },
-                {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
-                    {
-                      "name": "Correct, Feedback, Proceed",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Human"
-                      ],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Saves Answers and Evidencein Context",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [
-                        "Human"
-                      ],
-                      "story_type": "user"
-                    }
-                  ]
-                }
               ]
             }
           ]
@@ -996,6 +969,23 @@
         {
           "name": "Decide Planning Criteria Action",
           "sequential_order": 2.0,
+          "domain_concepts": [
+            {
+              "name": "PlanningAction",
+              "responsibilities": [
+                {"name": "Inject planning instructions", "collaborators": ["Behavior", "Guardrails", "Planning"]},
+                {"name": "Inject decision criteria and assumptions", "collaborators": ["Behavior", "Guardrails", "Decision Criteria", "Assumptions", "Recommended Human Activity"]}
+              ]
+            },
+            {
+              "name": "Guardrails",
+              "responsibilities": [
+                {"name": "Provide required context", "collaborators": ["Key Questions", "Evidence"]},
+                {"name": "Guide planning decisions", "collaborators": ["Decision Criteria", "Assumptions"]},
+                {"name": "Define recommended human activity", "collaborators": ["Human", "Instructions"]}
+              ]
+            }
+          ],
           "test_file": "test_decide_planning_criteria.py",
           "sub_epics": [
             {
@@ -1011,28 +1001,8 @@
                   "type": "and",
                   "connector": "and",
                   "stories": [
-                    {
-                      "name": "Make Assumptions and Decisions from Context",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [],
-                      "story_type": "user"
-                    }
                   ]
                 },
-                {
-                  "type": "and",
-                  "connector": "or",
-                  "stories": [
-                    {
-                      "name": "Make Assumptions and Decisions",
-                      "sequential_order": 5,
-                      "connector": "opt",
-                      "users": [],
-                      "story_type": "user"
-                    }
-                  ]
-                }
               ]
             },
             {
@@ -1041,33 +1011,8 @@
               "story_groups": [
                 {
                   "type": "and",
-                  "connector": null,
-                  "stories": [
-                    {
-                      "name": "Correct, Feedback, Proceed",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [],
-                      "story_type": "user"
-                    }
-                  ]
-                },
-                {
-                  "type": "or",
-                  "connector": "and",
-                  "stories": []
-                },
-                {
-                  "type": "and",
                   "connector": "or",
                   "stories": [
-                    {
-                      "name": "Submit Final Assumptions and Decisions to Tools for Saving",
-                      "sequential_order": 1,
-                      "connector": "or",
-                      "users": [],
-                      "story_type": "user"
-                    },
                     {
                       "name": "Save Final Assumptions and Decisions",
                       "sequential_order": 2,
@@ -1086,20 +1031,6 @@
                       ],
                       "story_type": "user"
                     },
-                    {
-                      "name": "Track Activity for Planning Action",
-                      "sequential_order": 4,
-                      "connector": "or",
-                      "users": [],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Proceed to Build Knowledge",
-                      "sequential_order": 5,
-                      "connector": "or",
-                      "users": [],
-                      "story_type": "user"
-                    }
                   ]
                 }
               ]
@@ -1112,28 +1043,12 @@
                   "type": "and",
                   "connector": null,
                   "stories": [
-                    {
-                      "name": "Read Answers and Evidence from Context",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [],
-                      "story_type": "user"
-                    }
                   ]
                 },
                 {
                   "type": "and",
                   "connector": "or",
                   "stories": [
-                    {
-                      "name": "Inject Decision Criteria and Assumptions Loading Instructions",
-                      "sequential_order": 1,
-                      "connector": "opt",
-                      "users": [
-                        "Bot-Behavior"
-                      ],
-                      "story_type": "user"
-                    },
                     {
                       "name": "Inject Planning Criteria Into Instructions",
                       "sequential_order": 2,
@@ -1151,28 +1066,6 @@
                     }
                   ]
                 },
-                {
-                  "type": "and",
-                  "connector": "or",
-                  "stories": [
-                    {
-                      "name": "Load + Inject  Answers + Evidence",
-                      "sequential_order": 1,
-                      "connector": "or",
-                      "users": [
-                        "Bot-Behavior"
-                      ],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Read Injected Answers and Evidence",
-                      "sequential_order": 2,
-                      "connector": "or",
-                      "users": [],
-                      "story_type": "user"
-                    }
-                  ]
-                }
               ]
             }
           ]
@@ -1180,12 +1073,68 @@
         {
           "name": "Build Knowledge",
           "sequential_order": 3.0,
+          "domain_concepts": [
+            {
+              "name": "BuildKnowledgeAction",
+              "responsibilities": [
+                {"name": "Inject knowledge graph template", "collaborators": ["Behavior", "Content", "Knowledge Graph Spec", "Knowledge Graph"]},
+                {"name": "Inject builder instructions", "collaborators": ["Behavior", "Content", "Build Instructions"]},
+                {"name": "Save Knowledge graph", "collaborators": ["Behavior", "Content", "Knowledge Graph"]}
+              ]
+            },
+            {
+              "name": "Content",
+              "responsibilities": [
+                {"name": "Render outputs", "collaborators": ["Template", "Renderer", "Render Spec"]},
+                {"name": "Synchronize formats", "collaborators": ["Synchronizer", "Extractor", "Synchronizer Spec"]},
+                {"name": "Save knowledge graph", "collaborators": ["Knowledge Graph"]},
+                {"name": "Load rendered content", "collaborators": ["na"]},
+                {"name": "Present rendered content", "collaborators": ["na"]}
+              ]
+            }
+          ],
           "test_file": "test_build_knowledge.py",
           "story_groups": []
         },
         {
           "name": "Render Output",
           "sequential_order": 4.0,
+          "domain_concepts": [
+            {
+              "name": "RenderOutputAction",
+              "responsibilities": [
+                {"name": "Inject render output instructions", "collaborators": ["Behavior", "Content", "Render Spec", "Renderer"]},
+                {"name": "Inject templates", "collaborators": ["Behavior", "Content", "Render Spec", "Template"]},
+                {"name": "Inject transformers", "collaborators": ["Behavior", "Content", "Transformer"]},
+                {"name": "Load + inject structured content", "collaborators": ["Behavior", "Content", "Knowledge Graph"]}
+              ]
+            },
+            {
+              "name": "Renderer",
+              "responsibilities": [
+                {"name": "Render complex output", "collaborators": ["Template", "Knowledge Graph", "Transformer"]},
+                {"name": "Render outputs using components in context", "collaborators": ["AI Chat", "Template", "Content"]}
+              ]
+            },
+            {
+              "name": "Template",
+              "responsibilities": [
+                {"name": "Define output structure", "collaborators": ["Placeholder"]},
+                {"name": "Transform content", "collaborators": ["Transformer", "Content"]},
+                {"name": "Load template", "collaborators": ["Behavior", "Content"]}
+              ]
+            },
+            {
+              "name": "Content",
+              "responsibilities": [
+                {"name": "Render outputs", "collaborators": ["Template", "Renderer", "Render Spec"]},
+                {"name": "Synchronize formats", "collaborators": ["Synchronizer", "Extractor", "Synchronizer Spec"]},
+                {"name": "Save knowledge graph", "collaborators": ["Knowledge Graph"]},
+                {"name": "Load rendered content", "collaborators": ["na"]},
+                {"name": "Present rendered content", "collaborators": ["na"]}
+              ]
+            }
+          ],
           "test_file": "test_render_output.py",
           "story_groups": [
             {
@@ -1213,79 +1162,38 @@
         {
           "name": "Validate Knowledge & Content Against Rules",
           "sequential_order": 5.0,
+          "domain_concepts": [
+            {
+              "name": "ValidateRulesAction",
+              "responsibilities": [
+                {"name": "Inject common bot rules", "collaborators": ["Base Bot", "Rules", "Common Rules"]},
+                {"name": "Inject behavior specific rules", "collaborators": ["Behavior", "Rules", "Behavior Rules"]},
+                {"name": "Load + inject content for validation", "collaborators": ["Behavior", "Content", "Knowledge Graph", "Rendered Outputs"]}
+              ]
+            },
+            {
+              "name": "Rule",
+              "responsibilities": [
+                {"name": "Validate content", "collaborators": ["Knowledge Graph", "Violations"]},
+                {"name": "Find behavior specific rules from context", "collaborators": ["Behavior"]},
+                {"name": "Find common bot rules from context", "collaborators": ["Base Bot"]},
+                {"name": "Load + inject diagnostics results", "collaborators": ["AI Chat", "Violations", "Corrections"]},
+                {"name": "Suggest corrections", "collaborators": ["Violations", "Suggestions", "Fixes"]},
+                {"name": "Provide examples - Do", "collaborators": ["Example", "Description"]},
+                {"name": "Provide examples - Dont", "collaborators": ["Example", "Description"]},
+                {"name": "Specialized examples", "collaborators": ["Language", "Framework", "Pattern"]}
+              ]
+            },
+            {
+              "name": "CorrectBotAction",
+              "responsibilities": [
+                {"name": "Inject correct bot instructions", "collaborators": ["Behavior", "Correct Bot Instructions"]},
+                {"name": "Load + inject diagnostics results", "collaborators": ["Content", "Diagnostic Report", "Violations", "Suggestions"]}
+              ]
+            }
+          ],
           "test_file": "test_validate_knowledge_and_content_against_rules.py",
           "story_groups": [
-            {
-              "type": "and",
-              "connector": "and",
-              "stories": [
-                {
-                  "name": "FInd Content in Context",
-                  "sequential_order": 3,
-                  "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                }
-              ]
-            },
-            {
-              "type": "or",
-              "connector": "and",
-              "stories": [
-                {
-                  "name": "Find Rules in Context and validate against Rules",
-                  "sequential_order": 2,
-                  "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Validate Content vs Injected Diagnostics and Rules",
-                  "sequential_order": 3,
-                  "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Validate Content Using Injected Diagnostics + Rules",
-                  "sequential_order": 8,
-                  "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                }
-              ]
-            },
-            {
-              "type": "and",
-              "connector": "and",
-              "stories": [
-                {
-                  "name": "Pause",
-                  "sequential_order": 1,
-                  "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Read report and make changes",
-                  "sequential_order": 2,
-                  "connector": "or",
-                  "users": [
-                    "Human"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Save Content through Context",
-                  "sequential_order": 3,
-                  "connector": "or",
-                  "users": [
-                    "Human"
-                  ],
-                  "story_type": "user"
-                }
-              ]
-            },
             {
               "type": "and",
               "connector": "or",
@@ -1312,24 +1220,6 @@
               "connector": "and",
               "stories": [
                 {
-                  "name": "Submit Content to Tool for Saving",
-                  "sequential_order": 5,
-                  "connector": "or",
-                  "users": [
-                    "Bot-Behavior"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Save Content",
-                  "sequential_order": 6,
-                  "connector": "or",
-                  "users": [
-                    "Bot-Behavior"
-                  ],
-                  "story_type": "user"
-                },
-                {
                   "name": "Track Activity for Validate Rules Action",
                   "sequential_order": 4,
                   "connector": "or",
@@ -1338,34 +1228,6 @@
                 }
               ]
             },
-            {
-              "type": "and",
-              "connector": "and",
-              "stories": [
-                {
-                  "name": "Load + Inject Diagnostics Results, Knowledge, Content Instructions",
-                  "sequential_order": 7,
-                  "connector": "or",
-                  "users": [
-                    "Bot-Behavior"
-                  ],
-                  "story_type": "user"
-                }
-              ]
-            },
-            {
-              "type": "and",
-              "connector": null,
-              "stories": [
-                {
-                  "name": "Proceed to Correct-Bot trough  context",
-                  "sequential_order": 1,
-                  "connector": "or",
-                  "users": [],
-                  "story_type": "user"
-                }
-              ]
-            }
           ]
         }
       ]
@@ -1395,33 +1257,14 @@
           ]
         },
         {
-          "name": "Invoke MCP Bot Server",
+          "name": "Invoke Bot",
           "sequential_order": 2,
           "sub_epics": [
             {
               "name": "Init Project",
               "sequential_order": 1,
               "sub_epics": [],
-              "stories": [
-                {
-                  "name": "Shares Context and Project Location",
-                  "sequential_order": 1,
-                  "connector": "or",
-                  "users": [
-                    "Human"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Drops Behavior Folder in Chat w/ relevant Bot Config",
-                  "sequential_order": 2,
-                  "connector": "or",
-                  "users": [
-                    "Human"
-                  ],
-                  "story_type": "user"
-                }
-              ]
+              "stories": []
             },
             {
               "name": "Invoke Bot Tool",
@@ -1802,7 +1645,7 @@
           ]
         },
         {
-          "name": "Invoke MCP Bot Server",
+          "name": "Invoke Bot",
           "sequential_order": 2,
           "sub_epics": [
             {
@@ -2269,7 +2112,7 @@
           ]
         },
         {
-          "name": "Invoke MCP Bot Server",
+          "name": "Invoke Bot",
           "sequential_order": 2,
           "sub_epics": [
             {
@@ -2715,6 +2558,23 @@
               "sequential_order": 4,
               "sub_epics": [],
               "stories": [
+                {
+                  "name": "Build Knowledge Loads From Context Folder",
+                  "sequential_order": 1,
+                  "connector": "and",
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "system",
+                  "test_file": "test_build_knowledge.py",
+                  "test_class": "TestBuildKnowledgeLoadsFromContextFolder",
+                  "acceptance_criteria": [
+                    "WHEN build_knowledge action executes",
+                    "THEN Action loads context from {project_area}/docs/stories/ folder (clarification.json, planning.json)",
+                    "AND Action loads original input from {project_area}/docs/context/ folder (input.txt)",
+                    "AND Action incorporates all context into generated content"
+                  ]
+                },
                 {
                   "name": "Inject Knowledge Graph Template and Builder Instructions",
                   "sequential_order": 1,
@@ -3248,7 +3108,7 @@
       "priority": 4,
       "epics": [
         {
-          "name": "Invoke MCP Bot Server",
+          "name": "Invoke Bot",
           "sequential_order": 2,
           "sub_epics": [
             {
@@ -3295,7 +3155,7 @@
       "priority": 5,
       "epics": [
         {
-          "name": "Invoke MCP Bot Server",
+          "name": "Invoke Bot",
           "sequential_order": 2,
           "sub_epics": [
             {

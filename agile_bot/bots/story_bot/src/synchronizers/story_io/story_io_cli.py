@@ -43,7 +43,8 @@ def render_outline_command(args):
                 print(f"Using layout file: {layout_path}")
                 break
     
-    result = diagram.render_outline(output_path=args.output, layout_data=layout_data)
+    force_outline = hasattr(args, 'force_outline') and args.force_outline
+    result = diagram.render_outline(output_path=args.output, layout_data=layout_data, force_outline=force_outline)
     print(f"Generated DrawIO diagram: {result['output_path']}")
     print(f"Epics: {result['summary']['epics']}")
     return 0
@@ -414,6 +415,7 @@ def main():
     render_outline_parser.add_argument('--drawio-file', type=Path, help='DrawIO file path')
     render_outline_parser.add_argument('--output', type=Path, required=True, help='Output DrawIO file')
     render_outline_parser.add_argument('--layout', type=Path, help='Layout JSON file (default: auto-detect from output filename)')
+    render_outline_parser.add_argument('--force-outline', action='store_true', help='Force outline mode (disable auto-exploration mode)')
     
     # Render increments command
     render_inc_parser = subparsers.add_parser('render-increments', help='Render increments diagram')
