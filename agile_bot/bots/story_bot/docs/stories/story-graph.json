@@ -4,12 +4,16 @@
       "name": "Render Diagram",
       "sequential_order": 1.0,
       "users": [],
-      "features": [
+      "sub_epics": [
         {
           "name": "Render Story IO Diagram",
           "sequential_order": 1.0,
           "users": [],
-          "stories": [
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "stories": [
             {
               "name": "Handle Render Outline",
               "sequential_order": 1.0,
@@ -244,7 +248,7 @@
       "name": "Edit Diagram",
           "sequential_order": 2.0,
       "users": [],
-      "features": [
+      "sub_epics": [
         {
           "name": "Edit Epics",
           "sequential_order": 1.0,
@@ -781,7 +785,7 @@
       "name": "Synchronize Graph",
       "sequential_order": 3.0,
       "users": [],
-      "features": [
+      "sub_epics": [
         {
           "name": "Synchronize Story Graph",
           "sequential_order": 1.0,

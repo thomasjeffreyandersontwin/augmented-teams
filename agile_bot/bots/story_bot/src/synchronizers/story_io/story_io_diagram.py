@@ -454,7 +454,8 @@ class StoryIODiagram(StoryIOComponent):
     
     def render_outline(self, output_path: Optional[Union[str, Path]] = None,
                       layout_data: Optional[Dict[str, Any]] = None,
-                      story_graph: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                      story_graph: Optional[Dict[str, Any]] = None,
+                      force_outline: bool = False) -> Dict[str, Any]:
         """
         Render diagram as outline (no increments).
         
@@ -462,6 +463,7 @@ class StoryIODiagram(StoryIOComponent):
             output_path: Optional path for DrawIO output file
             layout_data: Optional layout data to preserve positions
             story_graph: Optional story graph dictionary to render directly (if provided, uses this instead of diagram state)
+            force_outline: If True, force outline mode (disable auto-exploration mode)
         
         Returns:
             Dictionary with output_path and summary
@@ -483,13 +485,15 @@ class StoryIODiagram(StoryIOComponent):
         return self._renderer.render_outline(
             story_graph=graph_data,
             output_path=output_path,
-            layout_data=layout_data
+            layout_data=layout_data,
+            force_outline=force_outline
         )
     
     @staticmethod
     def render_outline_from_graph(story_graph: Union[Dict[str, Any], str, Path],
                                   output_path: Union[str, Path],
-                                  layout_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                                  layout_data: Optional[Dict[str, Any]] = None,
+                                  force_outline: bool = False) -> Dict[str, Any]:
         """
         Render outline directly from story graph JSON (static method).
         
@@ -497,6 +501,7 @@ class StoryIODiagram(StoryIOComponent):
             story_graph: Story graph as dict, JSON file path, or Path
             output_path: Path for DrawIO output file
             layout_data: Optional layout data to preserve positions
+            force_outline: If True, force outline mode (disable auto-exploration mode)
         
         Returns:
             Dictionary with output_path and summary
@@ -526,7 +531,8 @@ class StoryIODiagram(StoryIOComponent):
         return diagram._renderer.render_outline(
             story_graph=graph_data,
             output_path=output_path,
-            layout_data=layout_data
+            layout_data=layout_data,
+            force_outline=force_outline
         )
     
     def render_exploration(self, output_path: Optional[Union[str, Path]] = None,
@@ -917,14 +923,21 @@ class StoryIODiagram(StoryIOComponent):
             steps = data['behavioral_ac']
         # Handle new format: acceptance_criteria (convert to Steps format)
         if not steps and 'acceptance_criteria' in data:
-            steps = [
-                {
-                    'description': ac.get('description', ''),
-                    'user': ac.get('user', ''),
-                    'sequential_order': ac.get('sequential_order', i + 1)
-                }
-                for i, ac in enumerate(data.get('acceptance_criteria', []))
-            ]
+            steps = []
+            for i, ac in enumerate(data.get('acceptance_criteria', [])):
+                if isinstance(ac, dict):
+                    steps.append({
+                        'description': ac.get('description', ''),
+                        'user': ac.get('user', ''),
+                        'sequential_order': ac.get('sequential_order', i + 1)
+                    })
+                elif isinstance(ac, str):
+                    # Handle string format - treat as description
+                    steps.append({
+                        'description': ac,
+                        'user': '',
+                        'sequential_order': i + 1
+                    })
         
         story = Story(
             name=data['name'],

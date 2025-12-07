@@ -30,37 +30,3 @@ Rendered increment:
     First few: ['Receive Power Characteristics', 'Request Base Templates', 'Instantiate Cast Template']...
 
 [SUCCESS] Priority structure preserved!
-Starting outline render...
-Loading story graph from: c:\dev\augmented-teams\agile_bot\bots\base_bot\docs\stories\story-graph.json
-Output will be written to: c:\dev\augmented-teams\agile_bot\bots\base_bot\docs\stories\story-map-outline.drawio
-Story graph loaded. Epics: 3
-Render complete!
-Output path: c:\dev\augmented-teams\agile_bot\bots\base_bot\docs\stories\story-map-outline.drawio
-Summary: {'epics': 3, 'sub_epic_count': 17, 'diagram_generated': True}
-File exists: True
-File size: 45394 bytes
-Done!
-Starting render...
-Error: 'str' object has no attribute 'get'
-Traceback (most recent call last):
-  File "c:\dev\augmented-teams\test_render.py", line 19, in <module>
-    result = render_outline_command(args)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\dev\augmented-teams\agile_bot\bots\story_bot\src\synchronizers\story_io\story_io_cli.py", line 19, in render_outline_command
-    diagram = StoryIODiagram.load_from_story_graph(args.story_graph, args.drawio_file)
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\dev\augmented-teams\agile_bot\bots\story_bot\src\synchronizers\story_io\story_io_diagram.py", line 1139, in load_from_story_graph
-    diagram._load_from_story_graph_format(data)
-  File "c:\dev\augmented-teams\agile_bot\bots\story_bot\src\synchronizers\story_io\story_io_diagram.py", line 820, in _load_from_story_graph_format
-    epic = self._create_epic_from_data(epic_data)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\dev\augmented-teams\agile_bot\bots\story_bot\src\synchronizers\story_io\story_io_diagram.py", line 844, in _create_epic_from_data
-    feature = self._create_feature_from_sub_epic_data(sub_epic_data, epic)
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\dev\augmented-teams\agile_bot\bots\story_bot\src\synchronizers\story_io\story_io_diagram.py", line 888, in _create_feature_from_sub_epic_data
-    story = self._create_story_from_data(story_data)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\dev\augmented-teams\agile_bot\bots\story_bot\src\synchronizers\story_io\story_io_diagram.py", line 922, in _create_story_from_data
-    'description': ac.get('description', ''),
-                   ^^^^^^
-AttributeError: 'str' object has no attribute 'get'
