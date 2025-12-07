@@ -103,3 +103,4 @@ WHEN: close_current_action is called
 THEN: action "gather_context" is marked complete
 AND: workflow transitions to next action "decide_planning_criteria"
 ```
+

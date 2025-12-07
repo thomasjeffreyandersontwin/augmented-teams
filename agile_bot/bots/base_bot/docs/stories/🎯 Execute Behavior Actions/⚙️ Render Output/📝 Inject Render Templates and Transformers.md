@@ -63,3 +63,4 @@ The Render Output Action loads:
 - Spec path - Specification file path for rendering configuration
 
 All paths are injected into the instructions provided to the AI for rendering output.
+

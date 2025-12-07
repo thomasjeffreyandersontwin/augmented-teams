@@ -132,3 +132,4 @@ The Render Output Action handles template-only renders:
 6. Handles missing templates gracefully, skipping them and continuing with valid ones
 
 Template content is stored in the render config object alongside the configuration, allowing the AI to use the template for rendering output.
+
