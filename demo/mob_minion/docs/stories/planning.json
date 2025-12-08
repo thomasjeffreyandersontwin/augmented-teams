@@ -1,25 +1,18 @@
 {
   "shape": {
-    "assumptions_made": [
-      "Focus on user flow over internal systems",
-      "Cover the end-to-end scenario",
-      "Prioritize customer-facing features (GM-facing features for Foundry VTT)",
-      "Assume stories should be independently testable",
-      "Assume each story delivers user value",
-      "Assume technical infrastructure stories are implicit",
-      "Focus on core domain over supporting domains",
-      "Identify overall domain concepts and relationships before detailed modeling",
-      "Use ubiquitous language from domain sources (RPG/VTT terminology)",
-      "Model domain concepts, not technical implementation",
-      "Separate domain logic from infrastructure concerns",
-      "Drill down where integration complexity exists (Foundry VTT integration requires detailed mapping)",
-      "Drill down where user behavior is highly variable (different strategies, target selection methods, attack types)"
-    ],
+    "assumptions_made": {
+      "focus_user_flow": "Game Master controlling mobs within Foundry VTT combat encounters.",
+      "end_to_end_scope": "Group minions into a mob, pick a strategy, select a target, and execute coordinated actions in combat.",
+      "environment": "Foundry Virtual Tabletop; actions operate on tokens/actors inside Foundry."
+    },
     "decisions_made": {
-      "drill_down_approach": "Dig deep on system interactions (Foundry VTT integration) and user workflows (mob management, strategy selection)",
-      "flow_scope_and_granularity": "End-to-end user-system behavior – One user interaction followed by one system response",
-      "depth_of_shaping": "Workflow -> Figure out logical process, alternate/or conditions",
-      "structure_exploration_depth": "Behavioral -> Explore Business and Domain AC"
+      "drill_down_approach": "Flow-first on mob lifecycle: select minions -> create mob -> choose strategy -> pick target -> execute action.",
+      "flow_scope_and_granularity": "Story-level steps for GM commands (create mob, choose strategy, target, execute).",
+      "constraints": "Stay within Foundry VTT APIs; no new external systems or data sources beyond provided context.",
+      "story_map_style": "Verb-noun stories centered on GM issuing commands to mobs.",
+      "data_sources": "Use provided input.txt as sole context; no additional reference material noted.",
+      "risks": "Strategy logic complexity, edge cases in targeting, keeping mob members synchronized on actions.",
+      "target_audience": "Game Masters needing faster, consistent control over multiple minions."
     }
   }
 }

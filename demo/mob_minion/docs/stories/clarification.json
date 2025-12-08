@@ -1,0 +1,28 @@
+{
+  "story_bot": {
+    "key_questions": {
+      "Who are the distinct types of users?": "Primary: Game Masters running sessions in Foundry VTT who need to control many minion tokens efficiently. Secondary: Players are impacted by smoother turn flow but are not direct operators.",
+      "What are the key goals, behaviors, or decisions each group is trying to accomplish using this capability?": "GM wants to group minions into mobs and issue one command so all minions act together; choose and apply strategies such as attack most powerful/weakest, defend leader, attack most damaged; avoid per-token clicking.",
+      "Who are the primary users or stakeholder groups impacted?": "Game Masters are the primary users; players experience the outcomes (faster, consistent combat turns).",
+      "What is the first thing users will try to do with this new capability or system?": "Select several minion tokens in Foundry VTT, create a mob from them, and apply a strategy so they act together on a target.",
+      "What problems, inefficiencies, or workarounds is this request trying to eliminate?": "Eliminates clicking every individual minion to perform the same action and the resulting slow, inconsistent execution.",
+      "Where are users currently struggling, getting stuck, or experiencing delays in the process we're aiming to improve?": "Managing many minions during combat—selecting targets, issuing repeated actions, and keeping actions synchronized across minions.",
+      "What other systems, data sources, or tools does this capability need to interact with in order to deliver value?": "Needs to integrate with Foundry Virtual Tabletop (tokens/actors, targeting, movement/attack actions). No other external systems mentioned.",
+      "What are the key behaviors or integration points that define how these systems support or depend on one another?": "Create mobs from existing minion tokens/actors; hook into Foundry actions for selecting targets, executing attacks/moves; apply chosen strategy so all mob members follow it.",
+      "What is the business domain we are modeling?": "Virtual tabletop combat management within Foundry VTT, focused on minion grouping and coordinated actions.",
+      "What are the core business concepts and their relationships?": "Minion (individual token), Mob (collection of minions acting together), Strategy (rules for choosing targets/behavior), Target (actor chosen by strategy), Action (attack/defend/move) executed by mob members.",
+      "What are the distinct sub-domains or business capabilities?": "Grouping/minion-to-mob management; strategy selection/configuration; target selection; coordinated action execution; possibly mob template/spawn management.",
+      "What are the boundaries between different parts of the domain?": "Mob management (grouping, membership) is separate from strategy logic (how to pick targets/behaviors) and from Foundry core mechanics (movement/attack resolution). Limited detail on technical boundaries in the source.",
+      "What domain events occur in this business domain?": "Mob created, minions added/removed, strategy selected/changed, target chosen, mob action executed, mob disbanded.",
+      "What are the key business rules and constraints?": "Mobs act together under a selected strategy (e.g., attack most powerful/weakest, defend leader, attack most damaged); actions must operate within Foundry VTT mechanics. Additional rules (range, movement, templates) are not specified.",
+      "What domain language do business experts use to describe this domain?": "Terms: minion, mob, group, strategy (attack most powerful/weakest, defend leader, attack most damaged), spawn, template, choose targets, area attack, Foundry Virtual Tabletop."
+    },
+    "evidence": {
+      "input_description": {
+        "path": "docs/context/input.txt",
+        "summary": "User provided project description for mob/minion grouping and strategy execution within Foundry VTT."
+      }
+    }
+  }
+}
+

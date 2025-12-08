@@ -4,6 +4,7 @@ Render story-graph-new.json to story-map.txt format using template.
 """
 
 import json
+import sys
 from pathlib import Path
 
 def format_actor(users):
@@ -167,9 +168,22 @@ def render_story_graph(story_graph):
     return "\n".join(lines)
 
 def main():
+    """
+    Render story graph to story map text.
+    
+    Usage:
+      python render_story_map.py <input_story_graph.json> <output_story_map.txt>
+    
+    If no args provided, falls back to legacy locations under templates/stories/.
+    """
     base_dir = Path(__file__).parent / "stories"
-    input_path = base_dir / "story-graph-new.json"
-    output_path = base_dir / "story-map-rendered.txt"
+    
+    if len(sys.argv) >= 3:
+        input_path = Path(sys.argv[1])
+        output_path = Path(sys.argv[2])
+    else:
+        input_path = base_dir / "story-graph-new.json"
+        output_path = base_dir / "story-map-rendered.txt"
     
     print(f"Loading {input_path}...")
     with open(input_path, 'r', encoding='utf-8') as f:
