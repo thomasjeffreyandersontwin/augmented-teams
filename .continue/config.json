@@ -1,0 +1,69 @@
+{
+  "slashCommands": [
+    {
+      "name": "story_bot",
+      "description": "Run story bot CLI",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py"
+    },
+    {
+      "name": "story_bot-help",
+      "description": "Show story bot help for Cursor",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py --help-cursor"
+    },
+    {
+      "name": "story_bot-shape",
+      "description": "Shape stories from input",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py shape {{input}}"
+    },
+    {
+      "name": "story_bot-continue",
+      "description": "Continue to next action in workflow",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py --close"
+    },
+    {
+      "name": "story_bot-initialize-project",
+      "description": "Initialize project with specific area",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py shape initialize_project --project_area={{input}} --confirm=true"
+    },
+    {
+      "name": "story_bot-confirm-project-area",
+      "description": "Confirm current project area",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py shape initialize_project --confirm=true --project_area={{input}}"
+    },
+    {
+      "name": "story_bot-arrange",
+      "description": "Arrange stories",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py arrange {{input}}"
+    },
+    {
+      "name": "story_bot-discovery",
+      "description": "Discovery mode",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py discovery {{input}}"
+    },
+    {
+      "name": "story_bot-examples",
+      "description": "Show examples",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py examples {{input}}"
+    },
+    {
+      "name": "story_bot-exploration",
+      "description": "Exploration mode",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py exploration {{input}}"
+    },
+    {
+      "name": "story_bot-prioritization",
+      "description": "Prioritization mode",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py prioritization {{input}}"
+    },
+    {
+      "name": "story_bot-scenarios",
+      "description": "Scenarios mode",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py scenarios {{input}}"
+    },
+    {
+      "name": "story_bot-tests",
+      "description": "Tests mode",
+      "run": "python agile_bot/bots/story_bot/src/story_bot_cli.py tests {{input}}"
+    }
+  ]
+}
