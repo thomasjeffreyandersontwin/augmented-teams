@@ -6,6 +6,8 @@ Converts format and renders to DrawIO.
 
 import json
 import sys
+import os
+import argparse
 from pathlib import Path
 
 from ..story_io_diagram import StoryIODiagram
@@ -249,13 +251,21 @@ def adapt_story_graph(data):
 def main():
     """Load structured.json and render to DrawIO."""
     # Path to the structured.json file (relative to workspace root)
-    # From story_io/render_example.py -> story_io -> src -> story_bot -> bots -> agile_bot -> workspace root
-    workspace_root = Path(__file__).parent.parent.parent.parent.parent.parent
-    structured_path = workspace_root / "demo" / "cheap_wealth_online" / "docs" / "stories" / "structured.json"
-    
-    # Also try direct path from workspace root if provided as argument
-    if len(sys.argv) > 1:
-        structured_path = Path(sys.argv[1])
+    # Determine Python import root for imports; keep it separate from runtime workspace.
+    python_workspace_root = Path(__file__).parent.parent.parent.parent.parent.parent
+
+    # Resolve workspace from environment (WORKING_AREA preferred)
+    parser = argparse.ArgumentParser(description='Load and render a story graph from structured.json')
+    parser.add_argument('structured_path', nargs='?', help='Optional path to structured.json to load')
+    args = parser.parse_args()
+
+    from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+    workspace_root = get_workspace_directory()
+
+    if args.structured_path:
+        structured_path = Path(args.structured_path)
+    else:
+        structured_path = workspace_root / "demo" / "cheap_wealth_online" / "docs" / "stories" / "structured.json"
     
     if not structured_path.exists():
         print(f"Error: File not found: {structured_path}")

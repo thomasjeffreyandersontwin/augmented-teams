@@ -3,12 +3,13 @@ from typing import Dict, Any
 import json
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.bot.base_action import BaseAction
+from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import find_nested_subfolder
 
 
 class PlanningAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path):
-        super().__init__(bot_name, behavior, workspace_root, 'decide_planning_criteria')
+    def __init__(self, bot_name: str, behavior: str, botspace_root: Path, working_dir: Path = None):
+        super().__init__(bot_name, behavior, botspace_root, 'decide_planning_criteria', working_dir)
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute decide_planning_criteria action logic."""
@@ -16,7 +17,7 @@ class PlanningAction(BaseAction):
         return {'instructions': instructions}
     
     def _find_action_folder(self, action_name: str) -> Path:
-        base_actions_dir = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        base_actions_dir = self.base_actions_dir
         
         # Try to find folder with action name (with or without number prefix)
         for folder in base_actions_dir.glob(f'*{action_name}'):
@@ -30,22 +31,18 @@ class PlanningAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.botspace_root,
                 self.bot_name,
                 self.behavior
             )
-            planning_dir = None
-            for guardrails_folder in behavior_folder.glob('*guardrails'):
-                candidate = guardrails_folder / 'planning'
-                if candidate.exists():
-                    planning_dir = candidate
-                    break
+            # Use centralized utility to find guardrails/planning folder
+            planning_dir = find_nested_subfolder(behavior_folder, 'guardrails', 'planning')
         except FileNotFoundError:
             planning_dir = None
         
         instructions = {}
         
-        if not planning_dir or not planning_dir.exists():
+        if not planning_dir:
             return {'assumptions': [], 'decision_criteria': {}}
         
         # Load assumptions
@@ -62,7 +59,9 @@ class PlanningAction(BaseAction):
             decision_criteria = {}
             for criteria_file in criteria_dir.glob('*.json'):
                 criteria_data = read_json_file(criteria_file)
-                decision_criteria.update(criteria_data)
+                # Use filename (without .json) as the key to avoid overwriting
+                criteria_key = criteria_file.stem
+                decision_criteria[criteria_key] = criteria_data
             instructions['decision_criteria'] = decision_criteria
         else:
             instructions['decision_criteria'] = {}

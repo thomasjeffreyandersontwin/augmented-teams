@@ -1,21 +1,26 @@
 {
   "description": "Behavior-level trigger words - specific to prioritization/thin slicing behavior",
   "patterns": [
-    "prioritiz.*stories",
+    "start.*prioritization",
+    "let.*s.*prioritize",
+    "begin.*prioritization",
+    "do.*prioritization",
+    "prioritization",
+    "prioritize",
     "rank.*epics",
     "value.*based.*order",
     "decide.*what.*first",
-    "slice.*for.*delivery",
-    "group.*stories.*by.*value",
-    "group.*stories.*by.*risk",
-    "group.*stories.*by.*assumption",
+    "slice.*",
+    "group.*by.*value",
+    "group.*by.*risk",
+    "group.*by.*assumption",
     "define.*thin.*slice",
-    "organize.*story.*map",
+    "organize.*map",
     "plan.*mvp.*delivery",
     "choose.*mvp",
     "decide.*initial.*release",
     "pick.*first.*slice",
-    "stack.*stories.*by.*impact",
+    "stack.*by.*impact",
     "delivery.*sequence",
     "delivery.*order",
     "assumption.*driven.*planning",
@@ -24,8 +29,7 @@
     "validate.*risk.*first",
     "learn.*fast.*slice",
     "test.*value.*proposition",
-    "explore.*release.*path",
-    "prioritization"
+    "explore.*release.*path"
   ],
   "priority": 9
 }

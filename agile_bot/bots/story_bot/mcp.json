@@ -8,7 +8,8 @@
     "cwd": "C:\\dev\\augmented-teams",
     "env": {
       "AGENT_NAME": "story_bot",
-      "PYTHONPATH": "C:\\dev\\augmented-teams"
+      "PYTHONPATH": "C:\\dev\\augmented-teams",
+      "WORKING_AREA": "C:\\dev\\augmented-teams"
     }
   }
 }

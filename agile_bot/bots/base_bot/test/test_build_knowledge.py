@@ -76,7 +76,7 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         
         template_file = create_knowledge_graph_template(workspace_root, bot_name, behavior, template_name)
         
-        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, botspace_root=workspace_root)
         instructions = action_obj.inject_knowledge_graph_template()
         
         assert 'knowledge_graph_template' in instructions
@@ -90,7 +90,7 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         behavior_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior
         behavior_dir.mkdir(parents=True, exist_ok=True)
         
-        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, botspace_root=workspace_root)
         
         with pytest.raises(FileNotFoundError) as exc_info:
             action_obj.inject_knowledge_graph_template()

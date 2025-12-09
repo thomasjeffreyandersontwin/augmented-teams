@@ -5,17 +5,20 @@ from datetime import datetime
 from transitions import Machine
 import logging
 
+from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+
 logger = logging.getLogger(__name__)
 
 
 class Workflow:
     
     def __init__(self, bot_name: str, behavior: str, workspace_root: Path, 
-                 states: List[str], transitions: List[Dict]):
+                 states: List[str], transitions: List[Dict], bot_instance=None):
         self.bot_name = bot_name
         self.behavior = behavior
         self.workspace_root = Path(workspace_root)
         self.states = states
+        self.bot = bot_instance  # Reference to parent Bot instance
         
         # Initialize state machine
         self.machine = Machine(
@@ -35,30 +38,20 @@ class Workflow:
         return self.workspace_root / 'agile_bot' / 'bots' / self.bot_name
     
     @property
-    def current_project_file(self) -> Path:
-        """Get current_project.json file path."""
-        return self.dir / 'current_project.json'
-    
-    @property
-    def current_project(self) -> Path:
-        """Get current project directory."""
-        if self.current_project_file.exists():
-            try:
-                project_data = json.loads(self.current_project_file.read_text(encoding='utf-8'))
-                return Path(project_data.get('current_project', ''))
-            except Exception:
-                pass
-        return self.workspace_root
-    
-    @property
-    def project_location(self) -> Path:
-        """Get project location (same as current_project for clarity)."""
-        return self.current_project
+    def working_dir(self) -> Path:
+        """Authoritative working directory for workflow operations.
+
+        This is computed from the centralized workspace helper so workflow
+        does not store or accept a caller-provided working directory.
+        """
+        # Per environment-only workspace policy, the project area is the
+        # workspace root itself (everything is dumped into WORKING_AREA).
+        return get_workspace_directory()
     
     @property
     def file(self) -> Path:
-        """Get workflow state file path."""
-        return self.project_location / 'workflow_state.json'
+        """Get workflow state file path (always derived from workspace helper)."""
+        return self.working_dir / 'workflow_state.json'
     
     @property
     def workflow_states(self) -> List[str]:
@@ -79,35 +72,47 @@ class Workflow:
             logger.debug(f'Transition failed (expected at workflow end): {e}')
     
     def load_state(self):
-        if self.file.exists():
-            try:
-                state_data = json.loads(self.file.read_text(encoding='utf-8'))
-                current_behavior = state_data.get('current_behavior', '')
-                current_action = state_data.get('current_action', '')
-                
-                if current_behavior == f'{self.bot_name}.{self.behavior}':
-                    # Use current_action from file as source of truth
-                    # Extract action name from format: 'bot.behavior.action' -> 'action'
-                    if current_action:
-                        action_name = current_action.split('.')[-1]
-                        if action_name in self.states:
-                            self.machine.set_state(action_name)
-                            return
-                    
-                    # Fallback: if current_action not found or invalid, determine from completed_actions
-                    completed_actions = state_data.get('completed_actions', [])
-                    next_action = self._determine_next_action_from_completed(completed_actions)
-                    
-                    if next_action and next_action in self.states:
-                        self.machine.set_state(next_action)
-            except Exception as e:
-                logger.warning(f'Failed to load workflow state from {self.file}: {e}', exc_info=True)
-        else:
+        # If no workflow file, start at first action
+        if not self.file.exists():
             # No file - reset to first action
             first_action = self.states[0] if self.states else None
             if first_action:
                 self.machine.set_state(first_action)
                 logger.info(f'No workflow state found, reset to first action: {first_action}')
+            return
+        
+        try:
+            state_data = json.loads(self.file.read_text(encoding='utf-8'))
+            current_behavior = state_data.get('current_behavior', '')
+            current_action = state_data.get('current_action', '')
+            
+            if current_behavior == f'{self.bot_name}.{self.behavior}':
+                # Use current_action from file as source of truth
+                # Extract action name from format: 'bot.behavior.action' -> 'action'
+                if current_action:
+                    action_name = current_action.split('.')[-1]
+                    if action_name in self.states:
+                        self.machine.set_state(action_name)
+                        return
+                
+                # Fallback: if current_action not found or invalid, determine from completed_actions
+                completed_actions = state_data.get('completed_actions', [])
+                next_action = self._determine_next_action_from_completed(completed_actions)
+                
+                if next_action and next_action in self.states:
+                    self.machine.set_state(next_action)
+            else:
+                # Behavior/bot doesn't match - reset to first action
+                first_action = self.states[0] if self.states else None
+                if first_action:
+                    self.machine.set_state(first_action)
+                    logger.info(f'Bot/behavior mismatch ({current_behavior} != {self.bot_name}.{self.behavior}), reset to first action: {first_action}')
+        except Exception as e:
+            logger.warning(f'Failed to load workflow state from {self.file}: {e}', exc_info=True)
+            # On error, reset to first action
+            first_action = self.states[0] if self.states else None
+            if first_action:
+                self.machine.set_state(first_action)
     
     def _determine_next_action_from_completed(self, completed_actions: list) -> str:
         """
@@ -162,10 +167,7 @@ class Workflow:
         return last_completed
     
     def save_state(self):
-        if not self.current_project_file.exists():
-            return
-        
-        self.project_location.mkdir(parents=True, exist_ok=True)
+        self.working_dir.mkdir(parents=True, exist_ok=True)
         
         existing_state = {}
         if self.file.exists():
@@ -187,13 +189,9 @@ class Workflow:
         self.save_completed_action(self.current_state)
     
     def save_completed_action(self, action_name: str):
-        # Don't write if current_project not set
-        if not self.current_project_file.exists():
-            # Silently skip - project not initialized yet
-            return
-        
-        # Workflow state is in {project_location}/workflow_state.json
-        self.project_location.mkdir(parents=True, exist_ok=True)
+        # Don't write if working_dir not set
+        # Workflow state is in {working_dir}/workflow_state.json
+        self.working_dir.mkdir(parents=True, exist_ok=True)
         
         # Load existing state
         state_data = {}
@@ -218,7 +216,7 @@ class Workflow:
         """Check if an action has been marked as completed."""
         if not self.file.exists():
             return False
-        
+
         try:
             state_data = json.loads(self.file.read_text(encoding='utf-8'))
             completed_actions = state_data.get('completed_actions', [])

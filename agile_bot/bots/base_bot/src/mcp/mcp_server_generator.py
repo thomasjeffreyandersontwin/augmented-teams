@@ -103,6 +103,9 @@ class MCPServerGenerator:
         # Register bot tool (routes to current behavior and current action)
         self.register_bot_tool(mcp_server)
         
+        # Register get_working_dir tool (shows current working directory)
+        self.register_get_working_dir_tool(mcp_server)
+        
         # Register close current action tool (marks action complete and transitions)
         self.register_close_current_action_tool(mcp_server)
         
@@ -132,7 +135,7 @@ class MCPServerGenerator:
     def register_bot_tool(self, mcp_server: FastMCP):
         tool_name = 'tool'
         
-        @mcp_server.tool(name=tool_name, description=f'Bot tool for {self.bot_name} - routes to current behavior and action')
+        @mcp_server.tool(name=tool_name, description=f'Bot tool for {self.bot_name} - routes to current behavior and action.')
         async def bot_tool(parameters: dict = None):
             if parameters is None:
                 parameters = {}
@@ -140,7 +143,7 @@ class MCPServerGenerator:
             if self.bot is None:
                 return {"error": "Bot not initialized"}
             
-            result = self.bot.forward_to_current_behavior_and_current_action()
+            result = self.bot.forward_to_current_behavior_and_current_action(parameters=parameters)
             
             return {
                 "status": result.status,
@@ -155,56 +158,85 @@ class MCPServerGenerator:
             'description': f'Routes to current behavior and action'
         })
     
+    def register_get_working_dir_tool(self, mcp_server: FastMCP):
+        tool_name = 'get_working_dir'
+        
+        @mcp_server.tool(name=tool_name, description=f'Get the current working directory inferred from context. Triggers: where are we working, what\'s my location, show working directory')
+        async def get_working_dir(input_file: str = None, project_dir: str = None):
+            """Get the working directory inferred from context or current session.
+
+            If `input_file` or `project_dir` provided, the working directory is inferred
+            from that path. Otherwise the server returns the workflow-derived working
+            directory (resolved via the centralized workspace helper).
+            """
+            if self.bot is None:
+                return {"error": "Bot not initialized"}
+
+            # If explicit context provided, infer from it
+            if input_file or project_dir:
+                path = input_file or project_dir
+                working_dir = self.bot.infer_working_dir_from_path(path)
+                return {
+                    'working_dir': str(working_dir),
+                    'message': f'Working directory inferred from {path}: {working_dir}'
+                }
+
+            # Otherwise return the workflow-derived working directory for the first behavior
+            if self.bot.behaviors:
+                first_behavior = self.bot.behaviors[0]
+                behavior_obj = getattr(self.bot, first_behavior)
+                try:
+                    wd = behavior_obj.workflow.working_dir
+                    return {
+                        'working_dir': str(wd),
+                        'message': f'Working directory derived from workspace helper: {wd}'
+                    }
+                except Exception:
+                    pass
+
+            return {
+                'working_dir': None,
+                'message': 'No working directory available. Provide input_file or project_dir to infer location.'
+            }
+        
+        self.registered_tools.append({
+            'name': tool_name,
+            'type': 'get_working_dir_tool',
+            'description': f'Get current working directory'
+        })
+    
     def register_close_current_action_tool(self, mcp_server: FastMCP):
         tool_name = 'close_current_action'
         
         @mcp_server.tool(name=tool_name, description=f'Close current action tool for {self.bot_name} - marks current action complete and transitions to next')
         async def close_current_action(parameters: dict = None):
-            """
-            Mark the current action as complete and transition to next action.
-            
-            Call this after:
-            1. Action tool returned instructions
-            2. AI followed the instructions
-            3. Human reviewed and confirmed completion
-            
-            Returns:
-                status: "completed"
-                completed_action: Name of action that was closed
-                next_action: Name of next action (or same if at end)
-                message: Human-readable status message
+            """Mark the current action as complete and transition to the next action.
+
+            The server derives the working directory from the workflow (via the
+            centralized workspace helper). Callers do not need to provide a
+            `working_dir`.
             """
             if parameters is None:
                 parameters = {}
-            
+
             if self.bot is None:
                 return {"error": "Bot not initialized"}
-            
-            # Get first behavior to access workflow properties
-            # (all behaviors share same current_project configuration)
-            first_behavior = self.bot.behaviors[0] if self.bot.behaviors else None
-            if not first_behavior:
-                return {
-                    "error": "No behaviors configured",
-                    "message": "Bot has no behaviors configured."
-                }
-            
-            behavior_obj = getattr(self.bot, first_behavior)
-            
-            # Use workflow properties instead of manually constructing paths
-            if not behavior_obj.workflow.current_project_file.exists():
-                return {
-                    "error": "No project initialized",
-                    "message": "No current_project.json found. Initialize project first."
-                }
-            
-            # Workflow state file path from workflow object
-            state_file = behavior_obj.workflow.file
-            
-            if not state_file.exists():
+
+            # Locate an active workflow_state.json from any behavior's workflow file
+            state_file = None
+            for behavior in self.bot.behaviors:
+                behavior_obj = getattr(self.bot, behavior, None)
+                if behavior_obj is None:
+                    continue
+                wf_file = behavior_obj.workflow.file
+                if wf_file.exists():
+                    state_file = wf_file
+                    break
+
+            if state_file is None:
                 return {
                     "error": "No active workflow found",
-                    "message": f"No workflow_state.json exists at {state_file}. Start a workflow first."
+                    "message": "No workflow_state.json exists for any behavior. Start a workflow first."
                 }
             
             try:
@@ -232,6 +264,9 @@ class MCPServerGenerator:
                         "error": f"Behavior {behavior_name} not found",
                         "message": f"Available behaviors: {', '.join(self.bot.behaviors)}"
                     }
+                
+                # Workflow computes its own working_dir via the workspace helper;
+                # no explicit set is required here.
                 
                 # Mark action as complete and transition
                 # (idempotent - safe to call multiple times)
@@ -376,6 +411,22 @@ class MCPServerGenerator:
             if self.bot is None:
                 return {"error": "Bot not initialized"}
             
+            # WORKFLOW STATE ENFORCEMENT: Check if workflow_state.json exists
+            working_dir = self._infer_working_dir_from_parameters(parameters)
+            if working_dir:
+                workflow_state_file = working_dir / 'workflow_state.json'
+                
+                if not workflow_state_file.exists():
+                    # Check if user provided confirmation
+                    if 'confirmed_behavior' in parameters:
+                        confirmed = parameters['confirmed_behavior']
+                        # Initialize workflow state with confirmed behavior
+                        self._initialize_workflow_state(working_dir, confirmed)
+                        # Continue to execute the behavior
+                    else:
+                        # No workflow state - must execute entry workflow first
+                        return self._execute_entry_workflow(working_dir, parameters)
+            
             behavior_obj = getattr(self.bot, behavior, None)
             if behavior_obj is None:
                 return {"error": f"Behavior {behavior} not found"}
@@ -387,7 +438,7 @@ class MCPServerGenerator:
                     return {"error": f"Action {action} not found in {behavior}"}
                 result = action_method(parameters=parameters)
             else:
-                result = behavior_obj.forward_to_current_action()
+                result = behavior_obj.forward_to_current_action(parameters=parameters)
             
             return {
                 "status": result.status,
@@ -403,6 +454,155 @@ class MCPServerGenerator:
             'trigger_patterns': trigger_patterns,
             'description': description
         })
+    
+    def _infer_working_dir_from_parameters(self, parameters: dict) -> Path:
+        """
+        Extract and infer working directory from parameters.
+        
+        Returns None if no path information in parameters.
+        """
+        if not parameters:
+            return None
+        
+        if 'working_dir' in parameters:
+            path = parameters['working_dir']
+        elif 'input_file' in parameters:
+            path = parameters['input_file']
+        elif 'project_dir' in parameters:
+            path = parameters['project_dir']
+        else:
+            return None
+        
+        return self.bot.infer_working_dir_from_path(path) if self.bot else None
+    
+    def _execute_entry_workflow(self, working_dir: Path, parameters: dict) -> dict:
+        """
+        Execute the bot's entry workflow to determine which behavior to start with.
+        
+        This follows the ENTRY WORKFLOW defined in the bot's instructions.json:
+        1. Check {{project_area}}/docs/stories/ for artifacts
+        2. Suggest earliest missing stage
+        3. WAIT for user to confirm stage
+        4. Read behavior instructions and execute
+        
+        Returns a message prompting the user to confirm which stage to start with.
+        """
+        import json
+        
+        # Check for existing artifacts in docs/stories/
+        stories_dir = working_dir / 'docs' / 'stories'
+        existing_artifacts = []
+        
+        if stories_dir.exists():
+            for behavior in self.bot.behaviors:
+                # Check for common artifact patterns per behavior
+                behavior_artifacts = self._check_behavior_artifacts(stories_dir, behavior)
+                if behavior_artifacts:
+                    existing_artifacts.append({
+                        'behavior': behavior,
+                        'artifacts': behavior_artifacts
+                    })
+        
+        # Determine earliest missing stage
+        earliest_missing = None
+        for behavior in self.bot.behaviors:
+            # Check if this behavior has artifacts
+            has_artifacts = any(a['behavior'] == behavior for a in existing_artifacts)
+            if not has_artifacts:
+                earliest_missing = behavior
+                break
+        
+        # If no missing stages, suggest the last behavior
+        if earliest_missing is None:
+            earliest_missing = self.bot.behaviors[-1] if self.bot.behaviors else None
+        
+        # Build suggestion message
+        message = f"**ENTRY WORKFLOW - No workflow_state.json found**\n\n"
+        message += f"Checking for existing artifacts in `{stories_dir}`...\n\n"
+        
+        if existing_artifacts:
+            message += "**Found existing artifacts:**\n"
+            for artifact in existing_artifacts:
+                message += f"- {artifact['behavior']}: {', '.join(artifact['artifacts'])}\n"
+            message += "\n"
+        else:
+            message += "No existing artifacts found.\n\n"
+        
+        message += f"**Suggested starting behavior:** `{earliest_missing}`\n\n"
+        message += "**Available behaviors:**\n"
+        for i, behavior in enumerate(self.bot.behaviors, 1):
+            status = "✓" if any(a['behavior'] == behavior for a in existing_artifacts) else " "
+            message += f"{i}. [{status}] {behavior}\n"
+        
+        message += "\n**Please confirm which behavior to start with.**\n"
+        message += f"Reply with the behavior name (e.g., '{earliest_missing}') or number (e.g., '{self.bot.behaviors.index(earliest_missing) + 1}')."
+        
+        return {
+            "status": "requires_confirmation",
+            "message": message,
+            "suggested_behavior": earliest_missing,
+            "available_behaviors": self.bot.behaviors,
+            "existing_artifacts": existing_artifacts,
+            "working_dir": str(working_dir)
+        }
+    
+    def _check_behavior_artifacts(self, stories_dir: Path, behavior: str) -> list:
+        """
+        Check for common artifact patterns for a given behavior.
+        
+        Returns list of found artifact filenames.
+        """
+        artifacts = []
+        
+        # Common patterns per behavior
+        patterns = {
+            'shape': ['*story_map*', '*epic*', '*feature*'],
+            'prioritization': ['*increment*', '*priority*', '*backlog*'],
+            'arrange': ['*arrangement*', '*execution_order*'],
+            'discovery': ['*discovery*', '*flow*', '*rules*'],
+            'exploration': ['*exploration*', '*criteria*'],
+            'scenarios': ['*.feature', '*scenario*'],
+            'tests': ['*test*.py', '*_test.py', 'test_*.py']
+        }
+        
+        behavior_patterns = patterns.get(behavior, [])
+        
+        for pattern in behavior_patterns:
+            matches = list(stories_dir.rglob(pattern))
+            for match in matches:
+                if match.is_file():
+                    artifacts.append(match.name)
+        
+        return artifacts
+    
+    def _initialize_workflow_state(self, working_dir: Path, behavior: str):
+        """
+        Initialize workflow_state.json for a new workflow starting with the specified behavior.
+        """
+        import json
+        
+        # Create docs/stories directory if it doesn't exist
+        stories_dir = working_dir / 'docs' / 'stories'
+        stories_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Get the behavior object to find its first action
+        behavior_obj = getattr(self.bot, behavior, None)
+        if behavior_obj is None:
+            raise ValueError(f"Behavior {behavior} not found")
+        
+        first_action = behavior_obj.workflow.states[0] if behavior_obj.workflow.states else 'gather_context'
+        
+        # Create initial workflow state
+        workflow_state_file = working_dir / 'workflow_state.json'
+        state_data = {
+            'current_behavior': f'{self.bot_name}.{behavior}',
+            'current_action': f'{self.bot_name}.{behavior}.{first_action}',
+            'completed_actions': [],
+            'started_at': None  # Will be set by workflow when it saves
+        }
+        
+        workflow_state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+
     
     def register_behavior_action_tool(
         self,
@@ -421,7 +621,7 @@ class MCPServerGenerator:
             action=action
         )
         
-        description = f'{behavior} {action} for {self.bot_name}'
+        description = f'{behavior} {action} for {self.bot_name}.'
         if trigger_patterns:
             description += f'\nTrigger patterns: {", ".join(trigger_patterns)}'
         
@@ -520,21 +720,32 @@ Runnable MCP server for {self.bot_name} using FastMCP and base generator.
 from pathlib import Path
 import sys
 
-workspace_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(workspace_root))
+# Keep Python import root separate from runtime workspace. This file still
+# bootstraps `sys.path` for package imports; runtime workspace is resolved
+# from the environment (WORKING_AREA) by the workspace helper.
+python_workspace_root = Path(__file__).parent.parent.parent.parent.parent
+if str(python_workspace_root) not in sys.path:
+    sys.path.insert(0, str(python_workspace_root))
 
+from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
 from agile_bot.bots.base_bot.src.mcp_server_generator import MCPServerGenerator
 
 
 def main():
+    """Main entry point for the generated MCP server."""
+    # No CLI workspace parameter required — the workspace helper prefers
+    # the WORKING_AREA environment variable.
+
+    workspace_root = get_workspace_directory()
+
     generator = MCPServerGenerator(
         workspace_root=workspace_root,
         bot_location='agile_bot/bots/{self.bot_name}'
     )
-    
+
     mcp_server = generator.create_server_instance()
     generator.register_all_behavior_action_tools(mcp_server)
-    
+
     mcp_server.run()
 
 

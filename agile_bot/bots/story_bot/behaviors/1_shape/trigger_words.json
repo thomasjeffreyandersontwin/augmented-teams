@@ -1,6 +1,11 @@
 {
   "description": "Behavior-level trigger words - specific to shaping/scoping/initial planning behavior, including domain shaping integration",
   "patterns": [
+    "start.*shaping",
+    "let.*s.*shape",
+    "begin.*shaping",
+    "do.*shaping",
+    "shaping",
     "shape.*capability",
     "scoping",
     "initial.*planning",
@@ -25,7 +30,6 @@
     "identify.*system.*touchpoints",
     "start.*exploring.*flow",
     "problem.*framing",
-    "story.*shape",
     "build.*new",
     "start.*new.*project",
     "new.*project",
