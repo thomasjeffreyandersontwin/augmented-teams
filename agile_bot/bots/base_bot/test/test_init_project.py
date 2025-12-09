@@ -1,36 +1,47 @@
 """
 Init Project Tests
 
-Tests for all stories in the 'Init Project' sub-epic (in story map order):
-- Initialize Project Location (Increment 3)
+Tests for all stories in the 'Init Project' epic (in story map order):
+- Bootstrap Workspace Configuration
 """
 import pytest
 from pathlib import Path
 import json
 import tempfile
 import shutil
+import os
 from agile_bot.bots.base_bot.src.bot.bot import Bot
+from agile_bot.bots.base_bot.src.state.workspace import (
+    get_bot_directory,
+    get_workspace_directory,
+    get_behavior_folder
+)
 
 
 # ============================================================================
 # HELPER FUNCTIONS - Reusable test operations
 # ============================================================================
 
-def create_bot_config(workspace: Path, bot_name: str, behaviors: list) -> Path:
+def create_bot_config(bot_directory: Path, bot_name: str, behaviors: list) -> Path:
     """Helper: Create bot configuration file."""
-    config_path = workspace / 'agile_bot/bots' / bot_name / 'config/bot_config.json'
+    config_path = bot_directory / 'config' / 'bot_config.json'
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps({'name': bot_name, 'behaviors': behaviors}), encoding='utf-8')
     return config_path
 
 
-def create_saved_location(workspace: Path, bot_name: str, location: str):
-    """Helper: Create saved current_project file."""
-    bot_dir = workspace / 'agile_bot' / 'bots' / bot_name
-    current_project_file = bot_dir / 'current_project.json'
-    current_project_file.parent.mkdir(parents=True, exist_ok=True)
-    current_project_file.write_text(json.dumps({'current_project': location}), encoding='utf-8')
-    return current_project_file
+def create_agent_json(bot_directory: Path, working_area: str) -> Path:
+    """Helper: Create agent.json file."""
+    agent_json = bot_directory / 'agent.json'
+    agent_json.write_text(json.dumps({'WORKING_AREA': working_area}), encoding='utf-8')
+    return agent_json
+
+
+def create_behavior_folder(bot_directory: Path, behavior_name: str):
+    """Helper: Create behavior folder structure."""
+    behavior_dir = bot_directory / 'behaviors' / behavior_name
+    behavior_dir.mkdir(parents=True, exist_ok=True)
+    return behavior_dir
 
 
 # ============================================================================
@@ -38,318 +49,440 @@ def create_saved_location(workspace: Path, bot_name: str, location: str):
 # ============================================================================
 
 @pytest.fixture
-def workspace_root():
+def temp_workspace():
     """Fixture: Temporary workspace directory."""
     test_dir = Path(tempfile.mkdtemp())
-    workspace = test_dir / 'workspace'
-    workspace.mkdir(exist_ok=True)
-    
-    yield workspace
+    yield test_dir
     
     # Cleanup
     if test_dir.exists():
         shutil.rmtree(test_dir)
 
 
+@pytest.fixture
+def bot_directory(temp_workspace):
+    """Fixture: Bot directory structure."""
+    bot_dir = temp_workspace / 'agile_bot' / 'bots' / 'test_bot'
+    bot_dir.mkdir(parents=True, exist_ok=True)
+    return bot_dir
+
+
+@pytest.fixture
+def workspace_directory(temp_workspace):
+    """Fixture: Workspace directory for content files."""
+    workspace_dir = temp_workspace / 'demo' / 'test_workspace'
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+    return workspace_dir
+
+
+@pytest.fixture(autouse=True)
+def clean_env():
+    """Fixture: Clean environment variables before and after each test."""
+    # Store original values
+    original_bot_dir = os.environ.get('BOT_DIRECTORY')
+    original_working_area = os.environ.get('WORKING_AREA')
+    original_working_dir = os.environ.get('WORKING_DIR')
+    
+    # Clear for test
+    if 'BOT_DIRECTORY' in os.environ:
+        del os.environ['BOT_DIRECTORY']
+    if 'WORKING_AREA' in os.environ:
+        del os.environ['WORKING_AREA']
+    if 'WORKING_DIR' in os.environ:
+        del os.environ['WORKING_DIR']
+    
+    yield
+    
+    # Restore original values
+    if 'BOT_DIRECTORY' in os.environ:
+        del os.environ['BOT_DIRECTORY']
+    if 'WORKING_AREA' in os.environ:
+        del os.environ['WORKING_AREA']
+    if 'WORKING_DIR' in os.environ:
+        del os.environ['WORKING_DIR']
+        
+    if original_bot_dir:
+        os.environ['BOT_DIRECTORY'] = original_bot_dir
+    if original_working_area:
+        os.environ['WORKING_AREA'] = original_working_area
+    if original_working_dir:
+        os.environ['WORKING_DIR'] = original_working_dir
+
+
 # ============================================================================
-# STORY: Initialize Project Location (Increment 3)
+# STORY: Bootstrap Workspace Configuration
 # ============================================================================
 
-class TestInitializeProjectLocation:
-    """Story: Initialize Project Location - Confirms project location for workflow state persistence."""
+class TestBootstrapWorkspace:
+    """
+    Story: Bootstrap Workspace Configuration
     
-    def test_first_time_initialization_detects_and_requests_confirmation(self, workspace_root):
-        """
-        SCENARIO: First time initialization with no saved location
-        GIVEN: No project location has been saved
-        WHEN: Bot behavior is invoked
-        THEN: Bot detects current directory and requests confirmation
-        """
-        # Given: No saved location
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        
-        # When: Bot behavior is invoked
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project()
-        
-        # Then: Bot detects current directory (cwd) and requests confirmation
-        assert result.status == 'completed'
-        assert 'proposed_location' in result.data
-        assert result.data['requires_confirmation'] == True
-        assert 'Confirm?' in result.data['message']
+    As a bot developer, I want the workspace and bot directories to be 
+    automatically configured at startup from environment variables and 
+    configuration files, so that I don't need to pass directory paths 
+    as parameters throughout the codebase.
     
-    def test_subsequent_invocation_same_location_skips_confirmation(self, workspace_root):
-        """
-        SCENARIO: Subsequent invocation with same location (no confirmation bias)
-        GIVEN: Project location is saved and current directory matches saved location
-        WHEN: Bot behavior is invoked
-        THEN: Bot does NOT ask user for confirmation and says 'Resuming in...'
-        """
-        # Given: Saved location matches current directory
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        # Save current_project as cwd (which is what it will detect)
-        import os
-        current_dir = Path(os.getcwd())
-        create_saved_location(workspace_root, 'test_bot', str(current_dir))
-        
-        # When: Bot behavior is invoked
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project()
-        
-        # Then: Bot skips confirmation and says resuming
-        assert result.status == 'completed'
-        assert result.data.get('requires_confirmation') == False
-        assert 'Resuming in' in result.data['message']
+    Acceptance Criteria:
+    1. Entry points (MCP/CLI) bootstrap environment before importing modules
+    2. All directory resolution reads from environment variables only
+    3. agent.json provides default workspace location
+    4. Environment variables can override agent.json
+    """
     
-    def test_location_changed_requests_confirmation(self, workspace_root):
-        """
-        SCENARIO: Location changed - ask for confirmation
-        GIVEN: Project location is saved and current directory is DIFFERENT
-        WHEN: Bot behavior is invoked
-        THEN: Bot detects mismatch and asks if user wants to switch to current directory
-        """
-        # Given: Saved location differs from current
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        old_location = Path('C:/dev/old-project')
-        create_saved_location(workspace_root, 'test_bot', str(old_location))
-        
-        # When: Bot behavior is invoked
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project()
-        
-        # Then: Current behavior auto-resumes saved location (no prompt)
-        assert result.status == 'completed'
-        assert result.data.get('requires_confirmation') is False
-        assert 'Resuming in' in result.data.get('message', '')
+    # ========================================================================
+    # SCENARIO GROUP 1: Environment Variable Resolution
+    # ========================================================================
     
-    def test_location_file_saved_when_no_confirmation_needed(self, workspace_root):
+    def test_bot_directory_from_environment_variable(self, bot_directory):
         """
-        SCENARIO: Location file persistence when no confirmation needed
-        GIVEN: Saved location matches current location
-        WHEN: Bot behavior is invoked
-        THEN: Bot saves location to current_project.json file
+        SCENARIO: Bot directory resolved from environment variable
+        GIVEN: BOT_DIRECTORY environment variable is set
+        WHEN: get_bot_directory() is called
+        THEN: Returns the path from environment variable
         """
-        # Given: Saved location matches current
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        import os
-        current_dir = Path(os.getcwd())
-        current_project_file = create_saved_location(workspace_root, 'test_bot', str(current_dir))
+        # Given: BOT_DIRECTORY environment variable is set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
         
-        # When: Bot behavior is invoked
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project()
+        # When: get_bot_directory() is called
+        result = get_bot_directory()
         
-        # Then: Location persisted without confirmation
-        assert result.data['requires_confirmation'] == False
-        assert current_project_file.exists()
-        
-        saved_data = json.loads(current_project_file.read_text(encoding='utf-8'))
-        assert saved_data['current_project'] == str(current_dir)
+        # Then: Returns the path from environment variable
+        assert result == bot_directory
+        assert isinstance(result, Path)
     
-    def test_user_provides_custom_project_area_via_parameters(self, workspace_root):
+    def test_workspace_directory_from_environment_variable(self, workspace_directory):
         """
-        SCENARIO: User provides different location during initialization via parameters
-        GIVEN: No saved location exists
-        WHEN: Bot behavior is invoked with project_area parameter
-        THEN: Bot uses the provided project_area location
+        SCENARIO: Workspace directory resolved from environment variable
+        GIVEN: WORKING_AREA environment variable is set
+        WHEN: get_workspace_directory() is called
+        THEN: Returns the path from environment variable
         """
-        # Given: No saved location, custom project_area provided
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        custom_area = 'agile_bot/bots/base_bot/docs/stories'
+        # Given: WORKING_AREA environment variable is set
+        os.environ['WORKING_AREA'] = str(workspace_directory)
         
-        # When: Bot behavior is invoked with project_area parameter
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project(parameters={'project_area': custom_area})
+        # When: get_workspace_directory() is called
+        result = get_workspace_directory()
         
-        # Then: Bot proposes the custom location
-        expected_location = workspace_root / custom_area
-        assert result.status == 'completed'
-        assert result.data['proposed_location'] == str(expected_location)
-        assert result.data['requires_confirmation'] == True
+        # Then: Returns the path from environment variable
+        assert result == workspace_directory
+        assert isinstance(result, Path)
     
-    def test_user_changes_project_area_with_initialize_project_action(self, workspace_root):
+    def test_workspace_directory_supports_legacy_working_dir_variable(self, workspace_directory):
         """
-        SCENARIO: User changes project area via initialize_project action with parameters
-        GIVEN: Project location is already saved
-        WHEN: User invokes initialize_project with different project_area parameter
-        THEN: Bot detects change and asks if user wants to switch to current directory
+        SCENARIO: Backward compatibility with WORKING_DIR variable
+        GIVEN: WORKING_DIR environment variable is set (legacy name)
+        AND: WORKING_AREA is not set
+        WHEN: get_workspace_directory() is called
+        THEN: Returns the path from WORKING_DIR variable
         """
-        # Given: Old location is saved
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        old_area = 'agile_bot/bots/story_bot'
-        old_location = workspace_root / old_area
-        create_saved_location(workspace_root, 'test_bot', str(old_location))
+        # Given: WORKING_DIR environment variable is set (legacy)
+        # AND: WORKING_AREA is not set
+        os.environ['WORKING_DIR'] = str(workspace_directory)
+        assert 'WORKING_AREA' not in os.environ
         
-        # When: User provides new project_area parameter
-        new_area = 'agile_bot/bots/base_bot/docs/stories'
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project(parameters={'project_area': new_area})
+        # When: get_workspace_directory() is called
+        result = get_workspace_directory()
         
-        # Then: Bot detects location change and asks to switch
-        expected_new_location = workspace_root / new_area
-        assert result.status == 'completed'
-        assert 'saved_location' in result.data
-        assert 'current_location' in result.data
-        assert result.data['requires_confirmation'] == True
-        assert 'Switch to current directory?' in result.data['message']
+        # Then: Returns the path from WORKING_DIR variable
+        assert result == workspace_directory
+        assert isinstance(result, Path)
     
-    def test_project_area_parameter_as_hint_still_requests_confirmation(self, workspace_root):
+    def test_working_area_takes_precedence_over_working_dir(self, workspace_directory, temp_workspace):
         """
-        SCENARIO: First time with project_area parameter as hint
-        GIVEN: No saved location exists
-        WHEN: Bot is invoked with project_area parameter
-        THEN: Bot uses parameter as hint but still requests confirmation
-        AND: Location is NOT saved until user confirms
+        SCENARIO: WORKING_AREA takes precedence over legacy WORKING_DIR
+        GIVEN: Both WORKING_AREA and WORKING_DIR are set
+        AND: They have different values
+        WHEN: get_workspace_directory() is called
+        THEN: Returns WORKING_AREA value (preferred)
         """
-        # Given: No saved location
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        bot_dir = workspace_root / 'agile_bot' / 'bots' / 'test_bot'
-        current_project_file = bot_dir / 'current_project.json'
+        # Given: Both variables set with different values
+        different_dir = temp_workspace / 'different'
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        os.environ['WORKING_DIR'] = str(different_dir)
         
-        # When: Bot invoked with project_area parameter (as hint)
-        hint_area = 'agile_bot/bots/base_bot/docs/stories'
-        bot = Bot('test_bot', workspace_root, config_path)
-        result = bot.shape.initialize_project(parameters={'project_area': hint_area})
+        # When: get_workspace_directory() is called
+        result = get_workspace_directory()
         
-        # Then: Bot presents hint location but requests confirmation
-        expected_location = workspace_root / hint_area
-        assert result.status == 'completed'
-        assert result.data['proposed_location'] == str(expected_location)
-        assert result.data['requires_confirmation'] == True
-        
-        # AND: Location NOT saved yet (waiting for confirmation)
-        assert not current_project_file.exists()
+        # Then: Returns WORKING_AREA value
+        assert result == workspace_directory
+        assert result != different_dir
     
-    def test_user_confirms_proposed_location(self, workspace_root):
-        """
-        SCENARIO: User confirms proposed location
-        GIVEN: Bot proposed a location requiring confirmation
-        WHEN: User responds with confirm=True and same location
-        THEN: Bot saves the confirmed location
-        """
-        # Given: Initial call proposes location
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        bot = Bot('test_bot', workspace_root, config_path)
-        hint_area = 'agile_bot/bots/base_bot'
-        expected_location = workspace_root / hint_area
-        
-        result1 = bot.shape.initialize_project(parameters={'project_area': hint_area})
-        proposed = result1.data['proposed_location']
-        
-        # When: User confirms
-        result2 = bot.shape.initialize_project(parameters={
-            'confirm': True,
-            'project_area': proposed
-        })
-        
-        # Then: Location is saved
-        assert result2.status == 'completed'
-        assert result2.data['saved'] == True
-        assert result2.data.get('requires_confirmation', False) == False
-        
-        # Verify file was saved
-        bot_dir = workspace_root / 'agile_bot' / 'bots' / 'test_bot'
-        current_project_file = bot_dir / 'current_project.json'
-        assert current_project_file.exists()
-        
-        saved_data = json.loads(current_project_file.read_text(encoding='utf-8'))
-        assert saved_data['current_project'] == proposed
+    # ========================================================================
+    # SCENARIO GROUP 2: Error Handling
+    # ========================================================================
     
-    def test_user_provides_different_location_as_confirmation_response(self, workspace_root):
+    def test_missing_bot_directory_raises_clear_error(self):
         """
-        SCENARIO: User provides different location as response to confirmation
-        GIVEN: Bot proposed a location requiring confirmation
-        WHEN: User responds with confirm=True and DIFFERENT location
-        THEN: Bot saves the user's choice (not the proposed location)
+        SCENARIO: Missing BOT_DIRECTORY raises helpful error
+        GIVEN: BOT_DIRECTORY environment variable is NOT set
+        WHEN: get_bot_directory() is called
+        THEN: RuntimeError is raised
+        AND: Error message explains entry points must bootstrap
         """
-        # Given: Initial call proposes location
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        bot = Bot('test_bot', workspace_root, config_path)
+        # Given: BOT_DIRECTORY environment variable is NOT set
+        assert 'BOT_DIRECTORY' not in os.environ
         
-        result1 = bot.shape.initialize_project()
-        proposed = result1.data['proposed_location']
+        # When/Then: get_bot_directory() raises RuntimeError
+        with pytest.raises(RuntimeError) as exc_info:
+            get_bot_directory()
         
-        # When: User confirms with DIFFERENT location
-        user_choice = str(workspace_root / 'different-area')
-        result2 = bot.shape.initialize_project(parameters={
-            'confirm': True,
-            'project_area': user_choice
-        })
-        
-        # Then: User's choice is saved (not proposed location)
-        assert result2.status == 'completed'
-        assert result2.data['saved'] == True
-        
-        # Verify user's choice was saved, NOT proposed location
-        bot_dir = workspace_root / 'agile_bot' / 'bots' / 'test_bot'
-        current_project_file = bot_dir / 'current_project.json'
-        assert current_project_file.exists()
-        
-        saved_data = json.loads(current_project_file.read_text(encoding='utf-8'))
-        assert saved_data['current_project'] == user_choice
-        assert saved_data['current_project'] != proposed
+        # And: Error message explains bootstrap requirement
+        assert 'BOT_DIRECTORY' in str(exc_info.value)
+        assert 'bootstrap' in str(exc_info.value).lower()
     
-    def test_workflow_state_not_created_when_confirmation_required(self, workspace_root):
+    def test_missing_workspace_directory_raises_clear_error(self):
         """
-        SCENARIO: Workflow state not created when confirmation required
-        GIVEN: Bot proposes location requiring confirmation
-        WHEN: initialize_project is called and requires_confirmation is True
-        THEN: workflow_state.json is NOT created
-        AND: close_current_action cannot proceed without workflow state
+        SCENARIO: Missing WORKING_AREA raises helpful error
+        GIVEN: WORKING_AREA and WORKING_DIR environment variables are NOT set
+        WHEN: get_workspace_directory() is called
+        THEN: RuntimeError is raised
+        AND: Error message explains entry points must bootstrap
         """
-        # Given: Bot proposes location requiring confirmation
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        bot = Bot('test_bot', workspace_root, config_path)
+        # Given: Neither WORKING_AREA nor WORKING_DIR is set
+        assert 'WORKING_AREA' not in os.environ
+        assert 'WORKING_DIR' not in os.environ
         
-        # When: initialize_project is called (requires confirmation)
-        result = bot.shape.initialize_project(parameters={'project_area': 'test-project'})
+        # When/Then: get_workspace_directory() raises RuntimeError
+        with pytest.raises(RuntimeError) as exc_info:
+            get_workspace_directory()
         
-        # Then: workflow_state.json is NOT created
-        assert result.data['requires_confirmation'] == True
-        project_location = workspace_root / 'test-project'
-        workflow_state_file = project_location / 'workflow_state.json'
-        assert not workflow_state_file.exists(), "Workflow state should NOT be created when confirmation is required"
+        # And: Error message explains bootstrap requirement
+        assert 'WORKING_AREA' in str(exc_info.value)
+        assert 'bootstrap' in str(exc_info.value).lower()
     
-    def test_workflow_state_created_after_confirmation(self, workspace_root):
+    # ========================================================================
+    # SCENARIO GROUP 3: Bootstrap from agent.json
+    # ========================================================================
+    
+    def test_entry_point_bootstraps_from_agent_json(self, bot_directory, workspace_directory):
         """
-        SCENARIO: Workflow state created after confirmation
-        GIVEN: Bot proposed location requiring confirmation
-        WHEN: User confirms location with confirm=True
-        THEN: workflow_state.json IS created
-        AND: workflow_state.json contains current_behavior, current_action, and completed_actions
-        AND: close_current_action can proceed
+        SCENARIO: Entry point reads agent.json and sets environment
+        GIVEN: agent.json exists with WORKING_AREA field
+        AND: BOT_DIRECTORY can be self-detected from script location
+        WHEN: Entry point bootstrap code runs (simulated)
+        THEN: WORKING_AREA environment variable is set from agent.json
+        AND: BOT_DIRECTORY environment variable is set from script location
         """
-        # Given: Bot proposed location requiring confirmation
-        config_path = create_bot_config(workspace_root, 'test_bot', ['shape'])
-        bot = Bot('test_bot', workspace_root, config_path)
-        project_area = 'test-project'
+        # Given: agent.json exists with WORKING_AREA field
+        create_agent_json(bot_directory, str(workspace_directory))
         
-        result1 = bot.shape.initialize_project(parameters={'project_area': project_area})
-        proposed = result1.data['proposed_location']
+        # When: Entry point bootstrap code runs (simulated)
+        # Simulate what entry point does:
+        # 1. Self-detect bot directory
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
         
-        # When: User confirms location
-        result2 = bot.shape.initialize_project(parameters={
-            'confirm': True,
-            'project_area': proposed
-        })
+        # 2. Read agent.json and set WORKING_AREA
+        agent_json_path = bot_directory / 'agent.json'
+        if agent_json_path.exists():
+            agent_config = json.loads(agent_json_path.read_text(encoding='utf-8'))
+            if 'WORKING_AREA' in agent_config:
+                os.environ['WORKING_AREA'] = agent_config['WORKING_AREA']
         
-        # Then: workflow_state.json IS created
-        assert result2.status == 'completed'
-        assert result2.data.get('requires_confirmation', False) == False
+        # Then: Environment variables are set correctly
+        assert os.environ['BOT_DIRECTORY'] == str(bot_directory)
+        assert os.environ['WORKING_AREA'] == str(workspace_directory)
         
-        project_location = workspace_root / project_area
-        workflow_state_file = project_location / 'workflow_state.json'
-        assert workflow_state_file.exists(), "Workflow state SHOULD be created after confirmation"
+        # And: Functions return correct values
+        assert get_bot_directory() == bot_directory
+        assert get_workspace_directory() == workspace_directory
+    
+    def test_environment_variable_takes_precedence_over_agent_json(
+        self, bot_directory, workspace_directory, temp_workspace
+    ):
+        """
+        SCENARIO: Pre-set environment variable not overwritten
+        GIVEN: WORKING_AREA environment variable is already set (e.g., by mcp.json)
+        AND: agent.json also has WORKING_AREA field with different value
+        WHEN: Entry point bootstrap code runs (simulated)
+        THEN: WORKING_AREA environment variable retains original value
+        AND: agent.json value is NOT used (override pattern)
+        """
+        # Given: Environment variable already set with one value
+        override_workspace = temp_workspace / 'override_workspace'
+        override_workspace.mkdir(parents=True, exist_ok=True)
+        os.environ['WORKING_AREA'] = str(override_workspace)
         
-        # AND: workflow_state.json contains correct structure
-        state_data = json.loads(workflow_state_file.read_text(encoding='utf-8'))
-        assert 'current_behavior' in state_data, "Workflow state must have current_behavior"
-        assert 'current_action' in state_data, "Workflow state must have current_action"
-        assert 'completed_actions' in state_data, "Workflow state must have completed_actions"
+        # And: agent.json has different value
+        create_agent_json(bot_directory, str(workspace_directory))
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
         
-        assert state_data['current_behavior'] == 'test_bot.shape'
-        # initialize_project auto-advances, so the next action should be active
-        assert state_data['current_action'] == 'test_bot.shape.gather_context'
-        assert len(state_data['completed_actions']) == 1
-        assert state_data['completed_actions'][0]['action_state'] == 'test_bot.shape.initialize_project'
-
+        # When: Entry point bootstrap code runs (simulated with check)
+        # This is what entry point should do - check if already set
+        if 'WORKING_AREA' not in os.environ:
+            agent_json_path = bot_directory / 'agent.json'
+            if agent_json_path.exists():
+                agent_config = json.loads(agent_json_path.read_text(encoding='utf-8'))
+                if 'WORKING_AREA' in agent_config:
+                    os.environ['WORKING_AREA'] = agent_config['WORKING_AREA']
+        
+        # Then: Environment variable retains override value
+        assert os.environ['WORKING_AREA'] == str(override_workspace)
+        assert os.environ['WORKING_AREA'] != str(workspace_directory)
+        
+        # And: Function returns override value
+        assert get_workspace_directory() == override_workspace
+    
+    def test_missing_agent_json_with_preconfig_env_var_works(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: agent.json not required if env vars pre-configured
+        GIVEN: WORKING_AREA environment variable is already set
+        AND: BOT_DIRECTORY environment variable is already set
+        AND: agent.json does NOT exist
+        WHEN: Functions are called
+        THEN: No error occurs
+        AND: Environment variables work correctly
+        """
+        # Given: Environment variables already set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: agent.json does NOT exist
+        agent_json_path = bot_directory / 'agent.json'
+        assert not agent_json_path.exists()
+        
+        # When/Then: Functions work without error
+        assert get_bot_directory() == bot_directory
+        assert get_workspace_directory() == workspace_directory
+    
+    # ========================================================================
+    # SCENARIO GROUP 4: Bot Initialization with Bootstrap
+    # ========================================================================
+    
+    def test_bot_initializes_with_bootstrapped_directories(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Bot successfully initializes with bootstrapped environment
+        GIVEN: BOT_DIRECTORY environment variable is set
+        AND: WORKING_AREA environment variable is set
+        AND: Bot configuration exists
+        WHEN: Bot is instantiated
+        THEN: Bot uses bot_directory from environment
+        AND: Bot.workspace_directory property returns workspace from environment
+        """
+        # Given: Environment is bootstrapped
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: Bot configuration exists
+        config_path = create_bot_config(bot_directory, 'test_bot', ['shape'])
+        
+        # When: Bot is instantiated
+        bot = Bot('test_bot', bot_directory, config_path)
+        
+        # Then: Bot uses correct directories
+        assert bot.bot_directory == bot_directory
+        assert bot.workspace_directory == workspace_directory
+    
+    def test_workflow_state_created_in_workspace_directory(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Workflow state file created in correct workspace
+        GIVEN: Environment is properly bootstrapped
+        AND: Bot is initialized with a behavior
+        WHEN: Bot behavior's workflow accesses its file property
+        THEN: workflow_state.json path points to workspace directory
+        AND: NOT to bot directory
+        """
+        # Given: Environment is bootstrapped
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: Bot is initialized
+        config_path = create_bot_config(bot_directory, 'test_bot', ['shape'])
+        create_behavior_folder(bot_directory, 'shape')
+        bot = Bot('test_bot', bot_directory, config_path)
+        
+        # When: Workflow file path is accessed
+        workflow_file = bot.shape.workflow.file
+        
+        # Then: Path is in workspace directory
+        assert workflow_file.parent == workspace_directory
+        assert workflow_file.name == 'workflow_state.json'
+        
+        # And: NOT in bot directory
+        assert not str(workflow_file).startswith(str(bot_directory))
+    
+    # ========================================================================
+    # SCENARIO GROUP 5: Path Resolution Consistency
+    # ========================================================================
+    
+    def test_bot_config_loaded_from_bot_directory(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Bot configuration loaded from bot directory (not workspace)
+        GIVEN: BOT_DIRECTORY is set to bot code location
+        AND: WORKING_AREA is set to workspace location
+        AND: bot_config.json exists in bot directory
+        WHEN: Bot loads its configuration
+        THEN: bot_config.json is read from BOT_DIRECTORY/config/
+        AND: NOT from WORKING_AREA
+        """
+        # Given: Directories are set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: Config exists in bot directory
+        config_path = create_bot_config(bot_directory, 'test_bot', ['shape'])
+        
+        # When: Bot loads configuration
+        bot = Bot('test_bot', bot_directory, config_path)
+        
+        # Then: Config was loaded from bot directory
+        assert bot.bot_name == 'test_bot'
+        assert 'shape' in bot.behaviors
+        
+        # Verify config path is in bot directory
+        assert config_path.parent.parent == bot_directory
+    
+    def test_behavior_folders_resolved_from_bot_directory(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Behavior folders resolved from bot directory
+        GIVEN: BOT_DIRECTORY is set
+        AND: WORKING_AREA is set to different location
+        WHEN: get_behavior_folder() is called
+        THEN: Behavior path is BOT_DIRECTORY/behaviors/{behavior_name}/
+        AND: NOT from workspace directory
+        """
+        # Given: Directories are set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # When: get_behavior_folder() is called
+        behavior_folder = get_behavior_folder('test_bot', 'shape')
+        
+        # Then: Path is in bot directory
+        expected_path = bot_directory / 'behaviors' / 'shape'
+        assert behavior_folder == expected_path
+        
+        # And: NOT in workspace directory
+        assert not str(behavior_folder).startswith(str(workspace_directory))
+    
+    def test_multiple_calls_use_cached_env_vars(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Multiple calls read from cached environment (fast)
+        GIVEN: Environment variables are set
+        WHEN: get_workspace_directory() is called multiple times
+        THEN: Each call returns same value from environment
+        AND: No file I/O occurs (just env var reads)
+        """
+        # Given: Environment variables are set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # When: Called multiple times
+        result1 = get_workspace_directory()
+        result2 = get_workspace_directory()
+        result3 = get_workspace_directory()
+        
+        # Then: Same value each time
+        assert result1 == result2 == result3 == workspace_directory
+        
+        # And: All are Path objects
+        assert all(isinstance(r, Path) for r in [result1, result2, result3])

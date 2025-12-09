@@ -12,25 +12,30 @@ from agile_bot.bots.base_bot.src.bot.bot import Bot
 class BaseBotCli:
     """Base CLI class - bot-specific CLIs inherit 90% of functionality from this"""
     
-    def __init__(self, bot: Bot = None, bot_name: str = None, bot_config_path: Path = None, workspace_root: Path = None):
+    def __init__(self, bot: Bot = None, bot_name: str = None, bot_config_path: Path = None):
         """Initialize CLI with bot instance or configuration.
         
         Args:
             bot: Bot instance (preferred - explicit dependency)
             bot_name: Name of the bot (required if bot not provided)
             bot_config_path: Path to bot configuration file (required if bot not provided)
-            workspace_root: Root workspace directory (defaults to current directory if bot not provided)
             
         Raises:
             ValueError: If neither bot nor (bot_name and bot_config_path) are provided
+            
+        Note:
+            Bot and workspace directories are auto-detected from environment
         """
         if bot:
             self.bot = bot
             self.bot_name = bot.name
+            self.bot_directory = bot.bot_directory
         elif bot_name and bot_config_path:
             self.bot_name = bot_name
-            self.workspace_root = workspace_root or Path.cwd()
             self.bot_config_path = bot_config_path
+            # Get bot directory from environment
+            from agile_bot.bots.base_bot.src.state.workspace import get_bot_directory
+            self.bot_directory = get_bot_directory()
             self.bot = self._create_bot_instance()
         else:
             raise ValueError("Must provide either bot instance or (bot_name and bot_config_path)")
@@ -38,7 +43,7 @@ class BaseBotCli:
     def _create_bot_instance(self) -> Bot:
         return Bot(
             bot_name=self.bot_name,
-            workspace_root=self.workspace_root,
+            bot_directory=self.bot_directory,
             config_path=self.bot_config_path
         )
     
@@ -142,11 +147,12 @@ class BaseBotCli:
     def _get_action_description(self, action_name: str) -> str:
         """Get action description from base_actions instructions."""
         # Try to load from base_actions
-        base_actions_dir = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
+        repo_root = get_python_workspace_root()
+        base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
         
-        # Check numbered format (e.g., 1_initialize_project, 2_gather_context)
+        # Check numbered format (e.g., 2_gather_context, 3_decide_planning_criteria)
         action_prefixes = {
-            'initialize_project': '1_initialize_project',
             'gather_context': '2_gather_context',
             'decide_planning_criteria': '3_decide_planning_criteria',
             'build_knowledge': '4_build_knowledge',
@@ -184,7 +190,10 @@ class BaseBotCli:
     
     def help_cursor_commands(self):
         """List all available cursor commands and their parameters."""
-        commands_dir = self.workspace_root / '.cursor' / 'commands'
+        # Use centralized repository root
+        from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
+        repo_root = get_python_workspace_root()
+        commands_dir = repo_root / '.cursor' / 'commands'
         
         if not commands_dir.exists():
             print(f"No cursor commands directory found at {commands_dir}")
@@ -244,29 +253,24 @@ class BaseBotCli:
         behavior_name = cmd_name.replace(f'{self.bot_name}-', '').replace('-', '_')
         
         # Special cases for utility commands
-        if behavior_name in ['continue', 'help', 'initialize_project', 'confirm_project_area']:
+        if behavior_name in ['continue', 'help']:
             if behavior_name == 'continue':
                 return 'Close current action and continue to next action in workflow'
             elif behavior_name == 'help':
                 return 'List all available cursor commands and their parameters'
-            elif behavior_name == 'initialize_project':
-                return 'Initialize project location for workflow state persistence'
-            elif behavior_name == 'confirm_project_area':
-                return 'Confirm or change project area location'
             else:
                 return behavior_name.replace('_', ' ').title()
         
         # Try to load behavior instructions
         # First try direct name
         behavior_instructions_path = (
-            self.workspace_root / 'agile_bot' / 'bots' / self.bot_name / 
-            'behaviors' / behavior_name / 'instructions.json'
+            self.bot_directory / 'behaviors' / behavior_name / 'instructions.json'
         )
         
         # Also check numbered behavior folders (e.g., 1_shape, 2_prioritization)
         if not behavior_instructions_path.exists():
             # Try numbered format - check all numbered folders
-            behaviors_dir = self.workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'behaviors'
+            behaviors_dir = self.bot_directory / 'behaviors'
             if behaviors_dir.exists():
                 for folder in behaviors_dir.iterdir():
                     if folder.is_dir():
@@ -311,15 +315,7 @@ class BaseBotCli:
     def _infer_parameter_description(self, cmd_name: str, param_num: str, cmd_content: str) -> str:
         """Infer parameter description from command name and content."""
         # Common patterns
-        if 'initialize-project' in cmd_name:
-            if param_num == '1':
-                return 'Behavior name (e.g., shape)'
-            elif param_num == '2':
-                return 'Project area path (e.g., demo/my_project)'
-        elif 'confirm-project-area' in cmd_name:
-            if param_num == '1':
-                return 'confirm/true (confirm current) or path (change location)'
-        elif 'shape' in cmd_name or 'discovery' in cmd_name or 'exploration' in cmd_name:
+        if 'shape' in cmd_name or 'discovery' in cmd_name or 'exploration' in cmd_name:
             if param_num == '1':
                 return 'Optional action name or file path'
         elif 'continue' in cmd_name or 'help' in cmd_name:
@@ -530,26 +526,6 @@ class BaseBotCli:
         # Bot command: routes to current behavior/action
         bot_command = f"{python_command}"
         commands[f'{self.bot_name}'] = self._write_command_file(commands_dir / f'{self.bot_name}.md', bot_command)
-        
-        # Initialize project command: for confirming project location (requires behavior)
-        # ${1:} is behavior name, ${2:} is project area path
-        init_command = f"{python_command} --behavior ${{1:}} --action initialize_project --project_area=${{2:}} --confirm=true"
-        commands[f'{self.bot_name}-initialize-project'] = self._write_command_file(
-            commands_dir / f'{self.bot_name}-initialize-project.md',
-            init_command
-        )
-        
-        # Confirm project area command: confirms current location or changes to new location
-        # ${1:} can be "confirm"/"true" (confirm current) or a path (change to new location)
-        # If ${1:} is empty, "confirm", or "true", confirms current directory
-        # If ${1:} is a path, changes to that location
-        # Bot logic handles "confirm"/"true" as "use current directory"
-        # Use Python to conditionally add project_area parameter
-        confirm_script = f'''python -c "import sys; from pathlib import Path; import subprocess; param = sys.argv[1] if len(sys.argv) > 1 else ''; workspace_root = Path.cwd(); script = workspace_root / r'{cli_script_str}'; cmd = [sys.executable, str(script), '--behavior', 'shape', '--action', 'initialize_project', '--confirm=true']; cmd.extend(['--project_area=' + param] if param else []); subprocess.run(cmd)" ${{1:}}'''
-        commands[f'{self.bot_name}-confirm-project-area'] = self._write_command_file(
-            commands_dir / f'{self.bot_name}-confirm-project-area.md',
-            confirm_script
-        )
         
         # Continue command: closes current action and continues to next
         continue_command = f"{python_command} --close"

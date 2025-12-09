@@ -14,20 +14,20 @@ from agile_bot.bots.base_bot.src.bot.bot import Behavior
 # ============================================================================
 
 @pytest.fixture
-def workspace_root(tmp_path):
-    """Fixture: Temporary workspace directory."""
-    workspace = tmp_path / 'workspace'
-    workspace.mkdir()
-    return workspace
+def bot_directory(tmp_path):
+    """Fixture: Temporary bot directory."""
+    bot_dir = tmp_path / 'agile_bot' / 'bots' / 'test_bot'
+    bot_dir.mkdir(parents=True)
+    return bot_dir
 
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
-def create_behavior_folder(workspace: Path, bot_name: str, folder_name: str) -> Path:
-    """Helper: Create behavior folder."""
-    behavior_folder = workspace / 'agile_bot' / 'bots' / bot_name / 'behaviors' / folder_name
+def create_behavior_folder(bot_dir: Path, folder_name: str) -> Path:
+    """Helper: Create behavior folder in bot directory."""
+    behavior_folder = bot_dir / 'behaviors' / folder_name
     behavior_folder.mkdir(parents=True, exist_ok=True)
     return behavior_folder
 
@@ -39,7 +39,7 @@ def create_behavior_folder(workspace: Path, bot_name: str, folder_name: str) -> 
 class TestFindBehaviorFolder:
     """Tests for find_behavior_folder utility function."""
 
-    def test_finds_behavior_folder_with_number_prefix(self, workspace_root):
+    def test_finds_behavior_folder_with_number_prefix(self, bot_directory):
         """
         SCENARIO: Find behavior folder with number prefix
         GIVEN: Behavior folder exists with number prefix (8_tests)
@@ -51,17 +51,16 @@ class TestFindBehaviorFolder:
         folder_name = '8_tests'
         behavior_name = 'tests'
         
-        behavior_folder = create_behavior_folder(workspace_root, bot_name, folder_name)
+        behavior_folder = create_behavior_folder(bot_directory, folder_name)
         
         # When: Find folder using behavior name (without number)
-        
-        found_folder = Behavior.find_behavior_folder(workspace_root, bot_name, behavior_name)
+        found_folder = Behavior.find_behavior_folder(bot_directory, bot_name, behavior_name)
         
         # Then: Returns numbered folder
         assert found_folder == behavior_folder
         assert found_folder.name == '8_tests'
 
-    def test_finds_shape_folder_with_number_prefix(self, workspace_root):
+    def test_finds_shape_folder_with_number_prefix(self, bot_directory):
         """
         SCENARIO: Find shape folder with number prefix
         GIVEN: Behavior folder exists with number prefix (1_shape)
@@ -70,17 +69,16 @@ class TestFindBehaviorFolder:
         """
         # Given: Create numbered behavior folder
         bot_name = 'story_bot'
-        behavior_folder = create_behavior_folder(workspace_root, bot_name, '1_shape')
+        behavior_folder = create_behavior_folder(bot_directory, '1_shape')
         
         # When: Find folder using behavior name
-        
-        found_folder = Behavior.find_behavior_folder(workspace_root, bot_name, 'shape')
+        found_folder = Behavior.find_behavior_folder(bot_directory, bot_name, 'shape')
         
         # Then: Returns numbered folder
         assert found_folder == behavior_folder
         assert found_folder.name == '1_shape'
 
-    def test_finds_exploration_folder_with_number_prefix(self, workspace_root):
+    def test_finds_exploration_folder_with_number_prefix(self, bot_directory):
         """
         SCENARIO: Find exploration folder with number prefix
         GIVEN: Behavior folder exists with number prefix (5_exploration)
@@ -89,17 +87,16 @@ class TestFindBehaviorFolder:
         """
         # Given
         bot_name = 'story_bot'
-        behavior_folder = create_behavior_folder(workspace_root, bot_name, '5_exploration')
+        behavior_folder = create_behavior_folder(bot_directory, '5_exploration')
         
         # When
-        
-        found_folder = Behavior.find_behavior_folder(workspace_root, bot_name, 'exploration')
+        found_folder = Behavior.find_behavior_folder(bot_directory, bot_name, 'exploration')
         
         # Then
         assert found_folder == behavior_folder
         assert found_folder.name == '5_exploration'
 
-    def test_raises_error_when_behavior_folder_not_found(self, workspace_root):
+    def test_raises_error_when_behavior_folder_not_found(self, bot_directory):
         """
         SCENARIO: Raises error when behavior folder doesn't exist
         GIVEN: Behavior folder does not exist
@@ -111,11 +108,10 @@ class TestFindBehaviorFolder:
         behavior_name = 'nonexistent'
         
         # When/Then: Raises FileNotFoundError
-        
         with pytest.raises(FileNotFoundError, match='Behavior folder not found'):
-            Behavior.find_behavior_folder(workspace_root, bot_name, behavior_name)
+            Behavior.find_behavior_folder(bot_directory, bot_name, behavior_name)
 
-    def test_handles_prioritization_folder_with_prefix(self, workspace_root):
+    def test_handles_prioritization_folder_with_prefix(self, bot_directory):
         """
         SCENARIO: Find prioritization folder with number prefix
         GIVEN: Behavior folder exists as 2_prioritization
@@ -124,17 +120,16 @@ class TestFindBehaviorFolder:
         """
         # Given
         bot_name = 'story_bot'
-        behavior_folder = create_behavior_folder(workspace_root, bot_name, '2_prioritization')
+        behavior_folder = create_behavior_folder(bot_directory, '2_prioritization')
         
         # When
-        
-        found_folder = Behavior.find_behavior_folder(workspace_root, bot_name, 'prioritization')
+        found_folder = Behavior.find_behavior_folder(bot_directory, bot_name, 'prioritization')
         
         # Then
         assert found_folder == behavior_folder
         assert found_folder.name == '2_prioritization'
 
-    def test_handles_scenarios_folder_with_prefix(self, workspace_root):
+    def test_handles_scenarios_folder_with_prefix(self, bot_directory):
         """
         SCENARIO: Find scenarios folder with number prefix
         GIVEN: Behavior folder exists as 6_scenarios
@@ -143,17 +138,16 @@ class TestFindBehaviorFolder:
         """
         # Given
         bot_name = 'story_bot'
-        behavior_folder = create_behavior_folder(workspace_root, bot_name, '6_scenarios')
+        behavior_folder = create_behavior_folder(bot_directory, '6_scenarios')
         
         # When
-        
-        found_folder = Behavior.find_behavior_folder(workspace_root, bot_name, 'scenarios')
+        found_folder = Behavior.find_behavior_folder(bot_directory, bot_name, 'scenarios')
         
         # Then
         assert found_folder == behavior_folder
         assert found_folder.name == '6_scenarios'
 
-    def test_handles_examples_folder_with_prefix(self, workspace_root):
+    def test_handles_examples_folder_with_prefix(self, bot_directory):
         """
         SCENARIO: Find examples folder with number prefix
         GIVEN: Behavior folder exists as 7_examples
@@ -162,11 +156,10 @@ class TestFindBehaviorFolder:
         """
         # Given
         bot_name = 'story_bot'
-        behavior_folder = create_behavior_folder(workspace_root, bot_name, '7_examples')
+        behavior_folder = create_behavior_folder(bot_directory, '7_examples')
         
         # When
-        
-        found_folder = Behavior.find_behavior_folder(workspace_root, bot_name, 'examples')
+        found_folder = Behavior.find_behavior_folder(bot_directory, bot_name, 'examples')
         
         # Then
         assert found_folder == behavior_folder

@@ -8,18 +8,16 @@ Tests for all stories in the 'Validate Knowledge & Content Against Rules' sub-ep
 import pytest
 from pathlib import Path
 import json
-from agile_bot.bots.base_bot.test.test_helpers import read_activity_log, create_activity_log_file
+from agile_bot.bots.base_bot.test.test_helpers import bootstrap_env, read_activity_log, create_activity_log_file
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
 
-def create_workflow_state(workspace: Path, current_action: str, completed_actions: list = None) -> Path:
-    """Helper: Create workflow state file."""
-    state_dir = workspace / 'project_area'
-    state_dir.mkdir(parents=True, exist_ok=True)
-    state_file = state_dir / 'workflow_state.json'
+def create_workflow_state_local(workspace_dir: Path, current_action: str, completed_actions: list = None) -> Path:
+    """Helper: Create workflow state file in workspace directory."""
+    state_file = workspace_dir / 'workflow_state.json'
     state_file.write_text(json.dumps({
         'current_behavior': 'story_bot.exploration',
         'current_action': current_action,
@@ -28,9 +26,9 @@ def create_workflow_state(workspace: Path, current_action: str, completed_action
     }), encoding='utf-8')
     return state_file
 
-def create_validation_rules(workspace: Path, bot_name: str, behavior: str, rules: list) -> Path:
-    """Helper: Create validation rules file."""
-    rules_dir = workspace / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior / 'rules'
+def create_validation_rules(bot_dir: Path, behavior: str, rules: list) -> Path:
+    """Helper: Create validation rules file in bot directory."""
+    rules_dir = bot_dir / 'behaviors' / behavior / 'rules'
     rules_dir.mkdir(parents=True, exist_ok=True)
     rules_file = rules_dir / 'validation_rules.json'
     rules_file.write_text(json.dumps({'rules': rules}), encoding='utf-8')
@@ -40,12 +38,7 @@ def create_validation_rules(workspace: Path, bot_name: str, behavior: str, rules
 # FIXTURES
 # ============================================================================
 
-@pytest.fixture
-def workspace_root(tmp_path):
-    """Fixture: Temporary workspace directory."""
-    workspace = tmp_path / 'workspace'
-    workspace.mkdir()
-    return workspace
+# Use fixtures from conftest.py (bot_directory, workspace_directory)
 
 # ============================================================================
 # STORY: Track Activity for Validate Rules Action
@@ -54,48 +47,60 @@ def workspace_root(tmp_path):
 class TestTrackActivityForValidateRulesAction:
     """Story: Track Activity for Validate Rules Action - Tests activity tracking for validate_rules."""
 
-    def test_track_activity_when_validate_rules_action_starts(self, workspace_root):
+    def test_track_activity_when_validate_rules_action_starts(self, bot_directory, workspace_directory):
         """
         SCENARIO: Track activity when validate_rules action starts
         GIVEN: behavior is 'exploration' and action is 'validate_rules'
         WHEN: validate_rules action starts execution
         THEN: Activity logger creates entry with timestamp and action_state
         """
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
         # Given: Activity log initialized
-        log_file = create_activity_log_file(workspace_root)
+        log_file = create_activity_log_file(workspace_directory)
         
         # When: Action starts execution
         from agile_bot.bots.base_bot.src.bot.validate_rules_action import ValidateRulesAction
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='exploration',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_start()
         
         # Then: Activity logged with full path
-        log_data = read_activity_log(workspace_root, 'story_bot')
+        log_data = read_activity_log(workspace_directory)
         assert any(
             e['action_state'] == 'story_bot.exploration.validate_rules'
             for e in log_data
         )
 
-    def test_track_activity_when_validate_rules_action_completes(self, workspace_root):
+    def test_track_activity_when_validate_rules_action_completes(self, bot_directory, workspace_directory):
         """
         SCENARIO: Track activity when validate_rules action completes
         GIVEN: validate_rules action started at timestamp
         WHEN: validate_rules action finishes execution
         THEN: Activity logger creates completion entry with outputs and duration
         """
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
         # Given: Activity log initialized
-        log_file = create_activity_log_file(workspace_root)
+        log_file = create_activity_log_file(workspace_directory)
         
         # When: Action completes with validation results
         from agile_bot.bots.base_bot.src.bot.validate_rules_action import ValidateRulesAction
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='exploration',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_completion(
             outputs={
@@ -107,14 +112,14 @@ class TestTrackActivityForValidateRulesAction:
         )
         
         # Then: Completion logged with validation metrics
-        log_data = read_activity_log(workspace_root, 'story_bot')
+        log_data = read_activity_log(workspace_directory)
         completion_entry = next((e for e in log_data if 'outputs' in e), None)
         assert completion_entry is not None
         assert completion_entry['outputs']['violations_count'] == 2
         assert completion_entry['outputs']['rules_checked_count'] == 7
         assert completion_entry['duration'] == 240
 
-    def test_track_multiple_validate_rules_invocations_across_behaviors(self, workspace_root):
+    def test_track_multiple_validate_rules_invocations_across_behaviors(self, bot_directory, workspace_directory):
         """
         SCENARIO: Track multiple validate_rules invocations across behaviors
         GIVEN: activity log contains entries for shape and exploration validate_rules
@@ -138,14 +143,14 @@ class TestTrackActivityForValidateRulesAction:
             })
         
         # When: Read activity log
-        log_data = read_activity_log(workspace_root, 'story_bot')
+        log_data = read_activity_log(workspace_directory)
         
         # Then: 2 separate entries with full paths
         assert len(log_data) == 2
         assert log_data[0]['action_state'] == 'story_bot.shape.validate_rules'
         assert log_data[1]['action_state'] == 'story_bot.exploration.validate_rules'
 
-    def test_activity_log_maintains_chronological_order(self, workspace_root):
+    def test_activity_log_maintains_chronological_order(self, bot_directory, workspace_directory):
         """
         SCENARIO: Activity log maintains chronological order
         GIVEN: activity log contains 10 previous action entries
@@ -170,12 +175,12 @@ class TestTrackActivityForValidateRulesAction:
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='exploration',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_start()
         
         # Then: New entry at end in chronological order
-        log_data = read_activity_log(workspace_root, 'story_bot')
+        log_data = read_activity_log(workspace_directory)
         assert len(log_data) == 11
         assert log_data[10]['action_state'] == 'story_bot.exploration.validate_rules'
 
@@ -187,7 +192,7 @@ class TestTrackActivityForValidateRulesAction:
 class TestCompleteValidateRulesAction:
     """Story: Complete Validate Rules Action - Tests workflow completion at terminal action."""
 
-    def test_validate_rules_marks_workflow_as_complete(self, workspace_root):
+    def test_validate_rules_marks_workflow_as_complete(self, bot_directory, workspace_directory):
         """
         SCENARIO: validate_rules marks workflow as complete
         GIVEN: validate_rules action is complete
@@ -200,7 +205,7 @@ class TestCompleteValidateRulesAction:
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='exploration',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         
         # When: Action finalizes with no next action
@@ -209,7 +214,7 @@ class TestCompleteValidateRulesAction:
         # Then: No next action (terminal)
         assert result.next_action is None
 
-    def test_validate_rules_does_not_inject_next_action_instructions(self, workspace_root):
+    def test_validate_rules_does_not_inject_next_action_instructions(self, bot_directory, workspace_directory):
         """
         SCENARIO: validate_rules does NOT inject next action instructions
         GIVEN: validate_rules action is complete
@@ -233,29 +238,32 @@ class TestCompleteValidateRulesAction:
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='scenarios',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         instructions = action.inject_next_action_instructions()
         
         # Then: No next action instructions (terminal)
         assert instructions == '' or 'complete' in instructions.lower()
 
-    def test_workflow_state_shows_all_actions_completed(self, workspace_root):
+    def test_workflow_state_shows_all_actions_completed(self, bot_directory, workspace_directory):
         """
         SCENARIO: Workflow state shows all actions completed
         GIVEN: validate_rules completes as final action
         WHEN: Action tracks completion
         THEN: Activity log records the completion
         """
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
         # Given: Activity log initialized
-        log_file = create_activity_log_file(workspace_root)
+        log_file = create_activity_log_file(workspace_directory)
         
         # When: Final action completes
         from agile_bot.bots.base_bot.src.bot.validate_rules_action import ValidateRulesAction
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='exploration',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_completion(
             outputs={'violations_count': 0, 'workflow_complete': True},
@@ -263,27 +271,30 @@ class TestCompleteValidateRulesAction:
         )
         
         # Then: Completion recorded in activity log
-        log_data = read_activity_log(workspace_root, 'story_bot')
+        log_data = read_activity_log(workspace_directory)
         completion_entry = next((e for e in log_data if 'outputs' in e), None)
         assert completion_entry is not None
         assert completion_entry['outputs']['workflow_complete']
 
-    def test_activity_log_records_full_workflow_completion(self, workspace_root):
+    def test_activity_log_records_full_workflow_completion(self, bot_directory, workspace_directory):
         """
         SCENARIO: Activity log records full workflow completion
         GIVEN: validate_rules completes at timestamp
         WHEN: Activity logger records completion
         THEN: Activity log shows validate_rules completed and workflow finished
         """
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
         # Given: Activity log initialized
-        log_file = create_activity_log_file(workspace_root)
+        log_file = create_activity_log_file(workspace_directory)
         
         # When: Terminal action logs completion
         from agile_bot.bots.base_bot.src.bot.validate_rules_action import ValidateRulesAction
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='scenarios',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_completion(
             outputs={'violations_count': 0, 'workflow_complete': True},
@@ -291,12 +302,12 @@ class TestCompleteValidateRulesAction:
         )
         
         # Then: Completion logged with workflow_complete flag
-        log_data = read_activity_log(workspace_root, 'story_bot')
+        log_data = read_activity_log(workspace_directory)
         completion_entry = next((e for e in log_data if 'outputs' in e), None)
         assert completion_entry is not None
         assert completion_entry['outputs']['workflow_complete']
 
-    def test_workflow_does_not_transition_after_validate_rules(self, workspace_root):
+    def test_workflow_does_not_transition_after_validate_rules(self, bot_directory, workspace_directory):
         """
         SCENARIO: Workflow does NOT transition after validate_rules
         GIVEN: validate_rules action is complete
@@ -309,7 +320,7 @@ class TestCompleteValidateRulesAction:
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='exploration',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         
         # When: Action provides next action instructions
@@ -318,7 +329,7 @@ class TestCompleteValidateRulesAction:
         # Then: No next action instructions (terminal)
         assert instructions == ""
 
-    def test_behavior_workflow_completes_at_terminal_action(self, workspace_root):
+    def test_behavior_workflow_completes_at_terminal_action(self, bot_directory, workspace_directory):
         """
         SCENARIO: Behavior workflow completes at terminal action
         GIVEN: exploration behavior has completed all 5 workflow actions
@@ -345,7 +356,7 @@ class TestCompleteValidateRulesAction:
         # Then: Behavior workflow is complete
         assert is_complete
 
-    def test_validate_rules_returns_instructions_with_rules_as_context(self, workspace_root):
+    def test_validate_rules_returns_instructions_with_rules_as_context(self, bot_directory, workspace_directory):
         """
         SCENARIO: validate_rules returns instructions with rules as supporting context
         GIVEN: validate_rules action has base instructions and validation rules
@@ -398,7 +409,7 @@ class TestCompleteValidateRulesAction:
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='shape',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         result = action.do_execute(parameters={})
         
@@ -465,7 +476,7 @@ class TestCompleteValidateRulesAction:
             f"report_path should be in docs directory, got: {report_path}"
         )
 
-    def test_validate_rules_provides_report_path_for_saving_validation_report(self, workspace_root):
+    def test_validate_rules_provides_report_path_for_saving_validation_report(self, bot_directory, workspace_directory):
         """
         SCENARIO: validate_rules provides report_path for saving validation report
         GIVEN: validate_rules action executes
@@ -512,7 +523,7 @@ class TestCompleteValidateRulesAction:
         action = ValidateRulesAction(
             bot_name='story_bot',
             behavior='shape',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         result = action.do_execute(parameters={})
         

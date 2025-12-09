@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class RenderOutputAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path, working_dir: Path = None):
-        super().__init__(bot_name, behavior, workspace_root, 'render_output', working_dir)
+    def __init__(self, bot_name: str, behavior: str, bot_directory: Path):
+        super().__init__(bot_name, behavior, bot_directory, 'render_output')
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute render_output action logic."""
@@ -31,7 +31,7 @@ class RenderOutputAction(BaseAction):
     
     def _load_base_instructions(self) -> Dict[str, Any]:
         """Load base instructions from base_actions folder."""
-        base_actions_dir = self.botspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        base_actions_dir = self.base_actions_dir
         
         base_path = self._find_base_instructions_path(base_actions_dir)
         
@@ -64,7 +64,7 @@ class RenderOutputAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             return Behavior.find_behavior_folder(
-                self.botspace_root,
+                self.bot_directory,
                 self.bot_name,
                 self.behavior
             )
@@ -129,7 +129,7 @@ class RenderOutputAction(BaseAction):
             return None
         
         config_entry = {
-            'file': str(render_json_file.relative_to(self.botspace_root)),
+            'file': str(render_json_file.relative_to(self.bot_directory)),
             'config': config
         }
         
@@ -214,7 +214,7 @@ class RenderOutputAction(BaseAction):
         
         # Add project path information to instructions
         project_path = self.working_dir
-        if project_path and project_path != self.botspace_root:
+        if project_path and project_path != self.bot_directory:
             project_info = f"\n**PROJECT PATH: {project_path}**\nAll render outputs must be written to paths relative to this project path, NOT to the bot's own directories."
             base_instructions_list.insert(0, project_info)
         
@@ -233,7 +233,7 @@ class RenderOutputAction(BaseAction):
         if render_configs:
             merged['render_configs'] = render_configs
         
-        if project_path and project_path != self.botspace_root:
+        if project_path and project_path != self.bot_directory:
             merged['project_path'] = str(project_path)
         
         return merged
