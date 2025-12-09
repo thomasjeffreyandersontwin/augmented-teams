@@ -1,1 +1,1 @@
-python agile_bot/bots/story_bot/src/story_bot_cli.py exploration ${1:}
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior exploration --action ${1:}

@@ -58,6 +58,14 @@ class BaseBotCli:
         return self._route_to_current_behavior_and_action()
     
     def _route_to_specific_action(self, behavior_name: str, action_name: str, parameters: Dict[str, Any]):
+        # If behavior_name is None, get current behavior from workflow
+        if behavior_name is None:
+            workflow = self.bot.workflow
+            if workflow and workflow.current_stage:
+                behavior_name = workflow.current_stage
+            else:
+                raise ValueError(f"Cannot execute action '{action_name}' without knowing the behavior. No current behavior found in workflow state.")
+        
         behavior_obj = getattr(self.bot, behavior_name)
         action_method = getattr(behavior_obj, action_name)
         return action_method(parameters=parameters)
@@ -124,7 +132,7 @@ class BaseBotCli:
         
         print("\n" + "=" * 70)
         print("\nUsage:")
-        print(f"  {self.bot_name} [behavior] [action] [--options]")
+        print(f"  {self.bot_name} [--behavior <name>] [--action <name>] [--options]")
         print(f"  {self.bot_name} --help          # Show this help")
         print(f"  {self.bot_name} --list          # List behaviors/actions")
         print(f"  {self.bot_name} --help-cursor   # List cursor commands")
@@ -338,8 +346,10 @@ class BaseBotCli:
     @staticmethod
     def parse_arguments(description: str = "Bot CLI", custom_help_handler=None) -> Tuple[argparse.Namespace, Dict[str, str]]:
         parser = argparse.ArgumentParser(description=description, add_help=False)
-        parser.add_argument('behavior', nargs='?', help='Behavior name (optional)')
-        parser.add_argument('action', nargs='?', help='Action name (optional)')
+        # Use named parameters only
+        parser.add_argument('--behavior', nargs='?', help='Behavior name (optional)')
+        parser.add_argument('--action', nargs='?', help='Action name (optional)')
+        parser.add_argument('--user_message', nargs='?', help='User message from Cursor (optional)')
         parser.add_argument('--close', action='store_true', help='Close current action')
         parser.add_argument('--list', action='store_true', help='List available options')
         parser.add_argument('--help-cursor', action='store_true', help='List all cursor commands and parameters')
@@ -360,6 +370,10 @@ class BaseBotCli:
         # Combine unknown args with context args
         all_args = list(unknown) + (getattr(args, 'context', []) or [])
         params = BaseBotCli._parse_action_parameters(all_args)
+        
+        # Add user_message to params if provided
+        if args.user_message:
+            params['user_message'] = args.user_message
         
         return args, params
     
@@ -519,7 +533,7 @@ class BaseBotCli:
         
         # Initialize project command: for confirming project location (requires behavior)
         # ${1:} is behavior name, ${2:} is project area path
-        init_command = f"{python_command} ${{1:}} initialize_project --project_area=${{2:}} --confirm=true"
+        init_command = f"{python_command} --behavior ${{1:}} --action initialize_project --project_area=${{2:}} --confirm=true"
         commands[f'{self.bot_name}-initialize-project'] = self._write_command_file(
             commands_dir / f'{self.bot_name}-initialize-project.md',
             init_command
@@ -531,7 +545,7 @@ class BaseBotCli:
         # If ${1:} is a path, changes to that location
         # Bot logic handles "confirm"/"true" as "use current directory"
         # Use Python to conditionally add project_area parameter
-        confirm_script = f'''python -c "import sys; from pathlib import Path; import subprocess; param = sys.argv[1] if len(sys.argv) > 1 else ''; workspace_root = Path.cwd(); script = workspace_root / r'{cli_script_str}'; cmd = [sys.executable, str(script), 'shape', 'initialize_project', '--confirm=true']; cmd.extend(['--project_area=' + param] if param else []); subprocess.run(cmd)" ${{1:}}'''
+        confirm_script = f'''python -c "import sys; from pathlib import Path; import subprocess; param = sys.argv[1] if len(sys.argv) > 1 else ''; workspace_root = Path.cwd(); script = workspace_root / r'{cli_script_str}'; cmd = [sys.executable, str(script), '--behavior', 'shape', '--action', 'initialize_project', '--confirm=true']; cmd.extend(['--project_area=' + param] if param else []); subprocess.run(cmd)" ${{1:}}'''
         commands[f'{self.bot_name}-confirm-project-area'] = self._write_command_file(
             commands_dir / f'{self.bot_name}-confirm-project-area.md',
             confirm_script
@@ -558,7 +572,10 @@ class BaseBotCli:
             # If no action provided, behavior uses default/current action
             # Note: Cursor will replace ${1:} and ${2:} with user input or empty string
             # Additional arguments can be passed as --key=value or file paths
-            behavior_command = f"{python_command} {behavior_name} ${{1:}}"
+            # Use --behavior and --action named parameters
+            # ${1:} is optional action - if empty, argparse treats --action as None
+            # ${2:} is optional context - passed as positional argument
+            behavior_command = f"{python_command} --behavior {behavior_name} --action ${{1:}}${{2:+ }}${{2:}}"
             commands[f'{self.bot_name}-{behavior_name}'] = self._write_command_file(
                 commands_dir / f'{self.bot_name}-{behavior_name}.md', 
                 behavior_command

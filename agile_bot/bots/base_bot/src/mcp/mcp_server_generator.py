@@ -81,7 +81,7 @@ class MCPServerGenerator:
                 e.pos
             )
         
-        server_name = f'{self.bot_name}_server'
+        server_name = self.bot_name
         mcp_server = FastMCP(server_name)
         
         mcp_server.bot_config = bot_config
@@ -109,20 +109,9 @@ class MCPServerGenerator:
         # Register restart server tool (terminates processes, clears cache, restarts)
         self.register_restart_server_tool(mcp_server)
         
-        # Register behavior tools (routes to current action within behavior)
+        # Register behavior tools (routes to current action within behavior, or specific action if provided)
         for behavior in behaviors:
             self.register_behavior_tool(mcp_server, behavior)
-        
-        # Register all behavior-action tools
-        all_actions = self.workflow_actions + self.independent_actions
-        
-        for behavior in behaviors:
-            for action in all_actions:
-                self.register_behavior_action_tool(
-                    mcp_server=mcp_server,
-                    behavior=behavior,
-                    action=action
-                )
     
     def _normalize_name_for_tool(self, name: str) -> str:
         # Strip number prefix (e.g., '1_shape' -> 'shape')
@@ -141,7 +130,7 @@ class MCPServerGenerator:
         return name
     
     def register_bot_tool(self, mcp_server: FastMCP):
-        tool_name = f'{self.bot_name}_tool'
+        tool_name = 'tool'
         
         @mcp_server.tool(name=tool_name, description=f'Bot tool for {self.bot_name} - routes to current behavior and action')
         async def bot_tool(parameters: dict = None):
@@ -167,7 +156,7 @@ class MCPServerGenerator:
         })
     
     def register_close_current_action_tool(self, mcp_server: FastMCP):
-        tool_name = f'{self.bot_name}_close_current_action'
+        tool_name = 'close_current_action'
         
         @mcp_server.tool(name=tool_name, description=f'Close current action tool for {self.bot_name} - marks current action complete and transitions to next')
         async def close_current_action(parameters: dict = None):
@@ -318,7 +307,7 @@ class MCPServerGenerator:
         })
     
     def register_restart_server_tool(self, mcp_server: FastMCP):
-        tool_name = f'{self.bot_name}_restart_server'
+        tool_name = 'restart_server'
         
         @mcp_server.tool(name=tool_name, description=f'Restart MCP server for {self.bot_name} - terminates processes, clears cache, and restarts to load code changes')
         async def restart_server(parameters: dict = None):
@@ -370,10 +359,17 @@ class MCPServerGenerator:
     
     def register_behavior_tool(self, mcp_server: FastMCP, behavior: str):
         normalized_behavior = self._normalize_name_for_tool(behavior)
-        tool_name = f'{self.bot_name}_{normalized_behavior}_tool'
+        tool_name = normalized_behavior
         
-        @mcp_server.tool(name=tool_name, description=f'{behavior} behavior tool for {self.bot_name} - routes to current action')
-        async def behavior_tool(parameters: dict = None):
+        # Load trigger patterns from behavior folder
+        trigger_patterns = self._load_trigger_words_from_behavior_folder(behavior=behavior)
+        
+        description = f'{behavior} behavior for {self.bot_name}. Accepts optional action parameter and parameters dict.'
+        if trigger_patterns:
+            description += f'\nTrigger patterns: {", ".join(trigger_patterns[:5])}'  # Show first 5
+        
+        @mcp_server.tool(name=tool_name, description=description)
+        async def behavior_tool(action: str = None, parameters: dict = None):
             if parameters is None:
                 parameters = {}
             
@@ -384,7 +380,14 @@ class MCPServerGenerator:
             if behavior_obj is None:
                 return {"error": f"Behavior {behavior} not found"}
             
-            result = behavior_obj.forward_to_current_action()
+            # If action is specified, route to that action, otherwise use current action
+            if action:
+                action_method = getattr(behavior_obj, action, None)
+                if action_method is None:
+                    return {"error": f"Action {action} not found in {behavior}"}
+                result = action_method(parameters=parameters)
+            else:
+                result = behavior_obj.forward_to_current_action()
             
             return {
                 "status": result.status,
@@ -397,7 +400,8 @@ class MCPServerGenerator:
             'name': tool_name,
             'behavior': behavior,
             'type': 'behavior_tool',
-            'description': f'Routes to current action in {behavior}'
+            'trigger_patterns': trigger_patterns,
+            'description': description
         })
     
     def register_behavior_action_tool(

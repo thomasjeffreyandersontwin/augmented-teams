@@ -1,1 +1,1 @@
-python agile_bot/bots/story_bot/src/story_bot_cli.py shape ${1:}
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action ${1:}

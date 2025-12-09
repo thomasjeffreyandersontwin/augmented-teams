@@ -1,1 +1,1 @@
-python agile_bot/bots/story_bot/src/story_bot_cli.py ${1:} initialize_project --project_area=${2:} --confirm=true
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior ${1:} --action initialize_project --project_area=${2:} --confirm=true

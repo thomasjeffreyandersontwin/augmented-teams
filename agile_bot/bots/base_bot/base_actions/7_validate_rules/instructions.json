@@ -59,19 +59,3 @@
     }
   }
 }
-
-  "templates": {
-    "validation_results": {
-      "template": "Validation Results:\n\n**Status:** {{validation_status}}\n\n**Violations Found:**\n{{violations_list}}\n\n**Suggested Corrections:**\n{{suggested_corrections}}\n\nYou may request a second validation pass with corrections applied.",
-      "description": "Used to present validation results to user"
-    }
-  }
-}
-
-  "templates": {
-    "validation_results": {
-      "template": "Validation Results:\n\n**Status:** {{validation_status}}\n\n**Violations Found:**\n{{violations_list}}\n\n**Suggested Corrections:**\n{{suggested_corrections}}\n\nYou may request a second validation pass with corrections applied.",
-      "description": "Used to present validation results to user"
-    }
-  }
-}

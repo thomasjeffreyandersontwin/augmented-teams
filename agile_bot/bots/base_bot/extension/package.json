@@ -1,8 +1,8 @@
 {
-  "name": "trigger-awareness",
-  "displayName": "Trigger Awareness",
-  "description": "Detect trigger phrases in user messages and route through TriggerRouter",
-  "version": "0.0.1",
+  "name": "chat-participants",
+  "displayName": "Agile Chat Participants",
+  "description": "Chat participants for agile bots including @agilebot and @storybot",
+  "version": "0.1.0",
   "publisher": "yourname",
   "repository": {
     "type": "git",
@@ -15,28 +15,26 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onChatParticipant:chat-participants.agilebot",
+    "onChatParticipant:chat-participants.storybot"
   ],
-  "main": "./trigger_awareness.js",
+  "main": "./chat_participants.js",
   "contributes": {
-    "commands": [
+    "chatParticipants": [
       {
-        "command": "cursor.onUserMessage",
-        "title": "Handle User Message (Trigger Awareness)"
+        "id": "chat-participants.agilebot",
+        "name": "agilebot",
+        "description": "Lists all available agile bots and their capabilities",
+        "isSticky": true
       },
       {
-        "command": "trigger-awareness.checkStatus",
-        "title": "Check Extension Status"
-      },
-      {
-        "command": "trigger-awareness.activate",
-        "title": "Activate Trigger Awareness Extension"
-      },
-      {
-        "command": "trigger-awareness.reload",
-        "title": "Reload Trigger Awareness Extension"
+        "id": "chat-participants.storybot",
+        "name": "storybot",
+        "description": "Story shaping, discovery, exploration, scenarios, and test generation",
+        "isSticky": true
       }
     ]
   }
 }
+
 

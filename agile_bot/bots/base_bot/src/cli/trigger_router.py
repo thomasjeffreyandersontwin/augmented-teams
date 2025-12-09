@@ -108,7 +108,13 @@ class TriggerRouter:
             Bot name or None
         """
         for bot_name, bot_info in self._bot_registry.items():
+            # Try registry patterns first (for backward compatibility)
             patterns = bot_info.get('trigger_patterns', [])
+            
+            # If no patterns in registry, load from bot's trigger_words.json
+            if not patterns:
+                patterns = self._load_bot_triggers(bot_name)
+            
             if self._message_matches_patterns(message, patterns):
                 return bot_name
         return None
