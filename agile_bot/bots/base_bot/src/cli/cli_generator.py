@@ -101,17 +101,17 @@ class CliGenerator:
 Command-line interface for {self.bot_name} using BaseBotCli.
 
 Usage:
-    {self.bot_name} [behavior] [action] [--options]
+    {self.bot_name} [--behavior <name>] [--action <name>] [--options]
     {self.bot_name} --help          # Show help/usage documentation
     {self.bot_name} --list          # List available behaviors
-    {self.bot_name} <behavior> --list  # List available actions for behavior
+    {self.bot_name} --behavior <name> --list  # List available actions for behavior
     {self.bot_name} --close         # Close current action
 
 Examples:
-    {self.bot_name}                          # Route to current behavior/action from workflow state
-    {self.bot_name} exploration               # Route to exploration behavior, auto-forward to current action
-    {self.bot_name} exploration gather_context  # Route directly to exploration.gather_context action
-    {self.bot_name} exploration gather_context --increment_file=increment.txt  # With parameters
+    {self.bot_name}                                    # Route to current behavior/action from workflow state
+    {self.bot_name} --behavior exploration            # Route to exploration behavior, auto-forward to current action
+    {self.bot_name} --behavior exploration --action gather_context  # Route directly to exploration.gather_context action
+    {self.bot_name} --behavior exploration --action gather_context --increment_file=increment.txt  # With parameters
 """
 from pathlib import Path
 import sys
