@@ -6,6 +6,7 @@ For helpers used by only ONE test file, define them inline in that file.
 """
 import json
 import pytest
+import os
 from pathlib import Path
 
 
@@ -14,10 +15,50 @@ from pathlib import Path
 # ============================================================================
 
 @pytest.fixture
-def workspace_root(tmp_path):
-    """Fixture: Workspace directory structure."""
-    workspace = tmp_path
-    return workspace
+def repo_root(tmp_path):
+    """Fixture: Repository root directory."""
+    return tmp_path
+
+@pytest.fixture
+def bot_directory(tmp_path):
+    """Fixture: Bot directory for test bot."""
+    bot_dir = tmp_path / 'agile_bot' / 'bots' / 'story_bot'
+    bot_dir.mkdir(parents=True)
+    return bot_dir
+
+@pytest.fixture
+def workspace_directory(tmp_path):
+    """Fixture: Workspace directory for content files."""
+    workspace_dir = tmp_path / 'workspace'
+    workspace_dir.mkdir(parents=True)
+    return workspace_dir
+
+@pytest.fixture(autouse=True)
+def clean_env():
+    """Fixture: Clean environment variables before and after each test."""
+    # Store original values
+    original_bot_dir = os.environ.get('BOT_DIRECTORY')
+    original_working_area = os.environ.get('WORKING_AREA')
+    original_working_dir = os.environ.get('WORKING_DIR')
+    
+    # Clear for test
+    for key in ['BOT_DIRECTORY', 'WORKING_AREA', 'WORKING_DIR']:
+        if key in os.environ:
+            del os.environ[key]
+    
+    yield
+    
+    # Restore original values
+    for key in ['BOT_DIRECTORY', 'WORKING_AREA', 'WORKING_DIR']:
+        if key in os.environ:
+            del os.environ[key]
+        
+    if original_bot_dir:
+        os.environ['BOT_DIRECTORY'] = original_bot_dir
+    if original_working_area:
+        os.environ['WORKING_AREA'] = original_working_area
+    if original_working_dir:
+        os.environ['WORKING_DIR'] = original_working_dir
 
 @pytest.fixture
 def bot_name():
@@ -27,10 +68,9 @@ def bot_name():
 @pytest.fixture
 def standard_workflow_config():
     """Fixture: Standard workflow states and transitions."""
-    states = ['initialize_project', 'gather_context', 'decide_planning_criteria', 
+    states = ['gather_context', 'decide_planning_criteria', 
               'build_knowledge', 'render_output', 'validate_rules']
     transitions = [
-        {'trigger': 'proceed', 'source': 'initialize_project', 'dest': 'gather_context'},
         {'trigger': 'proceed', 'source': 'gather_context', 'dest': 'decide_planning_criteria'},
         {'trigger': 'proceed', 'source': 'decide_planning_criteria', 'dest': 'build_knowledge'},
         {'trigger': 'proceed', 'source': 'build_knowledge', 'dest': 'render_output'},
@@ -43,57 +83,42 @@ def standard_workflow_config():
 # FACTORY FUNCTIONS - Build test objects
 # ============================================================================
 
-def create_bot_dir(workspace: Path, bot_name: str) -> Path:
-    """Factory: Create bot directory structure."""
-    bot_dir = workspace / 'agile_bot' / 'bots' / bot_name
-    bot_dir.mkdir(parents=True, exist_ok=True)
-    return bot_dir
+def bootstrap_env(bot_dir: Path, workspace_dir: Path):
+    """Bootstrap environment variables for tests."""
+    os.environ['BOT_DIRECTORY'] = str(bot_dir)
+    os.environ['WORKING_AREA'] = str(workspace_dir)
 
-def create_project_dir(workspace: Path, project_name: str = 'test_project') -> Path:
-    """Factory: Create project directory."""
-    project_dir = workspace / project_name
-    project_dir.mkdir(parents=True, exist_ok=True)
-    return project_dir
-
-def create_current_project_file(workspace: Path, bot_name: str, project_path: str) -> Path:
-    """Factory: Create current_project.json file."""
-    bot_dir = create_bot_dir(workspace, bot_name)
-    current_project_file = bot_dir / 'current_project.json'
-    current_project_file.write_text(json.dumps({'current_project': project_path}), encoding='utf-8')
-    return current_project_file
+def create_bot_config_file(bot_dir: Path, bot_name: str, behaviors: list) -> Path:
+    """Factory: Create bot config file in bot directory."""
+    config_dir = bot_dir / 'config'
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / 'bot_config.json'
+    config_file.write_text(json.dumps({'name': bot_name, 'behaviors': behaviors}), encoding='utf-8')
+    return config_file
 
 def create_workflow_state_file(
-    project_dir: Path,
+    workspace_dir: Path,
     bot_name: str,
     behavior: str,
     current_action: str,
     completed_actions: list = None
 ) -> Path:
-    """Factory: Create workflow_state.json with specified state."""
+    """Factory: Create workflow_state.json in workspace directory."""
     workflow_state = {
         'current_behavior': f'{bot_name}.{behavior}',
         'current_action': f'{bot_name}.{behavior}.{current_action}',
         'timestamp': '2025-12-04T16:00:00.000000',
         'completed_actions': completed_actions or []
     }
-    workflow_file = project_dir / 'workflow_state.json'
+    workflow_file = workspace_dir / 'workflow_state.json'
     workflow_file.write_text(json.dumps(workflow_state), encoding='utf-8')
     return workflow_file
 
-def create_bot_config_file(workspace: Path, bot_name: str, behaviors: list) -> Path:
-    """Factory: Create bot config file."""
-    config_dir = workspace / 'agile_bot' / 'bots' / bot_name / 'config'
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_file = config_dir / 'bot_config.json'
-    config_file.write_text(json.dumps({'name': bot_name, 'behaviors': behaviors}), encoding='utf-8')
-    return config_file
-
-def create_base_actions_structure(workspace: Path) -> Path:
+def create_base_actions_structure(repo_root: Path) -> Path:
     """Factory: Create base_actions directory structure with action configs."""
-    base_actions_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+    base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
     
     workflow_actions = [
-        ('1_initialize_project', 'initialize_project', 1, 'gather_context'),
         ('2_gather_context', 'gather_context', 2, 'decide_planning_criteria'),
         ('3_decide_planning_criteria', 'decide_planning_criteria', 3, 'build_knowledge'),
         ('4_build_knowledge', 'build_knowledge', 4, 'render_output'),
@@ -117,4 +142,3 @@ def create_base_actions_structure(workspace: Path) -> Path:
         (action_dir / 'instructions.json').write_text(json.dumps({'instructions': [f'{action_name} base instructions']}), encoding='utf-8')
     
     return base_actions_dir
-

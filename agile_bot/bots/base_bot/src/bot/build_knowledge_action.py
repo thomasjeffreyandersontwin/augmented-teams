@@ -9,8 +9,8 @@ from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import find_nested_s
 
 class BuildKnowledgeAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, botspace_root: Path, working_dir: Path = None):
-        super().__init__(bot_name, behavior, botspace_root, 'build_knowledge', working_dir)
+    def __init__(self, bot_name: str, behavior: str, bot_directory: Path):
+        super().__init__(bot_name, behavior, bot_directory, 'build_knowledge')
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute build_knowledge action logic."""
@@ -29,7 +29,7 @@ class BuildKnowledgeAction(BaseAction):
         # Find behavior folder (handles numbered prefixes)
         from agile_bot.bots.base_bot.src.bot.bot import Behavior
         behavior_folder = Behavior.find_behavior_folder(
-            self.botspace_root,
+            self.bot_directory,
             self.bot_name,
             self.behavior
         )
@@ -89,7 +89,7 @@ class BuildKnowledgeAction(BaseAction):
         validate_action = ValidateRulesAction(
             bot_name=self.bot_name,
             behavior=self.behavior,
-            workspace_root=self.botspace_root,
+                bot_directory=self.bot_directory,
             working_dir=self.working_dir
         )
         

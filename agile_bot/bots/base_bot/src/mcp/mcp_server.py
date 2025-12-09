@@ -6,16 +6,26 @@ from agile_bot.bots.base_bot.src.bot.bot import Bot
 
 class MCPServer:
     
-    def __init__(self, bot_name: str, workspace_root: Path, config_path: Path):
+    def __init__(self, bot_name: str, bot_directory: Path, config_path: Path):
+        """Initialize MCP Server.
+        
+        Args:
+            bot_name: Name of the bot
+            bot_directory: Directory where bot code lives
+            config_path: Path to bot_config.json
+            
+        Note:
+            workspace_directory is auto-detected from agent.json
+        """
         self.bot_name = bot_name
-        self.workspace_root = Path(workspace_root)
+        self.bot_directory = Path(bot_directory)
         self.config_path = Path(config_path)
         self.bot = None
     
     def start(self):
         self.bot = Bot(
             bot_name=self.bot_name,
-            workspace_root=self.workspace_root,
+            bot_directory=self.bot_directory,
             config_path=self.config_path
         )
     

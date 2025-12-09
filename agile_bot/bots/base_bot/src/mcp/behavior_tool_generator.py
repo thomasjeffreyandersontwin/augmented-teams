@@ -13,12 +13,13 @@ class BehaviorTool:
     
     def invoke(self, parameters: Dict[str, Any] = None):
         from agile_bot.bots.base_bot.src.bot.bot import Bot
-        # Resolve workspace via workspace helper (authoritative source)
-        workspace_root = get_workspace_directory()
+        from agile_bot.bots.base_bot.src.state.workspace import get_bot_directory
+        
+        bot_directory = get_bot_directory()
 
         bot = Bot(
             bot_name=self.bot_name,
-            workspace_root=workspace_root,
+            bot_directory=bot_directory,
             config_path=self.config_path
         )
         

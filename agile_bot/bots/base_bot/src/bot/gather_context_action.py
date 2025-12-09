@@ -8,8 +8,8 @@ from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import find_nested_s
 
 class GatherContextAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path, working_dir: Path = None):
-        super().__init__(bot_name, behavior, workspace_root, 'gather_context', working_dir)
+    def __init__(self, bot_name: str, behavior: str, bot_directory: Path):
+        super().__init__(bot_name, behavior, bot_directory, 'gather_context')
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute gather_context action logic."""
@@ -104,7 +104,7 @@ class GatherContextAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.botspace_root,
+                self.bot_directory,
                 self.bot_name,
                 self.behavior
             )
@@ -138,7 +138,7 @@ class GatherContextAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.botspace_root,
+                self.bot_directory,
                 self.bot_name,
                 self.behavior
             )
@@ -176,7 +176,7 @@ class GatherContextAction(BaseAction):
     
     def inject_gather_context_instructions(self) -> Dict[str, Any]:
         rendered_dir = (
-            self.botspace_root /
+            self.bot_directory /
             'agile_bot' / 'bots' / self.bot_name / 'docs' / 'stories'
         )
         

@@ -6,22 +6,25 @@ from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
 
 class ActivityTracker:
     
-    def __init__(self, workspace_root: Path, bot_name: str):
-        # Always resolve the authoritative workspace via the workspace helper.
-        # Ignore any workspace_root passed in to centralize environment access.
-        self.workspace_root = Path(get_workspace_directory())
+    def __init__(self, workspace_directory: Path, bot_name: str):
+        """Initialize ActivityTracker.
+        
+        Args:
+            workspace_directory: Directory where content files are created
+            bot_name: Name of the bot
+        """
+        self.workspace_directory = Path(workspace_directory)
         self.bot_name = bot_name
         # Don't create directory in __init__, create it when actually writing
     
     @property
-    def workspace_directory(self) -> Path:
-        """Return the authoritative workspace directory (from workspace helper)."""
-        return get_workspace_directory()
+    def workspace_dir(self) -> Path:
+        """Return the workspace directory."""
+        return self.workspace_directory
 
     @property
     def file(self) -> Path:
         """Get activity log file path."""
-        # Activity logs live at the workspace root per environment-only policy.
         return self.workspace_directory / 'activity_log.json'
     
     def track_start(self, bot_name: str, behavior: str, action: str):

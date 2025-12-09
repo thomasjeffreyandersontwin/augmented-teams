@@ -12,11 +12,24 @@ logger = logging.getLogger(__name__)
 
 class Workflow:
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path, 
+    def __init__(self, bot_name: str, behavior: str, bot_directory: Path,
                  states: List[str], transitions: List[Dict], bot_instance=None):
+        """Initialize Workflow.
+        
+        Args:
+            bot_name: Name of the bot
+            behavior: Name of the behavior
+            bot_directory: Directory where bot code lives
+            states: List of workflow states
+            transitions: List of workflow transitions
+            bot_instance: Reference to parent Bot instance
+            
+        Note:
+            workspace_directory is auto-detected from get_workspace_directory()
+        """
         self.bot_name = bot_name
         self.behavior = behavior
-        self.workspace_root = Path(workspace_root)
+        self.bot_directory = Path(bot_directory)
         self.states = states
         self.bot = bot_instance  # Reference to parent Bot instance
         
@@ -33,19 +46,21 @@ class Workflow:
         self.load_state()
     
     @property
+    def workspace_directory(self) -> Path:
+        """Get workspace directory (auto-detected from environment/agent.json)."""
+        return get_workspace_directory()
+    
+    @property
     def dir(self) -> Path:
         """Get workflow's bot directory path."""
-        return self.workspace_root / 'agile_bot' / 'bots' / self.bot_name
+        return self.bot_directory
     
     @property
     def working_dir(self) -> Path:
         """Authoritative working directory for workflow operations.
-
-        This is computed from the centralized workspace helper so workflow
-        does not store or accept a caller-provided working directory.
+        
+        This is where content files are created (workflow_state.json, etc.)
         """
-        # Per environment-only workspace policy, the project area is the
-        # workspace root itself (everything is dumped into WORKING_AREA).
         return get_workspace_directory()
     
     @property

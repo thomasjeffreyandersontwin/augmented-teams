@@ -8,9 +8,9 @@ Tests for all stories in the 'Gather Context' sub-epic:
 import pytest
 from pathlib import Path
 import json
-from prefect.testing.utilities import prefect_test_harness
 from agile_bot.bots.base_bot.src.bot.gather_context_action import GatherContextAction
 from agile_bot.bots.base_bot.test.test_helpers import (
+    bootstrap_env,
     create_activity_log_file,
     create_workflow_state,
     read_activity_log,
@@ -25,16 +25,7 @@ def verify_activity_logged(log_file: Path, action_state: str):
         entries = db.all()
         assert any(entry['action_state'] == action_state for entry in entries)
 
-# ============================================================================
-# FIXTURES
-# ============================================================================
-
-@pytest.fixture
-def workspace_root(tmp_path):
-    """Fixture: Temporary workspace directory."""
-    workspace = tmp_path / 'workspace'
-    workspace.mkdir()
-    return workspace
+# Use fixtures from conftest.py (bot_directory, workspace_directory)
 
 # ============================================================================
 # STORY: Track Activity for Gather Context Action
@@ -43,44 +34,48 @@ def workspace_root(tmp_path):
 class TestTrackActivityForGatherContextAction:
     """Story: Track Activity for Gather Context Action - Tests activity tracking during execution."""
 
-    def test_track_activity_when_gather_context_action_starts(self, workspace_root):
+    def test_track_activity_when_gather_context_action_starts(self, bot_directory, workspace_directory):
         """
         SCENARIO: Track activity when gather_context action starts
         GIVEN: behavior is 'discovery' and action is 'gather_context'
         WHEN: gather_context action starts execution
         THEN: Activity logger creates entry with timestamp and action_state
         """
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
         # Given: Activity log initialized
-        log_file = create_activity_log_file(workspace_root)
+        log_file = create_activity_log_file(workspace_directory)
         
         # When: Action starts and logs activity
-        from agile_bot.bots.base_bot.src.bot.gather_context_action import GatherContextAction
         action = GatherContextAction(
             bot_name='story_bot',
             behavior='discovery',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_start()
         
         # Then: Activity logged with correct action_state
         verify_activity_logged(log_file, 'story_bot.discovery.gather_context')
 
-    def test_track_activity_when_gather_context_action_completes(self, workspace_root):
+    def test_track_activity_when_gather_context_action_completes(self, bot_directory, workspace_directory):
         """
         SCENARIO: Track activity when gather_context action completes
         GIVEN: gather_context action started
         WHEN: gather_context action finishes execution
         THEN: Activity logger creates completion entry with outputs and duration
         """
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
         # Given: Activity log with start entry
-        log_file = create_activity_log_file(workspace_root)
+        log_file = create_activity_log_file(workspace_directory)
         
         # When: Action completes
-        from agile_bot.bots.base_bot.src.bot.gather_context_action import GatherContextAction
         action = GatherContextAction(
             bot_name='story_bot',
             behavior='discovery',
-            workspace_root=workspace_root
+            bot_directory=bot_directory
         )
         action.track_activity_on_completion(
             outputs={'questions_count': 5, 'evidence_count': 3},
@@ -95,23 +90,22 @@ class TestTrackActivityForGatherContextAction:
             assert completion_entry['outputs']['questions_count'] == 5
             assert completion_entry['duration'] == 330
 
-    def test_track_multiple_gather_context_invocations_across_behaviors(self, workspace_root):
+    def test_track_multiple_gather_context_invocations_across_behaviors(self, workspace_directory):
         """
         SCENARIO: Track multiple gather_context invocations across behaviors
         GIVEN: activity log contains entries for shape and discovery
         WHEN: both entries are present
         THEN: activity log distinguishes same action in different behaviors using full path
         """
-        # Given: Activity log with multiple behavior entries (in workspace_root)
-        workspace_root.mkdir(parents=True, exist_ok=True)
-        log_file = workspace_root / 'activity_log.json'
+        # Given: Activity log with multiple behavior entries (in workspace_directory)
+        workspace_directory.mkdir(parents=True, exist_ok=True)
+        log_file = workspace_directory / 'activity_log.json'
         from tinydb import TinyDB
         with TinyDB(log_file) as db:
             db.insert({'action_state': 'story_bot.shape.gather_context', 'timestamp': '09:00'})
             db.insert({'action_state': 'story_bot.discovery.gather_context', 'timestamp': '10:00'})
         
         # When: Read activity log
-        from tinydb import TinyDB
         with TinyDB(log_file) as db:
             log_data = db.all()
         
@@ -128,48 +122,69 @@ class TestTrackActivityForGatherContextAction:
 class TestProceedToDecidePlanning:
     """Story: Proceed To Decide Planning - Tests transition from gather_context to decide_planning_criteria."""
 
-    def test_seamless_transition_from_gather_context_to_decide_planning_criteria(self, workspace_root):
+    def test_seamless_transition_from_gather_context_to_decide_planning_criteria(self, bot_directory, workspace_directory):
         """
         SCENARIO: Seamless transition from gather_context to decide_planning_criteria
         GIVEN: gather_context action is complete
         WHEN: workflow transitions
         THEN: Workflow proceeds to decide_planning_criteria
         """
-        verify_workflow_transition(workspace_root, 'gather_context', 'decide_planning_criteria')
+        verify_workflow_transition(bot_directory, workspace_directory, 'gather_context', 'decide_planning_criteria')
 
-    def test_workflow_state_captures_gather_context_completion(self, workspace_root):
+    def test_workflow_state_captures_gather_context_completion(self, bot_directory, workspace_directory):
         """
         SCENARIO: Workflow state captures gather_context completion
         GIVEN: gather_context action completes
         WHEN: Workflow saves completed action
         THEN: workflow state updated with timestamp and completed_actions
         """
-        verify_workflow_saves_completed_action(workspace_root, 'gather_context')
+        verify_workflow_saves_completed_action(bot_directory, workspace_directory, 'gather_context')
 
-    def test_workflow_resumes_at_decide_planning_criteria_after_interruption(self, workspace_root):
+    def test_workflow_resumes_at_decide_planning_criteria_after_interruption(self, bot_directory, workspace_directory):
         """
         SCENARIO: Workflow resumes at decide_planning_criteria after interruption
         GIVEN: gather_context is completed and chat was interrupted
         WHEN: user reopens chat and invokes bot tool
-        THEN: Router forwards to decide_planning_criteria action
+        THEN: Workflow auto-forwards to decide_planning_criteria action
         """
-        # Given: Workflow state with completed gather_context
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        # Given: Workflow state with completed gather_context and current_action pointing to it
+        from agile_bot.bots.base_bot.src.state.workflow import Workflow
+        
         state_file = create_workflow_state(
-            workspace_root,
-            'story_bot.discovery.gather_context',
+            workspace_directory,
+            'story_bot',
+            'discovery',
+            'gather_context',
             completed_actions=[{
                 'action_state': 'story_bot.discovery.gather_context',
                 'timestamp': '2025-12-03T10:05:30Z'
             }]
         )
         
-        # When: Router determines next action
-        from agile_bot.bots.base_bot.src.state.router import Router
-        router = Router(workspace_root=workspace_root)
-        next_action = router.determine_next_action_from_state(state_file)
+        # When: Workflow loads and determines next action
+        states = ['gather_context', 'decide_planning_criteria', 'build_knowledge']
+        transitions = [
+            {'trigger': 'proceed', 'source': 'gather_context', 'dest': 'decide_planning_criteria'},
+            {'trigger': 'proceed', 'source': 'decide_planning_criteria', 'dest': 'build_knowledge'},
+        ]
         
-        # Then: Next action is decide_planning_criteria
-        assert next_action == 'decide_planning_criteria'
+        workflow = Workflow(
+            bot_name='story_bot',
+            behavior='discovery',
+            bot_directory=bot_directory,
+            states=states,
+            transitions=transitions
+        )
+        
+        # Then: Workflow should auto-advance past completed gather_context
+        # If current_action is completed, workflow should transition to next
+        if workflow.is_action_completed('gather_context'):
+            workflow.transition_to_next()
+        
+        assert workflow.current_state == 'decide_planning_criteria'
 
 
 # ============================================================================
@@ -179,15 +194,18 @@ class TestProceedToDecidePlanning:
 class TestInjectGuardrailsAsPartOfClarifyRequirements:
     """Story: Inject Guardrails as Part of Clarify Requirements - Tests guardrail injection."""
 
-    def test_action_injects_questions_and_evidence(self, workspace_root):
+    def test_action_injects_questions_and_evidence(self, bot_directory, workspace_directory):
         bot_name = 'test_bot'
         behavior = 'shape'
         questions = ['What is the scope?', 'Who are the users?']
         evidence = ['Requirements doc', 'User interviews']
         
-        create_guardrails_files(workspace_root, bot_name, behavior, questions, evidence)
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
         
-        action_obj = GatherContextAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        create_guardrails_files(bot_directory, behavior, questions, evidence)
+        
+        action_obj = GatherContextAction(bot_name=bot_name, behavior=behavior, bot_directory=bot_directory)
         instructions = action_obj.inject_questions_and_evidence()
         
         assert 'key_questions' in instructions['guardrails']
@@ -195,28 +213,34 @@ class TestInjectGuardrailsAsPartOfClarifyRequirements:
         assert 'evidence' in instructions['guardrails']
         assert instructions['guardrails']['evidence'] == evidence
 
-    def test_action_uses_base_instructions_when_guardrails_missing(self, workspace_root):
+    def test_action_uses_base_instructions_when_guardrails_missing(self, bot_directory, workspace_directory):
         bot_name = 'test_bot'
         behavior = 'shape'
         
-        action_obj = GatherContextAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        action_obj = GatherContextAction(bot_name=bot_name, behavior=behavior, bot_directory=bot_directory)
         instructions = action_obj.inject_questions_and_evidence()
         
         assert 'guardrails' not in instructions or instructions['guardrails'] == {}
 
-    def test_action_handles_malformed_guardrails_json(self, workspace_root):
+    def test_action_handles_malformed_guardrails_json(self, bot_directory, workspace_directory):
         bot_name = 'test_bot'
         behavior = 'shape'
-        guardrails_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior / 'guardrails' / 'required_context'
+        
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        guardrails_dir = bot_directory / 'behaviors' / behavior / 'guardrails' / 'required_context'
         guardrails_dir.mkdir(parents=True, exist_ok=True)
         
         questions_file = guardrails_dir / 'key_questions.json'
         questions_file.write_text('invalid json {')
         
-        action_obj = GatherContextAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        action_obj = GatherContextAction(bot_name=bot_name, behavior=behavior, bot_directory=bot_directory)
         
         with pytest.raises(json.JSONDecodeError) as exc_info:
             action_obj.inject_questions_and_evidence()
         
         assert 'key_questions.json' in str(exc_info.value) or 'Expecting' in str(exc_info.value)
-

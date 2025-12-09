@@ -10,23 +10,16 @@ from pathlib import Path
 import json
 from agile_bot.bots.base_bot.src.bot.build_knowledge_action import BuildKnowledgeAction
 from agile_bot.bots.base_bot.test.test_helpers import (
+    bootstrap_env,
     verify_action_tracks_start,
     verify_action_tracks_completion,
     verify_workflow_transition,
     verify_workflow_saves_completed_action,
-    create_knowledge_graph_template
+    create_knowledge_graph_template,
+    get_bot_dir
 )
 
-# ============================================================================
-# FIXTURES
-# ============================================================================
-
-@pytest.fixture
-def workspace_root(tmp_path):
-    """Fixture: Temporary workspace directory."""
-    workspace = tmp_path / 'workspace'
-    workspace.mkdir()
-    return workspace
+# Use fixtures from conftest.py (bot_directory, workspace_directory)
 
 # ============================================================================
 # STORY: Track Activity for Build Knowledge Action
@@ -35,12 +28,13 @@ def workspace_root(tmp_path):
 class TestTrackActivityForBuildKnowledgeAction:
     """Story: Track Activity for Build Knowledge Action - Tests activity tracking for build_knowledge."""
 
-    def test_track_activity_when_build_knowledge_action_starts(self, workspace_root):
-        verify_action_tracks_start(workspace_root, BuildKnowledgeAction, 'build_knowledge')
+    def test_track_activity_when_build_knowledge_action_starts(self, bot_directory, workspace_directory):
+        verify_action_tracks_start(bot_directory, workspace_directory, BuildKnowledgeAction, 'build_knowledge')
 
-    def test_track_activity_when_build_knowledge_action_completes(self, workspace_root):
+    def test_track_activity_when_build_knowledge_action_completes(self, bot_directory, workspace_directory):
         verify_action_tracks_completion(
-            workspace_root,
+            bot_directory,
+            workspace_directory,
             BuildKnowledgeAction,
             'build_knowledge',
             outputs={'knowledge_items_count': 12, 'file_path': 'knowledge.json'},
@@ -55,11 +49,11 @@ class TestTrackActivityForBuildKnowledgeAction:
 class TestProceedToRenderOutput:
     """Story: Proceed To Render Output - Tests transition to render_output action."""
 
-    def test_seamless_transition_from_build_knowledge_to_render_output(self, workspace_root):
-        verify_workflow_transition(workspace_root, 'build_knowledge', 'render_output')
+    def test_seamless_transition_from_build_knowledge_to_render_output(self, bot_directory, workspace_directory):
+        verify_workflow_transition(bot_directory, workspace_directory, 'build_knowledge', 'render_output')
 
-    def test_workflow_state_captures_build_knowledge_completion(self, workspace_root):
-        verify_workflow_saves_completed_action(workspace_root, 'build_knowledge')
+    def test_workflow_state_captures_build_knowledge_completion(self, bot_directory, workspace_directory):
+        verify_workflow_saves_completed_action(bot_directory, workspace_directory, 'build_knowledge')
 
 
 # ============================================================================
@@ -69,31 +63,49 @@ class TestProceedToRenderOutput:
 class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
     """Story: Inject Knowledge Graph Template for Build Knowledge - Tests template injection."""
 
-    def test_action_injects_knowledge_graph_template(self, workspace_root):
-        bot_name = 'test_bot'
+    def test_action_injects_knowledge_graph_template(self, bot_directory, workspace_directory):
+        bot_name = 'story_bot'  # Match fixture
         behavior = 'exploration'
         template_name = 'story-graph-explored-outline.json'
         
-        template_file = create_knowledge_graph_template(workspace_root, bot_name, behavior, template_name)
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
         
-        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, botspace_root=workspace_root)
+        # Create knowledge graph directory structure
+        behavior_dir = bot_directory / 'behaviors' / behavior
+        kg_dir = behavior_dir / 'content' / 'knowledge_graph'
+        kg_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create config file that references the template
+        config_file = kg_dir / 'build_story_graph_outline.json'
+        config_file.write_text(json.dumps({'template': template_name}), encoding='utf-8')
+        
+        # Create the actual template file
+        template_file = kg_dir / template_name
+        template_file.write_text(json.dumps({'template': 'knowledge_graph', 'structure': {}}), encoding='utf-8')
+        
+        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, bot_directory=bot_directory)
         instructions = action_obj.inject_knowledge_graph_template()
         
         assert 'knowledge_graph_template' in instructions
-        assert template_name in instructions['knowledge_graph_template']
-        assert Path(instructions['knowledge_graph_template']).exists()
+        assert 'template_path' in instructions
+        assert template_name in instructions['template_path']
+        assert Path(instructions['template_path']).exists()
 
-    def test_action_raises_error_when_template_missing(self, workspace_root):
-        bot_name = 'test_bot'
+    def test_action_raises_error_when_template_missing(self, bot_directory, workspace_directory):
+        bot_name = 'story_bot'  # Match fixture
         behavior = 'exploration'
         
-        behavior_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        behavior_dir = bot_directory / 'behaviors' / behavior
         behavior_dir.mkdir(parents=True, exist_ok=True)
         
-        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, botspace_root=workspace_root)
+        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, bot_directory=bot_directory)
         
         with pytest.raises(FileNotFoundError) as exc_info:
             action_obj.inject_knowledge_graph_template()
         
-        assert 'Knowledge graph template not found' in str(exc_info.value) or 'template' in str(exc_info.value).lower()
-
+        error_msg = str(exc_info.value).lower()
+        assert 'knowledge graph' in error_msg

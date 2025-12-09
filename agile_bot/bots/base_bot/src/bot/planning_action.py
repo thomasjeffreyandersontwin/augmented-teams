@@ -8,8 +8,8 @@ from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import find_nested_s
 
 class PlanningAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, botspace_root: Path, working_dir: Path = None):
-        super().__init__(bot_name, behavior, botspace_root, 'decide_planning_criteria', working_dir)
+    def __init__(self, bot_name: str, behavior: str, bot_directory: Path):
+        super().__init__(bot_name, behavior, bot_directory, 'decide_planning_criteria')
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute decide_planning_criteria action logic."""
@@ -31,7 +31,7 @@ class PlanningAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.botspace_root,
+                self.bot_directory,
                 self.bot_name,
                 self.behavior
             )

@@ -117,8 +117,9 @@ def generator(workspace_root):
         'behaviors': ['shape', 'discovery']
     }), encoding='utf-8')
     
+    bot_dir = workspace_root / 'agile_bot' / 'bots' / 'test_bot'
     gen = MCPServerGenerator(
-        workspace_root=workspace_root,
+        bot_directory=bot_dir,
         bot_location='agile_bot/bots/test_bot'
     )
     return gen
@@ -199,8 +200,9 @@ class TestGenerateMCPBotServer:
         
         # When: MCP Server Generator receives Bot Config (generates files)
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         artifacts = generator.generate_server(behaviors=behaviors)
@@ -234,8 +236,9 @@ class TestGenerateMCPBotServer:
         
         # When: MCP Server Generator attempts to receive Bot Config
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         
@@ -263,8 +266,9 @@ class TestGenerateMCPBotServer:
         
         # When: MCP Server Generator attempts to receive Bot Config
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         
@@ -295,8 +299,9 @@ class TestGenerateBehaviorActionTools:
         
         # When: Generator processes Bot Config
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         mcp_server = generator.create_server_instance()
@@ -331,8 +336,9 @@ class TestGenerateBehaviorActionTools:
         
         # When: Call REAL MCPServerGenerator to register tool with trigger words
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         mcp_server = generator.create_server_instance()
@@ -365,8 +371,9 @@ class TestGenerateBehaviorActionTools:
         
         # When: Call REAL MCPServerGenerator (trigger words missing)
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         mcp_server = generator.create_server_instance()
@@ -399,8 +406,9 @@ class TestGenerateBehaviorActionTools:
         
         # When: Call REAL MCPServerGenerator to register tool
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         generator = MCPServerGenerator(
-            workspace_root=workspace_root,
+            bot_directory=bot_dir,
             bot_location=f'agile_bot/bots/{bot_name}'
         )
         mcp_server = generator.create_server_instance()

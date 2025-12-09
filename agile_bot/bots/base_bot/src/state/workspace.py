@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 import os
 
 
@@ -13,38 +12,66 @@ def get_python_workspace_root() -> Path:
     return Path(__file__).parent.parent.parent.parent.parent
 
 
-def get_workspace_directory(workspace: Optional[Path] = None) -> Path:
-    """Return the workspace directory used for file I/O.
-
-    Return the workspace directory used for file I/O.
-
-    Behavior:
-    - If the environment variable `WORKING_AREA` (preferred) or `WORKING_DIR`
-      is set, that value is returned (this makes the environment the single
-      authoritative source for directing outputs).
-    - Otherwise, if `workspace` is provided, it is returned.
-    - If neither is available a RuntimeError is raised.
+def get_bot_directory() -> Path:
+    """Get bot directory from BOT_DIRECTORY environment variable.
+    
+    Entry points (MCP server, CLI) must bootstrap this environment variable
+    before importing other modules. They should self-detect from their script
+    location and set the env var.
+    
+    Returns:
+        Path to bot directory (e.g., C:/dev/augmented-teams/agile_bot/bots/story_bot)
+    
+    Raises:
+        RuntimeError: If BOT_DIRECTORY environment variable is not set
     """
-    # Prefer an explicit environment-controlled working area so callers
-    # can direct all outputs to a single folder regardless of invocation.
-    env_working = os.environ.get('WORKING_AREA') or os.environ.get('WORKING_DIR')
-    if env_working:
-        return Path(env_working)
-
-    raise RuntimeError(
-        "WORKING_AREA (or WORKING_DIR) environment variable must be set to determine the workspace directory."
-    )
+    bot_dir = os.environ.get('BOT_DIRECTORY')
+    if not bot_dir:
+        raise RuntimeError(
+            "BOT_DIRECTORY environment variable is not set. "
+            "Entry points must bootstrap this before importing other modules."
+        )
+    return Path(bot_dir)
 
 
-def get_behavior_folder(bot_name: str, behavior: str, workspace: Path) -> Path:
+def get_workspace_directory() -> Path:
+    """Get workspace directory from WORKING_AREA environment variable.
+
+    Entry points (MCP server, CLI) must bootstrap this environment variable
+    before importing other modules. They should read from agent.json and set
+    the env var.
+
+    The workspace directory is where content files are created (workflow_state.json,
+    activity_log.json, docs/, etc.). This is different from the bot directory.
+
+    Returns:
+        Path to workspace directory where content files should be created
+        
+    Raises:
+        RuntimeError: If WORKING_AREA environment variable is not set
+    """
+    workspace = os.environ.get('WORKING_AREA') or os.environ.get('WORKING_DIR')
+    if not workspace:
+        raise RuntimeError(
+            "WORKING_AREA environment variable is not set. "
+            "Entry points must bootstrap this before importing other modules."
+        )
+    return Path(workspace)
+
+
+def get_behavior_folder(bot_name: str, behavior: str) -> Path:
     """Return the path to a behavior folder for a given bot.
 
-    Example: get_behavior_folder('story_bot', '1_shape', workspace) ->
-      <workspace>/agile_bot/bots/story_bot/behaviors/1_shape
+    Args:
+        bot_name: Name of the bot (e.g., 'story_bot')
+        behavior: Name of the behavior (e.g., '1_shape', 'shape')
 
-    The `workspace` parameter is required and must be a `Path` pointing to
-    the workspace directory used for file I/O.
+    Returns:
+        Path to behavior folder in bot directory
+
+    Example: 
+        get_behavior_folder('story_bot', '1_shape') ->
+        C:/dev/augmented-teams/agile_bot/bots/story_bot/behaviors/1_shape
     """
-    workspace = get_workspace_directory(workspace)
-
-    return workspace / 'agile_bot' / 'bots' / bot_name / 'behaviors' / behavior
+    bot_directory = get_bot_directory()
+    return bot_directory / 'behaviors' / behavior

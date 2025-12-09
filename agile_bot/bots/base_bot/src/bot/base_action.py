@@ -1,38 +1,64 @@
 from pathlib import Path
 from typing import Dict, Any, Optional
 from agile_bot.bots.base_bot.src.state.activity_tracker import ActivityTracker
-from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+from agile_bot.bots.base_bot.src.state.workspace import (
+    get_workspace_directory, 
+    get_bot_directory,
+    get_python_workspace_root
+)
 
 
 class BaseAction:
     
-    def __init__(self, bot_name: str, behavior: str, botspace_root: Path, action_name: str):
+    def __init__(self, bot_name: str, behavior: str, bot_directory: Path, action_name: str):
+        """Initialize BaseAction.
+        
+        Args:
+            bot_name: Name of the bot
+            behavior: Name of the behavior
+            bot_directory: Directory where bot code lives
+            action_name: Name of this action
+            
+        Note:
+            workspace_directory is auto-detected from get_workspace_directory()
+        """
         self.bot_name = bot_name
         self.behavior = behavior
-        self.botspace_root = Path(botspace_root)
+        self.bot_directory = Path(bot_directory)
         self.action_name = action_name
+    
+    @property
+    def workspace_directory(self) -> Path:
+        """Get workspace directory (auto-detected from environment/agent.json)."""
+        return get_workspace_directory()
 
-        self.tracker = ActivityTracker(self.working_dir, bot_name)
+    @property
+    def tracker(self):
+        """Get activity tracker (lazy initialization)."""
+        if not hasattr(self, '_tracker'):
+            self._tracker = ActivityTracker(self.workspace_directory, self.bot_name)
+        return self._tracker
 
     @property
     def base_actions_dir(self) -> Path:
-        """Instance convenience property for the base actions directory.
-
-        Computes the path relative to `self.botspace_root`, matching other
-        directory properties (non-static).
+        """Get base actions directory.
+        
+        Returns path to base_bot's base_actions folder.
         """
-        return Path(self.botspace_root) / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        # Use centralized repository root
+        repo_root = get_python_workspace_root()
+        return repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
     
 
     @property
     def working_dir(self) -> Path:
-        """Read-only working directory derived from the workspace helper."""
+        """Get workspace directory where content files are created."""
         return get_workspace_directory()
     
     @property
     def bot_dir(self) -> Path:
-        """Get action's bot directory path (read-only)."""
-        return self.botspace_root / 'agile_bot' / 'bots' / self.bot_name
+        """Get bot directory where bot code lives."""
+        return self.bot_directory
     
     
     def track_activity_on_start(self):

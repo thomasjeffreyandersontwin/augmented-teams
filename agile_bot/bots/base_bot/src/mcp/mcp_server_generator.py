@@ -3,23 +3,28 @@ import json
 from fastmcp import FastMCP
 from typing import Dict, Any
 from agile_bot.bots.base_bot.src.utils import read_json_file
+from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
 
 
 class MCPServerGenerator:
     
-    def __init__(self, workspace_root: Path, bot_location: str = None):
-        self.workspace_root = Path(workspace_root)
+    def __init__(self, bot_directory: Path):
+        """Initialize MCP Server Generator.
         
-        if bot_location is None:
-            bot_location = 'agile_bot/bots/base_bot'
+        Args:
+            bot_directory: Directory where bot code lives (e.g., agile_bot/bots/story_bot)
+                          Contains: agent.json, config/, behaviors/, src/
+                          
+        Note:
+            workspace_directory is auto-detected from agent.json WORKING_AREA field
+        """
+        self.bot_directory = Path(bot_directory)
         
-        self.bot_location = Path(bot_location)
+        # Derive bot_name from last folder in bot_directory
+        self.bot_name = self.bot_directory.name
         
-        # Derive bot_name from last folder in bot_location
-        self.bot_name = self.bot_location.name
-        
-        # Config path follows convention: {bot_location}/config/bot_config.json
-        self.config_path = self.workspace_root / self.bot_location / 'config' / 'bot_config.json'
+        # Config path follows convention: {bot_directory}/config/bot_config.json
+        self.config_path = self.bot_directory / 'config' / 'bot_config.json'
         
         self.bot = None
         self.registered_tools = []
@@ -29,11 +34,13 @@ class MCPServerGenerator:
         self.independent_actions = self._discover_independent_actions()
     
     def _discover_workflow_actions(self) -> list:
-        base_actions_path = self.workspace_root / self.bot_location / 'base_actions'
+        base_actions_path = self.bot_directory / 'base_actions'
         
         # Fallback to base_bot if bot doesn't have its own base_actions
         if not base_actions_path.exists():
-            base_actions_path = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+            # Use centralized repository root
+            repo_root = get_python_workspace_root()
+            base_actions_path = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
         
         if not base_actions_path.exists():
             return []
@@ -50,11 +57,12 @@ class MCPServerGenerator:
         return [action for _, action in workflow_actions]
     
     def _discover_independent_actions(self) -> list:
-        base_actions_path = self.workspace_root / self.bot_location / 'base_actions'
+        base_actions_path = self.bot_directory / 'base_actions'
         
         # Fallback to base_bot if bot doesn't have its own base_actions
         if not base_actions_path.exists():
-            base_actions_path = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+            repo_root = get_python_workspace_root()
+            base_actions_path = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
         
         if not base_actions_path.exists():
             return []
@@ -90,7 +98,7 @@ class MCPServerGenerator:
         from agile_bot.bots.base_bot.src.bot.bot import Bot
         self.bot = Bot(
             bot_name=self.bot_name,
-            workspace_root=self.workspace_root,
+            bot_directory=self.bot_directory,
             config_path=self.config_path
         )
         
@@ -292,7 +300,7 @@ class MCPServerGenerator:
                         
                         # Update workflow state to next behavior, first action
                         next_behavior_obj = getattr(self.bot, next_behavior_name)
-                        first_action = next_behavior_obj.workflow.states[0] if next_behavior_obj.workflow.states else 'initialize_project'
+                        first_action = next_behavior_obj.workflow.states[0] if next_behavior_obj.workflow.states else 'gather_context'
                         
                         # Update state file with new behavior
                         state_data['current_behavior'] = f'{self.bot_name}.{next_behavior_name}'
@@ -369,9 +377,8 @@ class MCPServerGenerator:
                 from agile_bot.bots.base_bot.src.mcp.server_restart import restart_mcp_server
                 
                 result = restart_mcp_server(
-                    workspace_root=self.workspace_root,
-                    bot_name=self.bot_name,
-                    bot_location=str(self.bot_location)
+                    bot_directory=self.bot_directory,
+                    bot_name=self.bot_name
                 )
                 
                 return result
@@ -669,7 +676,7 @@ class MCPServerGenerator:
         
         try:
             behavior_folder = Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.bot_directory,
                 self.bot_name,
                 behavior
             )
@@ -694,7 +701,7 @@ class MCPServerGenerator:
             return []
     
     def generate_bot_config_file(self, behaviors: list) -> Path:
-        config_dir = self.workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'config'
+        config_dir = self.bot_directory / 'config'
         config_dir.mkdir(parents=True, exist_ok=True)
         
         config_path = config_dir / 'bot_config.json'
@@ -707,7 +714,7 @@ class MCPServerGenerator:
         return config_path
     
     def generate_server_entry_point(self) -> Path:
-        src_dir = self.workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'src'
+        src_dir = self.bot_directory / 'src'
         src_dir.mkdir(parents=True, exist_ok=True)
         
         server_file = src_dir / f'{self.bot_name}_mcp_server.py'
@@ -719,28 +726,57 @@ Runnable MCP server for {self.bot_name} using FastMCP and base generator.
 """
 from pathlib import Path
 import sys
+import os
+import json
 
-# Keep Python import root separate from runtime workspace. This file still
-# bootstraps `sys.path` for package imports; runtime workspace is resolved
-# from the environment (WORKING_AREA) by the workspace helper.
+# Setup Python import path for package imports
 python_workspace_root = Path(__file__).parent.parent.parent.parent.parent
 if str(python_workspace_root) not in sys.path:
     sys.path.insert(0, str(python_workspace_root))
 
-from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
-from agile_bot.bots.base_bot.src.mcp_server_generator import MCPServerGenerator
+# ============================================================================
+# BOOTSTRAP: Set environment variables before importing other modules
+# ============================================================================
+
+# 1. Self-detect bot directory from this script's location
+bot_directory = Path(__file__).parent.parent  # src/ -> {self.bot_name}/
+os.environ['BOT_DIRECTORY'] = str(bot_directory)
+
+# 2. Read agent.json and set workspace directory (if not already set by mcp.json)
+if 'WORKING_AREA' not in os.environ:
+    agent_json_path = bot_directory / 'agent.json'
+    if agent_json_path.exists():
+        agent_config = json.loads(agent_json_path.read_text(encoding='utf-8'))
+        if 'WORKING_AREA' in agent_config:
+            os.environ['WORKING_AREA'] = agent_config['WORKING_AREA']
+
+# ============================================================================
+# Now import - everything will read from environment variables
+# ============================================================================
+
+from agile_bot.bots.base_bot.src.state.workspace import (
+    get_bot_directory,
+    get_workspace_directory
+)
+from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
 
 
 def main():
-    """Main entry point for the generated MCP server."""
-    # No CLI workspace parameter required — the workspace helper prefers
-    # the WORKING_AREA environment variable.
+    """Main entry point for {self.bot_name} MCP server.
 
-    workspace_root = get_workspace_directory()
-
+    Environment variables are bootstrapped before import:
+    - BOT_DIRECTORY: Self-detected from script location
+    - WORKING_AREA: Read from agent.json (or overridden by mcp.json env)
+    
+    All subsequent code reads from these environment variables.
+    """
+    # Get directories (these now just read from env vars we set above)
+    bot_directory = get_bot_directory()
+    workspace_directory = get_workspace_directory()
+    
+    # Create MCP server
     generator = MCPServerGenerator(
-        workspace_root=workspace_root,
-        bot_location='agile_bot/bots/{self.bot_name}'
+        bot_directory=bot_directory
     )
 
     mcp_server = generator.create_server_instance()
@@ -757,17 +793,18 @@ if __name__ == '__main__':
         return server_file
     
     def generate_cursor_mcp_config(self) -> Dict:
-        server_path = f'C:/dev/augmented-teams/agile_bot/bots/{self.bot_name}/src/{self.bot_name}_mcp_server.py'
+        server_path = str(self.bot_directory / 'src' / f'{self.bot_name}_mcp_server.py')
+        # Use centralized repository root
+        repo_root = str(get_python_workspace_root())
         
         mcp_config = {
             'mcpServers': {
                 f'{self.bot_name.replace("_", "-")}': {
                     'command': 'python',
                     'args': [server_path],
-                    'cwd': 'C:/dev/augmented-teams',
-                    'env': {
-                        'PYTHONPATH': 'C:/dev/augmented-teams'
-                    }
+                    'cwd': repo_root
+                    # Note: BOT_DIRECTORY and WORKING_AREA are now self-detected by the script
+                    # You can add 'env': {'WORKING_AREA': 'path'} here to override agent.json
                 }
             }
         }
@@ -775,10 +812,7 @@ if __name__ == '__main__':
         return mcp_config
     
     def discover_behaviors_from_folders(self) -> list:
-        behaviors_dir = (
-            self.workspace_root / 
-            'agile_bot' / 'bots' / self.bot_name / 'behaviors'
-        )
+        behaviors_dir = self.bot_directory / 'behaviors'
         
         if not behaviors_dir.exists():
             return []
@@ -813,7 +847,9 @@ if __name__ == '__main__':
         }
     
     def _generate_workspace_rules_file(self) -> Path:
-        rules_dir = self.workspace_root / '.cursor' / 'rules'
+        # Use centralized repository root
+        repo_root = get_python_workspace_root()
+        rules_dir = repo_root / '.cursor' / 'rules'
         rules_dir.mkdir(parents=True, exist_ok=True)
         
         # Use bot-specific filename with hyphens
@@ -825,7 +861,7 @@ if __name__ == '__main__':
         behaviors = bot_config.get('behaviors', [])
         
         # Load instructions.json for goal and behavior descriptions
-        instructions_path = self.workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'instructions.json'
+        instructions_path = self.bot_directory / 'instructions.json'
         bot_goal = ''
         bot_description = ''
         behavior_descriptions = {}

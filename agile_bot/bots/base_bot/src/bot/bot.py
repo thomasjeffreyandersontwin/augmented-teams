@@ -9,13 +9,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def load_workflow_states_and_transitions(workspace_root: Path) -> Tuple[List[str], List[Dict]]:
-    # Compute base actions directory directly from workspace root.
-    base_actions_dir = workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
-
+def load_workflow_states_and_transitions(bot_directory: Path) -> Tuple[List[str], List[Dict]]:
+    from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
+    
+    # Try to find base_actions in bot directory first
+    base_actions_dir = bot_directory / 'base_actions'
+    
+    # Fallback to base_bot if bot doesn't have its own base_actions
+    if not base_actions_dir.exists():
+        # Use centralized repository root
+        repo_root = get_python_workspace_root()
+        base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+    
     # Fallback if path doesn't exist (for tests with temp workspaces)
     if not base_actions_dir.exists():
-        # Use hardcoded defaults (no initialize_project - it's not an action)
+        # Use hardcoded defaults
         states = ['gather_context', 'decide_planning_criteria', 'build_knowledge', 
                   'render_output', 'validate_rules']
         transitions = [
@@ -42,34 +50,51 @@ class BotResult:
 
 class Behavior:
     
-    def __init__(self, name: str, bot_name: str, botspace_root: Path, bot_instance=None):
+    def __init__(self, name: str, bot_name: str, bot_directory: Path, bot_instance=None):
+        """Initialize Behavior.
+        
+        Args:
+            name: Behavior name (e.g., 'shape', '1_shape')
+            bot_name: Bot name (e.g., 'story_bot')
+            bot_directory: Directory where bot code lives
+            bot_instance: Reference to parent Bot instance
+            
+        Note:
+            workspace_directory is auto-detected from get_workspace_directory()
+        """
         self.name = name
         self.bot_name = bot_name
-        self.botspace_root = Path(botspace_root)
+        self.bot_directory = Path(bot_directory)
         self.bot = bot_instance  # Reference to parent Bot instance
         
         # Load workflow configuration
-        states, transitions = load_workflow_states_and_transitions(self.botspace_root)
+        states, transitions = load_workflow_states_and_transitions(self.bot_directory)
         
         # Initialize workflow (contains state machine)
         from agile_bot.bots.base_bot.src.state.workflow import Workflow
         self.workflow = Workflow(
             bot_name=bot_name,
             behavior=name,
-            workspace_root=botspace_root,
+            bot_directory=bot_directory,
             states=states,
             transitions=transitions,
             bot_instance=bot_instance
         )
     
     @property
+    def workspace_directory(self) -> Path:
+        """Get workspace directory (auto-detected from environment/agent.json)."""
+        return get_workspace_directory()
+    
+    @property
     def bot_dir(self) -> Path:
         """Get behavior's bot directory path."""
-        return self.botspace_root / 'agile_bot' / 'bots' / self.bot_name
+        return self.bot_directory
     
     @property
     def working_dir(self) -> Path:
-        return get_workspace_directory()
+        """Get workspace directory where content files are created."""
+        return self.workspace_directory
     
    
     @property
@@ -85,11 +110,21 @@ class Behavior:
     @property
     def folder(self) -> Path:
         """Get behavior's folder path in behaviors directory."""
-        return self.bot_dir / 'behaviors' / self.name
+        return self.bot_directory / 'behaviors' / self.name
     
     @staticmethod
-    def find_behavior_folder(botspace_root: Path, bot_name: str, behavior_name: str) -> Path:
-        behaviors_dir = botspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors'
+    def find_behavior_folder(bot_directory: Path, bot_name: str, behavior_name: str) -> Path:
+        """Find behavior folder within bot directory.
+        
+        Args:
+            bot_directory: Directory where bot code lives
+            bot_name: Bot name (for compatibility, not used since bot_directory is already specific)
+            behavior_name: Name of behavior to find
+            
+        Returns:
+            Path to behavior folder
+        """
+        behaviors_dir = bot_directory / 'behaviors'
         
         # Try to find folder with or without number prefix
         for folder in behaviors_dir.glob(f'*{behavior_name}'):
@@ -132,7 +167,7 @@ class Behavior:
         action = action_class(
             bot_name=self.bot_name,
             behavior=self.name,
-            workspace_root=self.botspace_root,
+            bot_directory=self.bot_directory
         )
         
         
@@ -181,8 +216,7 @@ class Behavior:
         action_method = getattr(self, current_action)
         result = action_method(parameters=parameters)
         
-        # Only save state if action doesn't require confirmation
-        # (initialize_project handles its own state saving after confirmation)
+        # Save state after action completion
         if not (result.data and result.data.get('requires_confirmation')):
             self.workflow.save_state()
         
@@ -196,7 +230,7 @@ class Behavior:
         action = action_class(
             bot_name=self.bot_name,
             behavior=self.name,
-            workspace_root=self.botspace_root
+            bot_directory=self.bot_directory
         )
         
         # Track start
@@ -221,12 +255,21 @@ class Behavior:
 
 class Bot:
     
-    def __init__(self, bot_name: str, workspace_root: Path, config_path: Path):
+    def __init__(self, bot_name: str, bot_directory: Path, config_path: Path):
+        """Initialize Bot.
+        
+        Args:
+            bot_name: Name of the bot (e.g., 'story_bot')
+            bot_directory: Directory where bot code lives (e.g., agile_bot/bots/story_bot)
+            config_path: Path to bot_config.json
+            
+        Note:
+            workspace_directory is auto-detected from get_workspace_directory()
+        """
         self.name = bot_name
         self.bot_name = bot_name  # Add bot_name attribute for consistency
-        self.workspace_root = Path(workspace_root)
+        self.bot_directory = Path(bot_directory)
         self.config_path = Path(config_path)
-        # No working_dir stored - it's always inferred from parameters
         
         # Load config
         if not self.config_path.exists():
@@ -241,10 +284,15 @@ class Bot:
             behavior_obj = Behavior(
                 name=behavior_name,
                 bot_name=self.name,
-                botspace_root=self.workspace_root,
+                bot_directory=self.bot_directory,
                 bot_instance=self  # Pass bot instance to behavior
             )
             setattr(self, behavior_name, behavior_obj)
+    
+    @property
+    def workspace_directory(self) -> Path:
+        """Get workspace directory (auto-detected from environment/agent.json)."""
+        return get_workspace_directory()
     
     def infer_working_dir_from_path(self, path: str | Path) -> Path:
         """
@@ -263,9 +311,9 @@ class Bot:
         if path.is_file():
             path = path.parent
         
-        # Make it absolute if relative
+        # Make it absolute if relative (relative to workspace_directory)
         if not path.is_absolute():
-            path = self.workspace_root / path
+            path = self.workspace_directory / path
         
         path = path.resolve()
         
