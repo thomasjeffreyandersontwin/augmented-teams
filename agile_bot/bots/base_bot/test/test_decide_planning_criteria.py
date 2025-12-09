@@ -77,7 +77,7 @@ class TestInjectPlanningCriteriaIntoInstructions:
         
         create_planning_guardrails(workspace_root, bot_name, behavior, assumptions, criteria)
         
-        action_obj = PlanningAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        action_obj = PlanningAction(bot_name=bot_name, behavior=behavior, botspace_root=workspace_root)
         instructions = action_obj.inject_decision_criteria_and_assumptions()
         
         assert 'decision_criteria' in instructions
@@ -89,7 +89,7 @@ class TestInjectPlanningCriteriaIntoInstructions:
         bot_name = 'test_bot'
         behavior = 'exploration'
         
-        action_obj = PlanningAction(bot_name=bot_name, behavior=behavior, workspace_root=workspace_root)
+        action_obj = PlanningAction(bot_name=bot_name, behavior=behavior, botspace_root=workspace_root)
         instructions = action_obj.inject_decision_criteria_and_assumptions()
         
         assert 'decision_criteria' not in instructions or instructions['decision_criteria'] == {}

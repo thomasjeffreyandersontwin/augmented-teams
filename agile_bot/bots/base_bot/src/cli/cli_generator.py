@@ -115,19 +115,29 @@ Examples:
 """
 from pathlib import Path
 import sys
+import os
 
-# Add workspace root to path
-# From src/{{bot_name}}_cli.py, go up to workspace root:
-# src/ -> {{bot_name}}/ -> bots/ -> agile_bot/ -> workspace_root (5 levels up)
-workspace_root = Path(__file__).parent.parent.parent.parent.parent
-if str(workspace_root) not in sys.path:
-    sys.path.insert(0, str(workspace_root))
+# Keep Python import root separate from runtime workspace.
+python_workspace_root = Path(__file__).parent.parent.parent.parent.parent
+if str(python_workspace_root) not in sys.path:
+    sys.path.insert(0, str(python_workspace_root))
+
+# Runtime workspace is resolved from the environment (WORKING_AREA or WORKING_DIR)
 
 from agile_bot.bots.base_bot.src.cli.base_bot_cli import BaseBotCli
 
 
 def main():
     """Main CLI entry point."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Run {self.bot_name} CLI')
+    args = parser.parse_args()
+
+    # Resolve workspace from environment (WORKING_AREA preferred) via helper
+    from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+    workspace_root = get_workspace_directory()
+
     bot_name = '{self.bot_name}'
     bot_config_path = workspace_root / 'agile_bot' / 'bots' / bot_name / 'config' / 'bot_config.json'
     
@@ -161,15 +171,18 @@ if __name__ == '__main__':
         script_file = bot_dir / f'{self.bot_name}_cli'
         
         script_content = f'''#!/bin/bash
-# {self.bot_name.title().replace('_', ' ')} CLI Wrapper
+    # {self.bot_name.title().replace('_', ' ')} CLI Wrapper
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
-WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+    # Get script directory
+    SCRIPT_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
 
-# Run Python CLI script
-python3 "$SCRIPT_DIR/src/{self.bot_name}_cli.py" "$@"
-'''
+    # Prefer setting WORKING_DIR explicitly for runtime file I/O. If not set,
+    # derive a sensible default from the script location.
+    export WORKING_DIR="${{WORKING_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)}}"
+
+    # Run Python CLI script (it resolves WORKING_AREA itself)
+    python3 "$SCRIPT_DIR/src/{self.bot_name}_cli.py" "$@"
+    '''
         
         script_file.write_text(script_content, encoding='utf-8')
         
@@ -189,13 +202,18 @@ python3 "$SCRIPT_DIR/src/{self.bot_name}_cli.py" "$@"
         
         script_content = f'''# {self.bot_name.title().replace('_', ' ')} CLI Wrapper (PowerShell)
 
-# Get script directory
-$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-$WORKSPACE_ROOT = (Resolve-Path "$SCRIPT_DIR\\..\\..\\..").Path
+    # Get script directory
+    $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Run Python CLI script with all arguments passed through
-python "$SCRIPT_DIR\\src\\{self.bot_name}_cli.py" $args
-'''
+    # Prefer setting WORKING_DIR explicitly for runtime file I/O. If not set,
+    # derive a sensible default from the script location.
+    if (-not $env:WORKING_DIR) {{
+        $env:WORKING_DIR = (Resolve-Path "$SCRIPT_DIR\..\..\..").Path
+    }}
+
+    # Run Python CLI script (it resolves WORKING_AREA itself)
+    python "$SCRIPT_DIR\src\{self.bot_name}_cli.py" $args
+    '''
         
         script_file.write_text(script_content, encoding='utf-8')
         

@@ -7,7 +7,9 @@ This shows exactly how to:
 """
 
 import sys
+import os
 from pathlib import Path
+import argparse
 
 # Add parent directories to path so we can import from the package
 # examples/ -> story_io/ -> synchronizers/ -> src/
@@ -23,11 +25,30 @@ import json
 
 
 # Load from the structured.json file
-# From examples/ -> story_io/ -> synchronizers/ -> src/ -> story_bot/ -> bots/ -> agile_bot/
-workspace_root = Path(__file__).parent.parent.parent.parent.parent.parent
-structured_path = workspace_root  / "base_bot" / "docs" / "stories" / "story-graph.json"
+# Determine Python import root for imports (examples folder layout).
+# Keep import root separate from workspace root used for file I/O.
+python_workspace_root = Path(__file__).parent.parent.parent.parent.parent.parent
 
-# Load the JSON
+# Parse required runtime workspace argument (explicit is required).
+parser = argparse.ArgumentParser(description='Example: Load and render from structured.json')
+parser.add_argument('structured_path', nargs='?', help='Optional path to structured.json to load')
+args = parser.parse_args()
+
+# Resolve workspace from environment (WORKING_AREA preferred)
+from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+workspace_root = get_workspace_directory()
+
+# If a structured_path positional arg was provided, use that instead of workspace-derived path
+if args.structured_path:
+    structured_path = Path(args.structured_path)
+else:
+    structured_path = workspace_root / "base_bot" / "docs" / "stories" / "story-graph.json"
+
+if not structured_path.exists():
+    print(f"Error: File not found: {structured_path}")
+    print(f"Current working directory: {Path.cwd()}")
+    raise SystemExit(1)
+
 print(f"Loading story graph from: {structured_path}")
 with open(structured_path, 'r', encoding='utf-8') as f:
     original_data = json.load(f)

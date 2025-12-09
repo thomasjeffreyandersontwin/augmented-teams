@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class RenderOutputAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path):
-        super().__init__(bot_name, behavior, workspace_root, 'render_output')
+    def __init__(self, bot_name: str, behavior: str, workspace_root: Path, working_dir: Path = None):
+        super().__init__(bot_name, behavior, workspace_root, 'render_output', working_dir)
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute render_output action logic."""
@@ -31,7 +31,7 @@ class RenderOutputAction(BaseAction):
     
     def _load_base_instructions(self) -> Dict[str, Any]:
         """Load base instructions from base_actions folder."""
-        base_actions_dir = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        base_actions_dir = self.botspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
         
         base_path = self._find_base_instructions_path(base_actions_dir)
         
@@ -64,7 +64,7 @@ class RenderOutputAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             return Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.botspace_root,
                 self.bot_name,
                 self.behavior
             )
@@ -129,7 +129,7 @@ class RenderOutputAction(BaseAction):
             return None
         
         config_entry = {
-            'file': str(render_json_file.relative_to(self.workspace_root)),
+            'file': str(render_json_file.relative_to(self.botspace_root)),
             'config': config
         }
         
@@ -213,8 +213,8 @@ class RenderOutputAction(BaseAction):
         base_instructions_list = base_instructions.get('instructions', []).copy()
         
         # Add project path information to instructions
-        project_path = self.current_project
-        if project_path and project_path != self.workspace_root:
+        project_path = self.working_dir
+        if project_path and project_path != self.botspace_root:
             project_info = f"\n**PROJECT PATH: {project_path}**\nAll render outputs must be written to paths relative to this project path, NOT to the bot's own directories."
             base_instructions_list.insert(0, project_info)
         
@@ -233,7 +233,7 @@ class RenderOutputAction(BaseAction):
         if render_configs:
             merged['render_configs'] = render_configs
         
-        if project_path and project_path != self.workspace_root:
+        if project_path and project_path != self.botspace_root:
             merged['project_path'] = str(project_path)
         
         return merged
@@ -241,7 +241,7 @@ class RenderOutputAction(BaseAction):
     def _generate_synchronizer_instructions(self, render_configs: List[Dict[str, Any]]) -> List[str]:
         """Generate execution instructions for synchronizer-based render configs."""
         instructions = []
-        project_path = self.current_project
+        project_path = self.working_dir
         
         for render_config in render_configs:
             config = render_config.get('config', {})

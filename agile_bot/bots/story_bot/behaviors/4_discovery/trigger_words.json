@@ -1,25 +1,28 @@
 {
   "description": "Behavior-level trigger words - specific to discovery/increment inventory behavior",
   "patterns": [
+    "start.*discovery",
+    "let.*s.*discover",
+    "begin.*discovery",
+    "do.*discovery",
+    "discovery",
     "map.*next.*increment",
-    "discover.*all.*stories",
+    "discover.*all",
     "explore.*end.*to.*end.*flow",
-    "get.*inventory.*of.*stories",
-    "list.*stories.*for.*increment",
+    "get.*inventory",
+    "list.*for.*increment",
     "define.*increment.*scope",
     "what.*are.*we.*building.*next",
-    "capture.*all.*stories.*next.*release",
+    "capture.*all.*next.*release",
     "model.*next.*increment.*flow",
     "visualize.*increment.*scope",
-    "build.*full.*story.*inventory",
+    "build.*full.*inventory",
     "walk.*through.*increment.*flow",
-    "define.*story.*sequence",
+    "define.*sequence",
     "lay.*out.*increment.*plan",
     "draft.*full.*map.*of.*increment",
     "capture.*increment.*workflow",
-    "discovery",
-    "refine.*increment",
-    "story.*discovery"
+    "refine.*increment"
   ],
   "priority": 10
 }

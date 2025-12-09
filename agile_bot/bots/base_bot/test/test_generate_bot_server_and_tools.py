@@ -145,8 +145,7 @@ class TestGenerateBotTools:
         from agile_bot.bots.base_bot.src.mcp.bot_tool_generator import BotToolGenerator
         generator = BotToolGenerator(
             bot_name='test_bot',
-            config_path=bot_config,
-            workspace_root=workspace_root
+            config_path=bot_config
         )
         bot_tool = generator.create_bot_tool()
         
@@ -176,8 +175,7 @@ class TestGenerateBehaviorTools:
         from agile_bot.bots.base_bot.src.mcp.behavior_tool_generator import BehaviorToolGenerator
         generator = BehaviorToolGenerator(
             bot_name='test_bot',
-            config_path=bot_config,
-            workspace_root=workspace_root
+            config_path=bot_config
         )
         tools = generator.create_behavior_tools()
         

@@ -6,7 +6,9 @@ from agile_bot.bots.base_bot.src.bot.base_action import BaseAction
 
 class ValidateRulesAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path):
+    def __init__(self, bot_name: str, behavior: str, workspace_root: Path, working_dir: Path = None):
+        # BaseAction takes (bot_name, behavior, botspace_root, action_name).
+        # `working_dir` is resolved from the workspace helper, so don't pass it.
         super().__init__(bot_name, behavior, workspace_root, 'validate_rules')
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -29,12 +31,12 @@ class ValidateRulesAction(BaseAction):
     def inject_common_bot_rules(self) -> Dict[str, Any]:
         # Try both potential paths for common rules
         rules_file = (
-            self.workspace_root /
+            self.botspace_root /
             'agile_bot' / 'bots' / 'base_bot' / 'rules' / 'common_rules.json'
         )
         if not rules_file.exists():
             rules_file = (
-                self.workspace_root /
+                self.botspace_root /
                 'base_bot' / 'rules' / 'common_rules.json'
             )
         
@@ -52,7 +54,7 @@ class ValidateRulesAction(BaseAction):
     def inject_behavior_specific_and_bot_rules(self) -> Dict[str, Any]:
         # Load action-specific instructions from base_actions
         action_instructions = []
-        base_actions_path = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        base_actions_path = self.botspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
         
         # Find the validate_rules action folder (may have number prefix)
         action_folder = None
@@ -71,12 +73,12 @@ class ValidateRulesAction(BaseAction):
         # Load common rules - try both paths
         common_rules = []
         common_file = (
-            self.workspace_root /
+            self.botspace_root /
             'agile_bot' / 'bots' / 'base_bot' / 'rules' / 'common_rules.json'
         )
         if not common_file.exists():
             common_file = (
-                self.workspace_root /
+                self.botspace_root /
                 'base_bot' / 'rules' / 'common_rules.json'
             )
         
@@ -91,7 +93,7 @@ class ValidateRulesAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.botspace_root,
                 self.bot_name,
                 self.behavior
             )
@@ -134,7 +136,7 @@ class ValidateRulesAction(BaseAction):
     
     def _identify_content_to_validate(self) -> Dict[str, Any]:
         """Identify what content needs to be validated from the project."""
-        project_dir = self.current_project
+        project_dir = self.working_dir
         content_info = {
             'project_location': str(project_dir),
             'rendered_outputs': [],
@@ -147,7 +149,7 @@ class ValidateRulesAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.botspace_root,
                 self.bot_name,
                 self.behavior
             )

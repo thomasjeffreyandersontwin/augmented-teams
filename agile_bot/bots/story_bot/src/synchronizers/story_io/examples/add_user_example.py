@@ -10,13 +10,23 @@ This script:
 
 import sys
 import json
+import argparse
 from pathlib import Path
 
 from ..story_io_diagram import StoryIODiagram
 from .render_example import adapt_story_graph
 
-# File paths
-story_graph_path = Path(__file__).parent.parent.parent.parent / "demo" / "mm3e_animations" / "docs" / "story_graph.json"
+# Parse arguments
+parser = argparse.ArgumentParser(description='Add GM user to a story and re-render')
+parser.add_argument('story_graph_path', nargs='?', help='Optional path to story_graph.json')
+args = parser.parse_args()
+
+from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+workspace_root = get_workspace_directory()
+if args.story_graph_path:
+    story_graph_path = Path(args.story_graph_path)
+else:
+    story_graph_path = workspace_root / "demo" / "mm3e_animations" / "docs" / "story_graph.json"
 
 print(f"Loading: {story_graph_path}")
 

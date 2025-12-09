@@ -3,12 +3,13 @@ from typing import Dict, Any
 import json
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.bot.base_action import BaseAction
+from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import find_nested_subfolder, find_file_in_folder
 
 
 class GatherContextAction(BaseAction):
     
-    def __init__(self, bot_name: str, behavior: str, workspace_root: Path):
-        super().__init__(bot_name, behavior, workspace_root, 'gather_context')
+    def __init__(self, bot_name: str, behavior: str, workspace_root: Path, working_dir: Path = None):
+        super().__init__(bot_name, behavior, workspace_root, 'gather_context', working_dir)
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute gather_context action logic."""
@@ -32,23 +33,12 @@ class GatherContextAction(BaseAction):
     def save_clarification(self, parameters: Dict[str, Any]):
         """Save clarification data to docs/stories folder (generated file, not original context)."""
         try:
-            # Get project area from current_project.json
-            project_area = self.current_project
-            
-            # If current_project returns workspace_root (fallback), 
-            # we need to get the actual project from current_project.json
-            if project_area == self.workspace_root and self.current_project_file.exists():
-                try:
-                    project_data = json.loads(self.current_project_file.read_text(encoding='utf-8'))
-                    project_path = project_data.get('current_project', '')
-                    if project_path:
-                        project_area = Path(project_path)
-                except Exception as e:
-                    # If we can't read the file, use workspace_root as fallback
-                    pass
+            # Use working_dir if set, otherwise skip
+            if not self.working_dir:
+                return
             
             # Generated files go to docs/stories/, not context folder
-            docs_folder = project_area / 'docs'
+            docs_folder = self.working_dir / 'docs'
             stories_folder = docs_folder / 'stories'
             
             # Ensure docs/stories folder exists
@@ -69,15 +59,16 @@ class GatherContextAction(BaseAction):
                 encoding='utf-8'
             )
         except Exception as e:
-            # Log error but don't fail - this allows the action to continue
-            # In production, this would be logged properly
+            # Log error and fail fast so callers can handle the problem.
+            # Previously this swallowed the error; now we raise a clear exception.
             import logging
-            logging.warning(f"Failed to save clarification: {e}")
-            raise
+            logging.exception("Failed to save clarification")
+            # Raise a RuntimeError with context, preserving original exception
+            raise RuntimeError(f"Failed to save clarification for behavior '{self.behavior}': {e}") from e
     
     def load_and_merge_instructions(self) -> Dict[str, Any]:
         # Load base instructions - check for numbered prefix folders
-        base_actions_dir = self.workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        base_actions_dir = self.base_actions_dir
         
         # Try with and without number prefix - prefer numbered folders
         base_path = None
@@ -113,7 +104,7 @@ class GatherContextAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.botspace_root,
                 self.bot_name,
                 self.behavior
             )
@@ -147,27 +138,13 @@ class GatherContextAction(BaseAction):
         try:
             from agile_bot.bots.base_bot.src.bot.bot import Behavior
             behavior_folder = Behavior.find_behavior_folder(
-                self.workspace_root,
+                self.botspace_root,
                 self.bot_name,
                 self.behavior
             )
             
-            # Find guardrails folder (may have number prefix like 1_guardrails)
-            guardrails_folder = None
-            for folder in behavior_folder.glob('*guardrails'):
-                if folder.is_dir():
-                    guardrails_folder = folder
-                    break
-            
-            if not guardrails_folder:
-                return {'guardrails': {}}
-            
-            # Find required_context folder (may have number prefix like 1_required_context)
-            guardrails_dir = None
-            for folder in guardrails_folder.glob('*required_context'):
-                if folder.is_dir():
-                    guardrails_dir = folder
-                    break
+            # Use centralized utility to find guardrails/required_context folder
+            guardrails_dir = find_nested_subfolder(behavior_folder, 'guardrails', 'required_context')
             
         except FileNotFoundError:
             guardrails_dir = None
@@ -177,23 +154,15 @@ class GatherContextAction(BaseAction):
         if not guardrails_dir:
             return instructions
         
-        # Load questions (may have number prefix like 1_key_questions.json or just key_questions.json)
-        questions_file = None
-        for file in guardrails_dir.glob('*key_questions.json'):
-            if file.is_file():
-                questions_file = file
-                break
+        # Find key_questions.json (may have number prefix)
+        questions_file = find_file_in_folder(guardrails_dir, 'key_questions.json')
         
         if questions_file and questions_file.exists():
             questions_data = read_json_file(questions_file)
             instructions['guardrails']['key_questions'] = questions_data.get('questions', [])
         
-        # Load evidence (may have number prefix like 1_evidence.json or just evidence.json)
-        evidence_file = None
-        for file in guardrails_dir.glob('*evidence.json'):
-            if file.is_file():
-                evidence_file = file
-                break
+        # Find evidence.json (may have number prefix)
+        evidence_file = find_file_in_folder(guardrails_dir, 'evidence.json')
         
         if evidence_file and evidence_file.exists():
             evidence_data = read_json_file(evidence_file)
@@ -201,28 +170,13 @@ class GatherContextAction(BaseAction):
         
         return instructions
     
-    def inject_gather_context_instructions(self) -> Dict[str, Any]:
-        rendered_dir = (
-            self.workspace_root /
-            'agile_bot' / 'bots' / self.bot_name / 'docs' / 'stories'
-        )
-        
-        rendered_paths = []
-        if rendered_dir.exists():
-            # Look for acceptance criteria files
-            for file_path in rendered_dir.rglob('acceptance-criteria.md'):
-                rendered_paths.append(str(file_path))
-        
-        return {
-            'rendered_content_paths': rendered_paths
-        }
 
             
 
     
     def inject_gather_context_instructions(self) -> Dict[str, Any]:
         rendered_dir = (
-            self.workspace_root /
+            self.botspace_root /
             'agile_bot' / 'bots' / self.bot_name / 'docs' / 'stories'
         )
         
@@ -235,20 +189,5 @@ class GatherContextAction(BaseAction):
         return {
             'rendered_content_paths': rendered_paths
         }
-
-            
-    def inject_gather_context_instructions(self) -> Dict[str, Any]:
-        rendered_dir = (
-            self.workspace_root /
-            'agile_bot' / 'bots' / self.bot_name / 'docs' / 'stories'
-        )
-        
-        rendered_paths = []
-        if rendered_dir.exists():
-            # Look for acceptance criteria files
-            for file_path in rendered_dir.rglob('acceptance-criteria.md'):
-                rendered_paths.append(str(file_path))
-        
-        return {
-            'rendered_content_paths': rendered_paths
-        }
+    
+           

@@ -1,23 +1,24 @@
 from pathlib import Path
 from typing import Dict, Any, List, Tuple
 import json
-from transitions import Machine
+ 
 from agile_bot.bots.base_bot.src.utils import read_json_file
+from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 def load_workflow_states_and_transitions(workspace_root: Path) -> Tuple[List[str], List[Dict]]:
+    # Compute base actions directory directly from workspace root.
     base_actions_dir = workspace_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
 
     # Fallback if path doesn't exist (for tests with temp workspaces)
     if not base_actions_dir.exists():
-        # Use hardcoded defaults
-        states = ['initialize_project', 'gather_context', 'decide_planning_criteria', 'build_knowledge', 
+        # Use hardcoded defaults (no initialize_project - it's not an action)
+        states = ['gather_context', 'decide_planning_criteria', 'build_knowledge', 
                   'render_output', 'validate_rules']
         transitions = [
-            {'trigger': 'proceed', 'source': 'initialize_project', 'dest': 'gather_context'},
             {'trigger': 'proceed', 'source': 'gather_context', 'dest': 'decide_planning_criteria'},
             {'trigger': 'proceed', 'source': 'decide_planning_criteria', 'dest': 'build_knowledge'},
             {'trigger': 'proceed', 'source': 'build_knowledge', 'dest': 'render_output'},
@@ -25,37 +26,8 @@ def load_workflow_states_and_transitions(workspace_root: Path) -> Tuple[List[str
         ]
         return states, transitions
 
-    # Load all action configs
-    actions = []
-    for action_dir in base_actions_dir.iterdir():
-        if action_dir.is_dir():
-            config_file = action_dir / 'action_config.json'
-            if config_file.exists():
-                try:
-                    config = json.loads(config_file.read_text(encoding='utf-8'))
-                    if config.get('workflow'):  # Only workflow actions
-                        actions.append(config)
-                except Exception as e:
-                    # Skip malformed action config files
-                    logger.warning(f'Failed to load action config from {config_file}: {e}')
-    
-    # Sort by order
-    actions.sort(key=lambda x: x.get('order', 999))
-    
-    # Build states list
-    states = [action['name'] for action in actions]
-    
-    # Build transitions list
-    transitions = []
-    for action in actions:
-        if 'next_action' in action:
-            transitions.append({
-                'trigger': 'proceed',
-                'source': action['name'],
-                'dest': action['next_action']
-            })
-    
-    return states, transitions
+
+
 
 
 class BotResult:
@@ -70,68 +42,54 @@ class BotResult:
 
 class Behavior:
     
-    def __init__(self, name: str, bot_name: str, workspace_root: Path):
+    def __init__(self, name: str, bot_name: str, botspace_root: Path, bot_instance=None):
         self.name = name
         self.bot_name = bot_name
-        self.workspace_root = Path(workspace_root)
+        self.botspace_root = Path(botspace_root)
+        self.bot = bot_instance  # Reference to parent Bot instance
         
         # Load workflow configuration
-        states, transitions = load_workflow_states_and_transitions(self.workspace_root)
+        states, transitions = load_workflow_states_and_transitions(self.botspace_root)
         
         # Initialize workflow (contains state machine)
         from agile_bot.bots.base_bot.src.state.workflow import Workflow
         self.workflow = Workflow(
             bot_name=bot_name,
             behavior=name,
-            workspace_root=workspace_root,
+            workspace_root=botspace_root,
             states=states,
-            transitions=transitions
+            transitions=transitions,
+            bot_instance=bot_instance
         )
     
     @property
-    def dir(self) -> Path:
+    def bot_dir(self) -> Path:
         """Get behavior's bot directory path."""
-        return self.workspace_root / 'agile_bot' / 'bots' / self.bot_name
+        return self.botspace_root / 'agile_bot' / 'bots' / self.bot_name
     
     @property
-    def current_project_file(self) -> Path:
-        """Get current_project.json file path."""
-        return self.dir / 'current_project.json'
+    def working_dir(self) -> Path:
+        return get_workspace_directory()
     
-    @property
-    def current_project(self) -> Path:
-        """Get current project directory."""
-        if self.current_project_file.exists():
-            try:
-                project_data = json.loads(self.current_project_file.read_text(encoding='utf-8'))
-                return Path(project_data.get('current_project', ''))
-            except Exception:
-                pass
-        return self.workspace_root
-    
-    @property
-    def project_area(self) -> Path:
-        """Get project_area directory for current project."""
-        return self.current_project / 'project_area'
-    
+   
     @property
     def workflow_state_file(self) -> Path:
         """Get workflow_state.json path."""
-        return self.project_area / 'workflow_state.json'
+        return self.working_dir / 'workflow_state.json'
     
     @property
     def activity_log_file(self) -> Path:
         """Get activity_log.json path."""
-        return self.project_area / 'activity_log.json'
+        return self.working_dir / 'activity_log.json'
     
     @property
     def folder(self) -> Path:
         """Get behavior's folder path in behaviors directory."""
-        return self.dir / 'behaviors' / self.name
+        return self.bot_dir / 'behaviors' / self.name
     
     @staticmethod
-    def find_behavior_folder(workspace_root: Path, bot_name: str, behavior_name: str) -> Path:
-        behaviors_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors'
+    def find_behavior_folder(botspace_root: Path, bot_name: str, behavior_name: str) -> Path:
+        behaviors_dir = botspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors'
         
         # Try to find folder with or without number prefix
         for folder in behaviors_dir.glob(f'*{behavior_name}'):
@@ -163,19 +121,27 @@ class Behavior:
         if self.workflow.current_state != action_name:
             self.workflow.machine.set_state(action_name)
         
+        # Use authoritative working_dir from workspace helper (environment-driven)
+        working_dir = self.working_dir
+
+        # Workflow uses the centralized workspace helper for its working_dir;
+        # no need to set it here.
+        
         self.workflow.save_state()
         
         action = action_class(
             bot_name=self.bot_name,
             behavior=self.name,
-            workspace_root=self.workspace_root
+            workspace_root=self.botspace_root,
         )
         
-        try:
-            data = action.execute(parameters)
-        except FileNotFoundError:
-            # Some actions (build_knowledge) may not have templates for all behaviors
-            data = {'instructions': {}}
+        
+        data = action.execute(parameters)
+  
+        
+        # Add working_dir to response so user knows where files are being created
+        if working_dir:
+            data['working_dir'] = str(working_dir)
         
         return BotResult(
             status='completed',
@@ -184,71 +150,6 @@ class Behavior:
             data=data
         )
     
-    
-    def initialize_project(self, parameters: Dict[str, Any] = None) -> BotResult:
-        from agile_bot.bots.base_bot.src.bot.initialize_project_action import InitializeProjectAction
-        
-        if parameters is None:
-            parameters = {}
-        
-        action = InitializeProjectAction(
-            bot_name=self.bot_name,
-            behavior=self.name,
-            workspace_root=self.workspace_root
-        )
-        
-        # Track activity start
-        action.track_activity_on_start()
-        
-        # Check if this is a confirmation response from user
-        action_name = 'initialize_project'
-        if parameters.get('confirm'):
-            # User is confirming location
-            project_area = parameters.get('project_area')
-            input_file = parameters.get('input_file')
-            # If project_area is "confirm" or "true", treat as "use current directory"
-            if project_area and project_area.lower() not in ['confirm', 'true']:
-                # User provided specific location - confirm that location
-                data = action.confirm_location(project_location=project_area, input_file=input_file)
-            else:
-                # User confirming current location - use current directory
-                from pathlib import Path
-                current_dir = Path.cwd()
-                data = action.confirm_location(project_location=str(current_dir), input_file=input_file)
-            
-            # After confirmation, save workflow state and mark action as completed
-            # Ensure workflow state machine is set to initialize_project before saving
-            if self.workflow.current_state != 'initialize_project':
-                self.workflow.machine.set_state('initialize_project')
-            self.workflow.save_state()
-            self.workflow.save_completed_action('initialize_project')
-            # Move to next action automatically after confirmation
-            self.workflow.transition_to_next()
-            action_name = self.workflow.current_state
-        else:
-            # Initial call - propose location and ask for confirmation
-            # (project_area here is just a hint, we still ask for confirmation)
-            project_area = parameters.get('project_area')
-            data = action.initialize_location(project_area=project_area)
-            
-            # Do NOT save workflow state if confirmation is required
-            # Workflow state should only be created after confirmation
-            if not data.get('requires_confirmation'):
-                # No confirmation needed (resuming existing project)
-                self.workflow.save_state()
-                self.workflow.save_completed_action('initialize_project')
-                self.workflow.transition_to_next()
-                action_name = self.workflow.current_state
-        
-        # Track activity completion
-        action.track_activity_on_completion(outputs=data)
-        
-        return BotResult(
-            status='completed',
-            behavior=self.name,
-            action=action_name,
-            data=data
-        )
     
     def gather_context(self, parameters: Dict[str, Any] = None) -> BotResult:
         from agile_bot.bots.base_bot.src.bot.gather_context_action import GatherContextAction
@@ -270,12 +171,15 @@ class Behavior:
         from agile_bot.bots.base_bot.src.bot.validate_rules_action import ValidateRulesAction
         return self.execute_action('validate_rules', ValidateRulesAction, parameters)
     
-    def forward_to_current_action(self) -> BotResult:
+    def forward_to_current_action(self, parameters: Dict[str, Any] = None) -> BotResult:
+        # CRITICAL: Workflow derives its working_dir from the workspace helper.
+        # Nothing to set here; proceed to load existing state.
+        
         self.workflow.load_state()
         
         current_action = self.workflow.current_state
         action_method = getattr(self, current_action)
-        result = action_method()
+        result = action_method(parameters=parameters)
         
         # Only save state if action doesn't require confirmation
         # (initialize_project handles its own state saving after confirmation)
@@ -292,7 +196,7 @@ class Behavior:
         action = action_class(
             bot_name=self.bot_name,
             behavior=self.name,
-            workspace_root=self.workspace_root
+            workspace_root=self.botspace_root
         )
         
         # Track start
@@ -322,6 +226,7 @@ class Bot:
         self.bot_name = bot_name  # Add bot_name attribute for consistency
         self.workspace_root = Path(workspace_root)
         self.config_path = Path(config_path)
+        # No working_dir stored - it's always inferred from parameters
         
         # Load config
         if not self.config_path.exists():
@@ -336,47 +241,61 @@ class Bot:
             behavior_obj = Behavior(
                 name=behavior_name,
                 bot_name=self.name,
-                workspace_root=self.workspace_root
+                botspace_root=self.workspace_root,
+                bot_instance=self  # Pass bot instance to behavior
             )
             setattr(self, behavior_name, behavior_obj)
     
-    def invoke_tool(self, tool_name: str, parameters: Dict[str, Any]) -> BotResult:
-        behavior = parameters.get('behavior')
-        action = parameters.get('action')
+    def infer_working_dir_from_path(self, path: str | Path) -> Path:
+        """
+        Infer working directory from a context file or folder path.
+        Walks up the directory tree until finding workflow_state.json, or uses the folder itself.
         
-        # Get behavior object
-        behavior_obj = getattr(self, behavior, None)
-        if behavior_obj is None:
-            raise AttributeError(
-                f'Behavior {behavior} not found in bot {self.name}. '
-                f'Available behaviors: {", ".join(self.behaviors)}'
-            )
+        Args:
+            path: File or folder path from context
+            
+        Returns:
+            Path object representing the working directory
+        """
+        path = Path(path)
         
-        # Get action method
-        action_method = getattr(behavior_obj, action, None)
-        if action_method is None:
-            raise FileNotFoundError(
-                f'Action {action} not found in base actions'
-            )
+        # If it's a file, start from its parent directory
+        if path.is_file():
+            path = path.parent
         
-        # Execute action
-        return action_method(parameters)
+        # Make it absolute if relative
+        if not path.is_absolute():
+            path = self.workspace_root / path
+        
+        path = path.resolve()
+        
+        # Walk up looking for workflow_state.json
+        current = path
+        while current != current.parent:  # Stop at filesystem root
+            workflow_state = current / 'workflow_state.json'
+            if workflow_state.exists():
+                return current
+            current = current.parent
+        
+        # No workflow_state.json found, use the original folder
+        return path
     
-    def forward_to_current_behavior_and_current_action(self) -> BotResult:
-        # Read workflow state from bot directory
-        bot_dir = self.workspace_root / 'agile_bot' / 'bots' / self.name
-        state_file = bot_dir / 'project_area' / 'workflow_state.json'
-        
+    def forward_to_current_behavior_and_current_action(self, parameters: Dict[str, Any] = None) -> BotResult:
+        # Determine current behavior by checking each behavior's workflow state file
         current_behavior = None
-        if state_file.exists():
-            try:
-                state_data = json.loads(state_file.read_text(encoding='utf-8'))
-                current_behavior_path = state_data.get('current_behavior', '')
-                # Extract: 'story_bot.discovery' -> 'discovery'
-                if current_behavior_path:
-                    current_behavior = current_behavior_path.split('.')[-1]
-            except Exception:
-                pass
+        for behavior_name in self.behaviors:
+            behavior_instance = getattr(self, behavior_name)
+            state_file = behavior_instance.workflow.file
+            if state_file.exists():
+                try:
+                    state_data = json.loads(state_file.read_text(encoding='utf-8'))
+                    current_behavior_path = state_data.get('current_behavior', '')
+                    if current_behavior_path:
+                        current_behavior = current_behavior_path.split('.')[-1]
+                        break
+                except Exception:
+                    # Ignore malformed state files and continue searching
+                    continue
         
         if not current_behavior or current_behavior not in self.behaviors:
             # Default to FIRST behavior in bot config
@@ -384,7 +303,7 @@ class Bot:
         
         # Forward to behavior
         behavior_instance = getattr(self, current_behavior)
-        return behavior_instance.forward_to_current_action()
+        return behavior_instance.forward_to_current_action(parameters=parameters)
     
     def close_current_action(self) -> BotResult:
         """Mark current action as complete and transition to next action."""

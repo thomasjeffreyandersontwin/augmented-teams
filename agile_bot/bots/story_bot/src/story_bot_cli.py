@@ -19,28 +19,42 @@ Examples:
 """
 from pathlib import Path
 import sys
+import os
 
-# Add workspace root to path
-# From src/{bot_name}_cli.py, go up to workspace root:
-# src/ -> {bot_name}/ -> bots/ -> agile_bot/ -> workspace_root (5 levels up)
-workspace_root = Path(__file__).parent.parent.parent.parent.parent
-if str(workspace_root) not in sys.path:
-    sys.path.insert(0, str(workspace_root))
+# Use explicit working directory when invoked by tools. Tools should set
+# the `WORKING_DIR` env var. If not set, fall back to the behavior-relative
+# workspace root (development fallback).
+# Preserve the Python import root for package imports so imports continue
+# to work as before. This name makes the purpose clear and separates import
+# resolution from runtime workspace I/O paths.
+python_workspace_root = Path(__file__).parent.parent.parent.parent.parent
+if str(python_workspace_root) not in sys.path:
+    sys.path.insert(0, str(python_workspace_root))
+
+# Use centralized helper for resolving the runtime workspace root
+from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
 
 from agile_bot.bots.base_bot.src.cli.base_bot_cli import BaseBotCli
 
 
 def main():
-    """Main CLI entry point."""
+    """Main CLI entry point.
+
+    Runtime workspace is determined from the environment (WORKING_AREA).
+    """
+
+    # No CLI workspace parameter — resolve from environment
+    workspace_root = get_workspace_directory()
+
     bot_name = 'story_bot'
     bot_config_path = workspace_root / 'agile_bot' / 'bots' / bot_name / 'config' / 'bot_config.json'
-    
+
     cli = BaseBotCli(
         bot_name=bot_name,
         bot_config_path=bot_config_path,
-        workspace_root=workspace_root
+        workspace_root=workspace_root,
     )
-    
+
     cli.main()
 
 
