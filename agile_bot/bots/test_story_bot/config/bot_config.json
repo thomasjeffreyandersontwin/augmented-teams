@@ -1,0 +1,13 @@
+{
+  "name": "test_story_bot",
+  "behaviors": [
+    "1_shape",
+    "2_prioritization",
+    "3_arrange",
+    "4_discovery",
+    "5_exploration",
+    "6_scenarios",
+    "7_tests",
+    "8_code"
+  ]
+}

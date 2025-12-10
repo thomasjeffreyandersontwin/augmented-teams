@@ -100,3 +100,10 @@ make instructions a lot for the actual bot that's running where you are getting 
 ------------------
 call a behaviorCall all behaviors with one action
 need something to in the background just update everything based on what has changed the latest so if the story graph was changed it just runs render automatically or if an artifact was changed it renders extract and then render
+
+
+
+
+
+
+

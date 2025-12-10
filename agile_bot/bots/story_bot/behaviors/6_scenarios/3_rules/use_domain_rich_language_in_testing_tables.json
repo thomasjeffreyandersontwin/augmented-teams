@@ -1,0 +1,177 @@
+{
+  "description": "CRITICAL: Use domain-rich language in testing tables. Replace generic JSON/test data with concrete, descriptive language that ties back to actual domain concepts. Use real data and examples for all inputs and outputs - don't use generic descriptions of expected behavior. Tests need concrete examples tied to the domain to create effective tests and aligned code.",
+  "examples": [
+    {
+      "do": {
+        "description": "Use domain-rich language describing actual problems in payment data",
+        "content": [
+          "**GOOD Example - Payment Validation Testing Table:**",
+          "",
+          "| Test ID | Payment Data Problems | Expected Violation Line |",
+          "|---------|----------------------|----------------------|",
+          "| T3.1 | Payment with amount '-50.00' (negative amount violates validation rule) | line 2 (payment.amount) |",
+          "| T3.3 | Payment with credit card '4111-1111-1111-1111' and expiry '01/2020' (expired card violates expiry validation rule) | line 3 (payment.card.expiry_date) |",
+          "| T3.4 | Payment with customer_id null (missing required field violates customer validation rule) | line 4 (payment.customer_id) |",
+          "",
+          "**Key points:**",
+          "- Describes actual payment data from domain",
+          "- Explicitly states what problem exists (negative amount, expired card, null customer_id)",
+          "- Ties back to payment structure (payment, card, customer_id)",
+          "- Uses domain terminology (amount, credit card, expiry date, customer_id)"
+        ]
+      },
+      "dont": {
+        "description": "Don't use generic JSON or abstract test data",
+        "content": [
+          "**BAD Example - Generic JSON:**",
+          "",
+          "| Test ID | Example Content | Expected Violation Line |",
+          "|---------|----------------|----------------------|",
+          "| T3.1 | `{\"payment\": {\"amount\": -50}}` | line 2 (payment.amount) |",
+          "",
+          "**Problems:**",
+          "- Generic JSON doesn't explain what problem exists",
+          "- Doesn't tie back to domain concepts",
+          "- Test generator must interpret what's wrong",
+          "- No explicit connection to payment validation violations",
+          "",
+          "**BAD Example - Abstract descriptions:**",
+          "",
+          "| Test ID | Payment Content | Expected Violation |",
+          "|---------|----------------|-------------------|",
+          "| T3.1 | Payment with invalid data | Violation detected |",
+          "",
+          "**Problems:**",
+          "- 'Invalid data' is vague - what makes it invalid?",
+          "- 'Violation detected' doesn't specify what violation",
+          "- No concrete examples of actual payment amounts or card numbers"
+        ]
+      }
+    },
+    {
+      "do": {
+        "description": "Use real data and examples for all inputs and outputs",
+        "content": [
+          "**GOOD Example - Real violation data:**",
+          "",
+          "| Test ID | Violations Data | Expected Report Structure |",
+          "|---------|----------------|--------------------------|",
+          "| T4.1 | Payment amount '-50.00' violation: rule_name='validate_positive_amount', line_number=2, location='payment.amount', violation_message='Payment amount must be positive' | `{\"violations\": [{\"rule_name\": \"validate_positive_amount\", \"rule_file\": \"payment_rules/validate_positive_amount.json\", \"violation_message\": \"Payment amount must be positive\", \"line_number\": 2, \"location\": \"payment.amount\", \"severity\": \"error\"}]}` |",
+          "",
+          "**Key points:**",
+          "- Actual payment amount: '-50.00'",
+          "- Actual rule name: 'validate_positive_amount'",
+          "- Actual violation message: 'Payment amount must be positive'",
+          "- Actual line number: 2",
+          "- Actual location: 'payment.amount'",
+          "- Complete expected JSON structure with all fields",
+          "",
+          "**GOOD Example - Real error response:**",
+          "",
+          "| Test ID | Error Response (Full Text) |",
+          "|---------|--------------------------|",
+          "| T1.1 | **Original Response:**<br>\"Payment processed successfully\"<br><br>**Error Response:**<br><br>\"## Payment Validation Failed<br><br>Validation errors detected: 1<br><br>### Errors:<br><br>- **Rule**: validate_positive_amount<br>  - **Location**: Line 2 (payment.amount)<br>  - **Issue**: Payment amount '-50.00' must be positive<br>  - **Fix**: Provide a positive payment amount greater than zero<br><br>Please correct the payment amount before resubmitting.\" |",
+          "",
+          "**Key points:**",
+          "- Full text of error response, not just description",
+          "- Actual violation details included",
+          "- Actual fix suggestions provided",
+          "- Complete, executable example"
+        ]
+      },
+      "dont": {
+        "description": "Don't use generic descriptions of expected behavior or results",
+        "content": [
+          "**BAD Example - Generic descriptions:**",
+          "",
+          "| Test ID | Error Response |",
+          "|---------|--------------|",
+          "| T1.1 | Error response includes validation report |",
+          "",
+          "**Problems:**",
+          "- 'Includes validation report' doesn't show what the response looks like",
+          "- Test generator must interpret what 'includes' means",
+          "- No explicit conditions of success or failure",
+          "",
+          "**BAD Example - Vague expected results:**",
+          "",
+          "| Test ID | Expected Validator Behavior |",
+          "|---------|------------------------|",
+          "| T3.1 | Validator detects violations |",
+          "",
+          "**Problems:**",
+          "- 'Detects violations' is ambiguous",
+          "- Doesn't specify what violations or how they're detected",
+          "- No concrete example of violation output",
+          "",
+          "**BAD Example - Placeholder values:**",
+          "",
+          "| Test ID | Payment Validator Output |",
+          "|---------|----------------------|",
+          "| T1.1 | `{violations}` |",
+          "",
+          "**Problems:**",
+          "- Placeholder doesn't show actual structure",
+          "- Test generator must guess what violations look like",
+          "- No concrete example to validate against"
+        ]
+      }
+    },
+    {
+      "do": {
+        "description": "Use concrete examples tied to domain structure",
+        "content": [
+          "**GOOD Example - Payment transaction violations:**",
+          "",
+          "| Test ID | Payment Data Problems |",
+          "|---------|----------------------|",
+          "| T3.7 | Payment with amount '-50.00' (negative) and credit card '4111-1111-1111-1111' with expiry '01/2020' (expired) and customer_id null (missing) |",
+          "",
+          "**Key points:**",
+          "- Describes actual payment structure (amount, card, customer_id)",
+          "- Each field has explicit problem description",
+          "- Ties directly to payment domain structure",
+          "- Multiple violations in one example",
+          "",
+          "**GOOD Example - Rule file paths:**",
+          "",
+          "| Test ID | Rule File Paths |",
+          "|---------|---------------|",
+          "| T2.1 | payment_rules/validate_positive_amount.json<br>payment_rules/validate_card_expiry.json<br>payment_rules/validate_customer_required.json |",
+          "",
+          "**Key points:**",
+          "- Actual file paths, not placeholders",
+          "- Shows payment validation rules",
+          "- Demonstrates fixed directory structure"
+        ]
+      },
+      "dont": {
+        "description": "Don't use generic test data or abstract concepts",
+        "content": [
+          "**BAD Example - Generic test data:**",
+          "",
+          "| Test ID | Payment Content |",
+          "|---------|----------------|",
+          "| T3.1 | Test data with violations |",
+          "",
+          "**Problems:**",
+          "- 'Test data' is not domain-centric",
+          "- 'Violations' is vague - what violations?",
+          "- Doesn't enrich language or tie to payment domain",
+          "",
+          "**BAD Example - Abstract concepts:**",
+          "",
+          "| Test ID | Example Content |",
+          "|---------|----------------|",
+          "| T3.1 | Content that violates rules |",
+          "",
+          "**Problems:**",
+          "- 'Content' is generic",
+          "- 'Violates rules' doesn't specify which rules or how",
+          "- Not payment-centric or domain-rich"
+        ]
+      }
+    }
+  ]
+}
+
