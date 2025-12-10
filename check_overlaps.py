@@ -39,3 +39,6 @@ for i, x in enumerate(x_positions):
         if spacing != 60:
             print(f'  Gap between {x_positions[i-1]} and {x}: {spacing}px (expected 60px)')
 
+
+
+
