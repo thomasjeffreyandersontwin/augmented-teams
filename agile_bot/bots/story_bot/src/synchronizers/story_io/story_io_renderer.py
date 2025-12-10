@@ -761,16 +761,12 @@ class DrawIORenderer:
         all_background_rectangles = []
         epic_estimate_geoms = {}
         
-        # Handle increments mode
-        if is_increments and 'increments' in story_graph:
-            # Render increments with special handling for epic/feature story counts
-            return self._generate_increments_diagram(story_graph, layout_data, root_elem, root)
-        
         # Handle exploration mode separately
         if is_exploration:
             return self._generate_exploration_diagram(story_graph, layout_data, root_elem, root)
         
-        # Standard outline rendering (non-exploration mode)
+        # Standard outline rendering (used for both outline and increments mode)
+        # For increments mode, we'll add increment lanes at the end
         epic_group = ET.SubElement(root_elem, 'mxCell', id='epic-group', value='', 
                      style='group', parent='1', vertex='1', connectable='0')
         epic_group_geom = ET.SubElement(epic_group, 'mxGeometry', x='0', y='0', width='1', height='1')
@@ -2233,6 +2229,280 @@ class DrawIORenderer:
                     id1_index = list(root_elem).index(id1_elem)
                     for bg_rect_id, bg_rect in reversed(all_background_rectangles):
                         root_elem.insert(id1_index + 1, bg_rect)
+        
+        # If increments mode, add increment lanes after outline rendering
+        if is_increments and 'increments' in story_graph:
+            # Build story-to-increment mapping from increments data
+            story_to_increments = {}  # Maps story_key -> list of increment indices
+            increment_stories_map = {}  # Maps story_key -> story_data
+            
+            # Build story-to-increment mapping from increments data
+            for inc_idx, increment in enumerate(story_graph.get('increments', []), 1):
+                for epic in increment.get('epics', []):
+                    epic_name = epic['name']
+                    # In increments, sub_epics contain stories directly
+                    features = epic.get('sub_epics', [])
+                    
+                    for feature in features:
+                        feature_name = feature['name']
+                        
+                        # Handle both 'stories' and 'story_groups' formats
+                        stories_list = []
+                        if 'stories' in feature:
+                            stories_list = feature['stories']
+                        elif 'story_groups' in feature:
+                            for group in feature['story_groups']:
+                                stories_list.extend(group.get('stories', []))
+                        
+                        for story in stories_list:
+                            story_name = story['name']
+                            story_key = f"{epic_name}|{feature_name}|{story_name}"
+                            if story_key not in story_to_increments:
+                                story_to_increments[story_key] = []
+                            story_to_increments[story_key].append(inc_idx)
+                            if story_key not in increment_stories_map:
+                                increment_stories_map[story_key] = story
+            
+            # Find all story cells rendered by outline code and map them to increments
+            story_cells_to_move = []  # List of (cell, story_x, story_data, increment_indices, story_key)
+            
+            # Get all epics and features to build mapping from cell IDs to story keys
+            all_epics = story_graph.get('epics', [])
+            
+            # Find all story cells rendered by outline code and map them to increments
+            for cell in root_elem.findall('mxCell'):
+                cell_id = cell.get('id', '')
+                # Story cells have pattern: e{epic}f{feature}s{story}
+                if cell_id and 's' in cell_id and cell_id.startswith('e') and 'f' in cell_id and not cell_id.startswith('user_'):
+                    parts = cell_id.split('s')
+                    if len(parts) == 2:
+                        epic_feat_part = parts[0]  # e.g., "e1f1"
+                        story_idx_part = parts[1]   # e.g., "1"
+                        if epic_feat_part.startswith('e') and 'f' in epic_feat_part:
+                            # Extract epic and feature indices
+                            try:
+                                epic_part = epic_feat_part[1:].split('f')[0]
+                                feat_part = epic_feat_part.split('f')[1]
+                                if epic_part.isdigit() and feat_part.isdigit():
+                                    epic_idx = int(epic_part)
+                                    feat_idx = int(feat_part)
+                                    if 1 <= epic_idx <= len(all_epics):
+                                        epic = all_epics[epic_idx - 1]
+                                        features = get_sub_epics(epic)
+                                        if 1 <= feat_idx <= len(features):
+                                            feature = features[feat_idx - 1]
+                                            story_name = cell.get('value', '')
+                                            story_key = f"{epic['name']}|{feature['name']}|{story_name}"
+                                            
+                                            # Check if this story is in any increment
+                                            if story_key in story_to_increments:
+                                                geom = cell.find('mxGeometry')
+                                                if geom is not None:
+                                                    story_x = float(geom.get('x', 0))
+                                                    story_data = increment_stories_map.get(story_key)
+                                                    increment_indices = story_to_increments[story_key]
+                                                    story_cells_to_move.append((cell, story_x, story_data, increment_indices, story_key))
+                            except (ValueError, IndexError):
+                                # Skip if parsing fails
+                                continue
+            
+            # Calculate increment lane positions
+            increments = story_graph.get('increments', [])
+            increment_lane_height = 100
+            # Find bottom of all content to place increment lanes below
+            max_y = 0
+            for cell in root_elem.findall('mxCell'):
+                geom = cell.find('mxGeometry')
+                if geom is not None:
+                    y = float(geom.get('y', 0))
+                    height = float(geom.get('height', 0))
+                    max_y = max(max_y, y + height)
+            increment_lane_y_start = max_y + 50 - 125  # Move up 125 pixels
+            
+            # Render increment labels
+            increment_label_x = -180  # Move another 100px to the left
+            for inc_idx, increment in enumerate(increments, 1):
+                increment_name = increment.get('name', f'Increment {inc_idx}')
+                increment_y = increment_lane_y_start + (inc_idx - 1) * increment_lane_height
+                increment_cell = ET.SubElement(root_elem, 'mxCell',
+                                             id=f'increment{inc_idx}',
+                                             value=increment_name,
+                                             style='whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;',
+                                             parent='1', vertex='1')
+                increment_geom = ET.SubElement(increment_cell, 'mxGeometry',
+                                             x=str(increment_label_x), y=str(increment_y),
+                                             width='150', height='40')
+                increment_geom.set('as', 'geometry')
+            
+            # Find and collect background rectangles associated with stories being moved
+            # Note: User cells are NOT moved - they stay in their original positions
+            bg_rects_to_move = []  # List of (cell, story_keys_in_group, original_bounds)
+            
+            # Build mapping of story keys to their original story cells for reference
+            story_key_to_original_cell = {}
+            for cell, story_x, story_data, increment_indices, story_key in story_cells_to_move:
+                story_key_to_original_cell[story_key] = cell
+            
+            # Note: User cells are NOT moved - they stay in their original positions above the stories
+            
+            # Find background rectangles that contain stories being moved
+            # Background rectangles are positioned around story groups
+            for cell in root_elem.findall('mxCell'):
+                cell_id = cell.get('id', '')
+                geom = cell.find('mxGeometry')
+                if geom is not None:
+                    # Check if this is a background rectangle (grey dashed rectangle)
+                    style = cell.get('style', '')
+                    if 'dashed=1' in style and 'fillColor=#F7F7F7' in style and cell.get('value', '') == '':
+                        # This is a background rectangle
+                        bg_x = float(geom.get('x', 0))
+                        bg_y = float(geom.get('y', 0))
+                        bg_width = float(geom.get('width', 0))
+                        bg_height = float(geom.get('height', 0))
+                        bg_right = bg_x + bg_width
+                        bg_bottom = bg_y + bg_height
+                        
+                        # Check which stories are inside this background rectangle
+                        stories_in_bg = []
+                        for orig_cell, orig_x, orig_data, orig_indices, orig_key in story_cells_to_move:
+                            orig_geom = orig_cell.find('mxGeometry')
+                            if orig_geom is not None:
+                                story_x_orig = float(orig_geom.get('x', 0))
+                                story_y_orig = float(orig_geom.get('y', 0))
+                                # Check if story is within background rectangle bounds
+                                if (bg_x <= story_x_orig <= bg_right and 
+                                    bg_y <= story_y_orig <= bg_bottom):
+                                    stories_in_bg.append(orig_key)
+                        
+                        # If this background contains stories being moved, mark it for moving
+                        if stories_in_bg:
+                            bg_rects_to_move.append((cell, stories_in_bg, {
+                                'x': bg_x, 'y': bg_y, 'width': bg_width, 'height': bg_height
+                            }))
+            
+            # Remove story cells and background rectangles from their current positions
+            # Note: User cells are NOT removed - they stay in their original positions
+            for cell, story_x, story_data, increment_indices, story_key in story_cells_to_move:
+                root_elem.remove(cell)
+            for cell, stories_in_bg, bg_bounds in bg_rects_to_move:
+                root_elem.remove(cell)
+            
+            # Calculate story positions first (needed for background rectangles)
+            # Track story positions per increment to avoid duplicates and handle horizontal positioning
+            story_x_positions = {}  # Maps (inc_idx, story_key) -> current_x_position
+            story_y_positions = {}  # Maps (inc_idx, story_key) -> current_y_position
+            
+            for cell, story_x, story_data, increment_indices, story_key in story_cells_to_move:
+                # Calculate position for story in each increment lane it belongs to
+                for inc_idx in increment_indices:
+                    increment_y = increment_lane_y_start + (inc_idx - 1) * increment_lane_height
+                    story_y = increment_y + 20
+                    
+                    # Calculate X position - use original story_x for first occurrence, then space horizontally
+                    position_key = (inc_idx, story_key)
+                    if position_key not in story_x_positions:
+                        story_x_positions[position_key] = story_x
+                        story_y_positions[position_key] = story_y
+                    else:
+                        # Story already in this increment - position to the right
+                        story_x_positions[position_key] += self.STORY_SPACING_X
+            
+            # Render background rectangles FIRST (so they appear behind stories)
+            bg_rect_counter = {}  # Track unique IDs per increment
+            for bg_cell, stories_in_bg, bg_bounds in bg_rects_to_move:
+                # Group stories by increment
+                stories_by_increment = {}  # Maps inc_idx -> list of story_keys
+                for story_key in stories_in_bg:
+                    if story_key in story_to_increments:
+                        for inc_idx in story_to_increments[story_key]:
+                            if inc_idx not in stories_by_increment:
+                                stories_by_increment[inc_idx] = []
+                            stories_by_increment[inc_idx].append(story_key)
+                
+                # Render background rectangle for each increment that has stories in this group
+                for inc_idx, story_keys in stories_by_increment.items():
+                    # Find bounding box of stories in this increment
+                    story_positions_in_inc = []
+                    for story_key in story_keys:
+                        position_key = (inc_idx, story_key)
+                        if position_key in story_x_positions and position_key in story_y_positions:
+                            story_x = story_x_positions[position_key]
+                            story_y = story_y_positions[position_key]
+                            story_positions_in_inc.append({
+                                'x': story_x,
+                                'y': story_y,
+                                'width': self.STORY_WIDTH,
+                                'height': self.STORY_HEIGHT
+                            })
+                    
+                    if len(story_positions_in_inc) >= 2:
+                        # Calculate bounding box
+                        padding = 5
+                        min_x = min(pos['x'] for pos in story_positions_in_inc) - padding
+                        max_x = max(pos['x'] + pos['width'] for pos in story_positions_in_inc) + padding
+                        min_y = min(pos['y'] for pos in story_positions_in_inc) - padding
+                        max_y = max(pos['y'] + pos['height'] for pos in story_positions_in_inc) + padding
+                        
+                        rect_width = max_x - min_x
+                        rect_height = max_y - min_y
+                        
+                        # Create unique background rectangle ID
+                        if inc_idx not in bg_rect_counter:
+                            bg_rect_counter[inc_idx] = 0
+                        bg_rect_counter[inc_idx] += 1
+                        bg_rect_id = f'inc{inc_idx}_bg_{bg_rect_counter[inc_idx]}'
+                        
+                        bg_rect = ET.SubElement(root_elem, 'mxCell',
+                                                id=bg_rect_id,
+                                                value='',
+                                                style='rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;',
+                                                parent='1', vertex='1')
+                        bg_geom = ET.SubElement(bg_rect, 'mxGeometry',
+                                                x=str(min_x), y=str(min_y),
+                                                width=str(rect_width), height=str(rect_height))
+                        bg_geom.set('as', 'geometry')
+            
+            # Render stories AFTER background rectangles (so they appear on top)
+            for cell, story_x, story_data, increment_indices, story_key in story_cells_to_move:
+                # Render story in each increment lane it belongs to
+                for inc_idx in increment_indices:
+                    position_key = (inc_idx, story_key)
+                    current_story_x = story_x_positions[position_key]
+                    current_story_y = story_y_positions[position_key]
+                    
+                    # Create unique ID by including story name to avoid duplicates
+                    safe_story_name = story_data['name'].replace(' ', '_').replace('|', '_')
+                    story_cell_id = f'inc{inc_idx}_{story_key.replace("|", "_")}_{safe_story_name}'
+                    
+                    story_cell = ET.SubElement(root_elem, 'mxCell',
+                                               id=story_cell_id,
+                                               value=story_data['name'],
+                                               style=self._get_story_style(story_data),
+                                               parent='1', vertex='1')
+                    story_geom = ET.SubElement(story_cell, 'mxGeometry',
+                                               x=str(current_story_x), y=str(current_story_y),
+                                               width=str(self.STORY_WIDTH), height=str(self.STORY_HEIGHT))
+                    story_geom.set('as', 'geometry')
+            
+            # Note: User cells are NOT moved - they stay in their original positions above the stories
+            
+            # Draw increment separator lines
+            for inc_idx in range(len(increments)):
+                separator_y = increment_lane_y_start + inc_idx * increment_lane_height + increment_lane_height
+                separator = ET.SubElement(root_elem, 'mxCell',
+                                        id=f'increment_sep{inc_idx + 1}',
+                                        value="",
+                                        style='endArrow=none;dashed=1;html=1;',
+                                        parent='1', edge='1')
+                separator_geom = ET.SubElement(separator, 'mxGeometry',
+                                             width='50', height='50', relative='1')
+                separator_geom.set('as', 'geometry')
+                separator_point1 = ET.SubElement(separator_geom, 'mxPoint',
+                                               x=str(increment_label_x), y=str(separator_y))
+                separator_point1.set('as', 'sourcePoint')
+                separator_point2 = ET.SubElement(separator_geom, 'mxPoint',
+                                               x='4000', y=str(separator_y))
+                separator_point2.set('as', 'targetPoint')
         
         rough_string = ET.tostring(root, encoding='unicode')
         reparsed = minidom.parseString(rough_string)
