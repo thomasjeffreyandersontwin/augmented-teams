@@ -2227,7 +2227,7 @@ class DrawIORenderer:
     def _generate_increments_diagram(self, story_graph: Dict[str, Any], layout_data: Dict[str, Any], root_elem: ET.Element, xml_root: ET.Element) -> str:
         """
         Generate DrawIO XML for increments mode.
-        Epics and features within increments show story counts in top right.
+        Renders epics/features at top (like outline), then stories in increment swim lanes below.
         
         Args:
             story_graph: Story graph with increments
@@ -2235,139 +2235,271 @@ class DrawIORenderer:
             root_elem: Root XML element to append to (this is the <root> element)
             xml_root: Root of the entire XML tree (mxfile element)
         """
-        """
-        Generate DrawIO XML for increments mode.
-        Epics and features within increments show story counts in top right.
+        # Build map of story -> increment(s) it belongs to
+        # Story key format: "epic_name|feature_name|story_name"
+        story_to_increments = {}  # Maps story_key -> list of increment indices
         
-        Args:
-            story_graph: Story graph with increments
-            layout_data: Optional layout data
-            root_elem: Root XML element to append to
-        """
-        # For now, use same rendering but with increment-specific story count display
-        # TODO: Implement full increments rendering with increment boundaries
-        # This is a placeholder - actual implementation would render increment lanes
+        # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
+        def get_sub_epics(epic):
+            return epic.get('sub_epics', []) or epic.get('features', [])
         
-        # Use the same rendering logic but mark as increments
-        # The story count display will be handled in the epic/feature rendering
-        # by checking if we're in increments mode
+        # Build story-to-increment mapping from increments data
+        for inc_idx, increment in enumerate(story_graph.get('increments', []), 1):
+            for epic in increment.get('epics', []):
+                epic_name = epic['name']
+                for feature in get_sub_epics(epic):
+                    feature_name = feature['name']
+                    for story in feature.get('stories', []):
+                        story_name = story['name']
+                        story_key = f"{epic_name}|{feature_name}|{story_name}"
+                        if story_key not in story_to_increments:
+                            story_to_increments[story_key] = []
+                        story_to_increments[story_key].append(inc_idx)
         
-        # Return the standard diagram for now - will enhance later
+        # Use outline rendering for epics/features, but track story positions for increment lanes
+        # First, render epics and features using outline logic (but don't render stories yet)
+        # We'll collect story positions and render them in increment lanes
+        
+        # Call outline rendering with a flag to skip story rendering
+        # Actually, we need to render epics/features ourselves, then render stories in lanes
+        # Let's use the outline code structure but modify story rendering
+        
+        # Render epics and features at top using outline logic
+        # Then render stories in increment lanes below
+        
+        # For now, use outline rendering but intercept story rendering
+        # Better approach: copy outline rendering code and modify story Y positions
+        
+        # Use outline rendering but modify story Y to be in increment lanes
+        # Generate outline first, then move stories to increment lanes
+        outline_output = self._generate_diagram(story_graph, layout_data, is_increments=False, is_exploration=False)
+        
+        # Parse the outline XML and modify story positions to be in increment lanes
+        outline_root = ET.fromstring(outline_output)
+        
+        # Find all story cells and move them to increment lanes
+        # But we need to rebuild from scratch to properly handle increment lanes
+        
+        # Better: Render epics/features manually using outline logic, then add increment lanes
         epic_group = ET.SubElement(root_elem, 'mxCell', id='epic-group', value='', 
                      style='group', parent='1', vertex='1', connectable='0')
         epic_group_geom = ET.SubElement(epic_group, 'mxGeometry', x='0', y='0', width='1', height='1')
         epic_group_geom.set('as', 'geometry')
         
-        # Render increments with their epics and features
-        increment_y_start = 510  # Starting Y position for increments
-        increment_height = 400  # Height per increment
+        # Render epics and features using outline logic (copy from _generate_diagram)
+        # But instead of rendering stories below features, collect them and render in lanes
         
-        for inc_idx, increment in enumerate(story_graph.get('increments', []), 1):
-            inc_y = increment_y_start + (inc_idx - 1) * increment_height
-            
-            # Render increment label/box
+        # Use top-level epics from story_graph for structure
+        # But we'll get story data from increments
+        all_epics = story_graph.get('epics', [])
+        
+        # Also build a map of stories from increments for lookup
+        increment_stories_map = {}  # Maps story_key -> story_data
+        for increment in story_graph.get('increments', []):
+            for epic in increment.get('epics', []):
+                epic_name = epic['name']
+                for feature in get_sub_epics(epic):
+                    feature_name = feature['name']
+                    for story in feature.get('stories', []):
+                        story_name = story['name']
+                        story_key = f"{epic_name}|{feature_name}|{story_name}"
+                        if story_key not in increment_stories_map:
+                            increment_stories_map[story_key] = story
+        
+        # Calculate increment lane positions
+        increments = story_graph.get('increments', [])
+        increment_lane_height = 100  # Height per increment lane
+        increment_lane_y_start = self.FEATURE_Y + 60 + self.STORY_OFFSET_FROM_FEATURE + 50  # Below where stories would normally be
+        
+        # Render increment labels on left side (further left to avoid overlap)
+        increment_label_x = 20  # Start position for increment labels
+        epic_start_x = 200  # Start epics after increment labels (150 width + 50 spacing)
+        
+        for inc_idx, increment in enumerate(increments, 1):
             increment_name = increment.get('name', f'Increment {inc_idx}')
+            increment_y = increment_lane_y_start + (inc_idx - 1) * increment_lane_height
             increment_cell = ET.SubElement(root_elem, 'mxCell',
                                          id=f'increment{inc_idx}',
                                          value=increment_name,
-                                         style='whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;',
+                                         style='whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;',
                                          parent='1', vertex='1')
             increment_geom = ET.SubElement(increment_cell, 'mxGeometry',
-                                         x='1090', y=str(inc_y),
+                                         x=str(increment_label_x), y=str(increment_y),
                                          width='150', height='40')
             increment_geom.set('as', 'geometry')
+        
+        # Now render epics and features using outline logic, but collect stories for increment lanes
+        # Copy the epic/feature rendering from outline mode, but skip story rendering
+        # Then render stories in increment lanes based on story_to_increments mapping
+        
+        # For now, use a simpler approach: call outline rendering, then parse and move stories
+        # Actually, let's render manually to have full control
+        
+        x_pos = epic_start_x  # Start epics after increment labels
+        shown_users = set()
+        feature_story_positions = {}  # Maps story_key -> (feature_x, feature_y, story_index_in_feature)
+        
+        for epic_idx, epic in enumerate(all_epics, 1):
+            features = get_sub_epics(epic)
             
-            # Render epics and features within this increment
-            epics = increment.get('epics', [])
-            x_pos = 1262  # Starting X for epic content
+            epic_x = x_pos
+            epic_y = self.EPIC_Y
+            epic_width = 0
+            epic_height = 60
             
-            for epic_idx, epic in enumerate(epics, 1):
-                # Calculate total stories for epic in this increment
-                epic_total_stories = self._calculate_total_stories_for_epic_in_increment(epic)
+            # Calculate epic width based on features (sized by story count)
+            current_feature_x = epic_x
+            for feature in features:
+                stories = feature.get('stories', [])
+                # Feature width based on number of stories
+                if stories:
+                    feature_width = max(300, len(stories) * self.STORY_SPACING_X + 20)
+                else:
+                    feature_width = 300
+                epic_width += feature_width + self.FEATURE_SPACING_X
+                current_feature_x += feature_width + self.FEATURE_SPACING_X
+            
+            epic_width = max(668, epic_width)
+            
+            # Render epic
+            epic_total_stories = self._calculate_total_stories_for_epic_in_increment(epic)
+            epic_story_count_html = ""
+            if epic_total_stories > 0:
+                epic_story_count_html = self._get_story_count_display_html(epic_total_stories, position='top-right')
+            
+            epic_cell = ET.SubElement(root_elem, 'mxCell', id=f'epic{epic_idx}',
+                                     value=f"<div style=\"position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;\"><span style=\"flex: 1; text-align: center;\">{epic['name']}</span>{epic_story_count_html}</div>",
+                                     style='rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;',
+                                     parent='epic-group', vertex='1')
+            epic_geom = ET.SubElement(epic_cell, 'mxGeometry', x=str(epic_x), y=str(epic_y), 
+                                     width=str(epic_width), height=str(epic_height))
+            epic_geom.set('as', 'geometry')
+            
+            # Render features side by side
+            feature_y = epic_y + epic_height  # Features directly below epic
+            current_feature_x = epic_x
+            
+            for feat_idx, feature in enumerate(features, 1):
+                # Count stories for this feature across all increments
+                feature_stories = []
+                for increment in story_graph.get('increments', []):
+                    for inc_epic in increment.get('epics', []):
+                        if inc_epic['name'] == epic['name']:
+                            for inc_feature in get_sub_epics(inc_epic):
+                                if inc_feature['name'] == feature['name']:
+                                    feature_stories.extend(inc_feature.get('stories', []))
+                                    break
+                            break
                 
-                # Epic story count display in top right for increments
-                epic_story_count_html = ""
-                if epic_total_stories > 0:
-                    epic_story_count_html = self._get_story_count_display_html(epic_total_stories, position='top-right')
+                # Calculate feature width based on total story count (across all increments)
+                story_count = len(set(s['name'] for s in feature_stories))  # Unique story names
+                if story_count > 0:
+                    feature_width = max(300, story_count * self.STORY_SPACING_X + 20)
+                else:
+                    feature_width = 300
                 
-                epic_cell = ET.SubElement(root_elem, 'mxCell',
-                                         id=f'inc{inc_idx}_epic{epic_idx}',
-                                         value=f"<div style=\"position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;\"><span style=\"flex: 1; text-align: center;\">{epic['name']}</span>{epic_story_count_html}</div>",
-                                         style='rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;',
-                                         parent='1', vertex='1')
-                # Calculate epic width based on features
-                epic_width = 668  # Default, will be calculated
-                epic_geom = ET.SubElement(epic_cell, 'mxGeometry',
-                                         x=str(x_pos), y=str(inc_y - 70),
-                                         width=str(epic_width), height='60')
-                epic_geom.set('as', 'geometry')
+                feature_total_stories = self._calculate_total_stories_for_feature_in_increment(feature)
+                feature_story_count_html = ""
+                if feature_total_stories > 0:
+                    feature_story_count_html = self._get_story_count_display_html(feature_total_stories, position='top-right')
                 
-                # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
-                def get_sub_epics(epic):
-                    return epic.get('sub_epics', []) or epic.get('features', [])
+                feature_cell = ET.SubElement(root_elem, 'mxCell',
+                                           id=f'e{epic_idx}f{feat_idx}',
+                                           value=f"<div style=\"position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;\"><span style=\"flex: 1; text-align: center;\">{feature['name']}</span>{feature_story_count_html}</div>",
+                                           style='rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;',
+                                           parent='1', vertex='1')
+                feature_geom = ET.SubElement(feature_cell, 'mxGeometry',
+                                           x=str(current_feature_x), y=str(feature_y),
+                                           width=str(feature_width), height='60')
+                feature_geom.set('as', 'geometry')
                 
-                # Render sub_epics (features) within epic
-                features = get_sub_epics(epic)
-                feature_x = x_pos + 10
+                # Store story positions for increment lane rendering
+                # Use unique stories from increments, positioned horizontally
+                unique_stories = {}
+                for increment in story_graph.get('increments', []):
+                    for inc_epic in increment.get('epics', []):
+                        if inc_epic['name'] == epic['name']:
+                            for inc_feature in get_sub_epics(inc_epic):
+                                if inc_feature['name'] == feature['name']:
+                                    for story in inc_feature.get('stories', []):
+                                        story_name = story['name']
+                                        if story_name not in unique_stories:
+                                            unique_stories[story_name] = story
+                                    break
+                            break
                 
-                for feat_idx, feature in enumerate(features, 1):
-                    # Calculate total stories for feature in this increment
-                    feature_total_stories = self._calculate_total_stories_for_feature_in_increment(feature)
+                # Position stories horizontally based on their sequential_order
+                sorted_stories = sorted(unique_stories.values(), key=lambda s: s.get('sequential_order', 999))
+                
+                # Render users above feature (at the top, aligned with story positions)
+                feature_users_shown = set()
+                for story_idx, story in enumerate(sorted_stories):
+                    story_name = story['name']
+                    story_key = f"{epic['name']}|{feature['name']}|{story_name}"
+                    story_x_in_feature = current_feature_x + story_idx * self.STORY_SPACING_X
+                    feature_story_positions[story_key] = (story_x_in_feature, feature_y, story_idx)
                     
-                    # Feature story count display in top right for increments
-                    feature_story_count_html = ""
-                    if feature_total_stories > 0:
-                        feature_story_count_html = self._get_story_count_display_html(feature_total_stories, position='top-right')
-                    
-                    feature_cell = ET.SubElement(root_elem, 'mxCell',
-                                               id=f'inc{inc_idx}_epic{epic_idx}_feat{feat_idx}',
-                                               value=f"<div style=\"position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;\"><span style=\"flex: 1; text-align: center;\">{feature['name']}</span>{feature_story_count_html}</div>",
-                                               style='rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;',
-                                               parent='1', vertex='1')
-                    feature_width = 300  # Default, will be calculated
-                    feature_geom = ET.SubElement(feature_cell, 'mxGeometry',
-                                               x=str(feature_x), y=str(inc_y - 20),
-                                               width=str(feature_width), height='60')
-                    feature_geom.set('as', 'geometry')
-                    
-                    # Render stories within this feature
-                    stories = feature.get('stories', [])
-                    story_x = feature_x + 10
-                    story_y = inc_y + 50  # Start below feature
-                    
-                    for story_idx, story in enumerate(stories, 1):
-                        # Render user labels if present
-                        story_users = story.get('users', [])
-                        for user in story_users:
+                    # Render users above feature (only once per user, aligned with story X position)
+                    story_users = story.get('users', [])
+                    for user in story_users:
+                        if user not in feature_users_shown:
                             user_label = ET.SubElement(root_elem, 'mxCell',
-                                                      id=f'user_inc{inc_idx}_e{epic_idx}f{feat_idx}s{story_idx}_{user}',
+                                                      id=f'user_e{epic_idx}f{feat_idx}_{user}',
                                                       value=user,
                                                       style='whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;',
                                                       parent='1', vertex='1')
+                            # Position user below feature (where stories normally are in outline mode)
+                            # Users go where stories would be: feature_y + feature_height + STORY_OFFSET - USER_LABEL_OFFSET
+                            story_normal_y = feature_y + 60 + self.STORY_OFFSET_FROM_FEATURE  # Where story would be
+                            user_y = story_normal_y - self.USER_LABEL_OFFSET  # User above story position
                             user_geom = ET.SubElement(user_label, 'mxGeometry',
-                                                     x=str(story_x),
-                                                     y=str(story_y - self.USER_LABEL_OFFSET),
+                                                     x=str(story_x_in_feature),
+                                                     y=str(user_y),
                                                      width=str(self.STORY_WIDTH), height=str(self.STORY_HEIGHT))
                             user_geom.set('as', 'geometry')
-                        
-                        # Render story
-                        story_cell = ET.SubElement(root_elem, 'mxCell',
-                                                   id=f'inc{inc_idx}_e{epic_idx}f{feat_idx}s{story_idx}',
-                                                   value=story['name'],
-                                                   style=self._get_story_style(story),
-                                                   parent='1', vertex='1')
-                        story_geom = ET.SubElement(story_cell, 'mxGeometry',
-                                                   x=str(story_x), y=str(story_y),
-                                                   width=str(self.STORY_WIDTH), height=str(self.STORY_HEIGHT))
-                        story_geom.set('as', 'geometry')
-                        
-                        story_x += self.STORY_SPACING_X
-                    
-                    feature_x += feature_width + 10
+                            feature_users_shown.add(user)
+                
+                current_feature_x += feature_width + self.FEATURE_SPACING_X
             
-            # Draw increment separator line
+            x_pos += epic_width + 30
+        
+        # Now render stories in increment lanes
+        for story_key, increment_indices in story_to_increments.items():
+            epic_name, feature_name, story_name = story_key.split('|')
+            
+            # Get story data from increment stories map
+            story_data = increment_stories_map.get(story_key)
+            
+            if not story_data:
+                continue
+            
+            # Get story X position from feature
+            if story_key in feature_story_positions:
+                story_x, feature_y, story_idx = feature_story_positions[story_key]
+            else:
+                continue
+            
+            # Render story in each increment lane it belongs to (users already rendered at top)
+            for inc_idx in increment_indices:
+                increment_y = increment_lane_y_start + (inc_idx - 1) * increment_lane_height
+                story_y = increment_y + 20  # Small offset from lane top
+                
+                # Render story (users are already rendered above features at the top)
+                story_cell = ET.SubElement(root_elem, 'mxCell',
+                                           id=f'inc{inc_idx}_{story_key}',
+                                           value=story_name,
+                                           style=self._get_story_style(story_data),
+                                           parent='1', vertex='1')
+                story_geom = ET.SubElement(story_cell, 'mxGeometry',
+                                           x=str(story_x), y=str(story_y),
+                                           width=str(self.STORY_WIDTH), height=str(self.STORY_HEIGHT))
+                story_geom.set('as', 'geometry')
+        
+        # Draw increment separator lines
+        for inc_idx in range(len(increments)):
+            separator_y = increment_lane_y_start + inc_idx * increment_lane_height + increment_lane_height
             separator = ET.SubElement(root_elem, 'mxCell',
-                                    id=f'increment_sep{inc_idx}',
+                                    id=f'increment_sep{inc_idx + 1}',
                                     value="",
                                     style='endArrow=none;dashed=1;html=1;',
                                     parent='1', edge='1')
@@ -2375,10 +2507,10 @@ class DrawIORenderer:
                                          width='50', height='50', relative='1')
             separator_geom.set('as', 'geometry')
             separator_point1 = ET.SubElement(separator_geom, 'mxPoint',
-                                           x='1080', y=str(inc_y + 220))
+                                           x=str(increment_label_x), y=str(separator_y))
             separator_point1.set('as', 'sourcePoint')
             separator_point2 = ET.SubElement(separator_geom, 'mxPoint',
-                                           x='2721', y=str(inc_y + 220))
+                                           x='4000', y=str(separator_y))
             separator_point2.set('as', 'targetPoint')
         
         rough_string = ET.tostring(xml_root, encoding='unicode')

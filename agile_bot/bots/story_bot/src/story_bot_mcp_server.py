@@ -9,9 +9,9 @@ import os
 import json
 
 # Setup Python import path for package imports
-# This file is at: agile_bot/bots/story_bot/src/story_bot_mcp_server.py
 python_workspace_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(python_workspace_root))
+if str(python_workspace_root) not in sys.path:
+    sys.path.insert(0, str(python_workspace_root))
 
 # ============================================================================
 # BOOTSTRAP: Set environment variables before importing other modules

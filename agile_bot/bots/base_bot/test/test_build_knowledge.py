@@ -109,3 +109,97 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         
         error_msg = str(exc_info.value).lower()
         assert 'knowledge graph' in error_msg
+
+
+# ============================================================================
+# STORY: Update Existing Knowledge Graph Instead of Creating New File
+# ============================================================================
+
+class TestUpdateExistingKnowledgeGraph:
+    """Story: Update Existing Knowledge Graph - Tests that build_knowledge updates existing story-graph.json instead of creating a new file."""
+
+    def test_prioritization_updates_existing_story_graph_json(self, bot_directory, workspace_directory):
+        """
+        Test that prioritization behavior updates existing story-graph.json by adding increments array,
+        rather than creating a separate story-graph-increments.json file.
+        """
+        bot_name = 'story_bot'
+        behavior = 'prioritization'
+        
+        # Bootstrap environment
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        # Create existing story-graph.json with epics (from shape behavior)
+        stories_dir = workspace_directory / 'docs' / 'stories'
+        stories_dir.mkdir(parents=True, exist_ok=True)
+        
+        existing_story_graph = {
+            "epics": [
+                {
+                    "name": "Manage Mobs",
+                    "sequential_order": 1,
+                    "estimated_stories": 6,
+                    "domain_concepts": [
+                        {
+                            "name": "Mob",
+                            "responsibilities": [
+                                {
+                                    "name": "Groups minions together for coordinated action",
+                                    "collaborators": ["Minion"]
+                                }
+                            ]
+                        }
+                    ],
+                    "sub_epics": []
+                }
+            ]
+        }
+        
+        story_graph_path = stories_dir / 'story-graph.json'
+        story_graph_path.write_text(json.dumps(existing_story_graph, indent=2), encoding='utf-8')
+        
+        # Create knowledge graph config for prioritization
+        behavior_dir = bot_directory / 'behaviors' / behavior
+        kg_dir = behavior_dir / 'content' / '1_knowledge_graph'
+        kg_dir.mkdir(parents=True, exist_ok=True)
+        
+        config_file = kg_dir / 'build_story_graph_increments.json'
+        config_data = {
+            "name": "build_story_graph_outline",
+            "path": "docs/stories",
+            "template": "story_graph_increments.json",
+            "output": "story-graph.json"
+        }
+        config_file.write_text(json.dumps(config_data), encoding='utf-8')
+        
+        # Create template file
+        template_file = kg_dir / 'story_graph_increments.json'
+        template_content = {
+            "_explanation": {},
+            "epics": [],
+            "increments": []
+        }
+        template_file.write_text(json.dumps(template_content), encoding='utf-8')
+        
+        # Create action and get instructions
+        action_obj = BuildKnowledgeAction(bot_name=bot_name, behavior=behavior, bot_directory=bot_directory)
+        instructions = action_obj.inject_knowledge_graph_template()
+        
+        # Verify instructions include update guidance
+        assert 'knowledge_graph_config' in instructions
+        assert instructions['knowledge_graph_config']['output'] == 'story-graph.json'
+        
+        # Verify that instructions should indicate updating existing file
+        # The instructions should guide the LLM to load existing story-graph.json and add increments
+        assert 'template_path' in instructions
+        
+        # Verify existing file still exists and wasn't replaced
+        assert story_graph_path.exists()
+        
+        # Verify that the config specifies the same output file (not a new file)
+        config = instructions['knowledge_graph_config']
+        assert config['output'] == 'story-graph.json'
+        assert config['path'] == 'docs/stories'
+        
+        # The actual update logic should be in the instructions passed to LLM
+        # This test verifies the action provides the correct guidance

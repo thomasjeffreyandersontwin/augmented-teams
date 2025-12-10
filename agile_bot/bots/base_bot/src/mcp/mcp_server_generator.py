@@ -169,42 +169,21 @@ class MCPServerGenerator:
     def register_get_working_dir_tool(self, mcp_server: FastMCP):
         tool_name = 'get_working_dir'
         
-        @mcp_server.tool(name=tool_name, description=f'Get the current working directory inferred from context. Triggers: where are we working, what\'s my location, show working directory')
+        @mcp_server.tool(name=tool_name, description=f'Get the current working directory from WORKING_AREA. Triggers: where are we working, what\'s my location, show working directory')
         async def get_working_dir(input_file: str = None, project_dir: str = None):
-            """Get the working directory inferred from context or current session.
+            """Get the working directory from WORKING_AREA environment variable.
 
-            If `input_file` or `project_dir` provided, the working directory is inferred
-            from that path. Otherwise the server returns the workflow-derived working
-            directory (resolved via the centralized workspace helper).
+            Always returns the workspace directory from WORKING_AREA (no inference).
             """
             if self.bot is None:
                 return {"error": "Bot not initialized"}
 
-            # If explicit context provided, infer from it
-            if input_file or project_dir:
-                path = input_file or project_dir
-                working_dir = self.bot.infer_working_dir_from_path(path)
-                return {
-                    'working_dir': str(working_dir),
-                    'message': f'Working directory inferred from {path}: {working_dir}'
-                }
-
-            # Otherwise return the workflow-derived working directory for the first behavior
-            if self.bot.behaviors:
-                first_behavior = self.bot.behaviors[0]
-                behavior_obj = getattr(self.bot, first_behavior)
-                try:
-                    wd = behavior_obj.workflow.working_dir
-                    return {
-                        'working_dir': str(wd),
-                        'message': f'Working directory derived from workspace helper: {wd}'
-                    }
-                except Exception:
-                    pass
-
+            # Always use workspace_directory from WORKING_AREA
+            from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+            working_dir = get_workspace_directory()
             return {
-                'working_dir': None,
-                'message': 'No working directory available. Provide input_file or project_dir to infer location.'
+                'working_dir': str(working_dir),
+                'message': f'Working directory from WORKING_AREA: {working_dir}'
             }
         
         self.registered_tools.append({
@@ -419,20 +398,49 @@ class MCPServerGenerator:
                 return {"error": "Bot not initialized"}
             
             # WORKFLOW STATE ENFORCEMENT: Check if workflow_state.json exists
-            working_dir = self._infer_working_dir_from_parameters(parameters)
-            if working_dir:
-                workflow_state_file = working_dir / 'workflow_state.json'
-                
-                if not workflow_state_file.exists():
-                    # Check if user provided confirmation
-                    if 'confirmed_behavior' in parameters:
-                        confirmed = parameters['confirmed_behavior']
-                        # Initialize workflow state with confirmed behavior
-                        self._initialize_workflow_state(working_dir, confirmed)
-                        # Continue to execute the behavior
-                    else:
-                        # No workflow state - must execute entry workflow first
-                        return self._execute_entry_workflow(working_dir, parameters)
+            # Use workspace_directory directly from WORKING_AREA (no inference)
+            from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+            working_dir = get_workspace_directory()
+            
+            workflow_state_file = working_dir / 'workflow_state.json'
+            
+            if not workflow_state_file.exists():
+                # Check if user provided confirmation
+                if 'confirmed_behavior' in parameters:
+                    confirmed = parameters['confirmed_behavior']
+                    # Initialize workflow state with confirmed behavior
+                    self._initialize_workflow_state(working_dir, confirmed)
+                    # Continue to execute the behavior
+                else:
+                    # No workflow state - must execute entry workflow first
+                    return self._execute_entry_workflow(working_dir, parameters)
+            
+            # WORKFLOW ORDER ENFORCEMENT: Check if proceeding out of order
+            matches, current_behavior, expected_next = self.bot.does_requested_behavior_match_current(behavior)
+            if not matches and expected_next:
+                # Check if user already confirmed out-of-order execution
+                if parameters.get('confirm_out_of_order') == True:
+                    # User confirmed - proceed
+                    pass
+                else:
+                    # Out of order - ask for confirmation
+                    return {
+                        "status": "requires_confirmation",
+                        "message": (
+                            f"**WORKFLOW ORDER CHECK**\n\n"
+                            f"Current behavior: `{current_behavior}`\n"
+                            f"Expected next behavior: `{expected_next}`\n"
+                            f"Requested behavior: `{behavior}`\n\n"
+                            f"You are attempting to execute `{behavior}` out of sequence. "
+                            f"The next behavior in sequence should be `{expected_next}`.\n\n"
+                            f"**Would you like to proceed with `{behavior}` anyway?**\n"
+                            f"Reply with confirmation to proceed out of order, or switch to `{expected_next}`."
+                        ),
+                        "current_behavior": current_behavior,
+                        "expected_next": expected_next,
+                        "requested_behavior": behavior,
+                        "confirmation_required": True
+                    }
             
             behavior_obj = getattr(self.bot, behavior, None)
             if behavior_obj is None:
@@ -464,23 +472,12 @@ class MCPServerGenerator:
     
     def _infer_working_dir_from_parameters(self, parameters: dict) -> Path:
         """
-        Extract and infer working directory from parameters.
+        Get working directory from WORKING_AREA (no inference).
         
-        Returns None if no path information in parameters.
+        Always returns workspace_directory from WORKING_AREA environment variable.
         """
-        if not parameters:
-            return None
-        
-        if 'working_dir' in parameters:
-            path = parameters['working_dir']
-        elif 'input_file' in parameters:
-            path = parameters['input_file']
-        elif 'project_dir' in parameters:
-            path = parameters['project_dir']
-        else:
-            return None
-        
-        return self.bot.infer_working_dir_from_path(path) if self.bot else None
+        from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
+        return get_workspace_directory()
     
     def _execute_entry_workflow(self, working_dir: Path, parameters: dict) -> dict:
         """

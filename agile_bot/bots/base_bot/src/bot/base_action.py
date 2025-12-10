@@ -75,10 +75,94 @@ class BaseAction:
         # Execute action logic (subclass implements this)
         result = self.do_execute(parameters or {})
         
+        # Inject next behavior reminder if this is the final action
+        result = self._inject_next_behavior_reminder(result)
+        
         # Track completion
         self.track_activity_on_completion(outputs=result)
         
         return result
+    
+    def _inject_next_behavior_reminder(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Inject next behavior reminder into instructions if this is the final action."""
+        # Check if this is the final action
+        if not self._is_final_action():
+            return result
+        
+        # Get next behavior reminder
+        reminder = self._get_next_behavior_reminder()
+        if not reminder:
+            return result
+        
+        # Inject reminder into instructions if they exist
+        if 'instructions' in result:
+            instructions = result['instructions']
+            if isinstance(instructions, dict) and 'base_instructions' in instructions:
+                base_instructions = instructions.get('base_instructions', [])
+                if isinstance(base_instructions, list):
+                    base_instructions = list(base_instructions)  # Make mutable copy
+                    base_instructions.append("")
+                    base_instructions.append("**NEXT BEHAVIOR REMINDER:**")
+                    base_instructions.append(reminder)
+                    instructions['base_instructions'] = base_instructions
+                    result['instructions'] = instructions
+        
+        return result
+    
+    def _is_final_action(self) -> bool:
+        """Check if this is the final action in the behavior's workflow."""
+        try:
+            from agile_bot.bots.base_bot.src.bot.bot import load_workflow_states_and_transitions
+            states, _ = load_workflow_states_and_transitions(self.bot_directory)
+            if states and self.action_name == states[-1]:
+                return True
+        except Exception as e:
+            # Log exception for debugging but don't fail
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to check if action is final: {e}")
+            pass
+        return False
+    
+    def _get_next_behavior_reminder(self) -> str:
+        """Get reminder about next behavior if this is the final action."""
+        try:
+            from agile_bot.bots.base_bot.src.utils import read_json_file
+            
+            # Load bot config to get behavior sequence
+            # Try config/bot_config.json first, then bot_config.json
+            bot_config_file = self.bot_directory / 'config' / 'bot_config.json'
+            if not bot_config_file.exists():
+                bot_config_file = self.bot_directory / 'bot_config.json'
+            
+            if not bot_config_file.exists():
+                return ""
+            
+            bot_config = read_json_file(bot_config_file)
+            behaviors = bot_config.get('behaviors', [])
+            
+            if not behaviors:
+                return ""
+            
+            # Find current behavior index and next behavior
+            try:
+                current_index = behaviors.index(self.behavior)
+                if current_index + 1 < len(behaviors):
+                    next_behavior = behaviors[current_index + 1]
+                    return (
+                        f"After completing this behavior, the next behavior in sequence is `{next_behavior}`. "
+                        f"When the user is ready to continue, remind them: 'The next behavior in sequence is `{next_behavior}`. "
+                        f"Would you like to continue with `{next_behavior}` or work on a different behavior?'"
+                    )
+            except ValueError:
+                # Current behavior not in list
+                pass
+            
+        except Exception:
+            # If anything fails, just return empty (non-blocking)
+            pass
+        
+        return ""
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Override this in subclasses to implement action logic."""
