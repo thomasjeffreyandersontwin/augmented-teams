@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 import json
  
 from agile_bot.bots.base_bot.src.utils import read_json_file
@@ -355,6 +355,40 @@ class Bot:
         """Get workspace directory (auto-detected from environment/agent.json)."""
         return get_workspace_directory()
     
+    def find_behavior_by_name(self, behavior_name: str) -> Optional[str]:
+        """
+        Find behavior in behaviors list by matching base name (handles numbered prefixes).
+        
+        Args:
+            behavior_name: Behavior name to find (e.g., "shape", "1_shape", "discovery", "4_discovery")
+            
+        Returns:
+            Full behavior name from self.behaviors if found, None otherwise
+            (e.g., "shape" -> "1_shape", "1_shape" -> "1_shape", "discovery" -> "4_discovery")
+        """
+        # First try exact match
+        if behavior_name in self.behaviors:
+            return behavior_name
+        
+        # Extract base name (e.g., "1_shape" -> "shape")
+        # Check if it starts with a digit and has underscore
+        if behavior_name and '_' in behavior_name and behavior_name[0].isdigit():
+            base_name = behavior_name.split('_', 1)[-1]
+        else:
+            base_name = behavior_name
+        
+        # Find behavior that ends with base name
+        for behavior in self.behaviors:
+            # Extract base name from behavior in list
+            if behavior and '_' in behavior and behavior[0].isdigit():
+                behavior_base = behavior.split('_', 1)[-1]
+            else:
+                behavior_base = behavior
+            if behavior_base == base_name:
+                return behavior
+        
+        return None
+    
     def infer_working_dir_from_path(self, path: str | Path) -> Path:
         """
         Infer working directory from a context file or folder path.
@@ -372,9 +406,19 @@ class Bot:
         if path.is_file():
             path = path.parent
         
-        # Make it absolute if relative (relative to workspace_directory)
+        # Make it absolute if relative
         if not path.is_absolute():
-            path = self.workspace_directory / path
+            # Check if path already contains workspace_directory name to avoid double nesting
+            from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
+            workspace_root = get_python_workspace_root()
+            workspace_dir_name = self.workspace_directory.name
+            
+            # If the relative path starts with the workspace directory name, it's already relative to workspace root
+            if str(path).startswith(workspace_dir_name):
+                path = workspace_root / path
+            else:
+                # Otherwise, resolve relative to workspace_directory
+                path = self.workspace_directory / path
         
         path = path.resolve()
         
@@ -413,6 +457,74 @@ class Bot:
         # Forward to behavior
         behavior_instance = getattr(self, current_behavior)
         return behavior_instance.forward_to_current_action(parameters=parameters)
+    
+    def does_requested_behavior_match_current(self, requested_behavior: str) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Check if requested behavior matches the current/expected behavior in workflow sequence.
+        
+        Args:
+            requested_behavior: The behavior name being requested
+            
+        Returns:
+            Tuple of (matches: bool, current_behavior: Optional[str], expected_next: Optional[str])
+            - matches: True if requested behavior matches expected next, False otherwise
+            - current_behavior: Current behavior from workflow state (None if no state)
+            - expected_next: Expected next behavior in sequence (None if no next or no state)
+        """
+        # Get workflow state file from first behavior (all behaviors share same file)
+        if not self.behaviors:
+            return (True, None, None)  # No behaviors configured, allow any
+        
+        first_behavior = self.behaviors[0]
+        behavior_instance = getattr(self, first_behavior)
+        state_file = behavior_instance.workflow.file
+        
+        if not state_file.exists():
+            # No workflow state - allow any behavior (entry workflow handles this)
+            return (True, None, None)
+        
+        try:
+            state_data = json.loads(state_file.read_text(encoding='utf-8'))
+            current_behavior_full = state_data.get('current_behavior', '')
+            
+            if not current_behavior_full:
+                return (True, None, None)  # No current behavior, allow any
+            
+            # Extract behavior name from full name (e.g., "story_bot.shape" -> "shape")
+            current_behavior = current_behavior_full.split('.')[-1] if '.' in current_behavior_full else current_behavior_full
+            
+            # Find matching behavior in self.behaviors using helper method (handles numbered prefixes)
+            current_behavior_matched = self.find_behavior_by_name(current_behavior)
+            
+            # Determine expected next behavior based on sequence
+            if current_behavior_matched is None:
+                return (True, current_behavior, None)  # Current not in sequence, allow any
+            
+            current_index = self.behaviors.index(current_behavior_matched)
+            expected_next = self.behaviors[current_index + 1] if current_index + 1 < len(self.behaviors) else None
+            
+            # Find matching behavior for requested (handles numbered prefixes)
+            requested_matched = self.find_behavior_by_name(requested_behavior)
+            
+            # Check if requested matches expected next OR if requested matches current behavior
+            # (allow executing current behavior - that's not "out of order")
+            if requested_matched is None:
+                matches = False
+            elif requested_matched == current_behavior_matched:
+                # Requested behavior is the current behavior - always allow
+                matches = True
+            elif expected_next is None:
+                # No expected next (at end of sequence) - allow
+                matches = True
+            else:
+                # Check if requested matches expected next
+                matches = (requested_matched == expected_next)
+            
+            return (matches, current_behavior, expected_next)
+            
+        except Exception as e:
+            logger.warning(f'Failed to check behavior order: {e}')
+            return (True, None, None)  # On error, allow (fail open)
     
     def close_current_action(self) -> BotResult:
         """Mark current action as complete and transition to next action."""

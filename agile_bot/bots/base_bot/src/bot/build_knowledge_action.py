@@ -15,7 +15,28 @@ class BuildKnowledgeAction(BaseAction):
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute build_knowledge action logic."""
         instructions = self.inject_knowledge_graph_template()
-       
+        
+        # Add explicit update instructions if existing file was found
+        if instructions.get('existing_file') and instructions.get('update_mode'):
+            existing_file = instructions['existing_file']
+            config = instructions['knowledge_graph_config']
+            output_path = config.get('path', 'docs/stories')
+            output_filename = config.get('output', 'story-graph.json')
+            
+            instructions['update_instructions'] = {
+                'mode': 'update_existing',
+                'message': f"**CRITICAL: Output file '{output_filename}' already exists at '{output_path}/{output_filename}'. You MUST UPDATE this existing file by adding/modifying only the content needed for this behavior. DO NOT create a new file.**",
+                'existing_file_path': existing_file['path'],
+                'preserve_existing': [
+                    'epics' if existing_file.get('has_epics') else None,
+                    'domain_concepts' if existing_file.get('has_domain_concepts') else None,
+                ],
+                'add_or_modify': self._determine_add_or_modify_content()
+            }
+            # Remove None values
+            instructions['update_instructions']['preserve_existing'] = [
+                item for item in instructions['update_instructions']['preserve_existing'] if item is not None
+            ]
 
         # Inject validation rules proactively
         validation_rules = self.inject_validation_rules()
@@ -24,6 +45,23 @@ class BuildKnowledgeAction(BaseAction):
             instructions['token_estimate'] = self._estimate_tokens(instructions)
         
         return {'instructions': instructions}
+    
+    def _determine_add_or_modify_content(self) -> list:
+        """
+        Determine what content should be added or modified based on the current behavior.
+        
+        Returns:
+            List of content types to add/modify
+        """
+        behavior_to_content = {
+            'prioritization': ['increments'],
+            'discovery': ['story refinements', 'increments', 'domain_concepts'],
+            'exploration': ['acceptance_criteria', 'domain_concepts'],
+            'scenarios': ['scenarios', 'domain_concepts'],
+            'tests': ['test_implementations', 'domain_concepts'],
+        }
+        
+        return behavior_to_content.get(self.behavior, ['knowledge_graph'])
     
     def inject_knowledge_graph_template(self) -> Dict[str, Any]:
         # Find behavior folder (handles numbered prefixes)
@@ -71,12 +109,71 @@ class BuildKnowledgeAction(BaseAction):
         with open(template_path, 'r', encoding='utf-8') as f:
             template_content = json.load(f)
         
-        return {
+        # Check if output file exists and add update instructions
+        output_path = config_data.get('path', 'docs/stories')
+        output_filename = config_data.get('output', 'story-graph.json')
+        existing_file_info = self._check_existing_output_file(output_path, output_filename)
+        
+        result = {
             'knowledge_graph_template': template_content,
             'knowledge_graph_config': config_data,
             'template_path': str(template_path),
             'config_path': str(config_path)
         }
+        
+        # Add existing file information if file exists
+        if existing_file_info:
+            result['existing_file'] = existing_file_info
+            result['update_mode'] = True
+        
+        return result
+    
+    def _check_existing_output_file(self, output_path: str, output_filename: str) -> Dict[str, Any]:
+        """
+        Check if the output file already exists and return information about it.
+        
+        Args:
+            output_path: Relative path from project root (e.g., 'docs/stories')
+            output_filename: Output filename (e.g., 'story-graph.json')
+            
+        Returns:
+            Dict with existing file info if file exists, None otherwise
+        """
+        import os
+        working_area = os.environ.get('WORKING_AREA')
+        if not working_area:
+            return None
+        
+        project_root = Path(working_area)
+        output_file_path = project_root / output_path / output_filename
+        
+        if output_file_path.exists():
+            try:
+                with open(output_file_path, 'r', encoding='utf-8') as f:
+                    existing_content = json.load(f)
+                
+                return {
+                    'path': str(output_file_path),
+                    'exists': True,
+                    'has_epics': 'epics' in existing_content,
+                    'has_increments': 'increments' in existing_content,
+                    'has_domain_concepts': any(
+                        'domain_concepts' in epic for epic in existing_content.get('epics', [])
+                    ),
+                    'structure_summary': {
+                        'epic_count': len(existing_content.get('epics', [])),
+                        'has_increments': 'increments' in existing_content
+                    }
+                }
+            except (json.JSONDecodeError, IOError):
+                # File exists but can't be read - return basic info
+                return {
+                    'path': str(output_file_path),
+                    'exists': True,
+                    'readable': False
+                }
+        
+        return None
 
     def inject_validation_rules(self) -> Dict[str, Any]:
         """

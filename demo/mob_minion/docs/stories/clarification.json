@@ -1,0 +1,27 @@
+{
+  "shape": {
+    "key_questions": {
+      "user_types": "Game Master (GM) - the primary user who manages minions/tokens in Foundry VTT during RPG sessions",
+      "key_goals_behaviors_decisions": "Goal: Efficiently control multiple minions as coordinated groups (mobs) instead of individually. Behavior: Click one minion token to command the entire mob. Decision: Select strategies for mob behavior (attack strongest/weakest, defend leader, attack most damaged, etc.)",
+      "primary_users_stakeholders": "Game Masters using Foundry VTT to run RPG sessions with minions",
+      "first_action": "Group individual minion tokens into a mob so they can be controlled together",
+      "problems_inefficiencies_workarounds": "Eliminates the need to click each minion token individually to perform actions. Currently, GMs must select and command each minion separately, which is time-consuming during combat",
+      "struggling_stuck_delays": "During combat/tactical encounters when managing multiple minions, requiring repetitive individual token selection and commands",
+      "other_systems_data_sources_tools": "Foundry VTT system - specifically: Actor/token system (to group minions), Combat system (for actions), Movement/range system (for positioning and area attacks), Template system (for spawning mobs from templates)",
+      "key_behaviors_integration_points": "Mobs depend on Foundry's actor system to identify and group minions. Mobs use Foundry's combat system to execute actions. Strategies depend on combat state (health, positioning, target selection). Movement/range system determines valid actions and targets. Templates enable spawning mobs from predefined actor configurations",
+      "business_domain": "Virtual Tabletop RPG Combat Management - specifically minion/mob coordination within Foundry VTT",
+      "core_business_concepts_relationships": "Minion: Individual token/actor that can be grouped. Mob: Collection of minions that act together. Strategy: Behavioral rules for mob actions (attack strongest, attack weakest, defend leader, attack most damaged). Target Selection: Method for choosing which enemy to attack. Action: What the mob does (move, attack, area attack, etc.). Range: Distance constraints for actions. Template: Predefined configuration for spawning mobs",
+      "distinct_sub_domains_capabilities": "Mob Management (create, edit, group minions), Strategy Selection (choose mob behavior), Target Selection (determine attack targets), Action Execution (perform mob actions), Template Management (spawn mobs from templates)",
+      "boundaries_domain_parts": "Foundry VTT provides the base actor/token/combat systems (out of scope). This system adds mob coordination and strategy layers on top. Boundary: This system coordinates Foundry actors but doesn't replace Foundry's core systems",
+      "domain_events": "Mob created, Minions grouped into mob, Strategy selected, Target chosen, Mob action executed (move, attack, area attack), Mob spawned from template",
+      "key_business_rules_constraints": "Mobs are collections of minions that act together. Selecting one minion in a mob controls all minions in that mob. Strategies determine target selection and behavior. Actions must respect range/positioning constraints. Mobs can be spawned from templates. Mobs can be edited (add/remove minions)",
+      "domain_language": "Mob (collection of minions), Minion (individual token/actor), Strategy (behavioral rules), Target (enemy to attack), Area attack (attack affecting multiple targets), Range (distance constraints), Template (predefined actor configuration), Spawn (create from template), Group (associate minions with mob)"
+    },
+    "evidence": {
+      "user_vision_requirements": "input.txt contains project vision describing mob functionality, strategies, and Foundry VTT integration requirements",
+      "existing_system_context": "References to Foundry VTT system and its capabilities (actor/token system, combat system, movement/range system, template system)",
+      "user_research": "Input file provides direct user requirements and vision for the system"
+    }
+  }
+}
+

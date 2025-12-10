@@ -1,0 +1,146 @@
+{
+  "1_shape": {
+    "assumptions_made": {
+      "focus_user_flow": "Focus on user flow over internal systems",
+      "cover_end_to_end": "Cover the end-to-end scenario",
+      "prioritize_customer_facing": "Prioritize customer-facing features",
+      "independent_testable": "Assume stories should be independently testable",
+      "user_value": "Assume each story delivers user value",
+      "technical_infrastructure_implicit": "Assume technical infrastructure stories are implicit",
+      "drill_down_architectural_uncertainty": "Drill down where architectural uncertainty is high – unknown integration patterns, new technology, or unclear system boundaries require deeper exploration",
+      "drill_down_business_complexity": "Drill down where business complexity is significant – complex business rules, regulatory requirements, or domain logic that needs clarification",
+      "drill_down_uniqueness": "Drill down where uniqueness creates risk – novel approaches, first-of-kind features, or untested patterns benefit from detailed shaping",
+      "drill_down_integration_complexity": "Drill down where integration complexity exists – multiple systems, data dependencies, or coordination challenges need detailed mapping",
+      "drill_down_user_behavior_variability": "Drill down where user behavior is highly variable – diverse user needs, multiple personas, or inconsistent workflows require deeper understanding",
+      "skip_established_patterns": "Skip deep drill-down where patterns are well-established – standard CRUD operations, familiar workflows, or proven integration patterns can stay high-level",
+      "focus_core_domain": "Focus on core domain over supporting domains",
+      "identify_concepts_first": "Identify overall domain concepts and relationships before detailed modeling",
+      "ubiquitous_language": "Use ubiquitous language from domain sources",
+      "model_domain_not_technical": "Model domain concepts, not technical implementation",
+      "separate_domain_infrastructure": "Separate domain logic from infrastructure concerns, where they are mentioned"
+    },
+    "decisions_made": {
+      "drill_down_approach": [
+        "Dig deep on system interactions",
+        "Dig deep on user workflows"
+      ],
+      "depth_of_shaping": [
+        "Decompose -> Discover all stories listed",
+        "Testable -> Specify minimal examples"
+      ],
+      "flow_scope_and_granularity": "End-to-end user-system behavior – One user interaction followed by one system response",
+      "bounded_context_identification": "By business capability - group by what the business does",
+      "drill_down_limits": [
+        "Approximate story limit: 5-10 stories"
+      ],
+      "structure_exploration_depth": "Behavioral -> Explore Business and Domain AC"
+    }
+  },
+  "2_prioritization": {
+    "assumptions_made": {
+      "thin_slices_value_learning_risk": "Thin slices should provide either value, learning, or risk reduction",
+      "slices_not_all_functionality": "Slices do not need to include all functionality to be useful",
+      "not_every_increment_user_visible": "Not every increment must be user-visible if it validates key assumptions",
+      "architectural_slices_unlock_features": "Some slices may be architectural if they unlock multiple features"
+    },
+    "decisions_made": {
+      "increment_slicing_strategy": [
+        "Delivering End-to-End Journey — supports integrated validation across systems and users",
+        "Validating Impact - Feasibility — reduces uncertainty and derisks critical components early",
+        "Maximizing Earned Value — delivers early impact and builds stakeholder confidence",
+        "Increasing Reuse/Dependency— prevents downstream rework and enables reuse"
+      ]
+    },
+    "prioritization_context": {
+      "highest_risk_areas": [
+        "Create Mob - foundational; if this fails, nothing else works",
+        "Foundry VTT integration - external dependency risk (actor/token system)",
+        "Strategy selection and target evaluation - complexity risk (combat state, multiple strategies)",
+        "Range constraints - integration risk (Foundry movement/range system)"
+      ],
+      "highest_value_early_delivery": [
+        "Create Mob + basic Execute Mob Action - delivers core value proposition (control multiple minions together, eliminates repetitive clicking)"
+      ],
+      "most_complex_relative_to_value": [
+        "Strategy selection and target evaluation - requires Foundry combat state analysis",
+        "Range constraints - requires Foundry movement system integration",
+        "Template spawning - requires Foundry template system integration"
+      ],
+      "thin_slices_end_to_end": true,
+      "reusable_components": [
+        "Mob grouping logic - used by Create, Edit, and Spawn",
+        "Foundry VTT integration layer - used by all features (CRITICAL)",
+        "Strategy evaluation engine - used by Choose Target and Execute Action",
+        "Range/positioning service - used by Execute Action"
+      ],
+      "project_constraints": [
+        "Must integrate with Foundry VTT (external dependency)",
+        "Small piece of functionality"
+      ],
+      "user_sequencing": "Game Masters are the only user type; no user sequencing needed"
+    },
+    "increment_priorities": {
+      "increment_1": {
+        "name": "Foundation - Create Mob and Basic Actions",
+        "priority": 1,
+        "rationale": "Foundational capability - if this fails, nothing else works. Delivers highest value early.",
+        "includes": [
+          "Create Mob (foundational, highest value)",
+          "Execute Mob Action (basic - move/attack without strategy)",
+          "Foundry VTT integration layer (used by all features - CRITICAL)"
+        ],
+        "stories": [
+          "Select Minion Tokens",
+          "Group Minions Into Mob",
+          "Assign Mob Name",
+          "Select Action Type",
+          "Execute Action For All Minions",
+          "Respect Range Constraints"
+        ]
+      },
+      "increment_2": {
+        "name": "Strategy and Target Selection",
+        "priority": 2,
+        "rationale": "Adds intelligence and strategy-driven behavior",
+        "includes": [
+          "Select Strategy",
+          "Choose Target"
+        ],
+        "stories": [
+          "Select Mob",
+          "Choose Strategy",
+          "Evaluate Available Targets",
+          "Apply Strategy To Select Target",
+          "Confirm Target Selection"
+        ]
+      },
+      "increment_3": {
+        "name": "Mob Management Enhancements",
+        "priority": 3,
+        "rationale": "Enhancement features for managing existing mobs",
+        "includes": [
+          "Edit Mob"
+        ],
+        "stories": [
+          "Select Mob To Edit",
+          "Add Minion To Mob",
+          "Remove Minion From Mob"
+        ]
+      },
+      "increment_4": {
+        "name": "Spawn Mobs",
+        "priority": 4,
+        "rationale": "Convenience feature for quick mob creation",
+        "includes": [
+          "Spawn From Template",
+          "Spawn From Actors"
+        ],
+        "stories": [
+          "Select Mob Template",
+          "Spawn Mob From Template",
+          "Spawn Mob From Selected Actors"
+        ]
+      }
+    }
+  }
+}

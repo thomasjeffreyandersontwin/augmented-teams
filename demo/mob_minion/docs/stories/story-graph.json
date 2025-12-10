@@ -1,0 +1,695 @@
+{
+  "epics": [
+    {
+      "name": "Manage Mobs",
+      "sequential_order": 1,
+      "estimated_stories": 6,
+      "domain_concepts": [
+        {
+          "name": "Mob",
+          "responsibilities": [
+            {
+              "name": "Groups minions together for coordinated action",
+              "collaborators": ["Minion"]
+            },
+            {
+              "name": "Maintains collection of minion tokens",
+              "collaborators": ["Minion"]
+            },
+            {
+              "name": "Associates strategy with mob behavior",
+              "collaborators": ["Strategy"]
+            }
+          ]
+        },
+        {
+          "name": "Minion",
+          "responsibilities": [
+            {
+              "name": "Represents individual token/actor in Foundry VTT",
+              "collaborators": []
+            },
+            {
+              "name": "Belongs to a mob for coordinated control",
+              "collaborators": ["Mob"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Create Mob",
+          "sequential_order": 1,
+          "estimated_stories": 3,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Select Minion Tokens",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Group Minions Into Mob",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Assign Mob Name",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Edit Mob",
+          "sequential_order": 2,
+          "estimated_stories": 3,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Select Mob To Edit",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Add Minion To Mob",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Remove Minion From Mob",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Control Mob Actions",
+      "sequential_order": 2,
+      "estimated_stories": 8,
+      "domain_concepts": [
+        {
+          "name": "Strategy",
+          "responsibilities": [
+            {
+              "name": "Determines target selection behavior for mob",
+              "collaborators": ["Target", "Mob"]
+            },
+            {
+              "name": "Defines how mob chooses which enemy to attack",
+              "collaborators": ["Target"]
+            }
+          ]
+        },
+        {
+          "name": "Target",
+          "responsibilities": [
+            {
+              "name": "Represents enemy token/actor to attack",
+              "collaborators": []
+            },
+            {
+              "name": "Evaluated by strategy for selection",
+              "collaborators": ["Strategy"]
+            }
+          ]
+        },
+        {
+          "name": "Action",
+          "responsibilities": [
+            {
+              "name": "Represents mob action (move, attack, area attack)",
+              "collaborators": ["Mob", "Range"]
+            },
+            {
+              "name": "Respects range and positioning constraints",
+              "collaborators": ["Range"]
+            }
+          ]
+        },
+        {
+          "name": "Range",
+          "responsibilities": [
+            {
+              "name": "Defines distance constraints for actions",
+              "collaborators": ["Action"]
+            },
+            {
+              "name": "Determines valid targets and movement",
+              "collaborators": ["Action", "Target"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Select Strategy",
+          "sequential_order": 1,
+          "estimated_stories": 2,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Select Mob",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Choose Strategy",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Choose Target",
+          "sequential_order": 2,
+          "estimated_stories": 3,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Evaluate Available Targets",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Apply Strategy To Select Target",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Confirm Target Selection",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Execute Mob Action",
+          "sequential_order": 3,
+          "estimated_stories": 3,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Select Action Type",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Execute Action For All Minions",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Respect Range Constraints",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Spawn Mobs",
+      "sequential_order": 3,
+      "estimated_stories": 3,
+      "domain_concepts": [
+        {
+          "name": "Template",
+          "responsibilities": [
+            {
+              "name": "Defines predefined actor configuration for spawning",
+              "collaborators": ["Mob"]
+            },
+            {
+              "name": "Enables quick mob creation from saved configurations",
+              "collaborators": ["Mob"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Spawn From Template",
+          "sequential_order": 1,
+          "estimated_stories": 2,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Select Mob Template",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Spawn Mob From Template",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Spawn From Actors",
+          "sequential_order": 2,
+          "estimated_stories": 1,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Spawn Mob From Selected Actors",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    }
+  ],
+  "increments": [
+    {
+      "name": "Foundation - Create Mob and Basic Actions",
+      "priority": 1,
+      "epics": [
+        {
+          "name": "Manage Mobs",
+          "users": ["Game Master"],
+          "sequential_order": 1,
+          "estimated_stories": 6,
+          "domain_concepts": [
+            {
+              "name": "Mob",
+              "responsibilities": [
+                {
+                  "name": "Groups minions together for coordinated action",
+                  "collaborators": ["Minion"]
+                },
+                {
+                  "name": "Maintains collection of minion tokens",
+                  "collaborators": ["Minion"]
+                }
+              ]
+            },
+            {
+              "name": "Minion",
+              "responsibilities": [
+                {
+                  "name": "Represents individual token/actor in Foundry VTT",
+                  "collaborators": []
+                },
+                {
+                  "name": "Belongs to a mob for coordinated control",
+                  "collaborators": ["Mob"]
+                }
+              ]
+            }
+          ],
+          "features": [
+            {
+              "name": "Create Mob",
+              "users": ["Game Master"],
+              "sequential_order": 1,
+              "estimated_stories": 3,
+              "stories": [
+                {
+                  "name": "Select Minion Tokens",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Group Minions Into Mob",
+                  "users": ["Game Master"],
+                  "sequential_order": 2
+                },
+                {
+                  "name": "Assign Mob Name",
+                  "users": ["Game Master"],
+                  "sequential_order": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Control Mob Actions",
+          "users": ["Game Master"],
+          "sequential_order": 2,
+          "estimated_stories": 8,
+          "domain_concepts": [
+            {
+              "name": "Action",
+              "responsibilities": [
+                {
+                  "name": "Represents mob action (move, attack, area attack)",
+                  "collaborators": ["Mob", "Range"]
+                },
+                {
+                  "name": "Respects range and positioning constraints",
+                  "collaborators": ["Range"]
+                }
+              ]
+            },
+            {
+              "name": "Range",
+              "responsibilities": [
+                {
+                  "name": "Defines distance constraints for actions",
+                  "collaborators": ["Action"]
+                },
+                {
+                  "name": "Determines valid targets and movement",
+                  "collaborators": ["Action", "Target"]
+                }
+              ]
+            }
+          ],
+          "features": [
+            {
+              "name": "Execute Mob Action",
+              "users": ["Game Master"],
+              "sequential_order": 3,
+              "estimated_stories": 3,
+              "stories": [
+                {
+                  "name": "Select Action Type",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Execute Action For All Minions",
+                  "users": ["Game Master"],
+                  "sequential_order": 2
+                },
+                {
+                  "name": "Respect Range Constraints",
+                  "users": ["Game Master"],
+                  "sequential_order": 3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strategy and Target Selection",
+      "priority": 2,
+      "epics": [
+        {
+          "name": "Control Mob Actions",
+          "users": ["Game Master"],
+          "sequential_order": 2,
+          "estimated_stories": 8,
+          "domain_concepts": [
+            {
+              "name": "Strategy",
+              "responsibilities": [
+                {
+                  "name": "Determines target selection behavior for mob",
+                  "collaborators": ["Target", "Mob"]
+                },
+                {
+                  "name": "Defines how mob chooses which enemy to attack",
+                  "collaborators": ["Target"]
+                }
+              ]
+            },
+            {
+              "name": "Target",
+              "responsibilities": [
+                {
+                  "name": "Represents enemy token/actor to attack",
+                  "collaborators": []
+                },
+                {
+                  "name": "Evaluated by strategy for selection",
+                  "collaborators": ["Strategy"]
+                }
+              ]
+            }
+          ],
+          "features": [
+            {
+              "name": "Select Strategy",
+              "users": ["Game Master"],
+              "sequential_order": 1,
+              "estimated_stories": 2,
+              "stories": [
+                {
+                  "name": "Select Mob",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Choose Strategy",
+                  "users": ["Game Master"],
+                  "sequential_order": 2
+                }
+              ]
+            },
+            {
+              "name": "Choose Target",
+              "users": ["Game Master"],
+              "sequential_order": 2,
+              "estimated_stories": 3,
+              "stories": [
+                {
+                  "name": "Evaluate Available Targets",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Apply Strategy To Select Target",
+                  "users": ["Game Master"],
+                  "sequential_order": 2
+                },
+                {
+                  "name": "Confirm Target Selection",
+                  "users": ["Game Master"],
+                  "sequential_order": 3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mob Management Enhancements",
+      "priority": 3,
+      "epics": [
+        {
+          "name": "Manage Mobs",
+          "users": ["Game Master"],
+          "sequential_order": 1,
+          "estimated_stories": 6,
+          "domain_concepts": [
+            {
+              "name": "Mob",
+              "responsibilities": [
+                {
+                  "name": "Groups minions together for coordinated action",
+                  "collaborators": ["Minion"]
+                },
+                {
+                  "name": "Maintains collection of minion tokens",
+                  "collaborators": ["Minion"]
+                }
+              ]
+            },
+            {
+              "name": "Minion",
+              "responsibilities": [
+                {
+                  "name": "Represents individual token/actor in Foundry VTT",
+                  "collaborators": []
+                },
+                {
+                  "name": "Belongs to a mob for coordinated control",
+                  "collaborators": ["Mob"]
+                }
+              ]
+            }
+          ],
+          "features": [
+            {
+              "name": "Edit Mob",
+              "users": ["Game Master"],
+              "sequential_order": 2,
+              "estimated_stories": 3,
+              "stories": [
+                {
+                  "name": "Select Mob To Edit",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Add Minion To Mob",
+                  "users": ["Game Master"],
+                  "sequential_order": 2
+                },
+                {
+                  "name": "Remove Minion From Mob",
+                  "users": ["Game Master"],
+                  "sequential_order": 3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Spawn Mobs",
+      "priority": 4,
+      "epics": [
+        {
+          "name": "Spawn Mobs",
+          "users": ["Game Master"],
+          "sequential_order": 3,
+          "estimated_stories": 3,
+          "domain_concepts": [
+            {
+              "name": "Template",
+              "responsibilities": [
+                {
+                  "name": "Defines predefined actor configuration for spawning",
+                  "collaborators": ["Mob"]
+                },
+                {
+                  "name": "Enables quick mob creation from saved configurations",
+                  "collaborators": ["Mob"]
+                }
+              ]
+            }
+          ],
+          "features": [
+            {
+              "name": "Spawn From Template",
+              "users": ["Game Master"],
+              "sequential_order": 1,
+              "estimated_stories": 2,
+              "stories": [
+                {
+                  "name": "Select Mob Template",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                },
+                {
+                  "name": "Spawn Mob From Template",
+                  "users": ["Game Master"],
+                  "sequential_order": 2
+                }
+              ]
+            },
+            {
+              "name": "Spawn From Actors",
+              "users": ["Game Master"],
+              "sequential_order": 2,
+              "estimated_stories": 1,
+              "stories": [
+                {
+                  "name": "Spawn Mob From Selected Actors",
+                  "users": ["Game Master"],
+                  "sequential_order": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
