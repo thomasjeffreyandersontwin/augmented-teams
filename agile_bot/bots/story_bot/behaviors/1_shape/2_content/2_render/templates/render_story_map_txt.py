@@ -53,9 +53,23 @@ def render_sub_epic(sub_epic, indent_level):
     indent = "    " * indent_level
     lines = [f"{indent}(E) {sub_epic['name']}"]
     
-    # Render story groups
-    for idx, group in enumerate(sub_epic.get('story_groups', [])):
-        lines.extend(render_story_group(group, indent_level + 1, is_first_group=(idx == 0)))
+    # Render story groups (if present)
+    story_groups = sub_epic.get('story_groups', [])
+    if story_groups:
+        for idx, group in enumerate(story_groups):
+            lines.extend(render_story_group(group, indent_level + 1, is_first_group=(idx == 0)))
+    
+    # Handle sub-epics with stories directly (not in story_groups)
+    # Create a default story group with type 'and' for direct stories
+    direct_stories = sub_epic.get('stories', [])
+    if direct_stories and not story_groups:
+        # Create a default story group for direct stories
+        default_group = {
+            'type': 'and',
+            'connector': None,
+            'stories': direct_stories
+        }
+        lines.extend(render_story_group(default_group, indent_level + 1, is_first_group=True))
     
     # Recursively render nested sub-epics
     for nested in sub_epic.get('sub_epics', []):

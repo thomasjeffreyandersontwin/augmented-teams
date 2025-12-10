@@ -155,10 +155,11 @@ def get_increments_and_boundaries(drawio_path: Path) -> List[Dict[str, Any]]:
         # Check for increment squares: white squares (strokeColor=#f8f7f7) positioned on the left (negative X)
         if 'strokeColor=#f8f7f7' in style and geom and geom['x'] < 0:
             value = get_cell_value(cell)
-            if value:  # Only include if it has a name
+            # Only include if it has a non-empty name (filter out empty strings and whitespace-only)
+            if value and value.strip():
                 increments.append({
                     'id': cell_id,
-                    'name': value,
+                    'name': value.strip(),
                     'x': geom['x'],
                     'y': geom['y'],
                     'width': geom['width'],
@@ -2224,9 +2225,20 @@ def merge_story_graphs(
                 sub_epic_name = sub_epic.get('name', '')
                 merge_sub_epic_stories(sub_epic, epic_name, sub_epic_name)
     
-    # If original doesn't have increments but extracted does, add them
-    if 'increments' not in merged_data and 'increments' in extracted_data:
-        merged_data['increments'] = extracted_data['increments']
+    # Merge increments: add new increments from extracted_data that don't exist in merged_data
+    if 'increments' not in merged_data:
+        merged_data['increments'] = []
+    
+    if 'increments' in extracted_data:
+        # Create a map of existing increment names for quick lookup
+        existing_increment_names = {inc.get('name') for inc in merged_data['increments']}
+        
+        # Add increments from extracted_data that don't already exist
+        for extracted_increment in extracted_data['increments']:
+            increment_name = extracted_increment.get('name')
+            if increment_name and increment_name not in existing_increment_names:
+                merged_data['increments'].append(extracted_increment)
+                existing_increment_names.add(increment_name)
     
     # Write merged result
     output_path = Path(output_path)

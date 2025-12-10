@@ -370,9 +370,16 @@ class MCPServerGenerator:
             try:
                 from agile_bot.bots.base_bot.src.mcp.server_restart import restart_mcp_server
                 
+                # Get workspace root
+                workspace_root = get_python_workspace_root()
+                
+                # Get bot_location as relative path from workspace root
+                bot_location = str(self.bot_directory.relative_to(workspace_root))
+                
                 result = restart_mcp_server(
-                    bot_directory=self.bot_directory,
-                    bot_name=self.bot_name
+                    workspace_root=workspace_root,
+                    bot_name=self.bot_name,
+                    bot_location=bot_location
                 )
                 
                 return result
