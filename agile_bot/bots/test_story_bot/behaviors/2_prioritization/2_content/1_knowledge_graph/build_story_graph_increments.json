@@ -1,0 +1,7 @@
+{
+  "name": "build_story_graph_increments",
+  "path": "docs/stories",
+  "template": "story_graph_increments.json",
+  "output": "story-graph.json"
+}
+
