@@ -207,9 +207,9 @@ def create_base_action_instructions(workspace: Path, action: str) -> Path:
         'initialize_workspace': '1_initialize_workspace',
         'gather_context': '2_gather_context',
         'decide_planning_criteria': '3_decide_planning_criteria',
-        'build_knowledge': '4_build_knowledge',
-        'render_output': '5_render_output',
-        'validate_rules': '7_validate_rules'
+        'validate_rules': '5_validate_rules',
+        'build_knowledge': '6_build_knowledge',
+        'render_output': '7_render_output'
     }
     
     action_folder = action_prefixes.get(action, action)
@@ -237,8 +237,8 @@ def setup_bot_for_testing(workspace_root: Path, bot_name: str, behaviors: list):
     # Create bot config
     bot_config = create_bot_config_file(bot_dir, bot_name, behaviors)
     
-    # Create base actions structure
-    create_base_actions_structure(workspace_root)
+    # Create base actions structure in bot_directory (no fallback)
+    create_base_actions_structure(bot_dir)
     
     # Create base action instructions
     for action in ['initialize_workspace', 'gather_context', 'decide_planning_criteria', 

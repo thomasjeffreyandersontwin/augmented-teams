@@ -11,5 +11,6 @@
         "content": "When user enters rank, then system saves (missing validation and calculation ACs)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.enumerate_ac_permutations_scanner.EnumerateACPermutationsScanner"
 }

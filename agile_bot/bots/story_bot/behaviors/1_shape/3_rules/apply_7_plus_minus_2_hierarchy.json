@@ -1,5 +1,6 @@
 {
   "description": "Apply 7±2 rule for hierarchy: epics contain 4-9 sub-epics, sub-epics contain 4-9 stories. Split when exceeding, merge when below minimum.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.story_sizing_scanner.StorySizingScanner",
   "examples": [
     {
       "do": {

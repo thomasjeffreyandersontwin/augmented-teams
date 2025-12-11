@@ -11,5 +11,6 @@
         "content": "docs/stories/Epic/Feature/Feature Specification.md (WRONG - scenarios go in story docs)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.scenarios_on_story_docs_scanner.ScenariosOnStoryDocsScanner"
 }

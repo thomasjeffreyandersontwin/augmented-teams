@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 import json
 import importlib
+from datetime import datetime
  
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
@@ -351,6 +352,46 @@ class Behavior:
         
         return (matches, current_action, expected_next)
     
+    def navigate_to_action(self, action_name: str, parameters: Dict[str, Any] = None, out_of_order: bool = False) -> BotResult:
+        """
+        Navigate to a specific action and execute it.
+        
+        This delegates workflow state management to the Workflow class.
+        
+        Args:
+            action_name: Action name to navigate to (e.g., 'build_knowledge')
+            parameters: Parameters to pass to the action
+            out_of_order: Whether this is out-of-order navigation (default: False)
+            
+        Returns:
+            BotResult from executing the action
+            
+        Raises:
+            ValueError: If action_name is not a valid state
+            AttributeError: If action method doesn't exist
+        """
+        # Delegate state management to Workflow
+        self.workflow.navigate_to_action(action_name, out_of_order=out_of_order)
+        
+        # Execute the action
+        if not hasattr(self, action_name):
+            raise AttributeError(f"Behavior {self.name} does not have action method '{action_name}'")
+        
+        action_method = getattr(self, action_name)
+        result = action_method(parameters=parameters)
+        
+        if result is None:
+            raise RuntimeError(f"Action method '{action_name}' returned None instead of BotResult")
+        
+        # Save state after action completion
+        if not (result.data and result.data.get('requires_confirmation')):
+            self.workflow.save_state()
+        
+        if self.workflow.is_action_completed(action_name):
+            self.workflow.transition_to_next()
+        
+        return result
+    
     def forward_to_current_action(self, parameters: Dict[str, Any] = None) -> BotResult:
         # CRITICAL: Workflow derives its working_dir from the workspace helper.
         # Nothing to set here; proceed to load existing state.
@@ -629,6 +670,191 @@ class Bot:
         except Exception as e:
             logger.warning(f'Failed to check behavior order: {e}')
             return (True, None, None)  # On error, allow (fail open)
+    
+    def execute_behavior(self, behavior_name: str, action: str = None, parameters: Dict[str, Any] = None) -> BotResult:
+        """
+        Execute a behavior with optional action. Handles all workflow state management.
+        
+        This is the main entry point for behavior execution. It handles:
+        - Workflow state initialization (entry workflow)
+        - Behavior order checking and confirmations
+        - Routing to the behavior
+        - The behavior handles action order checking
+        
+        Args:
+            behavior_name: Behavior name (e.g., "shape", "1_shape")
+            action: Optional action name (e.g., "build_knowledge")
+            parameters: Optional parameters dict
+            
+        Returns:
+            BotResult from executing the behavior/action
+            
+        Raises:
+            ValueError: If behavior not found or requires confirmation
+        """
+        if parameters is None:
+            parameters = {}
+        
+        # Get workflow state file (all behaviors share same file)
+        if not self.behaviors:
+            raise ValueError("No behaviors configured")
+        
+        first_behavior = self.behaviors[0]
+        behavior_instance = getattr(self, first_behavior)
+        workflow_state_file = behavior_instance.workflow.file
+        
+        # Check if workflow state exists (entry workflow)
+        if not workflow_state_file.exists():
+            # Check if user provided confirmation
+            if 'confirmed_behavior' in parameters:
+                confirmed = parameters['confirmed_behavior']
+                # Initialize workflow state with confirmed behavior
+                self._initialize_workflow_state(workflow_state_file.parent, confirmed)
+            else:
+                # No workflow state - must execute entry workflow first
+                return self._execute_entry_workflow(workflow_state_file.parent, parameters)
+        
+        # Check behavior order
+        matches, current_behavior, expected_next = self.does_requested_behavior_match_current(behavior_name)
+        if not matches and expected_next:
+            # Check if user has explicitly confirmed out-of-order execution
+            import json
+            state_data = {}
+            if workflow_state_file.exists():
+                try:
+                    state_data = json.loads(workflow_state_file.read_text(encoding='utf-8'))
+                except Exception:
+                    pass
+            
+            confirmations = state_data.get('out_of_order_confirmations', {})
+            from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import normalize_behavior_name
+            normalized_behavior = normalize_behavior_name(behavior_name)
+            is_confirmed = normalized_behavior in confirmations
+            
+            if not is_confirmed:
+                # Out of order - return confirmation requirement
+                return BotResult(
+                    status='requires_confirmation',
+                    behavior=behavior_name,
+                    action='',
+                    data={
+                        'message': (
+                            f"**WORKFLOW ORDER CHECK**\n\n"
+                            f"Current behavior: `{current_behavior}`\n"
+                            f"Expected next behavior: `{expected_next}`\n"
+                            f"Requested behavior: `{behavior_name}`\n\n"
+                            f"You are attempting to execute `{behavior_name}` out of sequence. "
+                            f"The next behavior in sequence should be `{expected_next}`.\n\n"
+                            f"**To proceed, you must explicitly call the `confirm_out_of_order` tool with behavior `{behavior_name}`.**\n"
+                            f"This confirmation must be sent by a human explicitly."
+                        ),
+                        'current_behavior': current_behavior,
+                        'expected_next': expected_next,
+                        'requested_behavior': behavior_name,
+                        'requires_confirmation': True,
+                        'confirmation_tool': 'confirm_out_of_order'
+                    }
+                )
+        
+        # Find the actual behavior name (handles numbered prefixes)
+        actual_behavior_name = self.find_behavior_by_name(behavior_name)
+        if actual_behavior_name is None:
+            raise ValueError(f"Behavior {behavior_name} not found")
+        
+        behavior_obj = getattr(self, actual_behavior_name, None)
+        if behavior_obj is None:
+            raise ValueError(f"Behavior {behavior_name} ({actual_behavior_name}) not found on bot")
+        
+        # Route to behavior - it handles action order checking
+        if action:
+            # Check if out-of-order navigation requires confirmation
+            matches, current_action, expected_next = behavior_obj.does_requested_action_match_current(action)
+            if not matches and expected_next:
+                # Check if user has explicitly confirmed out-of-order execution
+                import json
+                state_data = {}
+                if workflow_state_file.exists():
+                    try:
+                        state_data = json.loads(workflow_state_file.read_text(encoding='utf-8'))
+                    except Exception:
+                        pass
+                
+                confirmations = state_data.get('out_of_order_confirmations', {})
+                from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import normalize_behavior_name
+                normalized_behavior = normalize_behavior_name(behavior_name)
+                is_confirmed = normalized_behavior in confirmations
+                
+                if not is_confirmed:
+                    # Out of order - return confirmation requirement
+                    return BotResult(
+                        status='requires_confirmation',
+                        behavior=behavior_name,
+                        action=action,
+                        data={
+                            'message': (
+                                f"**ACTION ORDER CHECK**\n\n"
+                                f"Current action: `{current_action}`\n"
+                                f"Expected next action: `{expected_next}`\n"
+                                f"Requested action: `{action}`\n\n"
+                                f"You are attempting to execute `{action}` out of sequence. "
+                                f"The next action in sequence should be `{expected_next}`.\n\n"
+                                f"**To proceed, you must explicitly call the `confirm_out_of_order` tool with behavior `{behavior_name}`.**\n"
+                                f"This confirmation must be sent by a human explicitly."
+                            ),
+                            'current_action': current_action,
+                            'expected_next': expected_next,
+                            'requested_action': action,
+                            'requested_behavior': behavior_name,
+                            'requires_confirmation': True,
+                            'confirmation_tool': 'confirm_out_of_order'
+                        }
+                    )
+            
+            # Forward to Behavior - it handles all workflow state management
+            return behavior_obj.navigate_to_action(action, parameters=parameters, out_of_order=not matches)
+        else:
+            # No action specified - forward to current action
+            return behavior_obj.forward_to_current_action(parameters=parameters)
+    
+    def _initialize_workflow_state(self, working_dir: Path, confirmed_behavior: str):
+        """Initialize workflow state with confirmed behavior."""
+        workflow_state_file = working_dir / 'workflow_state.json'
+        
+        # Find actual behavior name
+        actual_behavior_name = self.find_behavior_by_name(confirmed_behavior)
+        if actual_behavior_name is None:
+            actual_behavior_name = self.behaviors[0]  # Fallback to first behavior
+        
+        behavior_obj = getattr(self, actual_behavior_name)
+        first_action = behavior_obj.workflow.states[0] if behavior_obj.workflow.states else 'gather_context'
+        
+        state_data = {
+            'current_behavior': f'{self.name}.{actual_behavior_name}',
+            'current_action': f'{self.name}.{actual_behavior_name}.{first_action}',
+            'completed_actions': [],
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        workflow_state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+    
+    def _execute_entry_workflow(self, working_dir: Path, parameters: dict) -> BotResult:
+        """Execute entry workflow when no workflow state exists."""
+        # Return a result that indicates entry workflow is needed
+        return BotResult(
+            status='requires_confirmation',
+            behavior='',
+            action='',
+            data={
+                'message': (
+                    "**ENTRY WORKFLOW**\n\n"
+                    "No workflow state found. Please select a behavior to start:\n\n"
+                    f"{chr(10).join(f'- {b}' for b in self.behaviors)}\n\n"
+                    "Provide 'confirmed_behavior' in parameters to proceed."
+                ),
+                'behaviors': self.behaviors,
+                'requires_confirmation': True
+            }
+        )
     
     def close_current_action(self) -> BotResult:
         """Mark current action as complete and transition to next action."""

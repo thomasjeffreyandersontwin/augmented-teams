@@ -483,130 +483,17 @@ class MCPServerGenerator:
             if self.bot is None:
                 return {"error": "Bot not initialized"}
             
-            # WORKFLOW STATE ENFORCEMENT: Check if workflow_state.json exists
-            # Use workspace_directory directly from WORKING_AREA (no inference)
-            from agile_bot.bots.base_bot.src.state.workspace import get_workspace_directory
-            working_dir = get_workspace_directory()
-            
-            workflow_state_file = working_dir / 'workflow_state.json'
-            
-            if not workflow_state_file.exists():
-                # Check if user provided confirmation
-                if 'confirmed_behavior' in parameters:
-                    confirmed = parameters['confirmed_behavior']
-                    # Initialize workflow state with confirmed behavior
-                    self._initialize_workflow_state(working_dir, confirmed)
-                    # Continue to execute the behavior
-                else:
-                    # No workflow state - must execute entry workflow first
-                    return self._execute_entry_workflow(working_dir, parameters)
-            
-            # WORKFLOW ORDER ENFORCEMENT: Check if proceeding out of order
-            matches, current_behavior, expected_next = self.bot.does_requested_behavior_match_current(behavior)
-            if not matches and expected_next:
-                # Check if user has explicitly confirmed out-of-order execution via confirm_out_of_order tool
-                import json
-                state_data = {}
-                if workflow_state_file.exists():
-                    try:
-                        state_data = json.loads(workflow_state_file.read_text(encoding='utf-8'))
-                    except Exception:
-                        pass
-                
-                confirmations = state_data.get('out_of_order_confirmations', {})
-                # Normalize behavior name to match how confirmations are stored using centralized utility
-                is_confirmed = False
-                if behavior:
-                    try:
-                        from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import normalize_behavior_name
-                        normalized_behavior = normalize_behavior_name(behavior)
-                        is_confirmed = normalized_behavior in confirmations
-                    except Exception:
-                        # If normalization fails, fall back to direct comparison
-                        is_confirmed = behavior in confirmations
-                
-                if not is_confirmed:
-                    # Out of order - ask for explicit confirmation via confirm_out_of_order tool
-                    return {
-                        "status": "requires_confirmation",
-                        "message": (
-                            f"**WORKFLOW ORDER CHECK**\n\n"
-                            f"Current behavior: `{current_behavior}`\n"
-                            f"Expected next behavior: `{expected_next}`\n"
-                            f"Requested behavior: `{behavior}`\n\n"
-                            f"You are attempting to execute `{behavior}` out of sequence. "
-                            f"The next behavior in sequence should be `{expected_next}`.\n\n"
-                            f"**To proceed, you must explicitly call the `confirm_out_of_order` tool with behavior `{behavior}`.**\n"
-                            f"This confirmation must be sent by a human explicitly."
-                        ),
-                        "current_behavior": current_behavior,
-                        "expected_next": expected_next,
-                        "requested_behavior": behavior,
-                        "confirmation_required": True,
-                        "confirmation_tool": "confirm_out_of_order"
-                    }
-            
-            behavior_obj = getattr(self.bot, behavior, None)
-            if behavior_obj is None:
-                return {"error": f"Behavior {behavior} not found"}
-            
-            # ACTION ORDER ENFORCEMENT: Check if proceeding out of order
-            if action:  # Only check if specific action was requested
-                matches, current_action, expected_next = behavior_obj.does_requested_action_match_current(action)
-                if not matches and expected_next:
-                    # Check if user has explicitly confirmed out-of-order execution via confirm_out_of_order tool
-                    import json
-                    state_data = {}
-                    if workflow_state_file.exists():
-                        try:
-                            state_data = json.loads(workflow_state_file.read_text(encoding='utf-8'))
-                        except Exception:
-                            pass
-                    
-                    confirmations = state_data.get('out_of_order_confirmations', {})
-                    # For action-level confirmation, check if behavior is confirmed (actions inherit behavior confirmation)
-                    # Normalize behavior name to match how confirmations are stored using centralized utility
-                    from agile_bot.bots.base_bot.src.bot.behavior_folder_finder import normalize_behavior_name
-                    normalized_behavior = normalize_behavior_name(behavior)
-                    is_confirmed = normalized_behavior in confirmations
-                    
-                    if not is_confirmed:
-                        # Out of order - ask for explicit confirmation via confirm_out_of_order tool
-                        return {
-                            "status": "requires_confirmation",
-                            "message": (
-                                f"**ACTION ORDER CHECK**\n\n"
-                                f"Current action: `{current_action}`\n"
-                                f"Expected next action: `{expected_next}`\n"
-                                f"Requested action: `{action}`\n\n"
-                                f"You are attempting to execute `{action}` out of sequence. "
-                                f"The next action in sequence should be `{expected_next}`.\n\n"
-                                f"**To proceed, you must explicitly call the `confirm_out_of_order` tool with behavior `{behavior}`.**\n"
-                                f"This confirmation must be sent by a human explicitly."
-                            ),
-                            "current_action": current_action,
-                            "expected_next": expected_next,
-                            "requested_action": action,
-                            "requested_behavior": behavior,
-                            "confirmation_required": True,
-                            "confirmation_tool": "confirm_out_of_order"
-                        }
-            
-            # If action is specified, route to that action, otherwise use current action
-            if action:
-                action_method = getattr(behavior_obj, action, None)
-                if action_method is None:
-                    return {"error": f"Action {action} not found in {behavior}"}
-                result = action_method(parameters=parameters)
-            else:
-                result = behavior_obj.forward_to_current_action(parameters=parameters)
-            
-            return {
-                "status": result.status,
-                "behavior": result.behavior,
-                "action": result.action,
-                "data": result.data
-            }
+            # MCP Server just forwards requests - Bot handles all workflow/state management
+            try:
+                result = self.bot.execute_behavior(behavior, action=action, parameters=parameters)
+                return {
+                    "status": result.status,
+                    "behavior": result.behavior,
+                    "action": result.action,
+                    "data": result.data
+                }
+            except Exception as e:
+                return {"error": f"Failed to execute behavior: {e}"}
         
         self.registered_tools.append({
             'name': tool_name,

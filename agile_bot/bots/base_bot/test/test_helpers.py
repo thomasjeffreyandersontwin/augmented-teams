@@ -137,9 +137,9 @@ def create_common_rules(repo_root: Path, rules: list) -> Path:
     rules_file.write_text(json.dumps({'rules': rules}), encoding='utf-8')
     return rules_file
 
-def create_base_instructions(repo_root: Path):
-    """Create base action instructions."""
-    base_actions = get_base_actions_dir(repo_root)
+def create_base_instructions(bot_directory: Path):
+    """Create base action instructions in bot_directory (no fallback to repo root)."""
+    base_actions = bot_directory / 'base_actions'
     for idx, action in enumerate(['gather_context', 'decide_planning_criteria', 
                                     'build_knowledge', 'render_output', 'validate_rules'], start=2):
         action_dir = base_actions / f'{idx}_{action}'
@@ -147,16 +147,16 @@ def create_base_instructions(repo_root: Path):
         instructions_file = action_dir / 'instructions.json'
         instructions_file.write_text(json.dumps({'instructions': [f'{action} base instructions']}), encoding='utf-8')
 
-def create_base_action_instructions(repo_root: Path, action: str) -> Path:
-    """Create base action instructions for specific action."""
-    base_actions_dir = get_base_actions_dir(repo_root)
+def create_base_action_instructions(bot_directory: Path, action: str) -> Path:
+    """Create base action instructions for specific action in bot_directory (no fallback)."""
+    base_actions_dir = bot_directory / 'base_actions'
     
     action_mapping = {
         'gather_context': '2_gather_context',
         'decide_planning_criteria': '3_decide_planning_criteria',
-        'build_knowledge': '4_build_knowledge',
-        'render_output': '5_render_output',
-        'validate_rules': '7_validate_rules'
+        'validate_rules': '5_validate_rules',
+        'build_knowledge': '6_build_knowledge',
+        'render_output': '7_render_output'
     }
     
     folder_name = action_mapping.get(action, action)
@@ -164,7 +164,13 @@ def create_base_action_instructions(repo_root: Path, action: str) -> Path:
     action_dir.mkdir(parents=True, exist_ok=True)
     
     instructions_file = action_dir / 'instructions.json'
-    instructions_file.write_text(json.dumps({'instructions': [f'{action} base instructions']}), encoding='utf-8')
+    instructions_file.write_text(
+        json.dumps({
+            'actionName': action,
+            'instructions': [f'{action} base instructions']
+        }),
+        encoding='utf-8'
+    )
     return instructions_file
 
 def create_behavior_folder(bot_dir: Path, folder_name: str) -> Path:
@@ -192,15 +198,15 @@ def create_trigger_words_file(bot_dir: Path, behavior: str, action: str, pattern
     trigger_file.write_text(json.dumps({'patterns': patterns}), encoding='utf-8')
     return trigger_file
 
-def create_base_actions_structure(repo_root: Path):
-    """Create base actions directory structure."""
-    base_actions_dir = get_base_actions_dir(repo_root)
+def create_base_actions_structure(bot_directory: Path):
+    """Create base actions directory structure in bot_directory (no fallback)."""
+    base_actions_dir = bot_directory / 'base_actions'
     workflow_actions = [
         ('2_gather_context', 'gather_context'),
         ('3_decide_planning_criteria', 'decide_planning_criteria'),
-        ('4_build_knowledge', 'build_knowledge'),
-        ('5_render_output', 'render_output'),
-        ('7_validate_rules', 'validate_rules')
+        ('5_validate_rules', 'validate_rules'),
+        ('6_build_knowledge', 'build_knowledge'),
+        ('7_render_output', 'render_output')
     ]
     
     for folder_name, action_name in workflow_actions:

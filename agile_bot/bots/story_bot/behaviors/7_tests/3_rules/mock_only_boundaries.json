@@ -208,7 +208,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.mock_boundaries_scanner.MockBoundariesScanner"
 }
-
-

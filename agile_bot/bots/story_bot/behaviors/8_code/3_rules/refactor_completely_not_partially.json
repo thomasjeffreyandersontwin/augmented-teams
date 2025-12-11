@@ -109,6 +109,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.complete_refactoring_scanner.CompleteRefactoringScanner"
 }
-
