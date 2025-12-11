@@ -1,7 +1,7 @@
 {
   "name": "gather_context",
   "workflow": true,
-  "order": 2,
+  "order": 1,
   "next_action": "decide_planning_criteria"
 }
 
