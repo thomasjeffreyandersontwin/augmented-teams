@@ -20,6 +20,9 @@ tinydb==4.8.0
 # Process Management (for MCP server restart)
 psutil==5.9.8
 
+# Natural Language Processing (for scanners)
+spacy>=3.7.0
+
 
 
 
