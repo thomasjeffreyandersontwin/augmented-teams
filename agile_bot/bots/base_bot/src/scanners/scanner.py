@@ -12,15 +12,16 @@ class Scanner(ABC):
     """
     
     @abstractmethod
-    def scan(self, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None) -> List[Dict[str, Any]]:
         """Scan knowledge graph for rule violations.
         
         Args:
             knowledge_graph: The knowledge graph to validate (typically story-graph.json structure)
+            rule_obj: Optional Rule object reference (for creating Violations with rule reference)
             
         Returns:
-            List of violation dictionaries, each containing:
-            - rule_name: Name of the rule being violated
+            List of violation dictionaries or Violation objects, each containing:
+            - rule: Rule object reference or rule name string
             - line_number: Line number where violation occurs (if applicable)
             - location: Location in knowledge graph (e.g., 'epics[0].name')
             - violation_message: Description of the violation

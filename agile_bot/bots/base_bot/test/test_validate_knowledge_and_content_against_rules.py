@@ -134,7 +134,8 @@ def setup_test_rules(repo_root: Path, rule_paths: List[str], rule_contents: List
 def validate_scanner_metadata(scanner_metadata: Dict[str, Any], expected_rule_name: str, 
                               expected_description: str, expected_behavior_name: str) -> bool:
     """Validate scanner metadata matches expected values."""
-    return (scanner_metadata.get('rule_name') == expected_rule_name and
+    rule_name = scanner_metadata.get('rule') or scanner_metadata.get('rule_name')  # Support both
+    return (rule_name == expected_rule_name and
             scanner_metadata.get('description') == expected_description and
             scanner_metadata.get('behavior_name') == expected_behavior_name)
 
@@ -701,17 +702,17 @@ class TestDiscoversScanners:
     """Story: Discovers Scanners - Tests scanner discovery from rule files."""
 
     @pytest.mark.parametrize("rule_file_paths,rule_file_content,expected_scanner_count", [
-        # Example 1: 3 scanners from different behaviors
+        # Example 1: 3 scanners from common rules and current behavior
         (
             [
                 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
                 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json',
-                'agile_bot/bots/test_story_bot/behaviors/4_discovery/3_rules/apply_exhaustive_decomposition.json'
+                'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/apply_exhaustive_decomposition.json'
             ],
             [
-                {'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
-                {'scanner': 'agile_bot.bots.story_bot.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
-                {'scanner': 'agile_bot.bots.story_bot.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner', 'description': 'Apply exhaustive decomposition', 'do': {}}
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner', 'description': 'Apply exhaustive decomposition', 'do': {}}
             ],
             3
         ),
@@ -722,15 +723,15 @@ class TestDiscoversScanners:
                 'agile_bot/bots/test_story_bot/rules/use_active_behavioral_language.json'
             ],
             [
-                {'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
-                {'scanner': 'agile_bot.bots.story_bot.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}}
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}}
             ],
             2
         ),
         # Example 3: Single scanner
         (
             ['agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json'],
-            [{'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}}],
+            [{'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}}],
             1
         ),
     ])
@@ -799,42 +800,42 @@ class TestRunScannersAgainstKnowledgeGraph:
         # Example 1: Epic with noun-only name (violation)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {'epics': [{'name': 'Order Management'}]},
             True
         ),
         # Example 2: Correct verb-noun format (no violations)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {'epics': [{'name': 'Places Order', 'features': [{'name': 'Validates Payment', 'stories': [{'name': 'Place Order'}]}]}]},
             False
         ),
         # Example 3: Story with actor in name (violation)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {'epics': [{'name': 'Places Order', 'features': [{'name': 'Validates Payment', 'stories': [{'name': 'Customer places order'}]}]}]},
             True
         ),
         # Example 4: Feature with capability noun (violation)
         (
             'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json',
-            {'scanner': 'agile_bot.bots.story_bot.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
             {'epics': [{'name': 'Places Order', 'features': [{'name': 'Payment Processing'}]}]},
             True
         ),
         # Example 5: Story sizing violation
         (
             'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/size_stories_3_to_12_days.json',
-            {'scanner': 'agile_bot.bots.story_bot.scanners.story_sizing_scanner.StorySizingScanner', 'description': 'Size stories 3-12 days', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.story_sizing_scanner.StorySizingScanner', 'description': 'Size stories 3-12 days', 'do': {}},
             {'epics': [{'name': 'Places Order', 'features': [{'name': 'Validates Payment', 'stories': [{'name': 'Place Order', 'sizing': '15 days'}]}]}]},
             True
         ),
         # Example 6: Empty graph (no violations)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.story_bot.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {},
             False
         ),
@@ -894,7 +895,7 @@ class TestRunScannersAgainstKnowledgeGraph:
             
             # Validate violation structure if violations found
             for violation in violations:
-                assert validate_violation_structure(violation, ['rule_name', 'line_number', 'location', 'violation_message', 'severity']), (
+                assert validate_violation_structure(violation, ['rule', 'line_number', 'location', 'violation_message', 'severity']), (
                     f"Violation missing required fields: {violation}"
                 )
         
@@ -917,7 +918,7 @@ class TestReportsViolations:
         # Example 1: Single violation, JSON format
         (
             [{
-                'rule_name': 'use_verb_noun_format_for_story_elements',
+                'rule': 'use_verb_noun_format_for_story_elements',
                 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
                 'violation_message': 'Epic name uses noun-only format',
                 'line_number': 2,
@@ -930,11 +931,11 @@ class TestReportsViolations:
         # Example 2: Multiple violations, JSON format
         (
             [
-                {'rule_name': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Epic name uses noun-only format', 'line_number': 2, 'location': 'epics[0].name', 'severity': 'error'},
-                {'rule_name': 'use_active_behavioral_language', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json', 'violation_message': 'Feature uses capability noun', 'line_number': 3, 'location': 'epics[0].features[0].name', 'severity': 'error'},
-                {'rule_name': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Story name contains actor', 'line_number': 4, 'location': 'epics[0].features[0].stories[0].name', 'severity': 'error'},
-                {'rule_name': 'size_stories_3_to_12_days', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/size_stories_3_to_12_days.json', 'violation_message': 'Story sizing outside range', 'line_number': 5, 'location': 'epics[0].features[0].stories[0].sizing', 'severity': 'error'},
-                {'rule_name': 'use_background_for_common_setup', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/use_background_for_common_setup.json', 'violation_message': 'Background step missing', 'line_number': 6, 'location': 'scenarios[0].background', 'severity': 'error'}
+                {'rule': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Epic name uses noun-only format', 'line_number': 2, 'location': 'epics[0].name', 'severity': 'error'},
+                {'rule': 'use_active_behavioral_language', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json', 'violation_message': 'Feature uses capability noun', 'line_number': 3, 'location': 'epics[0].features[0].name', 'severity': 'error'},
+                {'rule': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Story name contains actor', 'line_number': 4, 'location': 'epics[0].features[0].stories[0].name', 'severity': 'error'},
+                {'rule': 'size_stories_3_to_12_days', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/size_stories_3_to_12_days.json', 'violation_message': 'Story sizing outside range', 'line_number': 5, 'location': 'epics[0].features[0].stories[0].sizing', 'severity': 'error'},
+                {'rule': 'use_background_for_common_setup', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/use_background_for_common_setup.json', 'violation_message': 'Background step missing', 'line_number': 6, 'location': 'scenarios[0].background', 'severity': 'error'}
             ],
             'JSON',
             5
@@ -948,7 +949,7 @@ class TestReportsViolations:
         # Example 4: Single violation, CHECKLIST format
         (
             [{
-                'rule_name': 'use_verb_noun_format_for_story_elements',
+                'rule': 'use_verb_noun_format_for_story_elements',
                 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
                 'violation_message': 'Epic name uses noun-only format',
                 'line_number': 2,
@@ -961,7 +962,7 @@ class TestReportsViolations:
         # Example 5: Single violation, DETAILED format
         (
             [{
-                'rule_name': 'use_verb_noun_format_for_story_elements',
+                'rule': 'use_verb_noun_format_for_story_elements',
                 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
                 'violation_message': 'Epic name uses noun-only format',
                 'line_number': 2,
@@ -974,7 +975,7 @@ class TestReportsViolations:
         # Example 6: Single violation, SUMMARY format
         (
             [{
-                'rule_name': 'use_verb_noun_format_for_story_elements',
+                'rule': 'use_verb_noun_format_for_story_elements',
                 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
                 'violation_message': 'Epic name uses noun-only format',
                 'line_number': 2,
@@ -987,11 +988,11 @@ class TestReportsViolations:
         # Example 7: Multiple violations with mixed severities, JSON format
         (
             [
-                {'rule_name': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Epic name uses noun-only format', 'line_number': 2, 'location': 'epics[0].name', 'severity': 'error'},
-                {'rule_name': 'use_active_behavioral_language', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json', 'violation_message': 'Feature uses capability noun', 'line_number': 3, 'location': 'epics[0].features[0].name', 'severity': 'error'},
-                {'rule_name': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Story name contains actor', 'line_number': 4, 'location': 'epics[0].features[0].stories[0].name', 'severity': 'warning'},
-                {'rule_name': 'size_stories_3_to_12_days', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/size_stories_3_to_12_days.json', 'violation_message': 'Story sizing outside range', 'line_number': 5, 'location': 'epics[0].features[0].stories[0].sizing', 'severity': 'error'},
-                {'rule_name': 'use_background_for_common_setup', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/use_background_for_common_setup.json', 'violation_message': 'Background step missing', 'line_number': 6, 'location': 'scenarios[0].background', 'severity': 'info'}
+                {'rule': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Epic name uses noun-only format', 'line_number': 2, 'location': 'epics[0].name', 'severity': 'error'},
+                {'rule': 'use_active_behavioral_language', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json', 'violation_message': 'Feature uses capability noun', 'line_number': 3, 'location': 'epics[0].features[0].name', 'severity': 'error'},
+                {'rule': 'use_verb_noun_format_for_story_elements', 'rule_file': 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json', 'violation_message': 'Story name contains actor', 'line_number': 4, 'location': 'epics[0].features[0].stories[0].name', 'severity': 'warning'},
+                {'rule': 'size_stories_3_to_12_days', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/size_stories_3_to_12_days.json', 'violation_message': 'Story sizing outside range', 'line_number': 5, 'location': 'epics[0].features[0].stories[0].sizing', 'severity': 'error'},
+                {'rule': 'use_background_for_common_setup', 'rule_file': 'agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/use_background_for_common_setup.json', 'violation_message': 'Background step missing', 'line_number': 6, 'location': 'scenarios[0].background', 'severity': 'info'}
             ],
             'JSON',
             5
@@ -1024,16 +1025,31 @@ class TestReportsViolations:
         report = action.generate_report(report_format, violations=violations_data)
         
         # Then: Report structure matches expected format
-        assert 'violations' in report, "Report should contain violations key"
-        assert isinstance(report['violations'], list), "Violations should be a list"
-        assert len(report['violations']) == expected_violation_count, f"Expected {expected_violation_count} violations, got {len(report['violations'])}"
-        
-        # Validate violation structure if violations exist
-        if expected_violation_count > 0:
-            for violation in report['violations']:
-                assert validate_violation_structure(violation, ['rule_name', 'line_number', 'location', 'violation_message', 'severity']), (
-                    f"Violation missing required fields: {violation}"
-                )
-                assert 'line_number' in violation, "Violation should have line_number"
-                assert 'severity' in violation, "Violation should have severity"
+        if report_format == 'CHECKLIST':
+            assert 'checklist' in report, "CHECKLIST format should contain checklist key"
+            assert 'format' in report, "Report should contain format key"
+            assert report['format'] == 'CHECKLIST', "Format should be CHECKLIST"
+            # Count violations from checklist items
+            checklist_text = report.get('checklist', '')
+            violation_count = checklist_text.count('- [ ]') if checklist_text != 'No violations found.' else 0
+            assert violation_count == expected_violation_count, f"Expected {expected_violation_count} violations in checklist, got {violation_count}"
+        elif report_format == 'SUMMARY':
+            assert 'violation_count' in report, "SUMMARY format should contain violation_count key"
+            assert 'format' in report, "Report should contain format key"
+            assert report['format'] == 'SUMMARY', "Format should be SUMMARY"
+            assert report['violation_count'] == expected_violation_count, f"Expected {expected_violation_count} violations, got {report['violation_count']}"
+        else:
+            # JSON, DETAILED, and other formats should have violations key
+            assert 'violations' in report, "Report should contain violations key"
+            assert isinstance(report['violations'], list), "Violations should be a list"
+            assert len(report['violations']) == expected_violation_count, f"Expected {expected_violation_count} violations, got {len(report['violations'])}"
+            
+            # Validate violation structure if violations exist
+            if expected_violation_count > 0:
+                for violation in report['violations']:
+                    assert validate_violation_structure(violation, ['rule', 'line_number', 'location', 'violation_message', 'severity']), (
+                        f"Violation missing required fields: {violation}"
+                    )
+                    assert 'line_number' in violation, "Violation should have line_number"
+                    assert 'severity' in violation, "Violation should have severity"
 

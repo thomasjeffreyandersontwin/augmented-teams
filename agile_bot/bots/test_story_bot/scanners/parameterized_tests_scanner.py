@@ -12,11 +12,12 @@ class ParameterizedTestsScanner(Scanner):
     instead of single test methods.
     """
     
-    def scan(self, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None) -> List[Dict[str, Any]]:
         """Scan knowledge graph for violations of parameterized test requirements.
         
         Args:
             knowledge_graph: The knowledge graph (story-graph.json structure)
+            rule_obj: Optional Rule object reference (for creating Violations with rule reference)
             
         Returns:
             List of violation dictionaries
@@ -53,8 +54,12 @@ class ParameterizedTestsScanner(Scanner):
                                 # This is a simplified check - full implementation would parse test files
                                 location = f"epics[{epic_idx}].features[{feature_idx}].stories[{story_idx}].scenarios[{scenario_idx}]"
                                 
+                                # Require Rule object - raise error if not provided
+                                if not rule_obj:
+                                    raise ValueError("rule_obj parameter is required for ParameterizedTestsScanner")
+                                
                                 violations.append(Violation(
-                                    rule_name='create_parameterized_tests_for_scenarios',
+                                    rule=rule_obj,
                                     violation_message=f"Scenario '{scenario.get('name', 'unknown')}' has {len(examples)} examples but may not use @pytest.mark.parametrize",
                                     location=location,
                                     severity='warning'
