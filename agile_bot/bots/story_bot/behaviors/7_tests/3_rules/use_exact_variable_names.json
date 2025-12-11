@@ -89,5 +89,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.exact_variable_names_scanner.ExactVariableNamesScanner"
 }

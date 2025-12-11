@@ -1,5 +1,6 @@
 {
   "description": "CRITICAL: Stories must be specific about what, when, why, and who. Generic operations like 'Add Sub-Epic' or 'Read Epics' are insufficient - stories must include context and specificity.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.specificity_scanner.SpecificityScanner",
   "examples": [
     {
       "do": {

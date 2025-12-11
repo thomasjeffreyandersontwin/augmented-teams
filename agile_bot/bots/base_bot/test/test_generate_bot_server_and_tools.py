@@ -28,17 +28,17 @@ def create_bot_config(workspace: Path, bot_name: str, behaviors: list) -> Path:
     config_file.write_text(json.dumps({'name': bot_name, 'behaviors': behaviors}), encoding='utf-8')
     return config_file
 
-def create_base_actions_structure(workspace: Path):
-    """Helper: Create base_actions directory structure with 6 workflow actions."""
-    base_actions_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+def create_base_actions_structure(bot_directory: Path):
+    """Helper: Create base_actions directory structure in bot_directory (no fallback)."""
+    base_actions_dir = bot_directory / 'base_actions'
     
     actions = [
         ('1_initialize_project', 'decide_planning_criteria'),
         ('2_gather_context', 'decide_planning_criteria'),
         ('3_decide_planning_criteria', 'build_knowledge'),
-        ('4_build_knowledge', 'render_output'),
-        ('5_render_output', 'validate_rules'),
-        ('7_validate_rules', None)
+        ('5_validate_rules', 'build_knowledge'),
+        ('6_build_knowledge', 'render_output'),
+        ('7_render_output', 'validate_rules')
     ]
     
     for order_name, next_action in actions:
@@ -56,11 +56,12 @@ def create_base_actions_structure(workspace: Path):
         
         (action_dir / 'action_config.json').write_text(json.dumps(config), encoding='utf-8')
 
-def create_base_instructions(workspace: Path):
-    """Helper: Create base instructions for all actions."""
+def create_base_instructions(bot_directory: Path):
+    """Helper: Create base instructions for all actions in bot_directory (no fallback)."""
+    base_actions_dir = bot_directory / 'base_actions'
     actions = ['gather_context', 'decide_planning_criteria', 'build_knowledge', 'render_output', 'validate_rules']
     for action in actions:
-        action_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / action
+        action_dir = base_actions_dir / action
         action_dir.mkdir(parents=True, exist_ok=True)
         instructions_file = action_dir / 'instructions.json'
         instructions_file.write_text(
@@ -315,11 +316,11 @@ class TestGenerateBehaviorActionTools:
         # Given: Bot with 4 behaviors configured
         bot_name = 'test_bot'
         behaviors = ['shape', 'discovery', 'exploration', 'specification']
-        create_base_actions_structure(workspace_root)
+        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
+        create_base_actions_structure(bot_dir)
         config_file = create_bot_config(workspace_root, bot_name, behaviors)
         
         # Bootstrap environment before importing/creating generator
-        bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
         workspace_directory = workspace_root / 'workspace'
         workspace_directory.mkdir(parents=True, exist_ok=True)
         bootstrap_env(bot_dir, workspace_directory)
@@ -419,7 +420,7 @@ class TestGenerateBehaviorActionTools:
         SCENARIO: Generator registers behavior tool with forwarding logic
         GIVEN: Bot has behavior with action
         WHEN: Generator registers behavior tool with FastMCP
-        THEN: Behavior tool forwards invocation to Bot.Behavior.Action when action parameter provided
+        THEN: Behavior tool forwards invocation to Bot.execute_behavior() (production code path)
         """
         # Given: Bot configuration
         bot_name = 'test_bot'
@@ -434,25 +435,28 @@ class TestGenerateBehaviorActionTools:
         workspace_directory.mkdir(parents=True, exist_ok=True)
         bootstrap_env(bot_dir, workspace_directory)
         
+        # Create base actions structure (needed for workflow)
+        create_base_actions_structure(bot_dir)
+        
+        # Create base instructions (needed for action execution)
+        create_base_instructions(bot_dir)
+        
+        # Create behavior folder
+        behavior_dir = bot_dir / 'behaviors' / behavior
+        behavior_dir.mkdir(parents=True, exist_ok=True)
+        
         # When: Call REAL MCPServerGenerator to register behavior tool
         from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
         generator = MCPServerGenerator(bot_directory=bot_dir)
         mcp_server = generator.create_server_instance()
         
-        # Mock the bot to verify forwarding
-        from agile_bot.bots.base_bot.src.bot.bot import BotResult
-        mock_bot = Mock()
-        mock_bot.shape.gather_context = Mock(return_value=BotResult('completed', 'shape', 'gather_context', {'result': 'success'}))
-        mock_bot.behaviors = ['shape']  # Set behaviors list
-        mock_bot.config = {'behaviors': ['shape']}  # Set config dict
-        mock_bot.does_requested_behavior_match_current = Mock(return_value=(True, 'shape', None))  # Return tuple
-        generator.bot = mock_bot
-        
+        # Use REAL Bot instance (not mock) - generator creates it automatically
         # Create workflow state so entry workflow doesn't trigger
         workflow_file = workspace_directory / 'workflow_state.json'
         workflow_file.write_text(json.dumps({
-            'current_behavior': 'story_bot.shape',
-            'current_action': 'story_bot.shape.gather_context'
+            'current_behavior': f'{bot_name}.{behavior}',
+            'current_action': f'{bot_name}.{behavior}.{action}',
+            'completed_actions': []
         }), encoding='utf-8')
         
         generator.register_all_behavior_action_tools(mcp_server)
@@ -463,16 +467,16 @@ class TestGenerateBehaviorActionTools:
         assert tool['type'] == 'behavior_tool'
         
         # Test tool invocation through FastMCP client with action parameter
-        create_base_instructions(workspace_root)
+        # This calls the REAL bot.execute_behavior() method
         async with Client(mcp_server) as client:
             # Call behavior tool with action parameter
             result = await client.call_tool(behavior, {'action': action})
             
-            # Verify result contains BotResult structure
+            # Verify result contains BotResult structure from real execution
             result_dict = json.loads(result.content[0].text)
             assert result_dict['status'] == 'completed'
-            assert result_dict['behavior'] == 'shape'
-            assert result_dict['action'] == 'gather_context'
+            assert result_dict['behavior'] == behavior
+            assert result_dict['action'] == action
 
 
 class TestDeployMCPBotServer:

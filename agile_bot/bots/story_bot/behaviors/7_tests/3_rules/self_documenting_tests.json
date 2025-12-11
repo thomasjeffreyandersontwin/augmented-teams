@@ -242,7 +242,6 @@
       "What methods return (assertions show this)",
       "What exceptions are raised (pytest.raises shows this)"
     ]
-  }
+  },
+  "scanner": "agile_bot.bots.base_bot.src.scanners.useless_comments_scanner.UselessCommentsScanner"
 }
-
-

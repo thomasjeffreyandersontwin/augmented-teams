@@ -61,5 +61,6 @@
         ]
       }
     ]
-  }
+  },
+  "scanner": "agile_bot.bots.base_bot.src.scanners.invest_principles_scanner.InvestPrinciplesScanner"
 }

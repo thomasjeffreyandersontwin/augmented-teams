@@ -114,16 +114,16 @@ def create_workflow_state_file(
     workflow_file.write_text(json.dumps(workflow_state), encoding='utf-8')
     return workflow_file
 
-def create_base_actions_structure(repo_root: Path) -> Path:
-    """Factory: Create base_actions directory structure with action configs."""
-    base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+def create_base_actions_structure(bot_directory: Path) -> Path:
+    """Factory: Create base_actions directory structure in bot_directory (no fallback)."""
+    base_actions_dir = bot_directory / 'base_actions'
     
     workflow_actions = [
         ('2_gather_context', 'gather_context', 2, 'decide_planning_criteria'),
         ('3_decide_planning_criteria', 'decide_planning_criteria', 3, 'build_knowledge'),
-        ('4_build_knowledge', 'build_knowledge', 4, 'render_output'),
-        ('5_render_output', 'render_output', 5, 'validate_rules'),
-        ('7_validate_rules', 'validate_rules', 7, None)
+        ('5_validate_rules', 'validate_rules', 5, 'build_knowledge'),
+        ('6_build_knowledge', 'build_knowledge', 6, 'render_output'),
+        ('7_render_output', 'render_output', 7, 'validate_rules')
     ]
     
     for folder_name, action_name, order, next_action in workflow_actions:

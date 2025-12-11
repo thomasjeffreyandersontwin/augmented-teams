@@ -1,5 +1,5 @@
 {
-  "botName": "test_story_bot",
+  "botName": "story_bot",
   "description": "Helps teams create, refine, and specify user stories from initial idea through to executable specifications",
   "goal": "Transform user needs into well-structured, testable stories using a progressive refinement workflow",
   "behaviorName": "story_bot_entry",

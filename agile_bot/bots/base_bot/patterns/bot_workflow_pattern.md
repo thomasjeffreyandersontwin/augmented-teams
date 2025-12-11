@@ -212,14 +212,13 @@ def load_workflow_states_and_transitions(workspace_root: Path):
 
 ```python
 states = ['gather_context', 'decide_planning_criteria', 'build_knowledge', 
-          'render_output', 'validate_rules', 'correct_bot']
+          'render_output', 'validate_rules']
 
 transitions = [
     {'trigger': 'proceed', 'source': 'gather_context', 'dest': 'decide_planning_criteria'},
     {'trigger': 'proceed', 'source': 'decide_planning_criteria', 'dest': 'build_knowledge'},
     {'trigger': 'proceed', 'source': 'build_knowledge', 'dest': 'render_output'},
     {'trigger': 'proceed', 'source': 'render_output', 'dest': 'validate_rules'},
-    {'trigger': 'proceed', 'source': 'validate_rules', 'dest': 'correct_bot'},
 ]
 ```
 

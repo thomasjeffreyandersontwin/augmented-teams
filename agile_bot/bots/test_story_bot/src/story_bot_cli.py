@@ -64,7 +64,7 @@ def main():
     bot_directory = get_bot_directory()
     workspace_directory = get_workspace_directory()
 
-    bot_name = 'test_story_bot'
+    bot_name = 'story_bot'
     bot_config_path = bot_directory / 'config' / 'bot_config.json'
 
     cli = BaseBotCli(

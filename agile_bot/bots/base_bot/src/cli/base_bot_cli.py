@@ -155,9 +155,9 @@ class BaseBotCli:
         action_prefixes = {
             'gather_context': '2_gather_context',
             'decide_planning_criteria': '3_decide_planning_criteria',
-            'build_knowledge': '4_build_knowledge',
-            'render_output': '5_render_output',
-            'validate_rules': '7_validate_rules'
+            'validate_rules': '5_validate_rules',
+            'build_knowledge': '6_build_knowledge',
+            'render_output': '7_render_output'
         }
         
         action_folder = action_prefixes.get(action_name, action_name)

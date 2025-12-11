@@ -1,13 +1,13 @@
 {
   "mcp": {
-    "server_name": "test_story_bot",
+    "server_name": "story_bot",
     "command": "python",
     "args": [
-      "agile_bot/bots/test_story_bot/src/story_bot_mcp_server.py"
+      "agile_bot/bots/story_bot/src/story_bot_mcp_server.py"
     ],
     "cwd": "C:\\dev\\augmented-teams",
     "env": {
-      "AGENT_NAME": "test_story_bot",
+      "AGENT_NAME": "story_bot",
       "PYTHONPATH": "C:\\dev\\augmented-teams",
       "WORKING_AREA": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot"
     }

@@ -11,5 +11,6 @@
         "content": "Auto-consolidate similar ACs (WRONG - must ask user first)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.ac_consolidation_scanner.ACConsolidationScanner"
 }
