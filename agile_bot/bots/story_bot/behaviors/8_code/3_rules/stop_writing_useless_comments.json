@@ -1,5 +1,6 @@
 {
   "description": "CRITICAL: Most comments are useless. Kill AI-generated docstrings that just repeat function names and parameters. Only write comments for complex non-obvious algorithms, business rules, warnings, or legal notices. If the code is clear, NO COMMENT NEEDED.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.useless_comments_scanner.UselessCommentsScanner",
   "examples": [
     {
       "do": {

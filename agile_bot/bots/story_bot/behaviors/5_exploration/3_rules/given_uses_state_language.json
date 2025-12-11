@@ -11,5 +11,6 @@
         "content": "Given user logs in (action - WRONG) - Given system creates character (action - WRONG)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner"
 }

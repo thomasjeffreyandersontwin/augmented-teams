@@ -35,17 +35,18 @@ def create_bot_config_file(workspace: Path, bot_name: str, behaviors: list) -> P
     )
     return config_file
 
-def create_base_instructions(workspace: Path):
-    """Helper: Create base instructions for all actions."""
+def create_base_instructions(bot_directory: Path):
+    """Helper: Create base instructions for all actions in bot_directory (no fallback)."""
+    base_actions_dir = bot_directory / 'base_actions'
     action_prefixes = {
         'gather_context': '2_gather_context',
         'decide_planning_criteria': '3_decide_planning_criteria',
-        'build_knowledge': '4_build_knowledge',
-        'render_output': '5_render_output',
-        'validate_rules': '7_validate_rules'
+        'validate_rules': '5_validate_rules',
+        'build_knowledge': '6_build_knowledge',
+        'render_output': '7_render_output'
     }
     for action, folder_name in action_prefixes.items():
-        action_dir = workspace / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions' / folder_name
+        action_dir = base_actions_dir / folder_name
         action_dir.mkdir(parents=True, exist_ok=True)
         instructions_file = action_dir / 'instructions.json'
         instructions_file.write_text(
@@ -103,9 +104,9 @@ def create_base_action_instructions(workspace: Path, action: str) -> Path:
     action_prefixes = {
         'gather_context': '2_gather_context',
         'decide_planning_criteria': '3_decide_planning_criteria',
-        'build_knowledge': '4_build_knowledge',
-        'render_output': '5_render_output',
-        'validate_rules': '7_validate_rules'
+        'validate_rules': '5_validate_rules',
+        'build_knowledge': '6_build_knowledge',
+        'render_output': '7_render_output'
     }
     
     action_folder = action_prefixes.get(action, action)
@@ -139,7 +140,7 @@ class TestBotToolInvocation:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_action_instructions(repo_root, 'gather_context')
+        create_base_action_instructions(bot_directory, 'gather_context')
         
         # When: Call REAL Bot API
         from agile_bot.bots.base_bot.src.bot.bot import Bot
@@ -195,11 +196,11 @@ class TestBotToolInvocation:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_action_instructions(repo_root, 'build_knowledge')
+        create_base_action_instructions(bot_directory, 'build_knowledge')
         
         # Create base actions structure with action_config.json (needed for workflow)
         from agile_bot.bots.base_bot.test.conftest import create_base_actions_structure
-        create_base_actions_structure(repo_root)
+        create_base_actions_structure(bot_directory)
         
         # Create workflow state so action can execute
         create_bot_config_file(bot_directory, 'test_bot', ['shape', 'discovery', 'exploration'])
@@ -244,7 +245,7 @@ class TestBehaviorActionInstructions:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        base_instructions = create_base_action_instructions(repo_root, action)
+        base_instructions = create_base_action_instructions(bot_directory, action)
         
         # When: Call REAL GatherContextAction API
         action_obj = GatherContextAction(
@@ -276,7 +277,7 @@ class TestForwardToCurrentBehaviorAndCurrentAction:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_instructions(repo_root)
+        create_base_instructions(bot_directory)
         bot_config = create_bot_config_file(bot_directory, 'story_bot', ['discovery'])
         
         # When
@@ -302,7 +303,7 @@ class TestForwardToCurrentBehaviorAndCurrentAction:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_instructions(repo_root)
+        create_base_instructions(bot_directory)
         bot_config = create_bot_config_file(bot_directory, 'story_bot', ['shape', 'discovery'])
         
         # When
@@ -331,7 +332,7 @@ class TestForwardToCurrentAction:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_instructions(repo_root)
+        create_base_instructions(bot_directory)
         bot_config = create_bot_config_file(bot_directory, 'story_bot', ['discovery'])
         
         # When
@@ -359,7 +360,7 @@ class TestForwardToCurrentAction:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_instructions(repo_root)
+        create_base_instructions(bot_directory)
         bot_config = create_bot_config_file(bot_directory, 'story_bot', ['discovery', 'exploration'])
         
         # When
@@ -387,7 +388,7 @@ class TestForwardToCurrentAction:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_instructions(repo_root)
+        create_base_instructions(bot_directory)
         bot_config = create_bot_config_file(bot_directory, 'story_bot', ['shape'])
         
         # When
@@ -419,7 +420,7 @@ class TestForwardToCurrentAction:
         # Base actions need to be created in actual repo location (where base_actions_dir looks)
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
-        create_base_instructions(repo_root)
+        create_base_instructions(bot_directory)
         bot_config = create_bot_config_file(bot_directory, 'story_bot', ['shape'])
         
         # When

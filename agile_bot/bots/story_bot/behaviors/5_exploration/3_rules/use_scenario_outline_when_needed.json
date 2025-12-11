@@ -11,5 +11,6 @@
         "content": "Scenario Outline: User clicks button (too simple - use regular scenario)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.scenario_outline_scanner.ScenarioOutlineScanner"
 }

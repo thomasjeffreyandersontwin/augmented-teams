@@ -25,6 +25,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.noun_redundancy_scanner.NounRedundancyScanner"
 }
-

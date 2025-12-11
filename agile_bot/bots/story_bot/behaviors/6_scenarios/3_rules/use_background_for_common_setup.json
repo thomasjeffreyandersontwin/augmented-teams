@@ -1,5 +1,6 @@
 {
   "description": "CRITICAL: Background section is ONLY for common setup steps shared across 3+ scenarios. DO NOT include scenario-specific setup here. Background contains only Given/And steps (no When/Then). Scenario-specific setup goes in scenario Steps as Given steps, not in Background.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.background_common_setup_scanner.BackgroundCommonSetupScanner",
   "examples": [
     {
       "do": {

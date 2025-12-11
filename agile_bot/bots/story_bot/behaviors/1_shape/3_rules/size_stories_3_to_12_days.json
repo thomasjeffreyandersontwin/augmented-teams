@@ -1,5 +1,6 @@
 {
   "description": "Size stories to fall within 3-12 day effort range for effective planning and frequent delivery.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.story_sizing_scanner.StorySizingScanner",
   "examples": [
     {
       "do": {

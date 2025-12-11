@@ -1,5 +1,6 @@
 {
   "description": "Write scenarios in plain English. NO variables, NO placeholders, NO Scenario Outlines, NO Examples tables at this stage.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.plain_english_scenarios_scanner.PlainEnglishScenariosScanner",
   "examples": [
     {
       "do": {

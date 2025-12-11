@@ -44,5 +44,6 @@
         ]
       }
     ]
-  }
+  },
+  "scanner": "agile_bot.bots.base_bot.src.scanners.technical_language_scanner.TechnicalLanguageScanner"
 }

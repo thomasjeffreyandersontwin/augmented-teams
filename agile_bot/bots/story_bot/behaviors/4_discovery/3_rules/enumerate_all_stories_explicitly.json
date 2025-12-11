@@ -11,5 +11,6 @@
         "content": "Increment 1 (FOCUS): ~8 stories (WRONG - should list all) OR keeping original 'Group tokens from canvas into mob' without breaking down into component stories (WRONG - should expand based on approach)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.enumerate_stories_scanner.EnumerateStoriesScanner"
 }

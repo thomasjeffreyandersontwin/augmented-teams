@@ -1,5 +1,6 @@
 {
   "description": "Use verb-noun format for all story elements (epic names, feature names, story titles)",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner",
   "do": {
     "examples": [
       {

@@ -65,7 +65,7 @@ class TestInjectNextBehaviorReminder:
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
         base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
-        validate_rules_dir = base_actions_dir / '7_validate_rules'
+        validate_rules_dir = base_actions_dir / '5_validate_rules'
         validate_rules_dir.mkdir(parents=True, exist_ok=True)
         
         base_instructions = {
@@ -83,9 +83,9 @@ class TestInjectNextBehaviorReminder:
         workflow_actions = [
             ('2_gather_context', 'gather_context', 2),
             ('3_decide_planning_criteria', 'decide_planning_criteria', 3),
-            ('4_build_knowledge', 'build_knowledge', 4),
-            ('5_render_output', 'render_output', 5),
-            ('7_validate_rules', 'validate_rules', 7)
+            ('5_validate_rules', 'validate_rules', 5),
+            ('6_build_knowledge', 'build_knowledge', 6),
+            ('7_render_output', 'render_output', 7)
         ]
         for folder_name, action_name, order in workflow_actions:
             action_dir = base_actions_dir / folder_name
@@ -168,7 +168,7 @@ class TestInjectNextBehaviorReminder:
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
         base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
-        render_output_dir = base_actions_dir / '5_render_output'
+        render_output_dir = base_actions_dir / '7_render_output'
         render_output_dir.mkdir(parents=True, exist_ok=True)
         
         base_instructions = {
@@ -216,7 +216,7 @@ class TestInjectNextBehaviorReminder:
         from agile_bot.bots.base_bot.src.state.workspace import get_python_workspace_root
         repo_root = get_python_workspace_root()
         base_actions_dir = repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
-        validate_rules_dir = base_actions_dir / '7_validate_rules'
+        validate_rules_dir = base_actions_dir / '5_validate_rules'
         validate_rules_dir.mkdir(parents=True, exist_ok=True)
         
         base_instructions = {

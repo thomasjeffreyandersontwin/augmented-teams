@@ -1,33 +1,34 @@
-{
-    "python.testing.unittestArgs": [
-        "-v",
-        "-s",
-        "./agile_bot",
-        "-p",
-        "*test.py"
-    ],
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestArgs": [
-        "-v",
-        "--tb=short",
-        "--continue-on-collection-errors"
-    ],
-    "python.testing.cwd": "${workspaceFolder}",
-    "python.testing.autoTestDiscoverOnSaveEnabled": true,
-    "cursor.ai.autoAcceptFileWrites": true,
-    "cursor.general.autoAcceptFileWrites": true,
-    "github.copilot.chat.mcp.servers": {
-        "story_bot": {
-            "command": "python",
-            "args": [
-                "agile_bot/bots/story_bot/src/story_bot_mcp_server.py"
-            ],
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "AGENT_NAME": "story_bot",
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        }
-    }
+﻿{
+    "python.defaultInterpreterPath":  "python",
+    "python.testing.unittestArgs":  [
+                                        "-v",
+                                        "-s",
+                                        "./agile_bot",
+                                        "-p",
+                                        "*test.py"
+                                    ],
+    "python.testing.pytestEnabled":  true,
+    "python.testing.unittestEnabled":  false,
+    "python.testing.pytestArgs":  [
+                                      "-v",
+                                      "--tb=short",
+                                      "--continue-on-collection-errors"
+                                  ],
+    "python.testing.cwd":  "",
+    "python.testing.autoTestDiscoverOnSaveEnabled":  true,
+    "cursor.ai.autoAcceptFileWrites":  true,
+    "cursor.general.autoAcceptFileWrites":  true,
+    "github.copilot.chat.mcp.servers":  {
+                                            "story_bot":  {
+                                                              "command":  "python",
+                                                              "args":  [
+                                                                           "agile_bot/bots/story_bot/src/story_bot_mcp_server.py"
+                                                                       ],
+                                                              "cwd":  "${workspaceFolder}",
+                                                              "env":  {
+                                                                          "AGENT_NAME":  "story_bot",
+                                                                          "PYTHONPATH":  "${workspaceFolder}"
+                                                                      }
+                                                          }
+                                        }
 }

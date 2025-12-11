@@ -1,5 +1,5 @@
 {
-  "name": "test_story_bot",
+  "name": "story_bot",
   "behaviors": [
     "1_shape",
     "2_prioritization",

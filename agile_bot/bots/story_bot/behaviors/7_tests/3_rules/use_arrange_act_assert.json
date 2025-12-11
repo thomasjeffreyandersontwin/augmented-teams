@@ -85,5 +85,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.arrange_act_assert_scanner.ArrangeActAssertScanner"
 }

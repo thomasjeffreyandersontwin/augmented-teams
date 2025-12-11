@@ -67,5 +67,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.specification_match_scanner.SpecificationMatchScanner"
 }

@@ -138,11 +138,6 @@ And Catalog size is '{catalog_size}'
 | T2.10 | common | agile_bot/bots/test_story_bot/rules/invalid_scanner_path.json | invalid_scanner_path.json: `{"scanner": "invalid.module.path.InvalidScanner", "description": "Rule", "do": {...}}` | 1 scanner: InvalidScanner + 1 error | InvalidScanner: No - cannot be imported<br>Error: "Scanner class import failure: ModuleNotFoundError: No module named 'invalid.module.path'" | rule_name="invalid_scanner_path", description="Rule", behavior_name="common" | Catalog with 0 entries (scanner not registered due to import failure) | 0 scanners registered, 1 error logged |
 | T2.11 | common | agile_bot/bots/test_story_bot/rules/no_scanner_property.json | no_scanner_property.json: `{"description": "Rule without scanner property", "do": {...}}` (missing scanner property) | 1 scanner discovered + 1 error | Scanner: No - missing `scanner` property<br>Error: "Rule file missing required 'scanner' property: agile_bot/bots/test_story_bot/rules/no_scanner_property.json" | Error: Invalid rule structure, behavior_name="common" | Catalog with 0 entries (scanner not registered due to missing property) | 0 scanners registered, 1 error logged |
 | T2.12 | all | agile_bot/bots/test_story_bot/rules/ (1000+ rule files)<br>agile_bot/bots/test_story_bot/behaviors/*/3_rules/ (1000+ rule files total) | Multiple rule files with scanner properties | All scanners discovered | All scanner classes found, discovery completes without timeout | Metadata extracted for all scanners | Catalog with all entries grouped by behavior_name | All scanners registered, organized by behavior_name |
-
-#### Scanner Metadata Extraction Tests
-
-| Test ID | Behavior | Rule File Paths | Rule File Content | Scanners Discovered | Scanner Class Found | Scanner Metadata | Catalog Structure | Catalog Size |
-|---------|----------|----------------------------|----------------------------------------------|---------------------------|---------------------|-------------------|-------------------|---------------|
 | T2.13 | common | agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json | use_verb_noun_format_for_story_elements.json: `{"scanner": "...", "description": "Use verb-noun format", "do": {"examples": [...]}, "dont": {"examples": [...]}}` | 1 scanner: VerbNounScanner | VerbNounScanner: Yes - found | rule_name="use_verb_noun_format_for_story_elements", description="Use verb-noun format", behavior_name="common" | Catalog with 1 entry | 1 scanner registered |
 | T2.14 | shape | agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json | use_active_behavioral_language.json: `{"scanner": "...", "do": {...}}` (missing description field) | 1 scanner: ActiveLanguageScanner | ActiveLanguageScanner: Yes - found | rule_name="use_active_behavioral_language", description=null, behavior_name="shape" | Catalog with 1 entry | 1 scanner registered |
 | T2.15 | scenarios | agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/use_background_for_common_setup.json | use_background_for_common_setup.json: `{"scanner": "...", "description": "Use background for common setup"}` (missing do/dont examples) | 1 scanner: BackgroundSetupScanner | BackgroundSetupScanner: Yes - found | rule_name="use_background_for_common_setup", description="Use background for common setup", behavior_name="scenarios" | Catalog with 1 entry | 1 scanner registered |
@@ -150,18 +145,11 @@ And Catalog size is '{catalog_size}'
 | T2.17 | exploration | agile_bot/bots/test_story_bot/behaviors/5_exploration/3_rules/behavioral_ac_at_story_level.json | behavioral_ac_at_story_level.json: `{"scanner": "...", "description": "", "do": {}, "dont": {}}` (empty content) | 1 scanner: BehavioralACScanner | BehavioralACScanner: Yes - found | rule_name="behavioral_ac_at_story_level", description="", behavior_name="exploration" | Catalog with 1 entry | 1 scanner registered |
 | T2.18 | code | agile_bot/bots/test_story_bot/behaviors/8_code/3_rules/production_code_api_design.json | production_code_api_design.json: `{"scanner": "...", "description": "...", "behavior": "code", "do": {...}}` | 1 scanner: APIDesignScanner | APIDesignScanner: Yes - found | rule_name="production_code_api_design", behavior_name="code", description="..." | Catalog with 1 entry | 1 scanner registered |
 | T2.19 | discovery | agile_bot/bots/test_story_bot/behaviors/4_discovery/3_rules/apply_exhaustive_decomposition.json | apply_exhaustive_decomposition.json: `{"scanner": "...", "description": "...", "do": {...}}` (in discovery/3_rules directory) | 1 scanner: ExhaustiveDecompositionScanner | ExhaustiveDecompositionScanner: Yes - found | rule_name="apply_exhaustive_decomposition", behavior_name="discovery" (from path), description="..." | Catalog with 1 entry | 1 scanner registered |
-
-#### Scanner Registration and Catalog Tests
-
-### Testing Table: Scanner Registration and Catalog
-
-| Test ID | Behaviors | Scanners Discovered | Expected Catalog Structure | Expected Catalog Size |
-|---------|-----------|---------------------|---------------------------|----------------------|
-| T2.20 | common, shape, discovery, exploration, scenarios, tests, code | 50 scanners: 7 common (VerbNounScanner, ActiveLanguageScanner, ...), 25 shape (StorySizingScanner, BehavioralJourneyScanner, ...), 5 discovery (ExhaustiveDecompositionScanner, ...), 8 exploration, 9 scenarios, 30 tests, 43 code | Catalog with 50 entries grouped by behavior_name | 50 scanners registered, organized by behavior_name |
-| T2.21 | none | 0 scanners | Empty catalog | 0 scanners registered |
-| T2.22 | common, shape | Duplicate rule name "use_active_behavioral_language" exists in both common and shape | Catalog with unique rule names per behavior: common.use_active_behavioral_language, shape.use_active_behavioral_language | Duplicates handled (behavior-specific, both registered with behavior prefix) |
-| T2.23 | common, shape, discovery, exploration, scenarios, tests, code | Scanners from all 7 behaviors | Catalog grouped by behavior_name | Catalog organized by behavior_name: common (7), shape (25), discovery (5), exploration (8), scenarios (9), tests (30), code (43) |
-| T2.24 | common, shape | Scanner registration failure for shape behavior (scanner class not found) | Partial catalog: common scanners registered, shape scanners excluded | Failed scanners excluded, errors logged, common behavior still registered |
+| T2.20 | all | agile_bot/bots/test_story_bot/rules/ (7 rule files)<br>agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/ (25 rule files)<br>agile_bot/bots/test_story_bot/behaviors/4_discovery/3_rules/ (5 rule files)<br>agile_bot/bots/test_story_bot/behaviors/5_exploration/3_rules/ (8 rule files)<br>agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/ (9 rule files)<br>agile_bot/bots/test_story_bot/behaviors/7_tests/3_rules/ (30 rule files)<br>agile_bot/bots/test_story_bot/behaviors/8_code/3_rules/ (43 rule files) | Multiple rule files with scanner properties across all behaviors | 50 scanners: 7 common (VerbNounScanner, ActiveLanguageScanner, ...), 25 shape (StorySizingScanner, BehavioralJourneyScanner, ...), 5 discovery (ExhaustiveDecompositionScanner, ...), 8 exploration, 9 scenarios, 30 tests, 43 code | All scanner classes found | Metadata extracted for all scanners across all behaviors | Catalog with 50 entries grouped by behavior_name | 50 scanners registered, organized by behavior_name |
+| T2.21 | none | (no rule directories exist or all empty) | N/A | 0 scanners | N/A - no rule files | N/A - no metadata | Empty catalog | 0 scanners registered |
+| T2.22 | all | agile_bot/bots/test_story_bot/rules/use_active_behavioral_language.json<br>agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/use_active_behavioral_language.json | use_active_behavioral_language.json (common): `{"scanner": "...", "description": "Use active behavioral language", "do": {...}}`<br>use_active_behavioral_language.json (shape): `{"scanner": "...", "description": "Use active behavioral language", "do": {...}}` | 2 scanners: ActiveLanguageScanner (common), ActiveLanguageScanner (shape) | Both scanner classes found | rule_name="use_active_behavioral_language", behavior_name="common"<br>rule_name="use_active_behavioral_language", behavior_name="shape" | Catalog with unique rule names per behavior: common.use_active_behavioral_language, shape.use_active_behavioral_language | Duplicates handled (behavior-specific, both registered with behavior prefix) |
+| T2.23 | all | agile_bot/bots/test_story_bot/rules/ (7 rule files)<br>agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/ (25 rule files)<br>agile_bot/bots/test_story_bot/behaviors/4_discovery/3_rules/ (5 rule files)<br>agile_bot/bots/test_story_bot/behaviors/5_exploration/3_rules/ (8 rule files)<br>agile_bot/bots/test_story_bot/behaviors/6_scenarios/3_rules/ (9 rule files)<br>agile_bot/bots/test_story_bot/behaviors/7_tests/3_rules/ (30 rule files)<br>agile_bot/bots/test_story_bot/behaviors/8_code/3_rules/ (43 rule files) | Multiple rule files with scanner properties from all 7 behaviors | Scanners from all 7 behaviors | All scanner classes found | Metadata extracted for all scanners | Catalog grouped by behavior_name | Catalog organized by behavior_name: common (7), shape (25), discovery (5), exploration (8), scenarios (9), tests (30), code (43) |
+| T2.24 | all | agile_bot/bots/test_story_bot/rules/ (7 rule files)<br>agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/ (25 rule files, some with missing scanner classes) | Common rules: Multiple rule files with scanner properties<br>Shape rules: Some rule files reference scanner classes that don't exist | Scanners from common behavior + partial from shape behavior | Common scanners: All found<br>Shape scanners: Some not found (scanner class not found errors) | Metadata extracted for common scanners, errors logged for shape scanners | Partial catalog: common scanners registered, shape scanners excluded | Failed scanners excluded, errors logged, common behavior still registered |
 
 ---
 
@@ -264,7 +252,8 @@ And Knowledge graph contains '{knowledge_graph_problems}'
 And Scanner execution order is '{scanner_execution_order}'
 And Scanner failure behavior is '{scanner_failure_behavior}'
 When Scanners execute in '{scanner_execution_order}' order against knowledge graph containing '{knowledge_graph_problems}'
-Then Result is '{expected_result}'```
+Then Result is '{expected_result}'
+```
 
 ### Testing Table: Scanner Execution Order and Isolation
 
@@ -354,27 +343,6 @@ Then Output is '{expected_output}'
 | T4.29 | discovery | JSON | `[{"rule_name": "...", "line_number": 2, "severity": "warning", ...}]` | File: validation_report.json (exists) | File overwritten with new violations or error if overwrite disabled |
 | T4.30 | exploration | JSON | `[{"rule_name": "...", "line_number": 2, "severity": "info", ...}]` | File: nonexistent_dir/validation_report.json | Directory created or error if permissions insufficient |
 | T4.31 | scenarios | JSON | `[{"rule_name": "...", "line_number": 2, "severity": "error", ...}]` | File: validation_report.json (disk full) | Error reported: "Insufficient disk space" |
-
-### Scenario
-```gherkin
-Given Scanners have executed against knowledge graph
-And Violations data is '{example_violations_data}'
-When Report validation is performed with violations data '{example_violations_data}'
-Then Validation result is '{expected_validation}'
-And Error handling is '{expected_error_handling}'
-```
-
-### Testing Table: Report Validation and Error Handling
-
-| Test ID | Behavior | Example Violations Data | Expected Validation | Expected Error Handling |
-|---------|----------|------------------------|-------------------|----------------------|
-| T4.32 | common | `[{"rule_name": "use_verb_noun_format_for_story_elements", "line_number": 2, "location": "epics[0].name", "violation_message": "...", "severity": "error"}]` | Report generated successfully | No errors, report contains violations with exact line_number and severity |
-| T4.33 | shape | `{"invalid": "structure"}` (not an array) | Error: Invalid violations data | Error reported: "Violations data must be an array", no report generated |
-| T4.34 | discovery | `[{"rule_name": "...", "line_number": 2, "severity": "error"}]` (missing location, violation_message) | Partial report generated | Missing fields handled gracefully, report includes available fields including severity |
-| T4.35 | exploration | `[{"rule_name": "...", "line_number": 2, "location": null, "violation_message": null, "severity": "warning"}]` | Report generated with nulls | Null values preserved or replaced with defaults, severity preserved |
-| T4.36 | all | Array with 1000+ violations, each with line_number and severity | Report generated | Large array handled efficiently, all violations included with severity |
-| T4.37 | scenarios | `[{"rule_name": "...", "line_number": 2, "severity": "error", "ref": "violations[0]"}]` (circular ref) | Error: Circular reference | Error reported: "Circular reference detected in violations data" |
-| T4.38 | common | `[{"rule_name": "use_verb_noun_format_for_story_elements", "line_number": 2, "severity": null}]` (missing severity) | Report generated | Missing severity handled gracefully, default severity applied or null preserved |
 
 ---
 

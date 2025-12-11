@@ -50,10 +50,9 @@ agile_bot/bots/base_bot/
 │   │   └── trigger_words.json       ← Trigger patterns
 │   ├── 2_gather_context/
 │   ├── 3_decide_planning_criteria/
-│   ├── 4_build_knowledge/
-│   ├── 5_render_output/
-│   ├── 7_validate_rules/
-│   └── correct_bot/                 ← Independent action (workflow: false)
+│   ├── 5_validate_rules/
+│   ├── 6_build_knowledge/
+│   └── 7_render_output/
 └── rules/
     └── common_rules.json            ← Common rules for all bots
 ```
@@ -84,17 +83,14 @@ Loads base instructions from `base_actions/2_gather_context/instructions.json` a
 ### decide_planning_criteria
 Loads base instructions from `base_actions/3_decide_planning_criteria/instructions.json`. Loads planning guardrails from `behaviors/{behavior}/guardrails/planning/` (typical_assumptions.json, decision_criteria/*.json) to inject planning criteria and assumptions.
 
+### validate_rules
+Loads base instructions from `base_actions/5_validate_rules/instructions.json`. Loads common rules from `base_bot/rules/common_rules.json` and behavior-specific rules from `behaviors/{behavior}/rules/*.json` to validate content.
+
 ### build_knowledge
-Loads base instructions from `base_actions/4_build_knowledge/instructions.json`. Loads knowledge graph template from `behaviors/{behavior}/content/knowledge_graph/*.json` to guide knowledge graph construction.
+Loads base instructions from `base_actions/6_build_knowledge/instructions.json`. Loads knowledge graph template from `behaviors/{behavior}/content/knowledge_graph/*.json` to guide knowledge graph construction.
 
 ### render_output
-Loads base instructions from `base_actions/5_render_output/instructions.json`. Loads templates from `behaviors/{behavior}/content/render/templates/` and transformers from `behaviors/{behavior}/content/render/transformers/` to render structured output.
-
-### validate_rules
-Loads base instructions from `base_actions/7_validate_rules/instructions.json`. Loads common rules from `base_bot/rules/common_rules.json` and behavior-specific rules from `behaviors/{behavior}/rules/*.json` to validate content.
-
-### correct_bot
-Independent action (workflow: false). Loads base instructions from `base_actions/correct_bot/instructions.json` to guide bot corrections, invoked separately from workflow.
+Loads base instructions from `base_actions/7_render_output/instructions.json`. Loads templates from `behaviors/{behavior}/content/render/templates/` and transformers from `behaviors/{behavior}/content/render/transformers/` to render structured output.
 
 ---
 
