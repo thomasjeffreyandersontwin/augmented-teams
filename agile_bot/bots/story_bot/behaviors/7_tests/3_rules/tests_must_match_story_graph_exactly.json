@@ -1,6 +1,7 @@
 {
   "rule_id": "tests_must_match_story_graph_exactly",
   "description": "Test structure must match story graph exactly: file names match sub-epics, class names match stories, method names match scenarios, and ordering follows story map sequence",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner",
   "rationale": "Tests provide 1-to-1 traceability with story map. Exact naming and ordering makes it trivial to find tests for any story or scenario by following story map hierarchy.",
   
   "sub_rules": [

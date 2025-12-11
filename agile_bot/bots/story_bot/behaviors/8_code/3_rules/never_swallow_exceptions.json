@@ -81,20 +81,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.swallowed_exceptions_scanner.SwallowedExceptionsScanner"
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

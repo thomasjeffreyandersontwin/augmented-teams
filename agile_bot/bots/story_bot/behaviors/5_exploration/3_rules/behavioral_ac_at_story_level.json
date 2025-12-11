@@ -51,5 +51,6 @@
         "content": "acceptance_criteria: [\"WHEN Game Master selects tokens\", \"THEN system highlights selected tokens\", \"AND selected tokens are stored in temporary selection state\"] (WRONG - should be one string)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.behavioral_ac_scanner.BehavioralACScanner"
 }

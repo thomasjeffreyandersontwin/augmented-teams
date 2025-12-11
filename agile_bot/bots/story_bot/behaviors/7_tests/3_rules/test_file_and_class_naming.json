@@ -375,6 +375,6 @@
       "        # Test implementation",
       "        pass"
     ]
-  }
+  },
+  "scanner": "agile_bot.bots.base_bot.src.scanners.test_file_naming_scanner.TestFileNamingScanner"
 }
-

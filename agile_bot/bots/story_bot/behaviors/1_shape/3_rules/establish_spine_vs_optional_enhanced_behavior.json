@@ -1,5 +1,6 @@
 {
   "description": "Establish mandatory spine stories vs optional/enhanced behavior stories. When mapping stories, carefully distinguish between sequential spine (essential path) and optional paths, alternate routes, or additional functionality that is not strictly essential. Mandatory stories form the sequential spine (story AND story AND story). Optional stories are alternatives or enhancements (story OR story) that branch from the spine and can return to it. Sequential stories form the mandatory flow; optional stories are alternatives, enhancements, or non-essential sub-epics.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.spine_optional_scanner.SpineOptionalScanner",
   "examples": [
     {
       "do": {

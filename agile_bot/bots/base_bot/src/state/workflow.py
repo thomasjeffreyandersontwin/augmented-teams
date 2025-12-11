@@ -251,6 +251,98 @@ class Workflow:
     def is_terminal_action(self, action_name: str) -> bool:
         return action_name == 'validate_rules'
     
+    def navigate_to_action(self, target_action: str, out_of_order: bool = False):
+        """
+        Navigate to a specific action, handling out-of-order navigation if needed.
+        
+        This is the authoritative method for workflow state management.
+        When navigating out of order, removes completed actions that come after
+        the target action in the sequence.
+        
+        Args:
+            target_action: Action name to navigate to (e.g., 'build_knowledge')
+            out_of_order: Whether this is out-of-order navigation (default: False)
+            
+        Raises:
+            ValueError: If target_action is not a valid state
+        """
+        # Validate action exists
+        if target_action not in self.states:
+            raise ValueError(f"Action '{target_action}' is not a valid state. Valid states: {self.states}")
+        
+        # If out-of-order, remove completed actions that come after target
+        if out_of_order:
+            self._remove_completed_actions_after_target(target_action)
+        
+        # Set state machine to target action
+        self.machine.set_state(target_action)
+        
+        # Update workflow state file
+        self.save_state()
+    
+    def _remove_completed_actions_after_target(self, target_action: str):
+        """
+        Remove all completed actions that come after the target action in the sequence.
+        
+        When navigating out of order to a specific action, we need to remove all
+        completed actions that come after it, so the workflow state correctly reflects
+        that we're going back to an earlier action.
+        
+        Args:
+            target_action: The action we're navigating to (e.g., 'build_knowledge')
+        """
+        if not self.file.exists():
+            return
+        
+        try:
+            state_data = json.loads(self.file.read_text(encoding='utf-8'))
+            completed_actions = state_data.get('completed_actions', [])
+            
+            if not completed_actions:
+                return
+            
+            # Find the index of the target action
+            target_index = self.states.index(target_action)
+            
+            # Filter out completed actions that:
+            # 1. Belong to this behavior AND
+            # 2. Come after the target action in the sequence
+            behavior_prefix = f'{self.bot_name}.{self.behavior}.'
+            filtered_completed = []
+            
+            for action_entry in completed_actions:
+                action_state = action_entry.get('action_state', '')
+                
+                # Keep actions from other behaviors
+                if not action_state.startswith(behavior_prefix):
+                    filtered_completed.append(action_entry)
+                    continue
+                
+                # Extract action name from full state (e.g., 'bot.behavior.action' -> 'action')
+                action_name = action_state.split('.')[-1]
+                
+                # Keep this action if it's before or equal to target action in sequence
+                if action_name in self.states:
+                    action_index = self.states.index(action_name)
+                    if action_index <= target_index:
+                        filtered_completed.append(action_entry)
+                else:
+                    # Action not in states - keep it (might be from different workflow version)
+                    filtered_completed.append(action_entry)
+            
+            # Update state with filtered completed actions
+            state_data['completed_actions'] = filtered_completed
+            
+            # Update current_action to point to target action
+            state_data['current_behavior'] = f'{self.bot_name}.{self.behavior}'
+            state_data['current_action'] = f'{self.bot_name}.{self.behavior}.{target_action}'
+            
+            # Write updated state
+            self.file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+            
+        except Exception as e:
+            logger.warning(f'Failed to remove completed actions after target {target_action}: {e}', exc_info=True)
+    
     @staticmethod
     def is_behavior_complete(behavior: str, workflow_state_file: Path) -> bool:
         if not workflow_state_file.exists():

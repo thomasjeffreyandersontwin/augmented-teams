@@ -11,6 +11,6 @@
         "content": "docs/stories/🎯 Epic Name/ (wrong level) OR docs/stories/Epic Name/ (missing emoji)"
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.increment_folder_structure_scanner.IncrementFolderStructureScanner"
 }
-

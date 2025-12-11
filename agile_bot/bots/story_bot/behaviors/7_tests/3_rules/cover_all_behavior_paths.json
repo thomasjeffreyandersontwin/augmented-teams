@@ -187,7 +187,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.cover_all_paths_scanner.CoverAllPathsScanner"
 }
-
-

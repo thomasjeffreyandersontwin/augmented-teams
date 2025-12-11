@@ -50,6 +50,6 @@
         ]
       }
     }
-  ]
+  ],
+  "scanner": "agile_bot.bots.base_bot.src.scanners.scenario_specific_given_scanner.ScenarioSpecificGivenScanner"
 }
-

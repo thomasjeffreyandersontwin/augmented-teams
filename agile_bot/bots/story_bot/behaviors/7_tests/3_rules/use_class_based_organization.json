@@ -1,5 +1,6 @@
 {
   "description": "Use class-based organization with pytest orchestrator pattern. Test classes match story names exactly (Test<ExactStoryName>), test methods match scenario names exactly (test_<scenario_name_snake_case>). Helper functions/fixtures provide reusable operations. Keep tests under 20 lines, helpers under 20 lines, classes under 300 lines.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner",
   "rationale": [
     "Class-based organization groups related scenarios by story, making it easy to find all tests for a specific story",
     "Test classes named after stories provide 1-to-1 traceability with story map",

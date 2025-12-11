@@ -70,3 +70,10 @@ And Catalog size is "<catalog_size>"
 | (no rule directories exist or all empty) | N/A | 0 scanners | N/A - no rule files | N/A - no metadata | none | Empty catalog | 0 scanners registered |
 | agile_bot/bots/test_story_bot/rules/ (7 rule files)<br>agile_bot/bots/test_story_bot/behaviors/1_shape/3_rules/ (25 rule files, some with missing scanner classes) | Common rules: Multiple rule files with scanner properties<br>Shape rules: Some rule files reference scanner classes that don't exist | Scanners from common behavior + partial from shape behavior | Common scanners: All found<br>Shape scanners: Some not found (scanner class not found errors) | Metadata extracted for common scanners, errors logged for shape scanners | all | Partial catalog: common scanners registered, shape scanners excluded | Failed scanners excluded, errors logged, common behavior still registered |
 
+
+
+
+
+
+
+

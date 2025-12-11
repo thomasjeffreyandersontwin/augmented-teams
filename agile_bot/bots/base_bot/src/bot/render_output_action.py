@@ -212,14 +212,14 @@ class RenderOutputAction(BaseAction):
         """Merge base instructions with render instructions and configs."""
         base_instructions_list = base_instructions.get('instructions', []).copy()
         
-        # Add project path information to instructions
-        project_path = self.working_dir
-        if project_path and project_path != self.bot_directory:
-            project_info = f"\n**PROJECT PATH: {project_path}**\nAll render outputs must be written to paths relative to this project path, NOT to the bot's own directories."
-            base_instructions_list.insert(0, project_info)
+        # Add workspace path information to instructions
+        workspace_path = self.working_dir
+        if workspace_path and workspace_path != self.bot_directory:
+            workspace_info = f"\n**WORKSPACE PATH: {workspace_path}**\nAll render outputs must be written to paths relative to this workspace path, NOT to the bot's own directories."
+            base_instructions_list.insert(0, workspace_info)
         
-        synchronizer_instructions = self._generate_synchronizer_instructions(render_configs)
-        base_instructions_list.extend(synchronizer_instructions)
+        # Inject render_instructions and render_configs template variables
+        self._inject_render_instructions(base_instructions_list, render_instructions, render_configs)
         
         merged = {
             'action': 'render_output',
@@ -233,40 +233,93 @@ class RenderOutputAction(BaseAction):
         if render_configs:
             merged['render_configs'] = render_configs
         
-        if project_path and project_path != self.bot_directory:
-            merged['project_path'] = str(project_path)
+        if workspace_path and workspace_path != self.bot_directory:
+            merged['workspace_path'] = str(workspace_path)
         
         return merged
     
-    def _generate_synchronizer_instructions(self, render_configs: List[Dict[str, Any]]) -> List[str]:
-        """Generate execution instructions for synchronizer-based render configs."""
-        instructions = []
-        project_path = self.working_dir
+    def _inject_render_instructions(self, instructions_list: List[str], render_instructions: Optional[Dict[str, Any]], render_configs: List[Dict[str, Any]]) -> None:
+        """Inject render_instructions and render_configs template variables into instructions."""
+        render_instructions_text = ''
+        if render_instructions:
+            render_instructions_text = '\n'.join(render_instructions.get('instructions', []))
         
-        for render_config in render_configs:
+        # Format render configs for injection
+        render_configs_text = self._format_render_configs(render_configs)
+        
+        # Replace template variables
+        new_instructions = []
+        for line in instructions_list:
+            if '{{render_instructions}}' in line:
+                if render_instructions_text:
+                    # Split instructions into lines and insert them
+                    instructions_lines = render_instructions_text.split('\n')
+                    new_instructions.extend(instructions_lines)
+                else:
+                    new_instructions.append(line.replace('{{render_instructions}}', 'Follow behavior-specific render instructions'))
+            elif '{{render_configs}}' in line:
+                if render_configs_text:
+                    # Split configs into lines and insert them
+                    configs_lines = render_configs_text.split('\n')
+                    new_instructions.extend(configs_lines)
+                else:
+                    new_instructions.append(line.replace('{{render_configs}}', 'No render configurations found'))
+            else:
+                new_instructions.append(line)
+        
+        instructions_list[:] = new_instructions
+    
+    def _format_render_configs(self, render_configs: List[Dict[str, Any]]) -> str:
+        """Format render configs into readable text for injection."""
+        if not render_configs:
+            return "No render configurations found."
+        
+        formatted_parts = []
+        formatted_parts.append("**Render Configurations:**")
+        formatted_parts.append("")
+        
+        for i, render_config in enumerate(render_configs, 1):
             config = render_config.get('config', {})
-            if 'synchronizer' not in config:
-                continue
+            config_name = config.get('name', f'config_{i}')
+            config_file = render_config.get('file', 'unknown')
             
-            synchronizer_class = config['synchronizer']
-            renderer_command = config.get('renderer_command', 'render')
-            input_relative = config.get('input', '')
-            output_relative = config.get('output', '')
-            path_relative = config.get('path', 'docs/stories')
+            formatted_parts.append(f"{i}. **{config_name}** ({config_file})")
             
-            # Resolve paths relative to project
-            input_path = project_path / path_relative / input_relative if input_relative else None
-            output_path = project_path / path_relative / output_relative if output_relative else None
+            # Always show instructions first (if present)
+            if 'instructions' in config:
+                instructions = config.get('instructions', '')
+                if isinstance(instructions, str):
+                    formatted_parts.append(f"   - Instructions: {instructions}")
+                elif isinstance(instructions, list):
+                    formatted_parts.append(f"   - Instructions:")
+                    for inst in instructions:
+                        formatted_parts.append(f"     * {inst}")
             
-            if input_path and output_path:
-                instruction = (
-                    f"Instantiate synchronizer class {synchronizer_class} and "
-                    f"call render method with renderer_command='{renderer_command}', "
-                    f"input_path={input_path}, and output_path={output_path}"
-                )
-                instructions.append(instruction)
+            # Show execution method fields
+            if 'synchronizer' in config:
+                synchronizer = config.get('synchronizer', 'N/A')
+                formatted_parts.append(f"   - Synchronizer: {synchronizer}")
+                if 'renderer_command' in config:
+                    renderer_cmd = config.get('renderer_command', 'N/A')
+                    formatted_parts.append(f"   - Renderer Command: {renderer_cmd}")
+            elif 'template' in config:
+                template = config.get('template', 'N/A')
+                formatted_parts.append(f"   - Template: {template}")
+            
+            # Show input and output fields
+            if 'input' in config:
+                formatted_parts.append(f"   - Input: {config.get('input', 'N/A')}")
+            if 'output' in config:
+                formatted_parts.append(f"   - Output: {config.get('output', 'N/A')}")
+            
+            # Show path if present
+            if 'path' in config:
+                formatted_parts.append(f"   - Path: {config.get('path', 'N/A')}")
+            
+            formatted_parts.append("")
         
-        return instructions
+        return '\n'.join(formatted_parts)
+    
     
     def inject_next_action_instructions(self):
         return "Proceed to validate_rules action"

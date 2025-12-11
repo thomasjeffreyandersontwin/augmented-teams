@@ -1,5 +1,6 @@
 {
   "description": "Use Outcome Verbs, Not Communication Verbs",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.communication_verb_scanner.CommunicationVerbScanner",
   "examples": [
     {
       "do": {

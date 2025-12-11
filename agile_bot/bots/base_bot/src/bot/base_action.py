@@ -43,11 +43,22 @@ class BaseAction:
     def base_actions_dir(self) -> Path:
         """Get base actions directory.
         
-        Returns path to base_bot's base_actions folder.
+        Returns path to base_actions folder, checking bot_directory first,
+        then falling back to base_bot's base_actions folder.
+        
+        For tests: Always create base_actions in bot_directory to ensure isolation.
+        For production: Falls back to shared base_bot/base_actions if bot doesn't have its own.
         """
-        # Use centralized repository root
+        # Try to find base_actions in bot directory first (for test bots and custom bots)
+        bot_base_actions_dir = self.bot_directory / 'base_actions'
+        if bot_base_actions_dir.exists():
+            return bot_base_actions_dir
+        
+        # Fallback to base_bot if bot doesn't have its own base_actions (production use)
+        # get_python_workspace_root() already returns the agile_bot directory,
+        # so we don't need to add 'agile_bot' again
         repo_root = get_python_workspace_root()
-        return repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+        return repo_root / 'bots' / 'base_bot' / 'base_actions'
     
 
     @property

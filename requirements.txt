@@ -21,7 +21,8 @@ tinydb==4.8.0
 psutil==5.9.8
 
 # Natural Language Processing (for scanners)
-spacy>=3.7.0
+# NLTK requires downloading data: python -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')"
+nltk>=3.9.0
 
 
 

@@ -1,5 +1,6 @@
 {
   "description": "CRITICAL: Given statements describe STATE/CONFIGURATION, never actions or events. The first action in a scenario is ALWAYS a When, never a Given. Given sets up preconditions, When triggers the behavior being tested.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner",
   "examples": [
     {
       "do": {

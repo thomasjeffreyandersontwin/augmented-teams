@@ -1,5 +1,6 @@
 {
   "description": "Given statements must use state-oriented language (not action-oriented). Given describes STATE, not actions.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner",
   "examples": [
     {
       "do": {

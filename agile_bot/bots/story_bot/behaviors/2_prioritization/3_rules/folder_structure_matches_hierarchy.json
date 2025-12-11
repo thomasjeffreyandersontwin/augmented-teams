@@ -1,5 +1,6 @@
 {
   "description": "Folder structure must exactly match story map hierarchy. Epic/feature folders created inside docs/stories/ directory.",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.increment_folder_structure_scanner.IncrementFolderStructureScanner",
   "examples": [
     {
       "do": {

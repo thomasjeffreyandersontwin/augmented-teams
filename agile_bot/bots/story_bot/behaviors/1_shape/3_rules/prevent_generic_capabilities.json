@@ -1,5 +1,6 @@
 {
   "description": "CRITICAL: Stories must describe specific actions with actors, not generic capabilities. Reject stories that describe what system IS (capabilities) vs what system DOES (behaviors).",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.generic_capability_scanner.GenericCapabilityScanner",
   "examples": [
     {
       "do": {

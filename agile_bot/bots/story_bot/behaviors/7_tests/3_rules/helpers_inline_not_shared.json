@@ -11,6 +11,6 @@
   "validation": {
     "check": "No imports from test_helpers.py or separate helper modules",
     "error_message": "Helpers must be inline in test file, not imported from separate test_helpers.py"
-  }
+  },
+  "scanner": "agile_bot.bots.base_bot.src.scanners.inline_helpers_scanner.InlineHelpersScanner"
 }
-

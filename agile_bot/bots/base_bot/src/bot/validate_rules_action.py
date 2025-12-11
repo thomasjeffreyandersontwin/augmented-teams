@@ -120,20 +120,66 @@ class ValidateRulesAction(BaseAction):
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute validate_rules action logic."""
-        rules_data = self.inject_behavior_specific_and_bot_rules()
-        action_instructions = rules_data.get('action_instructions', [])
-        validation_rules = rules_data.get('validation_rules', [])
+        # Identify content to validate
+        content_info = self._identify_content_to_validate()
         
-        # Format instructions properly - action_instructions are primary, rules are context
-        instructions = {
-            'action': 'validate_rules',
-            'behavior': self.behavior,
-            'base_instructions': action_instructions,  # Primary instructions from instructions.json
-            'validation_rules': validation_rules,  # Rules to validate against (supporting context)
-            'content_to_validate': self._identify_content_to_validate()
-        }
+        # Load story graph to run scanners
+        story_graph = None
+        for output in content_info.get('rendered_outputs', []):
+            if 'story-graph.json' in output:
+                story_graph_path = Path(output)
+                if story_graph_path.exists():
+                    try:
+                        story_graph = read_json_file(story_graph_path)
+                        break
+                    except Exception as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f"Failed to load story graph from {story_graph_path}: {e}")
         
-        return {'instructions': instructions}
+        # Run scanners if story graph is available
+        if story_graph:
+            # This method runs scanners and returns instructions with scanner results
+            result = self.injectValidationInstructions(story_graph)
+            
+            # Write validation report with scanner results
+            report_path = content_info.get('report_path')
+            if report_path:
+                try:
+                    instructions = result.get('instructions', {})
+                    validation_rules = instructions.get('validation_rules', [])
+                    self._write_validation_report(report_path, instructions, validation_rules, content_info)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to write validation report to {report_path}: {e}", exc_info=True)
+            
+            return result
+        else:
+            # Fallback: return instructions without scanner results (no story graph available)
+            rules_data = self.inject_behavior_specific_and_bot_rules()
+            action_instructions = rules_data.get('action_instructions', [])
+            validation_rules = rules_data.get('validation_rules', [])
+            
+            instructions = {
+                'action': 'validate_rules',
+                'behavior': self.behavior,
+                'base_instructions': action_instructions,
+                'validation_rules': validation_rules,
+                'content_to_validate': content_info
+            }
+            
+            # Write validation report
+            report_path = content_info.get('report_path')
+            if report_path:
+                try:
+                    self._write_validation_report(report_path, instructions, validation_rules, content_info)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to write validation report to {report_path}: {e}", exc_info=True)
+            
+            return {'instructions': instructions}
     
     def inject_common_bot_rules(self) -> Dict[str, Any]:
         """Load common bot-level rules from base_bot/rules/ directory."""
@@ -160,7 +206,7 @@ class ValidateRulesAction(BaseAction):
         # Find the validate_rules action folder (may have number prefix)
         action_folder = None
         if base_actions_path.exists():
-            # Use glob pattern to find action folder (handles numbered prefixes like '7_validate_rules')
+            # Use glob pattern to find action folder (handles numbered prefixes like '5_validate_rules')
             matching_folders = list(base_actions_path.glob('*validate_rules'))
             if matching_folders:
                 action_folder = matching_folders[0]  # Take first match
@@ -482,6 +528,128 @@ class ValidateRulesAction(BaseAction):
         }
         
         return {'instructions': instructions}
+    
+    def _write_validation_report(self, report_path: str, instructions: Dict[str, Any], validation_rules: List[Dict[str, Any]], content_info: Dict[str, Any]) -> None:
+        """Write validation report to file.
+        
+        Args:
+            report_path: Path where report should be written
+            instructions: Instructions structure with base_instructions and validation_rules
+            validation_rules: List of validation rules
+            content_info: Content information including project location, rendered outputs, etc.
+        """
+        from datetime import datetime
+        
+        report_file = Path(report_path)
+        report_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Generate report content
+        lines = []
+        lines.append(f"# Validation Report - {self.behavior.replace('_', ' ').title()}")
+        lines.append("")
+        lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"**Project:** {Path(content_info.get('project_location', '')).name}")
+        lines.append(f"**Behavior:** {self.behavior}")
+        lines.append(f"**Action:** validate_rules")
+        lines.append("")
+        lines.append("## Summary")
+        lines.append("")
+        
+        # Count rules
+        total_rules = len(validation_rules)
+        lines.append(f"Validated story map and domain model against **{total_rules} validation rules**.")
+        lines.append("")
+        
+        # List content validated
+        lines.append("## Content Validated")
+        lines.append("")
+        if content_info.get('clarification_file'):
+            lines.append(f"- **Clarification:** `{Path(content_info['clarification_file']).name}`")
+        if content_info.get('planning_file'):
+            lines.append(f"- **Planning:** `{Path(content_info['planning_file']).name}`")
+        if content_info.get('rendered_outputs'):
+            lines.append("- **Rendered Outputs:**")
+            for output in content_info['rendered_outputs']:
+                lines.append(f"  - `{Path(output).name}`")
+        lines.append("")
+        
+        # List validation rules checked
+        lines.append("## Validation Rules Checked")
+        lines.append("")
+        for rule_dict in validation_rules[:20]:  # Show first 20 rules
+            rule_file = rule_dict.get('rule_file', 'unknown')
+            rule_content = rule_dict.get('rule_content', rule_dict)
+            description = rule_content.get('description', 'No description')
+            rule_name = Path(rule_file).stem if rule_file else 'unknown'
+            lines.append(f"### Rule: {rule_name.replace('_', ' ').title()}")
+            lines.append(f"**Description:** {description}")
+            lines.append("")
+        
+        if total_rules > 20:
+            lines.append(f"*... and {total_rules - 20} more rules*")
+            lines.append("")
+        
+        # Violations summary
+        lines.append("## Violations Found")
+        lines.append("")
+        
+        total_violations = 0
+        violations_by_rule = {}
+        
+        for rule_dict in validation_rules:
+            rule_file = rule_dict.get('rule_file', 'unknown')
+            scanner_results = rule_dict.get('scanner_results', {})
+            violations = scanner_results.get('violations', [])
+            
+            if violations:
+                rule_name = Path(rule_file).stem if rule_file else 'unknown'
+                violations_by_rule[rule_name] = violations
+                total_violations += len(violations)
+        
+        if total_violations == 0:
+            lines.append("✅ **No violations found.** All rules passed validation.")
+            lines.append("")
+        else:
+            lines.append(f"**Total Violations:** {total_violations}")
+            lines.append("")
+            
+            # Group violations by rule
+            for rule_name, violations in violations_by_rule.items():
+                lines.append(f"### {rule_name.replace('_', ' ').title()}: {len(violations)} violation(s)")
+                lines.append("")
+                
+                # Show all violations (no truncation)
+                for violation in violations:
+                    location = violation.get('location', 'unknown')
+                    message = violation.get('violation_message', 'No message')
+                    severity = violation.get('severity', 'error')
+                    severity_icon = '🔴' if severity == 'error' else '🟡' if severity == 'warning' else '🔵'
+                    lines.append(f"- {severity_icon} **{severity.upper()}** - `{location}`: {message}")
+                
+                lines.append("")
+        
+        # Instructions summary
+        lines.append("## Validation Instructions")
+        lines.append("")
+        base_instructions = instructions.get('base_instructions', [])
+        if base_instructions:
+            lines.append("The following validation steps were performed:")
+            lines.append("")
+            for i, instruction in enumerate(base_instructions[:10], 1):  # Show first 10 instructions
+                lines.append(f"{i}. {instruction}")
+            if len(base_instructions) > 10:
+                lines.append(f"*... and {len(base_instructions) - 10} more instructions*")
+        lines.append("")
+        
+        # Report path reminder
+        lines.append("## Report Location")
+        lines.append("")
+        lines.append(f"This report was automatically generated and saved to:")
+        lines.append(f"`{report_path}`")
+        lines.append("")
+        
+        # Write file
+        report_file.write_text('\n'.join(lines), encoding='utf-8')
     
     def generate_report(self, report_format: str = 'JSON', violations: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Generate violation report in specified format.

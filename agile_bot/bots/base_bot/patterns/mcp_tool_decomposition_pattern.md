@@ -535,7 +535,6 @@ def load_state(self):
 **For a bot with:**
 - 8 behaviors
 - 7 workflow actions per behavior
-- 1 independent action (correct_bot)
 
 **Total tools:**
 - 1 bot tool
