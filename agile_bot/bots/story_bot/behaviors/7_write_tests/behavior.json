@@ -1,13 +1,16 @@
 {
   "behaviorName": "specification_tests",
-  "description": "Generate executable test code from scenarios/examples",
-  "goal": "Create automated tests that validate story behavior",
+  "description": "Write test files (.py, .js, etc.) with executable test code from scenarios/examples",
+  "goal": "Write automated test files that validate story behavior",
   "inputs": "Scenarios from specification_scenarios or examples from specification_examples",
   "outputs": "Test files (.py, .js, etc.) with executable test code",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "instructions": [
+    "**BEHAVIOR PURPOSE:**",
+    "This behavior WRITES TEST FILES. The primary output is executable test code files that validate story behavior.",
+    "",
     "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
-     "Perform each instruction action as specified in base_actions, tweaked for the specification_tests behavior.",
+    "Perform each instruction action as specified in base_actions, tweaked for writing test files.",
     "",
     "**CRITICAL RULE - TESTS MUST MATCH STORY GRAPH EXACTLY:**",
     "",
@@ -88,8 +91,8 @@
         "order": 3,
         "next_action": "render_output",
         "instructions": [
-          "Follow agile_bot/bots/base_bot/base_actions/3_build_knowledge/instructions.json, specification_tests: build test implementations AND refine domain model based on test implementation details",
-          "Refine domain model concepts, relationships, and responsibilities based on test implementation patterns and requirements"
+          "Follow agile_bot/bots/base_bot/base_actions/3_build_knowledge/instructions.json, specification_tests: build test file implementations AND refine domain model based on test file implementation details",
+          "Refine domain model concepts, relationships, and responsibilities based on test file implementation patterns and requirements"
         ]
       },
       {
@@ -97,8 +100,8 @@
         "order": 4,
         "next_action": "validate_rules",
         "instructions": [
-          "Follow agile_bot/bots/base_bot/base_actions/5_render_output/instructions.json, specification_tests: render test code files",
-          "After rendering test files, update story-graph.json with test_file, test_class, and test_method mappings"
+          "Follow agile_bot/bots/base_bot/base_actions/5_render_output/instructions.json, specification_tests: write test files (.py, .js, etc.) with executable test code",
+          "After writing test files, update story-graph.json with test_file, test_class, and test_method mappings"
         ]
       },
       {
@@ -113,36 +116,27 @@
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to specification tests/test code generation behavior",
+    "description": "Behavior-level trigger words - specific to writing test files behavior",
     "patterns": [
+      "write.*test.*files",
+      "write.*test.*code",
+      "write.*pytest.*tests",
+      "write.*test.*cases",
       "generate.*test.*code",
       "create.*test.*file",
-      "write.*pytest.*tests",
       "implement.*step.*definitions",
       "generate.*acceptance.*tests",
       "create.*bdd.*tests",
-      "write.*test.*code",
       "generate.*test.*implementation",
       "create.*test.*cases",
       "implement.*feature.*tests",
       "specification.*tests",
       "test.*code.*generation",
-      "bdd.*test.*code"
+      "bdd.*test.*code",
+      "write.*tests"
     ],
     "priority": 14
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
