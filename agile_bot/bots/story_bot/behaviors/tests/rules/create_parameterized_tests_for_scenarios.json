@@ -1,6 +1,6 @@
 {
   "description": "If scenarios have tests in stories (Examples tables with multiple test cases), then create parameterized tests using @pytest.mark.parametrize. Each row in the Examples table becomes a test case. Don't write single test methods that only test one example - iterate over all examples from the scenario file.",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.parameterized_tests_scanner.ParameterizedTestsScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.parameterized_tests_scanner.ParameterizedTestsScanner",
   "examples": [
     {
       "do": {

@@ -1,6 +1,6 @@
 {
   "description": "Test structure must match story graph exactly: file names match sub-epics (test_<sub_epic_name>.py), class names match stories exactly (Test<ExactStoryName>), method names match scenarios exactly (test_<scenario_name_snake_case>). Test classes appear in same order as stories in story map. Use pytest orchestrator pattern with helper functions/fixtures. Keep tests under 20 lines, helpers under 20 lines, classes under 300 lines.",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner",
   "rationale": [
     "Test files organized by sub-epic keep related stories together",
     "One file per sub-epic prevents excessive file proliferation",

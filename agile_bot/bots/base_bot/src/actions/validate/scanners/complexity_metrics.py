@@ -1,6 +1,6 @@
 """Shared complexity metrics calculations for scanners."""
 
-from typing import Dict, List, Set, Optional
+from typing import Any, Dict, List, Set, Optional
 import ast
 
 
@@ -92,38 +92,102 @@ class ComplexityMetrics:
     def detect_responsibilities(func_node: ast.FunctionDef) -> List[str]:
         """Detect multiple responsibilities in function implementation.
         
-        Returns list of responsibility types found:
-        - 'I/O': File/network operations
-        - 'Validation': Validation/checking logic
-        - 'Transformation': Data transformation
-        - 'Computation': Calculations
-        - 'StateManagement': State changes
+        Returns list of responsibility types found (for backwards compatibility).
+        Use detect_responsibilities_with_examples for detailed output.
         """
-        responsibilities = set()
+        detailed = ComplexityMetrics.detect_responsibilities_with_examples(func_node)
+        return sorted(list(detailed.keys()))
+    
+    @staticmethod
+    def detect_responsibilities_with_examples(func_node: ast.FunctionDef) -> Dict[str, List[Dict[str, Any]]]:
+        """Detect multiple responsibilities with code examples.
+        
+        Returns dict mapping responsibility type to list of examples:
+        {
+            'I/O': [{'line': 26, 'code': 'read_json_file(path)'}],
+            'Transformation': [{'line': 19, 'code': 'result = process(data)'}],
+            ...
+        }
+        """
+        responsibilities: Dict[str, List[Dict[str, Any]]] = {}
+        
+        def add_example(resp_type: str, node: ast.AST):
+            if resp_type not in responsibilities:
+                responsibilities[resp_type] = []
+            # Only keep first 2 examples per type to avoid verbose output
+            if len(responsibilities[resp_type]) < 2:
+                line = getattr(node, 'lineno', None)
+                try:
+                    code = ast.unparse(node) if hasattr(ast, 'unparse') else str(node)
+                    # Truncate long code
+                    if len(code) > 80:
+                        code = code[:77] + '...'
+                except:
+                    code = '<code unavailable>'
+                responsibilities[resp_type].append({'line': line, 'code': code})
         
         for node in ast.walk(func_node):
-            # I/O operations
+            # I/O operations - must be actual file/network operations, not dict methods
             if isinstance(node, ast.Call):
                 func_name = ComplexityMetrics._get_call_name(node)
-                if func_name:
-                    io_keywords = ['open', 'read', 'write', 'load', 'save', 'fetch', 'request', 'post', 'get']
-                    if any(keyword in func_name.lower() for keyword in io_keywords):
-                        responsibilities.add('I/O')
+                if func_name and ComplexityMetrics._is_io_operation(func_name, node):
+                    add_example('I/O', node)
             
             # Validation (assertions, checks, validations)
             if isinstance(node, ast.Assert):
-                responsibilities.add('Validation')
+                add_example('Validation', node)
             
-            # Transformation (assignments with operations)
+            # Transformation (assignments with meaningful operations, not simple accessors)
             if isinstance(node, ast.Assign):
                 if ComplexityMetrics._has_transformation(node):
-                    responsibilities.add('Transformation')
+                    add_example('Transformation', node)
             
-            # Computation (math operations)
-            if isinstance(node, (ast.BinOp, ast.UnaryOp)):
-                responsibilities.add('Computation')
+            # Computation (math operations - but not simple comparisons or string ops)
+            if isinstance(node, ast.BinOp):
+                # Only count actual math, not string concatenation or list operations
+                if isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.FloorDiv)):
+                    add_example('Computation', node)
         
-        return sorted(list(responsibilities))
+        return responsibilities
+    
+    @staticmethod
+    def _is_io_operation(func_name: str, call_node: ast.Call) -> bool:
+        """Check if function call is an actual I/O operation, not a dict/list method.
+        
+        Excludes common non-I/O methods like dict.get(), list.append(), etc.
+        """
+        func_name_lower = func_name.lower()
+        
+        # Exclude common collection accessor methods (these are NOT I/O)
+        non_io_methods = {
+            'get', 'items', 'keys', 'values', 'pop', 'update', 'setdefault',
+            'append', 'extend', 'insert', 'remove', 'clear', 'copy',
+            'add', 'discard', 'union', 'intersection',
+            'getattr', 'setattr', 'hasattr', 'isinstance', 'issubclass',
+            'len', 'str', 'int', 'float', 'bool', 'list', 'dict', 'set', 'tuple',
+            'format', 'join', 'split', 'strip', 'replace', 'lower', 'upper',
+            'startswith', 'endswith', 'find', 'index', 'count'
+        }
+        if func_name_lower in non_io_methods:
+            return False
+        
+        # These are actual I/O keywords
+        io_keywords = ['open', 'read_file', 'write_file', 'load_json', 'save_json',
+                       'read_text', 'write_text', 'read_bytes', 'write_bytes',
+                       'fetch', 'request', 'post', 'download', 'upload',
+                       'read_json', 'read_yaml', 'read_csv']
+        
+        # Check for exact matches or contains (for composite names like read_json_file)
+        if func_name_lower in io_keywords:
+            return True
+        if any(keyword in func_name_lower for keyword in ['read_', 'write_', 'load_', 'save_', 'fetch_']):
+            return True
+        
+        # 'open' is I/O only if it's the builtin
+        if func_name_lower == 'open':
+            return True
+        
+        return False
     
     @staticmethod
     def _get_call_name(call_node: ast.Call) -> Optional[str]:
@@ -136,17 +200,40 @@ class ComplexityMetrics:
     
     @staticmethod
     def _has_transformation(assign_node: ast.Assign) -> bool:
-        """Check if assignment involves transformation."""
+        """Check if assignment involves meaningful transformation.
+        
+        Excludes simple type conversions and accessors like list(), str(), dict.get()
+        """
         if not assign_node.value:
             return False
         
-        # Check for function calls (likely transformations)
+        # Check for function calls - but exclude simple utility functions
         if isinstance(assign_node.value, ast.Call):
+            func_name = ComplexityMetrics._get_call_name(assign_node.value)
+            if func_name:
+                # Simple utilities are NOT transformations
+                simple_utilities = {
+                    'list', 'dict', 'set', 'tuple', 'str', 'int', 'float', 'bool',
+                    'len', 'sorted', 'reversed', 'enumerate', 'zip', 'range',
+                    'get', 'items', 'keys', 'values', 'copy', 'pop',
+                    'strip', 'lower', 'upper', 'split', 'join', 'replace',
+                    'startswith', 'endswith', 'format',
+                    'append', 'extend', 'insert', 'remove', 'clear',
+                    'add', 'discard', 'update',
+                    'glob', 'exists', 'is_file', 'is_dir',
+                    'relative_to', 'parent', 'name', 'stem', 'suffix'
+                }
+                if func_name.lower() in simple_utilities:
+                    return False
+            # Other function calls are transformations
             return True
         
-        # Check for operations
-        if isinstance(assign_node.value, (ast.BinOp, ast.UnaryOp, ast.ListComp, ast.DictComp)):
+        # List/dict comprehensions are transformations
+        if isinstance(assign_node.value, (ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp)):
             return True
+        
+        # BinOp/UnaryOp - only count if it's actual transformation, not simple concatenation
+        # (We handle this separately in detect_responsibilities for Computation)
         
         return False
     
@@ -156,15 +243,26 @@ class ComplexityMetrics:
         
         LCOM measures how related methods are. Lower is better (more cohesive).
         Returns value between 0 and 1, where 0 = perfect cohesion.
+        
+        Improvements over naive LCOM:
+        - Excludes simple property getters (just return self._x)
+        - Follows delegation chains (self.x.y counts as accessing x)
+        - Normalizes attribute names (self._x and self.x are same attribute)
         """
         methods = [node for node in class_node.body if isinstance(node, ast.FunctionDef)]
         
-        if len(methods) < 2:
+        # Filter out simple property getters - they're data accessors, not real methods
+        meaningful_methods = []
+        for method in methods:
+            if not ComplexityMetrics._is_simple_property_getter(method):
+                meaningful_methods.append(method)
+        
+        if len(meaningful_methods) < 2:
             return 0.0  # Single method or no methods = perfect cohesion
         
-        # Get attributes accessed by each method
+        # Get attributes accessed by each method (with delegation awareness)
         method_attributes = []
-        for method in methods:
+        for method in meaningful_methods:
             attrs = ComplexityMetrics._get_accessed_attributes(method, class_node)
             method_attributes.append(attrs)
         
@@ -185,8 +283,47 @@ class ComplexityMetrics:
         return non_shared_pairs / total_pairs
     
     @staticmethod
+    def _is_simple_property_getter(method_node: ast.FunctionDef) -> bool:
+        """Check if method is a simple property getter (just returns self._x or self.x).
+        
+        Simple getters are data accessors and shouldn't count toward LCOM.
+        Examples that return True:
+        - def x(self): return self._x
+        - @property def name(self): return self._name
+        """
+        # Must have exactly one statement (or docstring + return)
+        body = method_node.body
+        
+        # Skip docstring if present
+        if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, (ast.Str, ast.Constant)):
+            body = body[1:]
+        
+        # Must be exactly one return statement
+        if len(body) != 1:
+            return False
+        
+        stmt = body[0]
+        if not isinstance(stmt, ast.Return):
+            return False
+        
+        # Return value must be self.attr
+        if stmt.value is None:
+            return False
+        
+        if isinstance(stmt.value, ast.Attribute):
+            if isinstance(stmt.value.value, ast.Name) and stmt.value.value.id == 'self':
+                return True
+        
+        return False
+    
+    @staticmethod
     def _get_accessed_attributes(method_node: ast.FunctionDef, class_node: ast.ClassDef) -> Set[str]:
-        """Get set of class attributes accessed by method."""
+        """Get set of class attributes accessed by method.
+        
+        Improvements:
+        - Normalizes _attr and attr to same canonical name (strips leading _)
+        - Follows one level of delegation: self.x.y counts as accessing 'x'
+        """
         attributes = set()
         
         # Get class attribute names
@@ -200,40 +337,111 @@ class ComplexityMetrics:
         # Find attribute accesses in method
         for node in ast.walk(method_node):
             if isinstance(node, ast.Attribute):
+                # Direct self.attr access
                 if isinstance(node.value, ast.Name) and node.value.id == 'self':
-                    attributes.add(node.attr)
+                    attr_name = ComplexityMetrics._normalize_attr_name(node.attr)
+                    attributes.add(attr_name)
+                # Delegation: self.x.y - count as accessing 'x'
+                elif isinstance(node.value, ast.Attribute):
+                    if isinstance(node.value.value, ast.Name) and node.value.value.id == 'self':
+                        attr_name = ComplexityMetrics._normalize_attr_name(node.value.attr)
+                        attributes.add(attr_name)
             elif isinstance(node, ast.Name):
                 if node.id in class_attrs:
-                    attributes.add(node.id)
+                    attr_name = ComplexityMetrics._normalize_attr_name(node.id)
+                    attributes.add(attr_name)
         
         return attributes
     
     @staticmethod
+    def _normalize_attr_name(attr: str) -> str:
+        """Normalize attribute name by stripping leading underscore.
+        
+        This treats self._x and self.x as the same attribute for cohesion purposes.
+        """
+        if attr.startswith('_') and not attr.startswith('__'):
+            return attr[1:]
+        return attr
+    
+    @staticmethod
+    def _get_method_code_sample(method: ast.FunctionDef) -> str:
+        """Get a code sample from a method (first meaningful statement)."""
+        try:
+            if not hasattr(ast, 'unparse'):
+                return f'def {method.name}(...)'
+            
+            # Skip docstring if present
+            body = method.body
+            if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, (ast.Str, ast.Constant)):
+                body = body[1:]
+            
+            if body:
+                # Get first statement
+                first_stmt = body[0]
+                code = ast.unparse(first_stmt)
+                # Truncate if too long
+                if len(code) > 80:
+                    code = code[:77] + '...'
+                return code
+            
+            return f'def {method.name}(...)'
+        except:
+            return f'def {method.name}(...)'
+    
+    @staticmethod
     def detect_class_responsibilities(class_node: ast.ClassDef) -> List[str]:
-        """Detect multiple responsibilities in class by analyzing method groups."""
+        """Detect multiple responsibilities in class (for backwards compatibility)."""
+        detailed = ComplexityMetrics.detect_class_responsibilities_with_examples(class_node)
+        if len(detailed) > 3:
+            return list(detailed.keys())
+        return []
+    
+    @staticmethod
+    def detect_class_responsibilities_with_examples(class_node: ast.ClassDef) -> Dict[str, List[Dict[str, Any]]]:
+        """Detect multiple responsibilities in class with method examples.
+        
+        Returns dict mapping responsibility type to methods that exhibit it:
+        {
+            'I/O': [{'method': '_load_config', 'line': 21, 'code': 'read_json_file(path)'}],
+            ...
+        }
+        """
         methods = [node for node in class_node.body if isinstance(node, ast.FunctionDef)]
         
         if len(methods) == 0:
-            return []
+            return {}
         
-        # Group methods by responsibility type
-        responsibility_groups = {}
+        # Group methods by responsibility type with examples
+        responsibility_groups: Dict[str, List[Dict[str, Any]]] = {}
         
         for method in methods:
-            responsibilities = ComplexityMetrics.detect_responsibilities(method)
-            if not responsibilities:
-                responsibilities = ['General']
-            
-            for resp in responsibilities:
-                if resp not in responsibility_groups:
-                    responsibility_groups[resp] = []
-                responsibility_groups[resp].append(method.name)
+            responsibilities_detailed = ComplexityMetrics.detect_responsibilities_with_examples(method)
+            if not responsibilities_detailed:
+                # Method has no detected responsibility - classify as General
+                if 'General' not in responsibility_groups:
+                    responsibility_groups['General'] = []
+                if len(responsibility_groups['General']) < 2:
+                    # Get actual code from the method body (first non-docstring statement)
+                    code_sample = ComplexityMetrics._get_method_code_sample(method)
+                    responsibility_groups['General'].append({
+                        'method': method.name,
+                        'line': method.lineno,
+                        'code': code_sample
+                    })
+            else:
+                for resp_type, examples in responsibilities_detailed.items():
+                    if resp_type not in responsibility_groups:
+                        responsibility_groups[resp_type] = []
+                    # Add method name and first example
+                    if len(responsibility_groups[resp_type]) < 2 and examples:
+                        first_example = examples[0]
+                        responsibility_groups[resp_type].append({
+                            'method': method.name,
+                            'line': first_example.get('line'),
+                            'code': first_example.get('code', '')
+                        })
         
-        # If methods are spread across many responsibility types, class has multiple responsibilities
-        if len(responsibility_groups) > 3:
-            return list(responsibility_groups.keys())
-        
-        return []
+        return responsibility_groups
 
 
 

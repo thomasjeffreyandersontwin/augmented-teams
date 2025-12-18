@@ -32,7 +32,8 @@ class TestScanner(Scanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan files for violations.
         
@@ -44,12 +45,13 @@ class TestScanner(Scanner):
             rule_obj: Rule object reference
             test_files: List of test file paths to scan
             code_files: List of code file paths to scan (also scanned by TestScanner)
+            on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
             
         Returns:
             List of violation dictionaries from file scanning
         """
         # Use base Scanner.scan() which combines files and calls scan_file() for each
-        return super().scan(knowledge_graph, rule_obj, test_files, code_files)
+        return super().scan(knowledge_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
     
     def scan_file(
         self,

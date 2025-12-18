@@ -741,7 +741,8 @@ class BaseBotCli:
                 key = arg.lstrip('--')
                 file_list = []
                 i += 1
-                while i < len(unknown_args) and BaseBotCli._looks_like_file_path(unknown_args[i]):
+                # Collect paths that look like files OR directories
+                while i < len(unknown_args) and (BaseBotCli._looks_like_file_path(unknown_args[i]) or BaseBotCli._looks_like_directory_path(unknown_args[i])):
                     file_path = unknown_args[i].lstrip('@')
                     file_list.append(file_path)
                     i += 1
@@ -758,9 +759,26 @@ class BaseBotCli:
                 
             elif BaseBotCli._looks_like_file_path(arg):
                 file_path = arg.lstrip('@')
-                # If it looks like a directory path and we don't have src/test yet, treat as src
-                if BaseBotCli._looks_like_directory_path(arg) and 'src' not in params and 'test' not in params:
-                    params['src'] = file_path
+                # If it looks like a directory path, collect into src list (supports multiple directories)
+                if BaseBotCli._looks_like_directory_path(arg):
+                    if 'src' not in params:
+                        params['src'] = [file_path]
+                    elif isinstance(params['src'], str):
+                        params['src'] = [params['src'], file_path]
+                    else:
+                        params['src'].append(file_path)
+                elif file_path.endswith('.py'):
+                    # Python source files go into 'src' for validation scope
+                    # Test files (test_*.py or *_test.py) go into 'test', others into 'src'
+                    file_name = Path(file_path).name
+                    is_test_file = file_name.startswith('test_') or file_name.endswith('_test.py')
+                    target_key = 'test' if is_test_file else 'src'
+                    if target_key not in params:
+                        params[target_key] = [file_path]
+                    elif isinstance(params[target_key], str):
+                        params[target_key] = [params[target_key], file_path]
+                    else:
+                        params[target_key].append(file_path)
                 elif 'increment_file' not in params:
                     params['increment_file'] = file_path
                 else:
@@ -852,7 +870,10 @@ class BaseBotCli:
             sys.exit(1)
     
     def _execute_and_output(self, args, params: Dict[str, str]):
-        logger.info(f"Executing: behavior={args.behavior}, action={args.action}, params={params}")
+        logger.info(f"Executing: behavior={args.behavior}, action={args.action}")
+        logger.info(f"Parameters: {params}")
+        if 'src' in params:
+            logger.info(f"  src paths: {params['src']}")
         try:
             if args.close:
                 logger.info("Closing current action...")

@@ -18,10 +18,10 @@ class IntentionRevealingNamesScanner(CodeScanner):
         super().__init__()
         self.knowledge_graph = None
     
-    def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None, test_files: Optional[List['Path']] = None, code_files: Optional[List['Path']] = None) -> List[Dict[str, Any]]:
+    def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None, test_files: Optional[List['Path']] = None, code_files: Optional[List['Path']] = None, on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
         """Override scan to store knowledge_graph for use in scan_code_file."""
         self.knowledge_graph = knowledge_graph
-        return super().scan(knowledge_graph, rule_obj, test_files=test_files, code_files=code_files)
+        return super().scan(knowledge_graph, rule_obj, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
     
     # Acceptable domain terms that are well-known and intention-revealing
     ACCEPTABLE_DOMAIN_TERMS = {
@@ -84,6 +84,11 @@ class IntentionRevealingNamesScanner(CodeScanner):
         # Generic names that should be flagged (excluding acceptable context names and domain terms)
         generic_names = ['info', 'thing', 'stuff', 'temp']
         
+        # Collect all acceptable single-letter variable NAMES (those defined in loops, comprehensions, exceptions, etc.)
+        # We collect just the names (not line numbers) because once a var is defined in a loop,
+        # it's acceptable to use that single-letter name throughout that scope
+        acceptable_single_letter_names = self._collect_loop_and_comprehension_var_names(tree)
+        
         for node in ast.walk(tree):
             if isinstance(node, ast.Name):
                 var_name = node.id
@@ -98,19 +103,28 @@ class IntentionRevealingNamesScanner(CodeScanner):
                     if self._is_acceptable_in_context(node, tree, content):
                         continue
                 
-                # Check for single-letter names (except common loop counters)
-                if len(var_name) == 1 and var_name not in ['i', 'j', 'k', 'n', 'm']:
-                    # Check if it's in a small loop or acceptable context
-                    if not self._is_in_small_loop(node) and not self._is_acceptable_in_context(node, tree, content):
-                        line_number = node.lineno if hasattr(node, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Variable "{var_name}" uses single-letter name - use intention-revealing name',
-                            location=str(file_path),
-                            line_number=line_number,
-                            severity='error'
-                        ).to_dict()
-                        violations.append(violation)
+                # Check for single-letter names
+                # ONLY allow in loops, comprehensions, exception handlers, lambdas
+                # i, j, k are always allowed (classic loop counters)
+                # _ is always allowed (unused value convention)
+                always_allowed = {'i', 'j', 'k', '_'}
+                if len(var_name) == 1:
+                    if var_name in always_allowed:
+                        continue  # Always OK
+                    # Check if this variable is defined as a loop/comprehension/exception variable
+                    if var_name in acceptable_single_letter_names:
+                        continue  # OK - it's a loop/comprehension/exception variable
+                    # Not in an acceptable context - flag it
+                    line_number = node.lineno if hasattr(node, 'lineno') else None
+                    violation = Violation(
+                        rule=rule_obj,
+                        violation_message=f'Variable "{var_name}" uses single-letter name - use intention-revealing name',
+                        location=str(file_path),
+                        line_number=line_number,
+                        severity='error'
+                    ).to_dict()
+                    violations.append(violation)
+                    continue
                 
                 # Check for generic names (excluding acceptable context names and domain terms)
                 var_name_lower = var_name.lower()
@@ -136,6 +150,58 @@ class IntentionRevealingNamesScanner(CodeScanner):
                         continue  # Matches domain term - likely acceptable
         
         return violations
+    
+    def _collect_loop_and_comprehension_var_names(self, tree: ast.AST) -> set:
+        """Collect all variable NAMES that are defined in acceptable single-letter contexts.
+        
+        Returns a set of variable names (just the names, not line numbers) used in:
+        - For loop targets: for x in items
+        - Exception handlers: except Exception as e
+        - List/dict/set comprehensions: [x for x in items]
+        - Generator expressions: (x for x in items)
+        - Lambda parameters: lambda x: x + 1
+        - With statement targets: with open(f) as f
+        
+        Once a name is collected here, it's acceptable to use that single-letter
+        name throughout the file (since it's defined in a loop/comprehension context).
+        """
+        acceptable_names = set()
+        
+        for node in ast.walk(tree):
+            # For loop targets
+            if isinstance(node, ast.For):
+                self._add_target_var_names(node.target, acceptable_names)
+            
+            # Exception handlers
+            elif isinstance(node, ast.ExceptHandler):
+                if node.name:
+                    acceptable_names.add(node.name)
+            
+            # List/Set/Dict comprehensions and generator expressions
+            elif isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+                for generator in node.generators:
+                    self._add_target_var_names(generator.target, acceptable_names)
+            
+            # Lambda parameters
+            elif isinstance(node, ast.Lambda):
+                for arg in node.args.args:
+                    acceptable_names.add(arg.arg)
+            
+            # With statement targets
+            elif isinstance(node, ast.With):
+                for item in node.items:
+                    if item.optional_vars:
+                        self._add_target_var_names(item.optional_vars, acceptable_names)
+        
+        return acceptable_names
+    
+    def _add_target_var_names(self, target: ast.AST, acceptable_names: set):
+        """Add names from assignment target (handles tuples like 'for a, b in items')."""
+        if isinstance(target, ast.Name):
+            acceptable_names.add(target.id)
+        elif isinstance(target, ast.Tuple):
+            for elt in target.elts:
+                self._add_target_var_names(elt, acceptable_names)
     
     def _is_acceptable_in_context(self, node: ast.Name, tree: ast.AST, content: str) -> bool:
         """Check if variable name is acceptable in its context (e.g., callback parameters, event handlers)."""

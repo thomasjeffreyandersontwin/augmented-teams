@@ -24,7 +24,8 @@ class Scanner(ABC):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan knowledge graph for rule violations (file-by-file pass).
         
@@ -38,6 +39,7 @@ class Scanner(ABC):
             rule_obj: Optional Rule object reference (for creating Violations with rule reference)
             test_files: Optional list of test file paths
             code_files: Optional list of code file paths
+            on_file_scanned: Optional callback(file_path, violations) called after each file is scanned
             
         Returns:
             List of violation dictionaries or Violation objects, each containing:
@@ -60,19 +62,18 @@ class Scanner(ABC):
             all_files.extend(code_files)
         
         # Scan each file using unified scan_file() method
-        print(f"[Scanner.scan] Scanning {len(all_files)} files total")
         for file_path in all_files:
             if file_path and file_path.exists() and file_path.is_file():
-                print(f"[Scanner.scan] Calling scan_file for: {file_path}")
                 file_violations = self.scan_file(file_path, rule_obj, knowledge_graph)
-                print(f"[Scanner.scan] scan_file returned {len(file_violations) if isinstance(file_violations, list) else 1 if file_violations else 0} violations for {file_path}")
-                if file_violations:
-                    violations.extend(file_violations if isinstance(file_violations, list) else [file_violations])
-                    print(f"[Scanner.scan] Found {len(file_violations) if isinstance(file_violations, list) else 1} violations in {file_path}")
-            else:
-                print(f"[Scanner.scan] Skipping invalid file: {file_path} (exists={file_path.exists() if file_path else False}, is_file={file_path.is_file() if file_path else False})")
+                file_violations_list = file_violations if isinstance(file_violations, list) else [file_violations] if file_violations else []
+                
+                if file_violations_list:
+                    violations.extend(file_violations_list)
+                
+                # Call callback immediately after each file is scanned
+                if on_file_scanned:
+                    on_file_scanned(file_path, file_violations_list, rule_obj)
         
-        print(f"[Scanner.scan] Total violations collected: {len(violations)}")
         return violations
     
     def scan_file(

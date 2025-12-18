@@ -69,5 +69,5 @@
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.scanners.descriptive_function_names_scanner.DescriptiveFunctionNamesScanner"
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.descriptive_function_names_scanner.DescriptiveFunctionNamesScanner"
 }

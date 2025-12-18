@@ -225,7 +225,26 @@
       "- The scanners will filter violations based on scope, but all test files should be scanned",
       "- If user wants to validate only specific test files, they will pass test parameter explicitly",
       "",
-      "**AUTOMATIC PROGRESSION: Once validation is complete and all violations are fixed (if any), automatically proceed to render_output action without stopping or waiting for user confirmation. These two actions should execute sequentially as a single workflow step.**"
+      "**AUTOMATIC PROGRESSION: Once validation is complete and all violations are fixed (if any), automatically proceed to render_output action without stopping or waiting for user confirmation. These two actions should execute sequentially as a single workflow step.**",
+      "",
+      "## Validation Progress Monitoring",
+      "",
+      "When running validation commands that may take >10 seconds:",
+      "",
+      "1. **Run the command in background mode** - Use is_background=true for the terminal command",
+      "2. **Every 3 seconds, read the status file** at `docs/stories/{behavior}-validation-status.md` (e.g., `code-validation-status.md`)",
+      "3. **Parse and display progress to user:**",
+      "   - **Progress**: Count ## sections (each is a scanner result) vs total scanners",
+      "   - **Violations**: Count from file (look for 'Total violations: N' at end, or count violation entries)",
+      "   - **Files**: Read 'Files: N' from header to show total files being scanned",
+      "   - **Status**: 'Scanning...' while no 'Completed:' line, 'Complete' when found",
+      "4. **Display format example:**",
+      "   ```",
+      "   [VALIDATION PROGRESS]",
+      "   Files: 45 | Scanners: 12/49 | Violations: 23 | Status: Scanning...",
+      "   ```",
+      "5. **Stop polling when 'Completed:' line appears** in the status file",
+      "6. **Display final summary** with total violations, total scanners executed, and link to full report"
     ],
     "templates": {
       "validation_results": {

@@ -1,6 +1,6 @@
 {
   "description": "Tests must use Given/When/Then helper functions instead of inline code. All setup, action, and assertion code should be encapsulated in reusable helper functions following the BDD pattern. Helper functions must be placed as locally as possible based on their scope of reuse: story-level helpers go in the test class, sub-epic helpers go at module level in the test file, epic-level helpers go in a separate file named after the epic (e.g., `test_{epic_name}_helpers.py`), and cross-map helpers go in common files (e.g., `conftest.py` or `test_helpers.py`).",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.given_when_then_helpers_scanner.GivenWhenThenHelpersScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.given_when_then_helpers_scanner.GivenWhenThenHelpersScanner",
   "do": {
     "examples": [
       {

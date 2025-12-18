@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 import re
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
-from agile_bot.bots.base_bot.src.scanners.violation import Violation
+from .violation import Violation
 
 try:
     import spacy

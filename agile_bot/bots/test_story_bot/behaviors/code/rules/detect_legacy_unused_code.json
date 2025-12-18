@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Legacy code that is not used by any other code or front-end interfaces (CLI, MCP, web) should be removed. Unused code increases maintenance burden, creates confusion, and violates YAGNI (You Aren't Gonna Need It) principle.",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.legacy_code_scanner.LegacyCodeScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.legacy_code_scanner.LegacyCodeScanner",
   "examples": [
     {
       "do": {

@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Domain concepts must use natural English for plural, singular, and cardinality. Collections add 's' to concept name. Use 'many' for accessing collections, 'may' for optional, 'will' for required. Don't use brackets or technical notation like '0..1' or '1..*'.",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.natural_english_scanner.NaturalEnglishScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.natural_english_scanner.NaturalEnglishScanner",
   "examples": [
     {
       "do": {

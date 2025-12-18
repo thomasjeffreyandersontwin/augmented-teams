@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import List, Dict, Any, Optional, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.scanners.scanner import Scanner
+from .scanner import Scanner
 from .story_map import StoryMap, StoryNode, StoryGroup
 
 if TYPE_CHECKING:
@@ -16,7 +16,8 @@ class StoryScanner(Scanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for StoryScanner")

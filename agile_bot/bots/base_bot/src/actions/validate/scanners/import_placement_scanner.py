@@ -1,7 +1,6 @@
 """Scanner for validating import statements are at the top of files."""
 
-from typing import List, Dict, Any
-, Optional
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re

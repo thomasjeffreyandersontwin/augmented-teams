@@ -163,7 +163,21 @@ class Rules:
         
         return "\n".join(formatted_sections)
     
-    def validate(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None) -> List[Dict[str, Any]]:
+    def validate(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None, 
+                 on_scanner_start: Optional[Any] = None, on_scanner_complete: Optional[Any] = None,
+                 on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
+        """Validate knowledge graph and files against all rules.
+        
+        Args:
+            knowledge_graph: The knowledge graph to validate
+            files: Dict of file lists keyed by type ('src', 'test')
+            on_scanner_start: Optional callback(rule_file, scanner_path) called before each scanner
+            on_scanner_complete: Optional callback(rule_result) called after each scanner completes
+            on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
+        
+        Returns:
+            List of rule results with scanner status and violations
+        """
         from pathlib import Path
         import logging
         from datetime import datetime
@@ -203,8 +217,12 @@ class Rules:
                     for handler in logger.handlers:
                         handler.flush()
                     
+                    # Notify callback that scanner is starting
+                    if on_scanner_start:
+                        on_scanner_start(rule.rule_file, scanner_path)
+                    
                     try:
-                        scanner_results = rule.scan(knowledge_graph, files)
+                        scanner_results = rule.scan(knowledge_graph, files, on_file_scanned=on_file_scanned)
                         rule_result['scanner_results'] = scanner_results
                         
                         # Log after scanner execution
@@ -287,6 +305,10 @@ class Rules:
                 scanner_status_summary.append(f"  [SKIP] {rule.rule_file}: No scanner defined")
             
             processed_rules.append(rule_result)
+            
+            # Notify callback that scanner completed - enables real-time reporting
+            if on_scanner_complete:
+                on_scanner_complete(rule_result)
         
         # Log scanner status summary
         if scanner_status_summary:

@@ -25,7 +25,8 @@ class CodeScanner(Scanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan files for rule violations.
         
@@ -37,6 +38,7 @@ class CodeScanner(Scanner):
             rule_obj: Rule object reference (required)
             test_files: List of file paths to scan
             code_files: List of file paths to scan
+            on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
             
         Returns:
             List of violation dictionaries
@@ -44,17 +46,8 @@ class CodeScanner(Scanner):
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
-        # Log what we're scanning
-        total_files = len(test_files or []) + len(code_files or [])
-        print(f"[CodeScanner.scan] Scanning {total_files} files ({len(test_files or [])} test, {len(code_files or [])} code)")
-        if code_files:
-            print(f"[CodeScanner.scan] Code files: {[str(f) for f in code_files[:5]]}{'...' if len(code_files) > 5 else ''}")
-        if test_files:
-            print(f"[CodeScanner.scan] Test files: {[str(f) for f in test_files[:5]]}{'...' if len(test_files) > 5 else ''}")
-        
         # Use base Scanner.scan() which combines files and calls scan_file() for each
-        violations = super().scan(knowledge_graph, rule_obj, test_files, code_files)
-        print(f"[CodeScanner.scan] Returning {len(violations)} violations")
+        violations = super().scan(knowledge_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
         return violations
     
     def scan_file(

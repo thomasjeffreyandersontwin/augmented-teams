@@ -56,15 +56,17 @@ class ClassSizeScanner(CodeScanner):
                 severity='warning'
             ).to_dict())
         
-        # 2. LCOM (Lack of Cohesion of Methods)
+        # 2. LCOM (Lack of Cohesion of Methods) - measures single responsibility via shared attributes
+        # Threshold 0.8 because LCOM now excludes simple getters and follows delegation
         lcom = ComplexityMetrics.calculate_lcom(class_node)
-        if lcom > 0.7:
+        if lcom > 0.8:
             line_number = class_node.lineno if hasattr(class_node, 'lineno') else None
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(
                     f'Class "{class_node.name}" has low cohesion (LCOM={lcom:.2f}) - '
-                    f'methods don\'t share many attributes. Consider splitting into separate classes.'
+                    f'methods don\'t share many attributes, suggesting multiple responsibilities. '
+                    f'Consider splitting into separate classes.'
                 ),
                 location=str(file_path),
                 line_number=line_number,
@@ -73,7 +75,7 @@ class ClassSizeScanner(CodeScanner):
         
         # 3. Method count
         method_count = len([n for n in class_node.body if isinstance(n, ast.FunctionDef)])
-        if method_count > 20:
+        if method_count > 15:
             line_number = class_node.lineno if hasattr(class_node, 'lineno') else None
             violations.append(Violation(
                 rule=rule_obj,
@@ -84,21 +86,6 @@ class ClassSizeScanner(CodeScanner):
                 location=str(file_path),
                 line_number=line_number,
                 severity='info'
-            ).to_dict())
-        
-        # 4. Responsibility detection
-        responsibilities = ComplexityMetrics.detect_class_responsibilities(class_node)
-        if len(responsibilities) > 3:
-            line_number = class_node.lineno if hasattr(class_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
-                violation_message=(
-                    f'Class "{class_node.name}" has multiple responsibilities detected: {", ".join(responsibilities)}. '
-                    f'Split into separate classes, each with a single responsibility.'
-                ),
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
             ).to_dict())
         
         # Return first violation (most critical)

@@ -4,6 +4,9 @@ from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 
 
 class ValidationScope:
+    # Files to exclude from scanning (not meaningful for code review)
+    EXCLUDED_FILES = {'__init__.py'}
+    
     def __init__(self, parameters: Dict[str, Any], bot_paths: Optional[BotPaths] = None, behavior_name: Optional[str] = None):
         self._parameters = parameters or {}
         self._bot_paths = bot_paths
@@ -13,6 +16,10 @@ class ValidationScope:
         self._build_scope()
         if self._bot_paths:
             self._repo_root = self._find_repo_root()
+    
+    def _should_include_file(self, file_path: Path) -> bool:
+        """Check if a file should be included in validation scope."""
+        return file_path.name not in self.EXCLUDED_FILES
     
     def _behavior_to_directory(self, behavior_name: Optional[str]) -> Optional[str]:
         """Map behavior name to directory name.
@@ -102,6 +109,9 @@ class ValidationScope:
                 # Filter to ensure files are actually within the directory (not parent directories)
                 # Check that the file's absolute path starts with the directory's absolute path
                 for f in all_py_files:
+                    # Skip excluded files like __init__.py
+                    if not self._should_include_file(f):
+                        continue
                     f_abs_str = str(f.resolve()).replace('\\', '/')
                     # Ensure the file path starts with the directory path + separator
                     # This prevents matching parent directories
@@ -216,6 +226,9 @@ class ValidationScope:
         all_py_files = list(search_dir.rglob('*.py'))
         # Filter to ensure files are actually within the directory
         for f in all_py_files:
+            # Skip excluded files like __init__.py
+            if not self._should_include_file(f):
+                continue
             f_abs_str = str(f.resolve()).replace('\\', '/')
             if f_abs_str.startswith(abs_dir_str + '/') or f_abs_str == abs_dir_str:
                 discovered_files.append(f)
@@ -269,7 +282,9 @@ class ValidationScope:
         
         discovered_files = []
         
-        # Find all .py files recursively
-        discovered_files.extend(search_dir.rglob('*.py'))
+        # Find all .py files recursively, excluding __init__.py and similar
+        for f in search_dir.rglob('*.py'):
+            if self._should_include_file(f):
+                discovered_files.append(f)
         
         return [str(f) for f in discovered_files]

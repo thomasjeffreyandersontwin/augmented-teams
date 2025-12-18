@@ -5,13 +5,13 @@ import traceback
 import json
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.scanners.violation import Violation
+from agile_bot.bots.base_bot.src.actions.validate.scanners.violation import Violation
 from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
 from agile_bot.bots.base_bot.src.actions.validate.rules import Rules
 from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import ScannerLoader
 from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
 from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
-from agile_bot.bots.base_bot.src.actions.validate.validation_report_writer import ValidationReportWriter
+from agile_bot.bots.base_bot.src.actions.validate.validation_report_writer import ValidationReportWriter, StreamingValidationReportWriter
 
 logger = logging.getLogger(__name__)
 
@@ -74,10 +74,24 @@ class ValidateRulesAction(Action):
             logger.info("Discovering files to validate...")
             files = validation_scope.all_files()
             logger.info(f"Found {sum(len(f) for f in files.values())} files to validate")
+            
+            # Use streaming writer for real-time feedback
+            streaming_writer = StreamingValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
+            streaming_writer.start(files)
+            
             logger.info("Injecting validation instructions...")
-            result = self.injectValidationInstructions(story_graph.content, files=files)
+            result = self.injectValidationInstructions(
+                story_graph.content, 
+                files=files,
+                streaming_writer=streaming_writer
+            )
             instructions = result.get('instructions', {})
             validation_rules = instructions.get('validation_rules', [])
+            
+            # Finish the streaming report with summary
+            streaming_writer.finish(instructions, validation_rules)
+            
+            # Also write the full detailed report (for complete formatting)
             writer = ValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
             writer.write(instructions, validation_rules, files)
             return result
@@ -157,7 +171,8 @@ class ValidateRulesAction(Action):
     def inject_next_action_instructions(self):
         return ""
     
-    def injectValidationInstructions(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None) -> Dict[str, Any]:
+    def injectValidationInstructions(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None, 
+                                      streaming_writer: Optional['StreamingValidationReportWriter'] = None) -> Dict[str, Any]:
         action_instructions = self.get_action_instructions()
         writer = ValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
         report_path = writer.get_report_path()
@@ -178,7 +193,19 @@ class ValidateRulesAction(Action):
             }
         
         files = files or {}
-        processed_rules = self.rules.validate(knowledge_graph, files)
+        
+        # Pass streaming callbacks for real-time reporting
+        on_scanner_start = streaming_writer.on_scanner_start if streaming_writer else None
+        on_scanner_complete = streaming_writer.on_scanner_complete if streaming_writer else None
+        on_file_scanned = streaming_writer.on_file_scanned if streaming_writer else None
+        
+        processed_rules = self.rules.validate(
+            knowledge_graph, 
+            files,
+            on_scanner_start=on_scanner_start,
+            on_scanner_complete=on_scanner_complete,
+            on_file_scanned=on_file_scanned
+        )
         violation_summary = self.rules.violation_summary
         
         # Extract scanner status for chat output

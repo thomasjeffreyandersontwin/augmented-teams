@@ -96,5 +96,5 @@
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.scanners.business_readable_test_names_scanner.BusinessReadableTestNamesScanner"
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.business_readable_test_names_scanner.BusinessReadableTestNamesScanner"
 }
