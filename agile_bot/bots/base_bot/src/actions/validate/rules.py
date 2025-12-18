@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
+from datetime import datetime
 from typing import List, Optional, Iterator, Dict, Any, TYPE_CHECKING
 from pathlib import Path
+from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+    pass
 
 
 class Rules:
@@ -25,14 +28,12 @@ class Rules:
         else:
             raise ValueError("Either behavior or bot_config must be provided")
         
-        self._rules: Optional[List['Rule']] = None
+        self._rules: Optional[List[Rule]] = None
         self._all_violations: List[Dict[str, Any]] = []
     
-    def _load_rules(self) -> List['Rule']:
+    def _load_rules(self) -> List[Rule]:
         if self._rules is not None:
             return self._rules
-        
-        from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
         
         all_rules = []
         bot_rules = self._load_bot_rules()
@@ -45,9 +46,7 @@ class Rules:
         self._rules = all_rules
         return self._rules
     
-    def _load_bot_rules(self) -> List['Rule']:
-        from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
-        
+    def _load_bot_rules(self) -> List[Rule]:
         bot_rules = []
         bot_dir = self.bot_paths.bot_directory
         bot_rules_dir = bot_dir / 'rules'
@@ -61,9 +60,7 @@ class Rules:
         
         return bot_rules
     
-    def _load_behavior_rules(self) -> List['Rule']:
-        from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
-        
+    def _load_behavior_rules(self) -> List[Rule]:
         behavior_rules = []
         behavior_folder = self.bot_paths.bot_directory / 'behaviors' / self.behavior_name
         behavior_rules_dir = behavior_folder / 'rules'
@@ -95,14 +92,14 @@ class Rules:
         
         return behavior_rules
     
-    def find_by_name(self, rule_name: str) -> Optional['Rule']:
+    def find_by_name(self, rule_name: str) -> Optional[Rule]:
         rules = self._load_rules()
         for rule in rules:
             if rule.name == rule_name:
                 return rule
         return None
     
-    def __iter__(self) -> Iterator['Rule']:
+    def __iter__(self) -> Iterator[Rule]:
         rules = self._load_rules()
         for rule in rules:
             yield rule
@@ -165,7 +162,7 @@ class Rules:
     
     def validate(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None, 
                  on_scanner_start: Optional[Any] = None, on_scanner_complete: Optional[Any] = None,
-                 on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
+                 on_file_scanned: Optional[Any] = None, skiprule: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """Validate knowledge graph and files against all rules.
         
         Args:
@@ -174,19 +171,14 @@ class Rules:
             on_scanner_start: Optional callback(rule_file, scanner_path) called before each scanner
             on_scanner_complete: Optional callback(rule_result) called after each scanner completes
             on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
+            skiprule: Optional list of rule names to skip (matched against rule filename without .json)
         
         Returns:
             List of rule results with scanner status and violations
         """
-        from pathlib import Path
-        import logging
-        from datetime import datetime
-        
         logger = logging.getLogger(__name__)
         logger.info("=== Starting rules validation ===")
         logger.info(f"Files to validate: {sum(len(f) for f in (files or {}).values())} files")
-        
-        from agile_bot.bots.base_bot.src.actions.validate.validate_action import ScannerExecutionError
         
         files = files or {}
         processed_rules = []
@@ -198,7 +190,18 @@ class Rules:
         scanner_status_summary = []
         
         logger.info("Processing rules and executing scanners...")
+        skiprule_set = set(skiprule) if skiprule else set()
+        if skiprule_set:
+            logger.info(f"Skipping rules: {skiprule_set}")
+        
         for idx, rule in enumerate(rules_list, 1):
+            # Check if this rule should be skipped
+            rule_name = Path(rule.rule_file).stem  # Get filename without .json
+            if rule_name in skiprule_set:
+                logger.info(f"Skipping rule {idx}/{len(rules_list)}: {rule.rule_file} (--skiprule)")
+                scanner_status_summary.append(f"  [SKIP] {rule.rule_file}: Skipped by --skiprule")
+                continue
+            
             logger.info(f"Processing rule {idx}/{len(rules_list)}: {rule.rule_file}")
             rule_result = {
                 'rule_file': rule.rule_file,

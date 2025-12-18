@@ -62,10 +62,7 @@ def terminate_processes(pids: List[int], timeout: int = 5) -> dict:
         'failed': []
     }
     
-    if not pids:
-        return result
-    
-    # Send SIGTERM to all processes
+    # Send SIGTERM to all processes - pids must be provided
     processes = []
     for pid in pids:
         try:

@@ -1,5 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
+from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import ScannerLoader
+from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
 from agile_bot.bots.base_bot.src.utils import read_json_file
 
 
@@ -31,8 +34,6 @@ class Rule:
         self._scanner_execution_status: Optional[str] = None
     
     def _load_scanner(self, scanner_module_path: str) -> tuple[Optional[type], Optional[str]]:
-        from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import ScannerLoader
-        
         scanner_loader = ScannerLoader(self._bot_name)
         scanner_class, error = scanner_loader.load_scanner_with_error(scanner_module_path)
         return scanner_class, error
@@ -101,9 +102,6 @@ class Rule:
             return False
         
         # Check if scanner is a CodeScanner or TestScanner from the validate scanners module
-        from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
-        from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
-        
         return (
             issubclass(self._scanner, TestScanner) or 
             issubclass(self._scanner, CodeScanner)
@@ -219,6 +217,21 @@ class Rule:
                 result['error'] = self._scan_error
             return result
     
+    def _format_examples(self, examples: list, formatted: list) -> None:
+        """Format a list of examples into the formatted output.
+        
+        Extracted to eliminate duplication in formatted_text().
+        """
+        for example in examples:
+            desc = example.get('description', '')
+            content = example.get('content', '')
+            if isinstance(content, list):
+                content = '\n'.join(content)
+            if desc:
+                formatted.append(f"- {desc}: {content}")
+            else:
+                formatted.append(f"- {content}")
+    
     def formatted_text(self) -> List[str]:
         formatted = []
         
@@ -232,29 +245,13 @@ class Rule:
             do_examples = self._rule_content.get('do', {}).get('examples', [])
             if do_examples:
                 formatted.append("\n**DO:**")
-                for example in do_examples:
-                    desc = example.get('description', '')
-                    content = example.get('content', '')
-                    if isinstance(content, list):
-                        content = '\n'.join(content)
-                    if desc:
-                        formatted.append(f"- {desc}: {content}")
-                    else:
-                        formatted.append(f"- {content}")
+                self._format_examples(do_examples, formatted)
         
         if 'dont' in self._rule_content:
             dont_examples = self._rule_content.get('dont', {}).get('examples', [])
             if dont_examples:
                 formatted.append("\n**DON'T:**")
-                for example in dont_examples:
-                    desc = example.get('description', '')
-                    content = example.get('content', '')
-                    if isinstance(content, list):
-                        content = '\n'.join(content)
-                    if desc:
-                        formatted.append(f"- {desc}: {content}")
-                    else:
-                        formatted.append(f"- {content}")
+                self._format_examples(dont_examples, formatted)
         
         if 'examples' in self._rule_content:
             examples = self._rule_content.get('examples', [])

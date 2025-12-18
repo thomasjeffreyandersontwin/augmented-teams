@@ -27,12 +27,13 @@ class KnowledgeGraphTemplate:
         self._template_path = template_path
     
     @property
-    def schema(self) -> Dict[str, Any]:
+    def template_content(self) -> Dict[str, Any]:
         return self._template_content
     
     @property
-    def template_content(self) -> Dict[str, Any]:
-        return self._template_content
+    def schema(self) -> Dict[str, Any]:
+        """Alias for template_content (delegates to eliminate duplication)."""
+        return self.template_content
     
     @property
     def template_path(self) -> Optional[Path]:

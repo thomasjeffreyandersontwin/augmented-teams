@@ -378,14 +378,7 @@ class RenderOutputAction(Action):
             formatted_parts.append(f"{i}. **{config_name}** ({config_file})")
             
             # Always show instructions first (if present)
-            if 'instructions' in config:
-                instructions = config.get('instructions', '')
-                if isinstance(instructions, str):
-                    formatted_parts.append(f"   - Instructions: {instructions}")
-                elif isinstance(instructions, list):
-                    formatted_parts.append(f"   - Instructions:")
-                    for inst in instructions:
-                        formatted_parts.append(f"     * {inst}")
+            self._format_instructions(config, formatted_parts)
             
             # Show execution method fields
             if 'synchronizer' in config:
@@ -412,6 +405,23 @@ class RenderOutputAction(Action):
         
         return '\n'.join(formatted_parts)
     
+    
+    def _format_instructions(self, config: Dict[str, Any], parts: list, indent: str = "   ") -> None:
+        """Format instructions from config into parts list.
+        
+        Extracted to eliminate duplication between _format_render_configs()
+        and _format_template_instructions().
+        """
+        if 'instructions' not in config:
+            return
+        
+        instructions = config.get('instructions', '')
+        if isinstance(instructions, str):
+            parts.append(f"{indent}- Instructions: {instructions}")
+        elif isinstance(instructions, list):
+            parts.append(f"{indent}- Instructions:")
+            for inst in instructions:
+                parts.append(f"{indent}  * {inst}")
     
     def _format_executed_synchronizers(self, executed_configs: List[Dict[str, Any]]) -> str:
         """Format information about executed synchronizers for AI instructions."""
@@ -460,14 +470,7 @@ class RenderOutputAction(Action):
             parts.append(f"{i}. **{config_name}** ({config_file})")
             
             # Show instructions
-            if 'instructions' in config:
-                instructions = config.get('instructions', '')
-                if isinstance(instructions, str):
-                    parts.append(f"   - Instructions: {instructions}")
-                elif isinstance(instructions, list):
-                    parts.append(f"   - Instructions:")
-                    for inst in instructions:
-                        parts.append(f"     * {inst}")
+            self._format_instructions(config, parts)
             
             # Show template
             if 'template' in config:

@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 import logging
 import traceback
 import json
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.actions.action import Action
+from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
 from agile_bot.bots.base_bot.src.actions.validate.scanners.violation import Violation
 from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
 from agile_bot.bots.base_bot.src.actions.validate.rules import Rules
@@ -12,6 +13,9 @@ from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import
 from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
 from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
 from agile_bot.bots.base_bot.src.actions.validate.validation_report_writer import ValidationReportWriter, StreamingValidationReportWriter
+
+if TYPE_CHECKING:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +57,6 @@ class ValidateRulesAction(Action):
         try:
             # Get knowledge graph spec so StoryGraph can read config internally
             logger.info("Loading knowledge graph...")
-            from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
             knowledge = Knowledge(self.behavior)
             
             logger.info("Creating story graph...")
@@ -80,10 +83,12 @@ class ValidateRulesAction(Action):
             streaming_writer.start(files)
             
             logger.info("Injecting validation instructions...")
+            skiprule = parameters.get('skiprule', [])
             result = self.injectValidationInstructions(
                 story_graph.content, 
                 files=files,
-                streaming_writer=streaming_writer
+                streaming_writer=streaming_writer,
+                skiprule=skiprule
             )
             instructions = result.get('instructions', {})
             validation_rules = instructions.get('validation_rules', [])
@@ -172,7 +177,8 @@ class ValidateRulesAction(Action):
         return ""
     
     def injectValidationInstructions(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None, 
-                                      streaming_writer: Optional['StreamingValidationReportWriter'] = None) -> Dict[str, Any]:
+                                      streaming_writer: Optional['StreamingValidationReportWriter'] = None,
+                                      skiprule: Optional[List[str]] = None) -> Dict[str, Any]:
         action_instructions = self.get_action_instructions()
         writer = ValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
         report_path = writer.get_report_path()
@@ -204,7 +210,8 @@ class ValidateRulesAction(Action):
             files,
             on_scanner_start=on_scanner_start,
             on_scanner_complete=on_scanner_complete,
-            on_file_scanned=on_file_scanned
+            on_file_scanned=on_file_scanned,
+            skiprule=skiprule
         )
         violation_summary = self.rules.violation_summary
         

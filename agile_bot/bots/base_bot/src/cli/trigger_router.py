@@ -65,11 +65,8 @@ class TriggerRouter:
         """
         message_lower = message.lower().strip()
         
-        # Stage 1: Determine which bot
+        # Stage 1: Determine which bot - must always resolve to a valid bot
         target_bot = self.bot_name if self.bot_name else self._match_bot_from_registry(message_lower)
-        
-        if not target_bot:
-            return None
         
         # Load bot's triggers if not already loaded
         if target_bot not in self._behavior_triggers:
@@ -256,15 +253,7 @@ class TriggerRouter:
             List of trigger patterns, or empty list if file doesn't exist
         """
         trigger_file = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / bot_name / 'trigger_words.json'
-        if not trigger_file.exists():
-            return []
-        
-        try:
-            content = trigger_file.read_text(encoding='utf-8')
-            data = json.loads(content)
-            return data.get('patterns', [])
-        except (json.JSONDecodeError, IOError):
-            return []
+        return self._load_patterns_from_file(trigger_file)
     
     def _load_behavior_triggers(self, bot_name: str) -> Dict[str, List[str]]:
         """Load behavior-level trigger patterns for all behaviors.

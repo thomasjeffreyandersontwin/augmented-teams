@@ -8,11 +8,7 @@ from agile_bot.bots.base_bot.src.utils import read_json_file
 class CliGenerator:
     def __init__(self, workspace_root: Path, bot_location: str = None):
         self.workspace_root = Path(workspace_root)
-        
-        if bot_location is None:
-            bot_location = 'agile_bot/bots/base_bot'
-        
-        self.bot_location = Path(bot_location)
+        self.bot_location = Path(bot_location or 'agile_bot/bots/base_bot')
         
         # Derive bot_name from last folder in bot_location
         self.bot_name = self.bot_location.name

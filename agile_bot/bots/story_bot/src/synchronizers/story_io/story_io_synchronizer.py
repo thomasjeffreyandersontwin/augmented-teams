@@ -22,20 +22,6 @@ class DrawIOSynchronizer:
     
     def render(self, input_path: Union[str, Path], output_path: Union[str, Path], 
                renderer_command: Optional[str] = None, **kwargs) -> Dict[str, Any]:
-        """
-        Render story graph to DrawIO diagram.
-        
-        Lightweight wrapper around StoryIODiagram render methods.
-        
-        Args:
-            input_path: Path to story graph JSON file
-            output_path: Path for output DrawIO file
-            renderer_command: Command variant ('render-outline', 'render-increments', 'render-exploration')
-            **kwargs: Additional arguments (e.g., layout_data, force_outline)
-        
-        Returns:
-            Dictionary with output_path and summary
-        """
         from .story_io_diagram import StoryIODiagram
         
         input_path = Path(input_path)

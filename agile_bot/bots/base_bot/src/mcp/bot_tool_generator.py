@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
+from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory, get_bot_directory
 
 
 class BotTool:
@@ -11,9 +12,6 @@ class BotTool:
         self.name = f'{bot_name}_tool'
     
     def invoke(self, parameters: Dict[str, Any] = None):
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory
-        
         bot_directory = get_bot_directory()
 
         bot = Bot(
@@ -21,7 +19,6 @@ class BotTool:
             bot_directory=bot_directory,
             config_path=self.config_path
         )
-        from agile_bot.bots.base_bot.src.bot.bot import BotResult
         
         current_behavior = bot.behaviors.current
         if current_behavior is None:
@@ -34,14 +31,7 @@ class BotTool:
             raise ValueError("No current behavior")
         
         action = current_behavior.actions.forward_to_current()
-        if action is None:
-            return BotResult(
-                status='error',
-                behavior=current_behavior.name if current_behavior else '',
-                action='',
-                data={'message': f'No current action found for behavior {current_behavior.name if current_behavior else "unknown"}'}
-            )
-        
+        # Action must exist - fail fast if not
         try:
             result_data = action.execute(parameters or {})
             return BotResult(
