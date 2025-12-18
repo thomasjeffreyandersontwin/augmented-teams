@@ -436,11 +436,74 @@ class Action:
         self.tracker.track_completion(self.behavior.bot_name, self.behavior.name, self.action_name, outputs, duration)
     
     def execute(self, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Execute the action with master try-catch that captures errors in result.
+        
+        Any exceptions are caught, formatted with full traceback, and included
+        in the result dict so the CLI can display them to the user. The exception
+        is then re-raised to ensure proper error propagation.
+        """
+        import traceback
+        import sys
+        
         self.track_activity_on_start()
-        result = self.do_execute(parameters or {})
-        self.track_activity_on_completion(outputs=result)
-        result = self._inject_reminders_if_final(result)
-        return result
+        try:
+            result = self.do_execute(parameters or {})
+            self.track_activity_on_completion(outputs=result)
+            result = self._inject_reminders_if_final(result)
+            return result
+        except Exception as e:
+            # Capture full error details for display
+            error_type = type(e).__name__
+            error_message = str(e)
+            full_traceback = traceback.format_exc()
+            
+            # Build error instructions that will be displayed to user
+            error_instructions = [
+                "",
+                "=" * 70,
+                "**ERROR OCCURRED DURING ACTION EXECUTION**",
+                "=" * 70,
+                "",
+                f"**Exception Type:** {error_type}",
+                f"**Exception Message:** {error_message}",
+                "",
+                "**Full Traceback:**",
+                "-" * 70,
+                full_traceback,
+                "-" * 70,
+                "",
+                "**Action Details:**",
+                f"- Behavior: {self.behavior.name if self.behavior else 'unknown'}",
+                f"- Action: {self.action_name}",
+                f"- Parameters: {parameters}",
+                "=" * 70,
+                "",
+                "**AI ASSISTANT: YOU MUST DISPLAY THE ABOVE ERROR TO THE USER.**",
+                ""
+            ]
+            
+            # Create error result with instructions
+            error_result = {
+                'status': 'error',
+                'error': {
+                    'type': error_type,
+                    'message': error_message,
+                    'traceback': full_traceback
+                },
+                'instructions': {
+                    'base_instructions': error_instructions
+                }
+            }
+            
+            # Track completion with error
+            self.track_activity_on_completion(outputs={'error': error_message})
+            
+            # Print error to stdout so it's visible in terminal output
+            print("\n".join(error_instructions), file=sys.stdout)
+            sys.stdout.flush()
+            
+            # Re-raise the exception so it propagates up to CLI
+            raise
     
     def _inject_reminders_if_final(self, result: Dict[str, Any]) -> Dict[str, Any]:
         if not self.behavior or not self.behavior.actions:
