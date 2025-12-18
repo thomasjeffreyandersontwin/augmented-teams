@@ -1181,7 +1181,7 @@ def when_action_tracks_start(action):
     - when_validate_action_tracks_start(action)
     - when_action_tracks_activity_on_start(action)
     """
-    action.track_start()
+    action.track_activity_on_start()
 
 
 def when_action_tracks_completion(action, outputs=None, duration=None):
@@ -1191,7 +1191,7 @@ def when_action_tracks_completion(action, outputs=None, duration=None):
     - when_validate_action_tracks_completion(action, outputs, duration)
     - when_action_tracks_activity_on_completion(action, outputs, duration)
     """
-    action.track_completion(outputs=outputs, duration=duration)
+    action.track_activity_on_completion(outputs=outputs, duration=duration)
 
 
 def when_action_finalizes(action, next_action=None):
