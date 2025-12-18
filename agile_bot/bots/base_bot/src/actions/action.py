@@ -174,22 +174,22 @@ class Action:
         This is the SINGLE SOURCE OF TRUTH for workflow status breadcrumbs.
         Used by both CLI and actions to display workflow progress.
         
-        Actions are responsible for generating the CONTENT (raw breadcrumb data).
-        CLI is responsible for FORMATTING the content (colors, styling).
+        Returns fully formatted breadcrumbs with emojis and markdown.
+        Returns a default fallback if workspace not set or if generation fails.
         
         Returns:
-            List of breadcrumb strings. Returns empty list if workspace not set or if generation fails.
+            List of formatted breadcrumb strings.
         """
         if not self.behavior or not self.behavior.bot:
-            return []
+            return self._get_default_breadcrumbs()
         
         try:
-            # Check if workspace is set - if not, return empty tree
+            # Check if workspace is set - if not, return default with available info
             try:
                 workspace_dir = self.behavior.bot_paths.workspace_directory
             except (AttributeError, ValueError, Exception):
-                # Workspace not set - return empty tree
-                return []
+                # Workspace not set - return default breadcrumbs with bot info
+                return self._get_default_breadcrumbs()
             
             behaviors = self.behavior.bot.behaviors
             current_behavior = behaviors.current
@@ -265,57 +265,124 @@ class Action:
             # Do NOT skip displaying it. Display it EVERY TIME, without exception.
             # See BaseBotCli._has_cli_output_directives() and _format_cli_output_for_display()
             # methods in agile_bot/bots/base_bot/src/cli/base_bot_cli.py for handling directives.
+            # Build status table and workflow progress
             lines = [
                 "**CRITICAL: YOU MUST DISPLAY THE ENTIRE WORKFLOW STATUS BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**",
                 "",
-                f"**Working Directory:** {workspace_dir}",
-                f"**Bot Directory:** {bot_dir}",
-                ""
+                "## Workflow Status",
+                "",
+                "| Setting | Value |",
+                "|---------|-------|",
+                f"| **Working Directory** | {workspace_dir} |",
+                f"| **Bot Path** | {bot_dir} |",
             ]
             
+            # Add current state to table (will be filled in later)
+            current_state_placeholder = "CURRENT_STATE_PLACEHOLDER"
+            next_step_placeholder = "NEXT_STEP_PLACEHOLDER"
+            lines.append(current_state_placeholder)
+            lines.append(next_step_placeholder)
+            lines.append("")
+            lines.append("## Workflow Progress")
+            lines.append("")
+            
             # Display behaviors in the order specified in bot_config/behaviors.json
+            # Emoji markers for workflow status
+            DONE = "\u2713"      # ✓ simple checkmark
+            CURRENT = "\u27A4"   # ➤ arrow pointer  
+            PENDING = "\u2610"   # ☐ empty ballot box
+            
             for behavior_name in all_behaviors:
                 if behavior_name in completed_behaviors:
-                    lines.append(f"  - {behavior_name} [x]")
+                    # Completed behavior - collapsed (no actions shown)
+                    lines.append(f"### {DONE} **{behavior_name}**")
                 elif behavior_name == current_behavior_name:
-                    # Show current behavior with [current] marker and all its actions
-                    lines.append(f"  - {behavior_name} [current]")
+                    # Current behavior - expanded with actions
+                    lines.append(f"### {CURRENT} **{behavior_name}**")
                     if current_behavior_actions:
                         for action_name in current_behavior_actions:
                             if action_name == current_action_name:
-                                lines.append(f"       - {action_name} [current]")
+                                lines.append(f"  - {CURRENT} **{action_name}**")
                             elif action_name in current_behavior_completed:
-                                lines.append(f"       - {action_name} [x]")
+                                lines.append(f"  - {DONE} {action_name}")
                             else:
-                                lines.append(f"       - {action_name} [ ]")
+                                lines.append(f"  - {PENDING} {action_name}")
                 else:
-                    # Show remaining behaviors (not completed, not current)
-                    lines.append(f"  - {behavior_name} [ ]")
+                    # Remaining behaviors (not completed, not current) - collapsed
+                    lines.append(f"### {PENDING} **{behavior_name}**")
             
-            # Add current state info
+            # Replace placeholders with actual current state and next step
+            current_state_row = ""
+            next_step_row = ""
+            
             if current_behavior_name and current_action_name:
-                lines.append("")
-                lines.append(f"**Current State:** {current_behavior_name}.{current_action_name}")
+                current_state_row = f"| **Current State** | {current_behavior_name}.{current_action_name} |"
             
             next_action = remaining_actions_in_current[0] if remaining_actions_in_current else None
             if next_action:
-                lines.append("")
-                lines.append(f"**Next step:** To proceed, run: `{bot_name}_cli --behavior {current_behavior_name} --action {next_action}`")
+                next_step_row = f"| **Next step** | `/{bot_name}-{current_behavior_name} {next_action}` |"
             elif remaining_behaviors:
                 next_behavior = remaining_behaviors[0]['name']
                 next_behavior_obj = behaviors.find_by_name(next_behavior)
                 if next_behavior_obj and next_behavior_obj.actions.names:
                     first_action = next_behavior_obj.actions.names[0]
-                    lines.append("")
-                    lines.append(f"**Next step:** To proceed, run: `{bot_name}_cli --behavior {next_behavior} --action {first_action}`")
+                    next_step_row = f"| **Next step** | `/{bot_name}-{next_behavior} {first_action}` |"
+            
+            # Replace placeholders in lines
+            lines = [
+                current_state_row if line == "CURRENT_STATE_PLACEHOLDER" else
+                next_step_row if line == "NEXT_STEP_PLACEHOLDER" else
+                line
+                for line in lines
+            ]
+            # Remove empty placeholder rows
+            lines = [line for line in lines if line]
             
             lines.append("")
             return lines
             
         except Exception as e:
-            # If workspace not set or any other error, return empty tree
+            # If workspace not set or any other error, return default breadcrumbs
             logger.debug(f"Failed to generate workflow progress breadcrumbs: {e}")
-            return []
+            return self._get_default_breadcrumbs()
+    
+    def _get_default_breadcrumbs(self) -> list:
+        """
+        Return default breadcrumbs when full workflow state is not available.
+        Shows bot info and a message that no workflow state is available.
+        """
+        # Emoji markers for workflow status
+        PENDING = "\u2610"   # ☐ empty ballot box
+        
+        lines = [
+            "## Workflow Status",
+            ""
+        ]
+        
+        # Add bot info if available
+        if self.behavior and self.behavior.bot:
+            try:
+                bot_dir = self.behavior.bot_paths.bot_directory
+                lines.append(f"**Bot Directory:** {bot_dir}")
+                lines.append("")
+            except Exception:
+                pass
+            
+            # Show all behaviors with pending status
+            try:
+                all_behaviors = self.behavior.bot.behaviors.names
+                lines.append("## Workflow Progress")
+                lines.append("")
+                for behavior_name in all_behaviors:
+                    lines.append(f"### {PENDING} **{behavior_name}**")
+                lines.append("")
+                lines.append("*(No workspace configured - run from a project directory)*")
+            except Exception:
+                lines.append("*(No workflow state available)*")
+        else:
+            lines.append("*(No workflow state available)*")
+        
+        return lines
     
     def _inject_status_update_breadcrumbs(self, instructions: Dict[str, Any]) -> list:
         """Inject workflow progress breadcrumbs into instructions dict (for action use)."""

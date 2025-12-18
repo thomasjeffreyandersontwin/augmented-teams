@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="4805" dy="711" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4402" dy="566" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -317,16 +317,16 @@
                     <mxGeometry x="-2960" y="1161" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="71" value="SIngle Story Workflow n" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2790" y="1161" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2260" y="1085.09" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="72" value="Fix Bug" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2790" y="1099" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2260" y="1023.09" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="73" value="reverse eng Docs" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="1617.28" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2372.75" y="1641.24" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="74" value="TDD Run" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="1557.28" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2372.75" y="1581.24" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="75" value="Deploy Behavfior" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-3120" y="1102" width="50" height="50" as="geometry"/>
@@ -356,7 +356,7 @@
                     <mxGeometry x="-2960" y="1103.9999999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="90" value="VS Code 1 click install PC" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1860" y="921" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1735" y="762.5" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="91" value="Template Sprucing (eg Links)" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1998" y="980.59" width="50" height="50" as="geometry"/>
@@ -374,10 +374,10 @@
                     <mxGeometry x="-3262.93" y="1364.5" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="102" value="Scoped, /&amp;nbsp; runs" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="1440.28" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2372.75" y="1464.24" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="103" value="skipp guardrails if they are set , or non default actions" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2790" y="1218" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2260" y="1142.09" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="104" value="" style="endArrow=none;dashed=1;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;fontStyle=1" parent="1" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
@@ -389,7 +389,7 @@
                     <mxGeometry x="-48.19999999999982" y="593" width="48" height="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="106" value="Easiest way to call Story Bot&amp;nbsp;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1865" y="769.0699999999999" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1867.5" y="764.7499999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="110" value="Jeff" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;" parent="1" vertex="1">
                     <mxGeometry x="-2982.93" y="550" width="47.25" height="20" as="geometry"/>
@@ -512,7 +512,7 @@
                     <mxGeometry x="-1440" y="1070" width="48" height="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="140" value="Alternate Workflows" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2790" y="1008" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2280" y="967.5" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="141" value="Create Test Entire Run" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2869.9999999999995" y="1161" width="50" height="50" as="geometry"/>
@@ -539,13 +539,10 @@
                     <mxGeometry x="-2720" y="1161" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="153" value="Tech behaviors" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2967.4999999999995" y="1006" width="50" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="154" value="Simpler Config / Gen" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="968.5899999999999" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2967.4999999999995" y="992" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="155" value="Templates" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-3059.9999999999995" y="1018.22" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-3059.9999999999995" y="1030.59" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="156" value="Story Sync" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2572.4999999999995" y="1008" width="50" height="50" as="geometry"/>
@@ -554,7 +551,7 @@
                     <mxGeometry x="-3129.9999999999995" y="1042" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="158" value="New Rules Approach" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-3199.9999999999995" y="1008" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-3197.0699999999997" y="998.66" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="159" value="Other" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-3275.8199999999993" y="1044" width="50" height="50" as="geometry"/>
@@ -563,10 +560,10 @@
                     <mxGeometry x="-3359.9999999999995" y="1044" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="162" value="Multiple&amp;nbsp; Workflows" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="1495.28" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2372.75" y="1519.24" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="163" value="simplify action names and behaviors (for cli)" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1997.9999999999995" y="848" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1738.9999999999995" y="954.2199999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="164" value="Refactoring All Tests" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1594.9999999999995" y="828" width="50" height="50" as="geometry"/>
@@ -578,7 +575,7 @@
                     <mxGeometry x="-1594.9999999999995" y="888" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="167" value="Optimize Code Scanners" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1999.9999999999995" y="1058" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1996.9999999999995" y="1064.09" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="168" value="Scan All Code Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1594.9999999999995" y="949" width="50" height="50" as="geometry"/>
@@ -587,13 +584,13 @@
                     <mxGeometry x="-1864.9999999999995" y="841.25" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="170" value="Alternate Workflows" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2320" y="1406.28" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2432.75" y="1430.24" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="171" value="Design" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;fontColor=#080808;fillColor=#FFFCF5;" parent="1" vertex="1">
                     <mxGeometry x="-2160" y="694" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="173" value="VS Code 1 click install MAC" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1860" y="973.5" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1861" y="921" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="175" value="Must Deploy to&amp;nbsp; Venv&lt;br&gt;1. Install sucessfully&lt;br&gt;2. one click&lt;br&gt;3. CLear instructins how to start" style="rounded=0;whiteSpace=wrap;html=1;fontColor=#080808;fontSize=8;align=left;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
                     <mxGeometry x="-2960" y="780" width="100" height="110" as="geometry"/>
@@ -674,14 +671,11 @@
                 <mxCell id="206" value="" style="shape=doubleArrow;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=15;rotation=90;" parent="1" vertex="1">
                     <mxGeometry x="-3650" y="964.5" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="209" value="Addy" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1820" y="936" width="20" height="20" as="geometry"/>
-                </mxCell>
-                <mxCell id="210" value="Ashly" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
+                <mxCell id="210" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1820" y="883.75" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="213" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1830" y="808" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="-1832.5" y="805.25" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="214" value="Final Test Refactor" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1994.9999999999995" y="768.13" width="50" height="50" as="geometry"/>
@@ -690,16 +684,16 @@
                     <mxGeometry x="-1961" y="763.5" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="216" value="Ashly" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1820" y="979" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="-1821" y="926.5" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="217" value="Slash Commands for VSCode" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2124.9999999999995" y="841.2499999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="218" value="add to help as well" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;" parent="1" vertex="1">
-                    <mxGeometry x="-2032" y="907.5" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="-2030" y="916" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="220" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1964" y="843.25" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="-1701" y="949.4699999999999" width="16" height="16" as="geometry"/>
                 </mxCell>
                 <mxCell id="221" value="Addy" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2090" y="830" width="20" height="20" as="geometry"/>
@@ -720,7 +714,7 @@
                     <mxGeometry x="-2390" y="767.5" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="227" value="CICD Container / Pipeline" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="1142.22" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2260" y="840" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="229" value="Better Domain Oriented" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2960" y="1277.9999999999998" width="50" height="50" as="geometry"/>
@@ -729,10 +723,10 @@
                     <mxGeometry x="-3120" y="1339.9999999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="231" value="Automatic execution of synchronizers" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1734.9999999999995" y="943.7200000000001" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1859.9999999999995" y="1121.1800000000003" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="232" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1695" y="938.0000000000001" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="-1820" y="1115.46" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="233" value="Ready" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;fontColor=#080808;fillColor=#FFFCF5;" parent="1" vertex="1">
                     <mxGeometry x="-1770" y="692" width="120" height="60" as="geometry"/>
@@ -740,23 +734,47 @@
                 <mxCell id="234" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1965" y="971" width="20" height="20" as="geometry"/>
                 </mxCell>
-                <mxCell id="235" value="Build Action Scop" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1735" y="878.79" width="50" height="50" as="geometry"/>
+                <mxCell id="235" value="Build Action Scope" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1860" y="1056.25" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="236" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1702" y="871.2" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="-1827" y="1048.6599999999999" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="237" value="Scanner Execution Status Reporting" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1735" y="810" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1860" y="987.4599999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="238" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1690" y="803.1299999999999" width="15" height="15" as="geometry"/>
+                    <mxGeometry x="-1815" y="980.5899999999998" width="15" height="15" as="geometry"/>
                 </mxCell>
                 <mxCell id="240" value="CLI Displays Exceptions to Chat" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1997.9999999999995" y="1116" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1859.9999999999995" y="1189.37" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="241" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1964" y="1054.22" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="-1961" y="1060.31" width="20" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="242" value="Story Sync" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2412.7499999999995" y="1257.96" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="244" value="Chat Rendering" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2797" y="1102" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="245" value="User Experience" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2796.9999999999995" y="1042" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="246" value="Fancy Chat UI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2797" y="1161" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="247" value="Display Help With Better Formatting" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-1738.9999999999995" y="829.25" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="248" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-1697" y="825.25" width="16" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="249" value="Display BreadCrumbs" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-1737.9999999999995" y="891.25" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="250" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-1699" y="882.75" width="16" height="16" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

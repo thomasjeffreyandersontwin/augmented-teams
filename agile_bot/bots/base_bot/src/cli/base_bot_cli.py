@@ -283,14 +283,22 @@ class BaseBotCli:
             print(f"  {fmt.format_command(f'{self.bot_name} --help-cursor')}   {fmt.format_label('# List cursor commands')}")
             print(f"  {fmt.format_command(f'{self.bot_name} --close')}         {fmt.format_label('# Close current action')}")
             
-            # Add breadcrumbs at the end
+            # Add breadcrumbs at the end (from action.py - single source of truth)
             breadcrumbs = self._get_breadcrumbs_from_action()
             if breadcrumbs:
                 print(f"\n{fmt.format_separator()}")
-                print(f"\n{fmt.format_workflow_status_header('Current Workflow Status:')}")
+                sys.stdout.flush()  # Flush before buffer write to maintain order
                 for line in breadcrumbs:
-                    formatted_line = self._format_breadcrumb_line(line)
-                    print(formatted_line)
+                    # Skip AI directive lines
+                    if line.startswith("**CRITICAL: YOU MUST DISPLAY") or line.startswith("**YOU MUST DISPLAY"):
+                        continue
+                    # Write with UTF-8 encoding to preserve emojis for markdown rendering
+                    try:
+                        sys.stdout.buffer.write((line + "\n").encode('utf-8'))
+                        sys.stdout.buffer.flush()
+                    except Exception:
+                        # Fallback to regular print if buffer write fails
+                        print(line)
             
             sys.stdout.flush()
         except Exception as e:
@@ -398,7 +406,10 @@ class BaseBotCli:
             # in this class handle detection and formatting of output with directives.
             # Use sys.stdout.write to ensure exact output without any Python print() formatting
             sys.stdout.write("**CRITICAL: YOU MUST DISPLAY THE ENTIRE OUTPUT BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**\n")
-            print(f"{fmt.format_header(f'Available Cursor Commands for {self.bot_name}:')}\n")
+            print(f"{fmt.format_header(f'Available Cursor Commands for {self.bot_name}:')}")
+            print()
+            print(fmt.format_separator())
+            print()
             
             # Group commands by category (for ordering, but don't show group headers)
             grouped_commands = self._group_commands(command_files)
@@ -408,7 +419,7 @@ class BaseBotCli:
             for group_name, cmds in grouped_commands.items():
                 all_commands.extend(cmds)
             
-            # Display commands with separators
+            # Display commands with new format: title, description, code block with syntax/params
             for i, cmd_file in enumerate(all_commands):
                 cmd_name = cmd_file.stem
                 
@@ -420,63 +431,70 @@ class BaseBotCli:
                     
                     description = self._get_behavior_description(cmd_name)
                     
-                    # Build parameter placeholders for inline display
+                    # Build parameter placeholders for code block
                     param_placeholders = []
+                    param_details = []
                     if params:
                         for param_num in params:
                             param_desc = self._infer_parameter_description(cmd_name, param_num, cmd_content)
                             # Extract placeholder name from description, dynamically getting actions for behavior
                             placeholder = self._extract_placeholder_name(cmd_name, param_desc, param_num)
-                            param_placeholders.append(fmt.format_parameter(f"<{placeholder}>"))
-                    
-                    # Display command with inline parameters - make it more prominent with header
-                    if param_placeholders:
-                        print(f"### {fmt.format_command(f'/{cmd_name}')} {' '.join(param_placeholders)}")
-                    else:
-                        print(f"### {fmt.format_command(f'/{cmd_name}')}")
-                    
-                    print(f"  {fmt.format_label('Description:')} {description}")
-                    
-                    # Display parameter descriptions on one line with dash
-                    if params:
-                        for param_num in params:
-                            param_desc = self._infer_parameter_description(cmd_name, param_num, cmd_content)
+                            param_placeholders.append(f"<{placeholder}>")
                             
+                            # Build parameter detail lines for code block
                             if param_num == '1':
-                                # Action parameter - options already shown inline, just show description
-                                print(f"  {fmt.format_label('action:')} - Specifies which action to execute within this behavior")
+                                param_details.append(f"action:   {placeholder}")
                             elif param_num == '2':
-                                # Context parameter
-                                print(f"  {fmt.format_label('context:')} - Optional context or file path. If not specified, will be taken from the current chat context")
+                                param_details.append("context:  Optional context or file path")
                     
-                    # Add separator line after each command (below the command)
-                    print(fmt.format_thin_separator())
+                    # Display: ## title
+                    print(f"## {cmd_name}\n")
+                    
+                    # Display: description (plain text)
+                    print(f"{description}\n")
+                    
+                    # Display: code block with syntax and parameters
+                    print("```")
+                    if param_placeholders:
+                        print(f"/{cmd_name} {' '.join(param_placeholders)}")
+                    else:
+                        print(f"/{cmd_name}")
+                    
+                    # Add parameter details inside code block
+                    if param_details:
+                        print()
+                        for detail in param_details:
+                            print(detail)
+                    print("```\n")
                     
                 except Exception as e:
-                    if i > 0:
-                        print(fmt.format_separator())
-                        print()
-                    print(f"{fmt.format_command(f'/{cmd_name}')}")
-                    print(f"  {fmt.format_error(f'Error reading command: {e}')}")
+                    print(f"## {cmd_name}\n")
+                    print(f"{fmt.format_error(f'Error reading command: {e}')}\n")
                     import traceback
                     traceback.print_exc()
                     sys.stdout.flush()
             
             # Get breadcrumbs from Action (single source of truth)
+            # Action returns fully formatted breadcrumbs with emojis and markdown
             breadcrumbs = self._get_breadcrumbs_from_action()
             
-            # Format and display breadcrumbs
-            print(f"\n{fmt.format_separator()}")
-            print(f"\n{fmt.format_workflow_status_header('Current behavior action status.')}")
-            if breadcrumbs:
-                for line in breadcrumbs:
-                    # Format different parts of breadcrumb lines
-                    formatted_line = self._format_breadcrumb_line(line)
-                    # Skip empty lines (filtered directives)
-                    if formatted_line:
-                        print(formatted_line)
-            else:
-                print(f"  {fmt.format_workflow_pending('(No workflow state available)')}")
+            # Add separator before workflow status
+            print(fmt.format_separator())
+            print()
+            sys.stdout.flush()  # Flush before buffer write to maintain order
+            
+            # Display breadcrumbs directly - they're already formatted by action.py
+            for line in breadcrumbs:
+                # Skip AI directive lines
+                if line.startswith("**CRITICAL: YOU MUST DISPLAY") or line.startswith("**YOU MUST DISPLAY"):
+                    continue
+                # Write with UTF-8 encoding to preserve emojis for markdown rendering
+                try:
+                    sys.stdout.buffer.write((line + "\n").encode('utf-8'))
+                    sys.stdout.buffer.flush()
+                except Exception:
+                    # Fallback to regular print if buffer write fails
+                    print(line)
             
             sys.stdout.flush()
         except Exception as e:
@@ -954,76 +972,5 @@ class BaseBotCli:
             # If anything fails, return empty tree (don't print errors, just fail silently)
             logger.debug(f"Failed to get breadcrumbs from action: {e}")
             return []
-    
-    def _format_breadcrumb_line(self, line: str) -> str:
-        """
-        Format a breadcrumb line with markdown formatting.
-        CLI is responsible for formatting the content generated by Actions.
-        
-        Args:
-            line: Raw breadcrumb line from Action
-            
-        Returns:
-            Formatted line with markdown, or empty string if line should be filtered out
-        """
-        fmt = self.formatter
-        
-        # Filter out directives that are for AI assistants, not for display
-        if line.startswith("**YOU MUST DISPLAY") or line.startswith("**CRITICAL: YOU MUST DISPLAY"):
-            # This is a directive for AI, not for user display - skip it
-            return ""
-        elif line.startswith("**Working Directory:**"):
-            # Format: **base_bot** rest_of_path
-            path = line.replace("**Working Directory:**", "").strip()
-            path_obj = Path(path)
-            # Find base_bot in the path and format accordingly
-            parts = list(path_obj.parts)
-            if "base_bot" in parts:
-                idx = parts.index("base_bot")
-                # Reconstruct path with base_bot bold
-                before_parts = parts[:idx]
-                after_parts = parts[idx+1:]
-                before_str = str(Path(*before_parts)) if before_parts else ""
-                after_str = str(Path(*after_parts)) if after_parts else ""
-                if before_str:
-                    result = f"**base_bot** {before_str}{path_obj._flavour.sep}base_bot"
-                else:
-                    result = f"**base_bot** base_bot"
-                if after_str:
-                    result += f"{path_obj._flavour.sep}{after_str}"
-                return result
-            return line
-        elif line.startswith("**Bot Directory:**"):
-            # Format: **story_bot** full_path_including_story_bot
-            path = line.replace("**Bot Directory:**", "").strip()
-            path_obj = Path(path)
-            bot_name = path_obj.name
-            # Show full path with bot name bold
-            return f"**{bot_name}** {path}"
-        elif line.startswith("**WORKFLOW PROGRESS:**"):
-            # Skip this section - it's redundant
-            return ""
-        elif line.startswith("**Current State:**"):
-            # Already has **, keep it
-            return line
-        elif line.startswith("**Next step:**"):
-            # Already has **, keep it
-            return line
-        elif "[current]" in line:
-            # Current action marker - make it bold
-            return f"**{line}**"
-        elif "[x]" in line:
-            # Completed item - keep as is for markdown checkbox
-            return line
-        elif "[ ]" in line:
-            # Pending item - keep as is for markdown checkbox
-            return line
-        elif line.strip() == "":
-            # Empty line
-            return line
-        else:
-            # Default formatting - return as is
-            return line
-    
     
 
