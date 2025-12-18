@@ -1,6 +1,6 @@
 """Scanner for validating import statements are at the top of files."""
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
@@ -11,7 +11,7 @@ from .violation import Violation
 class ImportPlacementScanner(CodeScanner):
     """Validates that all import statements are at the top of the file."""
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Scan a file for import placement violations.
         
         Args:
@@ -141,6 +141,13 @@ class ImportPlacementScanner(CodeScanner):
                 violations.append(violation)
         
         return violations
+
+
+
+
+
+
+
 
 
 

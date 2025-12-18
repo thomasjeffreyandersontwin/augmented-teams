@@ -9,20 +9,20 @@ from .violation import Violation
 class UbiquitousLanguageScanner(TestScanner):
     """Validates domain language consistency (ubiquitous language)."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding='utf-8')
             
             # Extract domain terms from knowledge graph
             domain_terms = self._extract_domain_terms(knowledge_graph)
             
             # Check for ubiquitous language violations
-            violations.extend(self._check_ubiquitous_language(content, domain_terms, test_file_path, rule_obj))
+            violations.extend(self._check_ubiquitous_language(content, domain_terms, file_path, rule_obj))
         
         except (UnicodeDecodeError, Exception):
             # Skip binary files or files with encoding issues

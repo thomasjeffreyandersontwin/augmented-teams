@@ -5,6 +5,7 @@ from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
 from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_spec import KnowledgeGraphSpec
 from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_template import KnowledgeGraphTemplate
+from agile_bot.bots.base_bot.src.actions.build.build_scope import BuildScope
 from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,19 @@ class BuildKnowledgeAction(Action):
         # Inject knowledge graph data (knowledge_graph_spec, knowledge_graph_template) from Knowledge
         kg_instructions = self.knowledge.instructions
         instructions.update(kg_instructions)
+        
+        # Extract scope using BuildScope (similar to ValidationScope)
+        build_scope = BuildScope(parameters or {}, self.behavior.bot_paths)
+        scope_config = build_scope.scope
+        
+        # Add scope to instructions
+        instructions['scope'] = scope_config
+        
+        # Also add story names if scope is not 'all' (for convenience)
+        story_graph = self.knowledge_graph_spec.knowledge_graph
+        story_names = build_scope.get_story_names(story_graph.content)
+        if story_names is not None:
+            instructions['scope_story_names'] = list(story_names)
         
         # Check if output file exists and add update instructions
         story_graph = self.knowledge_graph_spec.knowledge_graph

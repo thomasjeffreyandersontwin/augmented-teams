@@ -13,21 +13,21 @@ class StoryGraphMatchScanner(TestScanner):
     This is similar to ClassBasedOrganizationScanner but more comprehensive.
     """
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Extract story names from knowledge graph
             story_names = self._extract_story_names(knowledge_graph)
             
             # Check test classes match stories
-            violations.extend(self._check_test_classes_match_stories(tree, story_names, test_file_path, rule_obj))
+            violations.extend(self._check_test_classes_match_stories(tree, story_names, file_path, rule_obj))
         
         except (SyntaxError, UnicodeDecodeError):
             # Skip files with syntax errors

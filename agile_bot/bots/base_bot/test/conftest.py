@@ -456,7 +456,8 @@ def create_test_behavior_action_state(
     
     # Create base action configs
     from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_standard_workflow_actions_config
-    given_standard_workflow_actions_config(bot_dir)
+    from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_workflow_config
+    given_workflow_config(bot_dir)
     
     # Create minimal guardrails files (required for Guardrails initialization)
     from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
@@ -467,11 +468,10 @@ def create_test_behavior_action_state(
     # (build action requires knowledge graph config to initialize)
     try:
         from agile_bot.bots.base_bot.test.test_build_knowledge import (
-            given_knowledge_graph_directory_structure_created,
-            given_knowledge_graph_config_and_template_created
+            given_setup
         )
-        kg_dir = given_knowledge_graph_directory_structure_created(bot_dir, behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir)
+        kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
+        given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     except Exception:
         pass  # If kg config creation fails, continue (some behaviors may not need it)
     

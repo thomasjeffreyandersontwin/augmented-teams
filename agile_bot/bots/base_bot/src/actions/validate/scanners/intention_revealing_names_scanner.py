@@ -39,17 +39,13 @@ class IntentionRevealingNamesScanner(CodeScanner):
         'result',  # Acceptable as return value name
     }
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
             return violations
         
-        # Skip test files - they have different naming conventions
-        if self._is_test_file(file_path):
-            return violations
-        
-        # Extract domain terms from knowledge graph
+        # Extract domain terms from knowledge graph (using enhanced extraction from CodeScanner base class)
         domain_terms = set()
         if self.knowledge_graph:
             domain_terms = self._extract_domain_terms(self.knowledge_graph)
@@ -58,8 +54,11 @@ class IntentionRevealingNamesScanner(CodeScanner):
             content = file_path.read_text(encoding='utf-8')
             tree = ast.parse(content, filename=str(file_path))
             
+            # Build docstring line ranges to exclude from scanning
+            docstring_ranges = self._get_docstring_ranges(tree)
+            
             # Check variable names
-            violations.extend(self._check_variable_names(tree, file_path, rule_obj, content, domain_terms))
+            violations.extend(self._check_variable_names(tree, file_path, rule_obj, content, domain_terms, docstring_ranges))
             
             # Check function names
             violations.extend(self._check_function_names(tree, file_path, rule_obj, domain_terms))
@@ -73,35 +72,14 @@ class IntentionRevealingNamesScanner(CodeScanner):
         
         return violations
     
-    def _is_test_file(self, file_path: Path) -> bool:
-        """Check if file is a test file and should be skipped."""
-        path_str = str(file_path).lower()
-        file_name = file_path.name.lower()
-        
-        # Skip test directories (but allow files in test directories if they're not test files)
-        # Only skip if path contains '/test/' or '/tests/' or '\\test\\' or '\\tests\\' (directory separators)
-        # Don't skip just because 'test' appears in the path (e.g., 'test_scanner' directory)
-        if '/test/' in path_str or '/tests/' in path_str or '\\test\\' in path_str or '\\tests\\' in path_str:
-            # But still check the filename - if it's not a test file, allow it
-            if not file_name.startswith('test_') and file_name != 'conftest.py':
-                return False  # File in test directory but not a test file - allow it
-        
-        # Skip test files (files starting with test_)
-        if file_name.startswith('test_'):
-            return True
-        
-        # Skip conftest files
-        if file_name == 'conftest.py':
-            return True
-        
-        return False
-    
-    def _check_variable_names(self, tree: ast.AST, file_path: Path, rule_obj: Any, content: str, domain_terms: set = None) -> List[Dict[str, Any]]:
+    def _check_variable_names(self, tree: ast.AST, file_path: Path, rule_obj: Any, content: str, domain_terms: set = None, docstring_ranges: List[tuple] = None) -> List[Dict[str, Any]]:
         """Check for poor variable names."""
         violations = []
         
         if domain_terms is None:
             domain_terms = set()
+        if docstring_ranges is None:
+            docstring_ranges = []
         
         # Generic names that should be flagged (excluding acceptable context names and domain terms)
         generic_names = ['info', 'thing', 'stuff', 'temp']
@@ -109,6 +87,10 @@ class IntentionRevealingNamesScanner(CodeScanner):
         for node in ast.walk(tree):
             if isinstance(node, ast.Name):
                 var_name = node.id
+                
+                # Skip if node is inside a docstring or comment
+                if self._is_in_docstring_or_comment(node, content, docstring_ranges):
+                    continue
                 
                 # Skip if it's a store context (assignment target) - check if it's acceptable in context
                 if isinstance(node.ctx, ast.Store):
@@ -147,12 +129,11 @@ class IntentionRevealingNamesScanner(CodeScanner):
                             severity='error'
                         ).to_dict()
                         violations.append(violation)
-                # Also check if variable name contains domain terms (e.g., "planning_data", "agent_config")
+                # Also check if variable name matches domain terms using compound term matching
                 elif domain_terms:
-                    # Check if variable name contains any domain term - if so, it's likely acceptable
-                    var_words = var_name_lower.split('_')
-                    if any(word in domain_terms for word in var_words):
-                        continue  # Contains domain term - likely acceptable
+                    # Use compound term matching (from CodeScanner base class)
+                    if self._matches_domain_term(var_name, domain_terms):
+                        continue  # Matches domain term - likely acceptable
         
         return violations
     
@@ -186,11 +167,10 @@ class IntentionRevealingNamesScanner(CodeScanner):
                 if func_name_lower in self.ACCEPTABLE_DOMAIN_TERMS:
                     continue
                 
-                # Check if function name contains domain terms (e.g., "process_planning_data", "build_agent_config")
+                # Check if function name matches domain terms using compound term matching
                 if domain_terms:
-                    func_words = func_name_lower.split('_')
-                    if any(word in domain_terms for word in func_words):
-                        continue  # Contains domain term - likely acceptable
+                    if self._matches_domain_term(func_name, domain_terms):
+                        continue  # Matches domain term - likely acceptable
                 
                 # Check for generic names (excluding acceptable domain terms)
                 generic_names = ['process', 'handle', 'do', 'execute', 'run', 'main']
@@ -227,14 +207,10 @@ class IntentionRevealingNamesScanner(CodeScanner):
                 if any(pattern in class_name for pattern in acceptable_class_patterns):
                     continue
                 
-                # Check if class name contains domain terms (e.g., "PlanningAgent", "WorkflowManager")
+                # Check if class name matches domain terms using compound term matching
                 if domain_terms:
-                    # Extract words from PascalCase class name
-                    import re
-                    class_words = re.findall(r'[A-Z][a-z]*', class_name)
-                    class_words_lower = [w.lower() for w in class_words]
-                    if any(word in domain_terms for word in class_words_lower):
-                        continue  # Contains domain term - likely acceptable
+                    if self._matches_domain_term(class_name, domain_terms):
+                        continue  # Matches domain term - likely acceptable
                 
                 # Check for generic names (only flag if it's a standalone generic name)
                 generic_names = ['Manager', 'Handler', 'Processor', 'Util', 'Helper', 'Service']
@@ -276,5 +252,79 @@ class IntentionRevealingNamesScanner(CodeScanner):
             elif isinstance(parent.iter, (ast.List, ast.Tuple)):
                 if len(parent.iter.elts) <= 5:  # Small collection
                     return True
+        return False
+    
+    def _get_docstring_ranges(self, tree: ast.AST) -> List[tuple]:
+        """Get line number ranges for all docstrings in the AST.
+        
+        Returns a list of (start_line, end_line) tuples for each docstring.
+        """
+        docstring_ranges = []
+        
+        def visit_node(node):
+            """Recursively visit nodes to find docstrings."""
+            # Check if this node has a body (function, class, module)
+            if hasattr(node, 'body') and isinstance(node.body, list) and len(node.body) > 0:
+                # Check if first statement is a docstring
+                first_stmt = node.body[0]
+                if isinstance(first_stmt, ast.Expr):
+                    # Docstring is an expression with a constant string
+                    if isinstance(first_stmt.value, (ast.Constant, ast.Str)):
+                        # Get the string value
+                        if isinstance(first_stmt.value, ast.Constant):
+                            docstring_value = first_stmt.value.value
+                        else:  # ast.Str (Python < 3.8)
+                            docstring_value = first_stmt.value.s
+                        
+                        if isinstance(docstring_value, str):
+                            # Get line numbers
+                            start_line = first_stmt.lineno if hasattr(first_stmt, 'lineno') else None
+                            if start_line:
+                                # Count lines in docstring content
+                                docstring_lines = docstring_value.count('\n')
+                                # Add 1 for the content itself, and account for triple quotes (2 lines)
+                                end_line = start_line + docstring_lines + 2
+                                docstring_ranges.append((start_line, end_line))
+            
+            # Recursively visit child nodes
+            for child in ast.iter_child_nodes(node):
+                visit_node(child)
+        
+        visit_node(tree)
+        return docstring_ranges
+    
+    def _is_in_docstring_or_comment(self, node: ast.AST, content: str, docstring_ranges: List[tuple]) -> bool:
+        """Check if a node is inside a docstring or comment.
+        
+        Args:
+            node: AST node to check
+            content: Source code content
+            docstring_ranges: List of (start_line, end_line) tuples for docstrings
+            
+        Returns:
+            True if node is inside a docstring or comment, False otherwise
+        """
+        if not hasattr(node, 'lineno'):
+            return False
+        
+        line_number = node.lineno
+        
+        # Check if line is within any docstring range
+        for start_line, end_line in docstring_ranges:
+            if start_line <= line_number <= end_line:
+                return True
+        
+        # Check if line is a comment
+        lines = content.split('\n')
+        if line_number <= len(lines):
+            line = lines[line_number - 1].strip()
+            # Check if line starts with # (comment)
+            if line.startswith('#'):
+                return True
+            # Check if line is part of a multi-line comment block (triple quotes in comments)
+            # This is a heuristic - Python doesn't have true multi-line comments, but docstrings can appear as comments
+            if line.startswith('"""') or line.startswith("'''"):
+                return True
+        
         return False
 

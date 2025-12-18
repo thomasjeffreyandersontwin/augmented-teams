@@ -37,9 +37,9 @@ def verify_action_tracks_start(bot_dir: Path, workspace_dir: Path, action_class,
     
     # If action is 'build', create knowledge graph config structure
     if action_name == 'build':
-        from agile_bot.bots.base_bot.test.test_build_knowledge import given_knowledge_graph_directory_structure_created, given_knowledge_graph_config_and_template_created
-        kg_dir = given_knowledge_graph_directory_structure_created(bot_dir, behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir)
+        from agile_bot.bots.base_bot.test.test_build_knowledge import given_setup
+        kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
+        given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
     # Create mock behavior object
     from types import SimpleNamespace
@@ -90,9 +90,9 @@ def verify_action_tracks_completion(bot_dir: Path, workspace_dir: Path, action_c
     
     # If action is 'build', create knowledge graph config structure
     if action_name == 'build':
-        from agile_bot.bots.base_bot.test.test_build_knowledge import given_knowledge_graph_directory_structure_created, given_knowledge_graph_config_and_template_created
-        kg_dir = given_knowledge_graph_directory_structure_created(bot_dir, behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir)
+        from agile_bot.bots.base_bot.test.test_build_knowledge import given_setup
+        kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
+        given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
     # Create mock behavior object
     from types import SimpleNamespace
@@ -165,9 +165,9 @@ def verify_workflow_transition(bot_dir: Path, workspace_dir: Path, source_action
     
     # If build action is involved, create knowledge graph config structure
     if source_action == 'build' or dest_action == 'build':
-        from agile_bot.bots.base_bot.test.test_build_knowledge import given_knowledge_graph_directory_structure_created, given_knowledge_graph_config_and_template_created
-        kg_dir = given_knowledge_graph_directory_structure_created(bot_dir, behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir)
+        from agile_bot.bots.base_bot.test.test_build_knowledge import given_setup
+        kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
+        given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
     config_path = bot_dir / 'bot_config.json'
     bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=config_path)
@@ -215,11 +215,10 @@ def verify_workflow_saves_completed_action(bot_dir: Path, workspace_dir: Path, a
     # If behavior has 'build' action, create knowledge graph configs
     if action_name == 'build':
         from agile_bot.bots.base_bot.test.test_build_knowledge import (
-            given_knowledge_graph_directory_structure_created,
-            given_knowledge_graph_config_and_template_created
+            given_setup
         )
-        kg_dir = given_knowledge_graph_directory_structure_created(bot_dir, behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir)
+        kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
+        given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
     config_path = bot_dir / 'bot_config.json'
     bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=config_path)
@@ -247,16 +246,42 @@ def verify_workflow_saves_completed_action(bot_dir: Path, workspace_dir: Path, a
 # WORKFLOW ASSERTION HELPERS - Used across Execute Behavior Actions epic
 # ============================================================================
 
-def then_workflow_current_state_is(workflow, expected_state: str):
-    """Then: Workflow current state is expected."""
-    assert workflow.current_state == expected_state or workflow.state == expected_state
+def then_workflow_current_state_matches(bot_or_workflow, expected_action: str):
+    """
+    Consolidated function for checking workflow current state.
+    Replaces: then_workflow_current_state_is
+    
+    Args:
+        bot_or_workflow: Bot instance or workflow object
+        expected_action: Expected action/state name
+    """
+    if hasattr(bot_or_workflow, 'current_state'):
+        workflow = bot_or_workflow
+    elif hasattr(bot_or_workflow, 'workflow'):
+        workflow = bot_or_workflow.workflow
+    else:
+        workflow = bot_or_workflow
+    
+    assert workflow.current_state == expected_action or workflow.state == expected_action
 
 
-def then_completed_actions_include(workflow_file: Path, expected_action_states: list):
-    """Then: Completed actions include expected action states."""
-    state_data = json.loads(workflow_file.read_text(encoding='utf-8'))
-    completed_states = [entry.get('action_state') for entry in state_data.get('completed_actions', [])]
-    for expected_state in expected_action_states:
+def then_completed_actions_match(workflow_file_or_workflow, expected_actions: list):
+    """
+    Consolidated function for checking completed actions.
+    Replaces: then_completed_actions_include
+    
+    Args:
+        workflow_file_or_workflow: Path to workflow file or workflow object
+        expected_actions: List of expected action states
+    """
+    if isinstance(workflow_file_or_workflow, Path):
+        state_data = json.loads(workflow_file_or_workflow.read_text(encoding='utf-8'))
+        completed_states = [entry.get('action_state') for entry in state_data.get('completed_actions', [])]
+    else:
+        workflow = workflow_file_or_workflow
+        completed_states = [entry.get('action_state') for entry in workflow.completed_actions]
+    
+    for expected_state in expected_actions:
         assert expected_state in completed_states, f"Expected {expected_state} in completed_actions"
 
 
@@ -408,14 +433,3 @@ def _create_action_with_default_class(bot_name: str, behavior: str, bot_director
         return bot_name, behavior, action_obj
 
 
-def given_environment_bootstrapped_and_action_initialized(bot_directory: Path, workspace_directory: Path, 
-                                                          bot_name: str = None, behavior: str = None, 
-                                                          action_class=None):
-    """Given: Environment bootstrapped and action initialized."""
-    bootstrap_env(bot_directory, workspace_directory)
-    bot_name = bot_name or 'story_bot'
-    
-    if action_class:
-        return _create_action_with_provided_class(action_class, bot_name, behavior, bot_directory)
-    else:
-        return _create_action_with_default_class(bot_name, behavior, bot_directory)

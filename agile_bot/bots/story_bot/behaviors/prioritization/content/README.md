@@ -14,12 +14,12 @@ All render and synchronize configurations now use the **story_io** CLI.
 
 ### Markdown Rendering (templates only)
 
-2. **render_increments.json**
-   - Template: `story-map-increments-template.md`
+2. **render_increments_md.json**
+   - Template: `story-map-increments.md`
    - Path: `docs/stories`
 
 3. **render_increments_backlog.json**
-   - Template: `story-map-increments-backlog-template.md`
+   - Template: `story-map-increments-backlog.md`
    - Path: `docs/stories`
 
 ## Synchronize Configurations

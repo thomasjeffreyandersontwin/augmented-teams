@@ -22,22 +22,22 @@ class ClassBasedOrganizationScanner(TestScanner):
         """Scan story node (required by StoryScanner, but not used for test scanning)."""
         return []  # Test scanning happens in scan_test_file, not scan_story_node
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         # Check file naming matches sub-epic
         sub_epic_names = self._extract_sub_epic_names(knowledge_graph)
-        file_name = test_file_path.stem  # Without .py extension
-        violation = self._check_file_name_matches_sub_epic(file_name, sub_epic_names, test_file_path, rule_obj, knowledge_graph)
+        file_name = file_path.stem  # Without .py extension
+        violation = self._check_file_name_matches_sub_epic(file_name, sub_epic_names, file_path, rule_obj, knowledge_graph)
         if violation:
             violations.append(violation)
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Extract story names from knowledge graph
             story_names = self._extract_story_names(knowledge_graph)
@@ -47,7 +47,7 @@ class ClassBasedOrganizationScanner(TestScanner):
                 if isinstance(node, ast.ClassDef):
                     if node.name.startswith('Test'):
                         # Check if class name matches a story name
-                        violation = self._check_class_name_matches_story(node.name, story_names, test_file_path, rule_obj)
+                        violation = self._check_class_name_matches_story(node.name, story_names, file_path, rule_obj)
                         if violation:
                             violations.append(violation)
                         
@@ -57,7 +57,7 @@ class ClassBasedOrganizationScanner(TestScanner):
                                 if item.name.startswith('test_'):
                                     # Check method name matches scenario
                                     violation = self._check_method_name_matches_scenario(
-                                        item.name, node.name, story_names, knowledge_graph, test_file_path, rule_obj
+                                        item.name, node.name, story_names, knowledge_graph, file_path, rule_obj
                                     )
                                     if violation:
                                         violations.append(violation)
@@ -450,7 +450,7 @@ class ClassBasedOrganizationScanner(TestScanner):
             severity='error'
         ).to_dict()
     
-    def _get_sub_epics_spanned_by_test_methods(self, test_file_path: Path, knowledge_graph: Dict[str, Any]) -> set:
+    def _get_sub_epics_spanned_by_test_methods(self, file_path: Path, knowledge_graph: Dict[str, Any]) -> set:
         """Get set of sub-epic names that test methods in this file span.
         
         Returns set of sub-epic names (normalized) that the test methods belong to.
@@ -458,8 +458,8 @@ class ClassBasedOrganizationScanner(TestScanner):
         sub_epics = set()
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Find all test methods
             for node in ast.walk(tree):

@@ -11,7 +11,7 @@ from .violation import Violation
 class ThirdPartyIsolationScanner(CodeScanner):
     """Validates third-party code is isolated (wrapped behind interfaces)."""
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():

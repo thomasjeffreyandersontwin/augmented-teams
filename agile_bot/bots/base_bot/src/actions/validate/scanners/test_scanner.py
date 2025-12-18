@@ -19,6 +19,11 @@ class TestScanner(Scanner):
     1. Test code files (test classes match stories, methods match scenarios)
     2. Test code quality (via code scanning)
     
+    Unified Architecture:
+    - Scanners should override scan_file() to scan individual files
+    - The base Scanner.scan() will combine test_files and code_files and call scan_file() for each
+    - scan_test_file() is kept for backward compatibility but delegates to scan_file()
+    
     Note: TestScanner does NOT scan story nodes - it only scans test files.
     """
     
@@ -29,40 +34,42 @@ class TestScanner(Scanner):
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None
     ) -> List[Dict[str, Any]]:
-        """Scan test files for violations.
+        """Scan files for violations.
+        
+        Delegates to base Scanner.scan() which combines files and calls scan_file() for each.
+        TestScanner scans all files (test and code) using the unified architecture.
         
         Args:
             knowledge_graph: Story graph structure
             rule_obj: Rule object reference
-            test_files: List of test file paths to scan (from parameters, not knowledge_graph)
-            code_files: Not used by TestScanner (for CodeScanner)
+            test_files: List of test file paths to scan
+            code_files: List of code file paths to scan (also scanned by TestScanner)
             
         Returns:
-            List of violation dictionaries from test code scanning
+            List of violation dictionaries from file scanning
         """
-        violations = []
-        
-        # Scan test files if provided via parameters
-        if test_files:
-            for test_file_path in test_files:
-                if test_file_path.exists():
-                    code_violations = self.scan_test_file(test_file_path, rule_obj, knowledge_graph)
-                    violations.extend(code_violations)
-        
-        return violations
+        # Use base Scanner.scan() which combines files and calls scan_file() for each
+        return super().scan(knowledge_graph, rule_obj, test_files, code_files)
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Scan a test file for violations.
+    def scan_file(
+        self,
+        file_path: Path,
+        rule_obj: Any = None,
+        knowledge_graph: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Scan a single file for violations.
+        
+        Subclasses must override this method to implement scanning logic.
         
         Args:
-            test_file_path: Path to test file
+            file_path: Path to file to scan (test or code file)
             rule_obj: Rule object reference
-            knowledge_graph: Story graph for mapping verification
+            knowledge_graph: Optional knowledge graph (for context-aware scanning)
             
         Returns:
             List of violation dictionaries
         """
-        # Default implementation - subclasses override
+        # Default implementation - subclasses must override
         return []
     
     def scan_cross_file(

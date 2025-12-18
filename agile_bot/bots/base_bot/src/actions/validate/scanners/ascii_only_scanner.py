@@ -14,19 +14,19 @@ class AsciiOnlyScanner(TestScanner):
     assertions, print statements, or output messages.
     """
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding='utf-8')
             lines = content.split('\n')
             
             for line_num, line in enumerate(lines, 1):
                 # Check for Unicode characters (non-ASCII)
-                violation = self._check_unicode_characters(line, test_file_path, line_num, rule_obj)
+                violation = self._check_unicode_characters(line, file_path, line_num, rule_obj)
                 if violation:
                     violations.append(violation)
         

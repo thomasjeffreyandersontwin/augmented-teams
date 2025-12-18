@@ -13,7 +13,7 @@ class SwallowedExceptionsScanner(CodeScanner):
     CRITICAL: Never swallow exceptions silently.
     """
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():

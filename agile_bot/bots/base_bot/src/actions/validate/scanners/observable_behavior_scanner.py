@@ -11,17 +11,17 @@ from .violation import Violation
 class ObservableBehaviorScanner(TestScanner):
     """Detects testing of internal calls/framework logic instead of observable behavior."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding='utf-8')
             
             # Check for internal testing patterns
-            violations.extend(self._check_internal_testing(content, test_file_path, rule_obj))
+            violations.extend(self._check_internal_testing(content, file_path, rule_obj))
         
         except (UnicodeDecodeError, Exception):
             # Skip binary files or files with encoding issues

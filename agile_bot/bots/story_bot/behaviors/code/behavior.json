@@ -7,8 +7,7 @@
   "outputs": "Source code files (.py, .js, etc.) with production implementation",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "instructions": [
-    "Create clean, maintainable production code that implements story behavior",
-    "**CODE MUST FOLLOW CLEAN CODE PRINCIPLES:"
+    "Create clean, maintainable production code that implements story behavior"
   ],
   "actions_workflow": {
     "actions": [
@@ -31,7 +30,6 @@
       {
         "name": "validate",
         "order": 3,
-        "action_class": "agile_bot.bots.story_bot.src.bot.validate_code_files_action.ValidateCodeFilesAction",
         "instructions": [
           "code: validate source code quality AND domain model refinements",
           "Validate that all source files, classes, and functions are properly mapped to story-graph.json",

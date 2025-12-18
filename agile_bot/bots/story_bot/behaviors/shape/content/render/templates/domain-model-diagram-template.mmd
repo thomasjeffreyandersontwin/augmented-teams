@@ -1,0 +1,27 @@
+classDiagram
+    namespace {NamespaceName} {
+        class {ConceptName} {
+            +{responsibility}()
+            +{responsibility}()
+            +{responsibility}()
+        }
+        
+        class {AnotherConcept} {
+            +{responsibility}()
+            +{responsibility}()
+        }
+    }
+    
+    namespace {AnotherNamespace} {
+        class {ConceptInOtherNamespace} {
+            +{responsibility}()
+        }
+    }
+    
+    %% Inheritance
+    {ChildConcept} --|> {ParentConcept}
+    
+    %% Associations
+    {ConceptName} --> {CollaboratorConcept} : {relationship_label}
+    {ConceptName} --> {AnotherConcept} : uses
+

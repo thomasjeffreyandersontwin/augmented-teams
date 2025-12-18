@@ -228,8 +228,6 @@ class TriggerRouterTestHelper:
 # HELPER FUNCTIONS
 # ============================================================================
 
-# Removed create_behavior_action_instructions - use test_helpers.create_behavior_action_instructions instead
-# Removed create_base_action_instructions - use test_helpers.create_base_action_instructions instead
 # Consolidated helper functions from test_invoke_bot_cli.py
 
 def create_base_action_instructions_duplicate_removed(bot_directory: Path, action: str) -> Path:
@@ -289,26 +287,6 @@ def create_action_trigger_words(workspace: Path, bot_name: str, behavior: str, a
     trigger_file.write_text(json.dumps(trigger_data), encoding='utf-8')
     return trigger_file
 
-def when_execute_trigger_for_all_behaviors_and_actions(setup, helper, trigger_message, current_behavior=None, current_action=None):
-    """When: Execute trigger for all behaviors and actions."""
-    for behavior in setup.behaviors:
-        for action in setup.actions:
-            if current_behavior is None:
-                test_behavior = behavior
-            else:
-                test_behavior = current_behavior
-            if current_action is None:
-                test_action = action
-            else:
-                test_action = current_action
-            setup.create_workflow_state(test_behavior, test_action)
-            
-            route, result = helper.match_and_execute(
-                trigger_message,
-                current_behavior=test_behavior,
-                current_action=test_action
-            )
-            
             yield behavior, action, route, result
 
 def then_verify_route_and_result_for_bot_only(setup, helper, behavior, action, route, result, trigger_message):
@@ -365,10 +343,35 @@ def given_trigger_router_helper_and_message(setup, trigger_message: str):
         )
         return helper, trigger_message
 
-def when_test_all_behavior_action_combinations(setup, helper, trigger_message, verify_func, current_behavior=None, current_action=None):
-    """When step: Test all behavior/action combinations."""
-    for behavior in (setup.behaviors if current_behavior is None else [current_behavior]):
-        for action in (setup.actions if current_action is None else [current_action]):
+def when_all_combinations_tested(cli, behaviors, actions, **params):
+    """
+    Consolidated function for testing all behavior/action combinations.
+    Replaces: when_test_all_behavior_action_combinations
+    
+    Args:
+        cli: CLI instance or setup object
+        behaviors: List of behaviors to test
+        actions: List of actions to test
+        **params: Additional parameters:
+            - setup: Setup object (if cli is not a setup object)
+            - helper: Trigger router helper
+            - trigger_message: Trigger message to test
+            - verify_func: Verification function
+            - current_behavior: Current behavior (if None, tests all)
+            - current_action: Current action (if None, tests all)
+    """
+    setup = params.get('setup', cli)
+    helper = params.get('helper')
+    trigger_message = params.get('trigger_message', '')
+    verify_func = params.get('verify_func')
+    current_behavior = params.get('current_behavior')
+    current_action = params.get('current_action')
+    
+    if helper is None or verify_func is None:
+        raise ValueError("helper and verify_func parameters required")
+    
+    for behavior in (behaviors if current_behavior is None else [current_behavior]):
+        for action in (actions if current_action is None else [current_action]):
             setup.create_workflow_state(behavior, action)
             route, result = helper.match_and_execute(
                 trigger_message,
@@ -377,9 +380,22 @@ def when_test_all_behavior_action_combinations(setup, helper, trigger_message, v
             )
             verify_func(setup, helper, behavior, action, route, result, trigger_message)
 
-def given_standard_behavior_triggers_dict():
-    """Given: Standard behavior triggers dictionary."""
-    return {
+def given_behavior_triggers_dict(behavior=None, triggers=None):
+    """
+    Consolidated function for creating behavior triggers dictionary.
+    Replaces: given_standard_behavior_triggers_dict
+    
+    Args:
+        behavior: Behavior name (if None, returns all standard behaviors)
+        triggers: Custom triggers dict (if None, uses standard triggers)
+    
+    Returns:
+        Dictionary mapping behavior names to trigger strings
+    """
+    if triggers is not None:
+        return triggers
+    
+    standard_triggers = {
         'shape': 'kick off shaping for a new feature',
         'prioritization': 'rank the backlog for launch',
         'arrange': 'arrange the feature map layout',
@@ -389,12 +405,52 @@ def given_standard_behavior_triggers_dict():
         'examples': 'prepare usage examples',
         'tests': 'design test coverage'
     }
+    
+    if behavior is None:
+        return standard_triggers
+    elif behavior in standard_triggers:
+        return {behavior: standard_triggers[behavior]}
+    else:
+        return {}
 
-def given_bot_setup_with_behavior_triggers(bot_directory: Path, workspace_directory: Path, behavior_triggers: dict):
-    """Given: Bot setup with behavior triggers."""
-    return TriggerTestSetup(bot_directory, workspace_directory).setup_bot().add_behavior_triggers(
-        {behavior: [trigger] for behavior, trigger in behavior_triggers.items()}
-    )
+def given_setup(setup_type, bot_directory, **setup_params):
+    """
+    Consolidated function for INVOKE CLI setup.
+    Replaces: given_bot_setup_with_triggers, given_bot_setup_with_behavior_triggers
+    
+    Args:
+        setup_type: Type of setup ('bot_with_triggers')
+        bot_directory: Bot directory path
+        **setup_params: Additional parameters:
+            - workspace_directory: Workspace directory path (required)
+            - behaviors: List of behavior names (optional, defaults to standard behaviors)
+            - triggers: Dict of triggers (for 'bot_with_triggers' setup_type)
+            - behavior_triggers: Dict mapping behavior names to trigger patterns
+    
+    Returns:
+        TriggerTestSetup object
+    """
+    workspace_directory = setup_params.get('workspace_directory')
+    if workspace_directory is None:
+        raise ValueError("workspace_directory is required")
+    
+    if setup_type == 'bot_with_triggers':
+        triggers = setup_params.get('triggers')
+        behavior_triggers = setup_params.get('behavior_triggers')
+        
+        setup = TriggerTestSetup(bot_directory, workspace_directory).setup_bot()
+        
+        if behavior_triggers:
+            # Convert behavior_triggers dict to format expected by add_behavior_triggers
+            behavior_patterns = {behavior: [trigger] for behavior, trigger in behavior_triggers.items()}
+            setup.add_behavior_triggers(behavior_patterns)
+        elif triggers:
+            # If triggers is provided as a list, add as bot triggers
+            setup.add_bot_triggers(triggers)
+        
+        return setup
+    else:
+        raise ValueError(f"Unknown setup_type: {setup_type}")
 
 def given_action_trigger_templates_dict():
     """Given: Action trigger templates dictionary."""
@@ -479,8 +535,6 @@ def setup_bot_for_testing(workspace_root: Path, bot_name: str, behaviors: list):
     _create_base_action_instructions(bot_dir)
     return bot_config
 
-# Removed then_route_matches_expected and then_cli_result_matches_expected - imported from test_helpers
-# Removed duplicate helper functions - imported from test_invoke_bot_cli.py above
 
 # ============================================================================
 # FIXTURES
@@ -520,7 +574,9 @@ class TestDetectTriggerWordsThroughExtension:
         helper, trigger_message = given_trigger_router_helper_and_message(setup, 'lets work on stories')
         
         # When: Test all behavior/action combinations
-        when_test_all_behavior_action_combinations(setup, helper, trigger_message, then_verify_route_and_result_for_bot_only)
+        when_all_combinations_tested(setup, setup.behaviors, setup.actions, 
+                                     helper=helper, trigger_message=trigger_message, 
+                                     verify_func=then_verify_route_and_result_for_bot_only)
 
     def test_trigger_bot_and_behavior_no_action_specified(self, bot_directory, workspace_directory):
         """
@@ -533,8 +589,8 @@ class TestDetectTriggerWordsThroughExtension:
         AND: CLI executes behavior with current action
         """
         # Arrange: Set up bot with behavior-level triggers
-        behavior_triggers = given_standard_behavior_triggers_dict()
-        setup = given_bot_setup_with_behavior_triggers(bot_directory, workspace_directory, behavior_triggers)
+        behavior_triggers = given_behavior_triggers_dict()
+        setup = given_setup('bot_with_triggers', bot_directory, workspace_directory=workspace_directory, behavior_triggers=behavior_triggers)
         
         # Given: Trigger router helper
         helper, _ = given_trigger_router_helper_and_message(setup, '')
@@ -586,7 +642,9 @@ class TestDetectTriggerWordsThroughExtension:
         # When: Test all behavior/action combinations for close trigger
         def verify_close(setup, helper, behavior, action, route, result, trigger_message):
             then_verify_close_trigger_route_and_result(setup, route, result)
-        when_test_all_behavior_action_combinations(setup, helper, trigger_message, verify_close)
+        when_all_combinations_tested(setup, setup.behaviors, setup.actions, 
+                                     helper=helper, trigger_message=trigger_message, 
+                                     verify_func=verify_close)
 
 
 # ============================================================================

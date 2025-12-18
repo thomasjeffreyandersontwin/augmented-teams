@@ -12,15 +12,24 @@ class Knowledge:
         self._behavior = behavior
         kg_dir = behavior.folder / 'content' / 'knowledge_graph'
         self._kg_dir = kg_dir
+        # KnowledgeGraphSpec handles missing folders gracefully - defaults to project's docs/stories/story-graph.json
         self.knowledge_graph_spec = KnowledgeGraphSpec(self._kg_dir, behavior.bot_paths)
-        self.knowledge_graph_template = self.knowledge_graph_spec.template
+        self.knowledge_graph_template = self.knowledge_graph_spec.template  # May be None if no template
     
     @property
     def instructions(self) -> Dict[str, Any]:
-        return {
-            'knowledge_graph_template': self.knowledge_graph_template.template_content,
+        result = {
             'knowledge_graph_config': self.knowledge_graph_spec.config_data,
-            'template_path': str(self.knowledge_graph_template.template_path),
-            'config_path': str(self.knowledge_graph_spec.config_path)
+            'config_path': str(self.knowledge_graph_spec.config_path) if self.knowledge_graph_spec.config_path else None
         }
+        
+        # Only include template if it exists
+        if self.knowledge_graph_template:
+            result['knowledge_graph_template'] = self.knowledge_graph_template.template_content
+            result['template_path'] = str(self.knowledge_graph_template.template_path)
+        else:
+            result['knowledge_graph_template'] = None
+            result['template_path'] = None
+        
+        return result
 

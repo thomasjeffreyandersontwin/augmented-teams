@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .complexity_metrics import ComplexityMetrics
 
 
 class FunctionSizeScanner(CodeScanner):
@@ -13,7 +14,7 @@ class FunctionSizeScanner(CodeScanner):
     Keep functions under 20 lines when possible.
     """
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
@@ -92,17 +93,68 @@ class FunctionSizeScanner(CodeScanner):
             # This is executable code
             executable_lines += 1
         
+        # Calculate complexity metrics
+        cyclomatic = ComplexityMetrics.cyclomatic_complexity(func_node)
+        cognitive = ComplexityMetrics.cognitive_complexity(func_node)
+        max_nesting = ComplexityMetrics.max_nesting_depth(func_node)
+        
+        violations = []
+        
+        # Check line count
         if executable_lines > 20:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            return Violation(
+            violations.append(Violation(
                 rule=rule_obj,
                 violation_message=f'Function "{func_node.name}" is {executable_lines} lines - should be under 20 lines (extract complex logic to helper functions)',
                 location=str(file_path),
                 line_number=line_number,
                 severity='warning'
-            ).to_dict()
+            ).to_dict())
         
-        return None
+        # Check cyclomatic complexity
+        if cyclomatic > 10:
+            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
+            violations.append(Violation(
+                rule=rule_obj,
+                violation_message=(
+                    f'Function "{func_node.name}" has high cyclomatic complexity ({cyclomatic}) - '
+                    f'should be under 10. Extract decision logic to helper functions.'
+                ),
+                location=str(file_path),
+                line_number=line_number,
+                severity='warning'
+            ).to_dict())
+        
+        # Check cognitive complexity
+        if cognitive > 15:
+            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
+            violations.append(Violation(
+                rule=rule_obj,
+                violation_message=(
+                    f'Function "{func_node.name}" has high cognitive complexity ({cognitive}) - '
+                    f'should be under 15. Reduce nesting and extract complex logic.'
+                ),
+                location=str(file_path),
+                line_number=line_number,
+                severity='warning'
+            ).to_dict())
+        
+        # Check nesting depth
+        if max_nesting > 4:
+            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
+            violations.append(Violation(
+                rule=rule_obj,
+                violation_message=(
+                    f'Function "{func_node.name}" has deep nesting (depth={max_nesting}) - '
+                    f'should be under 4 levels. Extract nested logic to helper functions.'
+                ),
+                location=str(file_path),
+                line_number=line_number,
+                severity='info'
+            ).to_dict())
+        
+        # Return first violation (most critical)
+        return violations[0] if violations else None
     
     def _get_multi_line_expression_line_numbers(self, func_node: ast.FunctionDef) -> set:
         """Get line numbers that are continuations of multi-line expressions.

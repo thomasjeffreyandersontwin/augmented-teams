@@ -19,20 +19,23 @@ class Rule:
             self._name = self._rule_file.replace('.json', '') if self._rule_file else 'unknown'
         
         scanner_path = self._rule_content.get('scanner')
+        self._scanner_load_error: Optional[str] = None
         if scanner_path:
-            self._scanner = self._load_scanner(scanner_path)
+            self._scanner, self._scanner_load_error = self._load_scanner(scanner_path)
         else:
             self._scanner = None
         
         self._file_by_file_violations: List[Dict[str, Any]] = []
         self._cross_file_violations: List[Dict[str, Any]] = []
         self._scan_error: Optional[str] = None
+        self._scanner_execution_status: Optional[str] = None
     
-    def _load_scanner(self, scanner_module_path: str) -> Optional[type]:
+    def _load_scanner(self, scanner_module_path: str) -> tuple[Optional[type], Optional[str]]:
         from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import ScannerLoader
         
         scanner_loader = ScannerLoader(self._bot_name)
-        return scanner_loader.load_scanner(scanner_module_path)
+        scanner_class, error = scanner_loader.load_scanner_with_error(scanner_module_path)
+        return scanner_class, error
     
     @property
     def name(self) -> str:
@@ -81,6 +84,18 @@ class Rule:
         return self._scanner is not None
     
     @property
+    def scanner_load_error(self) -> Optional[str]:
+        return self._scanner_load_error
+    
+    @property
+    def scanner_execution_status(self) -> Optional[str]:
+        return self._scanner_execution_status
+    
+    @scanner_execution_status.setter
+    def scanner_execution_status(self, value: Optional[str]):
+        self._scanner_execution_status = value
+    
+    @property
     def requires_two_pass_scan(self) -> bool:
         if not self._scanner:
             return False
@@ -109,8 +124,10 @@ class Rule:
         try:
             scanner_instance = self.scanner
             if not scanner_instance:
+                self._scanner_execution_status = "EXECUTION_SKIPPED: Scanner instance is None"
                 return {}
             
+            self._scanner_execution_status = "EXECUTION_SUCCESS"
             violations_file_by_file = scanner_instance.scan(
                 knowledge_graph,
                 rule_obj=self,
@@ -151,6 +168,7 @@ class Rule:
         
         except Exception as e:
             self._scan_error = str(e)
+            self._scanner_execution_status = f"EXECUTION_FAILED: {str(e)}"
             
             if self.requires_two_pass_scan:
                 return {

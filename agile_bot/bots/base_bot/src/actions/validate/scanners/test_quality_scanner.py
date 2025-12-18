@@ -11,19 +11,19 @@ from .violation import Violation
 class TestQualityScanner(TestScanner):
     """Validates test quality (FIRST principles: Fast, Independent, Repeatable, Self-validating, Timely)."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Check for test quality issues
-            violations.extend(self._check_test_independence(tree, content, test_file_path, rule_obj))
-            violations.extend(self._check_test_names_quality(tree, test_file_path, rule_obj))
+            violations.extend(self._check_test_independence(tree, content, file_path, rule_obj))
+            violations.extend(self._check_test_names_quality(tree, file_path, rule_obj))
         
         except (SyntaxError, UnicodeDecodeError):
             # Skip files with syntax errors

@@ -11,21 +11,21 @@ from .violation import Violation
 class TestFileNamingScanner(TestScanner):
     """Validates test file names match sub-epic names."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         # Extract sub-epic names from knowledge graph
         sub_epic_names = self._extract_sub_epic_names(knowledge_graph)
         
         # Get expected file name from sub-epic
-        file_name = test_file_path.stem  # Without .py extension
+        file_name = file_path.stem  # Without .py extension
         
         # Check if file name matches a sub-epic name
         violation = self._check_file_name_matches_sub_epic(
-            file_name, sub_epic_names, test_file_path, rule_obj, knowledge_graph
+            file_name, sub_epic_names, file_path, rule_obj, knowledge_graph
         )
         if violation:
             violations.append(violation)
@@ -129,7 +129,7 @@ class TestFileNamingScanner(TestScanner):
             severity='error'
         ).to_dict()
     
-    def _get_sub_epics_spanned_by_test_methods(self, test_file_path: Path, knowledge_graph: Dict[str, Any]) -> set:
+    def _get_sub_epics_spanned_by_test_methods(self, file_path: Path, knowledge_graph: Dict[str, Any]) -> set:
         """Get set of sub-epic names that test methods in this file span.
         
         Returns set of sub-epic names (normalized) that the test methods belong to.
@@ -137,8 +137,8 @@ class TestFileNamingScanner(TestScanner):
         sub_epics = set()
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Find all test methods
             for node in ast.walk(tree):

@@ -11,7 +11,7 @@ from .violation import Violation
 class SeparateConcernsScanner(CodeScanner):
     """Validates concerns are separated (pure logic from side effects, business logic from infrastructure)."""
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
@@ -34,25 +34,52 @@ class SeparateConcernsScanner(CodeScanner):
         return violations
     
     def _check_mixed_concerns(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function mixes concerns (I/O with calculations, business logic with infrastructure)."""
-        func_source = ast.get_source_segment(content, func_node) or ''
-        func_source_lower = func_source.lower()
+        """Check if function mixes concerns using AST-based responsibility detection."""
+        from .complexity_metrics import ComplexityMetrics
         
-        # Check for mixed concerns
-        has_calculation = any(keyword in func_source_lower for keyword in ['calculate', 'compute', 'total', 'sum', 'multiply'])
-        has_io = any(keyword in func_source_lower for keyword in ['print', 'write', 'read', 'save', 'load', 'open', 'close', 'file'])
-        has_db = any(keyword in func_source_lower for keyword in ['query', 'execute', 'commit', 'database', 'sql', 'db.'])
-        has_logging = any(keyword in func_source_lower for keyword in ['log', 'logger', 'logging', 'console.log'])
+        # Use ComplexityMetrics to detect responsibilities
+        responsibilities = ComplexityMetrics.detect_responsibilities(func_node)
         
-        # Mixed concerns: calculation + I/O, business logic + infrastructure
-        if has_calculation and (has_io or has_db or has_logging):
+        if len(responsibilities) <= 1:
+            # Single responsibility - no violation
+            return None
+        
+        # Check for incompatible responsibility combinations
+        incompatible_pairs = [
+            ('I/O', 'Computation'),
+            ('I/O', 'Transformation'),
+            ('Validation', 'Transformation'),
+            ('StateManagement', 'Computation'),
+        ]
+        
+        # Check if any incompatible pair exists
+        responsibility_set = set(responsibilities)
+        for resp1, resp2 in incompatible_pairs:
+            if resp1 in responsibility_set and resp2 in responsibility_set:
+                line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=(
+                        f'Function "{func_node.name}" mixes incompatible responsibilities: {", ".join(responsibilities)}. '
+                        f'Separate {resp1} from {resp2} - pure logic should be separate from side effects.'
+                    ),
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='error'
+                ).to_dict()
+        
+        # If multiple responsibilities but no incompatible pairs, still warn
+        if len(responsibilities) > 2:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
             return Violation(
                 rule=rule_obj,
-                violation_message=f'Function "{func_node.name}" mixes calculations with I/O/infrastructure - separate pure logic from side effects',
+                violation_message=(
+                    f'Function "{func_node.name}" has multiple responsibilities: {", ".join(responsibilities)}. '
+                    f'Consider splitting into separate functions, each with a single responsibility.'
+                ),
                 location=str(file_path),
                 line_number=line_number,
-                severity='error'
+                severity='warning'
             ).to_dict()
         
         return None

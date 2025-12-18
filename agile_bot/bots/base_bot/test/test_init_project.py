@@ -17,20 +17,18 @@ from agile_bot.bots.base_bot.src.bot.workspace import (
     get_workspace_directory,
     get_behavior_folder
 )
+from agile_bot.bots.base_bot.test.test_helpers import (
+    then_environment_variables_not_set,
+    then_environment_variable_matches,
+    then_function_returns_path
+)
 
 
 # ============================================================================
 # HELPER FUNCTIONS - Reusable test operations
 # ============================================================================
 
-# Removed duplicate create_bot_config - use conftest.create_bot_config_file instead
-
-
-# Removed create_agent_json - use update_bot_config_with_working_area instead
 from agile_bot.bots.base_bot.test.test_helpers import update_bot_config_with_working_area
-
-
-# Removed create_behavior_folder - use test_helpers.create_behavior_folder instead
 from agile_bot.bots.base_bot.test.test_helpers import create_behavior_folder
 
 def create_behavior_folder_duplicate_removed(bot_directory: Path, behavior_name: str):
@@ -75,9 +73,16 @@ def create_behavior_folder_duplicate_removed(bot_directory: Path, behavior_name:
 # GIVEN/WHEN/THEN HELPER FUNCTIONS
 # ============================================================================
 
-def given_bot_directory_environment_variable_set(bot_directory: Path):
-    """Given step: BOT_DIRECTORY environment variable is set."""
-    os.environ['BOT_DIRECTORY'] = str(bot_directory)
+def given_environment_variable_set(var_name, value):
+    """
+    Consolidated function for setting environment variables.
+    Replaces: given_bot_directory_environment_variable_set
+    
+    Args:
+        var_name: Environment variable name
+        value: Environment variable value (will be converted to string)
+    """
+    os.environ[var_name] = str(value)
 
 def given_workspace_directory_environment_variable_set(workspace_directory: Path):
     """Given step: WORKING_AREA environment variable is set."""
@@ -96,11 +101,6 @@ def then_workspace_directory_equals_expected_and_not_different(workspace_directo
     """Then step: Workspace directory equals expected value and not different value."""
     assert workspace_directory_path == expected
     assert workspace_directory_path != different
-
-def then_environment_variables_not_set(*variable_names: str):
-    """Then step: Environment variables are not set."""
-    for var_name in variable_names:
-        assert var_name not in os.environ
 
 def then_bot_and_workspace_directories_match_expected(bot_directory_result: Path, workspace_directory_result: Path, expected_bot_directory: Path, expected_workspace_directory: Path):
     """Then step: Bot and workspace directories match expected values."""
@@ -127,19 +127,28 @@ def then_behavior_folder_resolved_correctly(behavior_folder: Path, expected_path
     """Then step: Behavior folder resolved correctly."""
     assert behavior_folder == expected_path
 
-def then_multiple_calls_return_same_value(function, expected_value: Path, call_count: int = 3):
-    """Then step: Multiple calls to function return same value."""
-    results = [function() for _ in range(call_count)]
-    for result in results:
-        assert result == expected_value
-    return results
+def given_override_directory(directory):
+    """
+    Consolidated function for setting override directory.
+    Replaces: given_override_directory_set
+    
+    Args:
+        directory: Directory path (Path or string) - sets WORKING_AREA environment variable
+    """
+    from pathlib import Path
+    if isinstance(directory, str):
+        directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    os.environ['WORKING_AREA'] = str(directory)
+    return directory
 
 def given_override_workspace_directory_created_and_set(temp_workspace: Path, workspace_name: str):
-    """Given step: Override workspace directory created and WORKING_AREA set."""
+    """Given step: Override workspace directory created and WORKING_AREA set.
+    
+    Uses consolidated given_override_directory function.
+    """
     override_workspace = temp_workspace / workspace_name
-    override_workspace.mkdir(parents=True, exist_ok=True)
-    os.environ['WORKING_AREA'] = str(override_workspace)
-    return override_workspace
+    return given_override_directory(override_workspace)
 
 def given_different_directory_created(temp_workspace: Path, directory_name: str):
     """Given step: Create a different directory."""
@@ -150,18 +159,38 @@ def given_bot_directory_and_workspace_area_environment_variables_set(bot_directo
     os.environ['BOT_DIRECTORY'] = str(bot_directory)
     os.environ['WORKING_AREA'] = str(workspace_directory)
 
-def then_bot_config_does_not_have_working_area(bot_directory: Path):
-    """Then step: Bot config does not have WORKING_AREA field."""
-    # Try root first (actual code behavior), then config/ subdirectory (legacy)
-    config_path = bot_directory / 'bot_config.json'
-    if not config_path.exists():
-        config_path = bot_directory / 'config' / 'bot_config.json'
-    if config_path.exists():
-        config = json.loads(config_path.read_text(encoding='utf-8'))
-        assert 'WORKING_AREA' not in config
-    # If config doesn't exist, that's fine - test is checking it doesn't have WORKING_AREA
+def then_bot_config_field_missing(config, field):
+    """
+    Consolidated function for checking bot config field is missing.
+    Replaces: then_bot_config_field_missing_check, then_bot_config_does_not_have_working_area
+    
+    Args:
+        config: Bot config dict or bot_directory Path (if Path, loads config from file)
+        field: Field name to check is missing
+    """
+    from pathlib import Path
+    import json
+    
+    # If config is a Path, load the config file
+    if isinstance(config, Path):
+        bot_directory = config
+        config_path = bot_directory / 'bot_config.json'
+        if not config_path.exists():
+            config_path = bot_directory / 'config' / 'bot_config.json'
+        if config_path.exists():
+            config = json.loads(config_path.read_text(encoding='utf-8'))
+        else:
+            # If config doesn't exist, that's fine - field is missing
+            return
+    
+    # Check field is missing
+    assert field not in config, f"Expected field '{field}' to be missing from bot config, but it exists"
 
-def when_entry_point_bootstrap_logic_runs_if_working_area_not_set(bot_directory: Path):
+def when_bootstrap_logic_runs(bot_directory: Path):
+    """
+    Consolidated function for bootstrap logic execution.
+    Replaces: when_entry_point_bootstrap_logic_runs_if_working_area_not_set
+    """
     """When step: Entry point bootstrap logic runs if WORKING_AREA not set."""
     if 'WORKING_AREA' not in os.environ:
         # Try root first (actual code behavior), then config/ subdirectory (legacy)
@@ -179,21 +208,35 @@ def when_entry_point_bootstrap_logic_runs_if_working_area_not_set(bot_directory:
                 if 'WORKING_AREA' in mcp_env:
                     os.environ['WORKING_AREA'] = mcp_env['WORKING_AREA']
 
-def then_workspace_area_environment_variable_equals_expected_and_not_different(expected_value: Path, different_value: Path):
-    """Then step: WORKING_AREA environment variable equals expected and not different."""
-    assert os.environ['WORKING_AREA'] == str(expected_value)
-    assert os.environ['WORKING_AREA'] != str(different_value)
 
-def given_bot_config_and_behavior_exist(bot_directory: Path, bot_name: str, behavior_name: str):
-    """Given step: Bot configuration and behavior folder exist."""
+def given_bot_config_and_behavior(bot_directory, bot_name, behaviors):
+    """
+    Consolidated function for creating bot config and behaviors.
+    Replaces: given_bot_config_and_behavior_setup, given_bot_config_and_behavior_exist
+    
+    Args:
+        bot_directory: Bot directory path
+        bot_name: Bot name
+        behaviors: List of behavior names or single behavior name (string)
+    """
+    from pathlib import Path
+    from conftest import create_bot_config_file
     from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
-    config_path = create_bot_config_file(bot_directory, bot_name, [behavior_name])
-    # Create behavior.json file
-    create_actions_workflow_json(bot_directory, behavior_name)
-    # Create guardrails files (required by Guardrails class initialization)
     from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-    create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
+    
+    # Handle single behavior name as string
+    if isinstance(behaviors, str):
+        behaviors = [behaviors]
+    
+    config_path = create_bot_config_file(bot_directory, bot_name, behaviors)
+    
+    # Create behavior folders and guardrails for each behavior
+    for behavior_name in behaviors:
+        create_actions_workflow_json(bot_directory, behavior_name)
+        create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
+    
     return config_path
+
 
 def when_entry_point_bootstraps_from_bot_config(bot_directory: Path):
     """When step: Entry point bootstrap code runs (simulated).
@@ -221,22 +264,35 @@ def when_entry_point_bootstraps_from_bot_config(bot_directory: Path):
             if 'WORKING_AREA' in mcp_env:
                 os.environ['WORKING_AREA'] = mcp_env['WORKING_AREA']
 
-def when_bot_is_instantiated(bot_name: str, bot_directory: Path, config_path: Path):
-    """When step: Bot is instantiated."""
-    return Bot(bot_name, bot_directory, config_path)
+def when_item_created(item_type, **creation_params):
+    """
+    Consolidated function for creating items.
+    Replaces: when_bot_instantiated, when_instantiate_bot_from_directory, when_bot_is_instantiated
+    
+    Args:
+        item_type: Type of item to create ('bot', 'action', 'instructions', etc.)
+        **creation_params: Parameters for creation:
+            - For 'bot': bot_name, bot_directory, config_path (or behaviors list)
+    """
+    from agile_bot.bots.base_bot.src.bot.bot import Bot
+    from pathlib import Path
+    
+    if item_type == 'bot':
+        bot_name = creation_params.get('bot_name')
+        bot_directory = creation_params.get('bot_directory')
+        config_path = creation_params.get('config_path')
+        
+        if config_path is None:
+            # If config_path not provided, create bot with behaviors
+            behaviors = creation_params.get('behaviors', [])
+            from conftest import create_bot_config_file
+            config_path = create_bot_config_file(bot_directory, bot_name, behaviors)
+        
+        return Bot(bot_name, bot_directory, config_path)
+    else:
+        raise ValueError(f"Unknown item_type: {item_type}")
 
-def then_environment_variable_is_set(variable_name: str, expected_value: Path):
-    """Then step: Environment variable is set to expected value."""
-    assert os.environ[variable_name] == str(expected_value)
 
-def then_function_returns_path(function, expected_path: Path):
-    """Then step: Function returns expected path."""
-    result = function()
-    assert result == expected_path
-    assert isinstance(result, Path)
-    return result
-
-# Exception handling helper removed
 
 
 # ============================================================================
@@ -334,7 +390,7 @@ class TestBootstrapWorkspace:
         THEN: Returns the path from environment variable
         """
         # Given: BOT_DIRECTORY environment variable is set
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         
         # When: get_bot_directory() is called
         # Then: Returns the path from environment variable
@@ -365,7 +421,7 @@ class TestBootstrapWorkspace:
         # Given: WORKING_DIR environment variable is set (legacy)
         # AND: WORKING_AREA is not set
         given_legacy_working_dir_environment_variable_set(workspace_directory)
-        then_environment_variables_not_set('WORKING_AREA')
+        then_environment_variables_not_set(['WORKING_AREA'])
         
         # When: get_workspace_directory() is called
         # Then: Returns the path from WORKING_DIR variable
@@ -416,8 +472,8 @@ class TestBootstrapWorkspace:
         when_entry_point_bootstraps_from_bot_config(bot_directory)
         
         # Then: Environment variables are set correctly
-        then_environment_variable_is_set('BOT_DIRECTORY', bot_directory)
-        then_environment_variable_is_set('WORKING_AREA', workspace_directory)
+        then_environment_variable_matches('BOT_DIRECTORY', bot_directory)
+        then_environment_variable_matches('WORKING_AREA', workspace_directory)
         
         # And: Functions return correct values
         then_bot_and_workspace_directories_match_expected(get_bot_directory(), get_workspace_directory(), bot_directory, workspace_directory)
@@ -438,10 +494,10 @@ class TestBootstrapWorkspace:
         
         # And: bot_config.json has different value
         update_bot_config_with_working_area(bot_directory, workspace_directory)
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         
         # When: Entry point bootstrap code runs (simulated with check)
-        when_entry_point_bootstrap_logic_runs_if_working_area_not_set(bot_directory)
+        when_bootstrap_logic_runs(bot_directory)
         
         # Then: Environment variable retains override value
         assert os.environ['WORKING_AREA'] == str(override_workspace)
@@ -466,7 +522,7 @@ class TestBootstrapWorkspace:
         given_bot_directory_and_workspace_area_environment_variables_set(bot_directory, workspace_directory)
         
         # And: agent.json does NOT exist
-        then_bot_config_does_not_have_working_area(bot_directory)
+        then_bot_config_field_missing(bot_directory, 'WORKING_AREA')
         
         # When: Functions are called
         # Then: Functions work without error
@@ -489,13 +545,13 @@ class TestBootstrapWorkspace:
         AND: Bot.workspace_directory property returns workspace from environment
         """
         # Given: Environment is bootstrapped
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         given_workspace_directory_environment_variable_set(workspace_directory)
         # And: Bot configuration exists
-        config_path = given_bot_config_and_behavior_exist(bot_directory, 'test_bot', 'shape')
+        config_path = given_bot_config_and_behavior(bot_directory, 'test_bot', ['shape'])
         
         # When: Bot is instantiated
-        bot = when_bot_is_instantiated('test_bot', bot_directory, config_path)
+        bot = when_item_created('bot', bot_name='test_bot', bot_directory=bot_directory, config_path=config_path)
         
         # Then: Bot uses correct directories
         then_bot_has_correct_directories(bot, bot_directory, workspace_directory)
@@ -512,11 +568,11 @@ class TestBootstrapWorkspace:
         AND: NOT to bot directory
         """
         # Given: Environment is bootstrapped
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         given_workspace_directory_environment_variable_set(workspace_directory)
         # And: Bot is initialized
-        config_path = given_bot_config_and_behavior_exist(bot_directory, 'test_bot', 'shape')
-        bot = when_bot_is_instantiated('test_bot', bot_directory, config_path)
+        config_path = given_bot_config_and_behavior(bot_directory, 'test_bot', ['shape'])
+        bot = when_item_created('bot', bot_name='test_bot', bot_directory=bot_directory, config_path=config_path)
         
         # When: Behavior action state file path is accessed through bot_paths
         shape_behavior = bot.behaviors.find_by_name('shape')
@@ -547,13 +603,13 @@ class TestBootstrapWorkspace:
         AND: NOT from WORKING_AREA
         """
         # Given: Directories are set
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         given_workspace_directory_environment_variable_set(workspace_directory)
         # And: Config exists in bot directory
-        config_path = given_bot_config_and_behavior_exist(bot_directory, 'test_bot', 'shape')
+        config_path = given_bot_config_and_behavior(bot_directory, 'test_bot', ['shape'])
         
         # When: Bot loads configuration
-        bot = when_bot_is_instantiated('test_bot', bot_directory, config_path)
+        bot = when_item_created('bot', bot_name='test_bot', bot_directory=bot_directory, config_path=config_path)
         
         # Then: Config was loaded from bot directory
         then_bot_config_loaded_correctly(bot, 'test_bot', ['shape'])
@@ -573,7 +629,7 @@ class TestBootstrapWorkspace:
         AND: NOT from workspace directory
         """
         # Given: Directories are set
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         given_workspace_directory_environment_variable_set(workspace_directory)
         
         # When: get_behavior_folder() is called
@@ -595,7 +651,7 @@ class TestBootstrapWorkspace:
         AND: No file I/O occurs (just env var reads)
         """
         # Given: Environment variables are set
-        given_bot_directory_environment_variable_set(bot_directory)
+        given_environment_variable_set('BOT_DIRECTORY', bot_directory)
         given_workspace_directory_environment_variable_set(workspace_directory)
         
         # When: Called multiple times

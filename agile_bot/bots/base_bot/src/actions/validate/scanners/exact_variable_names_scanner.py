@@ -11,15 +11,15 @@ from .violation import Violation
 class ExactVariableNamesScanner(TestScanner):
     """Validates variable names match scenario/AC/domain model concepts exactly."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Extract domain concepts from knowledge graph
             domain_concepts = self._extract_domain_concepts(knowledge_graph)
@@ -28,7 +28,7 @@ class ExactVariableNamesScanner(TestScanner):
                 if isinstance(node, ast.FunctionDef):
                     if node.name.startswith('test_'):
                         # Check variable names in test
-                        violations.extend(self._check_variable_names(node, domain_concepts, test_file_path, rule_obj))
+                        violations.extend(self._check_variable_names(node, domain_concepts, file_path, rule_obj))
         
         except (SyntaxError, UnicodeDecodeError):
             # Skip files with syntax errors

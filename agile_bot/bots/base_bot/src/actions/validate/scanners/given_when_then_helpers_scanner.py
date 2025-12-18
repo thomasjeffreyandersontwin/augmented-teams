@@ -20,7 +20,8 @@ class GivenWhenThenHelpersScanner(TestScanner):
     """
     
     # Minimum number of consecutive non-helper lines to flag as violation
-    MIN_INLINE_LINES = 2
+    # Only flag 4+ lines to optimize for reusable functions, not exact step names
+    MIN_INLINE_LINES = 4
     
     # Helper function name patterns (these are OK - code calling these is not a violation)
     HELPER_PATTERNS = [
@@ -31,15 +32,15 @@ class GivenWhenThenHelpersScanner(TestScanner):
         r'verify_\w+',  # Some verify functions are helpers
     ]
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Get all helper function names defined in the file and imported
             helper_functions = self._get_helper_functions(tree, content)
@@ -49,7 +50,7 @@ class GivenWhenThenHelpersScanner(TestScanner):
                 if isinstance(node, ast.FunctionDef):
                     if node.name.startswith('test_'):
                         test_violations = self._check_test_method(
-                            node, content, test_file_path, rule_obj, helper_functions, tree
+                            node, content, file_path, rule_obj, helper_functions, tree
                         )
                         violations.extend(test_violations)
         
@@ -58,7 +59,7 @@ class GivenWhenThenHelpersScanner(TestScanner):
             violation = Violation(
                 rule=rule_obj,
                 violation_message=f'File has syntax error, cannot scan: {e}',
-                location=str(test_file_path),
+                location=str(file_path),
                 line_number=1,
                 severity='warning'
             ).to_dict()
@@ -134,18 +135,18 @@ class GivenWhenThenHelpersScanner(TestScanner):
         
         return helper_calls
     
-    def _parse_test_file(self, test_file_path: Path) -> Optional[Tuple[str, ast.AST]]:
+    def _parse_test_file(self, file_path: Path) -> Optional[Tuple[str, ast.AST]]:
         """Parse a test file and return its content and AST tree.
         
         Returns:
             Tuple of (content, tree) or None if file cannot be parsed
         """
-        if not test_file_path.exists():
+        if not file_path.exists():
             return None
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             return (content, tree)
         except (SyntaxError, UnicodeDecodeError):
             return None
@@ -415,7 +416,7 @@ class GivenWhenThenHelpersScanner(TestScanner):
         # Extract helper function definitions using existing method
         helper_definitions = {}  # func_name -> list of (file_path, line_number)
         
-        for test_file_path, content, tree in parsed_files:
+        for file_path, content, tree in parsed_files:
             # Reuse existing method to get defined helpers
             defined_helpers = self._get_defined_helper_functions(tree)
             
@@ -423,7 +424,7 @@ class GivenWhenThenHelpersScanner(TestScanner):
                 if func_name not in helper_definitions:
                     helper_definitions[func_name] = []
                 helper_definitions[func_name].append((
-                    str(test_file_path),
+                    str(file_path),
                     line_number
                 ))
         

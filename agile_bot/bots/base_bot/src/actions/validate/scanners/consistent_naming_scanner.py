@@ -11,14 +11,10 @@ from collections import defaultdict
 class ConsistentNamingScanner(CodeScanner):
     """Validates naming consistency across codebase."""
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
-            return violations
-        
-        # Skip test files - they may have different naming conventions
-        if self._is_test_file(file_path):
             return violations
         
         try:
@@ -46,25 +42,6 @@ class ConsistentNamingScanner(CodeScanner):
             pass
         
         return violations
-    
-    def _is_test_file(self, file_path: Path) -> bool:
-        """Check if file is a test file and should be skipped."""
-        path_str = str(file_path).lower()
-        file_name = file_path.name.lower()
-        
-        # Skip test directories
-        if '/test' in path_str or '/tests' in path_str or '\\test' in path_str or '\\tests' in path_str:
-            return True
-        
-        # Skip test files (files starting with test_)
-        if file_name.startswith('test_'):
-            return True
-        
-        # Skip conftest files
-        if file_name == 'conftest.py':
-            return True
-        
-        return False
     
     def _check_naming_consistency(self, function_names: List[str], class_names: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         """Check for inconsistent naming patterns."""

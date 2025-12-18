@@ -15,7 +15,7 @@ class UselessCommentsScanner(CodeScanner):
     non-obvious algorithms, business rules, warnings, or legal notices.
     """
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
@@ -114,6 +114,7 @@ class UselessCommentsScanner(CodeScanner):
         
         # Check for useful comment patterns
         useful_patterns = [
+            r'\?',  # Questions indicate reasoning or explanation
             r'(because|since|due to|as|when|if|unless)',  # Explains reason
             r'(warning|caution|note|important|critical)',  # Warnings/notes
             r'(todo|fixme|hack|workaround)',  # TODO/FIXME with context

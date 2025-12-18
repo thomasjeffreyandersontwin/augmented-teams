@@ -15,15 +15,15 @@ class BusinessReadableTestNamesScanner(TestScanner):
     Test names should read naturally when spoken aloud.
     """
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Extract domain language from story graph
             domain_language = self._extract_domain_language(knowledge_graph)
@@ -32,7 +32,7 @@ class BusinessReadableTestNamesScanner(TestScanner):
                 if isinstance(node, ast.FunctionDef):
                     if node.name.startswith('test_'):
                         # Check if test name is business-readable
-                        violation = self._check_business_readable(node.name, test_file_path, node, rule_obj, domain_language)
+                        violation = self._check_business_readable(node.name, file_path, node, rule_obj, domain_language)
                         if violation:
                             violations.append(violation)
         

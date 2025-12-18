@@ -24,18 +24,18 @@ class NoGuardClausesScanner(TestScanner):
     - Any defensive conditionals in test functions
     """
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding='utf-8')
             lines = content.split('\n')
             
-            violations.extend(self._check_guard_clause_patterns(lines, test_file_path, rule_obj))
-            violations.extend(self._check_ast_guard_clauses(test_file_path, rule_obj))
+            violations.extend(self._check_guard_clause_patterns(lines, file_path, rule_obj))
+            violations.extend(self._check_ast_guard_clauses(file_path, rule_obj))
         
         except (UnicodeDecodeError, SyntaxError, Exception):
             pass
@@ -103,17 +103,17 @@ class NoGuardClausesScanner(TestScanner):
         
         return violations
     
-    def _check_ast_guard_clauses(self, test_file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def _check_ast_guard_clauses(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         """Check for guard clauses using AST parsing."""
         violations = []
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
-                    violations.extend(self._check_function_guard_clauses(node, test_file_path, rule_obj))
+                    violations.extend(self._check_function_guard_clauses(node, file_path, rule_obj))
         
         except (SyntaxError, UnicodeDecodeError, Exception):
             pass

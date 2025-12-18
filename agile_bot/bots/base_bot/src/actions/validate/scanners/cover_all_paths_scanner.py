@@ -10,15 +10,15 @@ from .violation import Violation
 class CoverAllPathsScanner(TestScanner):
     """Validates all behavior paths are tested."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             # Find all test methods
             test_methods = []
@@ -48,7 +48,7 @@ class CoverAllPathsScanner(TestScanner):
                     violations.append(Violation(
                         rule=rule_obj,
                         violation_message=f'Test method "{test_method.name}" has no actual test code - tests must exercise behavior paths, not just contain pass statements',
-                        location=str(test_file_path),
+                        location=str(file_path),
                         line_number=test_method.lineno,
                         severity='error'
                     ).to_dict())

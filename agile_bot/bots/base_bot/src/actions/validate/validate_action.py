@@ -47,9 +47,23 @@ class ValidateRulesAction(Action):
         return self._rules
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        logger.info("=== Starting validation ===")
+        logger.info(f"Behavior: {self.behavior.name}")
+        logger.info(f"Parameters: {parameters}")
         try:
-            story_graph = StoryGraph(self.behavior.bot_paths, self.working_dir)
-            validation_scope = ValidationScope(parameters or {}, self.behavior.bot_paths)
+            # Get knowledge graph spec so StoryGraph can read config internally
+            logger.info("Loading knowledge graph...")
+            from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
+            knowledge = Knowledge(self.behavior)
+            
+            logger.info("Creating story graph...")
+            story_graph = StoryGraph(
+                self.behavior.bot_paths, 
+                self.working_dir,
+                knowledge_graph_spec=knowledge.knowledge_graph_spec
+            )
+            logger.info("Building validation scope...")
+            validation_scope = ValidationScope(parameters or {}, self.behavior.bot_paths, behavior_name=self.behavior.name)
             scope_config = validation_scope.scope
             scope_keys = {'story_names', 'increment_priorities', 'epic_names', 'all'}
             has_scope_in_params = any(key in scope_config for key in scope_keys)
@@ -57,7 +71,10 @@ class ValidateRulesAction(Action):
             if has_scope_in_params:
                 story_graph['_validation_scope'] = scope_config
             
+            logger.info("Discovering files to validate...")
             files = validation_scope.all_files()
+            logger.info(f"Found {sum(len(f) for f in files.values())} files to validate")
+            logger.info("Injecting validation instructions...")
             result = self.injectValidationInstructions(story_graph.content, files=files)
             instructions = result.get('instructions', {})
             validation_rules = instructions.get('validation_rules', [])
@@ -163,6 +180,52 @@ class ValidateRulesAction(Action):
         files = files or {}
         processed_rules = self.rules.validate(knowledge_graph, files)
         violation_summary = self.rules.violation_summary
+        
+        # Extract scanner status for chat output
+        scanner_status_lines = []
+        executed_count = 0
+        load_failed_count = 0
+        execution_failed_count = 0
+        no_scanner_count = 0
+        
+        for rule_dict in processed_rules:
+            scanner_status = rule_dict.get('scanner_status', {})
+            status = scanner_status.get('status', 'UNKNOWN')
+            rule_file = rule_dict.get('rule_file', 'unknown')
+            
+            if status == 'EXECUTED':
+                executed_count += 1
+            elif status == 'LOAD_FAILED':
+                load_failed_count += 1
+                scanner_path = scanner_status.get('scanner_path', 'unknown')
+                error = scanner_status.get('error', 'Unknown error')
+                scanner_status_lines.append(f"[FAILED] {rule_file}: Scanner failed to load - {scanner_path}")
+                scanner_status_lines.append(f"  Error: {error}")
+            elif status == 'EXECUTION_FAILED':
+                execution_failed_count += 1
+                scanner_path = scanner_status.get('scanner_path', 'unknown')
+                error = scanner_status.get('error', 'Unknown error')
+                scanner_status_lines.append(f"[ERROR] {rule_file}: Scanner execution failed - {scanner_path}")
+                scanner_status_lines.append(f"  Error: {error}")
+            elif status == 'NO_SCANNER':
+                no_scanner_count += 1
+        
+        # Always add scanner status to instructions for visibility
+        scanner_status_header = [
+            "\n=== SCANNER EXECUTION STATUS ===",
+            f"Successfully Executed: {executed_count}",
+            f"Load Failed: {load_failed_count}",
+            f"Execution Failed: {execution_failed_count}",
+            f"No Scanner: {no_scanner_count}",
+            ""
+        ]
+        if scanner_status_lines:
+            scanner_status_header.extend(scanner_status_lines)
+        else:
+            scanner_status_header.append("All scanners executed successfully.")
+        scanner_status_header.append("=== END SCANNER STATUS ===\n")
+        action_instructions.extend(scanner_status_header)
+        
         if violation_summary:
             edit_instructions = [
                 "Based on code scanner diagnostics, edit the knowledge graph to fix violations:",

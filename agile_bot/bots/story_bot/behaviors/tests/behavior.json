@@ -7,11 +7,7 @@
   "outputs": "Test files (.py, .js, etc.) with executable test code",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "instructions": [
-    "**BEHAVIOR PURPOSE:**",
-    "This behavior WRITES TEST FILES. The primary output is executable test code files that validate story behavior.",
-    "Write test files (.py, .js, etc.) with executable test code from scenarios/examples that validate story behavior",
-    "The secondary output is to make sure that the story_graph.json scenarios, stories, and sub-epics have test fields added for the test methods, test classes, and test files respectively.",
-    "After creating test files, classes, and methods, you MUST map them to the story-graph.json:"
+    "Creates automated tests that serve as executable specifications for story scenarios."
   ],
   "actions_workflow": {
     "actions": [
@@ -52,7 +48,6 @@
       {
         "name": "validate",
         "order": 5,
-        "action_class": "agile_bot.bots.story_bot.src.bot.validate_code_files_action.ValidateCodeFilesAction",
         "instructions": [
           "specification_tests: validate test code AND domain model refinements",
           "Validate that all test files, classes, and methods are properly mapped to story-graph.json"

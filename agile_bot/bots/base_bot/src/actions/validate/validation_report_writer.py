@@ -45,8 +45,7 @@ class ValidationReportWriter:
     def get_report_path(self) -> Path:
         docs_path = self.bot_paths.documentation_path
         docs_dir = self.workspace_directory / docs_path
-        report_filename = f'validation-report-{self.behavior_name}.md'
-        report_file = docs_dir / report_filename
+        report_file = docs_dir / f'{self.behavior_name}-validation-report.md'
         return report_file
     
     def _get_report_path(self) -> str:
@@ -77,6 +76,7 @@ class ValidationReportWriter:
         lines.extend(self._build_metadata())
         lines.extend(self._build_summary(validation_rules))
         lines.extend(self._build_content_validated(files))
+        lines.extend(self._build_scanner_status(validation_rules))
         lines.extend(self._build_validation_rules(validation_rules))
         lines.extend(self._build_violations(validation_rules))
         lines.extend(self._build_instructions(instructions))
@@ -185,6 +185,265 @@ class ValidationReportWriter:
             logger.warning(f"Could not create relative path for {file_path}: {e}")
             return file_path.name
     
+    def _rule_name_to_anchor(self, rule_name: str) -> str:
+        """Convert rule name to markdown anchor link.
+        
+        Converts rule name like 'use_class_based_organization' to anchor '#use-class-based-organization'
+        """
+        # Replace underscores with hyphens, convert to lowercase
+        anchor = rule_name.replace('_', '-').lower()
+        return f"#{anchor}"
+    
+    def _build_scanner_status(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
+        lines = [
+            "## Scanner Execution Status",
+            ""
+        ]
+        
+        executed_count = 0
+        load_failed_count = 0
+        execution_failed_count = 0
+        no_scanner_count = 0
+        
+        executed_rules = []
+        load_failed_rules = []
+        execution_failed_rules = []
+        no_scanner_rules = []
+        
+        # Track violation counts for status indicators
+        total_violations = 0
+        rules_with_errors = 0
+        rules_with_warnings = 0
+        rules_clean = 0
+        
+        for rule_dict in validation_rules:
+            rule_file = rule_dict.get('rule_file', 'unknown')
+            scanner_status = rule_dict.get('scanner_status', {})
+            status = scanner_status.get('status', 'UNKNOWN')
+            
+            if status == 'EXECUTED':
+                executed_count += 1
+                violations = scanner_status.get('violations_found', 0)
+                exec_status = scanner_status.get('execution_status', 'SUCCESS')
+                total_violations += violations
+                
+                # Check violation severities
+                scanner_results = rule_dict.get('scanner_results', {})
+                has_errors = False
+                has_warnings = False
+                if 'file_by_file' in scanner_results:
+                    for v in scanner_results['file_by_file'].get('violations', []):
+                        if v.get('severity') == 'error':
+                            has_errors = True
+                        elif v.get('severity') == 'warning':
+                            has_warnings = True
+                if 'cross_file' in scanner_results:
+                    for v in scanner_results['cross_file'].get('violations', []):
+                        if v.get('severity') == 'error':
+                            has_errors = True
+                        elif v.get('severity') == 'warning':
+                            has_warnings = True
+                
+                if has_errors:
+                    rules_with_errors += 1
+                elif has_warnings:
+                    rules_with_warnings += 1
+                elif violations == 0:
+                    rules_clean += 1
+                
+                executed_rules.append({
+                    'rule': rule_file,
+                    'violations': violations,
+                    'execution_status': exec_status,
+                    'scanner_path': scanner_status.get('scanner_path', 'unknown'),
+                    'has_errors': has_errors,
+                    'has_warnings': has_warnings
+                })
+            elif status == 'LOAD_FAILED':
+                load_failed_count += 1
+                load_failed_rules.append({
+                    'rule': rule_file,
+                    'scanner_path': scanner_status.get('scanner_path', 'unknown'),
+                    'error': scanner_status.get('error', 'Unknown error')
+                })
+            elif status == 'EXECUTION_FAILED':
+                execution_failed_count += 1
+                execution_failed_rules.append({
+                    'rule': rule_file,
+                    'scanner_path': scanner_status.get('scanner_path', 'unknown'),
+                    'error': scanner_status.get('error', 'Unknown error')
+                })
+            elif status == 'NO_SCANNER':
+                no_scanner_count += 1
+                no_scanner_rules.append(rule_file)
+        
+        total_with_scanners = executed_count + load_failed_count + execution_failed_count
+        
+        # Build visual status summary
+        lines.extend(self._build_status_summary(
+            len(validation_rules), total_with_scanners, executed_count, 
+            load_failed_count, execution_failed_count, no_scanner_count,
+            total_violations, rules_clean, rules_with_warnings, rules_with_errors,
+            executed_rules
+        ))
+        lines.append("")
+        
+        if executed_rules:
+            lines.append("### ✅ Successfully Executed Scanners")
+            lines.append("")
+            # Sort by violations (most violations first) then by name
+            executed_rules.sort(key=lambda x: (-x['violations'], x['rule']))
+            
+            for rule_info in executed_rules:
+                violations = rule_info['violations']
+                rule_name = Path(rule_info['rule']).stem if rule_info['rule'] else 'unknown'
+                
+                # Determine status indicator
+                if rule_info['has_errors']:
+                    status_indicator = "🔴"
+                    status_text = "ERRORS"
+                elif rule_info['has_warnings']:
+                    status_indicator = "🟡"
+                    status_text = "WARNINGS"
+                elif violations == 0:
+                    status_indicator = "🟢"
+                    status_text = "CLEAN"
+                else:
+                    status_indicator = "🟡"
+                    status_text = "VIOLATIONS"
+                
+                violations_text = f"{violations} violation(s)" if violations > 0 else "0 violations"
+                exec_status = rule_info.get('execution_status', 'SUCCESS')
+                
+                # Create anchor link to detailed rule section
+                anchor_link = self._rule_name_to_anchor(rule_name)
+                rule_display_name = rule_name.replace('_', ' ').title()
+                
+                # Add "View Details" link if there are violations
+                details_link = ""
+                if violations > 0:
+                    violations_anchor = f"#{rule_name.replace('_', '-').lower()}-violations"
+                    details_link = f" - [View Details]({violations_anchor})"
+                
+                if exec_status != 'SUCCESS':
+                    lines.append(f"- {status_indicator} **[{rule_display_name}]({anchor_link})** - {violations_text} ({exec_status}){details_link}")
+                else:
+                    lines.append(f"- {status_indicator} **[{rule_display_name}]({anchor_link})** - {violations_text} ({status_text}){details_link}")
+                lines.append(f"  - Scanner: `{rule_info['scanner_path']}`")
+            lines.append("")
+        
+        if load_failed_rules:
+            lines.append("### 🔴 Scanner Load Failures")
+            lines.append("")
+            for rule_info in load_failed_rules:
+                rule_name = Path(rule_info['rule']).stem if rule_info['rule'] else 'unknown'
+                anchor_link = self._rule_name_to_anchor(rule_name)
+                rule_display_name = rule_name.replace('_', ' ').title()
+                lines.append(f"- 🔴 **[{rule_display_name}]({anchor_link})** - LOAD FAILED")
+                lines.append(f"  - Scanner Path: `{rule_info['scanner_path']}`")
+                lines.append(f"  - Error: `{rule_info['error']}`")
+            lines.append("")
+        
+        if execution_failed_rules:
+            lines.append("### 🔴 Scanner Execution Failures")
+            lines.append("")
+            for rule_info in execution_failed_rules:
+                rule_name = Path(rule_info['rule']).stem if rule_info['rule'] else 'unknown'
+                anchor_link = self._rule_name_to_anchor(rule_name)
+                rule_display_name = rule_name.replace('_', ' ').title()
+                lines.append(f"- 🔴 **[{rule_display_name}]({anchor_link})** - EXECUTION FAILED")
+                lines.append(f"  - Scanner Path: `{rule_info['scanner_path']}`")
+                lines.append(f"  - Error: `{rule_info['error']}`")
+            lines.append("")
+        
+        if no_scanner_rules:
+            lines.append("### ⚪ Rules Without Scanners")
+            lines.append("")
+            for rule_file in no_scanner_rules[:10]:  # Show first 10
+                rule_name = Path(rule_file).stem if rule_file else 'unknown'
+                anchor_link = self._rule_name_to_anchor(rule_name)
+                rule_display_name = rule_name.replace('_', ' ').title()
+                lines.append(f"- ⚪ **[{rule_display_name}]({anchor_link})** - No scanner configured")
+            if len(no_scanner_rules) > 10:
+                lines.append(f"- *... and {len(no_scanner_rules) - 10} more rules without scanners*")
+            lines.append("")
+        
+        return lines
+    
+    def _build_status_summary(self, total_rules: int, total_with_scanners: int, 
+                             executed_count: int, load_failed_count: int, 
+                             execution_failed_count: int, no_scanner_count: int,
+                             total_violations: int, rules_clean: int, 
+                             rules_with_warnings: int, rules_with_errors: int,
+                             executed_rules: List[Dict[str, Any]]) -> List[str]:
+        """Build a visual status summary at the top of scanner status section."""
+        lines = []
+        
+        # Overall status indicator
+        if execution_failed_count > 0 or load_failed_count > 0:
+            overall_status = "🔴"
+            overall_text = "CRITICAL ISSUES"
+        elif total_violations > 0:
+            if rules_with_errors > 0:
+                overall_status = "🔴"
+                overall_text = "VIOLATIONS FOUND"
+            elif rules_with_warnings > 0:
+                overall_status = "🟡"
+                overall_text = "WARNINGS FOUND"
+            else:
+                overall_status = "🟡"
+                overall_text = "VIOLATIONS FOUND"
+        else:
+            overall_status = "🟢"
+            overall_text = "ALL CLEAN"
+        
+        lines.append(f"### {overall_status} Overall Status: {overall_text}")
+        lines.append("")
+        
+        # Summary table
+        lines.append("| Status | Count | Description |")
+        lines.append("|--------|-------|-------------|")
+        
+        # Execution status
+        if executed_count > 0:
+            if rules_clean > 0:
+                lines.append(f"| 🟢 Executed Successfully | {executed_count} | Scanners ran without errors |")
+            else:
+                lines.append(f"| ✅ Executed Successfully | {executed_count} | Scanners executed |")
+        
+        if rules_clean > 0:
+            lines.append(f"| 🟢 Clean Rules | {rules_clean} | No violations found |")
+        
+        if rules_with_warnings > 0:
+            warning_count = sum(r['violations'] for r in executed_rules if r.get('has_warnings') and not r.get('has_errors'))
+            lines.append(f"| 🟡 Rules with Warnings | {rules_with_warnings} | Found {warning_count} warning violation(s) |")
+        
+        if rules_with_errors > 0:
+            error_count = sum(r['violations'] for r in executed_rules if r.get('has_errors'))
+            lines.append(f"| 🔴 Rules with Errors | {rules_with_errors} | Found {error_count} error violation(s) |")
+        
+        if load_failed_count > 0:
+            lines.append(f"| 🔴 Load Failed | {load_failed_count} | Scanner could not be loaded |")
+        
+        if execution_failed_count > 0:
+            lines.append(f"| 🔴 Execution Failed | {execution_failed_count} | Scanner crashed during execution |")
+        
+        if no_scanner_count > 0:
+            lines.append(f"| ⚪ No Scanner | {no_scanner_count} | Rule has no scanner configured |")
+        
+        lines.append("")
+        lines.append(f"**Total Rules:** {total_rules}")
+        lines.append(f"- **Rules with Scanners:** {total_with_scanners}")
+        lines.append(f"  - ✅ **Executed Successfully:** {executed_count}")
+        if load_failed_count > 0:
+            lines.append(f"  - 🔴 **Load Failed:** {load_failed_count}")
+        if execution_failed_count > 0:
+            lines.append(f"  - 🔴 **Execution Failed:** {execution_failed_count}")
+        if no_scanner_count > 0:
+            lines.append(f"- ⚪ **Rules without Scanners:** {no_scanner_count}")
+        
+        return lines
+    
     def _build_validation_rules(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
         lines = [
             "## Validation Rules Checked",
@@ -192,13 +451,126 @@ class ValidationReportWriter:
         ]
         
         total_rules = len(validation_rules)
-        for rule_dict in validation_rules[:20]:
+        
+        # Build a lookup of rule status for quick access
+        rule_status_lookup = {}
+        for rule_dict in validation_rules:
+            rule_file = rule_dict.get('rule_file', 'unknown')
+            scanner_status = rule_dict.get('scanner_status', {})
+            status = scanner_status.get('status', 'UNKNOWN')
+            violations = scanner_status.get('violations_found', 0)
+            
+            # Check violation severities
+            has_errors = False
+            has_warnings = False
+            if status == 'EXECUTED':
+                scanner_results = rule_dict.get('scanner_results', {})
+                if 'file_by_file' in scanner_results:
+                    for v in scanner_results['file_by_file'].get('violations', []):
+                        if v.get('severity') == 'error':
+                            has_errors = True
+                        elif v.get('severity') == 'warning':
+                            has_warnings = True
+                if 'cross_file' in scanner_results:
+                    for v in scanner_results['cross_file'].get('violations', []):
+                        if v.get('severity') == 'error':
+                            has_errors = True
+                        elif v.get('severity') == 'warning':
+                            has_warnings = True
+            
+            rule_status_lookup[rule_file] = {
+                'status': status,
+                'violations': violations,
+                'has_errors': has_errors,
+                'has_warnings': has_warnings,
+                'scanner_path': scanner_status.get('scanner_path', 'unknown'),
+                'execution_status': scanner_status.get('execution_status', 'SUCCESS'),
+                'error': scanner_status.get('error', None)
+            }
+        
+        # Sort rules: errors first, then warnings, then clean, then no scanner
+        def sort_key(rule_dict):
+            rule_file = rule_dict.get('rule_file', 'unknown')
+            status_info = rule_status_lookup.get(rule_file, {})
+            status = status_info.get('status', 'UNKNOWN')
+            has_errors = status_info.get('has_errors', False)
+            has_warnings = status_info.get('has_warnings', False)
+            violations = status_info.get('violations', 0)
+            
+            if status == 'EXECUTION_FAILED' or status == 'LOAD_FAILED':
+                return (0, 0, 0)  # Failures first
+            elif has_errors:
+                return (1, -violations, rule_file)  # Errors next, sorted by violation count
+            elif has_warnings:
+                return (2, -violations, rule_file)  # Warnings next
+            elif violations == 0 and status == 'EXECUTED':
+                return (3, 0, rule_file)  # Clean rules
+            else:
+                return (4, 0, rule_file)  # No scanner last
+        
+        sorted_rules = sorted(validation_rules, key=sort_key)
+        
+        for rule_dict in sorted_rules[:20]:
             rule_file = rule_dict.get('rule_file', 'unknown')
             rule_content = rule_dict.get('rule_content', rule_dict)
             description = rule_content.get('description', 'No description')
             rule_name = Path(rule_file).stem if rule_file else 'unknown'
-            lines.append(f"### Rule: {rule_name.replace('_', ' ').title()}")
+            
+            status_info = rule_status_lookup.get(rule_file, {})
+            status = status_info.get('status', 'UNKNOWN')
+            violations = status_info.get('violations', 0)
+            has_errors = status_info.get('has_errors', False)
+            has_warnings = status_info.get('has_warnings', False)
+            scanner_path = status_info.get('scanner_path', 'unknown')
+            execution_status = status_info.get('execution_status', 'SUCCESS')
+            error = status_info.get('error', None)
+            
+            # Determine status indicator and text
+            if status == 'EXECUTION_FAILED' or status == 'LOAD_FAILED':
+                status_indicator = "🔴"
+                status_text = "FAILED"
+            elif status == 'NO_SCANNER':
+                status_indicator = "⚪"
+                status_text = "NO SCANNER"
+            elif has_errors:
+                status_indicator = "🔴"
+                status_text = f"{violations} ERROR(S)"
+            elif has_warnings:
+                status_indicator = "🟡"
+                status_text = f"{violations} WARNING(S)"
+            elif violations == 0:
+                status_indicator = "🟢"
+                status_text = "CLEAN (0 violations)"
+            else:
+                status_indicator = "🟡"
+                status_text = f"{violations} VIOLATION(S)"
+            
+            # Add explicit anchor ID for linking from summary section
+            anchor_id = rule_name.replace('_', '-').lower()
+            rule_title = rule_name.replace('_', ' ').title()
+            
+            # Add link to violations section if there are violations
+            violations_link = ""
+            if violations > 0:
+                violations_anchor = f"#{rule_name.replace('_', '-').lower()}-violations"
+                violations_link = f" - [View Details]({violations_anchor})"
+            
+            lines.append(f"### {status_indicator} Rule: <span id=\"{anchor_id}\">{rule_title}</span> - {status_text}{violations_link}")
             lines.append(f"**Description:** {description}")
+            
+            if status == 'EXECUTED':
+                if scanner_path != 'unknown':
+                    lines.append(f"**Scanner:** `{scanner_path}`")
+                if execution_status != 'SUCCESS':
+                    lines.append(f"**Execution Status:** {execution_status}")
+            elif status == 'LOAD_FAILED' or status == 'EXECUTION_FAILED':
+                if scanner_path != 'unknown':
+                    lines.append(f"**Scanner:** `{scanner_path}`")
+                if error:
+                    lines.append(f"**Error:** `{error}`")
+            elif status == 'NO_SCANNER':
+                lines.append("**Scanner:** Not configured")
+            
             lines.append("")
         
         if total_rules > 20:
@@ -270,7 +642,10 @@ class ValidationReportWriter:
         ]
         
         for rule_name, violations in violations_by_rule.items():
-            lines.append(f"#### {rule_name.replace('_', ' ').title()}: {len(violations)} violation(s)")
+            # Add anchor ID for linking from summary section
+            violations_anchor_id = f"{rule_name.replace('_', '-').lower()}-violations"
+            rule_display_name = rule_name.replace('_', ' ').title()
+            lines.append(f"#### <span id=\"{violations_anchor_id}\">{rule_display_name}: {len(violations)} violation(s)</span>")
             lines.append("")
             
             for violation in violations:
@@ -283,10 +658,37 @@ class ValidationReportWriter:
                 location_link = self._create_file_link(location, line_number)
                 test_info = self._extract_test_info(message, location, line_number)
                 
+                # Format message - if it contains code blocks, preserve them
+                formatted_message = self._format_violation_message(message)
+                
                 if test_info:
                     lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {test_info}")
                 else:
-                    lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {message}")
+                    # If message contains code blocks or multiple lines, format it properly
+                    if '\n' in formatted_message:
+                        # Split message into parts
+                        parts = formatted_message.split('\n')
+                        # First line goes on the bullet point
+                        first_line = parts[0] if parts else formatted_message
+                        remaining_parts = parts[1:] if len(parts) > 1 else []
+                        
+                        lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {first_line}")
+                        # Add remaining parts - code blocks need proper indentation in markdown lists
+                        in_code_block = False
+                        for part in remaining_parts:
+                            # Code blocks in markdown lists need 4-space indentation
+                            if part.strip().startswith('```'):
+                                in_code_block = not in_code_block
+                                lines.append(f"    {part}")
+                            elif in_code_block:
+                                # Inside code block, preserve indentation
+                                lines.append(f"    {part}")
+                            elif part.strip() == '':
+                                lines.append("")
+                            else:
+                                lines.append(f"  {part}")
+                    else:
+                        lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {formatted_message}")
             
             lines.append("")
         
@@ -350,6 +752,10 @@ class ValidationReportWriter:
                 if line_number:
                     return f"`{location}:{line_number}`"
                 return f"`{location}`"
+    
+    def _format_violation_message(self, message: str) -> str:
+        """Format violation message, preserving code blocks."""
+        return message
     
     def _extract_test_info(self, message: str, location: str, line_number: Optional[int] = None) -> Optional[str]:
         test_method_patterns = [

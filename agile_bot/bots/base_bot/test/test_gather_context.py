@@ -22,13 +22,18 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     then_activity_logged_with_action_state,
     then_completion_entry_logged_with_outputs,
     given_environment_bootstrapped_and_activity_log_initialized,
-    create_actions_workflow_json
+    create_actions_workflow_json,
+    given_environment_setup,
+    given_action_initialized,
+    when_action_tracks_start,
+    given_activity_log,
+    when_action_tracks_completion,
+    then_activity_log_matches
 )
 from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
     verify_workflow_transition,
     verify_workflow_saves_completed_action,
-    given_environment_bootstrapped_and_action_initialized,
-    then_workflow_current_state_is
+    then_workflow_current_state_matches
 )
 # Workflow class removed - state managed by Behaviors and Actions collections
 
@@ -36,24 +41,76 @@ from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
 # GIVEN/WHEN/THEN HELPER FUNCTIONS
 # ============================================================================
 
-def given_action_outputs_with_counts(questions_count: int = 5, evidence_count: int = 3):
-    """Given: Action outputs with counts."""
+def given_action_outputs(outputs=None, questions_count: int = 5, evidence_count: int = 3):
+    """
+    Consolidated function for action outputs.
+    Replaces: given_action_outputs_with_counts, given_action_outputs_dict
+    
+    Args:
+        outputs: Dict of outputs (if provided, returns as-is)
+        questions_count: Questions count (if outputs not provided)
+        evidence_count: Evidence count (if outputs not provided)
+    
+    Returns:
+        Dict of action outputs
+    """
+    if outputs is not None:
+        return outputs
     return {'questions_count': questions_count, 'evidence_count': evidence_count}
 
 def given_action_duration(duration: int = 330):
     """Given: Action duration."""
     return duration
 
-def given_activity_log_entries_for_behaviors(bot_name: str = 'story_bot', behaviors: list = None):
-    """Given: Activity log entries for multiple behaviors."""
-    if behaviors is None:
-        behaviors = ['shape', 'discovery']
-    entries = []
-    for i, behavior in enumerate(behaviors):
-        entries.append({
-            'action_state': f'{bot_name}.{behavior}.clarify',
-            'timestamp': f'{9 + i}:00'
-        })
+def given_activity_log_entries(workspace_directory: Path, entries: list = None, **params):
+    """
+    Consolidated function for creating activity log entries.
+    Replaces: given_activity_log_entries_for_behaviors, given_activity_log_entries_with_counts,
+    given_activity_log_entries_with_action_states
+    
+    Args:
+        workspace_directory: Workspace directory path
+        entries: List of activity log entries (if None, generates from behaviors/action_states)
+        **params: Additional parameters:
+            - bot_name: Bot name (default: 'story_bot')
+            - behaviors: List of behavior names (default: ['shape', 'discovery'])
+            - action_states: List of action_state strings (if provided, uses these instead of generating)
+            - counts: Dict with counts for generating entries (not currently used, kept for compatibility)
+    
+    Returns:
+        List of entries that were written to the log file
+    """
+    from tinydb import TinyDB
+    
+    bot_name = params.get('bot_name', 'story_bot')
+    behaviors = params.get('behaviors', ['shape', 'discovery'])
+    action_states = params.get('action_states')
+    
+    # Generate entries if not provided
+    if entries is None:
+        if action_states:
+            # Use provided action_states
+            entries = [
+                {'action_state': action_state, 'timestamp': f'{9 + i}:00'}
+                for i, action_state in enumerate(action_states)
+            ]
+        else:
+            # Generate from behaviors
+            entries = []
+            for i, behavior in enumerate(behaviors):
+                entries.append({
+                    'action_state': f'{bot_name}.{behavior}.clarify',
+                    'timestamp': f'{9 + i}:00'
+                })
+    
+    # Write entries to activity log file
+    workspace_directory.mkdir(parents=True, exist_ok=True)
+    log_file = workspace_directory / 'activity_log.json'
+    
+    with TinyDB(log_file) as db:
+        for entry in entries:
+            db.insert(entry)
+    
     return entries
 
 def given_expected_activity_log_entries_for_behaviors(bot_name: str = 'story_bot', behaviors: list = None):
@@ -65,10 +122,22 @@ def given_expected_activity_log_entries_for_behaviors(bot_name: str = 'story_bot
         for behavior in behaviors
     ]
 
-def given_questions_and_evidence_for_guardrails():
-    """Given: Questions and evidence for guardrails."""
-    questions = ['What is the scope?', 'Who are the users?']
-    evidence = ['Requirements doc', 'User interviews']
+def given_guardrails_data(questions=None, evidence=None):
+    """
+    Consolidated function for guardrails data.
+    Replaces: given_questions_and_evidence_for_guardrails
+    
+    Args:
+        questions: List of questions (if None, returns default)
+        evidence: List of evidence (if None, returns default)
+    
+    Returns:
+        Tuple of (questions, evidence)
+    """
+    if questions is None:
+        questions = ['What is the scope?', 'Who are the users?']
+    if evidence is None:
+        evidence = ['Requirements doc', 'User interviews']
     return questions, evidence
 
 def given_workflow_state_file_with_completed_action(workspace_directory: Path, bot_name: str, behavior: str, action: str, completed_actions: list):
@@ -83,13 +152,6 @@ def given_workflow_state_file_with_completed_action(workspace_directory: Path, b
     }
     state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
     return state_file
-
-def given_completed_action_entry_for_behavior(bot_name: str, behavior: str, action: str, timestamp: str = '2025-12-03T10:05:30Z'):
-    """Given: Completed action entry for behavior."""
-    return [{
-        'action_state': f'{bot_name}.{behavior}.{action}',
-        'timestamp': timestamp
-    }]
 
 def given_clarification_parameters_with_questions_and_evidence():
     """Given: Clarification parameters with questions and evidence."""
@@ -137,27 +199,21 @@ def then_clarification_data_contains_shape_user_types(clarification_data: dict, 
 
 
 def given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory: Path):
-    """Given: Environment bootstrapped and action initialized for discovery."""
-    action = given_gather_context_action_is_initialized(bot_directory, 'story_bot', 'discovery')
+    """Given: Environment bootstrapped and action initialized for discovery.
+    
+    Uses consolidated given_action_initialized function.
+    """
+    action = given_action_initialized('gather_context', bot_directory, bot_name='story_bot', behavior='discovery')
     return action
 
 
 def given_action_outputs_and_duration():
     """Given: Action outputs and duration."""
-    outputs = given_action_outputs_with_counts()
+    outputs = given_action_outputs()
     duration = given_action_duration()
     return outputs, duration
 
 
-def given_environment_bootstrapped_for_workflow_resume(bot_directory: Path, workspace_directory: Path):
-    """Given: Environment bootstrapped for workflow resume."""
-    bootstrap_env(bot_directory, workspace_directory)
-    bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'discovery')
-    completed_actions = given_completed_action_entry_for_behavior(bot_name, behavior, 'clarify')
-    # When clarify is completed, current_action should be set to the next action (strategy)
-    # This simulates the state after clarify was completed and workflow advanced
-    state_file = given_workflow_state_file_with_completed_action(workspace_directory, bot_name, behavior, 'strategy', completed_actions)
-    return bot_name, behavior, state_file
 
 
 def given_environment_bootstrapped_with_guardrails(bot_directory: Path, workspace_directory: Path):
@@ -181,7 +237,7 @@ def given_environment_bootstrapped_with_guardrails(bot_directory: Path, workspac
     }, indent=2), encoding='utf-8')
     from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
     create_minimal_guardrails_files(bot_directory, behavior, bot_name)
-    questions, evidence = given_questions_and_evidence_for_guardrails()
+    questions, evidence = given_guardrails_data()
     create_guardrails_files(bot_directory, behavior, questions, evidence)
     return bot_name, behavior, questions, evidence
 
@@ -214,7 +270,7 @@ def given_environment_bootstrapped_with_malformed_guardrails(bot_directory: Path
 def given_environment_action_and_parameters_for_clarification(bot_directory: Path, workspace_directory: Path):
     """Given: Environment, action and parameters for clarification."""
     bootstrap_env(bot_directory, workspace_directory)
-    action = given_gather_context_action_is_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape')
     parameters = given_clarification_parameters_with_questions_and_evidence()
     bot_paths = BotPaths(bot_directory=bot_directory)
     return action, parameters, bot_paths
@@ -226,7 +282,7 @@ def given_environment_with_existing_clarification_and_action(bot_directory: Path
     bot_paths = BotPaths(bot_directory=bot_directory)
     discovery_key_questions, discovery_evidence = given_discovery_key_questions_and_evidence()
     clarification_file = given_clarification_json_exists_with_data(workspace_directory, 'discovery', discovery_key_questions, discovery_evidence, bot_paths)
-    action = given_gather_context_action_is_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape')
     parameters = given_clarification_parameters_for_shape_behavior()
     return clarification_file, action, parameters, bot_paths
 
@@ -234,96 +290,30 @@ def given_environment_with_existing_clarification_and_action(bot_directory: Path
 def given_environment_action_and_empty_parameters(bot_directory: Path, workspace_directory: Path):
     """Given: Environment, action and empty parameters."""
     bootstrap_env(bot_directory, workspace_directory)
-    action = given_gather_context_action_is_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape')
     parameters = {'other_data': 'some value'}
     bot_paths = BotPaths(bot_directory=bot_directory)
     return action, parameters, bot_paths
 
-def given_gather_context_action_is_initialized(bot_directory: Path, bot_name: str, behavior_name: str):
-    """Given step: ClarifyContextAction is initialized."""
-    # Create bot_paths
-    bot_paths = BotPaths(bot_directory=bot_directory)
-    
-    # Ensure behavior.json exists with proper structure
-    import json
-    behavior_dir = bot_directory / 'behaviors' / behavior_name
-    behavior_dir.mkdir(parents=True, exist_ok=True)
-    behavior_file = behavior_dir / 'behavior.json'
-    behavior_config = {
-        "behaviorName": behavior_name,
-        "description": f"Test behavior: {behavior_name}",
-        "goal": f"Test goal for {behavior_name}",
-        "inputs": "Test inputs",
-        "outputs": "Test outputs",
-        "instructions": {},  # Content expects a dict
-        "actions_workflow": {
-            "actions": [
-                {'name': 'clarify', 'order': 1}
-            ]
-        }
-    }
-    behavior_file.write_text(json.dumps(behavior_config, indent=2), encoding='utf-8')
-    
-    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-    create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
-    
-    # Create Behavior object
-    behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
-    
-    # Create ClarifyContextAction with new signature
-    return ClarifyContextAction(
-        behavior=behavior,
-        action_config=None
-    )
 
-def when_action_tracks_activity_on_start(action: ClarifyContextAction):
-    """When step: Action tracks activity on start."""
-    action.track_activity_on_start()
 
-def when_action_tracks_activity_on_completion(action: ClarifyContextAction, outputs: dict = None, duration: int = None):
     """When step: Action tracks activity on completion."""
     if outputs is None:
-        outputs = given_action_outputs_with_counts()
+        outputs = given_action_outputs()
     if duration is None:
         duration = given_action_duration()
     action.track_activity_on_completion(outputs=outputs, duration=duration)
 
-# Removed then_activity_logged_with_action_state - use test_helpers.then_activity_logged_with_action_state instead
 # Import when needed: from agile_bot.bots.base_bot.test.test_helpers import then_activity_logged_with_action_state
 
 
-# Removed then_completion_entry_logged_with_outputs - use test_helpers.then_completion_entry_logged_with_outputs instead
 # Import when needed: from agile_bot.bots.base_bot.test.test_helpers import then_completion_entry_logged_with_outputs
 
 
-def given_activity_log_contains_entries(workspace_directory: Path, entries: list):
-    """Given step: Activity log contains entries."""
-    workspace_directory.mkdir(parents=True, exist_ok=True)
-    log_file = workspace_directory / 'activity_log.json'
-    from tinydb import TinyDB
-    with TinyDB(log_file) as db:
-        for entry in entries:
-            db.insert(entry)
-    return log_file
 
 
-def then_activity_log_contains_entries(log_file: Path, expected_entries: list):
-    """Then step: Activity log contains expected entries."""
-    from tinydb import TinyDB
-    with TinyDB(log_file) as db:
-        entries = db.all()
-        assert len(entries) == len(expected_entries)
-        for expected_entry in expected_entries:
-            assert any(
-                entry.get('action_state') == expected_entry.get('action_state')
-                for entry in entries
-            )
 
-# Removed duplicate then_completion_entry_logged_with_outputs - use test_helpers version instead
-# Removed duplicate given_activity_log_contains_entries - already defined above
-# Removed duplicate then_activity_log_contains_entries - already defined above (line 197)
 
-def when_action_injects_questions_and_evidence(action: ClarifyContextAction):
     """When step: Action injects questions and evidence."""
     # Call do_execute to get instructions with guardrails injected
     result = action.do_execute({})
@@ -331,18 +321,7 @@ def when_action_injects_questions_and_evidence(action: ClarifyContextAction):
     # Return just the guardrails portion for testing
     return {'guardrails': instructions.get('guardrails', {})}
 
-def then_instructions_contain_guardrails(instructions: dict, expected_questions: list, expected_evidence: list):
-    """Then step: Instructions contain guardrails with questions and evidence."""
-    assert 'guardrails' in instructions
-    assert 'required_context' in instructions['guardrails']
-    assert 'key_questions' in instructions['guardrails']['required_context']
-    assert instructions['guardrails']['required_context']['key_questions'] == expected_questions
-    assert 'evidence' in instructions['guardrails']['required_context']
-    assert instructions['guardrails']['required_context']['evidence'] == expected_evidence
 
-def then_instructions_do_not_contain_guardrails(instructions: dict):
-    """Then step: Instructions do not contain guardrails."""
-    assert 'guardrails' not in instructions or instructions['guardrails'] == {}
 
 def given_malformed_guardrails_json_exists(bot_directory: Path, behavior: str):
     """Given step: Malformed guardrails JSON exists."""
@@ -450,7 +429,7 @@ class TestTrackActivityForClarifyContextAction:
         action = given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory)
         
         # When: Action starts and logs activity
-        when_action_tracks_activity_on_start(action)
+        when_action_tracks_start(action)
         
         # Then: Activity logged with correct action_state
         then_activity_logged_with_action_state(log_file, 'story_bot.discovery.clarify')
@@ -468,7 +447,7 @@ class TestTrackActivityForClarifyContextAction:
         action = given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory)
         
         # When: Action completes
-        when_action_tracks_activity_on_completion(action)
+        when_action_tracks_completion(action)
         
         # Then: Completion entry logged with outputs and duration
         outputs, duration = given_action_outputs_and_duration()
@@ -482,15 +461,15 @@ class TestTrackActivityForClarifyContextAction:
         THEN: activity log distinguishes same action in different behaviors using full path
         """
         # Given: Activity log contains entries for shape and discovery
-        entries = given_activity_log_entries_for_behaviors()
-        log_file = given_activity_log_contains_entries(workspace_directory, entries)
+        entries = given_activity_log_entries(workspace_directory)
+        log_file = workspace_directory / 'activity_log.json'
         
         # When: Both entries are present
         # (log file already created above)
         
         # Then: Activity log distinguishes same action in different behaviors using full path
         expected_entries = given_expected_activity_log_entries_for_behaviors()
-        then_activity_log_contains_entries(log_file, expected_entries)
+        then_activity_log_matches(workspace_directory=workspace_directory, log_file=log_file, expected_entries=expected_entries)
 
 
 # ============================================================================
@@ -532,7 +511,16 @@ class TestProceedToDecidePlanning:
         THEN: Workflow auto-forwards to strategy action
         """
         # Bootstrap environment
-        bot_name, behavior, state_file = given_environment_bootstrapped_for_workflow_resume(bot_directory, workspace_directory)
+        from agile_bot.bots.base_bot.test.test_helpers import given_environment_setup
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'discovery')
+        given_environment_setup(bot_directory, workspace_directory, [behavior], 'resume', bot_name, behavior=behavior, action='clarify')
+        from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_completed_action_entry_for_behavior
+        from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_completed_action
+        completed_actions = given_completed_action(bot_name, behavior, 'clarify')
+        # When clarify is completed, current_action should be set to the next action (strategy)
+        # This simulates the state after clarify was completed and workflow advanced
+        from conftest import create_behavior_action_state_file
+        state_file = create_behavior_action_state_file(workspace_directory, bot_name, behavior, 'strategy', completed_actions)
         
         # When: Bot loads and determines next action
         from conftest import create_bot_config_file
@@ -572,10 +560,11 @@ class TestInjectGuardrailsAsPartOfClarifyRequirements:
         action_obj = ClarifyContextAction(behavior=behavior_obj, action_config=None)
         
         # When: Action injects questions and evidence
-        instructions = when_action_injects_questions_and_evidence(action_obj)
+        instructions = when_action_injects(action_obj, content='questions_and_evidence')
         
         # Then: Instructions contain guardrails with questions and evidence
-        then_instructions_contain_guardrails(instructions, questions, evidence)
+        from agile_bot.bots.base_bot.test.test_helpers import then_instructions_contain
+        then_instructions_contain(instructions, 'guardrails', expected_questions=questions, expected_evidence=evidence)
 
     # test_action_handles_malformed_guardrails_json removed - exception handling test
 
@@ -837,14 +826,6 @@ def when_actions_close_current_called(actions: Actions):
     actions.close_current()
 
 
-def then_actions_has_close_current_method(actions: Actions):
-    """Then: Actions has close_current method."""
-    assert hasattr(actions, 'close_current')
-
-
-def then_actions_has_execute_current_method(actions: Actions):
-    """Then: Actions has forward_to_current method (replaces execute_current)."""
-    assert hasattr(actions, 'forward_to_current')
 
 
 def then_action_has_instructions_property(action: Action):
@@ -1177,7 +1158,8 @@ class TestAccessActions:
         when_actions_close_current_called(actions)
         
         # Then: Current action marked complete (observable through workflow state)
-        then_actions_has_close_current_method(actions)
+        from agile_bot.bots.base_bot.test.test_perform_behavior_action import then_bot_has_method
+        then_bot_has_method(actions, 'close_current')
     
     def test_actions_execute_current_executes_current_action(self, bot_directory, workspace_directory):
         """
@@ -1203,7 +1185,8 @@ class TestAccessActions:
         
         # When: execute_current() called
         # Then: Method exists (observable behavior)
-        then_actions_has_execute_current_method(actions)
+        from agile_bot.bots.base_bot.test.test_perform_behavior_action import then_bot_has_method
+        then_bot_has_method(actions, 'forward_to_current')
 
 
 class TestInitializeAction:

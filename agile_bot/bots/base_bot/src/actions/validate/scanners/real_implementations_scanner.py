@@ -15,24 +15,24 @@ class RealImplementationsScanner(TestScanner):
     Tests that only contain 'pass' or 'TODO' comments violate this rule.
     """
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding='utf-8')
             lines = content.split('\n')
             
             # Parse AST to analyze test structure
             method_violations = self._check_test_methods_call_production_code(
-                content, lines, test_file_path, rule_obj, knowledge_graph
+                content, lines, file_path, rule_obj, knowledge_graph
             )
             violations.extend(method_violations)
             
             # Check for fake/stub implementations
-            fake_violations = self._check_fake_implementations(lines, test_file_path, rule_obj)
+            fake_violations = self._check_fake_implementations(lines, file_path, rule_obj)
             violations.extend(fake_violations)
         
         except (UnicodeDecodeError, SyntaxError, Exception):

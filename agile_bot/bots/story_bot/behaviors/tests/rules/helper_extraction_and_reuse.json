@@ -1,5 +1,5 @@
 {
-  "description": "Extract duplicate test setup to reusable helper functions and factory functions. Keep test bodies focused on specific behavior being tested. Balance shared context with test-specific setup. Avoid duplication through helper extraction. From BDD Rules 8.3 (Helper Extraction) and 4 (Balance Context Sharing with Localization).",
+  "description": "Extract duplicate test setup to reusable helper functions and factory functions. Keep test bodies focused on specific behavior being tested. Balance shared context with test-specific setup.",
   "examples": [
     {
       "do": {
@@ -370,5 +370,5 @@
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.scanners.duplication_scanner.DuplicationScanner"
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner"
 }

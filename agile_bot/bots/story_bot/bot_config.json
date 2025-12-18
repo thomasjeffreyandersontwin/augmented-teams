@@ -11,6 +11,7 @@
   ],
   "WORKING_AREA": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot",
   "description": "Helps teams create, refine, and specify user stories from initial idea through to executable specifications",
+  "command description.": "Execute the current action and current behavior in the story_bot workflow.",
   "goal": "Transform user needs into well-structured, testable stories using a progressive refinement workflow",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "verbose_mode": false,

@@ -13,7 +13,7 @@ class CodeRepresentationCodeScanner(CodeScanner):
     # This scanner is more of a placeholder - actual validation would require
     # comparing code against domain model, which is complex
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         # This scanner would need domain model context to validate
         # For now, return empty - can be enhanced later
         return []

@@ -12,9 +12,13 @@ class Scanner(ABC):
     
     Scanners validate knowledge graphs against rules and return violations.
     Each scanner is associated with a specific rule and implements the scan method.
+    
+    Unified Architecture:
+    - Scanners should implement scan_file() to scan individual files
+    - The scan() method combines test_files and code_files, then calls scan_file() for each
+    - This eliminates the distinction between test_files and code_files at the scanner level
     """
     
-    @abstractmethod
     def scan(
         self, 
         knowledge_graph: Dict[str, Any], 
@@ -26,11 +30,14 @@ class Scanner(ABC):
         
         This is the first pass where each file is scanned individually.
         
+        Default implementation combines test_files and code_files, then calls scan_file()
+        for each file. Subclasses can override to customize behavior.
+        
         Args:
             knowledge_graph: The knowledge graph to validate (typically story-graph.json structure)
             rule_obj: Optional Rule object reference (for creating Violations with rule reference)
-            test_files: Optional list of test file paths (for TestScanner instances)
-            code_files: Optional list of code file paths (for CodeScanner instances)
+            test_files: Optional list of test file paths
+            code_files: Optional list of code file paths
             
         Returns:
             List of violation dictionaries or Violation objects, each containing:
@@ -43,7 +50,54 @@ class Scanner(ABC):
         Raises:
             Exception: If scanner execution fails (exceptions should not be swallowed)
         """
-        pass
+        violations = []
+        
+        # Combine all files - unified architecture
+        all_files = []
+        if test_files:
+            all_files.extend(test_files)
+        if code_files:
+            all_files.extend(code_files)
+        
+        # Scan each file using unified scan_file() method
+        print(f"[Scanner.scan] Scanning {len(all_files)} files total")
+        for file_path in all_files:
+            if file_path and file_path.exists() and file_path.is_file():
+                print(f"[Scanner.scan] Calling scan_file for: {file_path}")
+                file_violations = self.scan_file(file_path, rule_obj, knowledge_graph)
+                print(f"[Scanner.scan] scan_file returned {len(file_violations) if isinstance(file_violations, list) else 1 if file_violations else 0} violations for {file_path}")
+                if file_violations:
+                    violations.extend(file_violations if isinstance(file_violations, list) else [file_violations])
+                    print(f"[Scanner.scan] Found {len(file_violations) if isinstance(file_violations, list) else 1} violations in {file_path}")
+            else:
+                print(f"[Scanner.scan] Skipping invalid file: {file_path} (exists={file_path.exists() if file_path else False}, is_file={file_path.is_file() if file_path else False})")
+        
+        print(f"[Scanner.scan] Total violations collected: {len(violations)}")
+        return violations
+    
+    def scan_file(
+        self,
+        file_path: 'Path',
+        rule_obj: Any = None,
+        knowledge_graph: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Scan a single file for violations (unified method for all file types).
+        
+        This is the unified method that replaces scan_test_file() and scan_code_file().
+        Subclasses should override this method to implement file scanning logic.
+        
+        Default implementation returns empty list. Subclasses must override.
+        
+        Args:
+            file_path: Path to file to scan (test or code file)
+            rule_obj: Rule object reference (for creating Violations)
+            knowledge_graph: Optional knowledge graph (for context-aware scanning)
+            
+        Returns:
+            List of violation dictionaries for this file
+        """
+        # Default implementation - subclasses should override
+        return []
     
     def scan_cross_file(
         self,
@@ -69,4 +123,33 @@ class Scanner(ABC):
             List of violation dictionaries or Violation objects for cross-file issues
         """
         return []
+    
+    def _is_test_file(self, file_path: 'Path') -> bool:
+        """Check if a file is a test file (for context-aware scanning).
+        
+        This is a helper method for scanners that need to differentiate behavior
+        between test and code files. The unified architecture scans all files,
+        but scanners can use this to apply different rules or thresholds.
+        
+        Args:
+            file_path: Path to file to check
+            
+        Returns:
+            True if file appears to be a test file, False otherwise
+        """
+        if not file_path:
+            return False
+        
+        path_str = str(file_path).lower()
+        file_name = file_path.name.lower()
+        
+        # Check for test directories
+        if '/test' in path_str or '/tests' in path_str or '\\test' in path_str or '\\tests' in path_str:
+            return True
+        
+        # Check for test file patterns
+        if file_name.startswith('test_') or file_name == 'conftest.py':
+            return True
+        
+        return False
 

@@ -3,10 +3,35 @@
 from typing import List, Dict, Any, Optional, Tuple, Set
 from pathlib import Path
 import ast
+from datetime import datetime
 from .code_scanner import CodeScanner
 from .violation import Violation
 import hashlib
 from difflib import SequenceMatcher
+
+# Timeout for individual file scans (seconds)
+FILE_SCAN_TIMEOUT = 60  # 60 seconds per file max
+
+
+def _safe_print(*args, **kwargs):
+    """Print function that handles Windows console encoding errors gracefully.
+    
+    Windows console uses cp1252 encoding which can't handle Unicode characters.
+    This wrapper catches encoding errors and replaces problematic characters with ASCII equivalents.
+    """
+    try:
+        print(*args, **kwargs)
+    except UnicodeEncodeError:
+        # Convert arguments to ASCII-safe strings
+        safe_args = []
+        for arg in args:
+            if isinstance(arg, str):
+                # Replace problematic Unicode characters with ASCII equivalents
+                safe_str = arg.encode('ascii', errors='replace').decode('ascii')
+                safe_args.append(safe_str)
+            else:
+                safe_args.append(str(arg))
+        print(*safe_args, **kwargs)
 
 
 class DuplicationScanner(CodeScanner):
@@ -21,11 +46,26 @@ class DuplicationScanner(CodeScanner):
     3. Similar patterns that should be extracted to helpers
     """
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
+        _safe_print(f"[DuplicationScanner.scan_code_file] Called for: {file_path}")
+        
         if not file_path.exists():
+            _safe_print(f"[DuplicationScanner.scan_code_file] File does not exist: {file_path}")
             return violations
+        
+        # Track time for timeout detection
+        file_start_time = datetime.now()
+        
+        # Check file size - skip very large files that might cause issues
+        try:
+            file_size = file_path.stat().st_size
+            if file_size > 500_000:  # Skip files larger than 500KB
+                _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
+                return violations
+        except Exception as e:
+            _safe_print(f"Could not check file size for {file_path}: {e}")
         
         try:
             content = file_path.read_text(encoding='utf-8')
@@ -40,18 +80,49 @@ class DuplicationScanner(CodeScanner):
                     functions.append((node.name, func_body, node.lineno, node))
             
             # Check for duplicate function bodies
-            violations.extend(self._check_duplicate_functions(functions, file_path, rule_obj))
+            func_violations = self._check_duplicate_functions(functions, file_path, rule_obj, lines)
+            violations.extend(func_violations)
+            
+            # Check elapsed time before expensive block comparison
+            elapsed = (datetime.now() - file_start_time).total_seconds()
+            if elapsed > FILE_SCAN_TIMEOUT:
+                _safe_print(f"TIMEOUT: File scan exceeded {FILE_SCAN_TIMEOUT}s: {file_path} (stopping early)")
+                return violations
             
             # Check for duplicate code blocks within and across functions
-            violations.extend(self._check_duplicate_code_blocks(functions, lines, file_path, rule_obj))
+            block_violations = self._check_duplicate_code_blocks(functions, lines, file_path, rule_obj)
+            violations.extend(block_violations)
+            
+            # Check final elapsed time
+            file_elapsed = (datetime.now() - file_start_time).total_seconds()
+            if file_elapsed > FILE_SCAN_TIMEOUT:
+                _safe_print(f"VERY SLOW scan: {file_path} took {file_elapsed:.1f}s (exceeded {FILE_SCAN_TIMEOUT}s threshold)")
+            elif file_elapsed > 10:
+                _safe_print(f"Slow scan: {file_path} took {file_elapsed:.1f}s")
+            
+            # Log detailed information if violations found
+            if violations:
+                _safe_print(f"[DUPLICATION SCANNER] Found {len(violations)} violations in {file_path}")
+                _safe_print(f"[DUPLICATION SCANNER] Violations: {[v.get('violation_message', '')[:100] for v in violations]}")
+                self._log_violation_details(file_path, violations, lines)
+            else:
+                _safe_print(f"[DUPLICATION SCANNER] No violations found in {file_path}")
+            
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
-        
-        return violations
+        except (SyntaxError, UnicodeDecodeError) as e:
+            # Skip files with syntax errors - these are expected and not scanner errors
+            _safe_print(f"Skipping file with syntax/encoding error: {file_path}: {e}")
+            return violations
+        except Exception as e:
+            # Unexpected errors should bubble up - log and re-raise
+            file_elapsed = (datetime.now() - file_start_time).total_seconds()
+            import traceback
+            _safe_print(f"Unexpected error scanning {file_path} after {file_elapsed:.1f}s: {e}")
+            traceback.print_exc()
+            raise  # Re-raise to let validation framework handle it
     
-    def _check_duplicate_functions(self, functions: List[tuple], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def _check_duplicate_functions(self, functions: List[tuple], file_path: Path, rule_obj: Any, lines: List[str] = None) -> List[Dict[str, Any]]:
         """Check for duplicate function bodies."""
         violations = []
         
@@ -93,9 +164,15 @@ class DuplicationScanner(CodeScanner):
         # Use similarity checking to find duplicate blocks
         SIMILARITY_THRESHOLD = 0.90  # Increased to 90% to reduce false positives
         
+        # Debug: track comparison attempts
+        comparison_count = 0
+        similarity_scores = []
+        
         # Track duplicate pairs and build groups using union-find approach
         duplicate_pairs = []  # List of (block1_idx, block2_idx, similarity) tuples
         reported_block_indices = set()  # Track which blocks have been reported
+        
+        _safe_print(f"[DuplicationScanner] Extracted {len(all_blocks)} blocks from {len(functions)} functions")
         
         # Compare all blocks pairwise
         compared_pairs = set()
@@ -118,29 +195,48 @@ class DuplicationScanner(CodeScanner):
                     continue
                 
                 # Calculate AST-level similarity (more accurate than string comparison)
-                ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
+                try:
+                    ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
+                except Exception as e:
+                    _safe_print(f"Error comparing AST blocks: {e}")
+                    ast_similarity = 0.0
                 
                 # Also check normalized structure similarity
-                normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
+                try:
+                    normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
+                except Exception as e:
+                    _safe_print(f"Error comparing normalized blocks: {e}")
+                    normalized_similarity = 0.0
                 
                 # Check actual code content similarity (normalize whitespace for comparison)
-                preview1_normalized = ' '.join(block1['preview'].split())
-                preview2_normalized = ' '.join(block2['preview'].split())
-                content_similarity = SequenceMatcher(None, preview1_normalized, preview2_normalized).ratio()
+                try:
+                    preview1_normalized = ' '.join(block1['preview'].split())
+                    preview2_normalized = ' '.join(block2['preview'].split())
+                    content_similarity = SequenceMatcher(None, preview1_normalized, preview2_normalized).ratio()
+                except Exception as e:
+                    _safe_print(f"Error comparing content blocks: {e}")
+                    content_similarity = 0.0
                 
                 # Use AST similarity as primary indicator (it ignores variable names)
                 # Content similarity is secondary - lower threshold since variable names differ
                 # If AST similarity is high (>= 85%), accept even with lower content similarity (>= 50%)
                 # Otherwise require both to be reasonably high
+                max_similarity = 0.0
                 if ast_similarity >= 0.85 and content_similarity >= 0.50:
                     max_similarity = max(ast_similarity, content_similarity)
                 elif ast_similarity >= 0.80 and content_similarity >= 0.70:
                     max_similarity = max(ast_similarity, content_similarity)
                 elif max(ast_similarity, content_similarity) >= 0.90 and min(ast_similarity, content_similarity) >= 0.60:
                     max_similarity = max(ast_similarity, content_similarity)
+                elif ast_similarity >= SIMILARITY_THRESHOLD:
+                    # If AST similarity alone meets threshold, use it (AST is more reliable for structural duplication)
+                    max_similarity = ast_similarity
                 else:
                     # If both aren't reasonably high, skip this comparison
+                    similarity_scores.append((ast_similarity, content_similarity, max(ast_similarity, content_similarity)))
                     continue
+                
+                similarity_scores.append((ast_similarity, content_similarity, max_similarity))
                 
                 if max_similarity >= SIMILARITY_THRESHOLD:
                     # Similar blocks found - check if they should be reported
@@ -165,6 +261,13 @@ class DuplicationScanner(CodeScanner):
                     
                     if should_report:
                         duplicate_pairs.append((i, j, max_similarity))
+                        _safe_print(f"[DuplicationScanner] Found duplicate pair: block {i} (line {block1['start_line']}) vs block {j} (line {block2['start_line']}), similarity={max_similarity:.2f}")
+        
+        _safe_print(f"[DuplicationScanner] Compared {comparison_count} block pairs")
+        _safe_print(f"[DuplicationScanner] Found {len(duplicate_pairs)} duplicate pairs (threshold: {SIMILARITY_THRESHOLD})")
+        if similarity_scores:
+            top_scores = sorted(similarity_scores, key=lambda x: x[2], reverse=True)[:10]
+            _safe_print(f"[DuplicationScanner] Top similarity scores: {[(f'{a:.2f}', f'{c:.2f}', f'{m:.2f}') for a, c, m in top_scores]}")
         
         # Build duplicate groups using union-find
         # Map each block to its group representative
@@ -252,10 +355,13 @@ class DuplicationScanner(CodeScanner):
         for root_idx in final_groups:
             final_groups[root_idx] = list(set(final_groups[root_idx]))
         
+        _safe_print(f"[DuplicationScanner] Built {len(final_groups)} duplicate groups")
+        
         # Report each duplicate group once
         for root_idx, block_indices in final_groups.items():
             # Skip groups with only one block (no duplicates)
             if len(block_indices) < 2:
+                _safe_print(f"[DuplicationScanner] Skipping group {root_idx}: only {len(block_indices)} block(s)")
                 continue
             
             # Skip if all blocks in this group have already been reported
@@ -297,7 +403,10 @@ class DuplicationScanner(CodeScanner):
             
             # Skip if filtering removed all blocks
             if len(filtered_blocks) < 2:
+                _safe_print(f"[DuplicationScanner] Skipping group {root_idx}: filtering reduced to {len(filtered_blocks)} block(s)")
                 continue
+            
+            _safe_print(f"[DuplicationScanner] Reporting duplicate group: {len(filtered_blocks)} blocks")
             
             # Use the first block as the primary one for reporting
             primary_block = filtered_blocks[0]
@@ -307,7 +416,7 @@ class DuplicationScanner(CodeScanner):
             for block in filtered_blocks:
                 location = f"{block['func_name']}:{block['start_line']}-{block['end_line']}"
                 preview = block['preview'][:200] + '...' if len(block['preview']) > 200 else block['preview']
-                previews.append(f"Location ({location}):\n{preview}")
+                previews.append(f"Location ({location}):\n```python\n{preview}\n```")
             
             violation_message = (
                 f'Duplicate code blocks detected ({len(filtered_blocks)} locations) - extract to helper function.\n\n' +
@@ -326,6 +435,7 @@ class DuplicationScanner(CodeScanner):
             # Mark all blocks in this group as reported
             reported_block_indices.update(block_indices)
         
+        _safe_print(f"[DuplicationScanner._check_duplicate_code_blocks] Returning {len(violations)} violations")
         return violations
     
     def _extract_code_blocks(self, func_node: ast.FunctionDef, func_start_line: int, func_name: str) -> List[Dict[str, Any]]:
@@ -475,21 +585,39 @@ class DuplicationScanner(CodeScanner):
         control_structures = (ast.If, ast.For, ast.While, ast.Try, ast.With, 
                              ast.AsyncFor, ast.AsyncWith)
         
-        def visit(node):
-            """Recursively visit nodes and collect meaningful subtrees."""
+        def extract_from_node(node):
+            """Recursively extract control structures from a node."""
             if isinstance(node, control_structures):
                 # Count nodes in this subtree
                 num_nodes = len(list(ast.walk(node)))
                 if min_nodes <= num_nodes <= max_nodes:
                     subtrees.append(node)
             
-            # Recursively visit children
-            for child in ast.iter_child_nodes(node):
-                visit(child)
+            # Recursively process children
+            if hasattr(node, 'body') and isinstance(node.body, list):
+                for child in node.body:
+                    extract_from_node(child)
+            
+            # Process orelse blocks (for if/for/while)
+            if hasattr(node, 'orelse') and isinstance(node.orelse, list):
+                for child in node.orelse:
+                    extract_from_node(child)
+            
+            # Process handlers (for try)
+            if hasattr(node, 'handlers') and isinstance(node.handlers, list):
+                for handler in node.handlers:
+                    if hasattr(handler, 'body') and isinstance(handler.body, list):
+                        for child in handler.body:
+                            extract_from_node(child)
+            
+            # Process finalbody (for try)
+            if hasattr(node, 'finalbody') and isinstance(node.finalbody, list):
+                for child in node.finalbody:
+                    extract_from_node(child)
         
-        # Start visiting from function body
+        # Start extracting from function body
         for stmt in func_node.body:
-            visit(stmt)
+            extract_from_node(stmt)
         
         return subtrees
     
@@ -817,7 +945,9 @@ class DuplicationScanner(CodeScanner):
                     normalized_parts.append(stmt_type)
             
             return "|".join(normalized_parts) if normalized_parts else None
-        except Exception:
+        except Exception as e:
+            # Log error but return None - this is a helper method, exception will bubble up if critical
+            _safe_print(f"Error normalizing block: {e}")
             return None
     
     def _get_block_preview(self, statements: List[ast.stmt]) -> str:
@@ -833,7 +963,9 @@ class DuplicationScanner(CodeScanner):
                 return "\n".join(preview_lines)
             else:
                 return str(statements)
-        except Exception:
+        except Exception as e:
+            # Log error but return fallback - this is a helper method, exception will bubble up if critical
+            _safe_print(f"Error generating block preview: {e}")
             return str(statements)
     
     def _compare_ast_blocks(self, block1: List[ast.stmt], block2: List[ast.stmt]) -> float:
@@ -1088,4 +1220,192 @@ class DuplicationScanner(CodeScanner):
         else:
             # Generic expression - same type means some similarity
             return 0.7
+    
+    def _log_violation_details(self, file_path: Path, violations: List[Dict[str, Any]], lines: List[str]) -> None:
+        """Log detailed information about violations including actual code blocks."""
+        if not violations:
+            return
+        
+        # Log detailed violation information
+        # Note: This can be verbose, but provides valuable debugging info
+        
+        _safe_print(f"\n[{file_path}] Found {len(violations)} duplication violation(s):")
+        
+        for idx, violation in enumerate(violations, 1):
+            line_num = violation.get('line_number', '?')
+            msg = violation.get('violation_message', '')
+            
+            _safe_print(f"\n  Violation {idx} (line {line_num}):")
+            
+            # Extract locations from the violation message
+            # Format: "Duplicate code blocks detected (N locations)...\n\nLocation (func:start-end):\ncode..."
+            if 'Location (' in msg:
+                # Split by "Location (" to get each location block
+                parts = msg.split('Location (')
+                locations_found = []
+                
+                for part in parts[1:]:  # Skip first part (header)
+                    if '):' in part:
+                        # Extract location info: "func_name:start-end):"
+                        location_part = part.split('):')[0]
+                        
+                        try:
+                            func_name, line_range = location_part.split(':')
+                            start_line, end_line = line_range.split('-')
+                            locations_found.append((func_name, int(start_line), int(end_line)))
+                        except ValueError:
+                            # Fallback if parsing fails
+                            locations_found.append((location_part, None, None))
+                
+                # Log all duplicate locations with actual code
+                for loc_idx, (func_name, start_line, end_line) in enumerate(locations_found, 1):
+                    _safe_print(f"\n    Location {loc_idx}: {func_name}() at lines {start_line}-{end_line}")
+                    
+                    # Extract and display actual code from file
+                    if start_line is not None and end_line is not None and lines:
+                        # Convert to 0-based indexing and ensure valid range
+                        start_idx = max(0, start_line - 1)
+                        end_idx = min(len(lines), end_line)
+                        
+                        if start_idx < len(lines) and end_idx > start_idx:
+                            code_block = lines[start_idx:end_idx]
+                            _safe_print(f"    {'-' * 70}")
+                            for line_num, code_line in enumerate(code_block, start=start_line):
+                                # Show line numbers and code
+                                _safe_print(f"    {line_num:4d} | {code_line}")
+                            _safe_print(f"    {'-' * 70}")
+                        else:
+                            _safe_print(f"    (Could not extract code: invalid line range)")
+                    else:
+                        _safe_print(f"    (Could not extract code: invalid location)")
+            else:
+                # For duplicate functions or other violations, log the message
+                _safe_print(f"    {msg[:300]}...")
+        
+        _safe_print("")  # Blank line after violations
+    
+    def scan_cross_file(
+        self,
+        rule_obj: Any = None,
+        test_files: Optional[List[Path]] = None,
+        code_files: Optional[List[Path]] = None
+    ) -> List[Dict[str, Any]]:
+        """Scan across all files for duplicate code blocks (cross-file duplication detection).
+        
+        This method finds duplicates that span multiple files, which is the primary use case
+        for duplication detection.
+        
+        Args:
+            rule_obj: Rule object reference
+            test_files: List of test file paths
+            code_files: List of code file paths
+            
+        Returns:
+            List of violation dictionaries for cross-file duplicates
+        """
+        violations = []
+        
+        # Combine all files
+        all_files = []
+        if code_files:
+            all_files.extend(code_files)
+        if test_files:
+            all_files.extend(test_files)
+        
+        if not all_files:
+            return violations
+        
+        _safe_print(f"Scanning {len(all_files)} files for cross-file duplication...")
+        
+        # Extract blocks from all files
+        all_blocks = []  # List of (file_path, func_name, block_info) tuples
+        
+        for file_path in all_files:
+            if not file_path.exists():
+                continue
+            
+            # Skip large files
+            try:
+                file_size = file_path.stat().st_size
+                if file_size > 500_000:  # Skip files larger than 500KB
+                    _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
+                    continue
+            except Exception:
+                continue
+            
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                tree = ast.parse(content, filename=str(file_path))
+                lines = content.split('\n')
+                
+                # Extract functions
+                functions = []
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        func_body = ast.unparse(node.body) if hasattr(ast, 'unparse') else str(node.body)
+                        functions.append((node.name, func_body, node.lineno, node))
+                
+                # Extract code blocks from all functions in this file
+                for func_name, func_body, func_line, func_node in functions:
+                    blocks = self._extract_code_blocks(func_node, func_line, func_name)
+                    for block in blocks:
+                        block['file_path'] = file_path
+                        block['lines'] = lines
+                        all_blocks.append(block)
+                        
+            except (SyntaxError, UnicodeDecodeError):
+                continue
+            except Exception as e:
+                _safe_print(f"Error processing {file_path} for cross-file scan: {e}")
+                continue
+        
+        _safe_print(f"Extracted {len(all_blocks)} code blocks from {len(all_files)} files")
+        
+        # Compare blocks across files
+        SIMILARITY_THRESHOLD = 0.90
+        compared_pairs = set()
+        
+        for i, block1 in enumerate(all_blocks):
+            for j, block2 in enumerate(all_blocks[i+1:], start=i+1):
+                # Skip if same file (already checked in scan_code_file)
+                if block1['file_path'] == block2['file_path']:
+                    continue
+                
+                # Skip if already compared
+                pair_key = tuple(sorted([i, j]))
+                if pair_key in compared_pairs:
+                    continue
+                compared_pairs.add(pair_key)
+                
+                # Calculate similarity
+                ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
+                normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
+                
+                preview1_normalized = ' '.join(block1['preview'].split())
+                preview2_normalized = ' '.join(block2['preview'].split())
+                content_similarity = SequenceMatcher(None, preview1_normalized, preview2_normalized).ratio()
+                
+                # Use AST similarity as primary indicator
+                if ast_similarity >= SIMILARITY_THRESHOLD or (normalized_similarity >= SIMILARITY_THRESHOLD and content_similarity >= 0.85):
+                    # Found duplicate across files
+                    file1 = block1['file_path']
+                    file2 = block2['file_path']
+                    func1 = block1['func_name']
+                    func2 = block2['func_name']
+                    start1 = block1['start_line']
+                    end1 = block1['end_line']
+                    start2 = block2['start_line']
+                    end2 = block2['end_line']
+                    
+                    violation = Violation(
+                        rule=rule_obj,
+                        violation_message=f'Duplicate code detected across files: {func1}() in {file1.name} (lines {start1}-{end1}) matches {func2}() in {file2.name} (lines {start2}-{end2}) - extract to shared function',
+                        location=str(file1),
+                        line_number=start1,
+                        severity='error'
+                    ).to_dict()
+                    violations.append(violation)
+        
+        _safe_print(f"Found {len(violations)} cross-file duplication violations")
+        return violations
 

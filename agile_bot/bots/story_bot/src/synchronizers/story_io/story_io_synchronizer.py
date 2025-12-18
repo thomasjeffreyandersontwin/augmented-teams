@@ -31,7 +31,7 @@ class DrawIOSynchronizer:
             input_path: Path to story graph JSON file
             output_path: Path for output DrawIO file
             renderer_command: Command variant ('render-outline', 'render-increments', 'render-exploration')
-            **kwargs: Additional arguments (e.g., layout_data)
+            **kwargs: Additional arguments (e.g., layout_data, force_outline)
         
         Returns:
             Dictionary with output_path and summary
@@ -41,12 +41,15 @@ class DrawIOSynchronizer:
         input_path = Path(input_path)
         output_path = Path(output_path)
         
+        # Filter out project_path if present (not used by DrawIO synchronizer)
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k != 'project_path'}
+        
         if renderer_command == 'render-outline' or renderer_command is None:
-            return StoryIODiagram.render_outline_from_graph(input_path, output_path, **kwargs)
+            return StoryIODiagram.render_outline_from_graph(input_path, output_path, **filtered_kwargs)
         elif renderer_command == 'render-increments':
-            return StoryIODiagram.render_increments_from_graph(input_path, output_path, **kwargs)
+            return StoryIODiagram.render_increments_from_graph(input_path, output_path, **filtered_kwargs)
         elif renderer_command == 'render-exploration':
-            return StoryIODiagram.render_exploration_from_graph(input_path, output_path, **kwargs)
+            return StoryIODiagram.render_exploration_from_graph(input_path, output_path, **filtered_kwargs)
         else:
             raise ValueError(f"Unknown renderer_command: {renderer_command}")
     

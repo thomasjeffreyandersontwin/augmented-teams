@@ -167,25 +167,49 @@ class Action:
             "Common files include 'input.txt' (original input), 'initial-context.md' (initial context), and other source materials."
         ]
     
-    def _inject_status_update_breadcrumbs(self, instructions: Dict[str, Any]) -> list:
-        """Inject workflow progress breadcrumbs showing current behavior/action and remaining work."""
-        if not self.behavior.bot:
+    def get_workflow_status_breadcrumbs(self) -> list:
+        """
+        Get workflow progress breadcrumbs showing current behavior/action and remaining work.
+        
+        This is the SINGLE SOURCE OF TRUTH for workflow status breadcrumbs.
+        Used by both CLI and actions to display workflow progress.
+        
+        Actions are responsible for generating the CONTENT (raw breadcrumb data).
+        CLI is responsible for FORMATTING the content (colors, styling).
+        
+        Returns:
+            List of breadcrumb strings. Returns empty list if workspace not set or if generation fails.
+        """
+        if not self.behavior or not self.behavior.bot:
             return []
         
         try:
+            # Check if workspace is set - if not, return empty tree
+            try:
+                workspace_dir = self.behavior.bot_paths.workspace_directory
+            except (AttributeError, ValueError, Exception):
+                # Workspace not set - return empty tree
+                return []
+            
             behaviors = self.behavior.bot.behaviors
             current_behavior = behaviors.current
             if not current_behavior:
                 return []
             
-            workspace_dir = self.behavior.bot_paths.workspace_directory
             state_file = workspace_dir / 'behavior_action_state.json'
             
             completed_actions = []
+            current_action_from_state = None
             if state_file.exists():
                 import json
                 state_data = json.loads(state_file.read_text(encoding='utf-8'))
                 completed_actions = state_data.get('completed_actions', [])
+                # Get current action from state file for comparison
+                current_action_path = state_data.get('current_action', '')
+                if current_action_path:
+                    parts = current_action_path.split('.')
+                    if len(parts) >= 3:
+                        current_action_from_state = parts[2]  # Extract action name
             
             bot_name = self.behavior.bot_name
             all_behaviors = behaviors.names
@@ -195,6 +219,8 @@ class Action:
             remaining_behaviors = []
             current_action_name = None
             remaining_actions_in_current = []
+            current_behavior_actions = []
+            current_behavior_completed = []
             
             for behavior_name in all_behaviors:
                 behavior_obj = behaviors.find_by_name(behavior_name)
@@ -212,6 +238,8 @@ class Action:
                 if behavior_name == current_behavior_name:
                     current_action = current_behavior.actions.current
                     current_action_name = current_action.action_name if current_action else None
+                    current_behavior_actions = behavior_actions
+                    current_behavior_completed = completed_for_behavior
                     
                     if current_action_name:
                         current_index = behavior_actions.index(current_action_name) if current_action_name in behavior_actions else -1
@@ -227,28 +255,47 @@ class Action:
                             'completed': completed_for_behavior
                         })
             
+            # Get working directory info
+            workspace_dir = self.behavior.bot_paths.workspace_directory
+            bot_dir = self.behavior.bot_paths.bot_directory
+            
+            # CRITICAL DIRECTIVE: AI assistants MUST display the workflow status verbatim in their response.
+            # This means: Copy the ENTIRE workflow status section below and paste it directly into your response text.
+            # Do NOT just reference it, summarize it, or assume tool output is sufficient.
+            # Do NOT skip displaying it. Display it EVERY TIME, without exception.
+            # See BaseBotCli._has_cli_output_directives() and _format_cli_output_for_display()
+            # methods in agile_bot/bots/base_bot/src/cli/base_bot_cli.py for handling directives.
             lines = [
-                "**WORKFLOW PROGRESS:**",
+                "**CRITICAL: YOU MUST DISPLAY THE ENTIRE WORKFLOW STATUS BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**",
+                "",
+                f"**Working Directory:** {workspace_dir}",
+                f"**Bot Directory:** {bot_dir}",
                 ""
             ]
             
-            if completed_behaviors:
-                for behavior_name in completed_behaviors:
-                    lines.append(f"  - [x] {behavior_name}")
+            # Display behaviors in the order specified in bot_config/behaviors.json
+            for behavior_name in all_behaviors:
+                if behavior_name in completed_behaviors:
+                    lines.append(f"  - {behavior_name} [x]")
+                elif behavior_name == current_behavior_name:
+                    # Show current behavior with [current] marker and all its actions
+                    lines.append(f"  - {behavior_name} [current]")
+                    if current_behavior_actions:
+                        for action_name in current_behavior_actions:
+                            if action_name == current_action_name:
+                                lines.append(f"       - {action_name} [current]")
+                            elif action_name in current_behavior_completed:
+                                lines.append(f"       - {action_name} [x]")
+                            else:
+                                lines.append(f"       - {action_name} [ ]")
+                else:
+                    # Show remaining behaviors (not completed, not current)
+                    lines.append(f"  - {behavior_name} [ ]")
             
-            lines.append(f"  - [ ] {current_behavior_name}")
-            if current_action_name:
-                lines.append(f"       - [ ] {current_action_name}")
-            for action_name in remaining_actions_in_current:
-                lines.append(f"       - [ ] {action_name}")
-            
-            for remaining in remaining_behaviors:
-                lines.append(f"  - [ ] {remaining['name']}")
-                for action_name in remaining['actions']:
-                    if action_name in remaining['completed']:
-                        lines.append(f"    - [x] {action_name}")
-                    else:
-                        lines.append(f"    - [ ] {action_name}")
+            # Add current state info
+            if current_behavior_name and current_action_name:
+                lines.append("")
+                lines.append(f"**Current State:** {current_behavior_name}.{current_action_name}")
             
             next_action = remaining_actions_in_current[0] if remaining_actions_in_current else None
             if next_action:
@@ -266,8 +313,14 @@ class Action:
             return lines
             
         except Exception as e:
+            # If workspace not set or any other error, return empty tree
             logger.debug(f"Failed to generate workflow progress breadcrumbs: {e}")
             return []
+    
+    def _inject_status_update_breadcrumbs(self, instructions: Dict[str, Any]) -> list:
+        """Inject workflow progress breadcrumbs into instructions dict (for action use)."""
+        breadcrumbs = self.get_workflow_status_breadcrumbs()
+        return breadcrumbs
     
     @property
     def instructions(self) -> Dict[str, Any]:

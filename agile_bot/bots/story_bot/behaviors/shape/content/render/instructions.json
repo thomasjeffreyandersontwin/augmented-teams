@@ -12,7 +12,7 @@
     "- Story map DrawIO render: render_story_map_outline_drawio.json",
     "- Domain model description render: render_domain_model_description.json",
     "- Domain model diagram render: render_domain_model_diagram.json",
-    "- Templates: templates/story-map-outline.drawio, templates/story-map.md, templates/domain-model-description-template.md, templates/domain-model-diagram-template.md",
+    "- Templates: templates/story-map-outline.drawio, templates/story-map.md, templates/domain-model-description-template.md, templates/domain-model-diagram-template.mmd",
     "",
     "**Process:**",
     "1. Read story-graph.json from docs/stories/",
@@ -24,7 +24,7 @@
     "- File: {project_area}/docs/stories/story-map-outline.drawio",
     "- File: {project_area}/docs/stories/story-map.md",
     "- File: {project_area}/docs/stories/{solution_name_slug}-domain-model-description.md",
-    "- File: {project_area}/docs/stories/{solution_name_slug}-domain-model-diagram.md",
+    "- File: {project_area}/docs/stories/{solution_name_slug}-domain-model-diagram.mmd",
     "",
     "**Next Step:** Proceed to synchronize step after rendering is complete."
   ]

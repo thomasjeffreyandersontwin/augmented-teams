@@ -25,26 +25,44 @@ from agile_bot.bots.base_bot.test.test_build_agile_bots import (
 # HELPER FUNCTIONS - Sub-Epic Level (Used across multiple test classes)
 # ============================================================================
 
-# Removed duplicate create_bot_config - use conftest.create_bot_config_file instead
 
 # ============================================================================
 # GIVEN HELPERS - Test setup
 # ============================================================================
 
-def given_test_bot_behaviors():
-    """Given: Test bot behaviors list.
-    
-    
+def given_behaviors_list(behaviors=None):
     """
-    return ['shape', 'discovery', 'exploration', 'specification']
+    Consolidated function for creating behaviors list.
+    Replaces: given_test_bot_behaviors
+    
+    Args:
+        behaviors: List of behavior names (if None, returns default test behaviors)
+    
+    Returns:
+        List of behavior names
+    """
+    if behaviors is None:
+        return ['shape', 'discovery', 'exploration', 'specification']
+    return behaviors
 
 
-def given_trigger_patterns_for_shape_behavior():
-    """Given: Trigger patterns for shape behavior.
-    
-    
+def given_trigger_patterns(behavior=None, patterns=None):
     """
-    return ['shape.*story', 'start.*mapping', 'story.*discovery']
+    Consolidated function for creating trigger patterns.
+    Replaces: given_trigger_patterns_for_shape_behavior
+    
+    Args:
+        behavior: Behavior name (for shape behavior, uses default patterns)
+        patterns: List of trigger patterns (if None, returns default patterns for shape)
+    
+    Returns:
+        List of trigger patterns
+    """
+    if patterns is None:
+        if behavior == 'shape' or behavior is None:
+            return ['shape.*story', 'start.*mapping', 'story.*discovery']
+        return []
+    return patterns
 
 
 def given_bot_config_file_with_working_dir_and_behaviors(

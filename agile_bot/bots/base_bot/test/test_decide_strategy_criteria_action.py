@@ -17,7 +17,8 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     bootstrap_env,
     create_strategy_guardrails,
     given_bot_name_and_behavior_setup,
-    create_actions_workflow_json
+    create_actions_workflow_json,
+    given_action_initialized
 )
 from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
     verify_action_tracks_start,
@@ -39,10 +40,22 @@ def when_action_executes_with_parameters(action, parameters: dict):
 # GIVEN/WHEN/THEN HELPER FUNCTIONS
 # ============================================================================
 
-def given_strategy_assumptions_and_criteria():
-    """Given: Strategy assumptions and criteria."""
-    assumptions = ['Stories follow user story format', 'Acceptance criteria are testable']
-    criteria = {'scope': ['Component', 'System', 'Solution']}
+def given_strategy_assumptions_and_criteria(assumptions=None, criteria=None):
+    """
+    Consolidated function for strategy assumptions and criteria.
+    Replaces: given_strategy_assumptions_and_criteria_dict
+    
+    Args:
+        assumptions: List of assumptions (if None, returns default)
+        criteria: Dict of criteria (if None, returns default)
+    
+    Returns:
+        Tuple of (assumptions, criteria)
+    """
+    if assumptions is None:
+        assumptions = ['Stories follow user story format', 'Acceptance criteria are testable']
+    if criteria is None:
+        criteria = {'scope': ['Component', 'System', 'Solution']}
     return assumptions, criteria
 
 def given_strategy_parameters_with_decisions_and_assumptions():
@@ -77,39 +90,6 @@ def given_expected_strategy_decisions_and_assumptions():
     assumptions = ['Focus on user flow over internal systems', 'Cover the end-to-end scenario']
     return decisions, assumptions
 
-def given_strategy_action_is_initialized(bot_directory: Path, bot_name: str, behavior_name: str):
-    """Given step: StrategyAction is initialized."""
-    # Create bot_paths
-    bot_paths = BotPaths(bot_directory=bot_directory)
-    
-    # Ensure behavior.json exists
-    import json
-    behavior_dir = bot_directory / 'behaviors' / behavior_name
-    behavior_dir.mkdir(parents=True, exist_ok=True)
-    behavior_file = behavior_dir / 'behavior.json'
-    behavior_config = {
-        "behaviorName": behavior_name,
-        "description": f"Test behavior: {behavior_name}",
-        "goal": f"Test goal for {behavior_name}",
-        "inputs": "Test inputs",
-        "outputs": "Test outputs",
-        "instructions": {},
-        "actions_workflow": {
-            "actions": [
-                {'name': 'strategy', 'order': 1}
-            ]
-        }
-    }
-    behavior_file.write_text(json.dumps(behavior_config, indent=2), encoding='utf-8')
-    
-    # Create minimal guardrails files (required by Guardrails class initialization)
-    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-    create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
-    
-    # Create Behavior object
-    behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
-    
-    # Create StrategyAction with new signature
     return StrategyAction(
         behavior=behavior,
         action_config=None
@@ -159,17 +139,7 @@ def when_action_injects_strategy_criteria_and_assumptions(action: StrategyAction
     }
 
 
-def then_instructions_contain_strategy_criteria_and_assumptions(instructions: dict, expected_assumptions: list):
-    """Then step: Instructions contain strategy criteria and assumptions."""
-    assert 'strategy_criteria' in instructions
-    assert 'assumptions' in instructions
-    assert instructions['assumptions'] == expected_assumptions
-    assert instructions['strategy_criteria'] is not None
 
-def then_instructions_do_not_contain_strategy_data(instructions: dict):
-    """Then step: Instructions do not contain strategy data."""
-    assert 'strategy_criteria' not in instructions or instructions['strategy_criteria'] == {}
-    assert 'assumptions' not in instructions or instructions['assumptions'] == []
 
 def then_strategy_json_file_exists(workspace_directory: Path, bot_paths: BotPaths = None):
     """Then step: strategy.json file exists."""
@@ -261,14 +231,14 @@ def given_environment_bootstrapped_and_strategy_action_initialized(bot_directory
     """Given: Environment bootstrapped and strategy action initialized."""
     bootstrap_env(bot_directory, workspace_directory)
     bot_name, behavior = given_bot_name_and_behavior_setup()
-    action_obj = given_strategy_action_is_initialized(bot_directory, bot_name, behavior)
+    action_obj = given_action_initialized('strategy', bot_directory, bot_name, behavior)
     return bot_name, behavior, action_obj
 
 
 def given_environment_action_and_strategy_parameters(bot_directory: Path, workspace_directory: Path):
     """Given: Environment, action and strategy parameters."""
     bootstrap_env(bot_directory, workspace_directory)
-    action = given_strategy_action_is_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape')
     parameters = given_strategy_parameters_with_decisions_and_assumptions()
     bot_paths = BotPaths(bot_directory=bot_directory)
     return action, parameters, bot_paths
@@ -280,7 +250,7 @@ def given_environment_with_existing_strategy_and_action(bot_directory: Path, wor
     bot_paths = BotPaths(bot_directory=bot_directory)
     discovery_decisions, discovery_assumptions = given_discovery_strategy_decisions_and_assumptions()
     strategy_file = given_strategy_json_exists_with_data(workspace_directory, 'discovery', discovery_decisions, discovery_assumptions, bot_paths)
-    action = given_strategy_action_is_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape')
     parameters = given_strategy_parameters_for_shape_behavior()
     return strategy_file, action, parameters, bot_paths
 
@@ -288,7 +258,7 @@ def given_environment_with_existing_strategy_and_action(bot_directory: Path, wor
 def given_environment_action_and_empty_strategy_parameters(bot_directory: Path, workspace_directory: Path):
     """Given: Environment, action and empty strategy parameters."""
     bootstrap_env(bot_directory, workspace_directory)
-    action = given_strategy_action_is_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape')
     parameters = {'other_data': 'some value'}
     bot_paths = BotPaths(bot_directory=bot_directory)
     return action, parameters, bot_paths
@@ -355,10 +325,11 @@ class TestInjectStrategyIntoInstructions:
         bot_name, behavior, assumptions, action_obj = given_environment_bootstrapped_with_strategy_guardrails(bot_directory, workspace_directory)
         
         # When: Action injects strategy criteria and assumptions
-        instructions = when_action_injects_strategy_criteria_and_assumptions(action_obj)
+        instructions = when_action_injects(action_obj, content='strategy_criteria_and_assumptions')
         
         # Then: Instructions contain strategy criteria and assumptions
-        then_instructions_contain_strategy_criteria_and_assumptions(instructions, assumptions)
+        from agile_bot.bots.base_bot.test.test_helpers import then_instructions_contain
+        then_instructions_contain(instructions, 'strategy_criteria_and_assumptions', expected_assumptions=assumptions)
 
 
 

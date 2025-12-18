@@ -1,22 +1,38 @@
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 import json
 import logging
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 from agile_bot.bots.base_bot.src.utils import read_json_file
 
+if TYPE_CHECKING:
+    from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_spec import KnowledgeGraphSpec
+
 logger = logging.getLogger(__name__)
 
 
 class StoryGraph:
-    def __init__(self, bot_paths: BotPaths, workspace_directory: Path, require_file: bool = True):
+    def __init__(self, bot_paths: BotPaths, workspace_directory: Path, require_file: bool = True, 
+                 knowledge_graph_spec: Optional['KnowledgeGraphSpec'] = None):
         self._bot_paths = bot_paths
         self._workspace_directory = workspace_directory
-        docs_path = self._bot_paths.documentation_path
-        docs_dir = self._workspace_directory / docs_path
-        story_graph_path = docs_dir / 'story-graph.json'
-        self._path = story_graph_path
+        self._knowledge_graph_spec = knowledge_graph_spec
         
+        # Get path and output from knowledge_graph_spec if provided, otherwise use defaults
+        if self._knowledge_graph_spec:
+            config_data = self._knowledge_graph_spec.config_data
+            config_path_value = config_data.get('path', 'docs/stories')
+            docs_path = Path(config_path_value.rstrip('/'))
+            output_filename = config_data.get('output', 'story-graph.json')
+        else:
+            # Use defaults
+            docs_path = self._bot_paths.documentation_path
+            output_filename = 'story-graph.json'
+        
+        docs_dir = self._workspace_directory / docs_path
+        story_graph_path = docs_dir / output_filename
+        self._path = story_graph_path
+    
         if not story_graph_path.exists():
             if require_file:
                 logger.error(f"Story graph file not found at {story_graph_path}")
@@ -26,9 +42,13 @@ class StoryGraph:
                     f"Expected story graph to be created by build action before validate."
                 )
             self._content = {}
-            return
-        
-        self._content = read_json_file(story_graph_path)
+        else:
+            self._content = read_json_file(story_graph_path)
+    
+    @property
+    def knowledge_graph_spec(self) -> Optional['KnowledgeGraphSpec']:
+        """Get the knowledge graph spec used to configure this story graph."""
+        return self._knowledge_graph_spec
     
     @property
     def content(self) -> Dict[str, Any]:

@@ -11,21 +11,21 @@ from .violation import Violation
 class DescriptiveFunctionNamesScanner(TestScanner):
     """Validates helper function names are descriptive and intention-revealing."""
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(test_file_path))
+            content = file_path.read_text(encoding='utf-8')
+            tree = ast.parse(content, filename=str(file_path))
             
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     # Check helper functions (not test methods)
                     if not node.name.startswith('test_'):
-                        violation = self._check_descriptive_name(node, test_file_path, rule_obj)
+                        violation = self._check_descriptive_name(node, file_path, rule_obj)
                         if violation:
                             violations.append(violation)
         

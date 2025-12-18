@@ -14,18 +14,18 @@ class NoFallbacksScanner(TestScanner):
     Tests should not use fallback/default values - use explicit test data.
     """
     
-    def scan_test_file(self, test_file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not test_file_path.exists():
+        if not file_path.exists():
             return violations
         
         try:
-            content = test_file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding='utf-8')
             lines = content.split('\n')
             
             # Check for fallback patterns
-            violations.extend(self._check_fallback_patterns(lines, test_file_path, rule_obj))
+            violations.extend(self._check_fallback_patterns(lines, file_path, rule_obj))
         
         except (UnicodeDecodeError, Exception):
             # Skip binary files or files with encoding issues

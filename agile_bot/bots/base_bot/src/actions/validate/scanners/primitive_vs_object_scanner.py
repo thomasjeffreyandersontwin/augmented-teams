@@ -13,7 +13,8 @@ class PrimitiveVsObjectScanner(CodeScanner):
     
     This scanner detects when methods are passing primitives (especially IDs)
     when they should be passing domain objects. It allows primitives at
-    presentation boundaries (UI/CLI rendering methods).
+    presentation boundaries (UI/CLI rendering methods). Works for both test
+    and production code files.
     """
     
     # Primitive type names that suggest objects should be used instead
@@ -34,14 +35,10 @@ class PrimitiveVsObjectScanner(CodeScanner):
         r'_email$',  # customer_email (when customer object exists)
     ]
     
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
-            return violations
-        
-        # Skip test files - they may use different patterns
-        if self._is_test_file(file_path):
             return violations
         
         try:
@@ -62,27 +59,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
             pass
         
         return violations
-    
-    def _is_test_file(self, file_path: Path) -> bool:
-        """Check if file is a test file and should be skipped."""
-        path_str = str(file_path).lower()
-        file_name = file_path.name.lower()
-        
-        # Skip test directories (but not if 'test' is part of a larger word like 'test_bot' or temp directory)
-        # Only skip if '/test/' or '/tests/' or '\\test\\' or '\\tests\\' appears as directory separators
-        import re
-        if re.search(r'[/\\]test[/\\]', path_str) or re.search(r'[/\\]tests[/\\]', path_str):
-            return True
-        
-        # Skip test files (files starting with test_)
-        if file_name.startswith('test_'):
-            return True
-        
-        # Skip conftest files
-        if file_name == 'conftest.py':
-            return True
-        
-        return False
     
     def _is_presentation_boundary(self, func_name: str, content: str, func_node: ast.FunctionDef) -> bool:
         """Check if function is at a presentation boundary where primitives are acceptable."""

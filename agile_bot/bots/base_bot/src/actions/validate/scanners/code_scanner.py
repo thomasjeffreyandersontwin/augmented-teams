@@ -12,7 +12,12 @@ class CodeScanner(Scanner):
     """Base class for code validation scanners.
     
     CodeScanners validate Python/JavaScript source code files against rules.
-    Each scanner implements scan_code_file() to check a single file.
+    Each scanner implements scan_file() (or scan_code_file() for backward compatibility) to check a single file.
+    
+    Unified Architecture:
+    - Scanners should override scan_file() to scan individual files
+    - The base Scanner.scan() will combine test_files and code_files and call scan_file() for each
+    - scan_code_file() is kept for backward compatibility but delegates to scan_file()
     """
     
     def scan(
@@ -22,11 +27,14 @@ class CodeScanner(Scanner):
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None
     ) -> List[Dict[str, Any]]:
-        """Scan code files for rule violations.
+        """Scan files for rule violations.
+        
+        Validates rule_obj is provided, then delegates to base Scanner.scan() which
+        combines files and calls scan_file() for each.
         
         Args:
             knowledge_graph: Story graph structure
-            rule_obj: Rule object reference (for creating Violations)
+            rule_obj: Rule object reference (required)
             test_files: List of file paths to scan
             code_files: List of file paths to scan
             
@@ -36,41 +44,52 @@ class CodeScanner(Scanner):
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
-        violations = []
-        
-        # Combine all files to scan - no distinction between test_files and code_files
-        all_files = []
+        # Log what we're scanning
+        total_files = len(test_files or []) + len(code_files or [])
+        print(f"[CodeScanner.scan] Scanning {total_files} files ({len(test_files or [])} test, {len(code_files or [])} code)")
         if code_files:
-            all_files.extend(code_files)
+            print(f"[CodeScanner.scan] Code files: {[str(f) for f in code_files[:5]]}{'...' if len(code_files) > 5 else ''}")
         if test_files:
-            all_files.extend(test_files)
+            print(f"[CodeScanner.scan] Test files: {[str(f) for f in test_files[:5]]}{'...' if len(test_files) > 5 else ''}")
         
-        # Scan all files that were passed in
-        for file_path in all_files:
-            if file_path.exists():
-                file_violations = self.scan_code_file(file_path, rule_obj)
-                violations.extend(file_violations if isinstance(file_violations, list) else [])
-        
+        # Use base Scanner.scan() which combines files and calls scan_file() for each
+        violations = super().scan(knowledge_graph, rule_obj, test_files, code_files)
+        print(f"[CodeScanner.scan] Returning {len(violations)} violations")
         return violations
     
-    @abstractmethod
-    def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Scan a single code file for violations.
+    def scan_file(
+        self,
+        file_path: Path,
+        rule_obj: Any = None,
+        knowledge_graph: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Scan a single file for violations.
+        
+        Subclasses must override this method to implement scanning logic.
         
         Args:
-            file_path: Path to code file to scan
-            rule_obj: Rule object reference
+            file_path: Path to file to scan (test or code file)
+            rule_obj: Rule object reference (required)
+            knowledge_graph: Optional knowledge graph (for context-aware scanning)
             
         Returns:
             List of violation dictionaries
         """
-        pass
+        if not rule_obj:
+            raise ValueError("rule_obj parameter is required for CodeScanner")
+        
+        # Store knowledge_graph in instance for scanners that need it
+        if knowledge_graph is not None:
+            self.knowledge_graph = knowledge_graph
+        
+        # Default implementation - subclasses must override
+        return []
     
     def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> set:
         """Extract domain language terms from story graph, epics, and stories.
         
-        This method copies the exact approach from BusinessReadableTestNamesScanner._extract_domain_language.
-        If a term appears in the story graph, it's part of the domain language and should be accepted.
+        Enhanced version that extracts from domain_concepts, responsibilities, collaborators, and scenario steps.
+        This matches the enhanced extraction from SpecificationMatchScanner.
         """
         domain_terms = set()
         
@@ -91,16 +110,41 @@ class CodeScanner(Scanner):
         if not knowledge_graph:
             return domain_terms
         
-        # Extract from epics
+        # Extract from epics and stories
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
-                # Epic name
                 epic_name = epic.get('name', '')
                 if epic_name:
                     domain_terms.update(self._extract_words_from_text(epic_name))
                 
-                # Sub-epics
+                # Extract from domain_concepts in epic - CRITICAL: Must extract all domain terms
+                domain_concepts = epic.get('domain_concepts', [])
+                for concept in domain_concepts:
+                    if isinstance(concept, dict):
+                        concept_name = concept.get('name', '')
+                        if concept_name:
+                            # Add full concept name (lowercase) and snake_case version
+                            domain_terms.add(concept_name.lower())
+                            domain_terms.add(concept_name.lower().replace(' ', '_'))
+                            # Add individual words
+                            domain_terms.update(self._extract_words_from_text(concept_name))
+                            
+                            # Extract from responsibilities (contains domain terminology)
+                            responsibilities = concept.get('responsibilities', [])
+                            for resp in responsibilities:
+                                if isinstance(resp, dict):
+                                    resp_name = resp.get('name', '')
+                                    if resp_name:
+                                        domain_terms.update(self._extract_words_from_text(resp_name))
+                            
+                            # Extract from collaborators (other domain concepts)
+                            collaborators = concept.get('collaborators', [])
+                            for collab in collaborators:
+                                if isinstance(collab, str):
+                                    domain_terms.add(collab.lower())
+                                    domain_terms.update(self._extract_words_from_text(collab))
+                
                 sub_epics = epic.get('sub_epics', [])
                 for sub_epic in sub_epics:
                     if isinstance(sub_epic, dict):
@@ -108,7 +152,33 @@ class CodeScanner(Scanner):
                         if sub_epic_name:
                             domain_terms.update(self._extract_words_from_text(sub_epic_name))
                         
-                        # Stories
+                        # Extract from domain_concepts in sub_epic - CRITICAL: Must extract all domain terms
+                        sub_epic_concepts = sub_epic.get('domain_concepts', [])
+                        for concept in sub_epic_concepts:
+                            if isinstance(concept, dict):
+                                concept_name = concept.get('name', '')
+                                if concept_name:
+                                    # Add full concept name (lowercase) and snake_case version
+                                    domain_terms.add(concept_name.lower())
+                                    domain_terms.add(concept_name.lower().replace(' ', '_'))
+                                    # Add individual words
+                                    domain_terms.update(self._extract_words_from_text(concept_name))
+                                    
+                                    # Extract from responsibilities (contains domain terminology)
+                                    responsibilities = concept.get('responsibilities', [])
+                                    for resp in responsibilities:
+                                        if isinstance(resp, dict):
+                                            resp_name = resp.get('name', '')
+                                            if resp_name:
+                                                domain_terms.update(self._extract_words_from_text(resp_name))
+                                    
+                                    # Extract from collaborators (other domain concepts)
+                                    collaborators = concept.get('collaborators', [])
+                                    for collab in collaborators:
+                                        if isinstance(collab, str):
+                                            domain_terms.add(collab.lower())
+                                            domain_terms.update(self._extract_words_from_text(collab))
+                        
                         story_groups = sub_epic.get('story_groups', [])
                         for story_group in story_groups:
                             if isinstance(story_group, dict):
@@ -119,20 +189,30 @@ class CodeScanner(Scanner):
                                         if story_name:
                                             domain_terms.update(self._extract_words_from_text(story_name))
                                         
-                                        # Acceptance criteria
                                         acceptance_criteria = story.get('acceptance_criteria', [])
                                         for ac in acceptance_criteria:
                                             if isinstance(ac, dict):
                                                 ac_text = ac.get('criterion', '')
                                                 if ac_text:
                                                     domain_terms.update(self._extract_words_from_text(ac_text))
+                                            elif isinstance(ac, str):
+                                                domain_terms.update(self._extract_words_from_text(ac))
+                                        
+                                        # Extract from scenario steps
+                                        scenarios = story.get('scenarios', [])
+                                        for scenario in scenarios:
+                                            if isinstance(scenario, dict):
+                                                steps = scenario.get('steps', [])
+                                                for step in steps:
+                                                    if isinstance(step, str):
+                                                        domain_terms.update(self._extract_words_from_text(step))
         
         return domain_terms
     
     def _extract_words_from_text(self, text: str) -> set:
         """Extract individual words from text, converting to lowercase.
         
-        This method copies the exact approach from BusinessReadableTestNamesScanner._extract_words_from_text.
+        This method extracts words from text using regex to find word boundaries.
         """
         if not text:
             return set()
@@ -141,6 +221,41 @@ class CodeScanner(Scanner):
         # Split on spaces, underscores, hyphens, and other separators
         words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
         return set(words)
+    
+    def _matches_domain_term(self, name: str, domain_terms: set) -> bool:
+        """Check if a name matches any domain term using compound term matching.
+        
+        This method implements the same compound term matching logic from SpecificationMatchScanner.
+        It checks if:
+        1. Any word in the name matches a domain term
+        2. Any domain term appears as a substring in the name (for compound terms)
+        
+        Args:
+            name: Variable, function, or class name to check
+            domain_terms: Set of domain terms from knowledge graph
+            
+        Returns:
+            True if name matches any domain term, False otherwise
+        """
+        if not name or not domain_terms:
+            return False
+        
+        name_lower = name.lower()
+        
+        # Extract words from name (handles snake_case, camelCase, etc.)
+        name_words = self._extract_words_from_text(name)
+        
+        # Check if any domain term is a word in the name
+        for domain_term in domain_terms:
+            # Check if domain term is a word in the name
+            if domain_term in name_words:
+                return True
+            # Check if domain term appears as substring (for compound terms)
+            # e.g., "assigned_strategy" contains "strategy", "template_manager" contains "template"
+            if domain_term in name_lower or name_lower in domain_term:
+                return True
+        
+        return False
     
     def scan_cross_file(
         self,

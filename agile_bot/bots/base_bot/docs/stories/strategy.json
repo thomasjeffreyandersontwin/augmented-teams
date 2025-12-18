@@ -17,6 +17,41 @@
       "programming_paradigm": "Object-oriented programming - Classes, objects, inheritance, polymorphism, encapsulation. Maximize OOP principles",
       "properties_vs_methods": "Maximize use of properties - Maximize use of properties, keep internals of class internal, maximize 'tell don't ask' principle"
     }
+  },
+  "shape": {
+    "strategy_criteria": {
+      "criteria": {},
+      "decisions_made": "{\\flow_scope_and_granularity\\: \\End-to-end"
+    },
+    "assumptions": {
+      "typical_assumptions": [
+        "Focus on user flow over internal systems",
+        "Cover the end-to-end scenario",
+        "Prioritize customer-facing features",
+        "Assume stories should be independently testable",
+        "Assume each story delivers user value",
+        "Assume technical infrastructure stories are implicit",
+        "Drill down where architectural uncertainty is high \u2013 unknown integration patterns, new technology, or unclear system boundaries require deeper exploration",
+        "Drill down where business complexity is significant \u2013 complex business rules, regulatory requirements, or domain logic that needs clarification",
+        "Drill down where uniqueness creates risk \u2013 novel approaches, first-of-kind features, or untested patterns benefit from detailed shaping",
+        "Drill down where integration complexity exists \u2013 multiple systems, data dependencies, or coordination challenges need detailed mapping",
+        "Drill down where user behavior is highly variable \u2013 diverse user needs, multiple personas, or inconsistent workflows require deeper understanding",
+        "Skip deep drill-down where patterns are well-established \u2013 standard CRUD operations, familiar workflows, or proven integration patterns can stay high-level",
+        "Focus on core domain over supporting domains",
+        "Identify overall domain concepts and relationships before detailed modeling",
+        "Use ubiquitous language from domain sources",
+        "Model domain concepts, not technical implementation",
+        "Separate domain logic from infrastructure concerns, where they are mentioned"
+      ],
+      "assumptions_made": "[\\Focus"
+    },
+    "recommended_activities": [
+      "Review the AI-generated story map to verify the overarching flow accurately describes the overall user journey and system behavior",
+      "Verify that epics, features, and stories follow action and goal-oriented language as intended",
+      "Review the AI's approach to drill-downs to confirm they bring clarity to areas of uncertainty, complexity, and opportunity rather than over-documenting simple areas",
+      "Review the AI-generated bounded contexts to verify they align with business capabilities",
+      "Validate that domain concepts use language from domain experts",
+      "Review the AI's approach to identifying bounded contexts to confirm they reflect business reality"
+    ]
   }
 }
-
