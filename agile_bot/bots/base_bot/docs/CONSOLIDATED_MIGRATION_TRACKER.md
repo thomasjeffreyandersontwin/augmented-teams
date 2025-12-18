@@ -248,3 +248,29 @@ This document tracks the migration of consolidated test helper functions from th
 
 *Last Updated: 2025-12-18 - All functions migrated*
 
+---
+
+## Post-Migration Test Status
+
+**Test Results after migration:** 284 passed, 51 failed, 1 error
+
+### Import/Migration Issues Fixed:
+- ✅ `given_knowledge_graph_directory_structure_created` alias added
+- ✅ `given_knowledge_graph_config_and_template_created` alias added
+- ✅ `given_standard_workflow_actions_config` alias added
+- ✅ `given_test_file_created_with_content` alias added
+- ✅ `given_directory_created` import added to test_render_output.py
+- ✅ `when_action_finalizes`, `when_action_injects` imports added
+
+### Remaining Test Failures (Not migration-related):
+These are actual test logic issues or product code issues:
+1. **Missing methods on action classes** - `track_start`, `track_completion` not on ValidateRulesAction
+2. **Scanner violations detection** - Some scanners not detecting expected violations
+3. **Validation scope issues** - test vs src scope handling
+4. **then_item_matches() usage** - Missing required argument in test_invoke_mcp.py
+5. **Report path assertion** - Expected `validation-report.md` but got `shapeValidationReport.md`
+
+### Commits:
+1. `b0eebb8` - fix: add backward-compatible aliases for consolidated test helpers
+2. `370af1e` - fix: add missing imports for consolidated test helpers
+
