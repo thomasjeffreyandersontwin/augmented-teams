@@ -1820,7 +1820,7 @@ def then_template_variables_replaced(instructions_text, type=None):
         assert '{{render_instructions}}' not in instructions_text
         assert 'Render all story files' in instructions_text or 'Generate markdown output' in instructions_text
 
-def then_item_matches(item, expected, item_type=None, **checks):
+def then_item_matches(item, expected=None, item_type=None, **checks):
     """Then: Item matches expected values.
     
     Consolidated function that handles matching for various item types:
@@ -1832,7 +1832,7 @@ def then_item_matches(item, expected, item_type=None, **checks):
     
     Args:
         item: The item to check (result, state_file, instructions, etc.)
-        expected: Expected value(s) - can be a single value or dict
+        expected: Expected value(s) - can be a single value or dict (optional if using **checks)
         item_type: Optional type hint ('result', 'state_file', 'instructions', 'behavior_config', etc.)
         **checks: Additional checks to perform (e.g., action='clarify', behavior='shape')
     """
@@ -1859,9 +1859,11 @@ def then_item_matches(item, expected, item_type=None, **checks):
             elif 'action' in checks:
                 assert item.action == checks['action'], f"Expected action {checks['action']}, got {item.action}"
         if 'behavior' in checks:
-            assert item.behavior == checks['behavior'], f"Expected behavior {checks['behavior']}, got {item.behavior}"
+            actual_behavior = getattr(item, 'behavior', None)
+            assert actual_behavior == checks['behavior'], f"Expected behavior {checks['behavior']}, got {actual_behavior}"
         if 'status' in checks:
-            assert item.status == checks['status'], f"Expected status {checks['status']}, got {item.status}"
+            actual_status = getattr(item, 'status', None)
+            assert actual_status == checks['status'], f"Expected status {checks['status']}, got {actual_status}"
     elif item_type == 'state_file' or (isinstance(item, Path) and item.exists()):
         # Handle state file matching
         import json
