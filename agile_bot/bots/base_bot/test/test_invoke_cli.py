@@ -287,7 +287,6 @@ def create_action_trigger_words(workspace: Path, bot_name: str, behavior: str, a
     trigger_file.write_text(json.dumps(trigger_data), encoding='utf-8')
     return trigger_file
 
-            yield behavior, action, route, result
 
 def then_verify_route_and_result_for_bot_only(setup, helper, behavior, action, route, result, trigger_message):
     """Then: Verify route and result for bot-only trigger."""
