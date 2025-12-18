@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 import logging
+import traceback
 from pathlib import Path
 from typing import List, Optional, Iterator, Tuple, Dict, Any, TYPE_CHECKING
 from datetime import datetime
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from agile_bot.bots.base_bot.src.utils import read_json_file
+from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
+from agile_bot.bots.base_bot.src.bot.behavior import Behavior
 
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.bot import BotResult
@@ -17,9 +21,6 @@ class Behaviors:
     def __init__(self, bot_name: str, bot_paths: BotPaths):
         self.bot_name = bot_name
         self.bot_paths = bot_paths
-        
-        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-        from agile_bot.bots.base_bot.src.utils import read_json_file
         
         self._behaviors: List['Behavior'] = []
         # Discover behaviors from folder structure and load their order from behavior.json
@@ -42,7 +43,6 @@ class Behaviors:
                             behavior_orders.append((order, behavior))
                         except Exception as e:
                             # If config load fails, skip this behavior
-                            import traceback
                             logger.warning(f"Failed to load behavior {item.name}: {e}")
                             logger.debug(f"Traceback: {traceback.format_exc()}")
                             continue
@@ -81,9 +81,7 @@ class Behaviors:
         return None
     
     def next(self) -> Optional['Behavior']:
-        if self._current_index is None:
-            return None
-        
+        # Caller must ensure current_index is set - fail fast if not
         next_index = self._current_index + 1
         if next_index < len(self._behaviors):
             return self._behaviors[next_index]
@@ -126,19 +124,8 @@ class Behaviors:
         if not reminder:
             return result
         
-        if isinstance(result, dict) and 'instructions' in result:
-            instructions = result['instructions']
-            if isinstance(instructions, dict) and 'base_instructions' in instructions:
-                base_instructions = instructions.get('base_instructions', [])
-                if isinstance(base_instructions, list):
-                    base_instructions = list(base_instructions)
-                    base_instructions.append("")
-                    base_instructions.append("**NEXT BEHAVIOR REMINDER:**")
-                    base_instructions.append(reminder)
-                    instructions['base_instructions'] = base_instructions
-                    result['instructions'] = instructions
-        
-        return result
+        # Use extracted function to avoid duplication with action.py
+        return inject_reminder_to_instructions(result, reminder)
     
     def _is_final_behavior(self) -> bool:
         try:
@@ -257,8 +244,8 @@ class Behaviors:
     
     def get_entry_state_result(self) -> 'BotResult':
         """Get result for entry state when no state file exists."""
+        # Import here to avoid circular import (BotResult is defined in bot.py which imports Behaviors)
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
-        
         return BotResult(
             status='requires_confirmation',
             behavior='',

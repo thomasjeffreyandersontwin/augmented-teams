@@ -138,6 +138,18 @@ class ActionScope:
         # Default: process all
         return None
     
+    def _extract_story_names(self, stories: list, story_names: Set[str]) -> None:
+        """Extract story names from a list of stories.
+        
+        Extracted to eliminate duplication between _get_increment_story_names(),
+        _get_increment_story_names_by_name(), and _extract_story_names_from_epic().
+        """
+        for story in stories:
+            if isinstance(story, dict):
+                story_names.add(story['name'])
+            elif isinstance(story, str):
+                story_names.add(story)
+    
     def _get_increment_story_names(self, knowledge_graph: Dict[str, Any], priority: int) -> Set[str]:
         """Get story names from increment by priority."""
         story_names = set()
@@ -145,12 +157,7 @@ class ActionScope:
         
         for increment in increments:
             if increment.get('priority') == priority:
-                stories = increment.get('stories', [])
-                for story in stories:
-                    if isinstance(story, dict):
-                        story_names.add(story['name'])
-                    elif isinstance(story, str):
-                        story_names.add(story)
+                self._extract_story_names(increment.get('stories', []), story_names)
         
         return story_names
     
@@ -161,12 +168,7 @@ class ActionScope:
         
         for increment in increments:
             if increment.get('name') == increment_name:
-                stories = increment.get('stories', [])
-                for story in stories:
-                    if isinstance(story, dict):
-                        story_names.add(story['name'])
-                    elif isinstance(story, str):
-                        story_names.add(story)
+                self._extract_story_names(increment.get('stories', []), story_names)
         
         return story_names
     
@@ -186,12 +188,7 @@ class ActionScope:
         # Extract from story_groups
         story_groups = epic_data.get('story_groups', [])
         for group in story_groups:
-            stories = group.get('stories', [])
-            for story in stories:
-                if isinstance(story, dict):
-                    story_names.add(story['name'])
-                elif isinstance(story, str):
-                    story_names.add(story)
+            self._extract_story_names(group.get('stories', []), story_names)
         
         # Recursively extract from sub_epics
         sub_epics = epic_data.get('sub_epics', [])

@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
+from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_template import KnowledgeGraphTemplate
+from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
 from agile_bot.bots.base_bot.src.utils import read_json_file
 
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
-    from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_template import KnowledgeGraphTemplate
 
 
 class KnowledgeGraphSpec:
@@ -14,30 +14,32 @@ class KnowledgeGraphSpec:
         self._bot_paths = bot_paths
         self._config_data: Dict[str, Any] = {}
         self._config_path: Optional[Path] = None
-        self._template: Optional['KnowledgeGraphTemplate'] = None
-        self._knowledge_graph: Optional['StoryGraph'] = None
+        self._template: Optional[KnowledgeGraphTemplate] = None
+        self._knowledge_graph: Optional[StoryGraph] = None
         self._load_config()
+    
+    def _get_default_config(self) -> dict:
+        """Get default knowledge graph config.
+        
+        Extracted to eliminate duplication in _load_config().
+        """
+        return {
+            'path': 'docs/stories',
+            'output': 'story-graph.json',
+            'template': None  # No template needed - just load existing story graph
+        }
     
     def _load_config(self):
         # If knowledge_graph folder doesn't exist, use defaults and load story graph from project
         if not self._kg_dir.exists():
-            # Default config: use story-graph.json from project's docs/stories folder
-            self._config_data = {
-                'path': 'docs/stories',
-                'output': 'story-graph.json',
-                'template': None  # No template needed - just load existing story graph
-            }
+            self._config_data = self._get_default_config()
             self._config_path = None
             return
         
         config_files = list(self._kg_dir.glob('*.json'))
         if not config_files:
             # If folder exists but no config files, use defaults
-            self._config_data = {
-                'path': 'docs/stories',
-                'output': 'story-graph.json',
-                'template': None
-            }
+            self._config_data = self._get_default_config()
             self._config_path = None
             return
         
@@ -46,9 +48,8 @@ class KnowledgeGraphSpec:
         self._config_path = config_path
     
     @property
-    def knowledge_graph(self) -> 'StoryGraph':
+    def knowledge_graph(self) -> StoryGraph:
         if self._knowledge_graph is None:
-            from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
             working_dir = self._bot_paths.workspace_directory
             # Pass self (KnowledgeGraphSpec) so StoryGraph can read config internally
             self._knowledge_graph = StoryGraph(
@@ -78,13 +79,12 @@ class KnowledgeGraphSpec:
         return template_filename
     
     @property
-    def template(self) -> Optional['KnowledgeGraphTemplate']:
+    def template(self) -> Optional[KnowledgeGraphTemplate]:
         if self._template is None:
             template_filename = self.template_filename
             if not template_filename:
                 # No template - return None (behavior doesn't need knowledge graph template)
                 return None
-            from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_template import KnowledgeGraphTemplate
             self._template = KnowledgeGraphTemplate(
                 self._kg_dir,
                 template_filename

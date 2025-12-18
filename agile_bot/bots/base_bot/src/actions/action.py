@@ -1,7 +1,14 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING, List
+import json
 import logging
+import re
+import sys
+import traceback
 from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker
+from agile_bot.bots.base_bot.src.actions.clarify.requirements_clarifications import RequirementsClarifications
+from agile_bot.bots.base_bot.src.actions.strategy.strategy_decision import StrategyDecision
+from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
 from agile_bot.bots.base_bot.src.bot.workspace import (
     get_base_actions_directory
 )
@@ -11,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+    from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
 
 
 class Action:
@@ -31,7 +39,6 @@ class Action:
         # Store derived/provided name for config loading and property
         self._action_name = action_name
         
-        from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker
         self._activity_tracker = ActivityTracker(behavior.bot_paths, behavior.bot_name)
         
         # Use property to get final action name (may be overridden by subclass)
@@ -64,7 +71,6 @@ class Action:
     
     def _derive_action_name_from_class(self) -> str:
         """Derive action name from class name for base Action class."""
-        import re
         class_name = self.__class__.__name__
         
         if class_name.endswith('Action'):
@@ -104,8 +110,6 @@ class Action:
     
     
     def _inject_clarification_data(self, instructions: Dict[str, Any]) -> list:
-        from agile_bot.bots.base_bot.src.actions.clarify.requirements_clarifications import RequirementsClarifications
-        
         bot_paths = self.behavior.bot_paths
         clarification_data = RequirementsClarifications.load_all(bot_paths)
         
@@ -123,8 +127,6 @@ class Action:
         ]
     
     def _inject_strategy_data(self, instructions: Dict[str, Any]) -> list:
-        from agile_bot.bots.base_bot.src.actions.strategy.strategy_decision import StrategyDecision
-        
         bot_paths = self.behavior.bot_paths
         strategy_data = StrategyDecision.load_all(bot_paths)
         
@@ -201,7 +203,6 @@ class Action:
             completed_actions = []
             current_action_from_state = None
             if state_file.exists():
-                import json
                 state_data = json.loads(state_file.read_text(encoding='utf-8'))
                 completed_actions = state_data.get('completed_actions', [])
                 # Get current action from state file for comparison
@@ -442,9 +443,6 @@ class Action:
         in the result dict so the CLI can display them to the user. The exception
         is then re-raised to ensure proper error propagation.
         """
-        import traceback
-        import sys
-        
         self.track_activity_on_start()
         try:
             result = self.do_execute(parameters or {})
@@ -517,7 +515,6 @@ class Action:
             if hasattr(self.behavior, 'actions') and hasattr(self.behavior.actions, 'behavior'):
                 behavior_from_actions = self.behavior.actions.behavior
                 if hasattr(behavior_from_actions, 'bot_paths'):
-                    from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
                     logger.debug(f"Behavior {self.behavior.name} has no bot reference - reminder will be skipped. "
                                f"This may indicate the behavior was not created through Bot.__init__")
                 return result
@@ -529,36 +526,18 @@ class Action:
                         f"behavior.bot.behaviors.names={self.behavior.bot.behaviors.names if self.behavior and self.behavior.bot else None}")
             return result
         
+        # Ensure base_instructions exists if needed from self.instructions
         if 'instructions' not in result:
             result['instructions'] = {}
-        
         instructions = result['instructions']
+        if isinstance(instructions, dict):
+            base_instructions = instructions.get('base_instructions', [])
+            if not base_instructions and isinstance(self.instructions, dict) and 'base_instructions' in self.instructions:
+                instructions['base_instructions'] = list(self.instructions['base_instructions'])
+                result['instructions'] = instructions
         
-        if not isinstance(instructions, dict):
-            if isinstance(instructions, list):
-                instructions = {'base_instructions': instructions}
-            else:
-                instructions = {}
-            result['instructions'] = instructions
-        
-        base_instructions = instructions.get('base_instructions', [])
-        
-        if not base_instructions and isinstance(self.instructions, dict) and 'base_instructions' in self.instructions:
-            base_instructions = list(self.instructions['base_instructions'])
-            instructions['base_instructions'] = base_instructions
-        
-        if not isinstance(base_instructions, list):
-            base_instructions = []
-            instructions['base_instructions'] = base_instructions
-        
-        base_instructions = list(base_instructions)
-        base_instructions.append("")
-        base_instructions.append("**NEXT BEHAVIOR REMINDER:**")
-        base_instructions.append(reminder)
-        instructions['base_instructions'] = base_instructions
-        result['instructions'] = instructions
-        
-        return result
+        # Use extracted function to avoid duplication with behaviors.py
+        return inject_reminder_to_instructions(result, reminder)
     
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError("Subclasses must implement do_execute()")

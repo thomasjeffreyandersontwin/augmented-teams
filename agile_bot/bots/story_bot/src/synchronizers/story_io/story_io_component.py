@@ -32,7 +32,6 @@ class StoryIOComponent(ABC):
     
     @property
     def parent(self) -> Optional['StoryIOComponent']:
-        """Get the parent component."""
         return self._parent
     
     @parent.setter

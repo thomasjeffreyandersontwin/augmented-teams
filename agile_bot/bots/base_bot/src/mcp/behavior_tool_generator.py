@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
 from typing import Dict, Any, List
-from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
+from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory, get_bot_directory
 
 
 class BehaviorTool:
@@ -12,9 +14,6 @@ class BehaviorTool:
         self.name = f'{bot_name}_{behavior_name}_tool'
     
     def invoke(self, parameters: Dict[str, Any] = None):
-        from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
-        from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory
-        
         bot_directory = get_bot_directory()
 
         bot = Bot(
@@ -25,14 +24,7 @@ class BehaviorTool:
         
         behavior = getattr(bot, self.behavior_name)
         action = behavior.actions.forward_to_current()
-        if action is None:
-            return BotResult(
-                status='error',
-                behavior=self.behavior_name,
-                action='',
-                data={'message': f'No current action found for behavior {self.behavior_name}'}
-            )
-        
+        # Action must exist - fail fast if not
         try:
             result_data = action.execute(parameters or {})
             return BotResult(
@@ -57,7 +49,6 @@ class BehaviorToolGenerator:
         self.config_path = config_path
         
         # Load bot config to get behaviors
-        import json
         self.config = json.loads(config_path.read_text(encoding='utf-8'))
     
     def create_behavior_tools(self) -> List[BehaviorTool]:

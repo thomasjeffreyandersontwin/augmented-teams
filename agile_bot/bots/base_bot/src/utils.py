@@ -51,10 +51,8 @@ class TerminalFormatter:
         Args:
             enabled: Force enable/disable colors. If None, auto-detect.
         """
-        if enabled is None:
-            enabled = self._supports_color()
-        
-        if not enabled:
+        should_enable = enabled if enabled is not None else self._supports_color()
+        if not should_enable:
             self._disable_colors()
     
     @staticmethod

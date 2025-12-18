@@ -11,16 +11,9 @@ from agile_bot.bots.base_bot.src.utils import read_json_file
 
 class BotPaths:
     def __init__(self, workspace_path: Path = None, bot_directory: Path = None):
-
-        if workspace_path:
-            self._workspace_directory = Path(workspace_path)
-        else:
-            self._workspace_directory = get_workspace_directory()
-        
-        if bot_directory:
-            self._bot_directory = Path(bot_directory)
-        else:
-            self._bot_directory = get_bot_directory()
+        # Use provided paths or get from environment - fail fast if neither available
+        self._workspace_directory = Path(workspace_path) if workspace_path else get_workspace_directory()
+        self._bot_directory = Path(bot_directory) if bot_directory else get_bot_directory()
         
         self._base_actions_directory = get_base_actions_directory(self._bot_directory)
         

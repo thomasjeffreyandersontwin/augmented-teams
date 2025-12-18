@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 import re
 import sys
+import traceback
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 
 logger = logging.getLogger(__name__)
@@ -193,7 +194,6 @@ class ValidationReportWriter:
             logger.info("Report file written successfully")
             logger.info("=== _write_validation_report COMPLETE ===")
         except Exception as e:
-            import traceback
             logger.error("=== ERROR in _write_validation_report ===")
             logger.error(f"Error type: {type(e).__name__}")
             logger.error(f"Error message: {e}")

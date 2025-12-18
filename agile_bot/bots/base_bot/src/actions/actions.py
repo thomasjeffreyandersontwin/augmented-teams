@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
 from typing import List, Optional, Iterator, Dict, Any, TYPE_CHECKING
 from datetime import datetime
+from agile_bot.bots.base_bot.src.actions.action import Action as BaseAction
+from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
+from agile_bot.bots.base_bot.src.utils import read_json_file
 
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.actions.action import Action
@@ -35,10 +39,6 @@ class Actions:
     
     def _create_action_instance(self, action_name: str, behavior: 'Behavior',
                                action_config: Dict[str, Any]) -> Action:
-        import importlib
-        from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
-        from agile_bot.bots.base_bot.src.utils import read_json_file
-        
         custom_class = action_config.get("action_class") or action_config.get("custom_class")
         
         if not custom_class:
@@ -88,7 +88,6 @@ class Actions:
             ) from e
         
         # Only pass action_name for base Action class; extended classes derive it from class name
-        from agile_bot.bots.base_bot.src.actions.action import Action as BaseAction
         if action_class is BaseAction:
             return action_class(
                 action_name=action_name,
@@ -124,9 +123,7 @@ class Actions:
         return None
     
     def next(self) -> Optional[Action]:
-        if self._current_index is None:
-            return None
-        
+        # Caller must ensure current_index is set - fail fast if not
         next_index = self._current_index + 1
         if next_index < len(self._actions):
             return self._actions[next_index]
@@ -155,9 +152,7 @@ class Actions:
                 self._current_index = i
                 break
         
-        if target_index is None:
-            return
-        
+        # target_index must be set after find_by_name succeeds
         if out_of_order and self.behavior.bot_paths:
             workspace_dir = self.behavior.bot_paths.workspace_directory
             state_file = workspace_dir / 'behavior_action_state.json'
@@ -184,23 +179,21 @@ class Actions:
         
         self.save_state()
     
-    def close_current(self):
-        if self.behavior.bot_paths is None:
-            return
+    def _get_state_file_path(self) -> Path:
+        """Get path to behavior_action_state.json file.
         
-        if self._current_index is None:
-            return
-        
-        current_action_obj = self.current
-        if current_action_obj is None:
-            return
-        
+        Extracted to eliminate duplication between close_current() and save_state().
+        """
         workspace_dir = self.behavior.bot_paths.workspace_directory
-        state_file = workspace_dir / 'behavior_action_state.json'
+        return workspace_dir / 'behavior_action_state.json'
+    
+    def _load_or_create_state(self, state_file: Path) -> dict:
+        """Load existing state or create default state.
         
+        Extracted to eliminate duplication between close_current() and save_state().
+        """
         expected_behavior = f'{self.behavior.bot_name}.{self.behavior.name}'
         
-        # Load existing state or create new
         if state_file.exists():
             state_data = json.loads(state_file.read_text(encoding='utf-8'))
         else:
@@ -211,11 +204,19 @@ class Actions:
                 'timestamp': datetime.now().isoformat()
             }
         
-        if 'current_behavior' not in state_data:
-            state_data['current_behavior'] = expected_behavior
-        
         if 'completed_actions' not in state_data:
             state_data['completed_actions'] = []
+        
+        return state_data
+    
+    def close_current(self):
+        # bot_paths, current_index, and current action must exist - fail fast if not
+        current_action_obj = self.current
+        state_file = self._get_state_file_path()
+        state_data = self._load_or_create_state(state_file)
+        
+        if 'current_behavior' not in state_data:
+            state_data['current_behavior'] = f'{self.behavior.bot_name}.{self.behavior.name}'
         
         action_to_complete = current_action_obj.action_name
         action_state = f'{self.behavior.bot_name}.{self.behavior.name}.{action_to_complete}'
@@ -294,11 +295,9 @@ class Actions:
     
     def _get_next_behavior_reminder(self) -> str:
         try:
-            if not self.behavior or not self.behavior.bot:
-                return ""
+            # behavior and bot must exist - fail fast if not
             behavior_names = self.behavior.bot.behaviors.names
-            if not behavior_names:
-                return ""
+            # behavior_names must have entries - fail fast if not
             try:
                 current_index = behavior_names.index(self.behavior.name)
                 if current_index + 1 < len(behavior_names):
@@ -328,30 +327,12 @@ class Actions:
         return ""
     
     def save_state(self):
-        if self.current is None or self.behavior.bot_paths is None:
-            return
-        
-        workspace_dir = self.behavior.bot_paths.workspace_directory
-        state_file = workspace_dir / 'behavior_action_state.json'
-        
-        expected_behavior = f'{self.behavior.bot_name}.{self.behavior.name}'
-        
-        # Load existing state or create new
-        if state_file.exists():
-            state_data = json.loads(state_file.read_text(encoding='utf-8'))
-        else:
-            state_data = {
-                'current_behavior': expected_behavior,
-                'current_action': '',
-                'completed_actions': [],
-                'timestamp': datetime.now().isoformat()
-            }
-        
-        if 'completed_actions' not in state_data:
-            state_data['completed_actions'] = []
+        # current and bot_paths must exist - fail fast if not
+        state_file = self._get_state_file_path()
+        state_data = self._load_or_create_state(state_file)
         
         # Always update current_behavior to reflect the current behavior
-        state_data['current_behavior'] = expected_behavior
+        state_data['current_behavior'] = f'{self.behavior.bot_name}.{self.behavior.name}'
         
         current_action_obj = self.current
         if current_action_obj:
@@ -362,19 +343,11 @@ class Actions:
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
     
     def load_state(self):
-        if self.behavior.bot_paths is None or len(self._actions) == 0:
-            if len(self._actions) > 0:
-                self._current_index = 0
-            return
-        
+        # bot_paths and actions must exist - fail fast if not
         workspace_dir = self.behavior.bot_paths.workspace_directory
         state_file = workspace_dir / 'behavior_action_state.json'
         
-        if not state_file.exists():
-            if len(self._actions) > 0:
-                self._current_index = 0
-            return
-        
+        # State file must exist - fail fast if not
         try:
             state_data = json.loads(state_file.read_text(encoding='utf-8'))
             current_action_full = state_data.get('current_action', '')
@@ -422,9 +395,7 @@ class Actions:
                 self._current_index = 0
     
     def _save_completed_action(self, action_name: str):
-        if self.behavior.bot_paths is None:
-            return
-        
+        # bot_paths must exist - fail fast if not
         workspace_dir = self.behavior.bot_paths.workspace_directory
         state_file = workspace_dir / 'behavior_action_state.json'
         
@@ -454,14 +425,9 @@ class Actions:
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
     
     def is_action_completed(self, action_name: str) -> bool:
-        if self.behavior.bot_paths is None:
-            return False
-        
+        # bot_paths and state file must exist - fail fast if not
         workspace_dir = self.behavior.bot_paths.workspace_directory
         state_file = workspace_dir / 'behavior_action_state.json'
-        
-        if not state_file.exists():
-            return False
         
         state_data = json.loads(state_file.read_text(encoding='utf-8'))
         completed_actions = state_data.get('completed_actions', [])

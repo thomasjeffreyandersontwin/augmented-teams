@@ -24,10 +24,7 @@ class MergedInstructions:
     
     def merge(self) -> Dict[str, Any]:
         merged = {
-            'base_instructions': self.base_instructions
+            'base_instructions': self.base_instructions,
+            'render_instructions': self.render_instructions
         }
-        
-        if self.render_instructions is not None:
-            merged['render_instructions'] = self.render_instructions
-        
         return merged

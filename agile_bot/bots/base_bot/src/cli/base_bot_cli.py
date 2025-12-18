@@ -4,10 +4,12 @@ import sys
 import argparse
 import json
 import logging
+import re
+import traceback
 from pathlib import Path
 from typing import Dict, Any, Tuple
 from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
-from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory, get_bot_directory
+from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory, get_bot_directory, get_python_workspace_root
 from agile_bot.bots.base_bot.src.utils import read_json_file
 
 logger = logging.getLogger(__name__)
@@ -130,25 +132,12 @@ class BaseBotCli:
     
     def close_current_action(self) -> Dict[str, Any]:
         try:
-            current_behavior = self.bot.behaviors.current
-            if current_behavior is None:
-                if self.bot.behaviors.first:
-                    self.bot.behaviors.navigate_to(self.bot.behaviors.first.name)
-                    current_behavior = self.bot.behaviors.current
-                else:
-                    raise ValueError("No behaviors available")
-            if current_behavior is None:
-                raise ValueError("No current behavior")
+            current_behavior = self._navigate_to_first_behavior_if_needed()
             current_behavior.actions.load_state()
             current_action = current_behavior.actions.current
             if current_action:
                 current_behavior.actions.close_current()
-            action = current_behavior.actions.forward_to_current()
-            if action is None:
-                raise ValueError(f"No current action found for behavior {current_behavior.name}")
-            result_data = action.execute()
-            result = self._create_bot_result('completed', current_behavior.name, action.action_name, result_data)
-            return self._format_result(result)
+            return self._execute_current_action(current_behavior)
         except Exception as e:
             self._handle_error(e)
     
@@ -178,15 +167,38 @@ class BaseBotCli:
     def _route_to_behavior(self, behavior_name: str):
         # Let exceptions propagate to run() which will handle them
         behavior_obj = getattr(self.bot, behavior_name)
-        action = behavior_obj.actions.forward_to_current()
-        if action is None:
-            raise ValueError(f"No current action found for behavior '{behavior_name}'")
-        result_data = action.execute()
-        result = self._create_bot_result('completed', behavior_name, action.action_name, result_data)
-        return self._format_result(result)
+        return self._execute_current_action(behavior_obj)
     
-    def _route_to_current_behavior_and_action(self):
-        # Let exceptions propagate to run() which will handle them
+    def _output_breadcrumbs(self, breadcrumbs: list, add_separator: bool = True):
+        """Output breadcrumbs with UTF-8 encoding for emoji support.
+        
+        Extracted to eliminate duplication between help_behaviors_and_actions()
+        and help_cursor_commands().
+        """
+        fmt = self._get_formatter()
+        if add_separator:
+            print(fmt.format_separator())
+            print()
+        sys.stdout.flush()  # Flush before buffer write to maintain order
+        for line in breadcrumbs:
+            # Skip AI directive lines
+            if line.startswith("**CRITICAL: YOU MUST DISPLAY") or line.startswith("**YOU MUST DISPLAY"):
+                continue
+            # Write with UTF-8 encoding to preserve emojis for markdown rendering
+            try:
+                sys.stdout.buffer.write((line + "\n").encode('utf-8'))
+                sys.stdout.buffer.flush()
+            except Exception:
+                # Fallback to regular print if buffer write fails
+                print(line)
+        sys.stdout.flush()
+    
+    def _navigate_to_first_behavior_if_needed(self):
+        """Navigate to first behavior if no current behavior is set.
+        
+        Extracted to eliminate duplication between close_current_action() and 
+        _route_to_current_behavior_and_action().
+        """
         current_behavior = self.bot.behaviors.current
         if current_behavior is None:
             if self.bot.behaviors.first:
@@ -196,12 +208,25 @@ class BaseBotCli:
                 raise ValueError("No behaviors available")
         if current_behavior is None:
             raise ValueError("No current behavior")
-        action = current_behavior.actions.forward_to_current()
+        return current_behavior
+    
+    def _execute_current_action(self, behavior):
+        """Execute current action for a behavior and return formatted result.
+        
+        Extracted to eliminate duplication between _route_to_behavior() and
+        _route_to_current_behavior_and_action().
+        """
+        action = behavior.actions.forward_to_current()
         if action is None:
-            raise ValueError(f"No current action found for behavior {current_behavior.name}")
+            raise ValueError(f"No current action found for behavior {behavior.name}")
         result_data = action.execute()
-        result = self._create_bot_result('completed', current_behavior.name, action.action_name, result_data)
+        result = self._create_bot_result('completed', behavior.name, action.action_name, result_data)
         return self._format_result(result)
+    
+    def _route_to_current_behavior_and_action(self):
+        # Let exceptions propagate to run() which will handle them
+        current_behavior = self._navigate_to_first_behavior_if_needed()
+        return self._execute_current_action(current_behavior)
     
     def _create_bot_result(self, status: str, behavior: str, action: str, data: Dict[str, Any]) -> BotResult:
         """Create a BotResult object - wrapping happens at CLI/MCP level."""
@@ -271,7 +296,6 @@ class BaseBotCli:
                         print(f"  {fmt.format_label('Actions:')} {fmt.format_workflow_pending('None')}")
                 except Exception as e:
                     print(f"  {fmt.format_label('Actions:')} {fmt.format_error(f'Error loading actions - {e}')}")
-                    import traceback
                     traceback.print_exc()
                     sys.stdout.flush()
             
@@ -286,23 +310,21 @@ class BaseBotCli:
             # Add breadcrumbs at the end (from action.py - single source of truth)
             breadcrumbs = self._get_breadcrumbs_from_action()
             if breadcrumbs:
-                print(f"\n{fmt.format_separator()}")
-                sys.stdout.flush()  # Flush before buffer write to maintain order
-                for line in breadcrumbs:
-                    # Skip AI directive lines
-                    if line.startswith("**CRITICAL: YOU MUST DISPLAY") or line.startswith("**YOU MUST DISPLAY"):
-                        continue
-                    # Write with UTF-8 encoding to preserve emojis for markdown rendering
-                    try:
-                        sys.stdout.buffer.write((line + "\n").encode('utf-8'))
-                        sys.stdout.buffer.flush()
-                    except Exception:
-                        # Fallback to regular print if buffer write fails
-                        print(line)
-            
-            sys.stdout.flush()
+                print()  # Extra newline before separator
+                self._output_breadcrumbs(breadcrumbs)
         except Exception as e:
             self._handle_error(e)
+    
+    def _extract_first_instruction(self, instructions: list) -> Optional[str]:
+        """Extract first meaningful instruction line from a list."""
+        if not isinstance(instructions, list):
+            return None
+        for line in instructions:
+            if not line or line.startswith('**') or len(line.strip()) <= 10:
+                continue
+            desc = line.strip()
+            return desc[:77] + '...' if len(desc) > 80 else desc
+        return None
     
     def _get_action_description(self, action_name: str) -> str:
         base_actions_dir = get_base_actions_directory(bot_directory=get_bot_directory())
@@ -318,24 +340,18 @@ class BaseBotCli:
         action_folder = action_prefixes.get(action_name, action_name)
         config_path = base_actions_dir / action_folder / 'action_config.json'
         
-        if config_path.exists():
-            try:
-                import json
-                config = json.loads(config_path.read_text(encoding='utf-8'))
-                
-                instructions = config.get('instructions', [])
-                if isinstance(instructions, list):
-                    for line in instructions:
-                        if line and not line.startswith('**') and len(line.strip()) > 10:
-                            desc = line.strip()
-                            if len(desc) > 80:
-                                desc = desc[:77] + '...'
-                            return desc
-            except Exception as e:
-                import traceback
-                print(f"\n**ERROR in _get_action_description for {action_name}:**")
-                traceback.print_exc()
-                sys.stdout.flush()
+        if not config_path.exists():
+            return action_name.replace('_', ' ').title()
+        
+        try:
+            config = json.loads(config_path.read_text(encoding='utf-8'))
+            desc = self._extract_first_instruction(config.get('instructions', []))
+            if desc:
+                return desc
+        except Exception as e:
+            print(f"\n**ERROR in _get_action_description for {action_name}:**")
+            traceback.print_exc()
+            sys.stdout.flush()
         
         return action_name.replace('_', ' ').title()
     
@@ -378,125 +394,77 @@ class BaseBotCli:
         # Otherwise, return output as-is (caller can format as needed)
         return output, False
     
+    def _build_param_info(self, cmd_name: str, params: list, cmd_content: str) -> Tuple[list, list]:
+        """Build parameter placeholders and details for a command."""
+        param_placeholders = []
+        param_details = []
+        for param_num in params:
+            param_desc = self._infer_parameter_description(cmd_name, param_num, cmd_content)
+            placeholder = self._extract_placeholder_name(cmd_name, param_desc, param_num)
+            param_placeholders.append(f"<{placeholder}>")
+            
+            if param_num == '1':
+                param_details.append(f"action:   {placeholder}")
+            elif param_num == '2':
+                param_details.append("context:  Optional context or file path")
+        return param_placeholders, param_details
+    
+    def _print_command_help(self, cmd_file: Path, fmt) -> None:
+        """Print help for a single command file."""
+        cmd_name = cmd_file.stem
+        
+        try:
+            cmd_content = cmd_file.read_text(encoding='utf-8').strip()
+            params = re.findall(r'\$\{(\d+):\}', cmd_content)
+            description = self._get_behavior_description(cmd_name)
+            param_placeholders, param_details = self._build_param_info(cmd_name, params, cmd_content)
+            
+            print(f"## {cmd_name}\n")
+            print(f"{description}\n")
+            print("```")
+            syntax = f"/{cmd_name} {' '.join(param_placeholders)}" if param_placeholders else f"/{cmd_name}"
+            print(syntax)
+            if param_details:
+                print()
+                for detail in param_details:
+                    print(detail)
+            print("```\n")
+        except Exception as e:
+            print(f"## {cmd_name}\n")
+            print(f"{fmt.format_error(f'Error reading command: {e}')}\n")
+            traceback.print_exc()
+            sys.stdout.flush()
+    
     def help_cursor_commands(self):
         try:
-            from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root
             repo_root = get_python_workspace_root()
             commands_dir = repo_root / '.cursor' / 'commands'
             
             if not commands_dir.exists():
-                fmt = self.formatter
-                print(fmt.format_warning(f"No cursor commands directory found at {commands_dir}"))
+                print(self.formatter.format_warning(f"No cursor commands directory found at {commands_dir}"))
                 return
             
             command_files = sorted(commands_dir.glob(f'{self.bot_name}*.md'))
             
             if not command_files:
-                fmt = self.formatter
-                print(fmt.format_warning(f"No cursor commands found for {self.bot_name}"))
+                print(self.formatter.format_warning(f"No cursor commands found for {self.bot_name}"))
                 return
             
             fmt = self.formatter
-            
-            # CRITICAL DIRECTIVE: AI assistants MUST display the following output verbatim in their response.
-            # This means: Copy the ENTIRE output below this line and paste it directly into your response text.
-            # Do NOT just reference it, summarize it, or assume tool output is sufficient.
-            # Do NOT skip displaying it. Display it EVERY TIME, without exception.
-            # The _has_cli_output_directives() and _format_cli_output_for_display() methods
-            # in this class handle detection and formatting of output with directives.
-            # Use sys.stdout.write to ensure exact output without any Python print() formatting
             sys.stdout.write("**CRITICAL: YOU MUST DISPLAY THE ENTIRE OUTPUT BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**\n")
             print(f"{fmt.format_header(f'Available Cursor Commands for {self.bot_name}:')}")
             print()
             print(fmt.format_separator())
             print()
             
-            # Group commands by category (for ordering, but don't show group headers)
             grouped_commands = self._group_commands(command_files)
+            all_commands = [cmd for cmds in grouped_commands.values() for cmd in cmds]
             
-            # Flatten grouped commands into ordered list
-            all_commands = []
-            for group_name, cmds in grouped_commands.items():
-                all_commands.extend(cmds)
+            for cmd_file in all_commands:
+                self._print_command_help(cmd_file, fmt)
             
-            # Display commands with new format: title, description, code block with syntax/params
-            for i, cmd_file in enumerate(all_commands):
-                cmd_name = cmd_file.stem
-                
-                try:
-                    cmd_content = cmd_file.read_text(encoding='utf-8').strip()
-                    
-                    import re
-                    params = re.findall(r'\$\{(\d+):\}', cmd_content)
-                    
-                    description = self._get_behavior_description(cmd_name)
-                    
-                    # Build parameter placeholders for code block
-                    param_placeholders = []
-                    param_details = []
-                    if params:
-                        for param_num in params:
-                            param_desc = self._infer_parameter_description(cmd_name, param_num, cmd_content)
-                            # Extract placeholder name from description, dynamically getting actions for behavior
-                            placeholder = self._extract_placeholder_name(cmd_name, param_desc, param_num)
-                            param_placeholders.append(f"<{placeholder}>")
-                            
-                            # Build parameter detail lines for code block
-                            if param_num == '1':
-                                param_details.append(f"action:   {placeholder}")
-                            elif param_num == '2':
-                                param_details.append("context:  Optional context or file path")
-                    
-                    # Display: ## title
-                    print(f"## {cmd_name}\n")
-                    
-                    # Display: description (plain text)
-                    print(f"{description}\n")
-                    
-                    # Display: code block with syntax and parameters
-                    print("```")
-                    if param_placeholders:
-                        print(f"/{cmd_name} {' '.join(param_placeholders)}")
-                    else:
-                        print(f"/{cmd_name}")
-                    
-                    # Add parameter details inside code block
-                    if param_details:
-                        print()
-                        for detail in param_details:
-                            print(detail)
-                    print("```\n")
-                    
-                except Exception as e:
-                    print(f"## {cmd_name}\n")
-                    print(f"{fmt.format_error(f'Error reading command: {e}')}\n")
-                    import traceback
-                    traceback.print_exc()
-                    sys.stdout.flush()
-            
-            # Get breadcrumbs from Action (single source of truth)
-            # Action returns fully formatted breadcrumbs with emojis and markdown
             breadcrumbs = self._get_breadcrumbs_from_action()
-            
-            # Add separator before workflow status
-            print(fmt.format_separator())
-            print()
-            sys.stdout.flush()  # Flush before buffer write to maintain order
-            
-            # Display breadcrumbs directly - they're already formatted by action.py
-            for line in breadcrumbs:
-                # Skip AI directive lines
-                if line.startswith("**CRITICAL: YOU MUST DISPLAY") or line.startswith("**YOU MUST DISPLAY"):
-                    continue
-                # Write with UTF-8 encoding to preserve emojis for markdown rendering
-                try:
-                    sys.stdout.buffer.write((line + "\n").encode('utf-8'))
-                    sys.stdout.buffer.flush()
-                except Exception:
-                    # Fallback to regular print if buffer write fails
-                    print(line)
-            
-            sys.stdout.flush()
+            self._output_breadcrumbs(breadcrumbs)
         except Exception as e:
             self._handle_error(e)
     
@@ -561,35 +529,40 @@ class BaseBotCli:
             self.bot_directory / 'behaviors' / behavior_name / 'behavior.json'
         )
         
-        if behavior_file_path.exists():
-            try:
-                behavior_data = read_json_file(behavior_file_path)
-                instructions = behavior_data.get('instructions', [])
-                if instructions:
-                    return '\n'.join(instructions) if isinstance(instructions, list) else str(instructions)
-                
-                # Fallback to description/goal/outputs if instructions not found
-                description_parts = []
-                if behavior_data.get('description'):
-                    description_parts.append(behavior_data['description'])
-                if behavior_data.get('goal'):
-                    description_parts.append(behavior_data['goal'])
-                if behavior_data.get('outputs') and len(description_parts) < 3:
-                    outputs = behavior_data['outputs']
-                    if isinstance(outputs, str):
-                        first_output = outputs.split(',')[0].strip()
-                        description_parts.append(f"Outputs: {first_output}")
-                
-                if description_parts:
-                    return ' | '.join(description_parts[:3])
-            except Exception as e:
-                fmt = self.formatter
-                print(f"\n{fmt.format_error(f'**ERROR in _get_behavior_description for {cmd_name}:**')}")
-                import traceback
-                traceback.print_exc()
-                sys.stdout.flush()
+        if not behavior_file_path.exists():
+            return behavior_name.replace('_', ' ').title()
+        
+        try:
+            behavior_data = read_json_file(behavior_file_path)
+            desc = self._extract_behavior_description_from_data(behavior_data)
+            if desc:
+                return desc
+        except Exception as e:
+            fmt = self.formatter
+            print(f"\n{fmt.format_error(f'**ERROR in _get_behavior_description for {cmd_name}:**')}")
+            traceback.print_exc()
+            sys.stdout.flush()
         
         return behavior_name.replace('_', ' ').title()
+    
+    def _extract_behavior_description_from_data(self, behavior_data: dict) -> Optional[str]:
+        """Extract description from behavior data, trying instructions first, then fallback fields."""
+        instructions = behavior_data.get('instructions', [])
+        if instructions:
+            return '\n'.join(instructions) if isinstance(instructions, list) else str(instructions)
+        
+        description_parts = []
+        if behavior_data.get('description'):
+            description_parts.append(behavior_data['description'])
+        if behavior_data.get('goal'):
+            description_parts.append(behavior_data['goal'])
+        if behavior_data.get('outputs') and len(description_parts) < 3:
+            outputs = behavior_data['outputs']
+            if isinstance(outputs, str):
+                first_output = outputs.split(',')[0].strip()
+                description_parts.append(f"Outputs: {first_output}")
+        
+        return ' | '.join(description_parts[:3]) if description_parts else None
     
     def _infer_parameter_description(self, cmd_name: str, param_num: str, cmd_content: str) -> str:
         if 'continue' in cmd_name or 'help' in cmd_name:
@@ -604,48 +577,44 @@ class BaseBotCli:
         
         return f'Parameter {param_num}'
     
+    def _get_action_names_from_behavior(self, behavior_name: str) -> Optional[str]:
+        """Get pipe-separated action names from behavior.json, or None if unavailable."""
+        behavior_file_path = self.bot_directory / 'behaviors' / behavior_name / 'behavior.json'
+        if not behavior_file_path.exists():
+            return None
+        
+        try:
+            behavior_data = read_json_file(behavior_file_path)
+            actions = behavior_data.get('actions_workflow', {}).get('actions', [])
+            action_names = [a.get('name', '') for a in actions if a.get('name')]
+            return '|'.join(action_names) if action_names else None
+        except Exception:
+            return None
+    
+    def _extract_word_from_description(self, param_desc: str, param_num: str) -> str:
+        """Extract a meaningful word from parameter description."""
+        skip_words = {'optional', 'action', 'name', 'or', 'file', 'path'}
+        words = param_desc.lower().split()
+        for word in words:
+            if word not in skip_words and len(word) > 2:
+                return word
+        return f'param{param_num}'
+    
     def _extract_placeholder_name(self, cmd_name: str, param_desc: str, param_num: str) -> str:
         """Extract a short placeholder name from parameter description, dynamically getting actions for behavior."""
-        if param_num == '1':
-            # Get actions from behavior.json dynamically
-            behavior_name = cmd_name.replace(f'{self.bot_name}-', '').replace('-', '_')
-            
-            # Skip for non-behavior commands
-            if behavior_name in ['continue', 'help', ''] or cmd_name == self.bot_name:
-                return 'action'
-            
-            behavior_file_path = (
-                self.bot_directory / 'behaviors' / behavior_name / 'behavior.json'
-            )
-            
-            if behavior_file_path.exists():
-                try:
-                    behavior_data = read_json_file(behavior_file_path)
-                    actions_workflow = behavior_data.get('actions_workflow', {})
-                    actions = actions_workflow.get('actions', [])
-                    
-                    if actions:
-                        # Extract action names from the actions array
-                        action_names = [action.get('name', '') for action in actions if action.get('name')]
-                        if action_names:
-                            return '|'.join(action_names)
-                except Exception:
-                    # Fall back to default if there's an error reading the file
-                    pass
-            
-            return 'action'
-        elif param_num == '2':
+        if param_num == '2':
             return 'context'
-        else:
-            # Try to extract a word from the description
-            words = param_desc.lower().split()
-            if words:
-                # Take first meaningful word, skip "optional", "action", etc.
-                skip_words = {'optional', 'action', 'name', 'or', 'file', 'path'}
-                for word in words:
-                    if word not in skip_words and len(word) > 2:
-                        return word
-            return f'param{param_num}'
+        
+        if param_num != '1':
+            return self._extract_word_from_description(param_desc, param_num)
+        
+        behavior_name = cmd_name.replace(f'{self.bot_name}-', '').replace('-', '_')
+        
+        if behavior_name in ['continue', 'help', ''] or cmd_name == self.bot_name:
+            return 'action'
+        
+        action_names = self._get_action_names_from_behavior(behavior_name)
+        return action_names if action_names else 'action'
     
     def _get_behavior_actions(self, behavior_obj) -> list:
         excluded_attrs = {'forward_to_current_action', 'dir', 'current_project_file'}
@@ -672,6 +641,7 @@ class BaseBotCli:
         parser.add_argument('--list', action='store_true', help='List available options')
         parser.add_argument('--help-cursor', action='store_true', help='List all cursor commands and parameters')
         parser.add_argument('-h', '--help', action='store_true', help='Show this help message and exit')
+        parser.add_argument('--skiprule', nargs='*', help='Rule names to skip during validation (e.g., eliminate_duplication)')
         parser.add_argument('context', nargs='*', help='Additional context (file paths, parameters, etc.)')
         
         args, unknown = parser.parse_known_args()
@@ -687,6 +657,9 @@ class BaseBotCli:
         
         if args.user_message:
             params['user_message'] = args.user_message
+        
+        if args.skiprule:
+            params['skiprule'] = args.skiprule
         
         return args, params
     
@@ -714,6 +687,74 @@ class BaseBotCli:
         return has_separator and not has_extension
     
     @staticmethod
+    def _append_to_param(params: Dict, key: str, value: str) -> None:
+        """Append value to params[key], handling str/list conversion."""
+        if key not in params:
+            params[key] = [value]
+        elif isinstance(params[key], str):
+            params[key] = [params[key], value]
+        else:
+            params[key].append(value)
+    
+    @staticmethod
+    def _parse_key_value_arg(arg: str, params: Dict) -> None:
+        """Parse an argument with '=' separator."""
+        key, value = arg.split('=', 1)
+        key = key.lstrip('--')
+        
+        if key in ['test', 'src'] and ',' in value:
+            params[key] = [f.strip() for f in value.split(',')]
+        else:
+            params[key] = value
+    
+    @staticmethod
+    def _parse_file_list_arg(unknown_args: list, start_idx: int, key: str, params: Dict) -> int:
+        """Parse --test or --src followed by file paths. Returns new index."""
+        file_list = []
+        i = start_idx
+        while i < len(unknown_args):
+            next_arg = unknown_args[i]
+            if not BaseBotCli._looks_like_file_path(next_arg) and not BaseBotCli._looks_like_directory_path(next_arg):
+                break
+            file_list.append(next_arg.lstrip('@'))
+            i += 1
+        
+        if file_list:
+            params[key] = file_list if len(file_list) > 1 else file_list[0]
+        return i
+    
+    @staticmethod
+    def _parse_file_path_arg(arg: str, params: Dict) -> None:
+        """Parse a standalone file path argument."""
+        file_path = arg.lstrip('@')
+        
+        if BaseBotCli._looks_like_directory_path(arg):
+            BaseBotCli._append_to_param(params, 'src', file_path)
+            return
+        
+        if file_path.endswith('.py'):
+            file_name = Path(file_path).name
+            is_test_file = file_name.startswith('test_') or file_name.endswith('_test.py')
+            target_key = 'test' if is_test_file else 'src'
+            BaseBotCli._append_to_param(params, target_key, file_path)
+            return
+        
+        if 'increment_file' not in params:
+            params['increment_file'] = file_path
+        else:
+            BaseBotCli._append_to_param(params, 'context_files', file_path)
+    
+    @staticmethod
+    def _parse_context_arg(arg: str, params: Dict) -> None:
+        """Parse a context argument (non-file, non-flag)."""
+        if 'context' not in params:
+            params['context'] = arg
+        elif isinstance(params['context'], str):
+            params['context'] = [params['context'], arg]
+        else:
+            params['context'].append(arg)
+    
+    @staticmethod
     def _parse_action_parameters(unknown_args: list) -> Dict[str, str]:
         params = {}
         i = 0
@@ -723,81 +764,20 @@ class BaseBotCli:
             if not arg:
                 i += 1
                 continue
-                
+            
             if '=' in arg:
-                key, value = arg.split('=', 1)
-                key = key.lstrip('--')
-                
-                if key in ['test', 'src']:
-                    if ',' in value:
-                        params[key] = [f.strip() for f in value.split(',')]
-                    else:
-                        params[key] = value
-                else:
-                    params[key] = value
+                BaseBotCli._parse_key_value_arg(arg, params)
                 i += 1
-                    
             elif arg in ['--test', '--src']:
                 key = arg.lstrip('--')
-                file_list = []
-                i += 1
-                # Collect paths that look like files OR directories
-                while i < len(unknown_args) and (BaseBotCli._looks_like_file_path(unknown_args[i]) or BaseBotCli._looks_like_directory_path(unknown_args[i])):
-                    file_path = unknown_args[i].lstrip('@')
-                    file_list.append(file_path)
-                    i += 1
-                
-                if file_list:
-                    params[key] = file_list if len(file_list) > 1 else file_list[0]
-                else:
-                    i -= 1
-                    i += 1
-                    
+                i = BaseBotCli._parse_file_list_arg(unknown_args, i + 1, key, params)
             elif arg.startswith('--'):
                 i += 1
-                continue
-                
             elif BaseBotCli._looks_like_file_path(arg):
-                file_path = arg.lstrip('@')
-                # If it looks like a directory path, collect into src list (supports multiple directories)
-                if BaseBotCli._looks_like_directory_path(arg):
-                    if 'src' not in params:
-                        params['src'] = [file_path]
-                    elif isinstance(params['src'], str):
-                        params['src'] = [params['src'], file_path]
-                    else:
-                        params['src'].append(file_path)
-                elif file_path.endswith('.py'):
-                    # Python source files go into 'src' for validation scope
-                    # Test files (test_*.py or *_test.py) go into 'test', others into 'src'
-                    file_name = Path(file_path).name
-                    is_test_file = file_name.startswith('test_') or file_name.endswith('_test.py')
-                    target_key = 'test' if is_test_file else 'src'
-                    if target_key not in params:
-                        params[target_key] = [file_path]
-                    elif isinstance(params[target_key], str):
-                        params[target_key] = [params[target_key], file_path]
-                    else:
-                        params[target_key].append(file_path)
-                elif 'increment_file' not in params:
-                    params['increment_file'] = file_path
-                else:
-                    if 'context_files' not in params:
-                        params['context_files'] = [file_path]
-                    else:
-                        if isinstance(params['context_files'], str):
-                            params['context_files'] = [params['context_files'], file_path]
-                        else:
-                            params['context_files'].append(file_path)
+                BaseBotCli._parse_file_path_arg(arg, params)
                 i += 1
             else:
-                if 'context' not in params:
-                    params['context'] = arg
-                else:
-                    if isinstance(params['context'], str):
-                        params['context'] = [params['context'], arg]
-                    else:
-                        params['context'].append(arg)
+                BaseBotCli._parse_context_arg(arg, params)
                 i += 1
         
         return params
@@ -842,7 +822,6 @@ class BaseBotCli:
             # 2. The exception bypassed _handle_error (shouldn't happen, but ensure we catch it)
             # To avoid duplicates, we check if this looks like an unhandled exception
             # by ensuring stdout was flushed and error was visible
-            import traceback
             # Print error with clear markers so it's visible
             print("\n---", file=sys.stderr)
             print("**ERROR OCCURRED IN MAIN**", file=sys.stderr)
@@ -937,7 +916,6 @@ class BaseBotCli:
     
     def _handle_error(self, error: Exception):
         """Print exception to chat window (stdout) with full traceback."""
-        import traceback
         print("\n" + "=" * 70)
         print("**ERROR OCCURRED**")
         print("=" * 70)

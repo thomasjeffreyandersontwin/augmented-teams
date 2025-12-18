@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
@@ -93,7 +94,6 @@ class ValidationScope:
                     file_path = self._bot_paths.workspace_directory / file_path
                 else:
                     # Last resort: try current working directory
-                    import os
                     file_path = Path(os.getcwd()) / file_path
             
             # If path is a directory, expand it to include all matching files

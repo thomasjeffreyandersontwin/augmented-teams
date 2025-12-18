@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="4402" dy="566" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4413" dy="546" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -53,13 +53,13 @@
                     <mxGeometry x="570" y="399" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="e2f1s4" value="Store Context Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#437070;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1595.0000000000005" y="1057.22" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1595.0000000000005" y="998.47" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="e2f1s5" value="Guards Prevent Writes Without Project" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="630" y="399" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="e2f1s6" value="Stores Activity for Initialize Project Action" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#437070;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1595" y="1004.22" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1595" y="945.47" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="e2f2" value="&lt;div style=&quot;display: flex; align-items: center; justify-content: center; width: 100%;&quot;&gt;Invoke MCP&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
                     <mxGeometry x="715" y="180" width="140" height="60" as="geometry"/>
@@ -296,7 +296,7 @@
                     <mxGeometry x="744" y="1640" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="58" value="&lt;font&gt;Fine grained control of story elements across graph and rendered, accelerate synching and merginf which is complete hassle, its buggy right now ,&amp;nbsp;&lt;/font&gt;&lt;font&gt;&amp;nbsp;&lt;/font&gt;&lt;font style=&quot;&quot;&gt;ROA on story Map Elements, real tests&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontColor=#080808;fontSize=8;align=left;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="-2595" y="1099" width="100" height="110" as="geometry"/>
+                    <mxGeometry x="-2572.5" y="1068.66" width="100" height="110" as="geometry"/>
                 </mxCell>
                 <mxCell id="59" value="&lt;font&gt;Better control of rendered outputs using simple template engine , reduce render drift, easily add new renderers&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontColor=#080808;fontSize=8;align=left;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
                     <mxGeometry x="-3060" y="1102" width="80" height="94" as="geometry"/>
@@ -308,7 +308,7 @@
                     <mxGeometry x="-3120" y="1224" width="80" height="104" as="geometry"/>
                 </mxCell>
                 <mxCell id="65" value="&lt;font&gt;Knowledge graph and all elements update on file save, makes life massively easier&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontColor=#080808;fontSize=8;align=left;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="-2595" y="1212" width="95" height="104" as="geometry"/>
+                    <mxGeometry x="-2572.5" y="1181.66" width="95" height="104" as="geometry"/>
                 </mxCell>
                 <mxCell id="66" value="&lt;font&gt;Some intstructns are heavy and doing to much , some guardrails are nonsencial better to emilinate or reduce, neet to get a test env tht runs rtherough thesi cleanly&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontColor=#080808;fontSize=8;align=left;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
                     <mxGeometry x="-2279.9999999999995" y="353" width="170" height="50" as="geometry"/>
@@ -533,7 +533,7 @@
                     <mxGeometry x="-2722" y="1044" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="149" value="Ensure Context Traceability Linking" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2720" y="1101" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2720" y="1102" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="150" value="Better Presentation of Rendered Content" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2720" y="1161" width="50" height="50" as="geometry"/>
@@ -566,19 +566,19 @@
                     <mxGeometry x="-1738.9999999999995" y="954.2199999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="164" value="Refactoring All Tests" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1594.9999999999995" y="828" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1738.9999999999995" y="1010.31" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="165" value="Scan All Test Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1594.9999999999995" y="770" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="166" value="Optimize Test Scanners" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1594.9999999999995" y="888" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1594.9999999999995" y="829.25" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="167" value="Optimize Code Scanners" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1996.9999999999995" y="1064.09" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="168" value="Scan All Code Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1594.9999999999995" y="949" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1594.9999999999995" y="890.25" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="169" value="Refactor All Code" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1864.9999999999995" y="841.25" width="50" height="50" as="geometry"/>
@@ -741,13 +741,13 @@
                     <mxGeometry x="-1827" y="1048.6599999999999" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="237" value="Scanner Execution Status Reporting" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1860" y="987.4599999999999" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1738" y="1131.4399999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="238" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1815" y="980.5899999999998" width="15" height="15" as="geometry"/>
+                    <mxGeometry x="-1693" y="1124.5699999999997" width="15" height="15" as="geometry"/>
                 </mxCell>
                 <mxCell id="240" value="CLI Displays Exceptions to Chat" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1859.9999999999995" y="1189.37" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1738.9999999999995" y="1065.4599999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="241" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1961" y="1060.31" width="20" height="20" as="geometry"/>
@@ -755,26 +755,74 @@
                 <mxCell id="242" value="Story Sync" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2412.7499999999995" y="1257.96" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="244" value="Chat Rendering" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="244" value="Chat Rendering" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2797" y="1102" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="245" value="User Experience" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="245" value="User Experience" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2796.9999999999995" y="1042" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="246" value="Fancy Chat UI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="246" value="Fancy Chat UI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2797" y="1161" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="247" value="Display Help With Better Formatting" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="247" value="Display Help With Better Formatting" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1738.9999999999995" y="829.25" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="248" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="248" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1697" y="825.25" width="16" height="16" as="geometry"/>
                 </mxCell>
-                <mxCell id="249" value="Display BreadCrumbs" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="249" value="Display BreadCrumbs" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1737.9999999999995" y="891.25" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="250" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="250" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1699" y="882.75" width="16" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="252" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1701" y="1064.0900000000001" width="20" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="253" value="Scan Specified Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1996.9999999999995" y="1128" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="254" value="Scan Files Discovered in Workspace&amp;nbsp;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1996.9999999999995" y="1196" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="255" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1961" y="1122.09" width="20" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="256" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1965" y="1189" width="20" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="257" value="Scan Code with AST based Parsing&amp;nbsp;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1997.9999999999995" y="1251" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="258" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1961" y="1248" width="20" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="259" value="Produce violation report in real-time" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1997.9999999999995" y="1314.5" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="260" value="Jeff" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1961" y="1307.96" width="20" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="261" value="Help Better parameter explanations and links to help files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2660" y="1104" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="262" value="Help System" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2660" y="1048.47" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="263" value="Generated from help entries in behavior.json&lt;span style=&quot;white-space: pre;&quot;&gt;&#9;&lt;/span&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2660" y="1162" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="264" value="Plan Mode --&amp;gt; creates instructins eg to validate" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2450" y="1084.09" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="265" value="Produce violation report in real-time" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1999.9999999999995" y="1390" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="266" value="Report AI ViolAtion Fix" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-3190" y="1292.96" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="267" value="INTERACTIVE VIOLATION REPORT --&amp;gt; check what to fix" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-3190" y="1355" width="50" height="50" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

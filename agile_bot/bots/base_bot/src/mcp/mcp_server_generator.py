@@ -1,9 +1,14 @@
 from pathlib import Path
 import json
+import logging
+from datetime import datetime
 from fastmcp import FastMCP
 from typing import Dict, Any
 from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
+from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
+from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory, get_workspace_directory
+from agile_bot.bots.base_bot.src.mcp.server_restart import restart_mcp_server
 
 
 class MCPServerGenerator:
@@ -70,7 +75,6 @@ class MCPServerGenerator:
         mcp_server.bot_config = bot_config
         
         # Initialize bot instance
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
         self.bot = Bot(
             bot_name=self.bot_name,
             bot_directory=self.bot_directory,
@@ -117,12 +121,7 @@ class MCPServerGenerator:
         
         @mcp_server.tool(name=tool_name, description=f'Bot tool for {self.bot_name} - routes to current behavior and action.')
         async def bot_tool(parameters: dict = None):
-            if parameters is None:
-                parameters = {}
-            
-            if self.bot is None:
-                return {"error": "Bot not initialized"}
-            
+            # Bot must be initialized, fail fast if not
             current_behavior = self.bot.behaviors.current
             if current_behavior is None:
                 if self.bot.behaviors.first:
@@ -134,11 +133,8 @@ class MCPServerGenerator:
                 raise ValueError("No current behavior")
             
             action = current_behavior.actions.forward_to_current()
-            if action is None:
-                return {"error": f"No current action found for behavior {current_behavior.name}"}
-            
+            # Action must exist - fail fast if not
             result_data = action.execute(parameters or {})
-            from agile_bot.bots.base_bot.src.bot.bot import BotResult
             result = BotResult(
                 status='completed',
                 behavior=current_behavior.name,
@@ -164,11 +160,8 @@ class MCPServerGenerator:
         
         @mcp_server.tool(name=tool_name, description=f'Get the current working directory from WORKING_AREA. Triggers: where are we working, what\'s my location, show working directory')
         async def get_working_dir(input_file: str = None, project_dir: str = None):
-            if self.bot is None:
-                return {"error": "Bot not initialized"}
-
+            # Bot must be initialized - fail fast if not
             # Always use workspace_directory from WORKING_AREA
-            from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
             working_dir = get_workspace_directory()
             return {
                 'working_dir': str(working_dir),
@@ -186,12 +179,7 @@ class MCPServerGenerator:
         
         @mcp_server.tool(name=tool_name, description=f'Close current action tool for {self.bot_name} - marks current action complete and transitions to next')
         async def close_current_action(parameters: dict = None):
-            if parameters is None:
-                parameters = {}
-
-            if self.bot is None:
-                return {"error": "Bot not initialized"}
-
+            # Bot must be initialized - fail fast if not
             # Locate an active behavior_action_state.json from workspace directory
             state_file = self.bot.bot_paths.workspace_directory / 'behavior_action_state.json'
             
@@ -204,21 +192,9 @@ class MCPServerGenerator:
             try:
                 # Use behaviors collection to close current action
                 current_behavior = self.bot.behaviors.current
-                if current_behavior is None:
-                    return {
-                        "error": "No current behavior",
-                        "message": "No current behavior found. Initialize a behavior first."
-                    }
-                
-                # Load state to sync
+                # Current behavior and action must exist - fail fast if not
                 current_behavior.actions.load_state()
                 current_action = current_behavior.actions.current
-                if current_action is None:
-                    return {
-                        "error": "No current action",
-                        "message": "No current action found."
-                    }
-                
                 action_name = current_action.action_name
                 action_names = current_behavior.actions.names
                 is_final_action = (action_name == action_names[-1] if action_names else False)
@@ -286,23 +262,11 @@ class MCPServerGenerator:
         
         @mcp_server.tool(name=tool_name, description=f'Confirm out-of-order behavior execution for {self.bot_name} - MUST be called explicitly by HUMAN USER, NOT by AI assistant. AI must ask user to call this tool, never call it directly.')
         async def confirm_out_of_order(behavior: str):
-            if self.bot is None:
-                return {"error": "Bot not initialized"}
-            
-            from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+            # Bot must be initialized, state file must exist - fail fast if not
             working_dir = get_workspace_directory()
             state_file = working_dir / 'behavior_action_state.json'
             
-            if not state_file.exists():
-                return {
-                    "error": "No behavior state found",
-                    "message": "Cannot confirm out-of-order execution without an active behavior state. Start a behavior first."
-                }
-            
             try:
-                import json
-                from datetime import datetime
-                
                 state_data = json.loads(state_file.read_text(encoding='utf-8'))
                 
                 # Store confirmation in workflow state
@@ -340,12 +304,7 @@ class MCPServerGenerator:
         
         @mcp_server.tool(name=tool_name, description=f'Restart MCP server for {self.bot_name} - terminates processes, clears cache, and restarts to load code changes')
         async def restart_server(parameters: dict = None):
-            if parameters is None:
-                parameters = {}
-            
             try:
-                from agile_bot.bots.base_bot.src.mcp.server_restart import restart_mcp_server
-                
                 # Get workspace root
                 workspace_root = get_python_workspace_root()
                 
@@ -361,7 +320,6 @@ class MCPServerGenerator:
                 return result
                 
             except Exception as e:
-                import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f'Failed to restart MCP server: {e}', exc_info=True)
                 return {
@@ -388,28 +346,20 @@ class MCPServerGenerator:
         
         @mcp_server.tool(name=tool_name, description=description)
         async def behavior_tool(action: str = None, parameters: dict = None):
-            if parameters is None:
-                parameters = {}
-            
-            if self.bot is None:
-                return {"error": "Bot not initialized"}
+            # Bot must be initialized - fail fast if not
             
             # MCP Server forwards requests using explicit object hierarchy to lowest level:
             # 1. Find behavior from behaviors collection
             # 2. Find action from behavior's actions collection (if specified)
             # 3. Execute the action directly
             try:
+                # Behavior must exist - fail fast if not
                 behavior_obj = self.bot.behaviors.find_by_name(behavior)
-                if behavior_obj is None:
-                    return {"error": f"Behavior '{behavior}' not found"}
                 
                 if action:
-                    # Find action and execute directly at lowest level
+                    # Find action and execute directly at lowest level - must exist
                     action_obj = behavior_obj.actions.find_by_name(action)
-                    if action_obj is None:
-                        return {"error": f"Action '{action}' not found in behavior '{behavior}'"}
-                    result_data = action_obj.execute(parameters)
-                    from agile_bot.bots.base_bot.src.bot.bot import BotResult
+                    result_data = action_obj.execute(parameters or {})
                     result = BotResult(
                         status='completed',
                         behavior=behavior,
@@ -417,13 +367,10 @@ class MCPServerGenerator:
                         data=result_data
                     )
                 else:
-                    # Get current action and execute directly
+                    # Get current action and execute directly - must exist
                     behavior_obj.actions.load_state()
                     current_action = behavior_obj.actions.current
-                    if current_action is None:
-                        return {"error": f"No current action in behavior '{behavior}'"}
-                    result_data = current_action.execute(parameters)
-                    from agile_bot.bots.base_bot.src.bot.bot import BotResult
+                    result_data = current_action.execute(parameters or {})
                     result = BotResult(
                         status='completed',
                         behavior=behavior,
@@ -454,7 +401,6 @@ class MCPServerGenerator:
         
         Always returns workspace_directory from WORKING_AREA environment variable.
         """
-        from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
         return get_workspace_directory()
     
     def _execute_entry_workflow(self, working_dir: Path, parameters: dict) -> dict:
@@ -469,8 +415,6 @@ class MCPServerGenerator:
         
         Returns a message prompting the user to confirm which stage to start with.
         """
-        import json
-        
         # Check for existing artifacts in docs/stories/
         stories_dir = working_dir / 'docs' / 'stories'
         existing_artifacts = []
@@ -571,8 +515,6 @@ class MCPServerGenerator:
         action: str = None
     ) -> list:
         # Find behavior folder
-        from agile_bot.bots.base_bot.src.bot.bot import Behavior
-        
         # Behavior folder is directly named (no numbered prefixes)
         behavior_folder = self.bot_directory / 'behaviors' / behavior
         if not behavior_folder.exists():
@@ -797,7 +739,6 @@ if __name__ == '__main__':
                     if trigger_words:
                         behavior_trigger_words[behavior] = trigger_words
             except (FileNotFoundError, Exception) as e:
-                import logging
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to load trigger words for {behavior}: {e}")
                 pass

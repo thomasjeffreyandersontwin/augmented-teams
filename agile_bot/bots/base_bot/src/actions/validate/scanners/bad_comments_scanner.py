@@ -71,7 +71,7 @@ class BadCommentsScanner(CodeScanner):
                         if commented_block_start:
                             violation = Violation(
                                 rule=rule_obj,
-                                violation_message=f'Line {commented_block_start} has commented-out code - call production code directly, even if API doesn\'t exist yet',
+                                violation_message=f"Line {commented_block_start} has commented-out code - delete it (it's in git history if needed)",
                                 location=str(file_path),
                                 line_number=commented_block_start,
                                 severity='warning'
@@ -86,7 +86,7 @@ class BadCommentsScanner(CodeScanner):
                 if commented_block_start:
                     violation = Violation(
                         rule=rule_obj,
-                        violation_message=f'Line {commented_block_start} has commented-out code - call production code directly, even if API doesn\'t exist yet',
+                        violation_message=f"Line {commented_block_start} has commented-out code - delete it (it's in git history if needed)",
                         location=str(file_path),
                         line_number=commented_block_start,
                         severity='warning'
@@ -98,7 +98,7 @@ class BadCommentsScanner(CodeScanner):
         if commented_block_start:
             violation = Violation(
                 rule=rule_obj,
-                violation_message=f'Line {commented_block_start} has commented-out code - call production code directly, even if API doesn\'t exist yet',
+                violation_message=f"Line {commented_block_start} has commented-out code - delete it (it's in git history if needed)",
                 location=str(file_path),
                 line_number=commented_block_start,
                 severity='warning'
