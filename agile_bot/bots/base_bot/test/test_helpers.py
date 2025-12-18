@@ -1161,15 +1161,15 @@ def given_action_initialized(action_type, bot_directory, bot_name='story_bot', b
     elif action_type == 'gather_context':
         from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-        bot_paths = BotPaths(bot_directory=bot_directory)
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
         behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
         return ClarifyContextAction(behavior=behavior_obj, action_config=None)
     elif action_type == 'strategy':
-        from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import DecidePlanningCriteriaAction
+        from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-        bot_paths = BotPaths(bot_directory=bot_directory)
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
         behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
-        return DecidePlanningCriteriaAction(behavior=behavior_obj, action_config=None)
+        return StrategyAction(behavior=behavior_obj, action_config=None)
     else:
         raise ValueError(f"Unknown action_type: {action_type}")
 
@@ -2796,8 +2796,8 @@ def when_action_executes(action_type, bot_directory, behavior, **execution_param
         instructions = action_obj.instructions.copy()
         instructions['action'] = action_type
         instructions['behavior'] = behavior
-        if action_obj.action_config:
-            instructions['behavior_instructions'] = action_obj.action_config.get('instructions', [])
+        if hasattr(action_obj, '_base_config') and action_obj._base_config:
+            instructions['behavior_instructions'] = action_obj._base_config.get('instructions', [])
     
     if return_action:
         return action_obj, instructions

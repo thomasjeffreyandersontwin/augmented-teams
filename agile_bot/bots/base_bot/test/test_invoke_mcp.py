@@ -244,7 +244,7 @@ def when_create_gather_context_action(bot_name: str, behavior: str, bot_director
     """When: Create gather context action."""
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-    from agile_bot.bots.base_bot.src.actions.base_action_config import BaseActionConfig
+    # BaseActionConfig deleted - Action already has config loading
     
     # Create bot_paths
     bot_paths = BotPaths(bot_directory=bot_directory)
@@ -360,7 +360,7 @@ def when_render_output_action_initialized(bot_directory: Path, bot_name: str, be
     """When: RenderOutputAction initialized."""
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-    from agile_bot.bots.base_bot.src.actions.base_action_config import BaseActionConfig
+    # BaseActionConfig deleted - Action already has config loading
     from agile_bot.bots.base_bot.src.actions.render.render_action import RenderOutputAction
     
     bot_paths = BotPaths(bot_directory=bot_directory)
@@ -908,43 +908,42 @@ class TestTrackActivityForWorkspace:
 
 from unittest.mock import Mock
 from agile_bot.bots.base_bot.src.bot.instructions import Instructions
-from agile_bot.bots.base_bot.src.actions.base_action_config import BaseActionConfig
+from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.bot.behavior import Behavior
 
 
-def given_base_action_config_with_instructions(instructions: list):
-    """Given: BaseActionConfig with instructions."""
-    base_action_config = Mock(spec=BaseActionConfig)
-    base_action_config.instructions = instructions
-    return base_action_config
+def given_action_with_instructions(instructions: list):
+    """Given: Action with instructions (BaseActionConfig merged into Action)."""
+    action = Mock(spec=Action)
+    action._base_config = {'instructions': instructions}
+    return action
 
 
-def given_base_action_config_with_string_instructions(instructions: str):
-    """Given: BaseActionConfig with string instructions."""
-    base_action_config = Mock(spec=BaseActionConfig)
-    base_action_config.instructions = instructions
-    return base_action_config
+def given_action_with_string_instructions(instructions: str):
+    """Given: Action with string instructions (BaseActionConfig merged into Action)."""
+    action = Mock(spec=Action)
+    action._base_config = {'instructions': instructions}
+    return action
 
 
-def given_base_action_config_with_none_instructions():
-    """Given: BaseActionConfig with None instructions."""
-    base_action_config = Mock(spec=BaseActionConfig)
-    base_action_config.instructions = None
-    return base_action_config
+def given_action_with_none_instructions():
+    """Given: Action with None instructions (BaseActionConfig merged into Action)."""
+    action = Mock(spec=Action)
+    action._base_config = {'instructions': None}
+    return action
 
 
 def given_behavior_with_instructions(instructions: dict):
-    """Given: Behavior with instructions."""
+    """Given: Behavior with instructions (BehaviorConfig merged into Behavior)."""
     behavior = Mock(spec=Behavior)
-    behavior_config = Mock()
-    behavior_config.instructions = instructions
-    behavior.behavior_config = behavior_config
+    # Use behavior.instructions directly since BehaviorConfig was merged
+    behavior.instructions = instructions
     return behavior
 
 
-def when_instructions_instantiated(base_action_config, behavior):
-    """When: Instructions instantiated."""
-    return Instructions(base_action_config, behavior)
+def when_instructions_instantiated(action, behavior):
+    """When: Instructions instantiated (updated to use Action instead of BaseActionConfig)."""
+    return Instructions(action, behavior)
 
 
 def when_base_instructions_accessed(instructions: Instructions):
@@ -1003,11 +1002,11 @@ class TestGetBaseInstructions:
         THEN: Returns ['instruction1', 'instruction2']
         """
         # Given: BaseActionConfig with list instructions
-        base_action_config = given_base_action_config_with_instructions(['instruction1', 'instruction2'])
+        action = given_action_with_instructions(['instruction1', 'instruction2'])
         behavior = given_behavior_with_instructions({})
         
         # When: Instructions instantiated and base_instructions accessed
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_base_instructions_accessed(instructions)
         
         # Then: Base instructions are from config
@@ -1021,11 +1020,11 @@ class TestGetBaseInstructions:
         THEN: Returns ['single instruction']
         """
         # Given: BaseActionConfig with string instructions
-        base_action_config = given_base_action_config_with_string_instructions('single instruction')
+        action = given_action_with_string_instructions('single instruction')
         behavior = given_behavior_with_instructions({})
         
         # When: Instructions instantiated and base_instructions accessed
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_base_instructions_accessed(instructions)
         
         # Then: Base instructions are converted to list
@@ -1039,11 +1038,11 @@ class TestGetBaseInstructions:
         THEN: Returns []
         """
         # Given: BaseActionConfig with None instructions
-        base_action_config = given_base_action_config_with_none_instructions()
+        action = given_action_with_none_instructions()
         behavior = given_behavior_with_instructions({})
         
         # When: Instructions instantiated and base_instructions accessed
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_base_instructions_accessed(instructions)
         
         # Then: Base instructions are empty list
@@ -1062,11 +1061,11 @@ class TestGetBehaviorInstructions:
         """
         # Given: Behavior with instructions
         behavior_instructions = {'instructions': ['behavior1', 'behavior2']}
-        base_action_config = given_base_action_config_with_instructions(['base1'])
+        action = given_action_with_instructions(['base1'])
         behavior = given_behavior_with_instructions(behavior_instructions)
         
         # When: Instructions instantiated and behavior_instructions accessed
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_behavior_instructions_accessed(instructions)
         
         # Then: Behavior instructions are from config
@@ -1080,11 +1079,11 @@ class TestGetBehaviorInstructions:
         THEN: Returns {}
         """
         # Given: Behavior with no instructions
-        base_action_config = given_base_action_config_with_instructions(['base1'])
+        action = given_action_with_instructions(['base1'])
         behavior = given_behavior_with_instructions({})
         
         # When: Instructions instantiated and behavior_instructions accessed
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_behavior_instructions_accessed(instructions)
         
         # Then: Behavior instructions are empty dict
@@ -1102,12 +1101,12 @@ class TestMergeInstructions:
         THEN: Returns dict with base_instructions, behavior_instructions, and combined instructions list
         """
         # Given: BaseActionConfig and Behavior with instructions
-        base_action_config = given_base_action_config_with_instructions(['base1', 'base2'])
+        action = given_action_with_instructions(['base1', 'base2'])
         behavior_instructions = {'instructions': ['behavior1', 'behavior2']}
         behavior = given_behavior_with_instructions(behavior_instructions)
         
         # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_merge_called(instructions)
         
         # Then: Merged dict contains both instruction sets
@@ -1123,12 +1122,12 @@ class TestMergeInstructions:
         THEN: Returns dict with base_instructions only
         """
         # Given: Behavior with instructions dict without 'instructions' key
-        base_action_config = given_base_action_config_with_instructions(['base1'])
+        action = given_action_with_instructions(['base1'])
         behavior_instructions = {'other_key': 'value'}
         behavior = given_behavior_with_instructions(behavior_instructions)
         
         # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_merge_called(instructions)
         
         # Then: Merged dict contains base instructions only
@@ -1137,11 +1136,10 @@ class TestMergeInstructions:
         assert result['instructions'] == ['base1']
     
 def given_behavior_with_non_dict_instructions():
-    """Given: Behavior with non-dict instructions."""
+    """Given: Behavior with non-dict instructions (BehaviorConfig merged into Behavior)."""
     behavior = Mock(spec=Behavior)
-    behavior_config = Mock()
-    behavior_config.instructions = 'not a dict'
-    behavior.behavior_config = behavior_config
+    # Use behavior.instructions directly since BehaviorConfig was merged
+    behavior.instructions = 'not a dict'
     return behavior
 
 
@@ -1161,12 +1159,12 @@ class TestMergeInstructions:
         THEN: Returns dict with base_instructions, behavior_instructions, and combined instructions list
         """
         # Given: BaseActionConfig and Behavior with instructions
-        base_action_config = given_base_action_config_with_instructions(['base1', 'base2'])
+        action = given_action_with_instructions(['base1', 'base2'])
         behavior_instructions = {'instructions': ['behavior1', 'behavior2']}
         behavior = given_behavior_with_instructions(behavior_instructions)
         
         # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_merge_called(instructions)
         
         # Then: Merged dict contains both instruction sets
@@ -1182,12 +1180,12 @@ class TestMergeInstructions:
         THEN: Returns dict with base_instructions only
         """
         # Given: Behavior with instructions dict without 'instructions' key
-        base_action_config = given_base_action_config_with_instructions(['base1'])
+        action = given_action_with_instructions(['base1'])
         behavior_instructions = {'other_key': 'value'}
         behavior = given_behavior_with_instructions(behavior_instructions)
         
         # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_merge_called(instructions)
         
         # Then: Merged dict contains base instructions only
@@ -1203,11 +1201,11 @@ class TestMergeInstructions:
         THEN: Returns dict with base_instructions only
         """
         # Given: Behavior with non-dict instructions
-        base_action_config = given_base_action_config_with_instructions(['base1'])
+        action = given_action_with_instructions(['base1'])
         behavior = given_behavior_with_non_dict_instructions()
         
         # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_merge_called(instructions)
         
         # Then: Merged dict contains base instructions only
@@ -1222,12 +1220,12 @@ class TestMergeInstructions:
         THEN: Returns dict with only base_instructions
         """
         # Given: Behavior with empty instructions list
-        base_action_config = given_base_action_config_with_instructions(['base1', 'base2'])
+        action = given_action_with_instructions(['base1', 'base2'])
         behavior_instructions = {'instructions': []}
         behavior = given_behavior_with_instructions(behavior_instructions)
         
         # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(base_action_config, behavior)
+        instructions = when_instructions_instantiated(action, behavior)
         result = when_merge_called(instructions)
         
         # Then: Merged dict contains only base instructions

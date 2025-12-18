@@ -700,12 +700,12 @@ class TestCLIExceptions:
 
 from unittest.mock import Mock
 from agile_bot.bots.base_bot.src.bot.trigger_words import TriggerWords
-from agile_bot.bots.base_bot.src.bot.behavior_config import BehaviorConfig
+from agile_bot.bots.base_bot.src.bot.behavior import Behavior  # BehaviorConfig merged into Behavior
 
 
 def given_behavior_config_with_trigger_patterns(patterns: list, priority: int = 0):
-    """Given: BehaviorConfig with trigger patterns."""
-    behavior_config = Mock(spec=BehaviorConfig)
+    """Given: Behavior with trigger patterns (BehaviorConfig merged into Behavior)."""
+    behavior_config = Mock(spec=Behavior)
     behavior_config.trigger_words = {
         'patterns': patterns,
         'priority': priority
@@ -714,15 +714,15 @@ def given_behavior_config_with_trigger_patterns(patterns: list, priority: int = 
 
 
 def given_behavior_config_with_list_triggers(patterns: list):
-    """Given: BehaviorConfig with list trigger words."""
-    behavior_config = Mock(spec=BehaviorConfig)
+    """Given: Behavior with list trigger words (BehaviorConfig merged into Behavior)."""
+    behavior_config = Mock(spec=Behavior)
     behavior_config.trigger_words = patterns
     return behavior_config
 
 
 def given_behavior_config_with_no_triggers():
-    """Given: BehaviorConfig with no trigger words."""
-    behavior_config = Mock(spec=BehaviorConfig)
+    """Given: Behavior with no trigger words (BehaviorConfig merged into Behavior)."""
+    behavior_config = Mock(spec=Behavior)
     behavior_config.trigger_words = None
     return behavior_config
 

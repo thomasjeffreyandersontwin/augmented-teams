@@ -18,7 +18,8 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     create_strategy_guardrails,
     given_bot_name_and_behavior_setup,
     create_actions_workflow_json,
-    given_action_initialized
+    given_action_initialized,
+    when_action_injects
 )
 from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
     verify_action_tracks_start,
@@ -238,19 +239,19 @@ def given_environment_bootstrapped_and_strategy_action_initialized(bot_directory
 def given_environment_action_and_strategy_parameters(bot_directory: Path, workspace_directory: Path):
     """Given: Environment, action and strategy parameters."""
     bootstrap_env(bot_directory, workspace_directory)
-    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape', workspace_directory=workspace_directory)
     parameters = given_strategy_parameters_with_decisions_and_assumptions()
-    bot_paths = BotPaths(bot_directory=bot_directory)
+    bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
     return action, parameters, bot_paths
 
 
 def given_environment_with_existing_strategy_and_action(bot_directory: Path, workspace_directory: Path):
     """Given: Environment with existing strategy and action."""
     bootstrap_env(bot_directory, workspace_directory)
-    bot_paths = BotPaths(bot_directory=bot_directory)
+    bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
     discovery_decisions, discovery_assumptions = given_discovery_strategy_decisions_and_assumptions()
     strategy_file = given_strategy_json_exists_with_data(workspace_directory, 'discovery', discovery_decisions, discovery_assumptions, bot_paths)
-    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('strategy', bot_directory, 'story_bot', 'shape', workspace_directory=workspace_directory)
     parameters = given_strategy_parameters_for_shape_behavior()
     return strategy_file, action, parameters, bot_paths
 

@@ -28,7 +28,8 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     when_action_tracks_start,
     given_activity_log,
     when_action_tracks_completion,
-    then_activity_log_matches
+    then_activity_log_matches,
+    when_action_injects
 )
 from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
     verify_workflow_transition,
@@ -270,19 +271,19 @@ def given_environment_bootstrapped_with_malformed_guardrails(bot_directory: Path
 def given_environment_action_and_parameters_for_clarification(bot_directory: Path, workspace_directory: Path):
     """Given: Environment, action and parameters for clarification."""
     bootstrap_env(bot_directory, workspace_directory)
-    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape', workspace_directory=workspace_directory)
     parameters = given_clarification_parameters_with_questions_and_evidence()
-    bot_paths = BotPaths(bot_directory=bot_directory)
+    bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
     return action, parameters, bot_paths
 
 
 def given_environment_with_existing_clarification_and_action(bot_directory: Path, workspace_directory: Path):
     """Given: Environment with existing clarification and action."""
     bootstrap_env(bot_directory, workspace_directory)
-    bot_paths = BotPaths(bot_directory=bot_directory)
+    bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
     discovery_key_questions, discovery_evidence = given_discovery_key_questions_and_evidence()
     clarification_file = given_clarification_json_exists_with_data(workspace_directory, 'discovery', discovery_key_questions, discovery_evidence, bot_paths)
-    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('gather_context', bot_directory, 'story_bot', 'shape', workspace_directory=workspace_directory)
     parameters = given_clarification_parameters_for_shape_behavior()
     return clarification_file, action, parameters, bot_paths
 
@@ -515,7 +516,6 @@ class TestProceedToDecidePlanning:
         from agile_bot.bots.base_bot.test.test_helpers import given_environment_setup
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'discovery')
         given_environment_setup(bot_directory, workspace_directory, [behavior], 'resume', bot_name, behavior=behavior, action='clarify')
-        from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_completed_action_entry_for_behavior
         from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_completed_action
         completed_actions = given_completed_action(bot_name, behavior, 'clarify')
         # When clarify is completed, current_action should be set to the next action (strategy)
@@ -644,7 +644,7 @@ class TestStoreClarificationData:
 # HELPER FUNCTIONS - Domain Classes (Stories 17-20: BaseActionConfig, Actions, Action, Guardrails)
 # ============================================================================
 
-from agile_bot.bots.base_bot.src.actions.base_action_config import BaseActionConfig
+# BaseActionConfig deleted - Action already has config loading
 from agile_bot.bots.base_bot.src.actions.actions import Actions
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.guardrails import Guardrails
@@ -663,9 +663,10 @@ def given_action_config_file_created(bot_directory: Path, action_name: str, conf
     return config_file
 
 
-def when_base_action_config_instantiated(action_name: str, bot_paths: BotPaths):
-    """When: BaseActionConfig instantiated."""
-    return BaseActionConfig(action_name=action_name, bot_paths=bot_paths)
+def when_action_config_loaded(action_name: str, behavior: Behavior):
+    """When: Action config is loaded via Action class (BaseActionConfig deleted)."""
+    # Action now loads config directly in its __init__
+    return Action(action_name=action_name, behavior=behavior, action_config=None)
 
 
 def when_actions_instantiated(behavior_config, behavior):
@@ -673,21 +674,9 @@ def when_actions_instantiated(behavior_config, behavior):
     return behavior.actions
 
 
-def when_action_instantiated(base_action_config: BaseActionConfig, behavior: Behavior):
-    """When: Action instantiated."""
-    # Action expects action_name, behavior, and action_config
-    # Extract action_name from base_action_config
-    action_name = base_action_config.name if hasattr(base_action_config, 'name') else 'clarify'
-    # Create action_config dict from base_action_config properties
-    action_config = {}
-    if hasattr(base_action_config, 'order'):
-        action_config['order'] = base_action_config.order
-    if hasattr(base_action_config, 'next_action'):
-        action_config['next_action'] = base_action_config.next_action
-    if hasattr(base_action_config, 'custom_class'):
-        action_config['action_class'] = base_action_config.custom_class
-    if hasattr(base_action_config, 'instructions'):
-        action_config['instructions'] = base_action_config.instructions
+def when_action_instantiated_from_config(action_config: dict, behavior: Behavior):
+    """When: Action instantiated from action_config dict (BaseActionConfig deleted)."""
+    action_name = action_config.get('name', 'clarify')
     return Action(action_name=action_name, behavior=behavior, action_config=action_config)
 
 
@@ -696,13 +685,13 @@ def when_guardrails_instantiated(behavior):
     return behavior.guardrails
 
 
-def then_base_action_config_properties_accessible(base_action_config: BaseActionConfig):
-    """Then: BaseActionConfig properties are accessible."""
-    assert hasattr(base_action_config, 'order')
-    assert hasattr(base_action_config, 'next_action')
-    assert hasattr(base_action_config, 'custom_class')
-    assert hasattr(base_action_config, 'instructions')
-    assert hasattr(base_action_config, 'workflow')
+def then_action_config_properties_accessible(action):
+    """Then: Action config properties are accessible (BaseActionConfig merged into Action)."""
+    assert hasattr(action, 'order')
+    assert hasattr(action, 'next_action')
+    assert hasattr(action, 'action_class')
+    assert hasattr(action, 'instructions')
+    assert hasattr(action, 'workflow')
 
 
 def then_actions_collection_contains_actions(actions: Actions, expected_count: int):
@@ -759,14 +748,14 @@ def given_complete_action_config_data(action_name: str):
     }
 
 
-def then_base_action_config_order_is(base_action_config: BaseActionConfig, expected_order: int):
-    """Then: BaseActionConfig order is expected."""
-    assert base_action_config.order == expected_order
+def then_action_order_is(action, expected_order: int):
+    """Then: Action order is expected (BaseActionConfig merged into Action)."""
+    assert action.order == expected_order
 
 
-def then_base_action_config_next_action_is(base_action_config: BaseActionConfig, expected_next_action: str):
-    """Then: BaseActionConfig next_action is expected."""
-    assert base_action_config.next_action == expected_next_action
+def then_action_next_action_is(action, expected_next_action: str):
+    """Then: Action next_action is expected (BaseActionConfig merged into Action)."""
+    assert action.next_action == expected_next_action
 
 
 def when_behavior_config_accessed_from_behavior(behavior: Behavior):
@@ -890,14 +879,14 @@ def then_guardrails_strategy_is_not_none_from_value(strategy):
 # ============================================================================
 
 class TestLoadBaseActionConfig:
-    """Story: Load Base Action Config (Sub-epic: Gather Context)"""
+    """Story: Load Base Action Config (Sub-epic: Gather Context) - Now tests Action class since BaseActionConfig was merged"""
     
-    def test_base_action_config_loads_correct_action_from_action_config_json_file(self, bot_directory, workspace_directory):
+    def test_action_loads_correct_config_from_action_config_json_file(self, bot_directory, workspace_directory):
         """
-        SCENARIO: Base action config loads correct action from action_config.json file
+        SCENARIO: Action loads correct config from action_config.json file (BaseActionConfig merged into Action)
         GIVEN: action_config.json exists in base_actions/{action_name}/ with complete config
-        WHEN: BaseActionConfig instantiated with action_name
-        THEN: Config loaded from file and properties accessible (order, next_action, custom_class, instructions, workflow)
+        WHEN: Action instantiated with action_name and behavior
+        THEN: Config loaded from file and properties accessible (order, next_action, action_class, instructions, workflow)
         """
         # Given: action_config.json exists
         given_environment_bootstrapped(bot_directory, workspace_directory)
@@ -906,31 +895,23 @@ class TestLoadBaseActionConfig:
         config_data = given_complete_action_config_data(action_name)
         given_action_config_file_created(bot_directory, action_name, config_data)
         
-        # When: BaseActionConfig instantiated
-        base_action_config = when_base_action_config_instantiated(action_name, bot_paths)
+        # Create behavior for Action - only include clarify action to avoid needing all action configs
+        bot_name, behavior_name = given_bot_name_and_behavior_setup('story_bot', 'shape')
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+        # Only include clarify action in workflow to match our test setup
+        single_action_workflow = [{'name': 'clarify', 'order': 1}]
+        create_actions_workflow_json(bot_directory, behavior_name, actions=single_action_workflow)
+        create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
+        behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
+        
+        # When: Action instantiated (loads config from action_config.json)
+        action = when_action_config_loaded(action_name, behavior)
         
         # Then: Config loaded and properties accessible
-        then_base_action_config_properties_accessible(base_action_config)
-        then_base_action_config_order_is(base_action_config, 1)
-        then_base_action_config_next_action_is(base_action_config, 'strategy')
-    
-        """
-        SCENARIO: Base action config uses default config when action_config.json missing
-        GIVEN: Action name without action_config.json
-        WHEN: BaseActionConfig instantiated
-        THEN: Uses default config (doesn't raise error)
-        """
-        # Given: Action name without action_config.json
-        given_environment_bootstrapped(bot_directory, workspace_directory)
-        bot_paths = when_bot_paths_created()
-        action_name = 'nonexistent_action'
-        
-        # When: BaseActionConfig instantiated
-        base_action_config = when_base_action_config_instantiated(action_name, bot_paths)
-        
-        # Then: Uses default config (doesn't raise error)
-        then_base_action_config_properties_accessible(base_action_config)
-        then_base_action_config_order_is(base_action_config, 0)
+        then_action_config_properties_accessible(action)
+        then_action_order_is(action, 1)
+        then_action_next_action_is(action, 'strategy')
 
 
 class TestAccessActions:
@@ -1191,19 +1172,18 @@ class TestAccessActions:
 
 
 class TestInitializeAction:
-    """Story: Initialize Action (Sub-epic: Gather Context)"""
+    """Story: Initialize Action (Sub-epic: Gather Context) - Updated since BaseActionConfig was merged into Action"""
     
-    def test_action_initializes_with_base_action_config_and_behavior(self, bot_directory, workspace_directory):
+    def test_action_initializes_with_behavior(self, bot_directory, workspace_directory):
         """
-        SCENARIO: Action initializes with base action config and behavior
-        GIVEN: BaseActionConfig and Behavior
-        WHEN: Action instantiated with both
+        SCENARIO: Action initializes with behavior (BaseActionConfig merged into Action)
+        GIVEN: Behavior
+        WHEN: Action instantiated with behavior
         THEN: Action initialized successfully
         """
-        # Given: BaseActionConfig and Behavior
+        # Given: Behavior
         given_environment_bootstrapped(bot_directory, workspace_directory)
         bot_paths = when_bot_paths_created()
-        base_action_config = when_base_action_config_instantiated('clarify', bot_paths)
         bot_name, behavior_name = given_bot_name_and_behavior_setup('story_bot', 'shape')
         # Create behavior.json file (required by Behavior class)
         from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
@@ -1211,12 +1191,11 @@ class TestInitializeAction:
         # Create guardrails files (required by Behavior class)
         from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
         create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
-        # Create Behavior object (not just string)
-        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        # Create Behavior object
         behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
         
-        # When: Action instantiated
-        action = when_action_instantiated(base_action_config, behavior)
+        # When: Action instantiated (loads config directly in __init__)
+        action = when_action_config_loaded('clarify', behavior)
         
         # Then: Action initialized successfully
         then_action_is_not_none(action)
@@ -1224,11 +1203,11 @@ class TestInitializeAction:
     def test_action_loads_and_merges_instructions_on_initialization(self, bot_directory, workspace_directory):
         """
         SCENARIO: Action loads and merges instructions on initialization
-        GIVEN: BaseActionConfig with instructions and Behavior
+        GIVEN: Behavior with action_config.json
         WHEN: Action instantiated
         THEN: Instructions loaded and merged
         """
-        # Given: BaseActionConfig with instructions and Behavior
+        # Given: Behavior
         given_environment_bootstrapped(bot_directory, workspace_directory)
         bot_name, behavior_name = given_bot_name_and_behavior_setup('story_bot', 'shape')
         from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
@@ -1236,11 +1215,10 @@ class TestInitializeAction:
         create_actions_workflow_json(bot_directory, behavior_name)
         create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
         bot_paths = BotPaths(bot_directory=bot_directory)
-        base_action_config = when_base_action_config_instantiated('clarify', bot_paths)
         behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
         
-        # When: Action instantiated
-        action = when_action_instantiated(base_action_config, behavior)
+        # When: Action instantiated (loads config directly)
+        action = when_action_config_loaded('clarify', behavior)
         
         # Then: Instructions loaded and merged
         then_action_has_instructions_property(action)
@@ -1249,9 +1227,9 @@ class TestInitializeAction:
     def test_action_properties_return_expected_values(self, bot_directory, workspace_directory):
         """
         SCENARIO: Action properties return expected values
-        GIVEN: Action initialized with BaseActionConfig and Behavior
+        GIVEN: Action initialized with Behavior (BaseActionConfig merged into Action)
         WHEN: Properties accessed (order, action_class, instructions, tracker)
-        THEN: All properties return expected values (order from config, action_class from config, merged instructions dict, ActivityTracker instance)
+        THEN: All properties return expected values
         """
         # Given: Action initialized
         given_environment_bootstrapped(bot_directory, workspace_directory)
@@ -1261,9 +1239,8 @@ class TestInitializeAction:
         create_actions_workflow_json(bot_directory, behavior_name)
         create_minimal_guardrails_files(bot_directory, behavior_name, bot_name)
         bot_paths = BotPaths(bot_directory=bot_directory)
-        base_action_config = when_base_action_config_instantiated('clarify', bot_paths)
         behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
-        action = when_action_instantiated(base_action_config, behavior)
+        action = when_action_config_loaded('clarify', behavior)
         
         # When: Properties accessed
         # Then: All properties return expected values

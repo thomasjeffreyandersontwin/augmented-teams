@@ -17,6 +17,9 @@ if TYPE_CHECKING:
 
 class Behavior:
     def __init__(self, name: str, bot_paths: BotPaths, bot_instance=None):
+        if not isinstance(bot_paths, BotPaths):
+            raise TypeError("bot_paths must be an instance of BotPaths")
+        
         self.bot_name = bot_paths.bot_directory.name
         self.name = name
         self.bot_paths = bot_paths
@@ -46,6 +49,24 @@ class Behavior:
         self.rules = Rules(behavior=self, bot_paths=self.bot_paths)
         self.actions = Actions(self)
         self.trigger_words_obj = TriggerWords(self)
+    
+    @property
+    def base_actions_path(self) -> Path:
+        """Path to base actions directory (merged from BehaviorConfig)."""
+        return self.bot_paths.base_actions_directory
+    
+    @property
+    def actions_workflow(self) -> list:
+        """Sorted list of action configs from behavior.json (merged from BehaviorConfig)."""
+        actions = self._config.get("actions_workflow", {}).get("actions", [])
+        if not isinstance(actions, list):
+            return []
+        return sorted(actions, key=lambda a: a.get("order", 0))
+    
+    @property
+    def action_names(self) -> list:
+        """List of action names from workflow (merged from BehaviorConfig)."""
+        return [action.get("name", "") for action in self.actions_workflow if action.get("name")]
 
     @property
     def folder(self) -> Path:

@@ -370,7 +370,7 @@ def _create_gather_context_action(bot_name: str, behavior: str, bot_directory: P
     from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.bots.base_bot.src.actions.base_action_config import BaseActionConfig
+    # BaseActionConfig deleted - Action already has config loading
     import json
     
     # Ensure behavior.json exists

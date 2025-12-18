@@ -1271,7 +1271,7 @@ def given_bot_setup(bot_directory: Path, workspace_directory: Path, rules: dict 
     
     bootstrap_env(bot_directory, workspace_directory)
     
-    if knowledge_graph:
+    if knowledge_graph is not None:
         # Knowledge graph and test bot setup
         rule_file_path = rules.get('rule_file_path') if rules else params.get('rule_file_path')
         rule_file_content = rules.get('rule_file_content') if rules else params.get('rule_file_content')
