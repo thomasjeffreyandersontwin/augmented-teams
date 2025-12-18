@@ -167,19 +167,12 @@ class Rule:
                 }
         
         except Exception as e:
+            # Store error for status reporting but ALWAYS re-raise
+            # Exceptions must bubble up to CLI for display to user
             self._scan_error = str(e)
             self._scanner_execution_status = f"EXECUTION_FAILED: {str(e)}"
-            
-            if self.requires_two_pass_scan:
-                return {
-                    'file_by_file': {'violations': [], 'error': self._scan_error},
-                    'cross_file': {'violations': []}
-                }
-            else:
-                return {
-                    'violations': [],
-                    'error': self._scan_error
-                }
+            # Re-raise the exception - never swallow errors
+            raise
     
     @property
     def violations(self) -> List[Dict[str, Any]]:
