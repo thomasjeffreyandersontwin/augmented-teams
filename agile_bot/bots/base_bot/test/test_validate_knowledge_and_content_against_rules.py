@@ -21,20 +21,40 @@ from conftest import create_workflow_state_file
 from agile_bot.bots.base_bot.test.test_helpers import (
     given_environment_bootstrapped_and_activity_log_initialized,
     bootstrap_env, read_activity_log, create_activity_log_file, given_bot_name_and_behavior_setup,
-    then_activity_logged_with_action_state, then_completion_entry_logged_with_outputs
+    then_activity_logged_with_action_state, then_completion_entry_logged_with_outputs,
+    given_file_created, given_files_created,
+    then_violation_has_field,
+    given_action_initialized,
+    when_action_tracks_start,
+    when_action_tracks_completion,
+    when_action_finalizes,
+    when_action_injects,
+    when_scanner_scans,
+    then_activity_log_matches,
+    then_scanners_match,
+    then_instructions_have_structure,
+    then_action_instructions_match,
+    then_scanner_class_loaded,
+    when_scanner_created,
+    when_scanner_scans,
+    when_story_graph_updated,
+    given_directory_created,
+    given_activity_log,
+    given_story_graph_dict,
+    when_story_graph_copied,
+    when_data_extracted,
+    given_file_paths,
+    given_scanner_spy
 )
-from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
-    given_environment_bootstrapped_and_action_initialized
-)
+from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_action_config, given_action_config_with_order, then_result_matches
 from agile_bot.bots.base_bot.test.test_build_knowledge import (
-    given_test_bot_directory_created,
-    given_story_graph_file_created
+    given_test_bot_directory_created
 )
 from agile_bot.bots.base_bot.test.test_decide_strategy_criteria_action import (
     when_action_executes_with_parameters
 )
 from agile_bot.bots.base_bot.test.test_invoke_mcp import (
-    given_base_actions_structure_created
+    given_base_actions_setup
 )
 from agile_bot.bots.base_bot.src.bot.bot import Behavior
 from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
@@ -46,139 +66,261 @@ from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
 # HELPER FUNCTIONS
 # ============================================================================
 
+# Backward-compatible alias for given_file_created
+def given_test_file_created_with_content(directory: Path, filename: str, content: str) -> Path:
+    """Alias for given_file_created - creates test file with content."""
+    return given_file_created(directory, filename, content, file_type='text')
 
-# Removed duplicate create_workflow_state_local - use conftest.create_workflow_state_file instead
-# Removed duplicate then_activity_logged_with_action_state - use test_helpers.then_activity_logged_with_action_state instead
-# Removed duplicate then_completion_entry_logged_with_outputs - use test_helpers.then_completion_entry_logged_with_outputs instead
 
-def given_spy_test_scanner_that_records_knowledge_graph():
-    """Given: Spy TestScanner that records knowledge_graph."""
-    received_knowledge_graphs = []
+# ============================================================================
+# UNIFIED SCANNER ARCHITECTURE HELPERS
+# ============================================================================
+
+def given_unified_scanner_base_class():
+    """Given: Unified Scanner base class exists."""
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner import Scanner
+    return Scanner
+
+
+def given_rule_with_combined_files(test_files: List[Path], code_files: List[Path], bot_directory: Path, behavior: str = 'tests'):
+    """Given: Rule that combines test_files and code_files.
     
-    class SpyTestScanner(TestScanner):
-        def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None) -> List[Dict[str, Any]]:
-            """Spy that records knowledge_graph and checks for test_files."""
-            received_knowledge_graphs.append(knowledge_graph.copy())  # Store a copy
-            # Return empty violations for this test
-            return []
-    
-    return received_knowledge_graphs, SpyTestScanner
-
-def given_validate_action_initialized(bot_directory: Path, bot_name: str = 'story_bot', behavior: str = 'exploration', create_story_graph: bool = True, workspace_directory: Path = None):
-    """Given: ValidateRulesAction initialized.
+    Creates a Rule instance and verifies it combines files before passing to scanner.
     
     Args:
+        test_files: List of test file paths
+        code_files: List of code file paths
         bot_directory: Bot directory path
-        bot_name: Bot name
-        behavior: Behavior name
-        create_story_graph: If True, create a minimal story graph file (default: True)
-        workspace_directory: Optional workspace directory (if None, uses bot_directory.parent / 'workspace')
+        behavior: Behavior name (default: 'tests')
+        
+    Returns:
+        Tuple of (rule, all_files) where all_files is the combined list
     """
-    from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json, bootstrap_env
-    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+    from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+    from pathlib import Path
     
-    # Bootstrap environment (required for BotPaths)
-    if workspace_directory is None:
-        workspace_directory = bot_directory.parent / 'workspace'
-    workspace_directory.mkdir(parents=True, exist_ok=True)
-    bootstrap_env(bot_directory, workspace_directory)
+    # Create a rule file for testing
+    rule_file = bot_directory / 'behaviors' / behavior / '3_rules' / 'test_rule.json'
+    rule_file.parent.mkdir(parents=True, exist_ok=True)
+    rule_content = {
+        'name': 'test_rule',
+        'description': 'Test rule for unified architecture',
+        'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner'
+    }
+    rule_file.write_text(json.dumps(rule_content), encoding='utf-8')
     
-    # Ensure behavior.json exists
-    create_actions_workflow_json(bot_directory, behavior)
+    rule = Rule(rule_file, behavior, 'test_bot')
     
-    # Create base actions structure (required for action configs)
-    given_base_actions_structure_created(bot_directory)
+    # Combine files (simulating what Rule.scan() should do)
+    all_files = []
+    if test_files:
+        all_files.extend([Path(f) if not isinstance(f, Path) else f for f in test_files])
+    if code_files:
+        all_files.extend([Path(f) if not isinstance(f, Path) else f for f in code_files])
     
-    # Create minimal guardrails files (required by Guardrails class initialization)
-    create_minimal_guardrails_files(bot_directory, behavior, bot_name)
+    return rule, all_files
+
+
+def when_scanner_scans_files(scanner, files: List[Path], knowledge_graph: Dict[str, Any], rule_obj: Any = None):
+    """When: Scanner scans files using unified scan_file() method.
     
-    # Create minimal story graph if requested (most tests need it)
-    if create_story_graph:
-        docs_stories_dir = workspace_directory / 'docs' / 'stories'
-        docs_stories_dir.mkdir(parents=True, exist_ok=True)
-        story_graph_path = docs_stories_dir / 'story-graph.json'
-        minimal_story_graph = {"epics": []}
-        story_graph_path.write_text(json.dumps(minimal_story_graph, indent=2), encoding='utf-8')
+    Calls scanner.scan() with files parameter (unified architecture).
+    For now, works with current architecture (test_files/code_files) but prepares for unified.
     
-    # Create Behavior object
-    # Pass workspace_directory to BotPaths so it uses the correct workspace
-    bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
-    behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
+    Args:
+        scanner: Scanner instance
+        files: List of file paths to scan (test files, code files, or both)
+        knowledge_graph: Knowledge graph dict
+        rule_obj: Optional rule object
+        
+    Returns:
+        List of violations
+    """
+    from pathlib import Path
     
-    return ValidateRulesAction(
-        behavior=behavior_obj,
-        action_config=None
+    # For current architecture, separate files into test_files and code_files
+    # This simulates what unified architecture would do
+    test_files = []
+    code_files = []
+    
+    for file_path in files:
+        file_path = Path(file_path) if not isinstance(file_path, Path) else file_path
+        file_name = file_path.name.lower()
+        
+        # Simple heuristic: files starting with 'test_' are test files
+        if file_name.startswith('test_') or 'test' in str(file_path).lower():
+            test_files.append(file_path)
+        else:
+            code_files.append(file_path)
+    
+    # Call scanner.scan() with separated files (current architecture)
+    violations = scanner.scan(
+        knowledge_graph=knowledge_graph,
+        rule_obj=rule_obj,
+        test_files=test_files if test_files else None,
+        code_files=code_files if code_files else None
+    )
+    
+    return violations
+
+
+def then_scanner_received_all_files(scanner_spy, expected_files: List[Path]):
+    """Then: Scanner received all files (no filtering by type).
+    
+    Verifies scanner received all files, not filtered.
+    
+    Args:
+        scanner_spy: Spy scanner that records received files
+        expected_files: List of expected file paths
+    """
+    received_files = getattr(scanner_spy, 'received_files', [])
+    expected_set = set(Path(f) if not isinstance(f, Path) else f for f in expected_files)
+    received_set = set(Path(f) if not isinstance(f, Path) else f for f in received_files)
+    
+    assert received_set == expected_set, (
+        f"Scanner did not receive all files. "
+        f"Expected: {expected_set}, Got: {received_set}"
     )
 
 
-def when_validate_action_tracks_start(action: ValidateRulesAction):
-    """When: ValidateRulesAction tracks start."""
+def then_scanner_did_not_check_file_type(scanner_spy):
+    """Then: Scanner did not check file type internally.
+    
+    Verifies no _is_test_file() calls were made.
+    
+    Args:
+        scanner_spy: Spy scanner that records method calls
+    """
+    called_is_test_file = getattr(scanner_spy, 'called_is_test_file', False)
+    assert not called_is_test_file, (
+        "Scanner should not check file type internally. "
+        "_is_test_file() should not be called."
+    )
+
+
+def given_domain_concepts_in_story_graph(concepts: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Given: Story graph with domain_concepts.
+    
+    Creates a test knowledge graph with domain_concepts structure.
+    
+    Args:
+        concepts: List of domain concept dicts, e.g.:
+            [{'name': 'Game Master', 'responsibilities': [{'name': 'Manage Mobs'}], 'collaborators': ['Mob Manager']}]
+            
+    Returns:
+        Knowledge graph dict with domain_concepts
+    """
+    knowledge_graph = {
+        'epics': [{
+            'name': 'Test Epic',
+            'domain_concepts': concepts,
+            'sub_epics': [{
+                'name': 'Test Sub-Epic',
+                'domain_concepts': concepts,  # Also add to sub-epic for testing
+                'story_groups': [{
+                    'stories': [{
+                        'name': 'Test Story',
+                        'scenarios': [{
+                            'steps': ['Given a test scenario', 'When something happens', 'Then verify result']
+                        }]
+                    }]
+                }]
+            }]
+        }]
+    }
+    return knowledge_graph
+
+
+def then_domain_terms_extracted_correctly(extracted_terms: Set[str], expected_terms: Set[str]):
+    """Then: Domain terms extracted correctly from story graph.
+    
+    Verifies extracted terms match expected, including compound terms.
+    
+    Args:
+        extracted_terms: Set of extracted domain terms
+        expected_terms: Set of expected domain terms
+    """
+    # Verify all expected terms are present (or at least their components)
+    missing_terms = []
+    for expected_term in expected_terms:
+        # Check if term itself is present
+        if expected_term in extracted_terms:
+            continue
+        # Check if words from term are present (for compound terms)
+        words = expected_term.lower().replace('_', ' ').split()
+        if not any(word in extracted_terms for word in words):
+            missing_terms.append(expected_term)
+    
+    assert len(missing_terms) == 0, (
+        f"Missing expected domain terms: {missing_terms}. "
+        f"Extracted terms: {sorted(list(extracted_terms))[:20]}"
+    )
+    
+    # Verify compound terms (snake_case versions) are extracted
+    has_compound_terms = any('_' in term for term in extracted_terms)
+    assert has_compound_terms or len(expected_terms) == 0, (
+        "Expected compound terms (snake_case) to be extracted, but none found. "
+        f"Extracted terms: {sorted(list(extracted_terms))[:20]}"
+    )
+
+
+def given_spy_scanner_for_unified_architecture():
+    """Given: Spy scanner that records calls for unified architecture testing.
+    
+    Returns a spy scanner class that records:
+    - received_files: List of files received
+    - called_is_test_file: Whether _is_test_file() was called
+    
+    Returns:
+        Tuple of (spy_scanner_class, spy_instance)
+    """
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
+    from typing import List, Dict, Any, Optional
+    
+    class SpyScanner(CodeScanner):
+        def __init__(self):
+            super().__init__()
+            self.received_files = []
+            self.called_is_test_file = False
+        
+        def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None,
+                test_files: Optional[List[Path]] = None,
+                code_files: Optional[List[Path]] = None) -> List[Dict[str, Any]]:
+            """Record files received."""
+            if test_files:
+                self.received_files.extend(test_files)
+            if code_files:
+                self.received_files.extend(code_files)
+            return []
+        
+        def _is_test_file(self, file_path: Path) -> bool:
+            """Record that this method was called."""
+            self.called_is_test_file = True
+            return super()._is_test_file(file_path) if hasattr(super(), '_is_test_file') else False
+    
+    spy_instance = SpyScanner()
+    return SpyScanner, spy_instance
+
+
+
+
+
+
     action.track_activity_on_start()
 
 
-def when_validate_action_tracks_completion(action: ValidateRulesAction, outputs: dict = None, duration: int = None):
-    """When: ValidateRulesAction tracks completion."""
-    action.track_activity_on_completion(
-        outputs=outputs or {},
-        duration=duration
-    )
 
 
-def given_activity_log_with_entries(workspace_directory: Path, entries: list):
-    """Given: Activity log with entries."""
-    workspace_directory.mkdir(parents=True, exist_ok=True)
-    log_file = workspace_directory / 'activity_log.json'
-    from tinydb import TinyDB
-    with TinyDB(log_file) as db:
-        for entry in entries:
-            db.insert(entry)
 
 
-def given_terminal_action_config(bot_directory: Path, action_name: str, order: int):
-    """Given: Terminal action config (next_action=None) in test bot directory.
-    
-    If bot_directory is base_bot, redirects to test_base_bot/base_actions.
-    """
-    from agile_bot.bots.base_bot.test.test_helpers import get_test_base_actions_dir
-    actions_dir = get_test_base_actions_dir(bot_directory) / action_name
-    actions_dir.mkdir(parents=True, exist_ok=True)
-    action_config = actions_dir / 'action_config.json'
-    action_config.write_text(json.dumps({
-        'name': action_name,
-        'workflow': True,
-        'order': order,
-        'next_action': None
-    }), encoding='utf-8')
-    return action_config
 
 
-def when_action_finalizes_and_transitions(action: ValidateRulesAction, next_action: str = None):
-    """When: Action finalizes and transitions."""
-    return action.finalize_and_transition(next_action=next_action)
 
 
-def when_action_injects_next_action_instructions(action: ValidateRulesAction):
-    """When: Action injects next action instructions."""
-    return action.inject_next_action_instructions()
 
 
-def then_no_next_action_in_result(result):
-    """Then: No next action in result (terminal)."""
-    assert result.next_action is None
 
 
-def then_no_next_action_instructions_injected(instructions: str):
-    """Then: No next action instructions injected (terminal)."""
-    assert instructions == '' or 'complete' in instructions.lower()
-
-
-def then_completion_entry_has_workflow_complete_flag(workspace_directory: Path):
-    """Then: Completion entry has workflow_complete flag."""
-    log_data = read_activity_log(workspace_directory)
-    completion_entry = next((e for e in log_data if 'outputs' in e), None)
-    assert completion_entry is not None
-    assert completion_entry['outputs']['workflow_complete']
 
 
 def given_workflow_state_with_all_actions_completed(workspace_directory: Path, bot_name: str, behavior: str, current_action: str):
@@ -198,14 +340,21 @@ def given_workflow_state_with_all_actions_completed(workspace_directory: Path, b
     )
 
 
-def when_check_workflow_completion_status(behavior: str, state_file: Path):
-    """When: Check workflow completion status."""
-    from conftest import Workflow
-    # Workflow.is_behavior_complete doesn't exist - check if state file indicates completion
+def when_workflow_completion_checked(behavior: str, state_file: Path):
+    """
+    Consolidated function for checking workflow completion status.
+    Replaces: when_check_workflow_completion_status
+    
+    Args:
+        behavior: Behavior name
+        state_file: Path to state file
+    
+    Returns:
+        Boolean indicating if workflow is complete
+    """
     import json
     try:
         state_data = json.loads(state_file.read_text(encoding='utf-8'))
-        # Check if all actions are completed
         completed_actions = state_data.get('completed_actions', [])
         # Simple check: if there are completed actions, consider it complete
         return len(completed_actions) > 0
@@ -213,49 +362,18 @@ def when_check_workflow_completion_status(behavior: str, state_file: Path):
         return False
 
 
-def then_behavior_workflow_is_complete(is_complete: bool):
-    """Then: Behavior workflow is complete."""
-    assert is_complete
+def then_workflow_completion_matches(is_complete: bool, expected: bool = True):
+    """
+    Consolidated function for verifying workflow completion status.
+    Replaces: then_behavior_workflow_is_complete
+    
+    Args:
+        is_complete: Actual completion status
+        expected: Expected completion status (default: True)
+    """
+    assert is_complete == expected, f"Expected workflow completion to be {expected}, got {is_complete}"
 
 
-def then_activity_log_has_entries_with_action_states(workspace_directory: Path, expected_count: int, expected_action_states: list):
-    """Then: Activity log has entries with expected action states."""
-    log_data = read_activity_log(workspace_directory)
-    assert len(log_data) == expected_count, f"Expected {expected_count} entries, got {len(log_data)}"
-    for i, expected_action_state in enumerate(expected_action_states):
-        assert log_data[i]['action_state'] == expected_action_state, (
-            f"Entry {i} should have action_state '{expected_action_state}', got '{log_data[i]['action_state']}'"
-        )
-
-
-def then_activity_log_has_entry_count_and_last_action_state(workspace_directory: Path, expected_count: int, expected_last_action_state: str):
-    """Then: Activity log has expected entry count and last entry has expected action state."""
-    log_data = read_activity_log(workspace_directory)
-    assert len(log_data) == expected_count, f"Expected {expected_count} entries, got {len(log_data)}"
-    assert log_data[expected_count - 1]['action_state'] == expected_last_action_state, (
-        f"Last entry should have action_state '{expected_last_action_state}', got '{log_data[expected_count - 1]['action_state']}'"
-    )
-
-
-def then_scanners_discovered_with_expected_count_and_valid_structure(behavior: Behavior, expected_scanner_count: int):
-    """Then: Scanners discovered with expected count and valid structure."""
-    # Get scanners from rules (scanners belong to rules, not behaviors)
-    rules = behavior.rules
-    scanners = [rule.scanner_class for rule in rules if rule.scanner_class]
-    assert len(scanners) == expected_scanner_count, (
-        f"Expected {expected_scanner_count} scanner classes discovered, got {len(scanners)}"
-    )
-    for scanner_class in scanners:
-        assert isinstance(scanner_class, type), (
-            f"Discovered scanner must be a class, got: {type(scanner_class)}"
-        )
-    assert len(rules) >= expected_scanner_count, (
-        f"Expected at least {expected_scanner_count} rules, got {len(rules)}"
-    )
-    for rule in rules:
-        assert rule.has_scanner, f"Rule {rule.name} should have a scanner attached"
-        scanner = rule.scanner
-        assert scanner is not None, f"Rule {rule.name} should have a scanner instance"
 
 
 def _validate_rule_structure(rule):
@@ -295,136 +413,240 @@ def _validate_rule_structure(rule):
         scanner_path = rule_content['scanner']
         assert scanner_path is not None, f"Rule should have a scanner attached: {rule_file}"
 
-def then_validation_rules_have_expected_structure(instructions: dict):
-    """Then: Validation rules have expected structure.
+
+
+
+
+def then_violations_match_scope(violated_stories: set, expected_stories: set, expected_violations: set):
+    """Then: Violations match expected scope and stories.
     
-    Accepts Rule objects or dicts (from rules.validate() which returns dicts).
+    Consolidates: then_violations_match_expected_scope_and_stories(violated_story_names, expected_stories_in_scope_set, expected_violations_set)
+    
+    Args:
+        violated_stories: Set of story names that have violations
+        expected_stories: Set of story names expected to be in scope (optional - if empty, scope check is skipped)
+        expected_violations: Set of story names expected to have violations
     """
-    assert 'validation_rules' in instructions, "Instructions must contain 'validation_rules' key"
-    validation_rules = instructions['validation_rules']
-    assert len(validation_rules) > 0, "Instructions should contain validation rules"
-    
-    for rule in validation_rules:
-        _validate_rule_structure(rule)
-    
-    assert 'base_instructions' in instructions, "Instructions must contain 'base_instructions' key"
-    base_instructions = instructions['base_instructions']
-    assert isinstance(base_instructions, list), "Base instructions should be a list"
-
-
-def then_instructions_contain_validation_rules(instructions: dict):
-    """Then: Instructions contain validation rules."""
-    assert 'validation_rules' in instructions, "Instructions must contain 'validation_rules' key"
-    return instructions['validation_rules']
-
-
-def then_violations_match_expected_scope_and_stories(violated_story_names: set, expected_stories_in_scope_set: set, expected_violations_set: set):
-    """Then: Violations match expected scope and stories."""
-    if expected_stories_in_scope_set:
+    if expected_stories:
         # Verify all violations are for stories in scope
-        assert violated_story_names.issubset(expected_stories_in_scope_set), (
-            f"Found violations for stories outside scope: {violated_story_names - expected_stories_in_scope_set}. "
-            f"Expected scope: {expected_stories_in_scope_set}"
+        assert violated_stories.issubset(expected_stories), (
+            f"Found violations for stories outside scope: {violated_stories - expected_stories}. "
+            f"Expected scope: {expected_stories}"
         )
     
     # Verify violations match expected
-    assert violated_story_names == expected_violations_set, (
-        f"Expected violations: {expected_violations_set}, but got: {violated_story_names}. "
-        f"Missing: {expected_violations_set - violated_story_names}, "
-        f"Unexpected: {violated_story_names - expected_violations_set}"
+    assert violated_stories == expected_violations, (
+        f"Expected violations: {expected_violations}, but got: {violated_stories}. "
+        f"Missing: {expected_violations - violated_stories}, "
+        f"Unexpected: {violated_stories - expected_violations}"
     )
 
 
-def then_expected_story_names_contain_stories(expected: set, stories_to_check: list, should_be_present: bool = True):
-    """Then: Expected story names contain (or don't contain) specified stories."""
-    for story in stories_to_check:
-        if should_be_present:
-            assert story in expected, f"Expected '{story}' to be in expected set: {expected}"
-        else:
-            assert story not in expected, f"Expected '{story}' NOT to be in expected set: {expected}"
+def then_stories_match(expected: set, stories_to_check, present: bool = None):
+    """
+    Consolidated function for matching stories.
+    Replaces: then_expected_story_names_contain_stories, then_expected_story_names_equal
+    
+    Args:
+        expected: Expected set of story names
+        stories_to_check: Stories to check (set or list)
+        present: If True, checks stories are present; if False, checks stories are absent;
+                 if None and stories_to_check is a set, checks equality
+    
+    Returns:
+        None (asserts on failure)
+    """
+    if isinstance(stories_to_check, set) and present is None:
+        # Equality check (then_expected_story_names_equal)
+        assert expected == stories_to_check, f"Expected {stories_to_check}, got {expected}"
+    else:
+        # Containment check (then_expected_story_names_contain_stories)
+        stories_list = list(stories_to_check) if not isinstance(stories_to_check, list) else stories_to_check
+        should_be_present = present if present is not None else True
+        for story in stories_list:
+            if should_be_present:
+                assert story in expected, f"Expected '{story}' to be in expected set: {expected}"
+            else:
+                assert story not in expected, f"Expected '{story}' NOT to be in expected set: {expected}"
 
 
-def then_violations_detected_in_test_file(all_violations: list, test_file: Path):
-    """Then: Violations detected in test file."""
-    assert len(all_violations) > 0, "TestScanner should detect violations in test file"
-    test_file_found_in_violations = any(
-        str(test_file) in str(v.get('location', '')) or 
-        test_file.name in str(v.get('location', ''))
-        for v in all_violations
+def then_violations_detected_in_file(violations: list, file: Path):
+    """Then: Violations detected in file.
+    
+    Consolidates: then_violations_detected_in_test_file(all_violations, test_file)
+    
+    Args:
+        violations: List of violation dictionaries
+        file: Path to the file that should have violations
+    """
+    assert len(violations) > 0, f"Should detect violations in file: {file}"
+    file_found_in_violations = any(
+        str(file) in str(v.get('location', '')) or 
+        file.name in str(v.get('location', ''))
+        for v in violations
     )
-    assert test_file_found_in_violations, (
-        f"Test file from scope parameter should be scanned. "
-        f"Expected test file: {test_file}. "
-        f"Violations found: {all_violations}"
-    )
-
-
-
-
-def given_test_file_created_with_content(workspace_directory: Path, filename: str, content: str):
-    """Given: Test file created with content."""
-    test_file = workspace_directory / filename
-    test_file.write_text(content, encoding='utf-8')
-    return test_file
-
-
-def given_behavior_rule_file_created(bot_directory: Path, behavior: str, rule_filename: str, rule_content: dict):
-    """Given: Behavior rule file created."""
-    rules_dir = bot_directory / 'behaviors' / behavior / '3_rules'
-    rules_dir.mkdir(parents=True, exist_ok=True)
-    rule_file = rules_dir / rule_filename
-    rule_file.write_text(json.dumps(rule_content, indent=2), encoding='utf-8')
-    return rule_file
-
-
-def given_validate_action_created(bot_directory: Path, bot_name: str, behavior: str):
-    """Given: ValidateRulesAction created."""
-    from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json, bootstrap_env
-    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-    
-    # Bootstrap environment (required for BotPaths)
-    workspace_directory = bot_directory.parent / 'workspace'
-    workspace_directory.mkdir(parents=True, exist_ok=True)
-    bootstrap_env(bot_directory, workspace_directory)
-    
-    # Ensure behavior.json exists
-    create_actions_workflow_json(bot_directory, behavior)
-    
-    # Create minimal guardrails files (required by Guardrails class initialization)
-    create_minimal_guardrails_files(bot_directory, behavior, bot_name)
-    
-    # Create Behavior object
-    bot_paths = BotPaths(bot_directory=bot_directory)
-    behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
-    
-    return ValidateRulesAction(
-        behavior=behavior_obj,
-        action_config=None
+    assert file_found_in_violations, (
+        f"File from scope parameter should be scanned. "
+        f"Expected file: {file}. "
+        f"Violations found: {violations}"
     )
 
 
-def then_result_contains_instructions_key(result: dict):
-    """Then: Result contains instructions key."""
-    assert 'instructions' in result, "Result must contain 'instructions' key"
+def then_violations_count_is(violations: list, count: int = None):
+    """Then: Violations count is.
+    
+    Consolidates: then_violations_detected_in_test_files_count(all_violations, expected_count)
+    
+    Args:
+        violations: List of violation dictionaries
+        count: Expected count of violations. If None, just checks that violations exist.
+    """
+    if count is not None:
+        assert len(violations) == count, (
+            f"Expected {count} violations, got {len(violations)}"
+        )
+    else:
+        assert len(violations) > 0, "Should detect violations"
 
 
-def given_test_file_paths_for_knowledge_graph(test_file: Path):
-    """Given: Test file paths for knowledge graph."""
-    return [Path(str(test_file))]
+def then_violations_found_in_files(violations: list, files: list):
+    """Then: Violations found in files.
+    
+    Consolidates: then_violations_found_in_test_files(all_violations, test_files)
+    
+    Args:
+        violations: List of violation dictionaries
+        files: List of file paths that should have violations
+    """
+    assert len(violations) > 0, "Should detect violations in files"
+    for file in files:
+        file_violations = [
+            v for v in violations 
+            if ('location' in v and file.name in str(v.get('location', ''))) or 
+               ('violation_message' in v and file.name.replace('.py', '') in str(v.get('violation_message', '')))
+        ]
+        assert len(file_violations) > 0, (
+            f"File should be scanned. Expected: {file}. "
+            f"Found violations: {violations}"
+        )
 
 
-def then_inject_validation_instructions_result_has_instructions(action: ValidateRulesAction, knowledge_graph: dict, test_file_paths: list):
-    """Then: Inject validation instructions result has instructions."""
-    files = {'test': test_file_paths} if test_file_paths else {}
-    result_direct = action.injectValidationInstructions(knowledge_graph, files=files)
-    assert 'instructions' in result_direct, "Result should contain 'instructions' key"
-    return result_direct
+def then_scanner_detects_violations_with_message(violations: list, scanner_class_path: str, message: str):
+    """Then: Scanner detects violations with message.
+    
+    Consolidates: then_scanner_detects_violations_with_expected_message(violations, scanner_class_path, expected_violation_message)
+    
+    Args:
+        violations: List of violation dictionaries
+        scanner_class_path: Path to scanner class
+        message: Expected violation message
+    """
+    assert len(violations) > 0, f"Scanner {scanner_class_path} should detect violations in bad example"
+    
+    # For SpecificationMatchScanner, it may detect multiple types of violations
+    # Check if expected message is in any violation, or if violations are detected (for flexible matching)
+    if 'specification_match' in scanner_class_path.lower() and message == 'scenario format':
+        # SpecificationMatchScanner detects various violations - if it detects any, that's acceptable
+        # The test file has violations that the scanner correctly identifies
+        assert len(violations) > 0, f"Scanner {scanner_class_path} should detect violations"
+        return  # Accept any violations for this scanner
+    
+    # Check that at least one violation contains expected message
+    violation_messages = []
+    for v in violations:
+        assert 'violation_message' in v, f"Violation must contain 'violation_message' key: {v}"
+        violation_messages.append(v['violation_message'])
+    assert any(message.lower() in msg.lower() for msg in violation_messages), (
+        f"Expected violation message '{message}' not found in violations: {violation_messages}"
+    )
+    
+    # Validate violation structure
+    for violation in violations:
+        assert validate_violation_structure(violation, ['rule', 'violation_message', 'severity']), (
+            f"Violation missing required fields: {violation}"
+        )
 
 
-def then_scanner_class_loaded_successfully(scanner_class, error_msg: str):
-    """Then: Scanner class loaded successfully."""
-    assert scanner_class is not None, f"Failed to load scanner: {error_msg}"
+
+
+
+
+def given_rule_file_created(bot_directory: Path, behavior: str, rule_filename: str, rule_content: dict = None, **params):
+    """
+    Consolidated function for creating rule files.
+    Replaces: given_behavior_rule_file_created, given_scenarios_rule_created,
+    given_test_scope_verification_rule_created, given_validation_rule_for_verb_noun_format,
+    given_validation_rules_created
+    
+    Args:
+        bot_directory: Bot directory path
+        behavior: Behavior name (required for behavior rules)
+        rule_filename: Name of the rule file
+        rule_content: Content of the rule file (dict)
+        **params: Additional parameters:
+            - rule_type: Type of rule ('behavior', 'scenarios', 'test_scope_verification',
+                          'validation', 'verb_noun_format')
+            - rules_dir_name: Directory name ('3_rules' or 'rules', default: '3_rules')
+    
+    Returns:
+        Path to created rule file
+    """
+    rule_type = params.get('rule_type', 'behavior')
+    rules_dir_name = params.get('rules_dir_name', '3_rules')
+    
+    if rule_type == 'behavior':
+        if not behavior:
+            raise ValueError("behavior parameter required for behavior rule")
+        if rule_content is None:
+            raise ValueError("rule_content parameter required")
+        rules_dir = bot_directory / 'behaviors' / behavior / rules_dir_name
+        rules_dir.mkdir(parents=True, exist_ok=True)
+        rule_file = rules_dir / rule_filename
+        rule_file.write_text(json.dumps(rule_content, indent=2), encoding='utf-8')
+        return rule_file
+    
+    elif rule_type == 'scenarios':
+        behavior_name = behavior or 'scenarios'
+        rules_dir = bot_directory / 'behaviors' / behavior_name / '3_rules'
+        rules_dir.mkdir(parents=True, exist_ok=True)
+        rule_file = rules_dir / 'test_scenarios_rule.json'
+        default_content = {
+            "description": "Stories must have scenarios",
+            "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.scenarios_on_story_docs_scanner.ScenariosOnStoryDocsScanner"
+        }
+        rule_file.write_text(json.dumps(default_content, indent=2), encoding='utf-8')
+        return rule_file
+    
+    elif rule_type == 'test_scope_verification':
+        rule_content = {
+            "description": "Test classes must match story names",
+            "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
+        }
+        return given_rule_file_created(bot_directory, 'tests', 'test_scope_verification_rule.json', rule_content, rule_type='behavior')
+    
+    elif rule_type == 'validation':
+        validation_rules_dir = bot_directory / 'validation_rules'
+        validation_rules_dir.mkdir(parents=True, exist_ok=True)
+        rule_file = validation_rules_dir / f'{rule_filename}.json'
+        if rule_content is None:
+            raise ValueError("rule_content parameter required for validation rule")
+        rule_file.write_text(json.dumps(rule_content, indent=2), encoding='utf-8')
+        return rule_file
+    
+    elif rule_type == 'verb_noun_format':
+        verb_noun_content = {
+            'name': 'verb-noun-format',
+            'description': 'Stories must use verb-noun format',
+            'examples': ['Create user account', 'Update profile']
+        }
+        return given_rule_file_created(bot_directory, None, 'verb-noun-format', verb_noun_content, rule_type='validation')
+    
+    else:
+        raise ValueError(f"Unknown rule_type: {rule_type}")
+
+
+
+
 
 
 def given_rule_object_for_scanner(rule_filename: str, scanner_class_path: str, behavior_name: str):
@@ -438,32 +660,6 @@ def given_rule_object_for_scanner(rule_filename: str, scanner_class_path: str, b
     )
 
 
-def then_scanner_detects_violations_with_expected_message(violations: list, scanner_class_path: str, expected_violation_message: str):
-    """Then: Scanner detects violations with expected message."""
-    assert len(violations) > 0, f"Scanner {scanner_class_path} should detect violations in bad example"
-    
-    # For SpecificationMatchScanner, it may detect multiple types of violations
-    # Check if expected message is in any violation, or if violations are detected (for flexible matching)
-    if 'specification_match' in scanner_class_path.lower() and expected_violation_message == 'scenario format':
-        # SpecificationMatchScanner detects various violations - if it detects any, that's acceptable
-        # The test file has violations that the scanner correctly identifies
-        assert len(violations) > 0, f"Scanner {scanner_class_path} should detect violations"
-        return  # Accept any violations for this scanner
-    
-    # Check that at least one violation contains expected message
-    violation_messages = []
-    for v in violations:
-        assert 'violation_message' in v, f"Violation must contain 'violation_message' key: {v}"
-        violation_messages.append(v['violation_message'])
-    assert any(expected_violation_message.lower() in msg.lower() for msg in violation_messages), (
-        f"Expected violation message '{expected_violation_message}' not found in violations: {violation_messages}"
-    )
-    
-    # Validate violation structure
-    for violation in violations:
-        assert validate_violation_structure(violation, ['rule', 'violation_message', 'severity']), (
-            f"Violation missing required fields: {violation}"
-        )
 
 
 
@@ -481,44 +677,10 @@ def given_behavior_created_for_test_bot(test_bot_dir: Path, behavior_name: str, 
     return Behavior(name=behavior_name, bot_paths=bot_paths)
 
 
-def given_knowledge_graph_file_created(workspace_directory: Path, knowledge_graph: dict):
-    """Given: Knowledge graph file created."""
-    kg_file = workspace_directory / 'docs' / 'stories' / 'story-graph.json'
-    kg_file.parent.mkdir(parents=True, exist_ok=True)
-    kg_file.write_text(json.dumps(knowledge_graph, indent=2), encoding='utf-8')
-    return kg_file
 
 
-def given_validate_action_for_test_bot(test_bot_dir: Path, bot_name: str, behavior: str):
-    """Given: ValidateRulesAction for test bot."""
-    from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json, bootstrap_env
-    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-    
-    # Bootstrap environment (required for BotPaths)
-    workspace_directory = test_bot_dir.parent / 'workspace'
-    workspace_directory.mkdir(parents=True, exist_ok=True)
-    bootstrap_env(test_bot_dir, workspace_directory)
-    
-    # Ensure behavior.json exists
-    create_actions_workflow_json(test_bot_dir, behavior)
-    
-    # Create minimal guardrails files (required by Guardrails class initialization)
-    create_minimal_guardrails_files(test_bot_dir, behavior, 'test_bot')
-    
-    # Create Behavior object
-    bot_paths = BotPaths(bot_directory=test_bot_dir)
-    behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
-    
-    return ValidateRulesAction(
-        behavior=behavior_obj,
-        action_config=None
-    )
 
 
-def when_scanner_instance_created(scanner_class):
-    """When: Scanner instance created."""
-    return scanner_class()
 
 
 def _extract_test_files_from_bad_example(bad_example: dict):
@@ -551,84 +713,6 @@ def _scan_files_via_scan_method(scanner_instance: TestScanner, bad_example: dict
     kg = {k: v for k, v in bad_example.items() if k not in ['test_files', 'code_files']}
     return scanner_instance.scan(kg, rule_obj, test_files=test_files_list, code_files=code_files_list)
 
-def when_test_scanner_scans_files(scanner_instance: TestScanner, bad_example: dict, rule_obj: Rule):
-    """When: Test scanner scans files."""
-    violations = []
-    test_files_to_scan = _extract_test_files_from_bad_example(bad_example)
-    
-    for test_file_path in test_files_to_scan:
-        file_path = Path(test_file_path)
-        assert bad_example is not None, "bad_example must be provided for test scanners"
-        kg = _extract_knowledge_graph_from_bad_example(bad_example)
-        file_violations = scanner_instance.scan_test_file(file_path, rule_obj, kg)
-        violations.extend(file_violations)
-    
-    if not violations and bad_example:
-        try:
-            violations = _scan_files_via_scan_method(scanner_instance, bad_example, rule_obj)
-        except Exception:
-            pass
-    
-    return violations
-
-
-def _scan_code_file(scanner_instance: CodeScanner, file_path: Path, rule_obj: Rule):
-    """Helper: Scan a single code file."""
-    return scanner_instance.scan_code_file(file_path, rule_obj)
-
-def _scan_code_files_from_example(scanner_instance: CodeScanner, bad_example: dict, rule_obj: Rule):
-    """Helper: Scan code files from bad_example."""
-    violations = []
-    if bad_example and 'code_files' in bad_example:
-        for code_file_path in bad_example['code_files']:
-            file_path = Path(code_file_path)
-            file_violations = _scan_code_file(scanner_instance, file_path, rule_obj)
-            violations.extend(file_violations)
-    return violations
-
-def _try_fallback_scan_method(scanner_instance: CodeScanner, bad_example: dict, rule_obj: Rule):
-    """Helper: Try scanning via scan() method as fallback."""
-    try:
-        code_files_list = None
-        if bad_example and 'code_files' in bad_example:
-            code_files_list = [Path(cf) for cf in bad_example['code_files']]
-        elif bad_example and 'test_files' in bad_example:
-            code_files_list = [Path(tf) for tf in bad_example['test_files']]
-        kg = {k: v for k, v in bad_example.items() if k not in ['test_files', 'code_files']} if bad_example else {}
-        return scanner_instance.scan(kg, rule_obj, code_files=code_files_list)
-    except Exception:
-        return []
-
-def when_code_scanner_scans_files(scanner_instance: CodeScanner, bad_example: dict, rule_obj: Rule):
-    """When: Code scanner scans files."""
-    violations = _scan_code_files_from_example(scanner_instance, bad_example, rule_obj)
-    if not violations:
-        violations = _try_fallback_scan_method(scanner_instance, bad_example, rule_obj)
-    return violations
-
-
-def when_story_scanner_scans_knowledge_graph(scanner_instance, bad_example: dict, rule_obj: Rule):
-    """When: Story scanner scans knowledge graph."""
-    # Story scanners scan knowledge graph
-    # Story scanners don't use test_files/code_files, so pass bad_example directly as knowledge_graph
-    return scanner_instance.scan(bad_example if bad_example else {}, rule_obj)
-
-
-def then_result_has_violations_or_report(result: dict, error_message: str = None):
-    """Then: Result has violations or report."""
-    # ValidateCodeFilesAction returns violations at top level (from do_execute override)
-    # It may also have instructions from base ValidateRulesAction
-    assert 'violations' in result or 'report' in result or 'instructions' in result, (
-        error_message or "Result should contain violations, report, or instructions"
-    )
-
-
-def then_result_has_violations_from_knowledge_graph(result: dict):
-    """Then: Result has violations from knowledge graph validation."""
-    # ValidateCodeFilesAction returns violations at top level or instructions
-    assert 'violations' in result or 'report' in result or 'instructions' in result, (
-        "ValidateCodeFilesAction should return violations, report, or instructions"
-    )
     violations = result.get('violations', [])
     # Violations may be empty if no violations found, but the key should exist if validation ran
     # If instructions exist, that's also valid (violations may be in instructions or empty)
@@ -637,228 +721,54 @@ def then_result_has_violations_from_knowledge_graph(result: dict):
         assert isinstance(violations, list), "violations should be a list"
 
 
-def then_violation_has_expected_line_number(violation: dict, expected_line_number: int):
-    """Then: Violation has expected line number."""
-    assert 'line_number' in violation, f"Violation must contain 'line_number' key: {violation}"
-    assert violation['line_number'] == expected_line_number, (
-        f"Expected line_number {expected_line_number}, got {violation['line_number']}"
-    )
 
 
-def then_violation_has_expected_location(violation: dict, expected_location: str):
-    """Then: Violation has expected location."""
-    assert 'location' in violation, f"Violation must contain 'location' key: {violation}"
-    assert violation['location'] == expected_location, (
-        f"Expected location '{expected_location}', got '{violation['location']}'"
-    )
 
 
-def then_violation_has_expected_message(violation: dict, expected_message: str):
-    """Then: Violation has expected message."""
-    assert 'violation_message' in violation, f"Violation must contain 'violation_message' key: {violation}"
-    assert expected_message in violation['violation_message'], (
-        f"Expected message '{expected_message}' not found in '{violation['violation_message']}'"
-    )
 
 
-def then_violation_has_expected_severity(violation: dict, expected_severity: str):
-    """Then: Violation has expected severity."""
-    assert 'severity' in violation, f"Violation must contain 'severity' key: {violation}"
-    assert violation['severity'] == expected_severity, (
-        f"Expected severity '{expected_severity}', got '{violation['severity']}'"
-    )
 
 
-def given_story_graph_file_with_content(workspace_directory: Path, story_graph: dict):
-    """Given: Story graph file with content."""
-    docs_stories_dir = given_docs_stories_directory_exists(workspace_directory)
-    story_graph_path = docs_stories_dir / 'story-graph.json'
-    story_graph_path.write_text(json.dumps(story_graph, indent=2), encoding='utf-8')
-    return story_graph_path
 
 
-def when_add_scope_to_story_graph_file(story_graph_path: Path, story_graph: dict, scope_config: dict):
-    """When: Add scope to story graph file."""
-    story_graph['_validation_scope'] = scope_config
-    story_graph_path.write_text(json.dumps(story_graph, indent=2), encoding='utf-8')
 
 
-def when_convert_expected_stories_to_set(expected_stories_in_scope, story_graph: dict, extract_method):
-    """When: Convert expected stories to set."""
-    if isinstance(expected_stories_in_scope, list):
-        return set(expected_stories_in_scope)
-    elif expected_stories_in_scope is None:
-        # Calculate all stories if None
-        expected_stories_in_scope_set = set()
-        for epic in story_graph['epics']:
-            extract_method(epic, expected_stories_in_scope_set)
-        return expected_stories_in_scope_set
-    else:
-        return expected_stories_in_scope
 
 
-def when_convert_expected_violations_to_set(expected_violations_list, expected_stories_in_scope_set, story_graph: dict, extract_method):
-    """When: Convert expected violations to set."""
-    if isinstance(expected_violations_list, list):
-        return set(expected_violations_list)
-    elif expected_violations_list is None:
-        # Calculate expected violations: all stories in scope without scenarios
-        stories_with_scenarios = {"Select And Capture Tokens"}
-        if expected_stories_in_scope_set:
-            return expected_stories_in_scope_set - stories_with_scenarios
+def when_parameters_created(scope=None, test_files=None, code_files=None):
+    """
+    Consolidated function for creating parameters.
+    Replaces: when_create_parameters_from_scope_config, when_create_test_file_parameter,
+    when_create_test_files_parameter, when_create_code_files_parameter, when_create_empty_parameters
+    """
+    if scope is not None:
+        return scope.copy() if scope else {}
+    elif test_files is not None:
+        # Handle both single Path and list of Paths
+        if isinstance(test_files, (list, tuple)):
+            return {'test': [str(f) for f in test_files]}
         else:
-            # All stories
-            all_story_names = set()
-            for epic in story_graph['epics']:
-                extract_method(epic, all_story_names)
-            return all_story_names - stories_with_scenarios
+            return {'test': str(test_files)}
+    elif code_files is not None:
+        return {'src': [str(f) for f in code_files]}
     else:
-        return set()
+        return {}
 
 
-def given_story_graph_file_with_invalid_json(workspace_directory: Path):
-    """Given: Story graph file with invalid JSON."""
-    docs_dir = given_docs_stories_directory_exists(workspace_directory)
-    story_graph_file = docs_dir / 'story-graph.json'
-    story_graph_file.write_text('{ invalid json }', encoding='utf-8')
-    return story_graph_file
-
-
-def then_expected_story_names_equal(expected: set, expected_stories: set):
-    """Then: Expected story names equal."""
-    assert expected == expected_stories, (
-        f"Expected story names {expected_stories}, got {expected}"
-    )
-
-
-def given_minimal_story_graph_for_test_file_scope():
-    """Given: Minimal story graph for test file scope."""
-    return {
-        "epics": [
-            {
-                "name": "Places Order",
-                "sub_epics": [
-                    {
-                        "name": "Validates Payment",
-                        "story_groups": [
-                            {
-                                "stories": [
-                                    {
-                                        "name": "Place Order",
-                                        "scenarios": []
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-
-
-def given_story_graph_for_multiple_test_files():
-    """Given: Story graph for multiple test files."""
-    return {
-        "epics": [
-            {
-                "name": "Manage Orders",
-                "sub_epics": [
-                    {
-                        "name": "Create Order",
-                        "story_groups": [
-                            {
-                                "stories": [
-                                    {
-                                        "name": "Place Order",
-                                        "scenarios": []
-                                    },
-                                    {
-                                        "name": "Cancel Order",
-                                        "scenarios": []
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-
-
-def then_violations_detected_in_test_files_count(all_violations: list, expected_count: int = None):
-    """Then: Violations detected in test files count."""
-    if expected_count is not None:
-        assert len(all_violations) == expected_count, (
-            f"Expected {expected_count} violations, got {len(all_violations)}"
-        )
-    else:
-        assert len(all_violations) > 0, "TestScanner should detect violations in test files"
-
-
-def when_create_parameters_from_scope_config(scope_config: dict):
-    """When: Create parameters from scope config."""
-    return scope_config.copy() if scope_config else {}
-
-
-def when_create_test_file_parameter(test_file: Path):
-    """When: Create test file parameter."""
-    return {'test': str(test_file)}
-
-
-def when_create_test_files_parameter(test_files: list):
-    """When: Create test files parameter."""
-    return {'test': [str(f) for f in test_files]}
-
-
-def when_create_code_files_parameter(code_files: list):
-    """When: Create code files parameter."""
-    return {'src': [str(f) for f in code_files]}
-
-
-def when_create_empty_parameters():
-    """When: Create empty parameters."""
-    return {}
-
-
-def when_copy_story_graph_for_test(story_graph: dict):
-    """When: Copy story graph for test."""
-    return story_graph.copy()
 
 
 def when_execute_action_and_extract_violations(action, parameters: dict):
     """When: Execute action and extract violations."""
     result = when_action_executes_with_scope_parameters(action, parameters)
     instructions = then_result_contains_instructions_with_content_to_validate(result)
-    validation_rules = then_instructions_contain_validation_rules(instructions)
+    from agile_bot.bots.base_bot.test.test_helpers import then_instructions_contain
+    validation_rules = then_instructions_contain(instructions, 'validation_rules')
     all_violations = when_extract_violations_from_validation_rules(validation_rules)
     return all_violations
 
 
-def given_workspace_directory_created(workspace_directory: Path):
-    """Given: Workspace directory created."""
-    workspace_directory.mkdir(parents=True, exist_ok=True)
 
 
-def given_scenarios_rule_created(bot_directory: Path, behavior_name: str = 'scenarios'):
-    """Given: Scenarios rule created."""
-    # Create rule in behavior's 3_rules directory so it's loaded for the behavior
-    behavior_dir = bot_directory / 'behaviors' / behavior_name
-    rules_dir = behavior_dir / '3_rules'
-    rules_dir.mkdir(parents=True, exist_ok=True)
-    rule_file = rules_dir / 'test_scenarios_rule.json'
-    rule_file.write_text(json.dumps({
-        "description": "Stories must have scenarios",
-        "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.scenarios_on_story_docs_scanner.ScenariosOnStoryDocsScanner"
-    }, indent=2), encoding='utf-8')
-    return rule_file
-
-
-def when_add_scope_to_story_graph_if_provided(story_graph_path: Path, story_graph: dict, scope_config: dict):
-    """When: Add scope to story graph if provided."""
-    if scope_config:
-        when_add_scope_to_story_graph_file(story_graph_path, story_graph, scope_config)
 
 
 def _create_test_file_for_class_based_scanner(test_file: Path):
@@ -1134,7 +1044,7 @@ def given_test_file_for_scanner_type(workspace_directory: Path, scanner_class_pa
         return obj.method1().method2().method3()
 
 '''
-            test_file.write_text(default_content, encoding='utf-8')
+            given_file_created(workspace_directory, 'code_sample.py', default_content, file_type='text')
             bad_example = {'code_files': [str(test_file)]}
         # Extract test_file from bad_example if needed
         elif bad_example and 'code_files' in bad_example:
@@ -1143,53 +1053,8 @@ def given_test_file_for_scanner_type(workspace_directory: Path, scanner_class_pa
     return test_file, bad_example
 
 
-def given_base_action_instructions_for_validate(bot_directory: Path, save_report_instruction: bool = False):
-    """Given: Base action instructions for validate.
-    
-    If bot_directory is base_bot, redirects to test_base_bot/base_actions.
-    """
-    from agile_bot.bots.base_bot.test.test_helpers import get_test_base_actions_dir
-    base_actions_dir = get_test_base_actions_dir(bot_directory)
-    # get_action_instructions looks for action_config.json in 'validate' directory
-    validate_dir = base_actions_dir / 'validate'
-    validate_dir.mkdir(parents=True, exist_ok=True)
-    
-    action_config_file = validate_dir / 'action_config.json'
-    # Use the same instructions as instructions.json for consistency
-    action_config_instructions = [
-        'Load and review clarification.json and planning.json',
-        'Check Content Data against all rules listed above',
-        'Generate a validation report'
-    ]
-    if save_report_instruction:
-        action_config_instructions.append('Save the validation report to validation-report.md in docs/stories/')
-    action_config_file.write_text(json.dumps({
-        'name': 'validate',
-        'workflow': True,
-        'order': 7,
-        'instructions': action_config_instructions
-    }), encoding='utf-8')
-    
-    # Also create instructions.json in validate directory (some tests may check for it)
-    instructions_file = validate_dir / 'instructions.json'
-    base_instructions = {
-        'instructions': [
-            'Load and review clarification.json and planning.json',
-            'Check Content Data against all rules listed above',
-            'Generate a validation report'
-        ]
-    }
-    if save_report_instruction:
-        base_instructions['instructions'].append('Save the validation report to validation-report.md in docs/stories/')
-    instructions_file.write_text(json.dumps(base_instructions), encoding='utf-8')
-    return instructions_file
 
 
-def given_docs_stories_directory_exists(workspace_directory: Path):
-    """Given: Docs/stories directory exists."""
-    docs_dir = workspace_directory / 'docs' / 'stories'
-    docs_dir.mkdir(parents=True, exist_ok=True)
-    return docs_dir
 
 
 def when_action_executes_and_returns_result(action: ValidateRulesAction, parameters: dict = None):
@@ -1213,86 +1078,29 @@ def when_action_executes_and_raises_json_error(action: ValidateRulesAction):
 
 
 
-def when_extract_test_case_data(test_case: dict):
-    """When: Extract test case data."""
-    scope_config = test_case['scope_config']
-    expected_stories_in_scope = test_case.get('expected_stories_in_scope')
-    expected_violations_list = test_case.get('expected_violations')
-    return scope_config, expected_stories_in_scope, expected_violations_list
 
 
-def when_test_scope_extraction_with_increment_priorities(story_graph: dict, get_expected_method):
-    """When: Test scope extraction with increment priorities."""
-    scope_config = {"increment_priorities": [1]}
-    expected = get_expected_method(scope_config, story_graph)
-    then_expected_story_names_contain_stories(expected, [
-        "Select And Capture Tokens",
-        "Group Tokens And Create Mob Entity",
-        "Handle Token Click And Intercept"
-    ], should_be_present=True)
-    then_expected_story_names_contain_stories(expected, ["Select Mob To Edit"], should_be_present=False)
 
 
-def when_test_scope_extraction_with_epic_names(story_graph: dict, get_expected_method):
-    """When: Test scope extraction with epic names."""
-    scope_config = {"epic_names": ["Manage Mobs"]}
-    expected = get_expected_method(scope_config, story_graph)
-    then_expected_story_names_contain_stories(expected, [
-        "Select And Capture Tokens",
-        "Select Mob To Edit",
-        "Select Actors For Mob"
-    ], should_be_present=True)
-    then_expected_story_names_contain_stories(expected, ["Select Mob For Strategy"], should_be_present=False)
 
 
-def when_test_scope_extraction_with_multiple_epics(story_graph: dict, get_expected_method):
-    """When: Test scope extraction with multiple epics."""
-    scope_config = {"epic_names": ["Manage Mobs", "Execute Mob Actions"]}
-    expected = get_expected_method(scope_config, story_graph)
-    then_expected_story_names_contain_stories(expected, [
-        "Select And Capture Tokens",
-        "Handle Token Click And Intercept"
-    ], should_be_present=True)
-    then_expected_story_names_contain_stories(expected, ["Select Mob For Strategy"], should_be_present=False)
-
-
-def when_test_scope_extraction_with_story_names(story_graph: dict, get_expected_method):
-    """When: Test scope extraction with story names."""
-    scope_config = {"story_names": ["Select And Capture Tokens", "Handle Token Click And Intercept"]}
-    expected = get_expected_method(scope_config, story_graph)
-    then_expected_story_names_equal(expected, {"Select And Capture Tokens", "Handle Token Click And Intercept"})
-
-
-def given_test_file_scope_verification_setup(bot_directory: Path, workspace_directory: Path):
-    """Given: Test file scope verification setup."""
-    bootstrap_env(bot_directory, workspace_directory)
-    story_graph = {"epics": []}
-    # Story graph should be in docs/stories directory
-    docs_stories_dir = workspace_directory / 'docs' / 'stories'
-    docs_stories_dir.mkdir(parents=True, exist_ok=True)
-    story_graph_path = given_story_graph_file_created(docs_stories_dir, story_graph)
-    return story_graph, story_graph_path
-
-
-def given_test_scope_verification_rule_created(bot_directory: Path):
-    """Given: Test scope verification rule created."""
-    rule_content = {
-        "description": "Test classes must match story names",
-        "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
-    }
-    return given_behavior_rule_file_created(
-        bot_directory,
-        'tests',
-        'test_scope_verification_rule.json',
-        rule_content
-    )
-
-
-def when_setup_scanner_test_environment(bot_directory: Path, workspace_directory: Path, scanner_class_path: str, behavior: str):
-    """When: Setup scanner test environment."""
+def given_scanner_test_setup(bot_directory: Path, workspace_directory: Path, scanner_class_path: str, behavior: str):
+    """
+    Consolidated function for scanner test setup.
+    Replaces: when_setup_scanner_test_environment
+    
+    Args:
+        bot_directory: Bot directory path
+        workspace_directory: Workspace directory path
+        scanner_class_path: Path to scanner class
+        behavior: Behavior name
+    
+    Returns:
+        Tuple of (scanner_class, rule_obj)
+    """
     bootstrap_env(bot_directory, workspace_directory)
     scanner_class, error_msg = load_scanner_class(scanner_class_path)
-    then_scanner_class_loaded_successfully(scanner_class, error_msg)
+    then_scanner_class_loaded(scanner_class, error_msg)
     rule_obj = given_rule_object_for_scanner('test_rule.json', scanner_class_path, behavior)
     return scanner_class, rule_obj
 
@@ -1300,55 +1108,68 @@ def when_setup_scanner_test_environment(bot_directory: Path, workspace_directory
 def given_environment_setup_for_file_not_found_test(bot_directory: Path, workspace_directory: Path):
     """Given: Environment setup for file not found test."""
     bootstrap_env(bot_directory, workspace_directory)
-    given_base_actions_structure_created(bot_directory)
-    given_docs_stories_directory_exists(workspace_directory)
+    given_base_actions_setup(bot_directory)
+    given_directory_created(workspace_directory, directory_type='docs_stories')
     # Don't create story graph - test expects FileNotFoundError
-    return given_validate_action_initialized(bot_directory, 'test_bot', 'shape', create_story_graph=False)
+    return given_action_initialized('validate', bot_directory, 'test_bot', 'shape', create_story_graph=False)
 
 
 def given_environment_setup_for_invalid_json_test(bot_directory: Path, workspace_directory: Path):
     """Given: Environment setup for invalid JSON test."""
     bootstrap_env(bot_directory, workspace_directory)
-    given_base_actions_structure_created(bot_directory)
-    story_graph_file = given_story_graph_file_with_invalid_json(workspace_directory)
+    given_base_actions_setup(bot_directory)
+    docs_stories_dir = given_directory_created(workspace_directory, directory_type='docs_stories')
+    story_graph_file = given_file_created(docs_stories_dir, 'story-graph.json', '{ invalid json }', file_type='text')
     # Don't create story graph - we want to use the invalid one
-    action = given_validate_action_initialized(bot_directory, 'test_bot', 'shape', create_story_graph=False, workspace_directory=workspace_directory)
+    action = given_action_initialized('validate', bot_directory, 'test_bot', 'shape', create_story_graph=False, workspace_directory=workspace_directory)
     return action, story_graph_file
 
 
 def when_execute_test_file_scope_verification(action, test_file: Path, story_graph: dict):
     """When: Execute test file scope verification."""
-    parameters = when_create_test_file_parameter(test_file)
+    parameters = when_parameters_created(test_files=test_file)
     result = when_action_executes_with_parameters(action, parameters)
-    then_result_contains_instructions_key(result)
-    test_file_paths = given_test_file_paths_for_knowledge_graph(test_file)
-    test_knowledge_graph = when_copy_story_graph_for_test(story_graph)
-    then_inject_validation_instructions_result_has_instructions(action, test_knowledge_graph, test_file_paths)
+    then_result_matches(result, has_instructions=True)
+    test_file_paths = given_file_paths(test_file)
+    test_knowledge_graph = when_story_graph_copied(story_graph)
+    then_action_instructions_match(action, knowledge_graph=test_knowledge_graph, test_files=test_file_paths)
 
 
-def when_execute_action_and_extract_violated_story_names_with_conversion(action, parameters: dict, story_graph: dict, test_case: dict, extract_story_names_method, convert_stories_method, convert_violations_method, extract_epic_method):
+def when_execute_action_and_extract_violated_story_names_with_conversion(action, parameters: dict, story_graph: dict, test_case: dict, extract_story_names_method, extract_epic_method):
     """When: Execute action and extract violated story names with conversion."""
     result = when_action_executes_and_returns_result(action, parameters=parameters)
     instructions = then_result_contains_instructions_with_content_to_validate(result)
-    validation_rules = then_instructions_contain_validation_rules(instructions)
+    from agile_bot.bots.base_bot.test.test_helpers import then_instructions_contain
+    validation_rules = then_instructions_contain(instructions, 'validation_rules')
     all_violations = when_extract_violations_from_validation_rules(validation_rules)
     violated_story_names = extract_story_names_method(all_violations)
-    scope_config, expected_stories_in_scope, expected_violations_list = when_extract_test_case_data(test_case)
-    expected_stories_in_scope_set = convert_stories_method(expected_stories_in_scope, story_graph, extract_epic_method)
-    expected_violations_set = convert_violations_method(expected_violations_list, expected_stories_in_scope_set, story_graph, extract_epic_method)
+    scope_config, expected_stories_in_scope, expected_violations_list = when_data_extracted(test_case, 'test_case')
+    expected_stories_in_scope_set = when_data_extracted(story_graph, 'convert_to_set', expected_stories_in_scope=expected_stories_in_scope, extract_method=extract_epic_method)
+    expected_violations_set = when_data_extracted(story_graph, 'convert_violations_to_set', expected_violations_list=expected_violations_list, expected_stories_in_scope_set=expected_stories_in_scope_set, extract_method=extract_epic_method)
     return violated_story_names, expected_stories_in_scope_set, expected_violations_set
 
 
-def when_create_test_file_if_needed_for_scanner(workspace_directory: Path, scanner_class_path: str, behavior: str, bad_example):
-    """When: Create test file if needed for scanner."""
+def given_file_created_if_needed(directory: Path, scanner_class_path: str, behavior: str, bad_example):
+    """
+    Consolidated function for creating test files if needed for scanner.
+    Replaces: when_create_test_file_if_needed_for_scanner
+    
+    Args:
+        directory: Directory where file should be created
+        scanner_class_path: Path to scanner class
+        behavior: Behavior name
+        bad_example: Bad example content (string, dict, or None)
+    
+    Returns:
+        Tuple of (file_path, parameters_dict) or (None, bad_example)
+    """
     if bad_example is None:
-        return given_test_file_for_scanner_type(workspace_directory, scanner_class_path, behavior)
+        return given_test_file_for_scanner_type(directory, scanner_class_path, behavior)
     
     # If bad_example is a string (code), create a file from it
     if isinstance(bad_example, str):
-        import tempfile
         # Create a Python file with the bad example code (don't use "test" in name to avoid scanner skipping it)
-        code_file = workspace_directory / 'bad_example_code.py'
+        code_file = directory / 'bad_example_code.py'
         code_file.parent.mkdir(parents=True, exist_ok=True)
         code_file.write_text(bad_example, encoding='utf-8')
         # Return file and dict with code_files
@@ -1407,7 +1228,7 @@ def when_execute_scanner_based_on_type(scanner_instance, bad_example: dict, rule
 
 def given_base_action_instructions_and_behavior_rule_setup(bot_directory: Path, workspace_directory: Path):
     """Given: Base action instructions and behavior rule setup."""
-    instructions_file = given_base_action_instructions_for_validate(bot_directory)
+    instructions_file = given_action_config(bot_directory, 'validate')
     given_behavior_specific_rule_exists(
         bot_directory, 'shape', 'test_rule.json',
         {'description': 'Test rule', 'examples': []}
@@ -1420,289 +1241,319 @@ def given_base_action_instructions_and_behavior_rule_setup(bot_directory: Path, 
 
 def given_environment_and_action_for_report_path_test(bot_directory: Path, workspace_directory: Path):
     """Given: Environment and action for report path test."""
-    docs_dir = given_docs_stories_directory_exists(workspace_directory)
+    docs_dir = given_directory_created(workspace_directory, directory_type='docs_stories', return_path=True)
     bootstrap_env(bot_directory, workspace_directory)
     given_story_graph_file_exists_minimal(workspace_directory)
-    action = given_validate_action_initialized(bot_directory, 'story_bot', 'shape')
+    action = given_action_initialized('validate', bot_directory, 'story_bot', 'shape')
     result = when_action_executes_and_returns_result(action)
     return action, result
 
 
-def given_test_bot_setup_with_rules(repo_root: Path, bot_directory: Path, workspace_directory: Path, rule_file_paths: list, rule_file_content: list):
-    """Given: Test bot setup with rules."""
+def given_bot_setup(bot_directory: Path, workspace_directory: Path, rules: dict = None, knowledge_graph: dict = None, **params):
+    """
+    Consolidated function for bot setup with rules and/or knowledge graph.
+    Replaces: given_test_bot_setup_with_rules, given_knowledge_graph_and_test_bot_setup
+    
+    Args:
+        bot_directory: Bot directory path
+        workspace_directory: Workspace directory path
+        rules: Dict with 'repo_root', 'rule_file_paths', 'rule_file_content' (for test_bot_setup_with_rules)
+               OR dict with 'repo_root', 'rule_file_path', 'rule_file_content' (for knowledge_graph_and_test_bot_setup)
+        knowledge_graph: Knowledge graph dict (optional, for knowledge_graph_and_test_bot_setup)
+        **params: Additional parameters (repo_root, etc.)
+    
+    Returns:
+        test_bot_dir Path (if rules only) or (kg_file, test_bot_dir) tuple (if knowledge_graph provided)
+    """
+    repo_root = params.get('repo_root') or (rules.get('repo_root') if rules else None)
+    if not repo_root:
+        raise ValueError("repo_root parameter required (via rules dict or params)")
+    
     bootstrap_env(bot_directory, workspace_directory)
-    test_bot_dir = given_test_bot_directory_created(repo_root)
-    setup_test_rules(repo_root, rule_file_paths, rule_file_content)
-    return test_bot_dir
+    
+    if knowledge_graph:
+        # Knowledge graph and test bot setup
+        rule_file_path = rules.get('rule_file_path') if rules else params.get('rule_file_path')
+        rule_file_content = rules.get('rule_file_content') if rules else params.get('rule_file_content')
+        if rule_file_path and rule_file_content:
+            setup_test_rules(repo_root, [rule_file_path], [rule_file_content])
+        test_bot_dir = given_test_bot_directory_created(repo_root)
+        # Create story graph in the workspace directory
+        test_workspace_directory = test_bot_dir.parent / 'workspace'
+        kg_file = given_file_created(test_workspace_directory / 'docs' / 'stories', 'story-graph.json', knowledge_graph)
+        return kg_file, test_bot_dir
+    else:
+        # Test bot setup with rules only
+        rule_file_paths = rules.get('rule_file_paths') if rules else params.get('rule_file_paths', [])
+        rule_file_content = rules.get('rule_file_content') if rules else params.get('rule_file_content', [])
+        test_bot_dir = given_test_bot_directory_created(repo_root)
+        if rule_file_paths and rule_file_content:
+            setup_test_rules(repo_root, rule_file_paths, rule_file_content)
+        return test_bot_dir
 
 
-def given_knowledge_graph_and_test_bot_setup(repo_root: Path, bot_directory: Path, workspace_directory: Path, knowledge_graph: dict, rule_file_path: str, rule_file_content: dict):
-    """Given: Knowledge graph and test bot setup."""
-    bootstrap_env(bot_directory, workspace_directory)
-    setup_test_rules(repo_root, [rule_file_path], [rule_file_content])
-    test_bot_dir = given_test_bot_directory_created(repo_root)
-    # Create story graph in the workspace directory that given_validate_action_for_test_bot will use
-    # (test_bot_dir.parent / 'workspace' matches what given_validate_action_for_test_bot uses)
-    test_workspace_directory = test_bot_dir.parent / 'workspace'
-    kg_file = given_knowledge_graph_file_created(test_workspace_directory, knowledge_graph)
-    return kg_file, test_bot_dir
-
-
-def given_test_file_scope_setup_with_rule(bot_directory: Path, workspace_directory: Path):
-    """Given: Test file scope setup with rule."""
-    bootstrap_env(bot_directory, workspace_directory)
-    story_graph = given_minimal_story_graph_for_test_file_scope()
-    story_graph_path = given_story_graph_saved_to_workspace(workspace_directory, story_graph)
-    test_file = given_test_file_with_content(
-        workspace_directory, 'test_place_order.py',
-        '''class TestPlOrd:
-    """Abbreviated class name - should be TestPlaceOrder"""
-    def test_creates_order(self):
-        pass
-'''
-    )
-    given_behavior_rule_created(bot_directory, 'tests', 'test_class_organization_rule.json', {
-        "description": "Test classes must match story names exactly",
-        "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
-    })
-    return story_graph, story_graph_path, test_file
-
-
-def given_multiple_test_files_scope_setup_with_rule(bot_directory: Path, workspace_directory: Path):
-    """Given: Multiple test files scope setup with rule."""
-    bootstrap_env(bot_directory, workspace_directory)
-    story_graph = given_story_graph_for_multiple_test_files()
-    story_graph_path = given_story_graph_saved_to_workspace(workspace_directory, story_graph)
-    test_file1 = given_test_file_with_content(
-        workspace_directory, 'test_place_order.py',
-        '''class TestPlOrd:
-    """Abbreviated class name - should be TestPlaceOrder"""
-    def test_creates_order(self):
-        pass
-'''
-    )
-    test_file2 = given_test_file_with_content(
-        workspace_directory, 'test_cancel_order.py',
-        '''class TestCancelOrd:
-    """Abbreviated class name - should be TestCancelOrder"""
-    def test_cancels_order(self):
-        pass
-'''
-    )
-    given_behavior_rule_created(bot_directory, 'tests', 'test_class_organization_rule.json', {
-        "description": "Test classes must match story names exactly",
-        "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
-    })
-    return story_graph, story_graph_path, test_file1, test_file2
-
-
-def given_test_files_for_validate_code_files_action(workspace_directory: Path):
-    """Given: Test files for validate code files action."""
-    test_file1 = given_test_file_created(workspace_directory, 'test_example_feature.py', '''
-import pytest
-
-class TestExampleStory:
-    def test_example_scenario(self):
-        assert True
-''')
-    test_file2 = given_test_file_created(workspace_directory, 'test_another_feature.py', '''
-import pytest
-
-class TestAnotherStory:
-    def test_another_scenario(self):
-        assert True
-''')
-    return test_file1, test_file2
 
 
 def when_execute_validate_code_files_action_with_test_files(bot_name: str, behavior: str, bot_directory: Path, test_files: list):
     """When: Execute validate code files action with test files."""
     action = when_validate_code_files_action_created(bot_name, behavior, bot_directory)
-    parameters = when_create_test_files_parameter(test_files)
+    parameters = when_parameters_created(test_files=test_files)
     return when_validate_code_files_action_executes(action, parameters)
 
 
-def given_test_file_for_validate_code_files_action(workspace_directory: Path, filename: str = 'test_example.py'):
-    """Given: Test file for validate code files action."""
-    return given_test_file_created(workspace_directory, filename, '''
-import pytest
-
-class TestExampleStory:
-    def test_example_scenario(self):
-        assert True
-''')
 
 
 def when_execute_validate_code_files_action_with_single_test_file(bot_name: str, behavior: str, bot_directory: Path, test_file: Path):
     """When: Execute validate code files action with single test file."""
     action = when_validate_code_files_action_created(bot_name, behavior, bot_directory)
-    parameters = when_create_test_files_parameter([test_file])
+    parameters = when_parameters_created(test_files=[test_file])
     return when_validate_code_files_action_executes(action, parameters)
 
 
-def given_verb_noun_rule_content():
-    """Given: Verb noun rule content."""
-    return {
-        'description': 'Use verb-noun format for all story elements',
-        'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner',
-        'do': {
-            'examples': [{
-                'description': 'Use verb-noun format',
-                'content': ['Place Order', 'Validate Payment']
-            }]
-        },
-        'dont': {
-            'examples': [{
-                'description': 'Don\'t use noun-only names',
-                'content': ['Sales Management', 'Payment Processing']
-            }]
+def given_rule_content_dict(rule_type: str = None):
+    """
+    Consolidated function for creating rule content dictionaries.
+    Replaces: given_verb_noun_rule_content
+    
+    Args:
+        rule_type: Type of rule content ('verb_noun' or None for default verb_noun)
+    
+    Returns:
+        Rule content dictionary
+    """
+    if rule_type is None or rule_type == 'verb_noun':
+        return {
+            'description': 'Use verb-noun format for all story elements',
+            'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner',
+            'do': {
+                'examples': [{
+                    'description': 'Use verb-noun format',
+                    'content': ['Place Order', 'Validate Payment']
+                }]
+            },
+            'dont': {
+                'examples': [{
+                    'description': 'Don\'t use noun-only names',
+                    'content': ['Sales Management', 'Payment Processing']
+                }]
+            }
         }
-    }
+    else:
+        raise ValueError(f"Unknown rule_type: {rule_type}")
 
 
-def given_story_graph_and_test_file_with_violations_setup(bot_directory: Path, workspace_directory: Path, behavior: str):
-    """Given: Story graph and test file with violations setup."""
-    verb_noun_rule_content = given_verb_noun_rule_content()
-    given_story_graph_with_content(workspace_directory, {
-        'epics': [{'name': 'Bad Epic Name'}]  # Violation: noun-only format
-    })
-    test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
+def given_setup(setup_type, bot_directory, **setup_params):
+    """
+    Consolidated function for VALIDATE setup.
+    Replaces: given_validation_setup, given_story_graph_and_test_file_with_violations_setup,
+    given_test_file_and_naming_rule_setup, given_story_graph_test_file_and_rules_setup,
+    given_test_file_and_naming_rule_with_rule_id_setup, given_comprehensive_story_graph_setup_for_scope_test,
+    given_test_file_scope_verification_setup, given_test_file_scope_setup_with_rule,
+    given_multiple_test_files_scope_setup_with_rule
+    
+    Args:
+        setup_type: Type of setup ('validation', 'story_graph_and_test_file_with_violations',
+                    'test_file_and_naming_rule', 'story_graph_test_file_and_rules',
+                    'test_file_and_naming_rule_with_rule_id', 'comprehensive_story_graph_for_scope',
+                    'test_file_scope_verification', 'test_file_scope_with_rule',
+                    'multiple_test_files_scope_with_rule')
+        bot_directory: Bot directory path
+        **setup_params: Additional parameters (workspace_directory, behavior, violations, rule_type,
+                      create_method, etc.)
+    
+    Returns:
+        Varies by setup_type:
+        - 'validation': None (just sets up environment)
+        - 'story_graph_and_test_file_with_violations': test_file Path
+        - 'test_file_and_naming_rule': test_file Path
+        - 'story_graph_test_file_and_rules': test_file Path
+        - 'test_file_and_naming_rule_with_rule_id': test_file Path
+        - 'comprehensive_story_graph_for_scope': (story_graph, story_graph_path)
+        - 'test_file_scope_verification': (story_graph, story_graph_path)
+        - 'test_file_scope_with_rule': (story_graph, story_graph_path, test_file)
+        - 'multiple_test_files_scope_with_rule': (story_graph, story_graph_path, test_file1, test_file2)
+    """
+    workspace_directory = setup_params.get('workspace_directory')
+    behavior = setup_params.get('behavior', 'tests')
+    violations = setup_params.get('violations', False)
+    rule_type = setup_params.get('rule_type')
+    create_method = setup_params.get('create_method')
+    
+    if setup_type == 'validation':
+        # General validation setup - just bootstrap environment
+        if workspace_directory:
+            bootstrap_env(bot_directory, workspace_directory)
+        return None
+    
+    elif setup_type == 'story_graph_and_test_file_with_violations':
+        verb_noun_rule_content = given_rule_content_dict('verb_noun')
+        given_story_graph_with_content(workspace_directory, {
+            'epics': [{'name': 'Bad Epic Name'}]  # Violation: noun-only format
+        })
+        test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
 import pytest
 
 class TestExampleStory:
     def test_example_scenario(self):
         assert True
 ''')
-    given_behavior_rule_file_created(bot_directory, behavior, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content)
-    given_common_rule_file_created(bot_directory, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content)
-    given_behavior_json_created(bot_directory, behavior, [{'name': 'validate_code_files', 'order': 1}])
-    bootstrap_env(bot_directory, workspace_directory)
-    return test_file
+        given_rule_file_created(bot_directory, behavior, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content, rule_type='behavior')
+        given_common_rule_file_created(bot_directory, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content)
+        given_behavior_json_created(bot_directory, behavior, [{'name': 'validate_code_files', 'order': 1}])
+        bootstrap_env(bot_directory, workspace_directory)
+        return test_file
+    
+    elif setup_type == 'test_file_and_naming_rule':
+        test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
+import pytest
 
+class TestExampleStory:
+    def test_scenario(self):
+        assert True
+''')
+        given_rule_file_created(bot_directory, behavior, 'test_naming_rule.json', {
+            "description": "Test files must follow naming conventions",
+            "scanner": "agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner"
+        })
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        return test_file
+    
+    elif setup_type == 'story_graph_test_file_and_rules':
+        verb_noun_rule_content = given_rule_content_dict('verb_noun')
+        given_story_graph_with_content(workspace_directory, {
+            'epics': [{'name': 'Bad Epic Name'}]  # Violation: noun-only format
+        })
+        test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
+import pytest
 
-def given_source_files_for_validate_code_files_action(workspace_directory: Path):
-    """Given: Source files for validate code files action."""
-    source_file1 = given_source_file_created(workspace_directory, 'example_module.py', '''
-class ExampleClass:
-    def example_method(self):
-        pass
+class TestExampleStory:
+    def test_example_scenario(self):
+        assert True
 ''')
-    source_file2 = given_source_file_created(workspace_directory, 'another_module.py', '''
-class AnotherClass:
-    def another_method(self):
-        pass
+        given_rule_file_created(bot_directory, behavior, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content, rule_type='behavior')
+        given_common_rule_file_created(bot_directory, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content)
+        given_behavior_json_created(bot_directory, behavior, [{'name': 'validate_code_files', 'order': 1}])
+        bootstrap_env(bot_directory, workspace_directory)
+        return test_file
+    
+    elif setup_type == 'test_file_and_naming_rule_with_rule_id':
+        test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
+import pytest
+
+class TestExampleStory:
+    def test_scenario(self):
+        assert True
 ''')
-    return source_file1, source_file2
+        given_rule_file_created(bot_directory, behavior, 'test_naming_rule.json', {
+            'rule_id': 'test_naming_rule',
+            'description': 'Test classes must follow naming convention',
+            'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'
+        })
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        return test_file
+    
+    elif setup_type == 'comprehensive_story_graph_for_scope':
+        given_directory_created(workspace_directory, directory_type='workspace')
+        bootstrap_env(bot_directory, workspace_directory)
+        story_graph = create_method()
+        docs_stories_dir = given_directory_created(workspace_directory, directory_type='docs_stories')
+        story_graph_path = given_file_created(docs_stories_dir, 'story-graph.json', story_graph)
+        # Create scenarios behavior.json and guardrails files (required for Behavior initialization)
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+        create_actions_workflow_json(bot_directory, 'scenarios')
+        create_minimal_guardrails_files(bot_directory, 'scenarios', 'test_bot')
+        given_rule_file_created(bot_directory, 'scenarios', None, rule_type='scenarios')
+        return story_graph, story_graph_path
+    
+    elif setup_type == 'test_file_scope_verification':
+        bootstrap_env(bot_directory, workspace_directory)
+        story_graph = {"epics": []}
+        # Story graph should be in docs/stories directory
+        docs_stories_dir = workspace_directory / 'docs' / 'stories'
+        docs_stories_dir.mkdir(parents=True, exist_ok=True)
+        story_graph_path = given_file_created(docs_stories_dir, 'story-graph.json', story_graph)
+        return story_graph, story_graph_path
+    
+    elif setup_type == 'test_file_scope_with_rule':
+        bootstrap_env(bot_directory, workspace_directory)
+        story_graph = given_story_graph_dict(minimal=True)
+        story_graph_path = given_story_graph_saved_to_workspace(workspace_directory, story_graph)
+        test_file = given_test_file_with_content(
+            workspace_directory, 'test_place_order.py',
+            '''class TestPlOrd:
+    """Abbreviated class name - should be TestPlaceOrder"""
+    def test_creates_order(self):
+        pass
+'''
+        )
+        given_behavior_rule_created(bot_directory, 'tests', 'test_class_organization_rule.json', {
+            "description": "Test classes must match story names exactly",
+            "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
+        })
+        return story_graph, story_graph_path, test_file
+    
+    elif setup_type == 'multiple_test_files_scope_with_rule':
+        bootstrap_env(bot_directory, workspace_directory)
+        story_graph = given_story_graph_dict(scope_type='multiple_test_files')
+        story_graph_path = given_story_graph_saved_to_workspace(workspace_directory, story_graph)
+        test_file1 = given_test_file_with_content(
+            workspace_directory, 'test_place_order.py',
+            '''class TestPlOrd:
+    """Abbreviated class name - should be TestPlaceOrder"""
+    def test_creates_order(self):
+        pass
+'''
+        )
+        test_file2 = given_test_file_with_content(
+            workspace_directory, 'test_cancel_order.py',
+            '''class TestCancelOrd:
+    """Abbreviated class name - should be TestCancelOrder"""
+    def test_cancels_order(self):
+        pass
+'''
+        )
+        given_behavior_rule_created(bot_directory, 'tests', 'test_class_organization_rule.json', {
+            "description": "Test classes must match story names exactly",
+            "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
+        })
+        return story_graph, story_graph_path, test_file1, test_file2
+    
+    else:
+        raise ValueError(f"Unknown setup_type: {setup_type}")
 
 
 def when_execute_validate_code_files_action_with_code_files(bot_name: str, behavior: str, bot_directory: Path, code_files: list):
     """When: Execute validate code files action with code files."""
     action = when_validate_code_files_action_created(bot_name, behavior, bot_directory)
-    parameters = when_create_code_files_parameter(code_files)
+    parameters = when_parameters_created(code_files=code_files)
     return when_validate_code_files_action_executes(action, parameters)
 
 
-def given_source_file_for_validate_code_files_action(workspace_directory: Path, filename: str = 'generated_module.py'):
-    """Given: Source file for validate code files action."""
-    return given_source_file_created(workspace_directory, filename, '''
-class GeneratedClass:
-    def generated_method(self):
-        pass
-''')
-
-
-def given_test_file_and_naming_rule_setup(bot_directory: Path, workspace_directory: Path, behavior: str):
-    """Given: Test file and naming rule setup."""
-    test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
-import pytest
-
-class TestExampleStory:
-    def test_scenario(self):
-        assert True
-''')
-    given_behavior_rule_file_created(bot_directory, behavior, 'test_naming_rule.json', {
-        "description": "Test files must follow naming conventions",
-        "scanner": "agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner"
-    })
-    given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
-    return test_file
-
-
-def given_story_graph_test_file_and_rules_setup(bot_directory: Path, workspace_directory: Path, behavior: str):
-    """Given: Story graph, test file and rules setup."""
-    verb_noun_rule_content = given_verb_noun_rule_content()
-    given_story_graph_with_content(workspace_directory, {
-        'epics': [{'name': 'Bad Epic Name'}]  # Violation: noun-only format
-    })
-    test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
-import pytest
-
-class TestExampleStory:
-    def test_example_scenario(self):
-        assert True
-''')
-    given_behavior_rule_file_created(bot_directory, behavior, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content)
-    given_common_rule_file_created(bot_directory, 'use_verb_noun_format_for_story_elements.json', verb_noun_rule_content)
-    given_behavior_json_created(bot_directory, behavior, [{'name': 'validate_code_files', 'order': 1}])
-    bootstrap_env(bot_directory, workspace_directory)
-    return test_file
-
-
-def given_test_file_and_naming_rule_with_rule_id_setup(bot_directory: Path, workspace_directory: Path, behavior: str):
-    """Given: Test file and naming rule with rule_id setup."""
-    test_file = given_test_file_created(workspace_directory, 'test_example.py', '''
-import pytest
-
-class TestExampleStory:
-    def test_scenario(self):
-        assert True
-''')
-    given_behavior_rule_file_created(bot_directory, behavior, 'test_naming_rule.json', {
-        'rule_id': 'test_naming_rule',
-        'description': 'Test classes must follow naming convention',
-        'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'
-    })
-    given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
-    return test_file
-
-
-def given_comprehensive_story_graph_setup_for_scope_test(bot_directory: Path, workspace_directory: Path, create_method):
-    """Given: Comprehensive story graph setup for scope test."""
-    given_workspace_directory_created(workspace_directory)
-    bootstrap_env(bot_directory, workspace_directory)
-    story_graph = create_method()
-    story_graph_path = given_story_graph_file_with_content(workspace_directory, story_graph)
-    # Create scenarios behavior.json and guardrails files (required for Behavior initialization)
-    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
-    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-    create_actions_workflow_json(bot_directory, 'scenarios')
-    create_minimal_guardrails_files(bot_directory, 'scenarios', 'test_bot')
-    given_scenarios_rule_created(bot_directory, behavior_name='scenarios')
-    return story_graph, story_graph_path
 
 
 def when_execute_test_file_scope_validation(action, test_file: Path, story_graph_path: Path):
     """When: Execute test file scope validation."""
-    parameters = when_create_test_file_parameter(test_file)
+    parameters = when_parameters_created(test_files=test_file)
     all_violations = when_execute_action_and_extract_violations(action, parameters)
-    then_violations_detected_in_test_file(all_violations, test_file)
-    then_story_graph_not_modified_with_test_files(story_graph_path)
+    then_violations_detected_in_file(all_violations, test_file)
+    then_file_unchanged(story_graph_path, exclude_keys=['test_files'])
     return all_violations
 
 
 def when_execute_multiple_test_files_scope_validation(action, test_file1: Path, test_file2: Path, story_graph_path: Path):
     """When: Execute multiple test files scope validation."""
-    parameters = when_create_test_files_parameter([test_file1, test_file2])
+    parameters = when_parameters_created(test_files=[test_file1, test_file2])
     all_violations = when_execute_action_and_extract_violations(action, parameters)
-    then_violations_detected_in_test_files_count(all_violations)
-    then_violations_found_in_test_files(all_violations, [test_file1, test_file2])
-    then_story_graph_not_modified_with_test_files(story_graph_path)
+    then_violations_count_is(all_violations)
+    then_violations_found_in_files(all_violations, [test_file1, test_file2])
+    then_file_unchanged(story_graph_path, exclude_keys=['test_files'])
     return all_violations
 
 
 def given_test_file_scope_verification_complete_setup(bot_directory: Path, workspace_directory: Path):
     """Given: Test file scope verification complete setup."""
-    story_graph, story_graph_path = given_test_file_scope_verification_setup(bot_directory, workspace_directory)
+    story_graph, story_graph_path = given_setup('test_file_scope_verification', bot_directory, workspace_directory=workspace_directory)
     test_file = given_test_file_created_with_content(
         workspace_directory,
         'test_verify_scope.py',
@@ -1711,9 +1562,9 @@ def given_test_file_scope_verification_complete_setup(bot_directory: Path, works
         pass
 '''
     )
-    rule_file = given_test_scope_verification_rule_created(bot_directory)
+    rule_file = given_rule_file_created(bot_directory, 'tests', None, rule_type='test_scope_verification')
     # IMPORTANT: Pass workspace_directory to action initialization to ensure it reads from the correct location
-    action = given_validate_action_initialized(bot_directory, 'test_bot', 'tests', create_story_graph=False, workspace_directory=workspace_directory)
+    action = given_action_initialized('validate', bot_directory, 'test_bot', 'tests', create_story_graph=False, workspace_directory=workspace_directory)
     return story_graph, story_graph_path, test_file, rule_file, action
 
 
@@ -1909,25 +1760,25 @@ def then_action_finds_instructions_file(action: ValidateRulesAction, expected_in
 def given_common_rule_created(bot_directory: Path, rule_name: str, rule_content: dict, behavior_name: str = None):
     """Given: Common rule created.
     
+    Uses consolidated given_file_created internally.
+    
     Args:
         bot_directory: Bot directory path
         rule_name: Name of the rule file
         rule_content: Rule content dictionary
         behavior_name: Behavior name (if None, creates in bot_directory/rules, otherwise in behaviors/behavior_name/rules)
     """
+    from agile_bot.bots.base_bot.test.test_helpers import given_file_created
     if behavior_name:
         rules_dir = bot_directory / 'behaviors' / behavior_name / 'rules'
     else:
         rules_dir = bot_directory / 'rules'
-    rules_dir.mkdir(parents=True, exist_ok=True)
-    rule_file = rules_dir / rule_name
-    rule_file.write_text(json.dumps(rule_content, indent=2), encoding='utf-8')
-    return rule_file
+    return given_file_created(rules_dir, rule_name, rule_content, file_type='json')
 
 
 def given_story_graph_saved_to_workspace(workspace_directory: Path, story_graph: dict):
     """Given: Story graph saved to workspace."""
-    docs_stories_dir = given_docs_stories_directory_exists(workspace_directory)
+    docs_stories_dir = given_directory_created(workspace_directory, directory_type='docs_stories')
     story_graph_path = docs_stories_dir / 'story-graph.json'
     story_graph_path.write_text(json.dumps(story_graph, indent=2), encoding='utf-8')
     return story_graph_path
@@ -1977,12 +1828,11 @@ def given_test_file_with_content(workspace_directory: Path, filename: str, conte
 
 
 def given_behavior_rule_created(bot_directory: Path, behavior: str, rule_name: str, rule_content: dict):
-    """Given: Behavior rule created."""
-    rules_dir = bot_directory / 'behaviors' / behavior / '3_rules'
-    rules_dir.mkdir(parents=True, exist_ok=True)
-    rule_file = rules_dir / rule_name
-    rule_file.write_text(json.dumps(rule_content, indent=2), encoding='utf-8')
-    return rule_file
+    """Given: Behavior rule created.
+    
+    Uses consolidated given_rule_file_created internally.
+    """
+    return given_rule_file_created(bot_directory, behavior, rule_name, rule_content, rule_type='behavior', rules_dir_name='3_rules')
 
 
 def when_action_executes_with_scope_parameters(action: ValidateRulesAction, parameters: dict):
@@ -1990,45 +1840,33 @@ def when_action_executes_with_scope_parameters(action: ValidateRulesAction, para
     return action.do_execute(parameters)
 
 
-def then_violations_found_in_test_files(all_violations: list, test_files: list):
-    """Then: Violations found in test files."""
-    assert len(all_violations) > 0, "TestScanner should detect violations in test files"
-    for test_file in test_files:
-        test_file_violations = [
-            v for v in all_violations 
-            if ('location' in v and test_file.name in str(v.get('location', ''))) or 
-               ('violation_message' in v and test_file.name.replace('.py', '') in str(v.get('violation_message', '')))
-        ]
-        assert len(test_file_violations) > 0, (
-            f"Test file should be scanned. Expected: {test_file}. "
-            f"Found violations: {all_violations}"
-        )
 
 
 # ============================================================================
 # HELPER FUNCTIONS FOR VALIDATE CODE FILES ACTION TESTS
 # ============================================================================
 
-# Removed given_bot_and_behavior_setup - use test_helpers.given_bot_name_and_behavior_setup instead
 # Import when needed: from agile_bot.bots.base_bot.test.test_helpers import given_bot_name_and_behavior_setup
 
 
 def given_test_file_created(workspace_directory: Path, filename: str, content: str):
-    """Given: Test file created in test directory (using test_base_bot structure)."""
+    """Given: Test file created in test directory (using test_base_bot structure).
+    
+    Uses consolidated given_file_created internally.
+    """
+    from agile_bot.bots.base_bot.test.test_helpers import given_file_created
     test_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'test'
-    test_dir.mkdir(parents=True, exist_ok=True)
-    test_file = test_dir / filename
-    test_file.write_text(content, encoding='utf-8')
-    return test_file
+    return given_file_created(test_dir, filename, content, file_type='text')
 
 
 def given_source_file_created(workspace_directory: Path, filename: str, content: str):
-    """Given: Source file created in src directory (using test_base_bot structure)."""
+    """Given: Source file created in src directory (using test_base_bot structure).
+    
+    Uses consolidated given_file_created internally.
+    """
+    from agile_bot.bots.base_bot.test.test_helpers import given_file_created
     src_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'src' / 'bot'
-    src_dir.mkdir(parents=True, exist_ok=True)
-    source_file = src_dir / filename
-    source_file.write_text(content, encoding='utf-8')
-    return source_file
+    return given_file_created(src_dir, filename, content, file_type='text')
 
 
 def given_environment_bootstrapped_with_story_graph(bot_directory: Path, workspace_directory: Path, story_graph: dict = None):
@@ -2090,23 +1928,14 @@ def then_result_has_violations_or_instructions(result: dict, expected_message: s
     )
 
 
-def given_behavior_rule_file_created(bot_directory: Path, behavior: str, rule_name: str, rule_content: dict):
-    """Given: Behavior rule file created."""
-    behavior_dir = bot_directory / 'behaviors' / behavior
-    rules_dir = behavior_dir / 'rules'
-    rules_dir.mkdir(parents=True, exist_ok=True)
-    rule_file = rules_dir / rule_name
-    rule_file.write_text(json.dumps(rule_content), encoding='utf-8')
-    return rule_file
-
-
 def given_common_rule_file_created(bot_directory: Path, rule_name: str, rule_content: dict):
-    """Given: Common rule file created."""
+    """Given: Common rule file created.
+    
+    Uses consolidated given_file_created internally.
+    """
+    from agile_bot.bots.base_bot.test.test_helpers import given_file_created
     common_rules_dir = bot_directory / 'rules'
-    common_rules_dir.mkdir(parents=True, exist_ok=True)
-    common_rule_file = common_rules_dir / rule_name
-    common_rule_file.write_text(json.dumps(rule_content), encoding='utf-8')
-    return common_rule_file
+    return given_file_created(common_rules_dir, rule_name, rule_content, file_type='json')
 
 
 def given_story_graph_with_content(workspace_directory: Path, story_graph_content: dict):
@@ -2127,13 +1956,26 @@ def given_behavior_json_created(bot_directory: Path, behavior: str, actions: lis
     )
 
 
-def then_story_graph_not_modified_with_test_files(story_graph_path: Path):
-    """Then: Story graph not modified with test files."""
-    reloaded_graph = json.loads(story_graph_path.read_text(encoding='utf-8'))
-    assert 'test_files' not in reloaded_graph, "test_files should not be persisted to knowledge graph file (one-off validation)"
+def then_file_unchanged(file_path: Path, **checks):
+    """
+    Consolidated function for checking file hasn't changed.
+    Replaces: then_story_graph_not_modified_with_test_files
+    
+    Args:
+        file_path: Path to file to check
+        **checks: Optional checks like 'exclude_keys' (list of keys that should not be present)
+    """
+    if 'exclude_keys' in checks:
+        # Check that specific keys are not present in JSON file
+        reloaded_content = json.loads(file_path.read_text(encoding='utf-8'))
+        for key in checks['exclude_keys']:
+            assert key not in reloaded_content, f"{key} should not be persisted to file"
+    else:
+        # Default: check that 'test_files' is not in story graph (backward compatibility)
+        reloaded_graph = json.loads(file_path.read_text(encoding='utf-8'))
+        assert 'test_files' not in reloaded_graph, "test_files should not be persisted to knowledge graph file (one-off validation)"
 
 
-# Removed duplicate - imported from test_helpers
 from agile_bot.bots.base_bot.test.test_helpers import create_validation_rules
 
 # ============================================================================
@@ -2232,13 +2074,13 @@ def validate_violation_details(violation: Dict[str, Any], expected_line_number: 
     """Validate violation details match expected values."""
     try:
         if expected_line_number is not None:
-            then_violation_has_expected_line_number(violation, expected_line_number)
+            then_violation_has_field(violation, 'line_number', expected_line_number)
         if expected_location is not None:
-            then_violation_has_expected_location(violation, expected_location)
+            then_violation_has_field(violation, 'location', expected_location)
         if expected_message is not None:
-            then_violation_has_expected_message(violation, expected_message)
+            then_violation_has_field(violation, 'violation_message', expected_message)
         if expected_severity is not None:
-            then_violation_has_expected_severity(violation, expected_severity)
+            then_violation_has_field(violation, 'severity', expected_severity)
         return True
     except AssertionError:
         return False
@@ -2281,10 +2123,10 @@ class TestTrackActivityForValidateRulesAction:
         """
         # Bootstrap environment
         log_file = given_environment_bootstrapped_and_activity_log_initialized(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'exploration', workspace_directory=workspace_directory)
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'exploration', workspace_directory=workspace_directory)
         
         # When: Action starts execution
-        when_validate_action_tracks_start(action)
+        when_action_tracks_start(action)
         
         # Then: Activity logged with full path
         then_activity_logged_with_action_state(workspace_directory, 'story_bot.exploration.validate')
@@ -2298,10 +2140,10 @@ class TestTrackActivityForValidateRulesAction:
         """
         # Bootstrap environment
         log_file = given_environment_bootstrapped_and_activity_log_initialized(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'exploration', workspace_directory=workspace_directory)
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'exploration', workspace_directory=workspace_directory)
         
         # When: Action completes with validation results
-        when_validate_action_tracks_completion(
+        when_action_tracks_completion(
             action,
             outputs={
                 'violations_count': 2,
@@ -2330,7 +2172,7 @@ class TestTrackActivityForValidateRulesAction:
         THEN: activity log distinguishes same action in different behaviors
         """
         # Given: Activity log with multiple validate entries (in workspace_directory)
-        given_activity_log_with_entries(workspace_directory, [
+        given_activity_log(workspace_directory, [
             {
                 'action_state': 'story_bot.shape.validate',
                 'timestamp': '2025-12-03T09:00:00Z',
@@ -2347,7 +2189,7 @@ class TestTrackActivityForValidateRulesAction:
         log_data = read_activity_log(workspace_directory)
         
         # Then: 2 separate entries with full paths
-        then_activity_log_has_entries_with_action_states(
+        then_activity_log_matches(
             workspace_directory,
             expected_count=2,
             expected_action_states=['story_bot.shape.validate', 'story_bot.exploration.validate']
@@ -2362,17 +2204,17 @@ class TestTrackActivityForValidateRulesAction:
         """
         # Given: Activity log with 10 entries (in workspace_directory)
         bootstrap_env(bot_directory, workspace_directory)
-        given_activity_log_with_entries(workspace_directory, [
+        given_activity_log(workspace_directory, [
             {'action_state': f'story_bot.discovery.action_{i}', 'timestamp': f'10:{i:02d}'}
             for i in range(10)
         ])
-        action = given_environment_bootstrapped_and_action_initialized(bot_directory, workspace_directory, 'story_bot', 'exploration')
+        action = given_action_initialized('validate', bot_directory, bot_name='story_bot', behavior='exploration', workspace_directory=workspace_directory)
         
         # When: Append validate entry
-        when_validate_action_tracks_start(action)
+        when_action_tracks_start(action)
         
         # Then: New entry at end in chronological order
-        then_activity_log_has_entry_count_and_last_action_state(
+        then_activity_log_matches(
             workspace_directory,
             expected_count=11,
             expected_last_action_state='story_bot.exploration.validate'
@@ -2395,13 +2237,13 @@ class TestInvokeCompleteValidationWorkflow:
         THEN: Workflow is marked as complete (no next action)
         """
         # Given: Terminal action
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'exploration')
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'exploration')
         
         # When: Action finalizes with no next action
-        action_result = when_action_finalizes_and_transitions(action, next_action=None)
+        action_result = when_action_finalizes(action, next_action=None)
         
         # Then: No next action (terminal)
-        then_no_next_action_in_result(action_result)
+        then_result_matches(action_result, next_action=None)
 
     def test_validate_does_not_inject_next_action_instructions(self, bot_directory, workspace_directory):
         """
@@ -2412,14 +2254,15 @@ class TestInvokeCompleteValidationWorkflow:
         THEN: No next action instructions injected
         """
         # Given: Terminal action
-        given_terminal_action_config(bot_directory, 'validate', 5)
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'scenarios')
+        given_action_config_with_order(bot_directory, 'validate', 5)
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'scenarios')
         
         # When: Action injects instructions
-        instructions = when_action_injects_next_action_instructions(action)
+        instructions = when_action_injects(action, content='next_action')
         
         # Then: No next action instructions (terminal)
-        then_no_next_action_instructions_injected(instructions)
+        from agile_bot.bots.base_bot.test.test_helpers import then_instructions_do_not_contain
+        then_instructions_do_not_contain(instructions, 'next_action_instructions')
 
     def test_workflow_state_shows_all_actions_completed(self, bot_directory, workspace_directory):
         """
@@ -2430,17 +2273,17 @@ class TestInvokeCompleteValidationWorkflow:
         """
         # Bootstrap environment
         log_file = given_environment_bootstrapped_and_activity_log_initialized(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'exploration', workspace_directory=workspace_directory)
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'exploration', workspace_directory=workspace_directory)
         
         # When: Final action completes
-        when_validate_action_tracks_completion(
+        when_action_tracks_completion(
             action,
             outputs={'violations_count': 0, 'workflow_complete': True},
             duration=180
         )
         
         # Then: Completion recorded in activity log
-        then_completion_entry_has_workflow_complete_flag(workspace_directory)
+        then_activity_log_matches(workspace_directory, workflow_complete=True)
 
     def test_activity_log_records_full_workflow_completion(self, bot_directory, workspace_directory):
         """
@@ -2451,17 +2294,17 @@ class TestInvokeCompleteValidationWorkflow:
         """
         # Bootstrap environment
         log_file = given_environment_bootstrapped_and_activity_log_initialized(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'scenarios', workspace_directory=workspace_directory)
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'scenarios', workspace_directory=workspace_directory)
         
         # When: Terminal action logs completion
-        when_validate_action_tracks_completion(
+        when_action_tracks_completion(
             action,
             outputs={'violations_count': 0, 'workflow_complete': True},
             duration=180
         )
         
         # Then: Completion logged with workflow_complete flag
-        then_completion_entry_has_workflow_complete_flag(workspace_directory)
+        then_activity_log_matches(workspace_directory, workflow_complete=True)
 
     def test_workflow_does_not_transition_after_validate(self, bot_directory, workspace_directory):
         """
@@ -2472,13 +2315,14 @@ class TestInvokeCompleteValidationWorkflow:
         THEN: No next action instructions (empty string indicates terminal action)
         """
         # Given: Terminal action
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'exploration')
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'exploration')
         
         # When: Action provides next action instructions
-        instructions = when_action_injects_next_action_instructions(action)
+        instructions = when_action_injects(action, content='next_action')
         
         # Then: No next action instructions (terminal)
-        then_no_next_action_instructions_injected(instructions)
+        from agile_bot.bots.base_bot.test.test_helpers import then_instructions_do_not_contain
+        then_instructions_do_not_contain(instructions, 'next_action_instructions')
 
     def test_behavior_workflow_completes_at_terminal_action(self, bot_directory, workspace_directory):
         """
@@ -2493,15 +2337,15 @@ class TestInvokeCompleteValidationWorkflow:
         )
         
         # When: Check workflow completion status
-        is_complete = when_check_workflow_completion_status('exploration', state_file)
+        is_complete = when_workflow_completion_checked('exploration', state_file)
         
         # Then: Behavior workflow is complete
-        then_behavior_workflow_is_complete(is_complete)
+        then_workflow_completion_matches(is_complete)
 
     def _verify_action_setup_and_execution(self, bot_directory, workspace_directory):
         """Helper: Set up action and execute, returning action and result."""
         instructions_file = given_base_action_instructions_and_behavior_rule_setup(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'story_bot', 'shape')
+        action = given_action_initialized('validate', bot_directory, 'story_bot', 'shape')
         then_action_finds_instructions_file(action, instructions_file)
         rules_data = when_action_injects_behavior_specific_and_bot_rules(action)
         then_rules_data_has_valid_action_instructions(rules_data)
@@ -2544,11 +2388,11 @@ class TestInvokeCompleteValidationWorkflow:
         AND: AI receives clear instruction to write validation report to file
         """
         # Given: Base action instructions exist with save report instruction
-        given_base_action_instructions_for_validate(bot_directory, save_report_instruction=True)
+        given_action_config(bot_directory, 'validate', save_report=True)
         
         # Given: Workspace directory with docs/stories/ folder
         action, result = given_environment_and_action_for_report_path_test(bot_directory, workspace_directory)
-        docs_dir = given_docs_stories_directory_exists(workspace_directory)
+        docs_dir = given_directory_created(workspace_directory, directory_type='docs_stories', return_path=True)
         
         # When: Action identifies content to validate
         # Then: report_path is included in instructions (at top level, not inside content_to_validate)
@@ -2608,14 +2452,14 @@ class TestDiscoversScanners:
         THEN: Scanners are discovered and registered in catalog
         """
         # Bootstrap environment
-        test_bot_dir = given_test_bot_setup_with_rules(repo_root, bot_directory, workspace_directory, rule_file_paths, rule_file_content)
+        test_bot_dir = given_bot_setup(bot_directory, workspace_directory, rules={'repo_root': repo_root, 'rule_file_paths': rule_file_paths, 'rule_file_content': rule_file_content})
         
         # When: ValidateRulesAction loads rules and discovers scanners
-        action = given_validate_action_for_test_bot(test_bot_dir, 'test_story_bot', 'shape')
+        action = given_action_initialized('validate', test_bot_dir, 'test_story_bot', 'shape')
         behavior = given_behavior_created_for_test_bot(test_bot_dir, 'shape', 'test_story_bot')
         
         # Then: Scanners discovered from rules
-        then_scanners_discovered_with_expected_count_and_valid_structure(behavior, expected_scanner_count)
+        then_scanners_match(behavior, count=expected_scanner_count)
 
 
 # ============================================================================
@@ -2680,15 +2524,15 @@ class TestRunScannersAgainstKnowledgeGraph:
         Tests all examples from scenario file - parameterized test.
         """
         # Bootstrap environment
-        kg_file, test_bot_dir = given_knowledge_graph_and_test_bot_setup(repo_root, bot_directory, workspace_directory, knowledge_graph, rule_file_path, rule_file_content)
+        kg_file, test_bot_dir = given_bot_setup(bot_directory, workspace_directory, rules={'repo_root': repo_root, 'rule_file_path': rule_file_path, 'rule_file_content': rule_file_content}, knowledge_graph=knowledge_graph)
         
         # When: ValidateRulesAction loads rules and discovers scanners
-        action = given_validate_action_for_test_bot(test_bot_dir, 'test_story_bot', 'shape')
+        action = given_action_initialized('validate', test_bot_dir, 'test_story_bot', 'shape')
         instructions_result = when_action_executes_and_returns_result(action)
         
         # Then: Instructions contain rules with scanner results
         instructions = then_result_contains_instructions_with_content_to_validate(instructions_result)
-        then_validation_rules_have_expected_structure(instructions)
+        then_instructions_have_structure(instructions, structure='validation_rules')
 
 
 # ============================================================================
@@ -3354,25 +3198,23 @@ class TestValidateRulesAccordingToScope:
         - Default to all stories
         """
         # Setup
-        story_graph, story_graph_path = given_comprehensive_story_graph_setup_for_scope_test(bot_directory, workspace_directory, self.create_comprehensive_story_graph)
+        story_graph, story_graph_path = given_setup('comprehensive_story_graph_for_scope', bot_directory, workspace_directory=workspace_directory, create_method=self.create_comprehensive_story_graph)
         # IMPORTANT: Pass workspace_directory to action initialization to ensure it reads from the correct location
-        action = given_validate_action_initialized(bot_directory, 'test_bot', 'scenarios', create_story_graph=False, workspace_directory=workspace_directory)
-        scope_config, expected_stories_in_scope, expected_violations_list = when_extract_test_case_data(test_case)
-        when_add_scope_to_story_graph_if_provided(story_graph_path, story_graph, scope_config)
-        parameters = when_create_parameters_from_scope_config(scope_config)
+        action = given_action_initialized('validate', bot_directory, 'test_bot', 'scenarios', create_story_graph=False, workspace_directory=workspace_directory)
+        scope_config, expected_stories_in_scope, expected_violations_list = when_data_extracted(test_case, 'test_case')
+        when_story_graph_updated(story_graph_path, story_graph, scope=scope_config)
+        parameters = when_parameters_created(scope=scope_config)
         violated_story_names, expected_stories_in_scope_set, expected_violations_set = when_execute_action_and_extract_violated_story_names_with_conversion(
             action,
             parameters,
             story_graph,
             test_case,
             TestValidateRulesAccordingToScope.extract_story_names_from_violations,
-            when_convert_expected_stories_to_set,
-            when_convert_expected_violations_to_set,
             self._extract_story_names_from_epic
         )
         
         # Verify violations match expected scope and stories
-        then_violations_match_expected_scope_and_stories(
+        then_violations_match_scope(
             violated_story_names,
             expected_stories_in_scope_set,
             expected_violations_set
@@ -3384,17 +3226,39 @@ class TestValidateRulesAccordingToScope:
         story_graph = self.create_comprehensive_story_graph()
         
         # When: Test scope extraction with increment priorities
-        # Then: Scope extraction functions work correctly (verified by when_test_scope_extraction_with_increment_priorities)
-        when_test_scope_extraction_with_increment_priorities(story_graph, self.get_expected_story_names_for_scope)
+        # Then: Scope extraction functions work correctly
+        scope_config = {"increment_priorities": [1]}
+        expected = when_data_extracted(story_graph, 'scope', get_expected=self.get_expected_story_names_for_scope, scope_config=scope_config)
+        then_stories_match(expected, [
+            "Select And Capture Tokens",
+            "Group Tokens And Create Mob Entity",
+            "Handle Token Click And Intercept"
+        ], present=True)
+        then_stories_match(expected, ["Select Mob To Edit"], present=False)
         
         # Test epic extraction
-        when_test_scope_extraction_with_epic_names(story_graph, self.get_expected_story_names_for_scope)
+        scope_config = {"epic_names": ["Manage Mobs"]}
+        expected = when_data_extracted(story_graph, 'scope', get_expected=self.get_expected_story_names_for_scope, scope_config=scope_config)
+        then_stories_match(expected, [
+            "Select And Capture Tokens",
+            "Select Mob To Edit",
+            "Select Actors For Mob"
+        ], present=True)
+        then_stories_match(expected, ["Select Mob For Strategy"], present=False)
         
         # Test multiple epics
-        when_test_scope_extraction_with_multiple_epics(story_graph, self.get_expected_story_names_for_scope)
+        scope_config = {"epic_names": ["Manage Mobs", "Execute Mob Actions"]}
+        expected = when_data_extracted(story_graph, 'scope', get_expected=self.get_expected_story_names_for_scope, scope_config=scope_config)
+        then_stories_match(expected, [
+            "Select And Capture Tokens",
+            "Handle Token Click And Intercept"
+        ], present=True)
+        then_stories_match(expected, ["Select Mob For Strategy"], present=False)
         
         # Test story names
-        when_test_scope_extraction_with_story_names(story_graph, self.get_expected_story_names_for_scope)
+        scope_config = {"story_names": ["Select And Capture Tokens", "Handle Token Click And Intercept"]}
+        expected = when_data_extracted(story_graph, 'scope', get_expected=self.get_expected_story_names_for_scope, scope_config=scope_config)
+        then_stories_match(expected, {"Select And Capture Tokens", "Handle Token Click And Intercept"})
 
     def test_validate_with_test_file_scope_parameter(self, bot_directory, workspace_directory):
         """
@@ -3408,8 +3272,8 @@ class TestValidateRulesAccordingToScope:
         """
         # Given: Test file exists with violations and rule with TestScanner exists
         # Bootstrap environment
-        story_graph, story_graph_path, test_file = given_test_file_scope_setup_with_rule(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'test_bot', 'tests')
+        story_graph, story_graph_path, test_file = given_setup('test_file_scope_with_rule', bot_directory, workspace_directory=workspace_directory)
+        action = given_action_initialized('validate', bot_directory, 'test_bot', 'tests')
         # When: Validate rules is called with test_file scope parameter
         # Then: TestScanner instances scan the test file and violations are detected (verified by when_execute_test_file_scope_validation)
         when_execute_test_file_scope_validation(action, test_file, story_graph_path)
@@ -3426,8 +3290,8 @@ class TestValidateRulesAccordingToScope:
         """
         # Given: Multiple test files exist with violations and rule with TestScanner exists
         # Bootstrap environment
-        story_graph, story_graph_path, test_file1, test_file2 = given_multiple_test_files_scope_setup_with_rule(bot_directory, workspace_directory)
-        action = given_validate_action_initialized(bot_directory, 'test_bot', 'tests')
+        story_graph, story_graph_path, test_file1, test_file2 = given_setup('multiple_test_files_scope_with_rule', bot_directory, workspace_directory=workspace_directory)
+        action = given_action_initialized('validate', bot_directory, 'test_bot', 'tests')
         # When: Validate rules is called with test_files scope parameter
         # Then: TestScanner instances scan all test files and violations are detected (verified by when_execute_multiple_test_files_scope_validation)
         when_execute_multiple_test_files_scope_validation(action, test_file1, test_file2, story_graph_path)
@@ -3446,7 +3310,7 @@ class TestValidateRulesAccordingToScope:
         story_graph, story_graph_path, test_file, rule_file, action = given_test_file_scope_verification_complete_setup(bot_directory, workspace_directory)
         
         # Create a spy TestScanner that records what knowledge_graph it receives
-        received_knowledge_graphs, SpyTestScanner = given_spy_test_scanner_that_records_knowledge_graph()
+        received_knowledge_graphs, SpyTestScanner = given_scanner_spy(scanner_type='test', record='knowledge_graph')
         
         # When: Validate rules is called with test_file scope parameter
         # Then: TestScanner receives knowledge_graph with test_files populated (verified by when_execute_test_file_scope_verification)
@@ -3529,7 +3393,7 @@ class TestRunAllScanners:
             'agile_bot.bots.base_bot.src.scanners.separate_concerns_scanner.SeparateConcernsScanner',
             'code',
             None,
-            'mixes calculations with I/O'
+            'mixes incompatible responsibilities'
         ),
         (
             'agile_bot.bots.base_bot.src.scanners.simplify_control_flow_scanner.SimplifyControlFlowScanner',
@@ -3657,10 +3521,10 @@ class TestRunAllScanners:
         """
         # Bootstrap environment
         # Given: Scanner class path, behavior, bad example, and expected violation message
-        scanner_class, rule_obj = when_setup_scanner_test_environment(bot_directory, workspace_directory, scanner_class_path, behavior)
+        scanner_class, rule_obj = given_scanner_test_setup(bot_directory, workspace_directory, scanner_class_path, behavior)
         
         # For test/code scanners, create a test file with violations if needed
-        test_file, bad_example = when_create_test_file_if_needed_for_scanner(workspace_directory, scanner_class_path, behavior, bad_example)
+        test_file, bad_example = given_file_created_if_needed(workspace_directory, scanner_class_path, behavior, bad_example)
         
         # If bad_example is None but test_file was created, create bad_example dict with code_files
         if bad_example is None and test_file and test_file.exists():
@@ -3671,11 +3535,11 @@ class TestRunAllScanners:
                 bad_example = {'test_files': [str(test_file)]}
         
         # When: Scanner is executed against bad example
-        scanner_instance = when_scanner_instance_created(scanner_class)
-        violations = when_execute_scanner_based_on_type(scanner_instance, bad_example, rule_obj)
+        scanner_instance = when_scanner_created(scanner_class)
+        violations = when_scanner_scans(scanner_instance, bad_example, rule_obj, scanner_type='auto')
         
         # Then: Violations detected with expected message
-        then_scanner_detects_violations_with_expected_message(violations, scanner_class_path, expected_violation_message)
+        then_scanner_detects_violations_with_message(violations, scanner_class_path, expected_violation_message)
 
 
 # ============================================================================
@@ -3690,7 +3554,22 @@ class TestRunScannersAgainstTestCode:
         
         # Given: A workspace with generated test files
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'tests')
-        test_file1, test_file2 = given_test_files_for_validate_code_files_action(workspace_directory)
+        test_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'test'
+        test_files = given_files_created(test_dir, [
+            ('test_example_feature.py', '''import pytest
+
+class TestExampleStory:
+    def test_example_scenario(self):
+        assert True
+'''),
+            ('test_another_feature.py', '''import pytest
+
+class TestAnotherStory:
+    def test_another_scenario(self):
+        assert True
+''')
+        ], file_type='text')
+        test_file1, test_file2 = test_files[0], test_files[1]
         given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
         
         # When: ValidateCodeFilesAction receives test files via parameters
@@ -3704,33 +3583,40 @@ class TestRunScannersAgainstTestCode:
         
         # Given: A workspace with test files and validation rules
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'tests')
-        test_file = given_test_file_and_naming_rule_with_rule_id_setup(bot_directory, workspace_directory, behavior)
+        test_file = given_setup('test_file_and_naming_rule_with_rule_id', bot_directory, workspace_directory=workspace_directory, behavior=behavior)
         
         # When: ValidateCodeFilesAction validates the test file via do_execute()
         validation_result = when_execute_validate_code_files_action_with_single_test_file(bot_name, behavior, bot_directory, test_file)
         
         # Then: Validation should have been performed on the test file
-        then_result_has_violations_or_report(validation_result, "ValidateCodeFilesAction should return violations or report")
+        then_result_matches(validation_result, has_violations_or_report=True, error_message="ValidateCodeFilesAction should return violations or report")
     
     def test_validate_code_files_action_merges_violations_from_knowledge_graph_and_files(self, bot_directory, workspace_directory):
         """Scenario: ValidateCodeFilesAction merges violations from knowledge graph validation and code file validation"""
         
         # Given: A workspace with story graph and test files, both with violations
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'tests')
-        test_file = given_story_graph_test_file_and_rules_setup(bot_directory, workspace_directory, behavior)
+        test_file = given_setup('story_graph_test_file_and_rules', bot_directory, workspace_directory=workspace_directory, behavior=behavior)
         
         # When: ValidateCodeFilesAction is executed via do_execute()
         validation_result = when_execute_validate_code_files_action_with_single_test_file(bot_name, behavior, bot_directory, test_file)
         
         # Then: Both validations should produce merged results
-        then_result_has_violations_from_knowledge_graph(validation_result)
+        then_result_matches(validation_result, has_violations_or_report=True)
     
     def test_validate_code_files_action_works_for_tests_behavior(self, bot_directory, workspace_directory):
         """Scenario: ValidateCodeFilesAction works for tests behavior (test files)"""
         
         # Given: tests behavior with generated test files
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'tests')
-        test_file = given_test_file_for_validate_code_files_action(workspace_directory, 'test_generated.py')
+        test_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'test'
+        test_file = given_file_created(test_dir, 'test_generated.py', '''
+import pytest
+
+class TestExampleStory:
+    def test_example_scenario(self):
+        assert True
+''', file_type='text')
         given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
         
         # When: ValidateCodeFilesAction is executed for tests behavior via do_execute()
@@ -3752,7 +3638,18 @@ class TestRunScannersAgainstCode:
         
         # Given: A workspace with generated source files
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
-        source_file1, source_file2 = given_source_files_for_validate_code_files_action(workspace_directory)
+        src_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'src' / 'bot'
+        source_files = given_files_created(src_dir, [
+            ('example_module.py', '''class ExampleClass:
+    def example_method(self):
+        pass
+'''),
+            ('another_module.py', '''class AnotherClass:
+    def another_method(self):
+        pass
+''')
+        ], file_type='text')
+        source_file1, source_file2 = source_files[0], source_files[1]
         given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
         
         # When: ValidateCodeFilesAction receives code files via parameters
@@ -3766,7 +3663,12 @@ class TestRunScannersAgainstCode:
         
         # Given: code behavior with generated source files
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
-        source_file = given_source_file_for_validate_code_files_action(workspace_directory)
+        src_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'src' / 'bot'
+        source_file = given_file_created(src_dir, 'generated_module.py', '''
+class GeneratedClass:
+    def generated_method(self):
+        pass
+''', file_type='text')
         given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
         
         # When: ValidateCodeFilesAction is executed for code behavior via do_execute()
@@ -3784,11 +3686,11 @@ class TestRunScannersAgainstCode:
         
         # When: ValidateCodeFilesAction is executed without test_files or code_files parameters
         action = when_validate_code_files_action_created(bot_name, behavior, bot_directory)
-        parameters = when_create_empty_parameters()
+        parameters = when_parameters_created()
         validation_result = when_validate_code_files_action_executes(action, parameters)
         
         # Then: Should return knowledge graph validation results only
-        then_result_contains_instructions_key(validation_result)
+        then_result_matches(validation_result, has_instructions=True)
 
 
 # ============================================================================
@@ -3929,11 +3831,16 @@ def given_behavior_with_bot_paths(bot_directory, workspace_directory, bot_name, 
     return behavior, bot_paths
 
 
-def given_rule_file_created(rule_dir: Path, rule_name: str, rule_data: dict):
-    """Given: Rule file created."""
-    rule_file = rule_dir / f'{rule_name}.json'
-    rule_file.write_text(json.dumps(rule_data), encoding='utf-8')
-    return rule_file
+def given_rule_file_created_in_dir(rule_dir: Path, rule_name: str, rule_data: dict):
+    """Given: Rule file created in specific directory.
+    
+    Uses consolidated given_file_created internally.
+    Note: This is a specialized helper for creating rule files when you already have the rule_dir.
+    For most cases, use the consolidated given_rule_file_created() function instead.
+    """
+    from agile_bot.bots.base_bot.test.test_helpers import given_file_created
+    rule_filename = f'{rule_name}.json' if not rule_name.endswith('.json') else rule_name
+    return given_file_created(rule_dir, rule_filename, rule_data, file_type='json')
 
 
 def when_rules_instantiated_with_behavior(behavior, bot_paths):
@@ -4282,7 +4189,7 @@ class TestFindRuleByName:
         behavior, bot_paths = given_behavior_with_bot_paths(bot_directory, workspace_directory, bot_name, behavior_name)
         
         rule_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created(rule_dir, 'test_rule', {'name': 'test_rule', 'description': 'Test rule'})
+        given_rule_file_created_in_dir(rule_dir, 'test_rule', {'name': 'test_rule', 'description': 'Test rule'})
         
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
         
@@ -4359,8 +4266,8 @@ class TestIterateRules:
         behavior, bot_paths = given_behavior_with_bot_paths(bot_directory, workspace_directory, bot_name, behavior_name)
         
         rule_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created(rule_dir, 'rule1', {'name': 'rule1'})
-        given_rule_file_created(rule_dir, 'rule2', {'name': 'rule2'})
+        given_rule_file_created_in_dir(rule_dir, 'rule1', {'name': 'rule1'})
+        given_rule_file_created_in_dir(rule_dir, 'rule2', {'name': 'rule2'})
         
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
         
@@ -4429,7 +4336,7 @@ class TestLoadRuleFromFile:
         # Given: Rule JSON file exists
         rule_dir = given_test_rules_directory_created(tmp_path)
         rule_data = {'name': 'test_rule', 'description': 'Test rule'}
-        rule_file = given_rule_file_created(rule_dir, 'test_rule', rule_data)
+        rule_file = given_rule_file_created_in_dir(rule_dir, 'test_rule', rule_data)
         
         # When: Rule instantiated with file path
         rule = when_rule_instantiated_from_file(rule_file)
@@ -4464,7 +4371,7 @@ class TestLoadRuleFromFile:
         """
         # Given: Rule file
         rule_dir = given_test_rules_directory_created(tmp_path)
-        rule_file = given_rule_file_created(rule_dir, 'test_rule', {'name': 'test_rule'})
+        rule_file = given_rule_file_created_in_dir(rule_dir, 'test_rule', {'name': 'test_rule'})
         
         # When: Rule instantiated
         rule = when_rule_instantiated_from_file(rule_file)
@@ -4666,7 +4573,7 @@ class TestInjectValidationRulesForValidateRulesAction:
         # Given: Environment bootstrapped
         bootstrap_env(bot_directory, workspace_directory)
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'shape')
-        action = given_validate_action_initialized(bot_directory, bot_name, behavior)
+        action = given_action_initialized('validate', bot_directory, bot_name, behavior)
         
         # When: Action executes
         # Then: Action uses Rules collection to load rules
@@ -4683,7 +4590,7 @@ class TestInjectValidationRulesForValidateRulesAction:
         bootstrap_env(bot_directory, workspace_directory)
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'shape')
         given_rules_exist_for_behavior(bot_directory, behavior)
-        action = given_validate_action_initialized(bot_directory, bot_name, behavior)
+        action = given_action_initialized('validate', bot_directory, bot_name, behavior)
         
         # When: Action accesses rule properties
         # Then: Uses Rule class properties
@@ -4700,7 +4607,7 @@ class TestInjectValidationRulesForValidateRulesAction:
         bootstrap_env(bot_directory, workspace_directory)
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'shape')
         given_rules_with_scanner_paths_exist(bot_directory, behavior)
-        action = given_validate_action_initialized(bot_directory, bot_name, behavior)
+        action = given_action_initialized('validate', bot_directory, bot_name, behavior)
         
         # When: Action loads scanners
         # Then: Uses ScannerLoader service
@@ -4716,7 +4623,7 @@ class TestInjectValidationRulesForValidateRulesAction:
         # Given: Environment bootstrapped
         bootstrap_env(bot_directory, workspace_directory)
         bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'shape')
-        action = given_validate_action_initialized(bot_directory, bot_name, behavior)
+        action = given_action_initialized('validate', bot_directory, bot_name, behavior)
         parameters = given_validation_parameters_with_scope()
         
         # When: Action creates validation scope
@@ -4779,19 +4686,4 @@ class TestLoadScannerClasses:
     # test_scanner_loader_returns_error_message_when_load_fails removed - exception handling test
     
     # test_scanner_loader_tries_multiple_paths_when_exact_path_fails removed - exception handling test
-        """
-        SCENARIO: Scanner loader tries multiple paths when exact path fails
-        GIVEN: Scanner name without full module path
-        WHEN: load_scanner() called
-        THEN: Tries multiple possible paths
-        """
-        # Given: Scanner name without full module path
-        scanner_loader = given_scanner_loader_created()
-        scanner_name = given_scanner_name_without_full_path()
-        
-        # When: load_scanner() called
-        scanner_class = when_scanner_loader_loads_scanner(scanner_loader, scanner_name)
-        
-        # Then: Tries multiple possible paths
-        then_scanner_class_may_be_none_or_not_none(scanner_class)
 

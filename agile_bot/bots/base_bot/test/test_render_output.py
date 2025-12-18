@@ -4,6 +4,7 @@ Render Output Tests
 Tests for all stories in the 'Render Output' sub-epic:
 - Track Activity for Render Output Action
 - Proceed To Validate Rules
+- Render Output Using Synchronizers
 """
 import pytest
 from pathlib import Path
@@ -12,8 +13,12 @@ from agile_bot.bots.base_bot.src.actions.render.render_action import RenderOutpu
 from agile_bot.bots.base_bot.test.test_helpers import (
     bootstrap_env,
     create_activity_log_file,
-    read_activity_log
+    read_activity_log,
+    then_activity_log_matches,
+    given_activity_log,
+    given_directory_created
 )
+from agile_bot.bots.base_bot.test.test_perform_behavior_action import then_result_matches
 from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
     verify_action_tracks_start,
     verify_action_tracks_completion,
@@ -85,24 +90,6 @@ def given_render_configs_created(render_dir: Path, configs: list):
         created_configs.append(config_file)
     return created_configs
 
-def given_behavior_render_directory_created(bot_directory: Path, behavior: str) -> Path:
-    """Given: Behavior render directory created."""
-    behavior_dir = bot_directory / 'behaviors' / behavior
-    render_dir = behavior_dir / 'content' / 'render'
-    render_dir.mkdir(parents=True, exist_ok=True)
-    
-    # instructions.json is mandatory when render folder exists
-    instructions_file = render_dir / 'instructions.json'
-    if not instructions_file.exists():
-        instructions_file.write_text(
-            json.dumps({
-                'behaviorName': behavior,
-                'instructions': [f'Render outputs for {behavior} behavior']
-            }),
-            encoding='utf-8'
-        )
-    
-    return render_dir
 
 def when_render_output_action_created(bot_name: str, behavior: str, bot_directory: Path):
     """When: RenderOutputAction created."""
@@ -150,62 +137,16 @@ def when_render_output_action_loads_and_merges_instructions(bot_name: str, behav
     return action_obj, instructions
 
 
-def then_render_configs_template_variable_replaced(base_instructions_text: str):
-    """Then: {{render_configs}} template variable replaced."""
-    assert '{{render_configs}}' not in base_instructions_text
-    assert 'render_story_files' in base_instructions_text
-    assert 'render_story_map_txt' in base_instructions_text
-
-
-def then_render_configs_include_all_required_fields(base_instructions_text: str):
-    """Then: Render configs include all required fields."""
-    assert 'Instructions:' in base_instructions_text or 'instructions' in base_instructions_text.lower()
-    assert 'Synchronizer:' in base_instructions_text or 'synchronizer' in base_instructions_text.lower()
-    assert 'Template:' in base_instructions_text or 'template' in base_instructions_text.lower()
-    assert 'Input:' in base_instructions_text or 'input' in base_instructions_text.lower()
-    assert 'Output:' in base_instructions_text or 'output' in base_instructions_text.lower()
-
-
-def then_specific_field_values_present(base_instructions_text: str):
-    """Then: Specific field values present."""
-    assert 'synchronizers.story_scenarios.StoryScenariosSynchronizer' in base_instructions_text
-    assert 'templates/story-map.txt' in base_instructions_text
-    assert 'story-graph.json' in base_instructions_text
-
-
-def then_render_instructions_template_variable_replaced(base_instructions_text: str):
-    """Then step: Render instructions template variable replaced."""
-    assert '{{render_configs}}' not in base_instructions_text
-    assert 'render_configs' in base_instructions_text
 
 def then_all_render_output_assertions_pass(base_instructions_text: str):
     """Then step: All render output assertions pass."""
-    then_render_configs_template_variable_replaced(base_instructions_text)
-    then_render_configs_include_all_required_fields(base_instructions_text)
-    then_specific_field_values_present(base_instructions_text)
-    then_render_instructions_template_variable_replaced(base_instructions_text)
-    """Then: {{render_instructions}} template variable replaced."""
-    assert '{{render_instructions}}' not in base_instructions_text
-    assert 'Render all story files' in base_instructions_text or 'Generate markdown output' in base_instructions_text
+    from agile_bot.bots.base_bot.test.test_helpers import then_template_variables_replaced, then_instructions_contain
+    then_template_variables_replaced(base_instructions_text, type='render_configs')
+    then_instructions_contain(base_instructions_text, 'render_required_fields')
+    then_instructions_contain(base_instructions_text, 'render_field_values')
+    then_template_variables_replaced(base_instructions_text, type='render_instructions')
 
 
-def given_activity_log_with_multiple_entries(workspace_directory: Path):
-    """Given: Activity log with multiple entries."""
-    workspace_directory.mkdir(parents=True, exist_ok=True)
-    log_file = workspace_directory / 'activity_log.json'
-    from tinydb import TinyDB
-    with TinyDB(log_file) as db:
-        db.insert({'action_state': 'story_bot.shape.render', 'timestamp': '09:00'})
-        db.insert({'action_state': 'story_bot.discovery.render', 'timestamp': '10:00'})
-    return log_file
-
-
-def then_activity_log_has_two_entries_with_expected_states(workspace_directory: Path):
-    """Then: Activity log has two entries with expected states."""
-    log_data = read_activity_log(workspace_directory)
-    assert len(log_data) == 2
-    assert log_data[0]['action_state'] == 'story_bot.shape.render'
-    assert log_data[1]['action_state'] == 'story_bot.discovery.render'
 
 
 def then_activity_log_file_does_not_exist(workspace_directory: Path):
@@ -266,11 +207,6 @@ def when_create_render_output_action(bot_name: str, behavior: str, bot_directory
     return action
 
 
-def then_action_has_correct_bot_name_and_behavior(action, expected_bot_name: str, expected_behavior: str):
-    """Then: Action has correct bot name and behavior."""
-    assert action.behavior.bot_name == expected_bot_name
-    # action.behavior is a Behavior object, not a string, so check its name attribute
-    assert action.behavior.name == expected_behavior
 
 
 def given_bot_name_and_behavior_for_shape():
@@ -316,11 +252,30 @@ def given_render_dir_and_configs_setup(bot_directory: Path, behavior: str):
     return render_dir
 
 
-def when_format_render_configs(action_obj):
-    """When: Format render configs."""
-    render_configs = action_obj._load_render_configs()
-    formatted = action_obj._format_render_configs(render_configs)
-    return formatted
+def when_render_configs_formatted(configs=None, format_type='json', action_obj=None):
+    """
+    Consolidated function for formatting render configs.
+    Replaces: when_format_render_configs
+    
+    Args:
+        configs: Render configs dict (if None and action_obj provided, loads from action_obj)
+        format_type: Format type (default 'json')
+        action_obj: Action object (if provided and configs is None, loads configs from it)
+    
+    Returns:
+        Formatted configs string
+    """
+    if configs is None:
+        if action_obj is None:
+            raise ValueError("Either configs or action_obj must be provided")
+        configs = action_obj._load_render_configs()
+    
+    if action_obj is not None:
+        return action_obj._format_render_configs(configs)
+    else:
+        # If no action_obj, assume configs is already a dict and format it
+        import json
+        return json.dumps(configs, indent=2) if format_type == 'json' else str(configs)
 
 
 def then_formatted_configs_contain_sync_and_template(formatted: str):
@@ -418,9 +373,13 @@ class TestTrackActivityForRenderOutputAction:
 
     def test_track_multiple_render_output_invocations_across_behaviors(self, workspace_directory):
         # Activity log is in workspace_directory
-        given_activity_log_with_multiple_entries(workspace_directory)
+        given_activity_log(workspace_directory, return_file=False)
         
-        then_activity_log_has_two_entries_with_expected_states(workspace_directory)
+        then_activity_log_matches(
+            workspace_directory,
+            expected_count=2,
+            expected_action_states=['story_bot.shape.render', 'story_bot.discovery.render']
+        )
 
     def test_activity_log_creates_file_if_not_exists(self, bot_directory, workspace_directory):
         """
@@ -483,7 +442,7 @@ class TestProceedToValidateRules:
         action = when_create_render_output_action(bot_name, behavior, bot_directory)
         
         # Action should initialize successfully
-        then_action_has_correct_bot_name_and_behavior(action, bot_name, behavior)
+        then_result_matches(action, bot_name=bot_name, behavior=behavior)
 
 
 # ============================================================================
@@ -526,13 +485,13 @@ class TestInjectRenderInstructionsAndConfigs:
         bootstrap_env(bot_directory, workspace_directory)
         
         bot_name, behavior = given_bot_name_and_behavior_for_shape()
-        render_dir = given_behavior_render_directory_created(bot_directory, behavior)
+        render_dir = given_directory_created(bot_directory, directory_type='behavior_render', behavior=behavior)
         when_create_sync_and_template_configs(render_dir)
         
         # When: Action formats render configs
         action_obj = when_render_output_action_created(bot_name, behavior, bot_directory)
         
-        formatted = when_format_render_configs(action_obj)
+        formatted = when_render_configs_formatted(action_obj=action_obj)
         
         # Then: All fields are present
         then_formatted_configs_contain_sync_and_template(formatted)
@@ -691,3 +650,187 @@ class TestMergeBaseAndRenderInstructions:
         # Then: Merged dict contains base instructions and empty render instructions
         then_merged_contains_base_instructions(result, ['base1'])
         then_merged_contains_render_instructions(result, render_instructions)
+
+
+# ============================================================================
+# STORY: Render Output Using Synchronizers
+# ============================================================================
+
+class TestRenderOutputUsingSynchronizers:
+    """Story: Render Output Using Synchronizers - Tests automatic execution of synchronizers."""
+
+    def test_synchronizers_are_executed_automatically(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Synchronizers are executed automatically during render action
+        GIVEN: Render configs with synchronizers are defined
+        WHEN: Render output action executes
+        THEN: Synchronizers are executed automatically and outputs are generated
+        """
+        bootstrap_env(bot_directory, workspace_directory)
+        bot_name, behavior = given_bot_name_and_behavior_for_shape()
+        
+        render_dir = given_directory_created(bot_directory, directory_type='behavior_render', behavior=behavior)
+        
+        # Create a test synchronizer config
+        given_render_configs_created(render_dir, [
+            {
+                'name': 'render_domain_model_description',
+                'type': 'synchronizer',
+                'path': 'docs/stories',
+                'input': 'story-graph.json',
+                'synchronizer': 'synchronizers.domain_model.DomainModelDescriptionSynchronizer',
+                'output': 'domain-model-description.md',
+                'instructions': 'Generate domain model description'
+            }
+        ])
+        
+        # Create story-graph.json input file
+        workspace_dir = workspace_directory
+        docs_dir = workspace_dir / 'docs' / 'stories'
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        story_graph_file = docs_dir / 'story-graph.json'
+        story_graph_file.write_text(
+            json.dumps({
+                'epics': [],
+                'domain_concepts': {}
+            }),
+            encoding='utf-8'
+        )
+        
+        # When: Render output action executes
+        action = when_render_output_action_created(bot_name, behavior, bot_directory)
+        action.working_dir = workspace_dir
+        result = action.do_execute(parameters={})
+        
+        # Then: Synchronizers were executed
+        executed_configs = result.get('executed_configs', [])
+        assert len(executed_configs) > 0
+        
+        executed_config = executed_configs[0]
+        assert executed_config['status'] == 'executed'
+        assert 'result' in executed_config
+        assert 'output_path' in executed_config['result']
+
+    def test_template_configs_remain_in_instructions(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Template configs remain in instructions for AI handling
+        GIVEN: Render configs with both synchronizers and templates
+        WHEN: Render output action executes
+        THEN: Synchronizers are executed, templates remain in instructions
+        """
+        bootstrap_env(bot_directory, workspace_directory)
+        bot_name, behavior = given_bot_name_and_behavior_for_shape()
+        
+        render_dir = given_directory_created(bot_directory, directory_type='behavior_render', behavior=behavior)
+        
+        # Create configs with both synchronizer and template
+        given_render_configs_created(render_dir, [
+            {
+                'name': 'render_domain_model',
+                'type': 'synchronizer',
+                'path': 'docs/stories',
+                'input': 'story-graph.json',
+                'synchronizer': 'synchronizers.domain_model.DomainModelDescriptionSynchronizer',
+                'output': 'domain-model.md',
+                'instructions': 'Generate domain model'
+            },
+            {
+                'name': 'render_story_map',
+                'type': 'template',
+                'path': 'docs/stories',
+                'input': 'story-graph.json',
+                'template': 'templates/story-map.txt',
+                'output': 'story-map.txt',
+                'instructions': 'Render story map using template'
+            }
+        ])
+        
+        # Create template file
+        templates_dir = render_dir / 'templates'
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        template_file = templates_dir / 'story-map.txt'
+        template_file.write_text('Story Map Template', encoding='utf-8')
+        
+        # Create story-graph.json input file
+        workspace_dir = workspace_directory
+        docs_dir = workspace_dir / 'docs' / 'stories'
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        story_graph_file = docs_dir / 'story-graph.json'
+        story_graph_file.write_text(
+            json.dumps({
+                'epics': [],
+                'domain_concepts': {}
+            }),
+            encoding='utf-8'
+        )
+        
+        # When: Render output action executes
+        action = when_render_output_action_created(bot_name, behavior, bot_directory)
+        action.working_dir = workspace_dir
+        result = action.do_execute(parameters={})
+        
+        # Then: Synchronizers executed, templates in instructions
+        executed_configs = result.get('executed_configs', [])
+        template_configs = result.get('template_configs', [])
+        
+        assert len(executed_configs) == 1
+        assert executed_configs[0]['status'] == 'executed'
+        
+        assert len(template_configs) == 1
+        assert template_configs[0]['config']['name'] == 'render_story_map'
+        
+        # Verify template config is in instructions
+        instructions = result.get('instructions', {})
+        render_configs_in_instructions = instructions.get('render_configs', [])
+        assert len(render_configs_in_instructions) == 1
+        assert render_configs_in_instructions[0]['config']['name'] == 'render_story_map'
+
+    def test_executed_synchronizers_info_in_instructions(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Executed synchronizers information is included in AI instructions
+        GIVEN: Render configs with synchronizers
+        WHEN: Render output action executes
+        THEN: Instructions include information about executed synchronizers
+        """
+        bootstrap_env(bot_directory, workspace_directory)
+        bot_name, behavior = given_bot_name_and_behavior_for_shape()
+        
+        render_dir = given_directory_created(bot_directory, directory_type='behavior_render', behavior=behavior)
+        
+        given_render_configs_created(render_dir, [
+            {
+                'name': 'render_domain_model',
+                'type': 'synchronizer',
+                'path': 'docs/stories',
+                'input': 'story-graph.json',
+                'synchronizer': 'synchronizers.domain_model.DomainModelDescriptionSynchronizer',
+                'output': 'domain-model.md',
+                'instructions': 'Generate domain model'
+            }
+        ])
+        
+        # Create story-graph.json input file
+        workspace_dir = workspace_directory
+        docs_dir = workspace_dir / 'docs' / 'stories'
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        story_graph_file = docs_dir / 'story-graph.json'
+        story_graph_file.write_text(
+            json.dumps({
+                'epics': [],
+                'domain_concepts': {}
+            }),
+            encoding='utf-8'
+        )
+        
+        # When: Render output action executes
+        action = when_render_output_action_created(bot_name, behavior, bot_directory)
+        action.working_dir = workspace_dir
+        result = action.do_execute(parameters={})
+        
+        # Then: Instructions include executed synchronizers info
+        instructions = result.get('instructions', {})
+        base_instructions = '\n'.join(instructions.get('base_instructions', []))
+        
+        assert 'Synchronizers Already Executed' in base_instructions
+        assert 'render_domain_model' in base_instructions
+        assert 'EXECUTED' in base_instructions
