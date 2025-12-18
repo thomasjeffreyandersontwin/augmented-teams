@@ -4157,11 +4157,11 @@ class TestLoadRulesCollection:
         
         # Create bot-level rule
         bot_rules_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'description': 'Bot rule'})
+        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'description': 'Bot rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         # Create behavior-specific rule
         behavior_rules_dir = given_behavior_rules_directory_created(bot_directory, behavior_name)
-        given_rule_file_created(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'description': 'Behavior rule'})
+        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'description': 'Behavior rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         # When: Rules instantiated
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
@@ -4233,11 +4233,11 @@ class TestFindRuleByName:
         
         # Bot-level rule
         bot_rules_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created(bot_rules_dir, 'bot_rule', {'name': 'bot_rule'})
+        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         # Behavior-specific rule
         behavior_rules_dir = given_behavior_rules_directory_created(bot_directory, behavior_name)
-        given_rule_file_created(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule'})
+        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
         
@@ -4309,10 +4309,10 @@ class TestIterateRules:
         behavior, bot_paths = given_behavior_with_bot_paths(bot_directory, workspace_directory, bot_name, behavior_name)
         
         bot_rules_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created(bot_rules_dir, 'bot_rule', {'name': 'bot_rule'})
+        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         behavior_rules_dir = given_behavior_rules_directory_created(bot_directory, behavior_name)
-        given_rule_file_created(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule'})
+        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
         
