@@ -198,12 +198,12 @@ def then_clarification_data_contains_shape_user_types(clarification_data: dict, 
 
 
 
-def given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory: Path):
+def given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory: Path, workspace_directory: Path = None):
     """Given: Environment bootstrapped and action initialized for discovery.
     
     Uses consolidated given_action_initialized function.
     """
-    action = given_action_initialized('gather_context', bot_directory, bot_name='story_bot', behavior='discovery')
+    action = given_action_initialized('gather_context', bot_directory, bot_name='story_bot', behavior='discovery', workspace_directory=workspace_directory)
     return action
 
 
@@ -426,7 +426,7 @@ class TestTrackActivityForClarifyContextAction:
         # Given: Environment is bootstrapped
         log_file = given_environment_bootstrapped_and_activity_log_initialized(bot_directory, workspace_directory)
         # And: ClarifyContextAction is initialized
-        action = given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory)
+        action = given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory, workspace_directory)
         
         # When: Action starts and logs activity
         when_action_tracks_start(action)
@@ -444,13 +444,14 @@ class TestTrackActivityForClarifyContextAction:
         # Given: Environment is bootstrapped
         log_file = given_environment_bootstrapped_and_activity_log_initialized(bot_directory, workspace_directory)
         # And: ClarifyContextAction is initialized
-        action = given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory)
+        action = given_environment_bootstrapped_and_action_initialized_for_discovery(bot_directory, workspace_directory)
+        # And: Expected outputs and duration
+        outputs, duration = given_action_outputs_and_duration()
         
-        # When: Action completes
-        when_action_tracks_completion(action)
+        # When: Action completes with outputs and duration
+        when_action_tracks_completion(action, outputs=outputs, duration=duration)
         
         # Then: Completion entry logged with outputs and duration
-        outputs, duration = given_action_outputs_and_duration()
         then_completion_entry_logged_with_outputs(log_file, outputs, duration)
 
     def test_track_multiple_gather_context_invocations_across_behaviors(self, workspace_directory):
