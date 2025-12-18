@@ -45,7 +45,8 @@ class ValidationReportWriter:
     def get_report_path(self) -> Path:
         docs_path = self.bot_paths.documentation_path
         docs_dir = self.workspace_directory / docs_path
-        report_file = docs_dir / 'validation-report.md'
+        report_filename = f'validation-report-{self.behavior_name}.md'
+        report_file = docs_dir / report_filename
         return report_file
     
     def _get_report_path(self) -> str:

@@ -1,11 +1,12 @@
 """Scanner for detecting code duplication (DRY principle)."""
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple, Set
 from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
 import hashlib
+from difflib import SequenceMatcher
 
 
 class DuplicationScanner(CodeScanner):
@@ -13,6 +14,11 @@ class DuplicationScanner(CodeScanner):
     
     CRITICAL: Every piece of knowledge should have a single, authoritative representation.
     Extract repeated logic into reusable functions.
+    
+    Detects:
+    1. Duplicate entire function bodies
+    2. Duplicate code blocks (sequences of 2+ statements) within and across functions
+    3. Similar patterns that should be extracted to helpers
     """
     
     def scan_code_file(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
@@ -24,16 +30,20 @@ class DuplicationScanner(CodeScanner):
         try:
             content = file_path.read_text(encoding='utf-8')
             tree = ast.parse(content, filename=str(file_path))
+            lines = content.split('\n')
             
             # Extract function bodies for comparison
             functions = []
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     func_body = ast.unparse(node.body) if hasattr(ast, 'unparse') else str(node.body)
-                    functions.append((node.name, func_body, node.lineno))
+                    functions.append((node.name, func_body, node.lineno, node))
             
             # Check for duplicate function bodies
             violations.extend(self._check_duplicate_functions(functions, file_path, rule_obj))
+            
+            # Check for duplicate code blocks within and across functions
+            violations.extend(self._check_duplicate_code_blocks(functions, lines, file_path, rule_obj))
         
         except (SyntaxError, UnicodeDecodeError):
             # Skip files with syntax errors
@@ -47,7 +57,7 @@ class DuplicationScanner(CodeScanner):
         
         # Group functions by body hash
         body_hashes = {}
-        for func_name, func_body, line_num in functions:
+        for func_name, func_body, line_num, node in functions:
             body_hash = hashlib.md5(func_body.encode()).hexdigest()
             if body_hash not in body_hashes:
                 body_hashes[body_hash] = []
@@ -69,4 +79,1013 @@ class DuplicationScanner(CodeScanner):
                 violations.append(violation)
         
         return violations
+    
+    def _check_duplicate_code_blocks(self, functions: List[tuple], lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
+        """Check for duplicate code blocks (sequences of statements) within and across functions using similarity checking."""
+        violations = []
+        
+        # Extract code blocks from all functions (sequences of 2+ statements)
+        all_blocks = []
+        for func_name, func_body, func_line, func_node in functions:
+            blocks = self._extract_code_blocks(func_node, func_line, func_name)
+            all_blocks.extend(blocks)
+        
+        # Use similarity checking to find duplicate blocks
+        SIMILARITY_THRESHOLD = 0.90  # Increased to 90% to reduce false positives
+        
+        # Track duplicate pairs and build groups using union-find approach
+        duplicate_pairs = []  # List of (block1_idx, block2_idx, similarity) tuples
+        reported_block_indices = set()  # Track which blocks have been reported
+        
+        # Compare all blocks pairwise
+        compared_pairs = set()
+        for i, block1 in enumerate(all_blocks):
+            for j, block2 in enumerate(all_blocks[i+1:], start=i+1):
+                # Skip if same block
+                if i == j:
+                    continue
+                
+                # Skip if already compared
+                pair_key = tuple(sorted([i, j]))
+                if pair_key in compared_pairs:
+                    continue
+                compared_pairs.add(pair_key)
+                
+                # Skip if blocks overlap significantly (same function, overlapping line ranges)
+                # This prevents comparing overlapping blocks from the same function
+                if (block1['func_name'] == block2['func_name'] and 
+                    not (block1['end_line'] < block2['start_line'] or block2['end_line'] < block1['start_line'])):
+                    continue
+                
+                # Calculate AST-level similarity (more accurate than string comparison)
+                ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
+                
+                # Also check normalized structure similarity
+                normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
+                
+                # Check actual code content similarity (normalize whitespace for comparison)
+                preview1_normalized = ' '.join(block1['preview'].split())
+                preview2_normalized = ' '.join(block2['preview'].split())
+                content_similarity = SequenceMatcher(None, preview1_normalized, preview2_normalized).ratio()
+                
+                # Use AST similarity as primary indicator (it ignores variable names)
+                # Content similarity is secondary - lower threshold since variable names differ
+                # If AST similarity is high (>= 85%), accept even with lower content similarity (>= 50%)
+                # Otherwise require both to be reasonably high
+                if ast_similarity >= 0.85 and content_similarity >= 0.50:
+                    max_similarity = max(ast_similarity, content_similarity)
+                elif ast_similarity >= 0.80 and content_similarity >= 0.70:
+                    max_similarity = max(ast_similarity, content_similarity)
+                elif max(ast_similarity, content_similarity) >= 0.90 and min(ast_similarity, content_similarity) >= 0.60:
+                    max_similarity = max(ast_similarity, content_similarity)
+                else:
+                    # If both aren't reasonably high, skip this comparison
+                    continue
+                
+                if max_similarity >= SIMILARITY_THRESHOLD:
+                    # Similar blocks found - check if they should be reported
+                    # Skip if EITHER block is mostly helper calls - that's intended reuse, not duplication
+                    if self._is_mostly_helper_calls(block1['ast_nodes']) or self._is_mostly_helper_calls(block2['ast_nodes']):
+                        continue
+                    
+                    # Skip if BOTH functions are helper functions - helper functions are meant to encapsulate patterns
+                    # Finding similar patterns in helpers is expected, not duplication
+                    if self._is_helper_function(block1['func_name']) and self._is_helper_function(block2['func_name']):
+                        continue
+                    
+                    # Only report if blocks are in different functions or far apart in same function
+                    should_report = False
+                    
+                    if block1['func_name'] != block2['func_name']:
+                        # Different functions - report as potential duplication
+                        should_report = True
+                    elif abs(block1['start_line'] - block2['start_line']) > 10:
+                        # Same function but far apart - report as potential duplication
+                        should_report = True
+                    
+                    if should_report:
+                        duplicate_pairs.append((i, j, max_similarity))
+        
+        # Build duplicate groups using union-find
+        # Map each block to its group representative
+        group_repr = list(range(len(all_blocks)))  # Initially each block is its own representative
+        
+        def find(x):
+            if group_repr[x] != x:
+                group_repr[x] = find(group_repr[x])  # Path compression
+            return group_repr[x]
+        
+        def union(x, y):
+            root_x = find(x)
+            root_y = find(y)
+            if root_x != root_y:
+                group_repr[root_y] = root_x  # Union by making root_x the parent
+        
+        # Union all duplicate pairs
+        for i, j, _ in duplicate_pairs:
+            union(i, j)
+        
+        # Group blocks by their representative
+        groups = {}
+        for idx in range(len(all_blocks)):
+            root = find(idx)
+            if root not in groups:
+                groups[root] = []
+            groups[root].append(idx)
+        
+        # Merge groups that represent the same duplication (same function pairs with overlapping ranges)
+        # This prevents reporting the same duplication multiple times with different block boundaries
+        merged_groups = {}
+        group_keys = list(groups.keys())
+        
+        for i, root_idx in enumerate(group_keys):
+            if root_idx in merged_groups:
+                continue  # Already merged into another group
+            
+            # Get function pairs for this group
+            group_blocks = [all_blocks[idx] for idx in groups[root_idx]]
+            func_pairs = set()
+            for block in group_blocks:
+                func_pairs.add(block['func_name'])
+            
+            # Check if any other group has overlapping blocks from the same function pairs
+            merged_with = root_idx
+            for j, other_root_idx in enumerate(group_keys[i+1:], start=i+1):
+                if other_root_idx in merged_groups:
+                    continue
+                
+                other_blocks = [all_blocks[idx] for idx in groups[other_root_idx]]
+                other_func_pairs = set()
+                for block in other_blocks:
+                    other_func_pairs.add(block['func_name'])
+                
+                # If they share function pairs, check for overlapping ranges
+                if func_pairs == other_func_pairs:
+                    # Check if blocks from same functions overlap
+                    overlaps = False
+                    for block1 in group_blocks:
+                        for block2 in other_blocks:
+                            if (block1['func_name'] == block2['func_name'] and
+                                not (block1['end_line'] < block2['start_line'] or 
+                                     block2['end_line'] < block1['start_line'])):
+                                overlaps = True
+                                break
+                        if overlaps:
+                            break
+                    
+                    if overlaps:
+                        # Merge into the first group
+                        groups[merged_with].extend(groups[other_root_idx])
+                        merged_groups[other_root_idx] = merged_with
+            
+            merged_groups[root_idx] = merged_with
+        
+        # Consolidate groups after merging
+        final_groups = {}
+        for root_idx, block_indices in groups.items():
+            merged_root = merged_groups.get(root_idx, root_idx)
+            if merged_root not in final_groups:
+                final_groups[merged_root] = []
+            final_groups[merged_root].extend(block_indices)
+        
+        # Remove duplicates from final groups
+        for root_idx in final_groups:
+            final_groups[root_idx] = list(set(final_groups[root_idx]))
+        
+        # Report each duplicate group once
+        for root_idx, block_indices in final_groups.items():
+            # Skip groups with only one block (no duplicates)
+            if len(block_indices) < 2:
+                continue
+            
+            # Skip if all blocks in this group have already been reported
+            if all(idx in reported_block_indices for idx in block_indices):
+                continue
+            
+            # Get all blocks in this group
+            group_blocks = [all_blocks[idx] for idx in sorted(block_indices)]
+            
+            # Filter out overlapping blocks from the same function
+            # Keep only the largest non-overlapping blocks per function
+            filtered_blocks = []
+            blocks_by_func = {}
+            
+            # Group blocks by function
+            for block in group_blocks:
+                func_name = block['func_name']
+                if func_name not in blocks_by_func:
+                    blocks_by_func[func_name] = []
+                blocks_by_func[func_name].append(block)
+            
+            # For each function, keep only non-overlapping blocks (prefer larger blocks)
+            for func_name, func_blocks in blocks_by_func.items():
+                # Sort by size (largest first), then by start line
+                func_blocks.sort(key=lambda b: (b['end_line'] - b['start_line'], -b['start_line']), reverse=True)
+                
+                non_overlapping = []
+                for block in func_blocks:
+                    # Check if this block overlaps with any already selected block
+                    overlaps = False
+                    for selected in non_overlapping:
+                        if not (block['end_line'] < selected['start_line'] or selected['end_line'] < block['start_line']):
+                            overlaps = True
+                            break
+                    if not overlaps:
+                        non_overlapping.append(block)
+                
+                filtered_blocks.extend(non_overlapping)
+            
+            # Skip if filtering removed all blocks
+            if len(filtered_blocks) < 2:
+                continue
+            
+            # Use the first block as the primary one for reporting
+            primary_block = filtered_blocks[0]
+            
+            # Create violation message showing all duplicate locations
+            previews = []
+            for block in filtered_blocks:
+                location = f"{block['func_name']}:{block['start_line']}-{block['end_line']}"
+                preview = block['preview'][:200] + '...' if len(block['preview']) > 200 else block['preview']
+                previews.append(f"Location ({location}):\n{preview}")
+            
+            violation_message = (
+                f'Duplicate code blocks detected ({len(filtered_blocks)} locations) - extract to helper function.\n\n' +
+                '\n\n'.join(previews)
+            )
+            
+            violation = Violation(
+                rule=rule_obj,
+                violation_message=violation_message,
+                location=str(file_path),
+                line_number=primary_block['start_line'],
+                severity='error'
+            ).to_dict()
+            violations.append(violation)
+            
+            # Mark all blocks in this group as reported
+            reported_block_indices.update(block_indices)
+        
+        return violations
+    
+    def _extract_code_blocks(self, func_node: ast.FunctionDef, func_start_line: int, func_name: str) -> List[Dict[str, Any]]:
+        """Extract cohesive semantic subtrees from a function.
+        
+        Based on AST-based duplication detection best practices:
+        - Extract semantic subtrees (functions, loops, if blocks, try blocks)
+        - Goldilocks zone: 5-15 AST nodes or 5-20 lines of code
+        - These represent cohesive logic fragments that should be reusable
+        - Normalize variable names and constants for structural comparison
+        """
+        blocks = []
+        MIN_NODES = 5  # Minimum AST nodes for a meaningful subtree
+        MAX_NODES = 80  # Maximum nodes to avoid overly large blocks
+        MIN_LINES = 5  # Minimum lines of code
+        MAX_LINES = 20  # Maximum lines (goldilocks zone)
+        
+        # Skip blocks in test methods - test structure similarity is expected, not duplication
+        if func_name.startswith('test_'):
+            return blocks
+        
+        # Extract all meaningful subtrees from the function
+        # These are nodes with bodies: functions, loops, conditionals, try blocks, etc.
+        subtrees = self._extract_subtrees_from_function(func_node, MIN_NODES, MAX_NODES)
+        
+        for subtree in subtrees:
+            # Get line numbers
+            start_line = subtree.lineno if hasattr(subtree, 'lineno') else func_start_line
+            end_line = subtree.end_lineno if hasattr(subtree, 'end_lineno') and subtree.end_lineno else start_line
+            
+            # Calculate total lines
+            total_lines = end_line - start_line + 1
+            if total_lines < MIN_LINES or total_lines > MAX_LINES:
+                continue
+            
+            # Extract statements from the subtree body
+            if not hasattr(subtree, 'body') or not isinstance(subtree.body, list):
+                continue
+            
+            block_statements = [stmt for stmt in subtree.body if not self._is_docstring_or_comment(stmt, func_node)]
+            
+            if not block_statements:
+                continue
+            
+            # Skip if block contains only docstrings or comments
+            if all(self._is_docstring_or_comment(s, func_node) for s in block_statements):
+                continue
+            
+            # Skip if block is just sequences of helper function calls
+            if self._is_only_helper_calls(block_statements):
+                continue
+            
+            # Skip if block is mostly helper calls with minimal actual implementation
+            if self._is_mostly_helper_calls(block_statements):
+                continue
+            
+            # Skip if block is mostly assertions - test assertions are expected to be similar
+            if self._is_mostly_assertions(block_statements):
+                continue
+            
+            # Skip if block follows test pattern (helper calls + assertions) - that's legitimate test structure
+            if self._is_test_pattern(block_statements):
+                continue
+            
+            # Normalize block (remove variable names, keep structure)
+            normalized = self._normalize_block(block_statements)
+            if not normalized:
+                continue
+            
+            # Get preview text
+            preview = self._get_block_preview(block_statements)
+            
+            blocks.append({
+                'hash': hashlib.md5(normalized.encode()).hexdigest(),
+                'start_line': start_line,
+                'end_line': end_line,
+                'func_name': func_name,
+                'preview': preview,
+                'normalized': normalized,
+                'ast_nodes': block_statements  # Store AST nodes for comparison
+            })
+        
+        # Also extract sequences of statements from the function body itself
+        # This catches patterns that aren't wrapped in control structures
+        executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
+        
+        # Extract sequences of 5-10 consecutive statements (sliding window for non-control patterns)
+        for block_size in range(5, min(11, len(executable_body) + 1)):
+            for i in range(len(executable_body) - block_size + 1):
+                block_statements = executable_body[i:i+block_size]
+                
+                # Skip if this is already covered by a subtree
+                # (e.g., if all statements are part of a single if/for block)
+                if self._is_contained_in_subtree(block_statements, subtrees):
+                    continue
+                
+                # Apply same filters as subtrees
+                if all(self._is_docstring_or_comment(s, func_node) for s in block_statements):
+                    continue
+                if self._is_only_helper_calls(block_statements):
+                    continue
+                if self._is_mostly_helper_calls(block_statements):
+                    continue
+                if self._is_mostly_assertions(block_statements):
+                    continue
+                if self._is_test_pattern(block_statements):
+                    continue
+                
+                # Get line numbers
+                start_line = block_statements[0].lineno if hasattr(block_statements[0], 'lineno') else func_start_line
+                end_line = block_statements[-1].end_lineno if hasattr(block_statements[-1], 'end_lineno') else (
+                    block_statements[-1].lineno if hasattr(block_statements[-1], 'lineno') else start_line
+                )
+                
+                total_lines = end_line - start_line + 1
+                if total_lines < MIN_LINES or total_lines > MAX_LINES:
+                    continue
+                
+                # Normalize and add
+                normalized = self._normalize_block(block_statements)
+                if not normalized:
+                    continue
+                
+                preview = self._get_block_preview(block_statements)
+                
+                blocks.append({
+                    'hash': hashlib.md5(normalized.encode()).hexdigest(),
+                    'start_line': start_line,
+                    'end_line': end_line,
+                    'func_name': func_name,
+                    'preview': preview,
+                    'normalized': normalized,
+                    'ast_nodes': block_statements
+                })
+        
+        return blocks
+    
+    def _extract_subtrees_from_function(self, func_node: ast.FunctionDef, min_nodes: int, max_nodes: int) -> List[ast.AST]:
+        """Extract all meaningful AST subtrees from a function.
+        
+        Finds nodes with bodies: If, For, While, Try, With, AsyncFor, AsyncWith
+        These represent cohesive semantic units (loops, conditionals, exception handling).
+        """
+        subtrees = []
+        
+        # Control structures that represent semantic units
+        control_structures = (ast.If, ast.For, ast.While, ast.Try, ast.With, 
+                             ast.AsyncFor, ast.AsyncWith)
+        
+        def visit(node):
+            """Recursively visit nodes and collect meaningful subtrees."""
+            if isinstance(node, control_structures):
+                # Count nodes in this subtree
+                num_nodes = len(list(ast.walk(node)))
+                if min_nodes <= num_nodes <= max_nodes:
+                    subtrees.append(node)
+            
+            # Recursively visit children
+            for child in ast.iter_child_nodes(node):
+                visit(child)
+        
+        # Start visiting from function body
+        for stmt in func_node.body:
+            visit(stmt)
+        
+        return subtrees
+    
+    def _is_contained_in_subtree(self, block_statements: List[ast.stmt], subtrees: List[ast.AST]) -> bool:
+        """Check if a block of statements is entirely contained within a subtree."""
+        if not block_statements or not subtrees:
+            return False
+        
+        block_start = block_statements[0].lineno if hasattr(block_statements[0], 'lineno') else 0
+        block_end = block_statements[-1].end_lineno if hasattr(block_statements[-1], 'end_lineno') else block_start
+        
+        for subtree in subtrees:
+            subtree_start = subtree.lineno if hasattr(subtree, 'lineno') else 0
+            subtree_end = subtree.end_lineno if hasattr(subtree, 'end_lineno') else subtree_start
+            
+            # Check if block is entirely within subtree
+            if subtree_start <= block_start and block_end <= subtree_end:
+                return True
+        
+        return False
+    
+    def _get_statement_end_line(self, stmt: ast.stmt) -> int:
+        """Get the end line number of a statement, including its body."""
+        if hasattr(stmt, 'end_lineno') and stmt.end_lineno:
+            return stmt.end_lineno
+        
+        # For control structures, find the end of their body
+        if isinstance(stmt, ast.If):
+            # Check body and orelse
+            end_line = stmt.lineno
+            if stmt.body:
+                end_line = max(end_line, self._get_body_end_line(stmt.body))
+            if stmt.orelse:
+                end_line = max(end_line, self._get_body_end_line(stmt.orelse))
+            return end_line
+        elif isinstance(stmt, (ast.For, ast.While, ast.AsyncFor)):
+            end_line = stmt.lineno
+            if stmt.body:
+                end_line = max(end_line, self._get_body_end_line(stmt.body))
+            if stmt.orelse:
+                end_line = max(end_line, self._get_body_end_line(stmt.orelse))
+            return end_line
+        elif isinstance(stmt, ast.Try):
+            end_line = stmt.lineno
+            if stmt.body:
+                end_line = max(end_line, self._get_body_end_line(stmt.body))
+            if stmt.orelse:
+                end_line = max(end_line, self._get_body_end_line(stmt.orelse))
+            if stmt.finalbody:
+                end_line = max(end_line, self._get_body_end_line(stmt.finalbody))
+            for handler in stmt.handlers:
+                if handler.body:
+                    end_line = max(end_line, self._get_body_end_line(handler.body))
+            return end_line
+        elif isinstance(stmt, (ast.With, ast.AsyncWith)):
+            end_line = stmt.lineno
+            if stmt.body:
+                end_line = max(end_line, self._get_body_end_line(stmt.body))
+            return end_line
+        
+        # Default: use lineno if end_lineno not available
+        return stmt.lineno if hasattr(stmt, 'lineno') else 0
+    
+    def _get_body_end_line(self, body: List[ast.stmt]) -> int:
+        """Get the end line of a statement body."""
+        if not body:
+            return 0
+        end_line = 0
+        for stmt in body:
+            stmt_end = self._get_statement_end_line(stmt)
+            end_line = max(end_line, stmt_end)
+        return end_line
+    
+    def _is_docstring_or_comment(self, stmt: ast.stmt, func_node: ast.FunctionDef = None) -> bool:
+        """Check if statement is a docstring or comment.
+        
+        Docstrings in Python AST are represented as ast.Expr with ast.Constant containing
+        a string value. The string value itself doesn't include triple quotes - those are
+        just syntax. The most reliable way to detect a docstring is to check if it's the
+        first statement in the function body.
+        """
+        # Check if it's a string constant expression (potential docstring)
+        if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+            if isinstance(stmt.value.value, str):
+                # If we have the function node, check if this is the first statement (docstrings are always first)
+                if func_node and func_node.body and func_node.body[0] is stmt:
+                    return True
+                # Also check for common docstring patterns (Args:, Returns:, etc.)
+                value_str = stmt.value.value.strip()
+                if any(pattern in value_str for pattern in ['Args:', 'Returns:', 'Raises:', 'Yields:', 'Note:', 'Example:']):
+                    return True
+                # Check if it's a multi-line string (most docstrings are multi-line)
+                if '\n' in value_str:
+                    return True
+        if isinstance(stmt, ast.Pass):
+            return True
+        return False
+    
+    def _is_mostly_helper_calls(self, statements: List[ast.stmt]) -> bool:
+        """Check if block is mostly helper function calls (>= 60% helper calls).
+        
+        This allows some implementation code but flags blocks that are primarily
+        helper calls as not being duplication. Lowered threshold to 60% to catch
+        more cases where tests are using helpers appropriately.
+        """
+        if not statements:
+            return False
+        
+        helper_count = 0
+        total_count = 0
+        
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            total_count += 1
+            
+            # Check if statement is a helper call
+            is_helper = False
+            
+            if isinstance(stmt, ast.Assign):
+                if isinstance(stmt.value, ast.Call):
+                    func_name = self._get_function_name(stmt.value.func)
+                    if func_name:
+                        is_helper = any(func_name.startswith(pattern) for pattern in [
+                            'given_', 'when_', 'then_',
+                            'create_', 'build_', 'make_', 'generate_',
+                            'verify_', 'assert_', 'check_', 'ensure_',
+                            'setup_', 'bootstrap_', 'initialize_',
+                            'get_', 'load_', 'fetch_'
+                        ])
+            elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                func_name = self._get_function_name(stmt.value.func)
+                if func_name:
+                    is_helper = any(func_name.startswith(pattern) for pattern in [
+                        'given_', 'when_', 'then_',
+                        'create_', 'build_', 'make_', 'generate_',
+                        'verify_', 'assert_', 'check_', 'ensure_',
+                        'setup_', 'bootstrap_', 'initialize_',
+                        'get_', 'load_', 'fetch_'
+                    ])
+            elif isinstance(stmt, ast.Assert):
+                # Assertions are verification, not duplication
+                is_helper = True
+            
+            if is_helper:
+                helper_count += 1
+        
+        if total_count == 0:
+            return True  # All docstrings/comments
+        
+        # If >= 60% are helper calls, consider it mostly helpers
+        return (helper_count / total_count) >= 0.6
+    
+    def _is_only_helper_calls(self, statements: List[ast.stmt]) -> bool:
+        """Check if block contains only helper function calls (assignments from helper functions).
+        
+        Helper functions typically have names like:
+        - given_*, when_*, then_*
+        - create_*, build_*, make_*
+        - verify_*, assert_*, check_*
+        - setup_*, bootstrap_*
+        
+        If all statements are assignments from function calls with these patterns,
+        this is not duplication - it's the intended pattern of using helpers.
+        """
+        helper_patterns = [
+            'given_', 'when_', 'then_',
+            'create_', 'build_', 'make_', 'generate_',
+            'verify_', 'assert_', 'check_', 'ensure_',
+            'setup_', 'bootstrap_', 'initialize_',
+            'get_', 'load_', 'fetch_'
+        ]
+        
+        for stmt in statements:
+            # Check if statement is an assignment
+            if isinstance(stmt, ast.Assign):
+                # Check if right side is a function call
+                if isinstance(stmt.value, ast.Call):
+                    func_name = self._get_function_name(stmt.value.func)
+                    if func_name:
+                        # Check if function name matches helper patterns
+                        is_helper = any(func_name.startswith(pattern) for pattern in helper_patterns)
+                        if not is_helper:
+                            # Not a helper call - this is actual implementation
+                            return False
+                else:
+                    # Assignment but not from function call - could be duplication
+                    return False
+            elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                # Expression statement with function call (no assignment)
+                func_name = self._get_function_name(stmt.value.func)
+                if func_name:
+                    is_helper = any(func_name.startswith(pattern) for pattern in helper_patterns)
+                    if not is_helper:
+                        return False
+            elif isinstance(stmt, ast.Assert):
+                # Assertions are fine - they're verification, not duplication
+                continue
+            else:
+                # Other statement types - could be duplication
+                return False
+        
+        # All statements are helper calls - not duplication
+        return True
+    
+    def _get_function_name(self, func_node: ast.expr) -> Optional[str]:
+        """Extract function name from AST node."""
+        if isinstance(func_node, ast.Name):
+            return func_node.id
+        elif isinstance(func_node, ast.Attribute):
+            # Method call or module.function
+            return func_node.attr
+        return None
+    
+    def _is_helper_function(self, func_name: str) -> bool:
+        """Check if function name indicates it's a helper function."""
+        helper_patterns = [
+            'given_', 'when_', 'then_',
+            'create_', 'build_', 'make_', 'generate_',
+            'verify_', 'assert_', 'check_', 'ensure_',
+            'setup_', 'bootstrap_', 'initialize_',
+            'get_', 'load_', 'fetch_'
+        ]
+        return any(func_name.startswith(pattern) for pattern in helper_patterns)
+    
+    def _is_mostly_assertions(self, statements: List[ast.stmt]) -> bool:
+        """Check if block is mostly assertion statements (>= 60% assertions)."""
+        if not statements:
+            return False
+        
+        assertion_count = 0
+        total_count = 0
+        
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            total_count += 1
+            if isinstance(stmt, ast.Assert):
+                assertion_count += 1
+        
+        if total_count == 0:
+            return False
+        
+        return (assertion_count / total_count) >= 0.6
+    
+    def _is_test_pattern(self, statements: List[ast.stmt]) -> bool:
+        """Check if block follows test pattern (helper calls + assertions).
+        
+        Test patterns are: helper call, helper call, assertion(s)
+        This is legitimate test structure, not duplication.
+        """
+        if not statements:
+            return False
+        
+        # Count helper calls and assertions
+        helper_count = 0
+        assertion_count = 0
+        other_count = 0
+        
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            if isinstance(stmt, ast.Assert):
+                assertion_count += 1
+            elif isinstance(stmt, ast.Assign) and isinstance(stmt.value, ast.Call):
+                func_name = self._get_function_name(stmt.value.func)
+                if func_name and self._is_helper_function(func_name):
+                    helper_count += 1
+                else:
+                    other_count += 1
+            elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                func_name = self._get_function_name(stmt.value.func)
+                if func_name and self._is_helper_function(func_name):
+                    helper_count += 1
+                else:
+                    other_count += 1
+            else:
+                other_count += 1
+        
+        total = helper_count + assertion_count + other_count
+        if total == 0:
+            return False
+        
+        # If it's mostly helper calls + assertions with minimal other code, it's a test pattern
+        test_pattern_ratio = (helper_count + assertion_count) / total
+        return test_pattern_ratio >= 0.75 and other_count <= 1
+    
+    def _normalize_block(self, statements: List[ast.stmt]) -> Optional[str]:
+        """Normalize code block by removing variable names and keeping structure."""
+        try:
+            normalized_parts = []
+            for stmt in statements:
+                stmt_type = type(stmt).__name__
+                
+                # Skip docstrings and comments
+                if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+                    if isinstance(stmt.value.value, str) and stmt.value.value.strip().startswith('"""'):
+                        continue
+                
+                # Normalize assignment: var = value -> ASSIGN
+                if isinstance(stmt, ast.Assign):
+                    normalized_parts.append(f"ASSIGN({len(stmt.targets)}_targets)")
+                
+                # Normalize function call: func() -> CALL
+                elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                    normalized_parts.append("CALL")
+                
+                # Normalize assert: assert x -> ASSERT
+                elif isinstance(stmt, ast.Assert):
+                    normalized_parts.append("ASSERT")
+                
+                # Normalize for loop: for x in y -> FOR_LOOP
+                elif isinstance(stmt, ast.For):
+                    normalized_parts.append("FOR_LOOP")
+                
+                # Normalize with statement: with x -> WITH
+                elif isinstance(stmt, ast.With):
+                    normalized_parts.append("WITH")
+                
+                # Keep other statement types
+                else:
+                    normalized_parts.append(stmt_type)
+            
+            return "|".join(normalized_parts) if normalized_parts else None
+        except Exception:
+            return None
+    
+    def _get_block_preview(self, statements: List[ast.stmt]) -> str:
+        """Get preview text of code block, excluding docstrings."""
+        try:
+            if hasattr(ast, 'unparse'):
+                preview_lines = []
+                for stmt in statements:
+                    # Skip docstrings when generating preview
+                    if self._is_docstring_or_comment(stmt):
+                        continue
+                    preview_lines.append(ast.unparse(stmt))
+                return "\n".join(preview_lines)
+            else:
+                return str(statements)
+        except Exception:
+            return str(statements)
+    
+    def _compare_ast_blocks(self, block1: List[ast.stmt], block2: List[ast.stmt]) -> float:
+        """Compare two AST blocks for structural similarity.
+        
+        Returns similarity ratio between 0.0 and 1.0.
+        Uses AST structure comparison (ignoring variable names, values, etc.)
+        """
+        if len(block1) == 0 and len(block2) == 0:
+            return 1.0
+        if len(block1) == 0 or len(block2) == 0:
+            return 0.0
+        
+        if len(block1) != len(block2):
+            # Different lengths - use longest common subsequence approach
+            return self._compare_ast_structures(block1, block2)
+        
+        # Same length - compare node by node with weighted similarity
+        similarities = []
+        for node1, node2 in zip(block1, block2):
+            similarity = self._compare_ast_nodes_deep(node1, node2)
+            similarities.append(similarity)
+        
+        return sum(similarities) / len(similarities) if similarities else 0.0
+    
+    def _compare_ast_structures(self, block1: List[ast.stmt], block2: List[ast.stmt]) -> float:
+        """Compare AST structures when blocks have different lengths using LCS approach."""
+        if not block1 or not block2:
+            return 0.0
+        
+        # Build similarity matrix for all pairs
+        similarities = []
+        for node1 in block1:
+            best_match = 0.0
+            for node2 in block2:
+                similarity = self._compare_ast_nodes_deep(node1, node2)
+                best_match = max(best_match, similarity)
+            similarities.append(best_match)
+        
+        # Average similarity, weighted by block lengths
+        if similarities:
+            avg_similarity = sum(similarities) / len(similarities)
+            # Penalize length differences
+            length_ratio = min(len(block1), len(block2)) / max(len(block1), len(block2))
+            return avg_similarity * length_ratio
+        
+        return 0.0
+    
+    def _get_ast_signature(self, block: List[ast.stmt]) -> str:
+        """Get structural signature of AST block (ignoring names/values)."""
+        signatures = []
+        for node in block:
+            sig = self._get_node_signature(node)
+            signatures.append(sig)
+        return "|".join(signatures)
+    
+    def _get_node_signature(self, node: ast.AST) -> str:
+        """Get structural signature of a single AST node."""
+        node_type = type(node).__name__
+        
+        # Get structural characteristics
+        if isinstance(node, ast.Assign):
+            return f"ASSIGN({len(node.targets)}_targets)"
+        elif isinstance(node, ast.AugAssign):
+            return f"AUGASSIGN({type(node.op).__name__})"
+        elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            return "CALL"
+        elif isinstance(node, ast.Assert):
+            return "ASSERT"
+        elif isinstance(node, ast.Return):
+            return "RETURN"
+        elif isinstance(node, ast.If):
+            return "IF"
+        elif isinstance(node, ast.For):
+            return "FOR"
+        elif isinstance(node, ast.While):
+            return "WHILE"
+        elif isinstance(node, ast.With):
+            return "WITH"
+        elif isinstance(node, ast.Try):
+            return "TRY"
+        elif isinstance(node, ast.Raise):
+            return "RAISE"
+        else:
+            return node_type
+    
+    def _compare_ast_nodes_deep(self, node1: ast.AST, node2: ast.AST) -> float:
+        """Compare two AST nodes for deep structural similarity.
+        
+        Returns similarity ratio 0.0-1.0 based on structural characteristics,
+        ignoring variable names and literal values.
+        """
+        # Check if same type
+        if type(node1) != type(node2):
+            return 0.0
+        
+        # Compare based on node type
+        if isinstance(node1, ast.Assign):
+            return self._compare_assign_nodes(node1, node2)
+        elif isinstance(node1, ast.AugAssign):
+            return self._compare_augassign_nodes(node1, node2)
+        elif isinstance(node1, ast.Expr) and isinstance(node1.value, ast.Call):
+            # Both are Expr nodes with Call values
+            if isinstance(node2, ast.Expr) and isinstance(node2.value, ast.Call):
+                return self._compare_call_nodes(node1.value, node2.value)
+            return 0.0
+        elif isinstance(node1, ast.Assert):
+            return self._compare_assert_nodes(node1, node2)
+        elif isinstance(node1, ast.Return):
+            return self._compare_return_nodes(node1, node2)
+        elif isinstance(node1, ast.If):
+            return self._compare_if_nodes(node1, node2)
+        elif isinstance(node1, ast.For):
+            return self._compare_for_nodes(node1, node2)
+        elif isinstance(node1, ast.While):
+            return self._compare_while_nodes(node1, node2)
+        elif isinstance(node1, ast.With):
+            return self._compare_with_nodes(node1, node2)
+        elif isinstance(node1, ast.Try):
+            return self._compare_try_nodes(node1, node2)
+        elif isinstance(node1, ast.Raise):
+            return self._compare_raise_nodes(node1, node2)
+        else:
+            # Generic comparison - same type means high similarity
+            return 0.8  # Not perfect match but structurally similar
+    
+    def _compare_assign_nodes(self, node1: ast.Assign, node2: ast.Assign) -> float:
+        """Compare assignment nodes structurally."""
+        # Compare number of targets
+        if len(node1.targets) != len(node2.targets):
+            return 0.5  # Partial match
+        
+        # Compare value structure (ignore actual values)
+        value_sim = self._compare_expr_structure(node1.value, node2.value)
+        return 0.7 + 0.3 * value_sim  # Base similarity + value structure bonus
+    
+    def _compare_augassign_nodes(self, node1: ast.AugAssign, node2: ast.AugAssign) -> float:
+        """Compare augmented assignment nodes."""
+        if type(node1.op) != type(node2.op):
+            return 0.5
+        return 0.9  # Same operation type = very similar
+    
+    def _compare_call_nodes(self, node1: ast.Call, node2: ast.Call) -> float:
+        """Compare function call nodes structurally."""
+        # Compare argument counts
+        arg_count1 = len(node1.args) + len(node1.keywords)
+        arg_count2 = len(node2.args) + len(node2.keywords)
+        
+        if arg_count1 != arg_count2:
+            return 0.6  # Partial match - different arg counts
+        
+        # Compare function structure (ignore function name)
+        func_sim = self._compare_expr_structure(node1.func, node2.func)
+        
+        # Compare argument structures
+        arg_sims = []
+        for a1, a2 in zip(node1.args, node2.args):
+            arg_sims.append(self._compare_expr_structure(a1, a2))
+        
+        avg_arg_sim = sum(arg_sims) / len(arg_sims) if arg_sims else 1.0
+        
+        return 0.5 + 0.3 * func_sim + 0.2 * avg_arg_sim
+    
+    def _compare_assert_nodes(self, node1: ast.Assert, node2: ast.Assert) -> float:
+        """Compare assert nodes."""
+        test_sim = self._compare_expr_structure(node1.test, node2.test)
+        return 0.8 + 0.2 * test_sim
+    
+    def _compare_return_nodes(self, node1: ast.Return, node2: ast.Return) -> float:
+        """Compare return nodes."""
+        if node1.value is None and node2.value is None:
+            return 1.0
+        if node1.value is None or node2.value is None:
+            return 0.5
+        return 0.7 + 0.3 * self._compare_expr_structure(node1.value, node2.value)
+    
+    def _compare_if_nodes(self, node1: ast.If, node2: ast.If) -> float:
+        """Compare if statement nodes."""
+        test_sim = self._compare_expr_structure(node1.test, node2.test)
+        body_sim = self._compare_ast_structures(node1.body, node2.body)
+        orelse_sim = self._compare_ast_structures(node1.orelse, node2.orelse)
+        return 0.3 * test_sim + 0.5 * body_sim + 0.2 * orelse_sim
+    
+    def _compare_for_nodes(self, node1: ast.For, node2: ast.For) -> float:
+        """Compare for loop nodes."""
+        body_sim = self._compare_ast_structures(node1.body, node2.body)
+        orelse_sim = self._compare_ast_structures(node1.orelse, node2.orelse)
+        return 0.8 * body_sim + 0.2 * orelse_sim
+    
+    def _compare_while_nodes(self, node1: ast.While, node2: ast.While) -> float:
+        """Compare while loop nodes."""
+        test_sim = self._compare_expr_structure(node1.test, node2.test)
+        body_sim = self._compare_ast_structures(node1.body, node2.body)
+        return 0.3 * test_sim + 0.7 * body_sim
+    
+    def _compare_with_nodes(self, node1: ast.With, node2: ast.With) -> float:
+        """Compare with statement nodes."""
+        if len(node1.items) != len(node2.items):
+            return 0.5
+        body_sim = self._compare_ast_structures(node1.body, node2.body)
+        return 0.7 + 0.3 * body_sim
+    
+    def _compare_try_nodes(self, node1: ast.Try, node2: ast.Try) -> float:
+        """Compare try statement nodes."""
+        body_sim = self._compare_ast_structures(node1.body, node2.body)
+        handlers_sim = 1.0 if len(node1.handlers) == len(node2.handlers) else 0.5
+        orelse_sim = self._compare_ast_structures(node1.orelse, node2.orelse)
+        finalbody_sim = self._compare_ast_structures(node1.finalbody, node2.finalbody)
+        return 0.4 * body_sim + 0.2 * handlers_sim + 0.2 * orelse_sim + 0.2 * finalbody_sim
+    
+    def _compare_raise_nodes(self, node1: ast.Raise, node2: ast.Raise) -> float:
+        """Compare raise nodes."""
+        if node1.exc is None and node2.exc is None:
+            return 1.0
+        if node1.exc is None or node2.exc is None:
+            return 0.5
+        return 0.7 + 0.3 * self._compare_expr_structure(node1.exc, node2.exc)
+    
+    def _compare_expr_structure(self, expr1: ast.expr, expr2: ast.expr) -> float:
+        """Compare expression structures (ignoring names/values)."""
+        if type(expr1) != type(expr2):
+            return 0.0
+        
+        if isinstance(expr1, ast.Call):
+            return self._compare_call_nodes(expr1, expr2)
+        elif isinstance(expr1, ast.Attribute):
+            # Compare attribute access structure (ignore attribute name)
+            return 0.8 + 0.2 * self._compare_expr_structure(expr1.value, expr2.value)
+        elif isinstance(expr1, ast.Name):
+            # Names are different but structure is same
+            return 0.9
+        elif isinstance(expr1, ast.Constant):
+            # Constants - compare types only
+            if type(expr1.value) == type(expr2.value):
+                return 0.8
+            return 0.5
+        elif isinstance(expr1, ast.BinOp):
+            if type(expr1.op) == type(expr2.op):
+                left_sim = self._compare_expr_structure(expr1.left, expr2.left)
+                right_sim = self._compare_expr_structure(expr1.right, expr2.right)
+                return 0.5 + 0.25 * left_sim + 0.25 * right_sim
+            return 0.3
+        elif isinstance(expr1, ast.UnaryOp):
+            if type(expr1.op) == type(expr2.op):
+                return 0.7 + 0.3 * self._compare_expr_structure(expr1.operand, expr2.operand)
+            return 0.3
+        elif isinstance(expr1, ast.Compare):
+            if len(expr1.ops) == len(expr2.ops) and len(expr1.comparators) == len(expr2.comparators):
+                left_sim = self._compare_expr_structure(expr1.left, expr2.left)
+                return 0.6 + 0.4 * left_sim
+            return 0.4
+        else:
+            # Generic expression - same type means some similarity
+            return 0.7
 

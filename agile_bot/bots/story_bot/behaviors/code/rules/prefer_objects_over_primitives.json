@@ -91,3 +91,6 @@
   "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.primitive_vs_object_scanner.PrimitiveVsObjectScanner"
 }
 
+
+
+
