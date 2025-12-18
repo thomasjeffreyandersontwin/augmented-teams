@@ -10,9 +10,13 @@ from .complexity_metrics import ComplexityMetrics
 
 
 class SingleResponsibilityScanner(CodeScanner):
-    """Validates functions/classes follow single responsibility principle.
+    """Validates functions follow single responsibility principle.
     
-    Scans all files (test and production code) using AST-based responsibility detection.
+    Note: Class single responsibility is now handled by ClassSizeScanner
+    (merged into "keep classes small with single responsibility" rule).
+    
+    For functions, checks name patterns like "validate_and_save" that indicate
+    multiple responsibilities in one function.
     """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -30,10 +34,7 @@ class SingleResponsibilityScanner(CodeScanner):
                     violation = self._check_function_sr(node, file_path, rule_obj)
                     if violation:
                         violations.append(violation)
-                elif isinstance(node, ast.ClassDef):
-                    violation = self._check_class_sr(node, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+                # Classes are now handled by ClassSizeScanner (LCOM + size checks)
         
         except (SyntaxError, UnicodeDecodeError):
             # Skip files with syntax errors
@@ -59,37 +60,20 @@ class SingleResponsibilityScanner(CodeScanner):
         if name_violation:
             violations.append(name_violation)
         
-        # 2. AST-based responsibility detection
-        responsibilities = ComplexityMetrics.detect_responsibilities(func_node)
-        if len(responsibilities) > 2:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
-                violation_message=(
-                    f'Function "{func_node.name}" has multiple responsibilities detected: {", ".join(responsibilities)}. '
-                    f'Split into separate functions, each with a single responsibility.'
-                ),
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict())
-        
-        # 3. Complexity metrics as indicators
-        cyclomatic = ComplexityMetrics.cyclomatic_complexity(func_node)
-        cognitive = ComplexityMetrics.cognitive_complexity(func_node)
-        
-        if cyclomatic > 10 or cognitive > 15:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
-                violation_message=(
-                    f'Function "{func_node.name}" has high complexity (cyclomatic={cyclomatic}, cognitive={cognitive}) - '
-                    f'high complexity often indicates multiple responsibilities. Consider splitting.'
-                ),
-                location=str(file_path),
-                line_number=line_number,
-                severity='info'
-            ).to_dict())
+        # 2. AST-based responsibility detection - DISABLED
+        # The detect_responsibilities heuristic was too aggressive - it flagged 
+        # implementation details (I/O, path math, assignments) as separate "responsibilities"
+        # when they're really just steps in accomplishing ONE responsibility.
+        # Example: A template class that loads from file was flagged for:
+        #   - I/O (read_json_file)
+        #   - Computation (path / filename)  
+        #   - Transformation (storing result)
+        # But these are all ONE responsibility: "manage template".
+        # 
+        # For real SRP violations, use:
+        # - LCOM metric (low cohesion = methods don't share attributes)
+        # - Name pattern detection ("validate_and_save" = two responsibilities)
+        # - Manual review
         
         # Return first violation (most specific)
         return violations[0] if violations else None
@@ -154,8 +138,9 @@ class SingleResponsibilityScanner(CodeScanner):
             ).to_dict())
         
         # 2. LCOM (Lack of Cohesion of Methods) - measures how related methods are
+        # Threshold raised to 0.8 because LCOM now excludes simple getters and follows delegation
         lcom = ComplexityMetrics.calculate_lcom(class_node)
-        if lcom > 0.7:  # Low cohesion threshold
+        if lcom > 0.8:  # Low cohesion threshold
             line_number = class_node.lineno if hasattr(class_node, 'lineno') else None
             violations.append(Violation(
                 rule=rule_obj,
@@ -169,21 +154,35 @@ class SingleResponsibilityScanner(CodeScanner):
                 severity='warning'
             ).to_dict())
         
-        # 3. Responsibility detection
-        responsibilities = ComplexityMetrics.detect_class_responsibilities(class_node)
-        if len(responsibilities) > 3:
-            line_number = class_node.lineno if hasattr(class_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
-                violation_message=(
-                    f'Class "{class_node.name}" has multiple responsibilities detected: {", ".join(responsibilities)}. '
-                    f'Split into separate classes, each with a single responsibility.'
-                ),
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict())
+        # 3. Responsibility detection - DISABLED
+        # Same issue as function detection - flagging implementation details
+        # (I/O, path math, assignments) as separate "responsibilities" when
+        # they're really just steps in ONE responsibility.
+        # Keep LCOM (above) which actually measures method cohesion.
         
         # Return first violation (most specific)
         return violations[0] if violations else None
+    
+    def _format_responsibility_examples(self, responsibilities: dict) -> str:
+        """Format responsibility examples as readable text with code samples."""
+        lines = []
+        for resp_type, examples in sorted(responsibilities.items()):
+            if examples:
+                first_example = examples[0]
+                line_num = first_example.get('line', '?')
+                code = first_example.get('code', '')
+                lines.append(f"**{resp_type}** (line {line_num}):\n```python\n{code}\n```")
+        return '\n\n'.join(lines)
+    
+    def _format_class_responsibility_examples(self, responsibilities: dict) -> str:
+        """Format class responsibility examples showing method and code sample."""
+        lines = []
+        for resp_type, examples in sorted(responsibilities.items()):
+            if examples:
+                first_example = examples[0]
+                method_name = first_example.get('method', '?')
+                line_num = first_example.get('line', '?')
+                code = first_example.get('code', '')
+                lines.append(f"**{resp_type}** in `{method_name}()` (line {line_num}):\n```python\n{code}\n```")
+        return '\n\n'.join(lines)
 

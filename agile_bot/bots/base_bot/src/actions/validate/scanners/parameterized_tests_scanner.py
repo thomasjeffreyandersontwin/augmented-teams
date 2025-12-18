@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
-from agile_bot.bots.base_bot.src.scanners.scanner import Scanner
-from agile_bot.bots.base_bot.src.scanners.violation import Violation
-from agile_bot.bots.base_bot.src.scanners.story_map import StoryMap, StoryNode, Story
+from .scanner import Scanner
+from .violation import Violation
+from .story_map import StoryMap, StoryNode, Story
 
 
 class ParameterizedTestsScanner(Scanner):
@@ -11,7 +11,8 @@ class ParameterizedTestsScanner(Scanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for ParameterizedTestsScanner")

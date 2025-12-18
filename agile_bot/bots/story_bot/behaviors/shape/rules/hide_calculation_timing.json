@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Domain concepts must hide calculation timing. Properties hide when calculations occur—they may be computed on-demand, cached, pre-computed, or loaded from storage. The caller shouldn't know or care when the value was calculated.",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.calculation_timing_scanner.CalculationTimingScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.calculation_timing_scanner.CalculationTimingScanner",
   "examples": [
     {
       "do": {

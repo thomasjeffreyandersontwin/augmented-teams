@@ -500,6 +500,11 @@ class DuplicationScanner(CodeScanner):
             if self._is_test_pattern(block_statements):
                 continue
             
+            # Skip blocks with fewer than 3 actual code statements (one-liners and trivial blocks)
+            actual_code_count = self._count_actual_code_statements(block_statements)
+            if actual_code_count < 3:
+                continue
+            
             # Normalize block (remove variable names, keep structure)
             normalized = self._normalize_block(block_statements)
             if not normalized:
@@ -542,6 +547,11 @@ class DuplicationScanner(CodeScanner):
                 if self._is_mostly_assertions(block_statements):
                     continue
                 if self._is_test_pattern(block_statements):
+                    continue
+                
+                # Skip blocks with fewer than 3 actual code statements (one-liners and trivial blocks)
+                actual_code_count = self._count_actual_code_statements(block_statements)
+                if actual_code_count < 3:
                     continue
                 
                 # Get line numbers
@@ -843,6 +853,54 @@ class DuplicationScanner(CodeScanner):
             'get_', 'load_', 'fetch_'
         ]
         return any(func_name.startswith(pattern) for pattern in helper_patterns)
+    
+    def _count_actual_code_statements(self, statements: List[ast.stmt]) -> int:
+        """Count actual executable code statements, excluding control structure overhead.
+        
+        This helps filter out trivial blocks where only 1-2 lines are actual logic
+        wrapped in control structures (if/for/while). We count:
+        - Simple statements: assignments, expressions, returns, raises
+        - Nested statements within if/for/while recursively
+        
+        We DON'T count:
+        - The control structure itself (if/for/while headers)
+        - Docstrings and comments
+        - Pass statements
+        """
+        count = 0
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            # Skip pass statements
+            if isinstance(stmt, ast.Pass):
+                continue
+            
+            # Count simple executable statements
+            if isinstance(stmt, (ast.Assign, ast.AnnAssign, ast.AugAssign, 
+                                 ast.Expr, ast.Return, ast.Raise, ast.Assert,
+                                 ast.Delete, ast.Import, ast.ImportFrom,
+                                 ast.Global, ast.Nonlocal)):
+                count += 1
+            
+            # For control structures, count their body statements recursively
+            elif isinstance(stmt, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
+                if hasattr(stmt, 'body'):
+                    count += self._count_actual_code_statements(stmt.body)
+                if hasattr(stmt, 'orelse') and stmt.orelse:
+                    count += self._count_actual_code_statements(stmt.orelse)
+                if hasattr(stmt, 'handlers'):  # Try blocks
+                    for handler in stmt.handlers:
+                        count += self._count_actual_code_statements(handler.body)
+                if hasattr(stmt, 'finalbody') and stmt.finalbody:
+                    count += self._count_actual_code_statements(stmt.finalbody)
+            
+            # For async variants
+            elif isinstance(stmt, (ast.AsyncFor, ast.AsyncWith)):
+                if hasattr(stmt, 'body'):
+                    count += self._count_actual_code_statements(stmt.body)
+        
+        return count
     
     def _is_mostly_assertions(self, statements: List[ast.stmt]) -> bool:
         """Check if block is mostly assertion statements (>= 60% assertions)."""
@@ -1315,12 +1373,45 @@ class DuplicationScanner(CodeScanner):
         if not all_files:
             return violations
         
-        _safe_print(f"Scanning {len(all_files)} files for cross-file duplication...")
+        _safe_print(f"\n[CROSS-FILE] Scanning {len(all_files)} files for cross-file duplication...")
+        import sys
+        
+        # Find status file path from the first file's directory structure
+        status_file_path = None
+        if all_files:
+            # Look for docs/stories directory relative to file paths
+            first_file = all_files[0]
+            # Walk up to find a docs/stories directory
+            current = first_file.parent
+            for _ in range(10):  # Max 10 levels up
+                docs_stories = current / 'docs' / 'stories'
+                if docs_stories.exists():
+                    status_file_path = docs_stories / 'code-validation-status.md'
+                    break
+                if current.parent == current:
+                    break
+                current = current.parent
+        
+        def write_status(msg: str):
+            """Write progress to status file."""
+            if status_file_path:
+                try:
+                    with open(status_file_path, 'a', encoding='utf-8') as f:
+                        f.write(msg + '\n')
+                except Exception:
+                    pass  # Don't fail on status write errors
+        
+        write_status(f"\n## Cross-File Duplication Analysis")
+        write_status(f"Scanning {len(all_files)} files...")
         
         # Extract blocks from all files
         all_blocks = []  # List of (file_path, func_name, block_info) tuples
         
-        for file_path in all_files:
+        for file_idx, file_path in enumerate(all_files):
+            # Progress every 10 files
+            if file_idx % 10 == 0:
+                _safe_print(f"[CROSS-FILE] Extracting blocks: {file_idx}/{len(all_files)} files - {file_path.name}")
+                sys.stdout.flush()
             if not file_path.exists():
                 continue
             
@@ -1359,14 +1450,51 @@ class DuplicationScanner(CodeScanner):
                 _safe_print(f"Error processing {file_path} for cross-file scan: {e}")
                 continue
         
-        _safe_print(f"Extracted {len(all_blocks)} code blocks from {len(all_files)} files")
+        _safe_print(f"\n[CROSS-FILE] Extracted {len(all_blocks)} code blocks from {len(all_files)} files")
+        write_status(f"Extracted {len(all_blocks)} code blocks")
         
         # Compare blocks across files
         SIMILARITY_THRESHOLD = 0.90
         compared_pairs = set()
+        total_comparisons = (len(all_blocks) * (len(all_blocks) - 1)) // 2
+        comparison_count = 0
+        last_progress = 0
+        
+        _safe_print(f"[CROSS-FILE] Starting {total_comparisons} pairwise comparisons...")
+        write_status(f"Starting {total_comparisons} pairwise comparisons...")
+        
+        start_time = datetime.now()
+        last_report_time = start_time
+        REPORT_INTERVAL_SECONDS = 10  # Report at least every 10 seconds
+        REPORT_INTERVAL_COMPARISONS = 50000  # Or every 50K comparisons
+        last_comparison_report = 0
         
         for i, block1 in enumerate(all_blocks):
             for j, block2 in enumerate(all_blocks[i+1:], start=i+1):
+                comparison_count += 1
+                
+                # Report progress: every 5%, every 50K comparisons, or every 10 seconds
+                now = datetime.now()
+                elapsed_since_report = (now - last_report_time).total_seconds()
+                progress_pct = (comparison_count * 100) // total_comparisons if total_comparisons > 0 else 0
+                
+                should_report = (
+                    progress_pct >= last_progress + 5 or  # Every 5%
+                    comparison_count >= last_comparison_report + REPORT_INTERVAL_COMPARISONS or  # Every 50K comparisons
+                    elapsed_since_report >= REPORT_INTERVAL_SECONDS  # Every 10 seconds
+                )
+                
+                if should_report:
+                    elapsed_total = (now - start_time).total_seconds()
+                    rate = comparison_count / max(1, elapsed_total)
+                    remaining = total_comparisons - comparison_count
+                    eta_seconds = int(remaining / max(1, rate))
+                    progress_msg = f"Comparing: {progress_pct}% ({comparison_count:,}/{total_comparisons:,}) - {len(violations)} violations - ETA: {eta_seconds}s"
+                    _safe_print(f"[CROSS-FILE] {progress_msg}")
+                    write_status(progress_msg)
+                    last_progress = progress_pct
+                    last_report_time = now
+                    last_comparison_report = comparison_count
                 # Skip if same file (already checked in scan_code_file)
                 if block1['file_path'] == block2['file_path']:
                     continue
@@ -1406,6 +1534,9 @@ class DuplicationScanner(CodeScanner):
                     ).to_dict()
                     violations.append(violation)
         
-        _safe_print(f"Found {len(violations)} cross-file duplication violations")
+        complete_msg = f"Complete: {comparison_count} comparisons, {len(violations)} violations"
+        _safe_print(f"\n[CROSS-FILE] {complete_msg}")
+        write_status(complete_msg)
+        write_status("")
         return violations
 

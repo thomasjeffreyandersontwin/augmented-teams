@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story, StoryGroup
-from agile_bot.bots.base_bot.src.scanners.violation import Violation
+from .violation import Violation
 
 
 class SpineOptionalScanner(StoryScanner):
@@ -11,7 +11,8 @@ class SpineOptionalScanner(StoryScanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for SpineOptionalScanner")

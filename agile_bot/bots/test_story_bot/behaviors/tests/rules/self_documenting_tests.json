@@ -243,5 +243,5 @@
       "What exceptions are raised (pytest.raises shows this)"
     ]
   },
-  "scanner": "agile_bot.bots.base_bot.src.scanners.useless_comments_scanner.UselessCommentsScanner"
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.useless_comments_scanner.UselessCommentsScanner"
 }

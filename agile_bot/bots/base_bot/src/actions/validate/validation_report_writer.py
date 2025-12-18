@@ -1,11 +1,170 @@
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 import logging
 import re
+import sys
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 
 logger = logging.getLogger(__name__)
+
+
+class StreamingValidationReportWriter:
+    """Writes a simple status file incrementally as violations are found.
+    
+    This writer provides real-time feedback during scanning by:
+    1. Writing to a simple status file (separate from the main report)
+    2. Printing progress to console
+    
+    The main formatted report is written by ValidationReportWriter at the end.
+    """
+    
+    def __init__(self, behavior_name: str, bot_paths: BotPaths):
+        self.behavior_name = behavior_name
+        self.bot_paths = bot_paths
+        self.workspace_directory = bot_paths.workspace_directory
+        self._status_file = None
+        self._files_scanned: Dict[str, List[Path]] = {}
+        self._scanner_results: List[Dict[str, Any]] = []
+        self._total_violations = 0
+        self._executed_count = 0
+        self._current_rule_name = ""
+        self._total_files = 0
+        self._files_processed = 0
+        self._status_path = ""
+    
+    def start(self, files: Dict[str, List[Path]]) -> None:
+        """Start the status file - write minimal header."""
+        self._files_scanned = files
+        status_path = self._get_status_path()
+        
+        # Ensure directory exists
+        Path(status_path).parent.mkdir(parents=True, exist_ok=True)
+        
+        # Open status file for writing
+        self._status_file = open(status_path, 'w', encoding='utf-8')
+        
+        test_files = files.get('test', [])
+        src_files = files.get('src', [])
+        total_files = len(src_files) + len(test_files)
+        
+        # Simple header
+        self._write_line(f"# Validation Status - {self.behavior_name}")
+        self._write_line(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        self._write_line(f"Files: {total_files}")
+        self._write_line("")
+        self._flush()
+        
+        # Console output
+        print(f"\n[VALIDATION] Scanning {total_files} files...", file=sys.stderr)
+        sys.stderr.flush()
+    
+    def on_scanner_start(self, rule_file: str, scanner_path: str) -> None:
+        """Called when a scanner starts execution."""
+        self._current_rule_name = Path(rule_file).stem if rule_file else 'unknown'
+        print(f"[SCANNING] {self._current_rule_name}", file=sys.stderr, end="", flush=True)
+    
+    def on_file_scanned(self, file_path: 'Path', violations: List[Dict[str, Any]], rule_obj: Any) -> None:
+        """Called after each file is scanned - write violations immediately."""
+        # Print dot for progress
+        print(".", file=sys.stderr, end="", flush=True)
+        
+        if not violations:
+            return
+        
+        self._total_violations += len(violations)
+        file_name = file_path.name if file_path else 'unknown'
+        rule_name = rule_obj.name if rule_obj else self._current_rule_name
+        
+        # Write rule header if this is first violation for this rule in this file
+        self._write_line(f"## {rule_name}")
+        self._write_line(f"**{file_name}** - {len(violations)} violation(s)")
+        self._write_line("")
+        
+        for violation in violations:
+            message = violation.get('violation_message', 'No message')
+            severity = violation.get('severity', 'error')
+            line_number = violation.get('line_number')
+            
+            severity_icon = '[X]' if severity == 'error' else '[!]' if severity == 'warning' else '[i]'
+            line_info = f" (line {line_number})" if line_number else ""
+            
+            self._write_line(f"{severity_icon} {severity.upper()}{line_info}")
+            self._write_line(f"{message}")
+            self._write_line("")
+        
+        self._write_line("---")
+        self._write_line("")
+        self._flush()
+    
+    def on_scanner_complete(self, rule_result: Dict[str, Any]) -> None:
+        """Called when a scanner completes - print console summary."""
+        self._scanner_results.append(rule_result)
+        
+        scanner_status = rule_result.get('scanner_status', {})
+        status = scanner_status.get('status', 'UNKNOWN')
+        
+        if status == 'EXECUTED':
+            self._executed_count += 1
+            violations_count = scanner_status.get('violations_found', 0)
+            
+            # Check severity for console output
+            scanner_results = rule_result.get('scanner_results', {})
+            has_errors = any(
+                v.get('severity') == 'error' 
+                for v in scanner_results.get('file_by_file', {}).get('violations', [])
+            ) or any(
+                v.get('severity') == 'error'
+                for v in scanner_results.get('cross_file', {}).get('violations', [])
+            )
+            
+            if violations_count > 0:
+                if has_errors:
+                    print(f" [X] {violations_count}", file=sys.stderr, flush=True)
+                else:
+                    print(f" [!] {violations_count}", file=sys.stderr, flush=True)
+            else:
+                print(f" [OK]", file=sys.stderr, flush=True)
+                
+        elif status == 'LOAD_FAILED':
+            print(f" [LOAD FAILED]", file=sys.stderr, flush=True)
+        elif status == 'EXECUTION_FAILED':
+            print(f" [EXEC FAILED]", file=sys.stderr, flush=True)
+        # NO_SCANNER rules - silent
+    
+    def finish(self, instructions: Dict[str, Any], validation_rules: List[Dict[str, Any]]) -> None:
+        """Finish the status file."""
+        if not self._status_file:
+            return
+        
+        # Write completion line
+        self._write_line(f"Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        self._write_line(f"Total violations: {self._total_violations}")
+        self._write_line(f"Scanners executed: {self._executed_count}")
+        
+        self._status_file.close()
+        self._status_file = None
+        
+        # Console summary
+        print(f"\n[COMPLETE] {self._total_violations} violations, {self._executed_count} scanners", file=sys.stderr)
+        sys.stderr.flush()
+    
+    def _write_line(self, line: str) -> None:
+        """Write a line to the status file."""
+        if self._status_file:
+            self._status_file.write(line + '\n')
+    
+    def _flush(self) -> None:
+        """Flush the status file to disk."""
+        if self._status_file:
+            self._status_file.flush()
+    
+    def _get_status_path(self) -> str:
+        """Get the status file path (separate from main report)."""
+        docs_path = self.bot_paths.documentation_path
+        docs_dir = self.workspace_directory / docs_path
+        status_file = docs_dir / f'{self.behavior_name}-validation-status.md'
+        return str(status_file)
 
 
 class ValidationReportWriter:

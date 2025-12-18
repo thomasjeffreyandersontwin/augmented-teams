@@ -24,7 +24,8 @@ class VerticalSliceScanner(StoryScanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan increments for vertical slice violations."""
         violations = []

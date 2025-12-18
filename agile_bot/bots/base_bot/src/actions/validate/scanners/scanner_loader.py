@@ -24,35 +24,20 @@ class ScannerLoader:
         try:
             module_path, class_name = scanner_module_path.rsplit('.', 1)
             
-            paths_to_try = [module_path]
-            
             # Extract scanner name from class name (handle camelCase)
             # Convert VerbNounScanner -> verb_noun
             import re
             scanner_name = re.sub(r'(?<!^)(?=[A-Z])', '_', class_name).lower().replace('_scanner', '').replace('scanner', '')
             
-            # Also try extracting from module path if it's in old format
-            if 'src.scanners.' in module_path:
-                # Extract scanner name from old path format: agile_bot.bots.base_bot.src.scanners.verb_noun_scanner
-                path_parts = module_path.split('.')
-                if 'scanners' in path_parts:
-                    scanner_idx = path_parts.index('scanners')
-                    if scanner_idx + 1 < len(path_parts):
-                        scanner_name_from_path = path_parts[scanner_idx + 1].replace('_scanner', '')
-                        if scanner_name_from_path:
-                            scanner_name = scanner_name_from_path
+            # Build paths to try - only validate.scanners location
+            paths_to_try = [
+                module_path,  # Exact path from config
+                f'agile_bot.bots.base_bot.src.actions.validate.scanners.{scanner_name}_scanner'
+            ]
             
-            # Try validate.scanners path format first
-            base_bot_path = f'agile_bot.bots.base_bot.src.actions.validate.scanners.{scanner_name}_scanner'
-            paths_to_try.append(base_bot_path)
-            
-            # Try old path format for backward compatibility
-            old_base_bot_path = f'agile_bot.bots.base_bot.src.scanners.{scanner_name}_scanner'
-            paths_to_try.append(old_base_bot_path)
-            
+            # Add bot-specific path if not base_bot
             if self.bot_name and self.bot_name != 'base_bot':
-                bot_path = f'agile_bot.bots.{self.bot_name}.src.actions.validate.scanners.{scanner_name}_scanner'
-                paths_to_try.append(bot_path)
+                paths_to_try.append(f'agile_bot.bots.{self.bot_name}.src.actions.validate.scanners.{scanner_name}_scanner')
             
             for path in paths_to_try:
                 try:

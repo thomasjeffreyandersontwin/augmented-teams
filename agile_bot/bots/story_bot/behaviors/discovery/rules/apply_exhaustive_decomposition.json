@@ -1,6 +1,6 @@
 {
   "description": "Apply exhaustive logic decomposition. Enumerate ALL permutations (prerequisite types, validation rules, calculation paths).",
-  "scanner": "agile_bot.bots.base_bot.src.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner",
   "examples": [
     {
       "do": {

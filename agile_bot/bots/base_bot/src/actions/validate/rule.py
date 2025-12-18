@@ -109,7 +109,15 @@ class Rule:
             issubclass(self._scanner, CodeScanner)
         )
     
-    def scan(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None) -> Dict[str, Any]:
+    def scan(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None,
+             on_file_scanned: Optional[Any] = None) -> Dict[str, Any]:
+        """Scan files against this rule.
+        
+        Args:
+            knowledge_graph: The knowledge graph for context
+            files: Dict of file lists keyed by type ('src', 'test')
+            on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
+        """
         files = files or {}
         test_files = files.get('test', [])
         code_files = files.get('src', [])
@@ -132,7 +140,8 @@ class Rule:
                 knowledge_graph,
                 rule_obj=self,
                 test_files=test_files,
-                code_files=code_files
+                code_files=code_files,
+                on_file_scanned=on_file_scanned
             )
             
             if violations_file_by_file is not None:

@@ -169,7 +169,8 @@ class ScenariosOnStoryDocsScanner(StoryScanner):
         knowledge_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
-        code_files: Optional[List['Path']] = None
+        code_files: Optional[List['Path']] = None,
+        on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Override scan to determine scope."""
         # Determine in-scope story names

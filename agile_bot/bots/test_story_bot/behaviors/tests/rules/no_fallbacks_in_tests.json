@@ -23,5 +23,5 @@
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.scanners.no_fallbacks_scanner.NoFallbacksScanner"
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.no_fallbacks_scanner.NoFallbacksScanner"
 }

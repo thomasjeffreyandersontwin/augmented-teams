@@ -44,5 +44,5 @@
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.scanners.given_precondition_scanner.GivenPreconditionScanner"
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.given_precondition_scanner.GivenPreconditionScanner"
 }

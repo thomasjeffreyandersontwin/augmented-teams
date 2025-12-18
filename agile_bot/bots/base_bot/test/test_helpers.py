@@ -1246,8 +1246,8 @@ def when_scanner_scans(scanner_instance, bad_example, rule_obj, scanner_type='au
         scanner_type: Type of scanner ('test', 'code', 'story', or 'auto' to detect)
     """
     from pathlib import Path
-    from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
-    from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
     
     # Auto-detect scanner type if not specified
     if scanner_type == 'auto':
@@ -1576,8 +1576,8 @@ def when_scanner_scans(scanner_instance, bad_example, rule_obj, scanner_type='au
         scanner_type: Type of scanner ('auto', 'test', 'code', 'story'). 'auto' uses rule.scan() (preferred)
     """
     from pathlib import Path
-    from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
-    from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
     
     if scanner_type == 'auto':
         # NEW DOMAIN MODEL: Use rule.scan() instead of calling scanner directly
@@ -2342,7 +2342,7 @@ def given_scanner_spy(scanner_type='test', record=None):
         Tuple of (recorded_data_list, SpyScannerClass)
     """
     from typing import Dict, List, Any
-    from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
     
     if scanner_type == 'test' and record == 'knowledge_graph':
         received_knowledge_graphs = []
@@ -2537,7 +2537,7 @@ def then_scenario_outlines_match(scenario, expected_count=None, expected_names=N
         expected_count: Expected number of scenario outlines (None = don't check count)
         expected_names: Expected names (list or None = don't check names)
     """
-    from agile_bot.bots.base_bot.src.scanners.story_map import Story
+    from agile_bot.bots.base_bot.src.actions.validate.scanners.story_map import Story
     if isinstance(scenario, Story):
         outlines = scenario.scenario_outlines
     else:
