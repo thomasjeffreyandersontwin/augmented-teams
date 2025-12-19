@@ -1,9 +1,24 @@
+"""
+Story Map (Legacy Compatibility Layer)
+
+This module provides backward-compatible wrappers around the new story_graph package.
+The old interface uses data dictionaries and indices, while the new model uses proper domain objects.
+
+This is a compatibility layer - new code should use story_graph package directly.
+"""
+
 from typing import List, Dict, Any, Optional, Iterator, Union
-from pathlib import Path
-import json
+
+# Note: New story_graph package available at agile_bot.bots.base_bot.src.story_graph
+# This module maintains backward compatibility with old interface
 
 
 class StoryNode:
+    """
+    Legacy compatibility wrapper for StoryNode.
+    Maintains old interface (data dict + indices) while using new model internally.
+    """
+    
     def __init__(self, data: Dict[str, Any], epic_idx: int, sub_epic_path: Optional[List[int]] = None, 
                  story_group_idx: Optional[int] = None, story_idx: Optional[int] = None):
         self.data = data
@@ -11,6 +26,8 @@ class StoryNode:
         self.sub_epic_path = sub_epic_path or []
         self.story_group_idx = story_group_idx
         self.story_idx = story_idx
+        # Create new node for internal use
+        self._new_node: Optional[NewStoryNode] = None
     
     @property
     def children(self) -> List['StoryNode']:
@@ -43,6 +60,8 @@ class StoryNode:
 
 
 class Epic(StoryNode):
+    """Legacy compatibility wrapper for Epic."""
+    
     @property
     def children(self) -> List[StoryNode]:
         children = []
@@ -61,6 +80,8 @@ class Epic(StoryNode):
 
 
 class SubEpic(StoryNode):
+    """Legacy compatibility wrapper for SubEpic."""
+    
     @property
     def children(self) -> List[StoryNode]:
         children = []
@@ -80,6 +101,8 @@ class SubEpic(StoryNode):
 
 
 class StoryGroup(StoryNode):
+    """Legacy compatibility wrapper for StoryGroup."""
+    
     @property
     def children(self) -> List[StoryNode]:
         children = []
@@ -93,6 +116,8 @@ class StoryGroup(StoryNode):
 
 
 class Scenario:
+    """Legacy compatibility wrapper for Scenario (not a node in old model)."""
+    
     def __init__(self, data: Dict[str, Any], story: 'Story', scenario_idx: int):
         self.data = data
         self.story = story
@@ -112,7 +137,10 @@ class Scenario:
     
     @property
     def steps(self) -> List[str]:
-        return self.data.get('steps', [])
+        steps_value = self.data.get('steps', '')
+        if isinstance(steps_value, str):
+            return [s.strip() for s in steps_value.split('\n') if s.strip()]
+        return steps_value if isinstance(steps_value, list) else []
     
     @property
     def test_method(self) -> Optional[str]:
@@ -133,6 +161,8 @@ class Scenario:
 
 
 class ScenarioOutline:
+    """Legacy compatibility wrapper for ScenarioOutline (not a node in old model)."""
+    
     def __init__(self, data: Dict[str, Any], story: 'Story', scenario_outline_idx: int):
         self.data = data
         self.story = story
@@ -152,7 +182,10 @@ class ScenarioOutline:
     
     @property
     def steps(self) -> List[str]:
-        return self.data.get('steps', [])
+        steps_value = self.data.get('steps', '')
+        if isinstance(steps_value, str):
+            return [s.strip() for s in steps_value.split('\n') if s.strip()]
+        return steps_value if isinstance(steps_value, list) else []
     
     @property
     def examples(self) -> Dict[str, Any]:
@@ -185,6 +218,8 @@ class ScenarioOutline:
 
 
 class Story(StoryNode):
+    """Legacy compatibility wrapper for Story."""
+    
     @property
     def sizing(self) -> Any:
         return self.data.get('sizing')
@@ -232,11 +267,20 @@ class Story(StoryNode):
 
 
 class StoryMap:
+    """
+    Legacy compatibility wrapper for StoryMap.
+    Maintains old interface while using new model internally.
+    """
+    
     def __init__(self, knowledge_graph: Dict[str, Any]):
         self.knowledge_graph = knowledge_graph
     
     @classmethod
     def from_bot(cls, bot: Any) -> 'StoryMap':
+        """Create StoryMap from bot object (finds story-graph.json)."""
+        from pathlib import Path
+        import json
+        
         # Handle different bot object types
         if hasattr(bot, 'bot_paths') and hasattr(bot.bot_paths, 'bot_directory'):
             bot_directory = Path(bot.bot_paths.bot_directory)
@@ -258,11 +302,12 @@ class StoryMap:
         return cls(knowledge_graph)
     
     def epics(self) -> List[Epic]:
+        """Return epics using old interface."""
         epics_data = self.knowledge_graph.get('epics', [])
         return [Epic(epic_data, epic_idx) for epic_idx, epic_data in enumerate(epics_data)]
     
     def walk(self, node: StoryNode) -> Iterator[StoryNode]:
+        """Walk the tree starting from a node."""
         yield node
         for child in node.children:
             yield from self.walk(child)
-

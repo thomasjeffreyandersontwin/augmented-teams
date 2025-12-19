@@ -1057,29 +1057,6 @@ class TestGenerateMCPBotServer:
         then_server_code_includes_bot_instantiation(artifacts, bot_name)
 
 
-    # test_generator_fails_when_bot_config_missing removed - exception handling test
-
-    # test_generator_fails_when_bot_config_malformed removed - exception handling test
-        """
-        SCENARIO: Generator fails when Bot Config is malformed
-        GIVEN: A bot directory exists
-        AND: Bot Config file exists with invalid JSON syntax
-        WHEN: MCP Server Generator attempts to receive Bot Config
-        THEN: Generator raises JSONDecodeError and does not create MCP Server instance
-        """
-        # Given: A bot directory exists
-        bot_name = given_test_bot_name()
-        bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
-        # And: Bot Config file exists with invalid JSON syntax
-        config_file = given_bot_config_file_with_invalid_json(workspace_root, bot_name)
-        
-        # When: MCP Server Generator attempts to receive Bot Config
-        # Then: Generator raises JSONDecodeError with message
-        then_generator_raises_json_decode_error(bot_dir, config_file)
-        
-        # And Generator does not create MCP Server instance (verified by exception)
-
-
 class TestDeployMCPBotServer:
     """Story: Deploy MCP Bot Server - Tests server deployment."""
 
@@ -1554,7 +1531,7 @@ def when_mcp_generator_created_without_base_actions(bot_directory: Path, fake_re
 
     with patch('agile_bot.bots.base_bot.src.bot.workspace.get_python_workspace_root', return_value=fake_repo_root):
 
-        with pytest.raises(FileNotFoundError, match="Base actions directory not found"):
+        with pytest.raises(FileNotFoundError):  # Fail fast - no custom message, just OS error
 
             MCPServerGenerator(bot_directory=bot_directory)
 

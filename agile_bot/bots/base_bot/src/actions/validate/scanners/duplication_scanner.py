@@ -249,6 +249,11 @@ class DuplicationScanner(CodeScanner):
                     if self._is_helper_function(block1['func_name']) and self._is_helper_function(block2['func_name']):
                         continue
                     
+                    # Skip if blocks operate on different domain entities - legitimate separate implementations
+                    # This prevents flagging similar CRUD operations on different entities as duplication
+                    if self._operates_on_different_domains(block1, block2):
+                        continue
+                    
                     # Only report if blocks are in different functions or far apart in same function
                     should_report = False
                     
@@ -455,6 +460,14 @@ class DuplicationScanner(CodeScanner):
         
         # Skip blocks in test methods - test structure similarity is expected, not duplication
         if func_name.startswith('test_'):
+            return blocks
+        
+        # Skip simple property methods (getters/setters) - these are legitimate boilerplate
+        if self._is_simple_property(func_node):
+            return blocks
+        
+        # Skip simple constructors that only set instance variables - legitimate boilerplate
+        if self._is_simple_constructor(func_node):
             return blocks
         
         # Extract all meaningful subtrees from the function
@@ -965,6 +978,140 @@ class DuplicationScanner(CodeScanner):
         # If it's mostly helper calls + assertions with minimal other code, it's a test pattern
         test_pattern_ratio = (helper_count + assertion_count) / total
         return test_pattern_ratio >= 0.75 and other_count <= 1
+    
+    def _is_simple_property(self, func_node: ast.FunctionDef) -> bool:
+        """Check if function is a simple property getter/setter/deleter.
+        
+        Simple properties are legitimate boilerplate that should not be flagged
+        as duplication. They're usually just return self._field or self._field = value.
+        """
+        if not func_node.decorator_list:
+            return False
+        
+        # Check for @property, @name.setter, @name.deleter decorators
+        has_property_decorator = False
+        for decorator in func_node.decorator_list:
+            if isinstance(decorator, ast.Name) and decorator.id == 'property':
+                has_property_decorator = True
+                break
+            elif isinstance(decorator, ast.Attribute):
+                if decorator.attr in ('setter', 'deleter'):
+                    has_property_decorator = True
+                    break
+        
+        if not has_property_decorator:
+            return False
+        
+        # Simple properties are usually just return self._field or self._field = value
+        # Count actual statements (excluding docstrings)
+        executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
+        
+        # If <= 2 executable statements, it's likely a simple property
+        if len(executable_body) <= 2:
+            return True
+        
+        return False
+    
+    def _is_simple_constructor(self, func_node: ast.FunctionDef) -> bool:
+        """Check if function is a simple constructor that only sets instance variables.
+        
+        Simple constructors are legitimate boilerplate that should not be flagged
+        as duplication. Each class needs its own __init__ method.
+        """
+        if func_node.name != '__init__':
+            return False
+        
+        # Count statements that are just assignments to self
+        executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
+        
+        self_assignments = 0
+        other_statements = 0
+        
+        for stmt in executable_body:
+            if isinstance(stmt, (ast.Assign, ast.AnnAssign)):
+                # Check if all targets are self.attribute
+                if isinstance(stmt, ast.Assign):
+                    targets = stmt.targets
+                else:
+                    targets = [stmt.target]
+                
+                all_self_attrs = True
+                for target in targets:
+                    if not (isinstance(target, ast.Attribute) and 
+                           isinstance(target.value, ast.Name) and 
+                           target.value.id == 'self'):
+                        all_self_attrs = False
+                        break
+                
+                if all_self_attrs:
+                    self_assignments += 1
+                else:
+                    other_statements += 1
+            else:
+                other_statements += 1
+        
+        # If >= 80% are just self assignments, it's a simple constructor
+        total = self_assignments + other_statements
+        if total > 0 and (self_assignments / total) >= 0.8:
+            return True
+        
+        return False
+    
+    def _extract_domain_entities(self, block: Dict[str, Any]) -> Set[str]:
+        """Extract domain entity names from function name and code.
+        
+        This helps identify if two blocks operate on different domain entities,
+        which would indicate legitimate separate implementations rather than duplication.
+        """
+        func_name = block['func_name'].lower()
+        entities = set()
+        
+        # Common domain entity patterns
+        # This could be improved with AST analysis of variable names
+        common_entities = ['user', 'product', 'order', 'item', 'account', 'payment', 
+                          'customer', 'invoice', 'report', 'task', 'project', 'story',
+                          'feature', 'epic', 'sprint', 'team', 'workflow', 'action',
+                          'rule', 'validation', 'scanner', 'violation', 'document',
+                          'file', 'path', 'config', 'context', 'state', 'node']
+        
+        for entity in common_entities:
+            if entity in func_name:
+                entities.add(entity)
+        
+        return entities
+    
+    def _operates_on_different_domains(self, block1: Dict[str, Any], block2: Dict[str, Any]) -> bool:
+        """Check if two blocks operate on different domain objects/entities.
+        
+        This helps avoid false positives where similar operations are needed
+        for different domain entities (e.g., create_user vs create_product).
+        These are legitimate separate implementations, not duplication.
+        """
+        # Extract domain objects from function names
+        domain_patterns1 = self._extract_domain_entities(block1)
+        domain_patterns2 = self._extract_domain_entities(block2)
+        
+        # If they have different domain entities and function names are similar,
+        # they're likely legitimate separate implementations
+        if domain_patterns1 and domain_patterns2:
+            if domain_patterns1 != domain_patterns2:
+                # Check if function structure is very similar (CRUD patterns)
+                # If so, this is likely legitimate - each domain needs its own handlers
+                func1 = block1['func_name']
+                func2 = block2['func_name']
+                if abs(len(func1) - len(func2)) <= 3:  # Similar length names
+                    # Extract common prefixes (CRUD operations: create, read, update, delete, get, set)
+                    crud_ops = ['create', 'read', 'get', 'update', 'delete', 'remove', 
+                               'save', 'load', 'fetch', 'set', 'find', 'search']
+                    func1_lower = func1.lower()
+                    func2_lower = func2.lower()
+                    
+                    # Check if both have the same CRUD operation prefix
+                    for op in crud_ops:
+                        if func1_lower.startswith(op) and func2_lower.startswith(op):
+                            return True  # Same CRUD operation on different domains = legitimate
+        
+        return False
     
     def _normalize_block(self, statements: List[ast.stmt]) -> Optional[str]:
         """Normalize code block by removing variable names and keeping structure."""
@@ -1525,9 +1672,29 @@ class DuplicationScanner(CodeScanner):
                     start2 = block2['start_line']
                     end2 = block2['end_line']
                     
+                    # Get code snippets for both locations
+                    preview1 = block1['preview']
+                    preview2 = block2['preview']
+                    
+                    # Truncate previews if too long
+                    if len(preview1) > 300:
+                        preview1 = preview1[:300] + '...'
+                    if len(preview2) > 300:
+                        preview2 = preview2[:300] + '...'
+                    
+                    # Create violation message with code boxes for each location
+                    location1 = f"{file1.name}:{func1} (lines {start1}-{end1})"
+                    location2 = f"{file2.name}:{func2} (lines {start2}-{end2})"
+                    
+                    violation_message = (
+                        f'Duplicate code detected across files - extract to shared function.\n\n'
+                        f'Location 1 ({location1}):\n```python\n{preview1}\n```\n\n'
+                        f'Location 2 ({location2}):\n```python\n{preview2}\n```'
+                    )
+                    
                     violation = Violation(
                         rule=rule_obj,
-                        violation_message=f'Duplicate code detected across files: {func1}() in {file1.name} (lines {start1}-{end1}) matches {func2}() in {file2.name} (lines {start2}-{end2}) - extract to shared function',
+                        violation_message=violation_message,
                         location=str(file1),
                         line_number=start1,
                         severity='error'

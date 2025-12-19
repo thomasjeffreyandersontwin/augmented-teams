@@ -236,34 +236,27 @@ class Actions:
             for a in completed_actions_list
         )
         
-        new_completed_action_entry = {
-            'action_state': action_state,
-            'timestamp': datetime.now().isoformat()
-        }
         if not is_already_completed:
+            # Create entry only when needed
+            new_completed_action_entry = {
+                'action_state': action_state,
+                'timestamp': datetime.now().isoformat()
+            }
             new_completed_actions = completed_actions_list + [new_completed_action_entry]
             state_data['completed_actions'] = new_completed_actions
         else:
             state_data['completed_actions'] = completed_actions_list
         
-        if 'completed_actions' not in state_data:
-            state_data['completed_actions'] = completed_actions_list if completed_actions_list else []
-        
         next_action_obj = self.next()
         if next_action_obj:
             self._current_index += 1
         
+        # Get current action object here, right before use
         current_action_obj = self.current
         if current_action_obj:
             state_data['current_action'] = f'{self.behavior.bot_name}.{self.behavior.name}.{current_action_obj.action_name}'
         
         state_data['timestamp'] = datetime.now().isoformat()
-        
-        if 'completed_actions' not in state_data:
-            state_data['completed_actions'] = []
-        elif not isinstance(state_data.get('completed_actions'), list):
-            existing = state_data.get('completed_actions')
-            state_data['completed_actions'] = [existing] if existing else []
         
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')

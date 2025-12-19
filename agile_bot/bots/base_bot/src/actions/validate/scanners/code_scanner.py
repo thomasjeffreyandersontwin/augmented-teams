@@ -325,4 +325,125 @@ class CodeScanner(Scanner):
                 parsed_files.append((file_path, content, tree))
         
         return parsed_files
+    
+    def _extract_code_snippet(self, content: str, ast_node: Optional[ast.AST] = None, 
+                             start_line: Optional[int] = None, end_line: Optional[int] = None,
+                             context_before: int = 2, max_lines: int = 50) -> str:
+        """Extract code snippet from an AST node or line range for display in violation messages.
+        
+        Works for both single-file (AST-based) and cross-file (line-based) scanners.
+        
+        Args:
+            content: Full source code content as string
+            ast_node: AST node to extract code for (FunctionDef, ClassDef, If, etc.) - optional
+            start_line: Start line number (1-indexed) - used if ast_node not provided
+            end_line: End line number (1-indexed) - used if ast_node not provided
+            context_before: Number of lines before the node to include for context
+            max_lines: Maximum number of lines to include (truncates if longer)
+            
+        Returns:
+            Code snippet string formatted for markdown display
+        """
+        lines = content.split('\n')
+        
+        # Determine start and end lines
+        if ast_node is not None:
+            # Use AST node to determine lines
+            start_line_0 = ast_node.lineno - 1 if hasattr(ast_node, 'lineno') and ast_node.lineno else 0
+            
+            # Get end line - use end_lineno if available (Python 3.8+), otherwise estimate
+            if hasattr(ast_node, 'end_lineno') and ast_node.end_lineno:
+                end_line_0 = ast_node.end_lineno  # end_lineno is 1-indexed, exclusive
+            else:
+                # Estimate end by finding the maximum line number in the subtree
+                end_line_0 = start_line_0 + 1
+                for node in ast.walk(ast_node):
+                    if hasattr(node, 'lineno') and node.lineno:
+                        end_line_0 = max(end_line_0, node.lineno)
+        elif start_line is not None:
+            # Use provided line numbers (1-indexed, convert to 0-indexed)
+            start_line_0 = start_line - 1
+            if end_line is not None:
+                end_line_0 = end_line  # end_line is 1-indexed, exclusive (like end_lineno)
+            else:
+                end_line_0 = start_line_0 + 1
+        else:
+            # No information provided, return empty
+            return ""
+        
+        # Extract code with context
+        snippet_start = max(0, start_line_0 - context_before)
+        snippet_end = min(len(lines), end_line_0 + 1)
+        code_snippet = '\n'.join(lines[snippet_start:snippet_end])
+        
+        # Truncate if too long
+        code_lines = code_snippet.split('\n')
+        if len(code_lines) > max_lines:
+            code_snippet = '\n'.join(code_lines[:max_lines]) + '\n    # ... (truncated)'
+        
+        return code_snippet
+    
+    def _create_violation_with_snippet(
+        self, 
+        rule_obj: Any,
+        violation_message: str,
+        file_path: Path,
+        line_number: Optional[int] = None,
+        severity: str = 'warning',
+        content: Optional[str] = None,
+        ast_node: Optional[ast.AST] = None,
+        start_line: Optional[int] = None,
+        end_line: Optional[int] = None,
+        context_before: int = 2,
+        max_lines: int = 50
+    ) -> Dict[str, Any]:
+        """Create a violation with code snippet automatically included.
+        
+        This helper method extracts code snippets and includes them in violation messages
+        for both single-file (AST-based) and cross-file (line-based) scanners.
+        
+        Args:
+            rule_obj: Rule object reference
+            violation_message: Base violation message (snippet will be appended)
+            file_path: Path to file where violation occurs
+            line_number: Line number where violation occurs (1-indexed)
+            severity: Severity level ('error', 'warning', 'info')
+            content: Source code content (required if ast_node or start_line provided)
+            ast_node: AST node to extract snippet from (for single-file scanners)
+            start_line: Start line number (1-indexed) for snippet (for cross-file scanners)
+            end_line: End line number (1-indexed) for snippet (for cross-file scanners)
+            context_before: Number of lines before to include for context
+            max_lines: Maximum number of lines to include
+            
+        Returns:
+            Violation dictionary with code snippet included in message
+        """
+        from .violation import Violation
+        
+        # Extract code snippet if content and location info provided
+        code_snippet = ""
+        if content is not None:
+            if ast_node is not None or start_line is not None:
+                code_snippet = self._extract_code_snippet(
+                    content=content,
+                    ast_node=ast_node,
+                    start_line=start_line,
+                    end_line=end_line,
+                    context_before=context_before,
+                    max_lines=max_lines
+                )
+        
+        # Build final message with snippet
+        if code_snippet:
+            final_message = f"{violation_message}\n\n```python\n{code_snippet}\n```"
+        else:
+            final_message = violation_message
+        
+        return Violation(
+            rule=rule_obj,
+            violation_message=final_message,
+            location=str(file_path),
+            line_number=line_number,
+            severity=severity
+        ).to_dict()
 

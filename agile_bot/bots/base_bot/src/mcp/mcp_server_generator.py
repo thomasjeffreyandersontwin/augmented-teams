@@ -31,7 +31,7 @@ class MCPServerGenerator:
     
     def _discover_workflow_actions(self) -> list:
         # Use centralized workspace utility to get base_actions directory
-        base_actions_path = get_base_actions_directory(bot_directory=self.bot_directory)
+        base_actions_path = get_base_actions_directory()
         
         workflow_actions = []
         for item in base_actions_path.iterdir():
@@ -45,7 +45,7 @@ class MCPServerGenerator:
     
     def _discover_independent_actions(self) -> list:
         # Use centralized workspace utility to get base_actions directory
-        base_actions_path = get_base_actions_directory(bot_directory=self.bot_directory)
+        base_actions_path = get_base_actions_directory()
         
         independent_actions = []
         for item in base_actions_path.iterdir():

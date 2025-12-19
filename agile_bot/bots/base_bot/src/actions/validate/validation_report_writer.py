@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
+from dataclasses import dataclass
 from datetime import datetime
 import logging
 import re
@@ -8,6 +9,32 @@ import traceback
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ValidationStats:
+    """Statistics for validation report summary - groups 12 related parameters."""
+    total_rules: int
+    total_with_scanners: int
+    executed_count: int
+    load_failed_count: int
+    execution_failed_count: int
+    no_scanner_count: int
+    total_violations: int
+    rules_clean: int
+    rules_with_warnings: int
+    rules_with_errors: int
+    executed_rules: List[Dict[str, Any]]
+    
+    @property
+    def has_failures(self) -> bool:
+        """Check if there are any execution or load failures."""
+        return self.execution_failed_count > 0 or self.load_failed_count > 0
+    
+    @property
+    def has_violations(self) -> bool:
+        """Check if any violations were found."""
+        return self.total_violations > 0
 
 
 class StreamingValidationReportWriter:
@@ -443,12 +470,20 @@ class ValidationReportWriter:
         total_with_scanners = executed_count + load_failed_count + execution_failed_count
         
         # Build visual status summary
-        lines.extend(self._build_status_summary(
-            len(validation_rules), total_with_scanners, executed_count, 
-            load_failed_count, execution_failed_count, no_scanner_count,
-            total_violations, rules_clean, rules_with_warnings, rules_with_errors,
-            executed_rules
-        ))
+        stats = ValidationStats(
+            total_rules=len(validation_rules),
+            total_with_scanners=total_with_scanners,
+            executed_count=executed_count,
+            load_failed_count=load_failed_count,
+            execution_failed_count=execution_failed_count,
+            no_scanner_count=no_scanner_count,
+            total_violations=total_violations,
+            rules_clean=rules_clean,
+            rules_with_warnings=rules_with_warnings,
+            rules_with_errors=rules_with_errors,
+            executed_rules=executed_rules
+        )
+        lines.extend(self._build_status_summary(stats))
         lines.append("")
         
         if executed_rules:
@@ -533,24 +568,23 @@ class ValidationReportWriter:
         
         return lines
     
-    def _build_status_summary(self, total_rules: int, total_with_scanners: int, 
-                             executed_count: int, load_failed_count: int, 
-                             execution_failed_count: int, no_scanner_count: int,
-                             total_violations: int, rules_clean: int, 
-                             rules_with_warnings: int, rules_with_errors: int,
-                             executed_rules: List[Dict[str, Any]]) -> List[str]:
-        """Build a visual status summary at the top of scanner status section."""
+    def _build_status_summary(self, stats: ValidationStats) -> List[str]:
+        """Build a visual status summary at the top of scanner status section.
+        
+        Args:
+            stats: ValidationStats containing all summary counts and executed rules
+        """
         lines = []
         
         # Overall status indicator
-        if execution_failed_count > 0 or load_failed_count > 0:
+        if stats.has_failures:
             overall_status = "🔴"
             overall_text = "CRITICAL ISSUES"
-        elif total_violations > 0:
-            if rules_with_errors > 0:
+        elif stats.has_violations:
+            if stats.rules_with_errors > 0:
                 overall_status = "🔴"
                 overall_text = "VIOLATIONS FOUND"
-            elif rules_with_warnings > 0:
+            elif stats.rules_with_warnings > 0:
                 overall_status = "🟡"
                 overall_text = "WARNINGS FOUND"
             else:
@@ -568,42 +602,42 @@ class ValidationReportWriter:
         lines.append("|--------|-------|-------------|")
         
         # Execution status
-        if executed_count > 0:
-            if rules_clean > 0:
-                lines.append(f"| 🟢 Executed Successfully | {executed_count} | Scanners ran without errors |")
+        if stats.executed_count > 0:
+            if stats.rules_clean > 0:
+                lines.append(f"| 🟢 Executed Successfully | {stats.executed_count} | Scanners ran without errors |")
             else:
-                lines.append(f"| ✅ Executed Successfully | {executed_count} | Scanners executed |")
+                lines.append(f"| ✅ Executed Successfully | {stats.executed_count} | Scanners executed |")
         
-        if rules_clean > 0:
-            lines.append(f"| 🟢 Clean Rules | {rules_clean} | No violations found |")
+        if stats.rules_clean > 0:
+            lines.append(f"| 🟢 Clean Rules | {stats.rules_clean} | No violations found |")
         
-        if rules_with_warnings > 0:
-            warning_count = sum(r['violations'] for r in executed_rules if r.get('has_warnings') and not r.get('has_errors'))
-            lines.append(f"| 🟡 Rules with Warnings | {rules_with_warnings} | Found {warning_count} warning violation(s) |")
+        if stats.rules_with_warnings > 0:
+            warning_count = sum(r['violations'] for r in stats.executed_rules if r.get('has_warnings') and not r.get('has_errors'))
+            lines.append(f"| 🟡 Rules with Warnings | {stats.rules_with_warnings} | Found {warning_count} warning violation(s) |")
         
-        if rules_with_errors > 0:
-            error_count = sum(r['violations'] for r in executed_rules if r.get('has_errors'))
-            lines.append(f"| 🔴 Rules with Errors | {rules_with_errors} | Found {error_count} error violation(s) |")
+        if stats.rules_with_errors > 0:
+            error_count = sum(r['violations'] for r in stats.executed_rules if r.get('has_errors'))
+            lines.append(f"| 🔴 Rules with Errors | {stats.rules_with_errors} | Found {error_count} error violation(s) |")
         
-        if load_failed_count > 0:
-            lines.append(f"| 🔴 Load Failed | {load_failed_count} | Scanner could not be loaded |")
+        if stats.load_failed_count > 0:
+            lines.append(f"| 🔴 Load Failed | {stats.load_failed_count} | Scanner could not be loaded |")
         
-        if execution_failed_count > 0:
-            lines.append(f"| 🔴 Execution Failed | {execution_failed_count} | Scanner crashed during execution |")
+        if stats.execution_failed_count > 0:
+            lines.append(f"| 🔴 Execution Failed | {stats.execution_failed_count} | Scanner crashed during execution |")
         
-        if no_scanner_count > 0:
-            lines.append(f"| ⚪ No Scanner | {no_scanner_count} | Rule has no scanner configured |")
+        if stats.no_scanner_count > 0:
+            lines.append(f"| ⚪ No Scanner | {stats.no_scanner_count} | Rule has no scanner configured |")
         
         lines.append("")
-        lines.append(f"**Total Rules:** {total_rules}")
-        lines.append(f"- **Rules with Scanners:** {total_with_scanners}")
-        lines.append(f"  - ✅ **Executed Successfully:** {executed_count}")
-        if load_failed_count > 0:
-            lines.append(f"  - 🔴 **Load Failed:** {load_failed_count}")
-        if execution_failed_count > 0:
-            lines.append(f"  - 🔴 **Execution Failed:** {execution_failed_count}")
-        if no_scanner_count > 0:
-            lines.append(f"- ⚪ **Rules without Scanners:** {no_scanner_count}")
+        lines.append(f"**Total Rules:** {stats.total_rules}")
+        lines.append(f"- **Rules with Scanners:** {stats.total_with_scanners}")
+        lines.append(f"  - ✅ **Executed Successfully:** {stats.executed_count}")
+        if stats.load_failed_count > 0:
+            lines.append(f"  - 🔴 **Load Failed:** {stats.load_failed_count}")
+        if stats.execution_failed_count > 0:
+            lines.append(f"  - 🔴 **Execution Failed:** {stats.execution_failed_count}")
+        if stats.no_scanner_count > 0:
+            lines.append(f"- ⚪ **Rules without Scanners:** {stats.no_scanner_count}")
         
         return lines
     

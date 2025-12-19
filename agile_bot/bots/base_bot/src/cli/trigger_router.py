@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import json
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from agile_bot.bots.base_bot.src.cli.trigger_domain import BotTriggers, BehaviorTriggers, ActionTriggers
 
 
 class TriggerRouter:
@@ -112,7 +113,8 @@ class TriggerRouter:
             
             # If no patterns in registry, load from bot's trigger_words.json
             if not patterns:
-                patterns = self._load_bot_triggers(bot_name)
+                bot_triggers = self._load_bot_triggers(bot_name)
+                patterns = bot_triggers.patterns
             
             if self._message_matches_patterns(message, patterns):
                 return bot_name
@@ -128,8 +130,10 @@ class TriggerRouter:
         Returns:
             Route dict or None
         """
-        action_triggers = self._action_triggers.get(target_bot, {})
-        for behavior, action_patterns in action_triggers.items():
+        action_triggers_obj = self._action_triggers.get(target_bot)
+        if not action_triggers_obj:
+            return None
+        for behavior, action_patterns in action_triggers_obj.items():
             for action, patterns in action_patterns.items():
                 if self._message_matches_patterns(message, patterns):
                     return {
@@ -151,8 +155,10 @@ class TriggerRouter:
         Returns:
             Route dict or None
         """
-        behavior_triggers = self._behavior_triggers.get(target_bot, {})
-        for behavior, patterns in behavior_triggers.items():
+        behavior_triggers_obj = self._behavior_triggers.get(target_bot)
+        if not behavior_triggers_obj:
+            return None
+        for behavior, patterns in behavior_triggers_obj.triggers.items():
             if self._message_matches_patterns(message, patterns):
                 return {
                     'bot_name': target_bot,
@@ -201,8 +207,10 @@ class TriggerRouter:
         Returns:
             Route dict or None
         """
-        bot_triggers = self._bot_triggers.get(target_bot, [])
-        if self._message_matches_patterns(message, bot_triggers):
+        bot_triggers_obj = self._bot_triggers.get(target_bot)
+        if not bot_triggers_obj:
+            return None
+        if self._message_matches_patterns(message, bot_triggers_obj.patterns):
             return {
                 'bot_name': target_bot,
                 'behavior_name': current_behavior,
@@ -243,17 +251,18 @@ class TriggerRouter:
         except (json.JSONDecodeError, IOError):
             return {}
     
-    def _load_bot_triggers(self, bot_name: str) -> List[str]:
+    def _load_bot_triggers(self, bot_name: str) -> BotTriggers:
         """Load bot-level trigger patterns from trigger_words.json.
         
         Args:
             bot_name: Name of the bot
         
         Returns:
-            List of trigger patterns, or empty list if file doesn't exist
+            BotTriggers domain object with trigger patterns, or empty if file doesn't exist
         """
         trigger_file = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / bot_name / 'trigger_words.json'
-        return self._load_patterns_from_file(trigger_file)
+        patterns = self._load_patterns_from_file(trigger_file)
+        return BotTriggers(patterns=patterns)
     
     def _load_triggers_from_behavior_file(self, behavior_file: Path) -> list:
         """Load trigger patterns from behavior.json file."""
@@ -266,12 +275,19 @@ class TriggerRouter:
         except Exception:
             return []
     
-    def _load_behavior_triggers(self, bot_name: str) -> Dict[str, List[str]]:
-        """Load behavior-level trigger patterns for all behaviors."""
+    def _load_behavior_triggers(self, bot_name: str) -> BehaviorTriggers:
+        """Load behavior-level trigger patterns for all behaviors.
+        
+        Args:
+            bot_name: Name of the bot
+        
+        Returns:
+            BehaviorTriggers domain object with behavior trigger patterns
+        """
         behaviors_dir = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors'
         
         if not behaviors_dir.exists():
-            return {}
+            return BehaviorTriggers()
         
         behavior_triggers = {}
         for behavior_dir in behaviors_dir.iterdir():
@@ -283,9 +299,9 @@ class TriggerRouter:
             if patterns:
                 behavior_triggers[behavior_name] = patterns
         
-        return behavior_triggers
+        return BehaviorTriggers(triggers=behavior_triggers)
     
-    def _load_action_triggers(self, bot_name: str) -> Dict[str, Dict[str, List[str]]]:
+    def _load_action_triggers(self, bot_name: str) -> ActionTriggers:
         """Load action-level trigger patterns for all behaviors and actions.
         
         Loads from trigger_words.json files in behavior/action directories.
@@ -299,7 +315,7 @@ class TriggerRouter:
         behaviors_dir = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors'
         
         if not behaviors_dir.exists():
-            return {}
+            return ActionTriggers()
         
         action_triggers = {}
         
@@ -312,7 +328,7 @@ class TriggerRouter:
             if behavior_action_triggers:
                 action_triggers[behavior_name] = behavior_action_triggers
         
-        return action_triggers
+        return ActionTriggers(triggers=action_triggers)
     
     def _load_action_triggers_for_behavior(self, behavior_dir: Path) -> Dict[str, List[str]]:
         """Load action triggers for a single behavior directory."""

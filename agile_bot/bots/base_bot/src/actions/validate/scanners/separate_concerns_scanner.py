@@ -5,7 +5,6 @@ from pathlib import Path
 import ast
 import re
 from .code_scanner import CodeScanner
-from .violation import Violation
 
 
 class SeparateConcernsScanner(CodeScanner):
@@ -44,6 +43,8 @@ class SeparateConcernsScanner(CodeScanner):
             # Single responsibility - no violation
             return None
         
+        line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
+        
         # Check for incompatible responsibility combinations
         incompatible_pairs = [
             ('I/O', 'Computation'),
@@ -56,31 +57,35 @@ class SeparateConcernsScanner(CodeScanner):
         responsibility_set = set(responsibilities)
         for resp1, resp2 in incompatible_pairs:
             if resp1 in responsibility_set and resp2 in responsibility_set:
-                line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-                return Violation(
-                    rule=rule_obj,
-                    violation_message=(
-                        f'Function "{func_node.name}" mixes incompatible responsibilities: {", ".join(responsibilities)}. '
-                        f'Separate {resp1} from {resp2} - pure logic should be separate from side effects.'
-                    ),
-                    location=str(file_path),
+                violation_message = (
+                    f'Function "{func_node.name}" mixes incompatible responsibilities: {", ".join(responsibilities)}. '
+                    f'Separate {resp1} from {resp2} - pure logic should be separate from side effects.'
+                )
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=violation_message,
+                    file_path=file_path,
                     line_number=line_number,
-                    severity='error'
-                ).to_dict()
+                    severity='error',
+                    content=content,
+                    ast_node=func_node
+                )
         
         # If multiple responsibilities but no incompatible pairs, still warn
         if len(responsibilities) > 2:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=(
-                    f'Function "{func_node.name}" has multiple responsibilities: {", ".join(responsibilities)}. '
-                    f'Consider splitting into separate functions, each with a single responsibility.'
-                ),
-                location=str(file_path),
+            violation_message = (
+                f'Function "{func_node.name}" has multiple responsibilities: {", ".join(responsibilities)}. '
+                f'Consider splitting into separate functions, each with a single responsibility.'
+            )
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
+                violation_message=violation_message,
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict()
+                severity='warning',
+                content=content,
+                ast_node=func_node
+            )
         
         return None
 

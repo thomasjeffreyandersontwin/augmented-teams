@@ -93,36 +93,27 @@ class ActionScope:
         
         # Collect from increment_priorities
         if 'increment_priorities' in scope_config:
-            priorities = scope_config['increment_priorities']
-            if isinstance(priorities, list):
-                for priority in priorities:
-                    increment_stories = self._get_increment_story_names(knowledge_graph, priority)
-                    story_names.update(increment_stories)
-            else:
-                increment_stories = self._get_increment_story_names(knowledge_graph, priorities)
-                story_names.update(increment_stories)
+            self._collect_stories_from_items(
+                scope_config['increment_priorities'],
+                lambda priority: self._get_increment_story_names(knowledge_graph, priority),
+                story_names
+            )
         
         # Collect from increment_names
         if 'increment_names' in scope_config:
-            increment_names = scope_config['increment_names']
-            if isinstance(increment_names, list):
-                for increment_name in increment_names:
-                    increment_stories = self._get_increment_story_names_by_name(knowledge_graph, increment_name)
-                    story_names.update(increment_stories)
-            elif isinstance(increment_names, str):
-                increment_stories = self._get_increment_story_names_by_name(knowledge_graph, increment_names)
-                story_names.update(increment_stories)
+            self._collect_stories_from_items(
+                scope_config['increment_names'],
+                lambda name: self._get_increment_story_names_by_name(knowledge_graph, name),
+                story_names
+            )
         
         # Collect from epic_names
         if 'epic_names' in scope_config:
-            epic_names_list = scope_config['epic_names']
-            if isinstance(epic_names_list, list):
-                for epic_name in epic_names_list:
-                    epic_stories = self._get_epic_story_names(knowledge_graph, epic_name)
-                    story_names.update(epic_stories)
-            elif isinstance(epic_names_list, str):
-                epic_stories = self._get_epic_story_names(knowledge_graph, epic_names_list)
-                story_names.update(epic_stories)
+            self._collect_stories_from_items(
+                scope_config['epic_names'],
+                lambda name: self._get_epic_story_names(knowledge_graph, name),
+                story_names
+            )
         
         # If no scope specified at all, return None (meaning process all)
         if not scope_config:
@@ -135,6 +126,22 @@ class ActionScope:
         
         # Default: process all
         return None
+    
+    def _collect_stories_from_items(self, items: Any, get_stories_fn, story_names: Set[str]) -> None:
+        """Helper to collect stories from a list or single item using a callback function.
+        
+        Args:
+            items: Either a list of items or a single item
+            get_stories_fn: Function that takes an item and returns a Set[str] of story names
+            story_names: Set to update with collected story names
+        """
+        if isinstance(items, list):
+            for item in items:
+                stories = get_stories_fn(item)
+                story_names.update(stories)
+        else:
+            stories = get_stories_fn(items)
+            story_names.update(stories)
     
     def _extract_story_names(self, stories: list, story_names: Set[str]) -> None:
         """Extract story names from a list of stories.

@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
-from .violation import Violation
 from .complexity_metrics import ComplexityMetrics
 
 
@@ -31,7 +30,7 @@ class FunctionSizeScanner(CodeScanner):
                     if node.name.startswith('_') and node.name != '__init__':
                         continue
                     
-                    violation = self._check_function_size(node, file_path, rule_obj, lines)
+                    violation = self._check_function_size(node, file_path, rule_obj, lines, content)
                     if violation:
                         violations.append(violation)
         
@@ -41,7 +40,7 @@ class FunctionSizeScanner(CodeScanner):
         
         return violations
     
-    def _check_function_size(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, source_lines: List[str]) -> Optional[Dict[str, Any]]:
+    def _check_function_size(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, source_lines: List[str], content: str) -> Optional[Dict[str, Any]]:
         """Check if function exceeds size limit, excluding data structures, comments, docstrings, and multi-line expressions."""
         # Calculate function size (end_lineno - lineno + 1)
         if hasattr(func_node, 'end_lineno') and func_node.end_lineno:
@@ -100,58 +99,64 @@ class FunctionSizeScanner(CodeScanner):
         
         violations = []
         
+        line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
+        
         # Check line count
         if executable_lines > 20:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
+            violations.append(self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=f'Function "{func_node.name}" is {executable_lines} lines - should be under 20 lines (extract complex logic to helper functions)',
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict())
+                severity='warning',
+                content=content,
+                ast_node=func_node
+            ))
         
         # Check cyclomatic complexity
         if cyclomatic > 10:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
+            violations.append(self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=(
                     f'Function "{func_node.name}" has high cyclomatic complexity ({cyclomatic}) - '
                     f'should be under 10. Extract decision logic to helper functions.'
                 ),
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict())
+                severity='warning',
+                content=content,
+                ast_node=func_node
+            ))
         
         # Check cognitive complexity
         if cognitive > 15:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
+            violations.append(self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=(
                     f'Function "{func_node.name}" has high cognitive complexity ({cognitive}) - '
                     f'should be under 15. Reduce nesting and extract complex logic.'
                 ),
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict())
+                severity='warning',
+                content=content,
+                ast_node=func_node
+            ))
         
         # Check nesting depth
         if max_nesting > 4:
-            line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
+            violations.append(self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=(
                     f'Function "{func_node.name}" has deep nesting (depth={max_nesting}) - '
                     f'should be under 4 levels. Extract nested logic to helper functions.'
                 ),
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='info'
-            ).to_dict())
+                severity='info',
+                content=content,
+                ast_node=func_node
+            ))
         
         # Return first violation (most critical)
         return violations[0] if violations else None
