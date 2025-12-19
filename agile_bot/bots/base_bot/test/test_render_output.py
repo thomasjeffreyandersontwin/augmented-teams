@@ -268,10 +268,10 @@ def when_render_configs_formatted(configs=None, format_type='json', action_obj=N
     if configs is None:
         if action_obj is None:
             raise ValueError("Either configs or action_obj must be provided")
-        configs = action_obj._load_render_configs()
+        configs = action_obj._config_loader.load_render_configs()
     
     if action_obj is not None:
-        return action_obj._format_render_configs(configs)
+        return action_obj._instruction_formatter.format_render_configs(configs)
     else:
         # If no action_obj, assume configs is already a dict and format it
         import json

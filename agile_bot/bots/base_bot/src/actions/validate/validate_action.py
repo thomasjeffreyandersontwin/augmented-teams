@@ -3,6 +3,7 @@ from typing import Dict, Any, List, Optional, TYPE_CHECKING
 import logging
 import traceback
 import json
+import threading
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
@@ -54,42 +55,132 @@ class ValidateRulesAction(Action):
         logger.info("=== Starting validation ===")
         logger.info(f"Behavior: {self.behavior.name}")
         logger.info(f"Parameters: {parameters}")
+        
+        # Check if validation should run in background
+        # Default to True only for code behavior, False for others (can be overridden with background parameter)
+        default_background = self.behavior.name == 'code'
+        run_in_background = parameters.get('background', default_background)
+        
+        if run_in_background:
+            # Run validation in background thread
+            return self._execute_background(parameters)
+        else:
+            # Run validation synchronously (original behavior)
+            return self._execute_synchronous(parameters)
+    
+    def _execute_background(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute validation in a background thread."""
+        # Build validation scope early to get file count for status message
         try:
-            # Get knowledge graph spec so StoryGraph can read config internally
-            logger.info("Loading knowledge graph...")
-            knowledge = Knowledge(self.behavior)
-            
-            logger.info("Creating story graph...")
-            story_graph = StoryGraph(
-                self.behavior.bot_paths, 
-                self.working_dir,
-                knowledge_graph_spec=knowledge.knowledge_graph_spec
-            )
-            logger.info("Building validation scope...")
             validation_scope = ValidationScope(parameters or {}, self.behavior.bot_paths, behavior_name=self.behavior.name)
-            scope_config = validation_scope.scope
-            scope_keys = {'story_names', 'increment_priorities', 'epic_names', 'all'}
-            has_scope_in_params = any(key in scope_config for key in scope_keys)
-            
-            if has_scope_in_params:
-                story_graph['_validation_scope'] = scope_config
-            
-            logger.info("Discovering files to validate...")
             files = validation_scope.all_files()
-            logger.info(f"Found {sum(len(f) for f in files.values())} files to validate")
+            total_files = sum(len(f) for f in files.values())
+        except Exception as e:
+            logger.warning(f"Could not pre-compute file count: {e}")
+            total_files = 0
+        
+        # Get status file path for user message
+        status_path = self.behavior.bot_paths.workspace_directory / 'agile_bot' / 'bots' / self.behavior.bot_name / 'docs' / 'stories' / 'code-validation-status.md'
+        
+        # Start background thread
+        def run_validation():
+            try:
+                # Note: Activity tracking start is handled by execute() method
+                # We need to track completion here when background thread finishes
+                result = self._execute_synchronous(parameters)
+                # Track completion in background thread
+                self.track_activity_on_completion(outputs=result)
+                logger.info("Background validation completed successfully")
+            except Exception as e:
+                error_msg = str(e)
+                # Track completion with error
+                self.track_activity_on_completion(outputs={'error': error_msg})
+                logger.error(f"Background validation failed: {e}")
+                import traceback
+                traceback.print_exc()
+                # Update status file with error
+                try:
+                    status_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(status_path, 'a', encoding='utf-8') as f:
+                        f.write(f"\n\n## ERROR\n\nValidation failed with error: {e}\n")
+                except Exception as status_err:
+                    logger.error(f"Could not write error to status file: {status_err}")
+        
+        # Use daemon=False so the thread continues even if CLI returns
+        # The thread will complete the validation and update the status file
+        validation_thread = threading.Thread(target=run_validation, daemon=False, name="ValidationThread")
+        validation_thread.start()
+        
+        # Return immediately with status message
+        status_path_relative = status_path.relative_to(self.behavior.bot_paths.workspace_directory)
+        
+        return {
+            'instructions': {
+                'base_instructions': [
+                    "",
+                    "=" * 70,
+                    "**VALIDATION RUNNING IN BACKGROUND**",
+                    "=" * 70,
+                    "",
+                    "**CRITICAL: YOU MUST POLL THE STATUS FILE EVERY 10 SECONDS UNTIL VALIDATION COMPLETES**",
+                    "",
+                    f"Validation has been started in the background. It will scan {total_files} file(s).",
+                    "",
+                    "**Status File:**",
+                    f"  {status_path_relative}",
+                    "",
+                    "**AI ASSISTANT DIRECTIVES:**",
+                    "1. YOU MUST read the status file every 10 seconds to check progress",
+                    "2. YOU MUST report the current status summary to the user each time you check",
+                    "3. Continue polling every 10 seconds until validation is complete",
+                    "4. When complete, YOU MUST read and report the final summary from the status file",
+                    "5. Also check the full report at: docs/stories/code-validation-report.md",
+                    "",
+                    "The validation is running asynchronously and will update the status file in real-time.",
+                    "The status file shows progress as scanners complete their work.",
+                    "",
+                    "**Status File Location:**",
+                    f"  {status_path_relative}",
+                    "",
+                    "**Report File Location (when complete):**",
+                    "  docs/stories/code-validation-report.md",
+                    "",
+                    "=" * 70,
+                    ""
+                ]
+            },
+            '_background_execution': True,  # Flag to tell execute() not to track completion immediately
+            'background': True,
+            'status_file': str(status_path_relative),
+            'total_files': total_files
+        }
+    
+    def _execute_synchronous(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute validation synchronously (original implementation)."""
+        try:
+            # Create validation context - it builds everything internally
+            from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+            validation_context = ValidationContext.from_parameters(
+                behavior=self.behavior,
+                parameters=parameters
+            )
+            
+            logger.info(f"Files to validate: {sum(len(f) for f in validation_context.files.values())} files")
             
             # Use streaming writer for real-time feedback
             streaming_writer = StreamingValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
-            streaming_writer.start(files)
+            streaming_writer.start(validation_context.files)
+            
+            # Update context with streaming callbacks
+            from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationCallbacks
+            validation_context.callbacks = ValidationCallbacks(
+                on_scanner_start=streaming_writer.on_scanner_start,
+                on_scanner_complete=streaming_writer.on_scanner_complete,
+                on_file_scanned=streaming_writer.on_file_scanned
+            )
             
             logger.info("Injecting validation instructions...")
-            skiprule = parameters.get('skiprule', [])
-            result = self.injectValidationInstructions(
-                story_graph.content, 
-                files=files,
-                streaming_writer=streaming_writer,
-                skiprule=skiprule
-            )
+            result = self.injectValidationInstructions(validation_context, streaming_writer)
             instructions = result.get('instructions', {})
             validation_rules = instructions.get('validation_rules', [])
             
@@ -98,36 +189,15 @@ class ValidateRulesAction(Action):
             
             # Also write the full detailed report (for complete formatting)
             writer = ValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
-            writer.write(instructions, validation_rules, files)
+            writer.write(instructions, validation_rules, validation_context.files)
             return result
-        except FileNotFoundError as e:
-            if "story graph" in str(e).lower() or "story-graph.json" in str(e):
-                raise
-            logger.error("=== ERROR in validate action ===")
-            logger.error(f"Error type: {type(e).__name__}")
-            logger.error(f"Error message: {e}")
-            logger.error(f"Parameters: {parameters}")
-            logger.error(f"Full traceback:\n{traceback.format_exc()}")
-            error_msg = (
-                f"Error in validate action: {e}\n"
-                f"Parameters: {parameters}\n"
-                f"Traceback:\n{traceback.format_exc()}"
-            )
-            raise RuntimeError(error_msg) from e
-        except (json.JSONDecodeError, ValueError) as e:
-            raise
         except Exception as e:
-            logger.error("=== ERROR in validate action ===")
+            logger.error(f"Error in synchronous validation: {e}")
             logger.error(f"Error type: {type(e).__name__}")
-            logger.error(f"Error message: {e}")
             logger.error(f"Parameters: {parameters}")
             logger.error(f"Full traceback:\n{traceback.format_exc()}")
-            error_msg = (
-                f"Error in validate action: {e}\n"
-                f"Parameters: {parameters}\n"
-                f"Traceback:\n{traceback.format_exc()}"
-            )
-            raise RuntimeError(error_msg) from e
+            # Re-raise the exception - don't wrap it, let it propagate
+            raise
     
     def inject_common_bot_rules(self) -> Dict[str, Any]:
         base_bot_rules_dir = self.bot_dir.parent / 'base_bot' / 'rules'
@@ -176,9 +246,9 @@ class ValidateRulesAction(Action):
     def inject_next_action_instructions(self):
         return ""
     
-    def injectValidationInstructions(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None, 
-                                      streaming_writer: Optional['StreamingValidationReportWriter'] = None,
-                                      skiprule: Optional[List[str]] = None) -> Dict[str, Any]:
+    def injectValidationInstructions(self, validation_context: 'ValidationContext',
+                                      streaming_writer: Optional['StreamingValidationReportWriter'] = None) -> Dict[str, Any]:
+        """Inject validation instructions into action instructions."""
         action_instructions = self.get_action_instructions()
         writer = ValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
         report_path = writer.get_report_path()
@@ -198,21 +268,8 @@ class ValidateRulesAction(Action):
                 }
             }
         
-        files = files or {}
-        
-        # Pass streaming callbacks for real-time reporting
-        on_scanner_start = streaming_writer.on_scanner_start if streaming_writer else None
-        on_scanner_complete = streaming_writer.on_scanner_complete if streaming_writer else None
-        on_file_scanned = streaming_writer.on_file_scanned if streaming_writer else None
-        
-        processed_rules = self.rules.validate(
-            knowledge_graph, 
-            files,
-            on_scanner_start=on_scanner_start,
-            on_scanner_complete=on_scanner_complete,
-            on_file_scanned=on_file_scanned,
-            skiprule=skiprule
-        )
+        # Validate using context - context already has all parameters
+        processed_rules = self.rules.validate(validation_context)
         violation_summary = self.rules.violation_summary
         
         # Extract scanner status for chat output

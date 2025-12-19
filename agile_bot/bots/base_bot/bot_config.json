@@ -1,0 +1,9 @@
+{
+  "name": "base_bot",
+  "description": "Base bot for validation",
+  "mcp": {
+    "env": {
+      "WORKING_AREA": "C:\\dev\\augmented-teams"
+    }
+  }
+}

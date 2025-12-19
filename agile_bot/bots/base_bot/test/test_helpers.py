@@ -1532,8 +1532,19 @@ def then_action_instructions_match(action, knowledge_graph=None, test_files=None
         knowledge_graph: Expected knowledge graph dict (optional)
         test_files: Expected test file paths list (optional)
     """
+    from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext, ValidationCallbacks
     files = {'test': test_files} if test_files else {}
-    result_direct = action.injectValidationInstructions(knowledge_graph, files=files)
+    validation_context = ValidationContext(
+        knowledge_graph=knowledge_graph,
+        files=files,
+        callbacks=ValidationCallbacks(),
+        skiprule=[],
+        exclude=[],
+        behavior=action.behavior,
+        bot_paths=action.behavior.bot_paths,
+        working_dir=action.behavior.bot_paths.workspace_directory
+    )
+    result_direct = action.injectValidationInstructions(validation_context)
     assert 'instructions' in result_direct, "Result should contain 'instructions' key"
     return result_direct
 

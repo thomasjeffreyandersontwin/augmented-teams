@@ -5,7 +5,6 @@ from pathlib import Path
 import ast
 import re
 from .code_scanner import CodeScanner
-from .violation import Violation
 
 
 class AbstractionLevelsScanner(CodeScanner):
@@ -47,13 +46,15 @@ class AbstractionLevelsScanner(CodeScanner):
         # Mixed abstraction: has both high-level and low-level
         if has_high_level and has_low_level:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=f'Function "{func_node.name}" mixes high-level operations with low-level details - extract low-level details to separate functions',
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict()
+                severity='warning',
+                content=content,
+                ast_node=func_node
+            )
         
         return None
 

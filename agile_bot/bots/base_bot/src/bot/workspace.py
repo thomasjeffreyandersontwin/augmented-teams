@@ -29,10 +29,17 @@ def get_workspace_directory() -> Path:
 
 
 def get_base_actions_directory(bot_directory: Path = None) -> Path:
-    # Use bot's base_actions if provided, otherwise use default - directories must exist
-    if bot_directory:
-        return Path(bot_directory) / 'base_actions'
+    """Get the base_actions directory path.
     
+    Always returns base_bot's base_actions directory.
+    The bot_directory parameter is ignored (kept for backward compatibility).
+    
+    Args:
+        bot_directory: Ignored - kept for backward compatibility only.
+    
+    Returns:
+        Path to agile_bot/bots/base_bot/base_actions
+    """
     repo_root = get_python_workspace_root()
     return repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
 

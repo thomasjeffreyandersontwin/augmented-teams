@@ -15,7 +15,7 @@ class BotPaths:
         self._workspace_directory = Path(workspace_path) if workspace_path else get_workspace_directory()
         self._bot_directory = Path(bot_directory) if bot_directory else get_bot_directory()
         
-        self._base_actions_directory = get_base_actions_directory(self._bot_directory)
+        self._base_actions_directory = get_base_actions_directory()
         
         # Always get python_workspace_root from get_python_workspace_root()
         # This is reliable and based on the file location. If it fails, let it crash.

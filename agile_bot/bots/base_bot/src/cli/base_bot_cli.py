@@ -7,10 +7,14 @@ import logging
 import re
 import traceback
 from pathlib import Path
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, TYPE_CHECKING
 from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
 from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory, get_bot_directory, get_python_workspace_root
 from agile_bot.bots.base_bot.src.utils import read_json_file
+
+if TYPE_CHECKING:
+    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+    from agile_bot.bots.base_bot.src.actions.action import Action
 
 logger = logging.getLogger(__name__)
 
@@ -144,24 +148,26 @@ class BaseBotCli:
     def _route_to_action(self, behavior_name: str, action_name: str, parameters: Dict[str, Any]):
         # Let exceptions propagate to run() which will handle them
         if action_name:
-            return self._route_to_specific_action(behavior_name, action_name, parameters)
+            # Convert strings to domain objects
+            behavior_obj = getattr(self.bot, behavior_name) if behavior_name else None
+            if not behavior_obj:
+                raise ValueError(f"Behavior '{behavior_name}' not found")
+            action_obj = behavior_obj.actions.find_by_name(action_name)
+            if not action_obj:
+                raise ValueError(f"Action '{action_name}' not found in behavior '{behavior_name}'")
+            return self._route_to_specific_action(behavior_obj, action_obj, parameters)
         if behavior_name:
             return self._route_to_behavior(behavior_name)
         return self._route_to_current_behavior_and_action()
     
-    def _route_to_specific_action(self, behavior_name: str, action_name: str, parameters: Dict[str, Any]):
+    def _route_to_specific_action(self, behavior: 'Behavior', action: 'Action', parameters: Dict[str, Any]):
         # Let exceptions propagate to run() which will handle them
-        behavior_obj = getattr(self.bot, behavior_name)
-        action = behavior_obj.actions.find_by_name(action_name)
-        if action is None:
-            raise ValueError(f"Action '{action_name}' not found in behavior '{behavior_name}'")
-        
         # Navigate to the action (saves workflow state)
-        behavior_obj.actions.navigate_to(action_name)
+        behavior.actions.navigate_to(action.action_name)
         
         # Execute action directly
         result_data = action.execute(parameters or {})
-        result = self._create_bot_result('completed', behavior_name, action_name, result_data)
+        result = self._create_bot_result('completed', behavior.name, action.action_name, result_data)
         return self._format_result(result)
     
     def _route_to_behavior(self, behavior_name: str):
@@ -327,7 +333,7 @@ class BaseBotCli:
         return None
     
     def _get_action_description(self, action_name: str) -> str:
-        base_actions_dir = get_base_actions_directory(bot_directory=get_bot_directory())
+        base_actions_dir = get_base_actions_directory()
         
         action_prefixes = {
             'clarify': 'clarify',
@@ -406,7 +412,21 @@ class BaseBotCli:
             if param_num == '1':
                 param_details.append(f"action:   {placeholder}")
             elif param_num == '2':
-                param_details.append("context:  Optional context or file path")
+                # Check if this is a code/validate command to add exclude/skiprule info
+                if 'code' in cmd_name.lower():
+                    param_details.append("context:  Optional context or file path (e.g., 'src')")
+                    param_details.append("           Additional options:")
+                    param_details.append("           --exclude <patterns>  File patterns to exclude (e.g., '--exclude scanners folder')")
+                    param_details.append("           --skiprule <rules>    Rule names to skip (e.g., '--skiprule eliminate_duplication')")
+                else:
+                    param_details.append("context:  Optional context or file path")
+            elif param_num == '3' and 'code' in cmd_name.lower():
+                param_details.append("exclude:  File patterns to exclude (--exclude flag added automatically)")
+            elif param_num == '4' and 'code' in cmd_name.lower():
+                param_details.append("exclude:  Additional exclude patterns (continues from previous)")
+            else:
+                # Use the inferred description for other parameters
+                param_details.append(f"{placeholder}:   {param_desc}")
         return param_placeholders, param_details
     
     def _print_command_help(self, cmd_file: Path, fmt) -> None:
@@ -574,6 +594,11 @@ class BaseBotCli:
             return 'Action name (e.g., clarify, strategy, build, render, validate)'
         elif param_num == '2':
             return 'Optional context or file path'
+        elif param_num == '3' and 'code' in cmd_name:
+            # For code behavior, $3 is for exclude patterns (--exclude flag is added automatically)
+            return 'Optional: File patterns to exclude (e.g., scanners folder). The --exclude flag is added automatically.'
+        elif param_num == '4' and 'code' in cmd_name:
+            return 'Additional exclude patterns (continues from $3)'
         
         return f'Parameter {param_num}'
     
@@ -642,6 +667,7 @@ class BaseBotCli:
         parser.add_argument('--help-cursor', action='store_true', help='List all cursor commands and parameters')
         parser.add_argument('-h', '--help', action='store_true', help='Show this help message and exit')
         parser.add_argument('--skiprule', nargs='*', help='Rule names to skip during validation (e.g., eliminate_duplication)')
+        parser.add_argument('--exclude', nargs='*', help='File patterns to exclude from validation (e.g., "agile_bot/bots/base_bot/src:*scanner*")')
         parser.add_argument('context', nargs='*', help='Additional context (file paths, parameters, etc.)')
         
         args, unknown = parser.parse_known_args()
@@ -660,6 +686,9 @@ class BaseBotCli:
         
         if args.skiprule:
             params['skiprule'] = args.skiprule
+        
+        if args.exclude:
+            params['exclude'] = args.exclude
         
         return args, params
     
@@ -872,6 +901,7 @@ class BaseBotCli:
             
             # Extract and print instructions for AI to read and display
             # CRITICAL: Instructions must be printed so AI can see them
+            # Extract variables right before processing
             data = result.get('data', {})
             instructions = data.get('instructions', {})
             
@@ -896,7 +926,7 @@ class BaseBotCli:
                         print(safe_instruction)
                 sys.stdout.flush()
             
-            # Also print JSON result for programmatic access
+            # Also print JSON result for programmatic access - create right before use
             result_json = json.dumps(result, indent=2)
             print(result_json)
             sys.stdout.flush()

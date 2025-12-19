@@ -17,6 +17,7 @@ from agile_bot.bots.base_bot.src.utils import read_json_file
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from agile_bot.bots.base_bot.src.bot.bot import Bot
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
     from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
 
@@ -45,8 +46,7 @@ class Action:
         # This ensures ValidateCodeFilesAction uses 'validate' instead of 'validate_code_files'
         final_action_name = self.action_name
         
-        bot_directory = behavior.bot_paths.bot_directory if behavior and behavior.bot_paths else None
-        base_actions_dir = get_base_actions_directory(bot_directory)
+        base_actions_dir = get_base_actions_directory()
         base_config_path = base_actions_dir / final_action_name / "action_config.json"
         
         self._base_config = read_json_file(base_config_path)
@@ -183,9 +183,9 @@ class Action:
                 current_action_from_state = parts[2]
         return completed_actions, current_action_from_state
     
-    def _get_completed_actions_for_behavior(self, bot_name: str, behavior_name: str, completed_actions: list) -> list:
+    def _get_completed_actions_for_behavior(self, bot: 'Bot', behavior: 'Behavior', completed_actions: list) -> list:
         """Get list of completed action names for a specific behavior."""
-        behavior_prefix = f'{bot_name}.{behavior_name}.'
+        behavior_prefix = f'{bot.name}.{behavior.name}.'
         return [
             action.get('action_state', '').split('.')[-1]
             for action in completed_actions
@@ -259,7 +259,7 @@ class Action:
                     continue
                 
                 behavior_actions = behavior_obj.actions.names
-                completed_for_behavior = self._get_completed_actions_for_behavior(bot_name, behavior_name, completed_actions)
+                completed_for_behavior = self._get_completed_actions_for_behavior(self.behavior.bot, behavior_obj, completed_actions)
                 
                 if behavior_name == current_behavior_name:
                     current_action = current_behavior.actions.current
@@ -274,10 +274,8 @@ class Action:
                 else:
                     remaining_behaviors.append({'name': behavior_name, 'actions': behavior_actions, 'completed': completed_for_behavior})
             
-            # Build output
+            # Build output - declare variables just before they're used
             bot_dir = self.behavior.bot_paths.bot_directory
-            DONE, CURRENT, PENDING = "\u2713", "\u27A4", "\u2610"
-            
             lines = [
                 "**CRITICAL: YOU MUST DISPLAY THE ENTIRE WORKFLOW STATUS BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**",
                 "", "## Workflow Status", "",
@@ -295,6 +293,8 @@ class Action:
             
             lines.extend(["", "## Workflow Progress", ""])
             
+            # Declare emoji constants just before they're used
+            DONE, CURRENT, PENDING = "\u2713", "\u27A4", "\u2610"
             for behavior_name in all_behaviors:
                 if behavior_name in completed_behaviors:
                     lines.append(f"### {DONE} **{behavior_name}**")
@@ -415,15 +415,21 @@ class Action:
         Any exceptions are caught, formatted with full traceback, and included
         in the result dict so the CLI can display them to the user. The exception
         is then re-raised to ensure proper error propagation.
+        
+        If result contains '_background_execution': True, completion tracking is
+        skipped (assumed to be handled by the background thread).
         """
         self.track_activity_on_start()
         try:
             result = self.do_execute(parameters or {})
-            self.track_activity_on_completion(outputs=result)
+            # Only track completion if not running in background
+            # Background operations should track completion themselves when they finish
+            if not result.get('_background_execution', False):
+                self.track_activity_on_completion(outputs=result)
             result = self._inject_reminders_if_final(result)
             return result
         except Exception as e:
-            # Capture full error details for display
+            # Capture full error details for display - declare variables right before use
             error_type = type(e).__name__
             error_message = str(e)
             full_traceback = traceback.format_exc()
