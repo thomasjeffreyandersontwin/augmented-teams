@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, TYPE_CHECKING
+from agile_bot.bots.base_bot.src.utils import read_json_file
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
     from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
@@ -102,7 +103,8 @@ class BehaviorActionStatusBuilder:
         current_behavior_actions = categorization['current_behavior_actions']
         current_action_name = categorization['current_action_name']
         current_behavior_completed = categorization['current_behavior_completed']
-        for behavior_name in all_behaviors:
+        ordered_behaviors = self._get_ordered_behaviors(all_behaviors)
+        for behavior_name in ordered_behaviors:
             if behavior_name in completed_behaviors:
                 lines.append(f'### {DONE} **{behavior_name}**')
             elif behavior_name == current_behavior_name:
@@ -126,6 +128,27 @@ class BehaviorActionStatusBuilder:
             return f'  - {DONE} {action_name}'
         return f'  - {PENDING} {action_name}'
 
+    def _get_ordered_behaviors(self, all_behaviors: list) -> list:
+        """Get behaviors ordered according to bot_config.json."""
+        if not self.behavior or not self.behavior.bot:
+            return all_behaviors
+        try:
+            bot_config_path = self.behavior.bot_paths.bot_directory / 'bot_config.json'
+            if not bot_config_path.exists():
+                return all_behaviors
+            config = read_json_file(bot_config_path)
+            behavior_order = config.get('behaviors', [])
+            if not behavior_order:
+                return all_behaviors
+            behavior_set = set(all_behaviors)
+            ordered_list = [b for b in behavior_order if b in behavior_set]
+            for b in all_behaviors:
+                if b not in behavior_order:
+                    ordered_list.append(b)
+            return ordered_list
+        except Exception:
+            return all_behaviors
+
     def _get_default_breadcrumbs(self) -> list:
         PENDING = '☐'
         lines = ['## Behavior/Action Status', '']
@@ -139,9 +162,10 @@ class BehaviorActionStatusBuilder:
                 raise
             try:
                 all_behaviors = self.behavior.bot.behaviors.names
+                ordered_behaviors = self._get_ordered_behaviors(all_behaviors)
                 lines.append('## Behavior/Action Progress')
                 lines.append('')
-                for behavior_name in all_behaviors:
+                for behavior_name in ordered_behaviors:
                     lines.append(f'### {PENDING} **{behavior_name}**')
                 lines.append('')
                 lines.append('*(No workspace configured - run from a project directory)*')

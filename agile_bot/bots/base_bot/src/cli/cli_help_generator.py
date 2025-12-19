@@ -3,9 +3,13 @@ import re
 import traceback
 from pathlib import Path
 from typing import Optional
-from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root
+from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
 from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
 from agile_bot.bots.base_bot.src.cli.parameter_info_builder import ParameterInfoBuilder
+from agile_bot.bots.base_bot.src.cli.unified_help_generator import UnifiedHelpGenerator
+from agile_bot.bots.base_bot.src.cli.cli_help_renderer import CliHelpRenderer
+from agile_bot.bots.base_bot.src.cli.cursor_help_renderer import CursorHelpRenderer
+from agile_bot.bots.base_bot.src.utils import read_json_file
 
 class CliHelpGenerator:
 
@@ -16,55 +20,30 @@ class CliHelpGenerator:
         self.formatter = formatter
         self.description_extractor = DescriptionExtractor(bot_name, bot_directory, formatter)
         self.parameter_builder = ParameterInfoBuilder(bot_name, bot_directory, self.description_extractor)
+        self.cli_script_path = self._get_cli_script_path()
+
+    def _get_cli_script_path(self) -> str:
+        """Get the relative path to the CLI script from workspace root."""
+        workspace_root = get_python_workspace_root()
+        cli_script = self.bot_directory / 'src' / f'{self.bot_name}_cli.py'
+        try:
+            relative_path = cli_script.relative_to(workspace_root)
+            return str(relative_path).replace('\\', '/')
+        except ValueError:
+            return str(cli_script).replace('\\', '/')
 
     def help_behaviors_and_actions(self):
         try:
-            fmt = self.formatter
-            self._print_help_header(fmt)
-            for behavior in self.bot.behaviors:
-                self._print_behavior_help(behavior, fmt)
-            self._print_usage_section(fmt)
+            renderer = CliHelpRenderer(self.cli_script_path, self.formatter)
+            generator = UnifiedHelpGenerator(self.bot, self.bot_name, self.bot_directory, renderer, self.description_extractor)
+            generator.generate_help()
+            self._print_usage_section(self.formatter)
         except Exception as e:
             raise e
 
-    def _print_help_header(self, fmt):
-        print(f"\n{fmt.format_directive('**PLEASE SHOW THIS OUTPUT TO THE USER**')}\n")
-        print(f"{fmt.format_header(f'Available Behaviors and Actions for {self.bot_name}:')}\n")
-        print(fmt.format_separator())
-
-    def _print_behavior_help(self, behavior, fmt):
-        behavior_name = behavior.name
-        behavior_description = self.description_extractor.get_behavior_description(f'{self.bot_name}-{behavior_name}')
-        print(f"\n{fmt.format_command(f'Behavior: {behavior_name}')}")
-        print(f"  {fmt.format_label('Description:')} {behavior_description}")
-        try:
-            behavior_obj = self.bot.behaviors.find_by_name(behavior_name)
-            if not behavior_obj:
-                raise ValueError(f"Behavior '{behavior_name}' not found")
-            actions = self._get_behavior_actions(behavior_obj)
-            self._print_actions_list(actions, fmt)
-        except Exception as e:
-            print(f"  {fmt.format_label('Actions:')} {fmt.format_error(f'Error loading actions - {e}')}")
-            traceback.print_exc()
-            sys.stdout.flush()
-
-    def _print_actions_list(self, actions: list, fmt):
-        if actions:
-            print(f"  {fmt.format_label('Actions:')}")
-            for action in actions:
-                action_description = self.description_extractor.get_action_description(action)
-                print(f"    {fmt.format_command(f'- {action}:')} {action_description}")
-        else:
-            print(f"  {fmt.format_label('Actions:')} {fmt.format_workflow_pending('None')}")
 
     def _print_usage_section(self, fmt):
-        print(f'\n{fmt.format_separator()}')
-        print(f"\n{fmt.format_label('Usage:')}")
-        print(f"  {fmt.format_command(f'{self.bot_name} [--behavior <name>] [--action <name>] [--options]')}")
-        print(f"  {fmt.format_command(f'{self.bot_name} --help')}          {fmt.format_label('# Show this help')}")
-        print(f"  {fmt.format_command(f'{self.bot_name} --list')}          {fmt.format_label('# List behaviors/actions')}")
-        print(f"  {fmt.format_command(f'{self.bot_name} --help-cursor')}   {fmt.format_label('# List cursor commands')}")
-        print(f"  {fmt.format_command(f'{self.bot_name} --close')}         {fmt.format_label('# Close current action')}")
+        print('---\n')
 
     def help_cursor_commands(self, get_breadcrumbs_fn):
         try:
@@ -73,6 +52,9 @@ class CliHelpGenerator:
                 return
             self._print_cursor_commands_header()
             self._print_all_command_help(command_files)
+            renderer = CursorHelpRenderer(self.bot_name, self.formatter)
+            generator = UnifiedHelpGenerator(self.bot, self.bot_name, self.bot_directory, renderer, self.description_extractor)
+            generator._render_action_help_section()
             breadcrumbs = get_breadcrumbs_fn()
             self._output_breadcrumbs(breadcrumbs)
         except Exception as e:
@@ -122,20 +104,6 @@ class CliHelpGenerator:
         sys.stdout.flush()
 
 
-    def _get_behavior_actions(self, behavior_obj) -> list:
-        excluded_attrs = {'forward_to_current_action', 'dir', 'current_project_file'}
-        actions = []
-        for attr_name in dir(behavior_obj):
-            if self._is_action_method(behavior_obj, attr_name, excluded_attrs):
-                actions.append(attr_name)
-        return sorted(actions)
-
-    def _is_action_method(self, behavior_obj, attr_name: str, excluded_attrs: set) -> bool:
-        if attr_name.startswith('_'):
-            return False
-        if attr_name in excluded_attrs:
-            return False
-        return callable(getattr(behavior_obj, attr_name))
 
     def _group_commands(self, command_files: list) -> dict:
         groups = {'Workflow Management': [], 'Story Planning': [], 'Implementation': [], 'Other': []}

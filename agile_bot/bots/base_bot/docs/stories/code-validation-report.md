@@ -1,112 +1,27 @@
 # Validation Report - Code
 
-**Generated:** 2025-12-19 10:31:45
+**Generated:** 2025-12-19 18:46:06
 **Project:** base_bot
 **Behavior:** code
 **Action:** validate
 
 ## Summary
 
-Validated story map and domain model against **40 validation rules**.
+Validated story map and domain model and 7 code file(s) against **33 validation rules**.
 
 ## Content Validated
 
 - **Rendered Outputs:**
   - `story-graph.json`
 - **Code Files Scanned:**
-  - `src\actions\action.py`
-  - `src\actions\action_factory.py`
-  - `src\actions\action_scope.py`
-  - `src\actions\action_state_manager.py`
-  - `src\actions\actions.py`
-  - `src\actions\activity_tracker.py`
-  - `src\actions\build\build_action.py`
-  - `src\actions\build\build_scope.py`
-  - `src\actions\build\knowledge.py`
-  - `src\actions\build\knowledge_graph_spec.py`
-  - `src\actions\build\knowledge_graph_template.py`
-  - `src\actions\clarify\clarify_action.py`
-  - `src\actions\clarify\evidence.py`
-  - `src\actions\clarify\key_questions.py`
-  - `src\actions\clarify\recommended_activities.py`
-  - `src\actions\clarify\required_context.py`
-  - `src\actions\clarify\requirements_clarifications.py`
-  - `src\actions\content.py`
-  - `src\actions\context_data_injector.py`
-  - `src\actions\guardrails.py`
-  - `src\actions\render\evidence.py`
-  - `src\actions\render\render_action.py`
-  - `src\actions\render\render_config_loader.py`
-  - `src\actions\render\render_instruction_formatter.py`
-  - `src\actions\render\render_spec.py`
-  - `src\actions\render\synchronizer.py`
-  - `src\actions\render\template.py`
-  - `src\actions\strategy\assumptions.py`
-  - `src\actions\strategy\json_persistent.py`
-  - `src\actions\strategy\recommended_activities.py`
-  - `src\actions\strategy\strategy.py`
-  - `src\actions\strategy\strategy_action.py`
-  - `src\actions\strategy\strategy_criteria.py`
-  - `src\actions\strategy\strategy_criterias.py`
-  - `src\actions\strategy\strategy_decision.py`
-  - `src\actions\validate\background_validation_handler.py`
-  - `src\actions\validate\file_discovery.py`
-  - `src\actions\validate\file_link_builder.py`
-  - `src\actions\validate\knowledge_graph.py`
-  - `src\actions\validate\path_resolver.py`
-  - `src\actions\validate\rule.py`
-  - `src\actions\validate\rule_filter.py`
-  - `src\actions\validate\rule_loader.py`
-  - `src\actions\validate\rules.py`
-  - `src\actions\validate\scanner_status_formatter.py`
-  - `src\actions\validate\story_graph.py`
-  - `src\actions\validate\validate_action.py`
-  - `src\actions\validate\validation_executor.py`
-  - `src\actions\validate\validation_report_builder.py`
-  - `src\actions\validate\validation_report_formatter.py`
-  - `src\actions\validate\validation_report_writer.py`
-  - `src\actions\validate\validation_scanner_status_builder.py`
-  - `src\actions\validate\validation_scope.py`
-  - `src\actions\validate\validation_stats.py`
-  - `src\actions\validate\validation_violations_builder.py`
-  - `src\actions\validate\violation_formatter.py`
-  - `src\actions\workflow_status_builder.py`
-  - `src\bot\behavior.py`
-  - `src\bot\behaviors.py`
-  - `src\bot\bot.py`
-  - `src\bot\bot_paths.py`
-  - `src\bot\instructions.py`
-  - `src\bot\merged_instructions.py`
-  - `src\bot\reminders.py`
-  - `src\bot\trigger_words.py`
-  - `src\bot\workspace.py`
-  - `src\cli\base_bot_cli.py`
-  - `src\cli\behavior_matcher.py`
-  - `src\cli\bot_matcher.py`
-  - `src\cli\cli_command_router.py`
-  - `src\cli\cli_executor.py`
   - `src\cli\cli_generator.py`
   - `src\cli\cli_help_generator.py`
-  - `src\cli\cli_parameter_parser.py`
-  - `src\cli\cli_script_generator.py`
+  - `src\cli\cli_help_renderer.py`
   - `src\cli\cursor_command_generator.py`
-  - `src\cli\description_extractor.py`
-  - `src\cli\parameter_info_builder.py`
-  - `src\cli\trigger_domain.py`
-  - `src\cli\trigger_router.py`
-  - `src\cli\trigger_router_entry.py`
-  - `src\mcp\behavior_tool_generator.py`
-  - `src\mcp\bot_tool_generator.py`
-  - `src\mcp\mcp_code_generator.py`
-  - `src\mcp\mcp_config_generator.py`
-  - `src\mcp\mcp_server.py`
-  - `src\mcp\mcp_server_generator.py`
-  - `src\mcp\mcp_tool_registrar.py`
-  - `src\mcp\server_deployer.py`
-  - `src\mcp\server_restart.py`
-  - `src\story_graph\domain.py`
-  - `src\story_graph\nodes.py`
-  - **Total:** 92 src file(s)
+  - `src\cli\cursor_help_renderer.py`
+  - `src\cli\help_renderer.py`
+  - `src\cli\unified_help_generator.py`
+  - **Total:** 7 src file(s)
 
 ## Scanner Execution Status
 
@@ -114,71 +29,65 @@ Validated story map and domain model against **40 validation rules**.
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| 🟩 Executed Successfully | 34 | Scanners ran without errors |
-| 🟩 Clean Rules | 24 | No violations found |
-| 🟨 Rules with Warnings | 7 | Found 27 warning violation(s) |
-| 🟥 Rules with Errors | 1 | Found 1 error violation(s) |
-| [i] No Scanner | 6 | Rule has no scanner configured |
+| 🟩 Executed Successfully | 31 | Scanners ran without errors |
+| 🟩 Clean Rules | 27 | No violations found |
+| 🟨 Rules with Warnings | 3 | Found 13 warning violation(s) |
+| 🟥 Rules with Errors | 1 | Found 25 error violation(s) |
+| [i] No Scanner | 2 | Rule has no scanner configured |
 
-**Total Rules:** 40
-- **Rules with Scanners:** 34
-  - 🟩 **Executed Successfully:** 34
-- [i] **Rules without Scanners:** 6
+**Total Rules:** 33
+- **Rules with Scanners:** 31
+  - 🟩 **Executed Successfully:** 31
+- [i] **Rules without Scanners:** 2
 
 ### 🟩 Successfully Executed Scanners
 
-- 🟨 **[Use Clear Function Parameters](#use-clear-function-parameters)** - 14 violation(s) (EXECUTION_SUCCESS) - [View Details](#use-clear-function-parameters-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.clear_parameters_scanner.ClearParametersScanner`
-- 🟨 **[Avoid Excessive Guards](#avoid-excessive-guards)** - 6 violation(s) (EXECUTION_SUCCESS) - [View Details](#avoid-excessive-guards-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.excessive_guards_scanner.ExcessiveGuardsScanner`
-- 🟨 **[Avoid Unnecessary Parameter Passing](#avoid-unnecessary-parameter-passing)** - 2 violation(s) (EXECUTION_SUCCESS) - [View Details](#avoid-unnecessary-parameter-passing-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.scanners.unnecessary_parameter_passing_scanner.UnnecessaryParameterPassingScanner`
-- 🟨 **[Provide Meaningful Context](#provide-meaningful-context)** - 2 violation(s) (EXECUTION_SUCCESS) - [View Details](#provide-meaningful-context-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.meaningful_context_scanner.MeaningfulContextScanner`
-- 🟨 **[Chain Dependencies Properly](#chain-dependencies-properly)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#chain-dependencies-properly-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.dependency_chaining_code_scanner.DependencyChainingCodeScanner`
-- 🟨 **[Delegate To Lowest Level](#delegate-to-lowest-level)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#delegate-to-lowest-level-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.delegation_code_scanner.DelegationCodeScanner`
-- 🟥 **[Eliminate Duplication](#eliminate-duplication)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#eliminate-duplication-violations)
+- 🟥 **[Eliminate Duplication](#eliminate-duplication)** - 25 violation(s) (EXECUTION_SUCCESS) - [View Details](#eliminate-duplication-violations)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner`
-- 🟨 **[Keep Functions Small Focused](#keep-functions-small-focused)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#keep-functions-small-focused-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
-- 🟨 **[Remove Bad Comments](#remove-bad-comments)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#remove-bad-comments-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.bad_comments_scanner.BadCommentsScanner`
-- 🟨 **[Simplify Control Flow](#simplify-control-flow)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#simplify-control-flow-violations)
+- 🟨 **[Use Clear Function Parameters](#use-clear-function-parameters)** - 6 violation(s) (EXECUTION_SUCCESS) - [View Details](#use-clear-function-parameters-violations)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.clear_parameters_scanner.ClearParametersScanner`
+- 🟨 **[Simplify Control Flow](#simplify-control-flow)** - 4 violation(s) (EXECUTION_SUCCESS) - [View Details](#simplify-control-flow-violations)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.simplify_control_flow_scanner.SimplifyControlFlowScanner`
+- 🟨 **[Chain Dependencies Properly](#chain-dependencies-properly)** - 3 violation(s) (EXECUTION_SUCCESS) - [View Details](#chain-dependencies-properly-violations)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.dependency_chaining_code_scanner.DependencyChainingCodeScanner`
+- 🟩 **[Avoid Excessive Guards](#avoid-excessive-guards)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.excessive_guards_scanner.ExcessiveGuardsScanner`
+- 🟩 **[Avoid Unnecessary Parameter Passing](#avoid-unnecessary-parameter-passing)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.scanners.unnecessary_parameter_passing_scanner.UnnecessaryParameterPassingScanner`
 - 🟩 **[Classify Exceptions By Caller Needs](#classify-exceptions-by-caller-needs)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.exception_classification_scanner.ExceptionClassificationScanner`
+- 🟩 **[Delegate To Lowest Level](#delegate-to-lowest-level)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.delegation_code_scanner.DelegationCodeScanner`
 - 🟩 **[Enforce Encapsulation](#enforce-encapsulation)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.encapsulation_scanner.EncapsulationScanner`
 - 🟩 **[Favor Code Representation](#favor-code-representation)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.code_representation_code_scanner.CodeRepresentationCodeScanner`
-- 🟩 **[Follow Open Closed Principle](#follow-open-closed-principle)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.open_closed_principle_scanner.OpenClosedPrincipleScanner`
 - 🟩 **[Group By Domain](#group-by-domain)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.domain_grouping_code_scanner.DomainGroupingCodeScanner`
+- 🟩 **[Hide Business Logic Behind Properties](#hide-business-logic-behind-properties)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.calculation_timing_code_scanner.CalculationTimingCodeScanner`
 - 🟩 **[Hide Calculation Timing](#hide-calculation-timing)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.calculation_timing_code_scanner.CalculationTimingCodeScanner`
 - 🟩 **[Keep Classes Small With Single Responsibility](#keep-classes-small-with-single-responsibility)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.class_size_scanner.ClassSizeScanner`
 - 🟩 **[Keep Functions Single Responsibility](#keep-functions-single-responsibility)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.single_responsibility_scanner.SingleResponsibilityScanner`
+- 🟩 **[Keep Functions Small Focused](#keep-functions-small-focused)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
 - 🟩 **[Maintain Test Quality](#maintain-test-quality)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.test_quality_scanner.TestQualityScanner`
 - 🟩 **[Maintain Vertical Density](#maintain-vertical-density)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.vertical_density_scanner.VerticalDensityScanner`
-- 🟩 **[Minimize Mutable State](#minimize-mutable-state)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.minimize_mutable_state_scanner.MinimizeMutableStateScanner`
 - 🟩 **[Never Swallow Exceptions](#never-swallow-exceptions)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.swallowed_exceptions_scanner.SwallowedExceptionsScanner`
 - 🟩 **[Place Imports At Top](#place-imports-at-top)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.import_placement_scanner.ImportPlacementScanner`
+- 🟩 **[Provide Meaningful Context](#provide-meaningful-context)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.meaningful_context_scanner.MeaningfulContextScanner`
 - 🟩 **[Refactor Completely Not Partially](#refactor-completely-not-partially)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.complete_refactoring_scanner.CompleteRefactoringScanner`
 - 🟩 **[Stop Writing Useless Comments](#stop-writing-useless-comments)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.useless_comments_scanner.UselessCommentsScanner`
-- 🟩 **[Test Boundary Behavior](#test-boundary-behavior)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.test_boundary_behavior_scanner.TestBoundaryBehaviorScanner`
 - 🟩 **[Test One Concept Per Test](#test-one-concept-per-test)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.one_concept_per_test_scanner.OneConceptPerTestScanner`
 - 🟩 **[Use Consistent Indentation](#use-consistent-indentation)** - 0 violations (EXECUTION_SUCCESS)
@@ -199,57 +108,48 @@ Validated story map and domain model against **40 validation rules**.
 ### <span style="color: gray;">[i] Rules Without Scanners</span>
 
 - <span style="color: gray;">[i]</span> **[Detect Legacy Unused Code](#detect-legacy-unused-code)** - No scanner configured
-- <span style="color: gray;">[i]</span> **[Enforce Team Formatting Consensus](#enforce-team-formatting-consensus)** - No scanner configured
-- <span style="color: gray;">[i]</span> **[Handle Backward Compatibility](#handle-backward-compatibility)** - No scanner configured
-- <span style="color: gray;">[i]</span> **[Practice Test Driven Development](#practice-test-driven-development)** - No scanner configured
 - <span style="color: gray;">[i]</span> **[Refactor Tests With Production Code](#refactor-tests-with-production-code)** - No scanner configured
-- <span style="color: gray;">[i]</span> **[Write Good Comments](#write-good-comments)** - No scanner configured
 
 ## Validation Rules Checked
 
-### 🟥 Rule: <span id="eliminate-duplication">Eliminate Duplication</span> - 1 ERROR(S) - [View Details](#eliminate-duplication-violations)
+### 🟥 Rule: <span id="eliminate-duplication">Eliminate Duplication</span> - 25 ERROR(S) - [View Details](#eliminate-duplication-violations)
 **Description:** CRITICAL: Every piece of knowledge should have a single, authoritative representation (DRY principle). Extract repeated logic into reusable functions and use abstraction to capture common patterns.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟨 Rule: <span id="use-clear-function-parameters">Use Clear Function Parameters</span> - 14 WARNING(S) - [View Details](#use-clear-function-parameters-violations)
+### 🟨 Rule: <span id="use-clear-function-parameters">Use Clear Function Parameters</span> - 6 WARNING(S) - [View Details](#use-clear-function-parameters-violations)
 **Description:** Function signatures should be simple and intention-revealing. Prefer 0-2 parameters; use objects for more complex needs.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.clear_parameters_scanner.ClearParametersScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟨 Rule: <span id="avoid-excessive-guards">Avoid Excessive Guards</span> - 6 WARNING(S) - [View Details](#avoid-excessive-guards-violations)
-**Description:** Excessive guard clauses add to cyclomatic complexity and make code harder to read. Centralize error handling in one place rather than scattering defensive checks throughout the code. Let code fail fast with clear errors rather than silently handling missing components.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.excessive_guards_scanner.ExcessiveGuardsScanner`
+### 🟨 Rule: <span id="simplify-control-flow">Simplify Control Flow</span> - 4 WARNING(S) - [View Details](#simplify-control-flow-violations)
+**Description:** Keep nesting minimal and control flow straightforward. Use guard clauses to reduce nesting and extract nested blocks into separate functions.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.simplify_control_flow_scanner.SimplifyControlFlowScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟨 Rule: <span id="avoid-unnecessary-parameter-passing">Avoid Unnecessary Parameter Passing</span> - 2 WARNING(S) - [View Details](#avoid-unnecessary-parameter-passing-violations)
-**Description:** Don't pass parameters to internal methods when the value is already accessible through instance variables. Access instance properties directly instead of passing them around unnecessarily.
-**Scanner:** `agile_bot.bots.base_bot.src.scanners.unnecessary_parameter_passing_scanner.UnnecessaryParameterPassingScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
-### 🟨 Rule: <span id="provide-meaningful-context">Provide Meaningful Context</span> - 2 WARNING(S) - [View Details](#provide-meaningful-context-violations)
-**Description:** Names should provide appropriate context without redundancy. Use longer names for longer scopes and replace magic numbers with named constants.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.meaningful_context_scanner.MeaningfulContextScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
-### 🟨 Rule: <span id="chain-dependencies-properly">Chain Dependencies Properly</span> - 1 WARNING(S) - [View Details](#chain-dependencies-properly-violations)
+### 🟨 Rule: <span id="chain-dependencies-properly">Chain Dependencies Properly</span> - 3 WARNING(S) - [View Details](#chain-dependencies-properly-violations)
 **Description:** CRITICAL: Code must chain dependencies properly with constructor injection. Map dependencies in a chain: highest-level object → collaborator → sub-collaborator. Inject collaborators at construction time so methods can use them without passing them as parameters. Access sub-collaborators through their owning objects.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.dependency_chaining_code_scanner.DependencyChainingCodeScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟨 Rule: <span id="remove-bad-comments">Remove Bad Comments</span> - 1 WARNING(S) - [View Details](#remove-bad-comments-violations)
-**Description:** CRITICAL: Some comments actively harm readability. Delete commented-out code (it's in git), remove misleading or outdated comments, and eliminate redundant noise.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.bad_comments_scanner.BadCommentsScanner`
+### 🟩 Rule: <span id="avoid-excessive-guards">Avoid Excessive Guards</span> - CLEAN (0 violations)
+**Description:** Excessive guard clauses add to cyclomatic complexity and make code harder to read. Centralize error handling in one place rather than scattering defensive checks throughout the code. Let code fail fast with clear errors rather than silently handling missing components.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.excessive_guards_scanner.ExcessiveGuardsScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟨 Rule: <span id="simplify-control-flow">Simplify Control Flow</span> - 1 WARNING(S) - [View Details](#simplify-control-flow-violations)
-**Description:** Keep nesting minimal and control flow straightforward. Use guard clauses to reduce nesting and extract nested blocks into separate functions.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.simplify_control_flow_scanner.SimplifyControlFlowScanner`
+### 🟩 Rule: <span id="avoid-unnecessary-parameter-passing">Avoid Unnecessary Parameter Passing</span> - CLEAN (0 violations)
+**Description:** Don't pass parameters to internal methods when the value is already accessible through instance variables. Access instance properties directly instead of passing them around unnecessarily.
+**Scanner:** `agile_bot.bots.base_bot.src.scanners.unnecessary_parameter_passing_scanner.UnnecessaryParameterPassingScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
 ### 🟩 Rule: <span id="classify-exceptions-by-caller-needs">Classify Exceptions By Caller Needs</span> - CLEAN (0 violations)
 **Description:** Design exceptions based on how callers will handle them. Create exception types based on caller's needs, use special case objects for predictable failures, and wrap third-party exceptions at boundaries.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.exception_classification_scanner.ExceptionClassificationScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
+### 🟩 Rule: <span id="delegate-to-lowest-level">Delegate To Lowest Level</span> - CLEAN (0 violations)
+**Description:** CRITICAL: Code must delegate responsibilities to the lowest-level object that can handle them. If a collection class can do something, delegate to it rather than implementing it in the parent.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.delegation_code_scanner.DelegationCodeScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
 ### 🟩 Rule: <span id="enforce-encapsulation">Enforce Encapsulation</span> - CLEAN (0 violations)
@@ -262,18 +162,18 @@ Validated story map and domain model against **40 validation rules**.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.code_representation_code_scanner.CodeRepresentationCodeScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟩 Rule: <span id="follow-open-closed-principle">Follow Open Closed Principle</span> - CLEAN (0 violations)
-**Description:** Open for extension, closed for modification. Design for extension without modification, depend on interfaces/abstractions not concrete types, and use composition over inheritance.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.open_closed_principle_scanner.OpenClosedPrincipleScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
 ### 🟩 Rule: <span id="group-by-domain">Group By Domain</span> - CLEAN (0 violations)
 **Description:** CRITICAL: Code must be organized by domain area and relationships, not by technical layers, object types, or architectural concerns.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.domain_grouping_code_scanner.DomainGroupingCodeScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
+### 🟩 Rule: <span id="hide-business-logic-behind-properties">Hide Business Logic Behind Properties</span> - CLEAN (0 violations)
+**Description:** CRITICAL: Hide business logic behind properties. Properties hide logic that occurs—it may be computed on-demand, cached, pre-computed, or loaded from storage. The caller shouldn't know or care when the values are calculated / determined.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.calculation_timing_code_scanner.CalculationTimingCodeScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
 ### 🟩 Rule: <span id="hide-calculation-timing">Hide Calculation Timing</span> - CLEAN (0 violations)
-**Description:** CRITICAL: Code must hide calculation timing. Properties hide when calculations occur—they may be computed on-demand, cached, pre-computed, or loaded from storage. The caller shouldn't know or care when the value was calculated.
+**Description:** CRITICAL: Code must hide calculations. Properties hide logic that occurs—it may be computed on-demand, cached, pre-computed, or loaded from storage. The caller shouldn't know or care when the values are calculated / determined.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.calculation_timing_code_scanner.CalculationTimingCodeScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
@@ -287,6 +187,11 @@ Validated story map and domain model against **40 validation rules**.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.single_responsibility_scanner.SingleResponsibilityScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
+### 🟩 Rule: <span id="keep-functions-small-focused">Keep Functions Small Focused</span> - CLEAN (0 violations)
+**Description:** Functions should be small enough to understand at a glance. Keep functions under 20 lines when possible and extract complex logic into named helper functions.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
 ### 🟩 Rule: <span id="maintain-test-quality">Maintain Test Quality</span> - CLEAN (0 violations)
 **Description:** CRITICAL: Tests should be as clean as production code. Keep tests readable and maintainable, use descriptive test names, and follow FIRST principles (Fast, Independent, Repeatable, Self-validating, Timely).
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.test_quality_scanner.TestQualityScanner`
@@ -297,122 +202,651 @@ Validated story map and domain model against **40 validation rules**.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.vertical_density_scanner.VerticalDensityScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟩 Rule: <span id="minimize-mutable-state">Minimize Mutable State</span> - CLEAN (0 violations)
-**Description:** CRITICAL: Prefer immutable data structures and pure functions. Use immutable data structures by default, create new objects instead of mutating, and make immutability explicit in type system.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.minimize_mutable_state_scanner.MinimizeMutableStateScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
 ### 🟩 Rule: <span id="never-swallow-exceptions">Never Swallow Exceptions</span> - CLEAN (0 violations)
 **Description:** CRITICAL: Never swallow exceptions silently. Empty catch blocks hide failures and make debugging impossible. Always log, handle, or rethrow exceptions with context.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.swallowed_exceptions_scanner.SwallowedExceptionsScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-*... and 20 more rules*
+### 🟩 Rule: <span id="place-imports-at-top">Place Imports At Top</span> - CLEAN (0 violations)
+**Description:** Place all import statements at the top of the file, after module docstrings and comments, but before any executable code. This improves readability and makes dependencies clear.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.import_placement_scanner.ImportPlacementScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
+*... and 13 more rules*
 
 ## Violations Found
 
-**Total Violations:** 30
-- **File-by-File Violations:** 30
-- **Cross-File Violations:** 0
+**Total Violations:** 38
+- **File-by-File Violations:** 13
+- **Cross-File Violations:** 25
 
 ### File-by-File Violations (Pass 1)
 
 These violations were detected by scanning each file individually.
 
-#### <span id="avoid-excessive-guards-violations">Avoid Excessive Guards: 6 violation(s)</span>
+#### <span id="chain-dependencies-properly-violations">Chain Dependencies Properly: 3 violation(s)</span>
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\actions.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/actions.py:156): Line 156: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\file_link_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/file_link_builder.py:27): Line 27: Variable truthiness check detected (if not is_absolute:). Assume variable exists - let code fail fast if missing.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\file_link_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/file_link_builder.py:52): Line 52: Variable truthiness check detected (if line_number:). Assume variable exists - let code fail fast if missing.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rules.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rules.py:42): Line 42: Variable truthiness check detected (if has_scope_in_params:). Assume variable exists - let code fail fast if missing.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\bot\behaviors.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/bot/behaviors.py:247): Line 247: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\bot\behaviors.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/bot/behaviors.py:251): Line 251: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cursor_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:12): Method "render_header" in Test class [CursorHelpRenderer](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:12) takes parameter "bot_name" that is already injected in __init__. Use self.bot_name instead.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cursor_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:20): Method "render_behavior_section" in Test class [CursorHelpRenderer](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:20) takes parameter "bot_name" that is already injected in __init__. Use self.bot_name instead.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cursor_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:42): Method "render_action_help" in Test class [CursorHelpRenderer](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:42) takes parameter "bot_name" that is already injected in __init__. Use self.bot_name instead.
 
-#### <span id="avoid-unnecessary-parameter-passing-violations">Avoid Unnecessary Parameter Passing: 2 violation(s)</span>
+#### <span id="simplify-control-flow-violations">Simplify Control Flow: 4 violation(s)</span>
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\actions.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/actions.py:114): Instance property "self.current" is extracted to variable "current_action_obj" and passed to internal method "_mark_action_completed". Access via self.current directly instead.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\build\build_action.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/build/build_action.py:51): Instance property "self.knowledge_graph_spec.knowledge_graph" is extracted to variable "story_graph" and passed to internal method "_add_update_instructions". Access via self.knowledge_graph_spec.knowledge_graph directly instead.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\unified_help_generator.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/unified_help_generator.py:82): Function "_get_action_parameters" has nesting depth of 5 - use guard clauses and extract nested blocks to reduce nesting
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\unified_help_generator.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/unified_help_generator.py:99): Function "_get_parameter_descriptions" has nesting depth of 7 - use guard clauses and extract nested blocks to reduce nesting
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:38): Function "render_action_help" has nesting depth of 4 - use guard clauses and extract nested blocks to reduce nesting
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cursor_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:42): Function "render_action_help" has nesting depth of 4 - use guard clauses and extract nested blocks to reduce nesting
 
-#### <span id="chain-dependencies-properly-violations">Chain Dependencies Properly: 1 violation(s)</span>
+#### <span id="use-clear-function-parameters-violations">Use Clear Function Parameters: 6 violation(s)</span>
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rule_loader.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rule_loader.py:20): Method "_load_rules_from_glob" in Test class [RuleLoader](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rule_loader.py:20) takes parameter "behavior" that is already injected in __init__. Use self.behavior instead.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:17): Function "render_behavior_section" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:38): Function "render_action_help" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cursor_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:20): Function "render_behavior_section" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\cursor_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cursor_help_renderer.py:42): Function "render_action_help" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/help_renderer.py:14): Function "render_behavior_section" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
+- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/help_renderer.py:24): Function "render_action_help" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
 
-#### <span id="delegate-to-lowest-level-violations">Delegate To Lowest Level: 1 violation(s)</span>
+### Cross-File Violations (Pass 2)
 
-- <span style="color: blue;">[i]</span> **INFO** - [`src\actions\validate\file_discovery.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/file_discovery.py:21): Method "should_include_file" in Test class [FileDiscovery](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/file_discovery.py:21) iterates through "exclude_patterns" instead of delegating to collection class. Delegate to collection class instead.
+These violations were detected by analyzing all files together to find patterns that span multiple files.
 
-#### <span id="eliminate-duplication-violations">Eliminate Duplication: 1 violation(s)</span>
+#### <span id="eliminate-duplication-violations">Eliminate Duplication: 25 violation(s)</span>
 
-- <span style="color: red;">[X]</span> **ERROR** - [`src\story_graph\nodes.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/story_graph/nodes.py:230): Duplicate code blocks detected (2 locations) - extract to helper function.
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:19): Duplicate code detected across files - extract to shared function.
 
-  Location (from_dict:230-234):
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 19-23)):
     ```python
-    sequential_order = float(data.get('sequential_order', index + 1))
-    scenario = cls(name=data.get('name', ''), sequential_order=sequential_order, type=data.get('type', ''), background=data.get('backgroun...
+    print(f'\n## {bot_name}-{behavior_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
     ```
 
-  Location (from_dict:273-277):
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 23-27)):
     ```python
-    sequential_order = float(data.get('sequential_order', index + 1))
-    scenario_outline = cls(name=data.get('name', ''), sequential_order=sequential_order, type=data.get('type', ''), background=data.get('b...
+    print(f'## {cmd_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:20): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 20-24)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
     ```
 
-#### <span id="keep-functions-small-focused-violations">Keep Functions Small Focused: 1 violation(s)</span>
-
-- <span style="color: blue;">[i]</span> **INFO** - [`src\actions\validate\scanner_status_formatter.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/scanner_status_formatter.py:29): Function "categorize_scanner_rules" has deep nesting (depth=5) - should be under 4 levels. Extract nested logic to helper functions.
-
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 24-28)):
     ```python
-            return lines
-    
-        def categorize_scanner_rules(self, validation_rules: List[Dict[str, Any]]) -> Dict:
-            """Categorize rules by execution status."""
-            executed_rules = []
-            load_failed_rules = []
-            execution_failed_rules = []
-            no_scanner_rules = []
-            for rule_dict in validation_rules:
-                category = self._get_rule_category(rule_dict)
-                if category == 'executed':
-                    executed_rules.append(self._build_executed_rule_entry(rule_dict))
-                elif category == 'load_failed':
-                    load_failed_rules.append(self._build_failed_rule_entry(rule_dict))
-                elif category == 'execution_failed':
-                    execution_failed_rules.append(self._build_failed_rule_entry(rule_dict))
-                elif category == 'no_scanner':
-                    no_scanner_rules.append(self._get_rule_file(rule_dict))
-            return {'executed': executed_rules, 'load_failed': load_failed_rules, 'execution_failed': execution_failed_rules, 'no_scanner': no_scanner_rules}
-    
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:21): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 21-25)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
     ```
 
-#### <span id="provide-meaningful-context-violations">Provide Meaningful Context: 2 violation(s)</span>
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 25-29)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:22): Duplicate code detected across files - extract to shared function.
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\scanner_status_formatter.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/scanner_status_formatter.py:6): Line 6 contains magic number - replace with named constant
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\validation_scanner_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/validation_scanner_status_builder.py:8): Line 8 contains magic number - replace with named constant
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 22-26)):
+    ```python
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
 
-#### <span id="remove-bad-comments-violations">Remove Bad Comments: 1 violation(s)</span>
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 26-30)):
+    ```python
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:24): Duplicate code detected across files - extract to shared function.
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\validation_scanner_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/validation_scanner_status_builder.py:143): Line 143 has commented-out code - delete it (it's in git history if needed)
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 24-31)):
+    ```python
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options.items():
+            print(f'           {option}  {description}')
+    print('```\n')
+    ```
 
-#### <span id="simplify-control-flow-violations">Simplify Control Flow: 1 violation(s)</span>
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 28-35)):
+    ```python
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options.items():
+            print(f'           {option}  {description}')
+    print('```\n')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:19): Duplicate code detected across files - extract to shared function.
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\scanner_status_formatter.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/scanner_status_formatter.py:29): Function "categorize_scanner_rules" has nesting depth of 5 - use guard clauses and extract nested blocks to reduce nesting
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 19-24)):
+    ```python
+    print(f'\n## {bot_name}-{behavior_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    ```
 
-#### <span id="use-clear-function-parameters-violations">Use Clear Function Parameters: 14 violation(s)</span>
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 23-28)):
+    ```python
+    print(f'## {cmd_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:20): Duplicate code detected across files - extract to shared function.
 
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\workflow_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/workflow_status_builder.py:115): Function "_build_current_behavior_section" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\render\render_instruction_formatter.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/render/render_instruction_formatter.py:33): Function "_update_instructions_dict" has 8 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rule.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rule.py:143): Function "_execute_file_by_file_scan" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rule.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rule.py:155): Function "_execute_cross_file_scan" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rules.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rules.py:176): Function "_process_scanner_result" has 7 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rules.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rules.py:192): Function "_execute_scanner" has 10 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rules.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rules.py:212): Function "_process_rule" has 9 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rules.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rules.py:224): Function "validate" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\rules.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/rules.py:229): Function "_create_legacy_context" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\validation_executor.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/validation_executor.py:81): Function "_process_scanner_status" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\validation_scanner_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/validation_scanner_status_builder.py:38): Function "_categorize_rule_by_status" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\validation_scanner_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/validation_scanner_status_builder.py:241): Function "_get_rule_status_display" has vague parameter name "info" - use descriptive name
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\actions\validate\validation_scanner_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/validate/validation_scanner_status_builder.py:255): Function "_format_rule_scanner_info" has vague parameter name "info" - use descriptive name
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\cli\parameter_info_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/parameter_info_builder.py:24): Function "add_param_detail" has 6 parameters - consider using existing domain objects with properties instead of passing primitives. Extend domain objects (Behaviors, Behavior, Actions, RenderSpec, etc.) with properties that encapsulate the needed data rather than creating new parameter objects.
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 20-25)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 24-29)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:21): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 21-26)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 25-30)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:23): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 23-31)):
+    ```python
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additiona...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 27-35)):
+    ```python
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options.items():
+            print(f'           {option}...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:19): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 19-25)):
+    ```python
+    print(f'\n## {bot_name}-{behavior_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 23-29)):
+    ```python
+    print(f'## {cmd_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:20): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 20-26)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 24-30)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:21): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 21-30)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional option...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 25-34)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:22): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 22-31)):
+    ```python
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for ...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 26-35)):
+    ```python
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options.items():
+       ...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:19): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 19-26)):
+    ```python
+    print(f'\n## {bot_name}-{behavior_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional contex...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 23-30)):
+    ```python
+    print(f'## {cmd_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:20): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 20-30)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        ...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 24-34)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:21): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 21-31)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional option...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 26-35)):
+    ```python
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options.items():
+       ...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:21): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 21-31)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional option...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 25-35)):
+    ```python
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option, description in additional_options...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:19): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 19-30)):
+    ```python
+    print(f'\n## {bot_name}-{behavior_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional contex...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 23-34)):
+    ```python
+    print(f'## {cmd_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:20): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 20-31)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        ...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 24-35)):
+    ```python
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional options:')
+        for option...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:19): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_behavior_section (lines 19-31)):
+    ```python
+    print(f'\n## {bot_name}-{behavior_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'python {self.cli_script_path} --behavior {behavior_name} --action <{action_list}> [context]')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional contex...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_behavior_section (lines 23-35)):
+    ```python
+    print(f'## {cmd_name}\n')
+    print(f'{behavior_description}\n')
+    print('```')
+    action_list = '|'.join(actions)
+    print(f'/{cmd_name} <{action_list}> <context>')
+    print()
+    print(f'action:   {action_list}')
+    print('context:  Optional context or file path')
+    if additional_options:
+        print('           Additional...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:46): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_action_help (lines 46-54)):
+    ```python
+    param_desc = parameter_descriptions.get(param, 'Optional parameter')
+    if '\n' in param_desc:
+        lines = param_desc.split('\n')
+        print(f'{param}:   {lines[0]}')
+        for line in lines[1:]:
+            print(f'    {line}')
+    else:
+        print(f'{param}:   {param_desc}')
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_action_help (lines 50-58)):
+    ```python
+    param_desc = parameter_descriptions.get(param, 'Optional parameter')
+    if '\n' in param_desc:
+        lines = param_desc.split('\n')
+        print(f'{param}:   {lines[0]}')
+        for line in lines[1:]:
+            print(f'    {line}')
+    else:
+        print(f'{param}:   {param_desc}')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:48): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_action_help (lines 48-54)):
+    ```python
+    lines = param_desc.split('\n')
+    print(f'{param}:   {lines[0]}')
+    for line in lines[1:]:
+        print(f'    {line}')
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_action_help (lines 52-58)):
+    ```python
+    lines = param_desc.split('\n')
+    print(f'{param}:   {lines[0]}')
+    for line in lines[1:]:
+        print(f'    {line}')
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:40): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_action_help (lines 40-54)):
+    ```python
+    print(f'### {action_name}\n')
+    print(f'{action_description}\n')
+    print('```')
+    print(f'python {self.cli_script_path} --behavior <behavior> --action {action_name} [parameters]')
+    if parameters:
+        print()
+        for param in parameters:
+            param_desc = parameter_descriptions.get(param, 'Optional param...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_action_help (lines 44-58)):
+    ```python
+    print(f'### {action_name}\n')
+    print(f'{action_description}\n')
+    print('```')
+    print(f'/{bot_name}-<behavior> {action_name} [parameters]')
+    if parameters:
+        print()
+        for param in parameters:
+            param_desc = parameter_descriptions.get(param, 'Optional parameter')
+            if '\n' in param_desc:
+    ...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:41): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_action_help (lines 41-55)):
+    ```python
+    print(f'{action_description}\n')
+    print('```')
+    print(f'python {self.cli_script_path} --behavior <behavior> --action {action_name} [parameters]')
+    if parameters:
+        print()
+        for param in parameters:
+            param_desc = parameter_descriptions.get(param, 'Optional parameter')
+            if '\n' in para...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_action_help (lines 45-59)):
+    ```python
+    print(f'{action_description}\n')
+    print('```')
+    print(f'/{bot_name}-<behavior> {action_name} [parameters]')
+    if parameters:
+        print()
+        for param in parameters:
+            param_desc = parameter_descriptions.get(param, 'Optional parameter')
+            if '\n' in param_desc:
+                lines = param_desc...
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\cli\cli_help_renderer.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/cli/cli_help_renderer.py:40): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (cli_help_renderer.py:render_action_help (lines 40-55)):
+    ```python
+    print(f'### {action_name}\n')
+    print(f'{action_description}\n')
+    print('```')
+    print(f'python {self.cli_script_path} --behavior <behavior> --action {action_name} [parameters]')
+    if parameters:
+        print()
+        for param in parameters:
+            param_desc = parameter_descriptions.get(param, 'Optional param...
+    ```
+
+  Location 2 (cursor_help_renderer.py:render_action_help (lines 44-59)):
+    ```python
+    print(f'### {action_name}\n')
+    print(f'{action_description}\n')
+    print('```')
+    print(f'/{bot_name}-<behavior> {action_name} [parameters]')
+    if parameters:
+        print()
+        for param in parameters:
+            param_desc = parameter_descriptions.get(param, 'Optional parameter')
+            if '\n' in param_desc:
+    ...
+    ```
 
 ## Validation Instructions
 
@@ -428,7 +862,7 @@ The following validation steps were performed:
 8. - **Original input:** `{project_area}/docs/context/input.txt` and other original context files
 9. 
 10. These files contain critical requirements, decisions, and context that MUST be checked against during validation.
-*... and 256 more instructions*
+*... and 250 more instructions*
 
 ## Report Location
 

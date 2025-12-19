@@ -22,7 +22,8 @@ class JsonPersistent:
         file_path = self.file_path
         if not file_path.exists():
             return {}
-        return json.loads(file_path.read_text(encoding='utf-8'))
+        # Use utf-8-sig to automatically handle UTF-8 BOM if present
+        return json.loads(file_path.read_text(encoding='utf-8-sig'))
 
     def merge(self, existing_data: Dict[str, Any], new_data: Dict[str, Any], key: str) -> Dict[str, Any]:
         merged = existing_data.copy()

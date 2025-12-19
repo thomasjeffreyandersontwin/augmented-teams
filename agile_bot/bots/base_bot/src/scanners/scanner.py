@@ -5,6 +5,12 @@ from typing import List, Dict, Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from .resources.scan import Scan
+    from .resources.scope import Scope
+    from .resources.violation import Violation
+    from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+    from .resources.block import Block
+    from .resources.file import File
 
 
 class Scanner(ABC):
@@ -153,4 +159,169 @@ class Scanner(ABC):
             return True
         
         return False
+    
+    # New resource-oriented methods
+    
+    def performs_scan_for_one_rule(
+        self,
+        scan: 'Scan',
+        scope: 'Scope',
+        rule: 'Rule'
+    ) -> List['Violation']:
+        """Perform scan for one rule (resource-oriented interface).
+        
+        This is the new resource-oriented method that works with Scan, Scope, and Rule.
+        Scanners should override this method to implement their scanning logic.
+        
+        Args:
+            scan: Scan instance to populate with violations
+            scope: Scope containing files and blocks to scan
+            rule: Rule to validate against
+            
+        Returns:
+            List of Violation objects
+        """
+        violations = []
+        
+        # Iterate through files in scope
+        for file in scope.files:
+            # Parse file if needed
+            if not file.parse_safely():
+                continue
+            
+            # Get blocks from file
+            for block in file.blocks:
+                # Scan block for violations
+                block_violations = self._scan_block(block, rule, scan)
+                violations.extend(block_violations)
+        
+        return violations
+    
+    def _scan_block(
+        self,
+        block: 'Block',
+        rule: 'Rule',
+        scan: 'Scan'
+    ) -> List['Violation']:
+        """Scan a single block for violations.
+        
+        Subclasses should override this to implement block-level scanning.
+        
+        Args:
+            block: Block to scan
+            rule: Rule to validate against
+            scan: Scan instance
+            
+        Returns:
+            List of Violation objects
+        """
+        # Default implementation - subclasses should override
+        return []
+    
+    def associated_with_rule(self, rule: 'Rule') -> bool:
+        """Check if scanner is associated with rule.
+        
+        Args:
+            rule: Rule to check
+            
+        Returns:
+            True if scanner handles this rule
+        """
+        # Default implementation - subclasses can override
+        return True
+    
+    # Helper methods for domain model responsibilities
+    
+    def checks_file_naming(self, file: 'File', file_naming_checker) -> List['Violation']:
+        """Check file naming using FileNamingChecker.
+        
+        Args:
+            file: File to check
+            file_naming_checker: FileNamingChecker instance
+            
+        Returns:
+            List of violations
+        """
+        return file.check_file_naming(file_naming_checker)
+    
+    def checks_class_naming(self, block: 'Block', class_naming_checker) -> List['Violation']:
+        """Check class naming using ClassNamingChecker.
+        
+        Args:
+            block: Block to check
+            class_naming_checker: ClassNamingChecker instance
+            
+        Returns:
+            List of violations
+        """
+        return block.check_class_naming(class_naming_checker)
+    
+    def checks_method_naming(self, block: 'Block', method_naming_checker) -> List['Violation']:
+        """Check method naming using MethodNamingChecker.
+        
+        Args:
+            block: Block to check
+            method_naming_checker: MethodNamingChecker instance
+            
+        Returns:
+            List of violations
+        """
+        return block.check_method_naming(method_naming_checker)
+    
+    def analyzes_code_structure(
+        self,
+        block: 'Block',
+        code_structure_analyzer,
+        pattern_collection = None
+    ) -> List['Violation']:
+        """Analyze code structure using CodeStructureAnalyzer.
+        
+        Args:
+            block: Block to analyze
+            code_structure_analyzer: CodeStructureAnalyzer instance
+            pattern_collection: Optional PatternCollection for pattern matching
+            
+        Returns:
+            List of violations
+        """
+        return block.analyze_structure(code_structure_analyzer)
+    
+    def examines_ast_for_violations(
+        self,
+        block: 'Block',
+        code_structure_analyzer
+    ) -> List['Violation']:
+        """Examine AST for violations using CodeStructureAnalyzer.
+        
+        Args:
+            block: Block to examine
+            code_structure_analyzer: CodeStructureAnalyzer instance
+            
+        Returns:
+            List of violations
+        """
+        return block.analyze_structure(code_structure_analyzer)
+    
+    def identifies_code_patterns(
+        self,
+        block: 'Block',
+        pattern_collection,
+        code_structure_analyzer
+    ) -> List['Violation']:
+        """Identify code patterns using PatternCollection and CodeStructureAnalyzer.
+        
+        Args:
+            block: Block to analyze
+            pattern_collection: PatternCollection instance
+            code_structure_analyzer: CodeStructureAnalyzer instance
+            
+        Returns:
+            List of violations
+        """
+        # This would use pattern_collection to match patterns in block content
+        violations = []
+        if pattern_collection and pattern_collection.matches_text(block.content):
+            # Create violation if pattern matches
+            pass
+        return violations
 

@@ -1,6 +1,7 @@
 import argparse
+import json
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 
 class CliParameterParser:
 
@@ -36,7 +37,7 @@ class CliParameterParser:
         return unknown
 
     @staticmethod
-    def _build_params_from_args(args: argparse.Namespace, unknown: list) -> Dict[str, str]:
+    def _build_params_from_args(args: argparse.Namespace, unknown: list) -> Dict[str, Any]:
         all_args = list(unknown) + (getattr(args, 'context', []) or [])
         params = CliParameterParser._parse_action_parameters(all_args)
         if args.user_message:
@@ -49,6 +50,8 @@ class CliParameterParser:
                 params['exclude'] = exclude_list
         if args.skip_cross_file:
             params['skip_cross_file'] = True
+        # Parse JSON strings in parameters
+        params = CliParameterParser._parse_json_parameters(params)
         return params
 
     @staticmethod
@@ -77,13 +80,55 @@ class CliParameterParser:
             params[key].append(value)
 
     @staticmethod
-    def _parse_key_value_arg(arg: str, params: Dict) -> None:
+    def _parse_key_value_arg(arg: str, unknown_args: list, i: int, params: Dict) -> int:
+        """Parse key=value argument. Returns number of arguments consumed."""
         key, value = arg.split('=', 1)
         key = key.lstrip('--')
         if key in ['test', 'src'] and ',' in value:
             params[key] = [f.strip() for f in value.split(',')]
-        else:
-            params[key] = value
+            return 1
+        # Check if value looks like start of JSON that might be split
+        value_stripped = value.strip()
+        if (value_stripped.startswith('{') or value_stripped.startswith('[')) and not CliParameterParser._is_complete_json(value_stripped):
+            # Try to reconstruct JSON by collecting more arguments
+            json_parts = [value]
+            j = i + 1
+            while j < len(unknown_args):
+                next_arg = unknown_args[j]
+                # Stop if we hit another key=value or flag
+                if '=' in next_arg or next_arg.startswith('--'):
+                    break
+                json_parts.append(next_arg)
+                combined = ' '.join(json_parts)
+                if CliParameterParser._is_complete_json(combined.strip()):
+                    params[key] = combined.strip()
+                    return j - i + 1
+                j += 1
+            # If we couldn't complete it, use what we have
+            params[key] = ' '.join(json_parts).strip()
+            return j - i
+        params[key] = value
+        return 1
+
+    @staticmethod
+    def _is_complete_json(value: str) -> bool:
+        """Check if a string looks like complete JSON by checking bracket/brace balance."""
+        if not value:
+            return False
+        value = value.strip()
+        if not (value.startswith('{') or value.startswith('[')):
+            return False
+        # Simple balance check
+        open_braces = value.count('{')
+        close_braces = value.count('}')
+        open_brackets = value.count('[')
+        close_brackets = value.count(']')
+        # Also check if it ends with } or ]
+        if value.startswith('{'):
+            return open_braces == close_braces and value.rstrip().endswith('}')
+        elif value.startswith('['):
+            return open_brackets == close_brackets and value.rstrip().endswith(']')
+        return False
 
     @staticmethod
     def _parse_file_list_arg(unknown_args: list, start_idx: int, key: str, params: Dict) -> int:
@@ -153,8 +198,8 @@ class CliParameterParser:
     @staticmethod
     def _process_argument(arg: str, unknown_args: list, i: int, params: Dict, has_src_path: bool) -> tuple:
         if '=' in arg:
-            CliParameterParser._parse_key_value_arg(arg, params)
-            return (i + 1, has_src_path)
+            consumed = CliParameterParser._parse_key_value_arg(arg, unknown_args, i, params)
+            return (i + consumed, has_src_path)
         if arg in ['--test', '--src']:
             key = arg.lstrip('--')
             new_i = CliParameterParser._parse_file_list_arg(unknown_args, i + 1, key, params)
@@ -207,3 +252,51 @@ class CliParameterParser:
                 existing.append(arg)
             else:
                 params['exclude'] = [existing, arg]
+
+    @staticmethod
+    def _parse_json_parameters(params: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse JSON strings in parameters. If a parameter value is a string that looks like JSON, parse it."""
+        parsed_params = {}
+        for key, value in params.items():
+            if isinstance(value, str):
+                value = value.strip()
+                # Check if it looks like JSON (starts with { or [)
+                if value.startswith('{') or value.startswith('['):
+                    try:
+                        parsed_params[key] = json.loads(value)
+                    except (json.JSONDecodeError, ValueError):
+                        # Try to fix common issues (unquoted keys/values from PowerShell)
+                        fixed_value = CliParameterParser._try_fix_json(value)
+                        if fixed_value != value:
+                            try:
+                                parsed_params[key] = json.loads(fixed_value)
+                            except (json.JSONDecodeError, ValueError):
+                                # If still can't parse, keep as string
+                                parsed_params[key] = value
+                        else:
+                            # If fixing didn't change it, keep as string
+                            parsed_params[key] = value
+                else:
+                    parsed_params[key] = value
+            else:
+                parsed_params[key] = value
+        return parsed_params
+
+    @staticmethod
+    def _try_fix_json(value: str) -> str:
+        """Try to fix common JSON issues like unquoted keys/values."""
+        import re
+        # Pattern: key: value (unquoted key, possibly unquoted value)
+        # Try to quote unquoted keys
+        value = re.sub(r'(\w+):', r'"\1":', value)
+        # Try to quote unquoted string values (values that aren't already quoted, numbers, booleans, null)
+        # This is a simple heuristic - look for : followed by space and a word that's not a number/boolean/null
+        def quote_value(match):
+            val = match.group(1)
+            # Don't quote if it's already quoted, a number, boolean, or null
+            if val.startswith('"') or val.lower() in ('true', 'false', 'null') or val.replace('.', '').replace('-', '').isdigit():
+                return f': {val}'
+            # Quote it
+            return f': "{val}"'
+        value = re.sub(r':\s+([^,}\]]+)', quote_value, value)
+        return value

@@ -3,8 +3,11 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class UselessCommentsScanner(CodeScanner):
@@ -31,9 +34,8 @@ class UselessCommentsScanner(CodeScanner):
             # Check for useless inline comments
             violations.extend(self._check_useless_comments(lines, file_path, rule_obj))
             
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        except (UnicodeDecodeError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

@@ -91,6 +91,8 @@ class DescriptionExtractor:
             return action_name.replace('_', ' ').title()
         try:
             config = json.loads(config_path.read_text(encoding='utf-8'))
+            if config.get('description'):
+                return config.get('description')
             desc = self.extract_first_instruction(config.get('instructions', []))
             if desc:
                 return desc
@@ -123,4 +125,5 @@ class DescriptionExtractor:
             return '|'.join(action_names) if action_names else None
         except Exception:
             return None
+
 

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Set
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from agile_bot.bots.base_bot.src.actions.scoping_parameter import ScopingParameter
 
 class ActionScope:
 
@@ -10,25 +11,29 @@ class ActionScope:
         self._scope_config: Dict[str, Any] = {}
         self._build_scope()
 
-    def _handle_scope_parameter(self, scope_value) -> None:
-        if scope_value == 'all':
-            self._scope_config['all'] = True
+    def _handle_scope_parameter(self, scope_value: Any) -> None:
+        if not isinstance(scope_value, dict):
             return
-        if 'increment_names' not in self._scope_config:
-            self._scope_config['increment_names'] = []
-        if isinstance(scope_value, str):
-            self._scope_config['increment_names'].append(scope_value)
-        elif isinstance(scope_value, list):
-            self._scope_config['increment_names'].extend(scope_value)
-
-    def _handle_standard_parameter(self, key: str, value) -> bool:
-        if key in ['story_names', 'increment_priorities', 'epic_names', 'increment_names']:
-            self._scope_config[key] = [value] if not isinstance(value, list) else value
-            return True
-        if key == 'all' and value is True:
+        
+        scope_type = scope_value.get('type')
+        scope_val = scope_value.get('value')
+        
+        if scope_type == 'all':
             self._scope_config['all'] = True
-            return True
-        return False
+        elif scope_type == 'story':
+            self._scope_config['story_names'] = scope_val if isinstance(scope_val, list) else [scope_val]
+        elif scope_type == 'epic':
+            self._scope_config['epic_names'] = scope_val if isinstance(scope_val, list) else [scope_val]
+        elif scope_type == 'increment':
+            if scope_val and isinstance(scope_val, list) and len(scope_val) > 0:
+                if isinstance(scope_val[0], int):
+                    self._scope_config['increment_priorities'] = scope_val
+                else:
+                    self._scope_config['increment_names'] = scope_val
+            elif isinstance(scope_val, int):
+                self._scope_config['increment_priorities'] = [scope_val]
+            elif isinstance(scope_val, str):
+                self._scope_config['increment_names'] = [scope_val]
 
     def _build_scope(self):
         if 'scope' in self._parameters:
@@ -36,8 +41,7 @@ class ActionScope:
         for key, value in self._parameters.items():
             if value is None or key == 'scope':
                 continue
-            if not self._handle_standard_parameter(key, value):
-                self._handle_custom_parameter(key, value)
+            self._handle_custom_parameter(key, value)
 
     def _handle_custom_parameter(self, key: str, value: Any):
         self._scope_config[key] = value
@@ -123,3 +127,9 @@ class ActionScope:
         sub_epics = epic_data.get('sub_epics', [])
         for sub_epic in sub_epics:
             self._extract_story_names_from_epic(sub_epic, story_names)
+
+    def filter_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
+        if 'scope' not in self._parameters:
+            return story_graph
+        scope_param = ScopingParameter(self._parameters['scope'])
+        return scope_param.filter_story_graph(story_graph)

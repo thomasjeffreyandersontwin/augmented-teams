@@ -2,8 +2,11 @@
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class UbiquitousLanguageScanner(TestScanner):
@@ -24,9 +27,8 @@ class UbiquitousLanguageScanner(TestScanner):
             # Check for ubiquitous language violations
             violations.extend(self._check_ubiquitous_language(content, domain_terms, file_path, rule_obj))
         
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        except (UnicodeDecodeError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

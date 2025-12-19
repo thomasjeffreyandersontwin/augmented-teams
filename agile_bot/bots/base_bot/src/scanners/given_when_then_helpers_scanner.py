@@ -255,29 +255,24 @@ class GivenWhenThenHelpersScanner(TestScanner):
             
             # Skip lines that are part of the docstring
             if docstring_range and docstring_range[0] <= line_num <= docstring_range[1]:
-                # If we have a current block, end it
+                # If we have a current block, end it and reset state
                 if current_block_start is not None:
-                    blocks.append((current_block_start, line_num - 1, current_block_lines))
-                    current_block_start = None
-                    current_block_lines = []
-                in_multiline_call = False
-                paren_balance = 0
+                    self._end_current_block(blocks, current_block_start, line_num - 1, current_block_lines)
+                current_block_start, current_block_lines, in_multiline_call, paren_balance = self._reset_block_state()
                 continue
             
             # Skip empty lines, comments, decorators
             if (not stripped or 
                 stripped.startswith('#') or 
                 stripped.startswith('@')):
-                # If we have a current block, end it
+                # If we have a current block, end it and reset state
                 if current_block_start is not None:
-                    blocks.append((current_block_start, line_num - 1, current_block_lines))
-                    current_block_start = None
-                    current_block_lines = []
+                    self._end_current_block(blocks, current_block_start, line_num - 1, current_block_lines)
                 # Empty lines don't break multi-line calls
                 if in_multiline_call:
+                    current_block_start, current_block_lines, in_multiline_call, paren_balance = self._reset_block_state()
                     continue
-                in_multiline_call = False
-                paren_balance = 0
+                current_block_start, current_block_lines, in_multiline_call, paren_balance = self._reset_block_state()
                 continue
             
             # Check if this line starts a helper function call
@@ -338,49 +333,13 @@ class GivenWhenThenHelpersScanner(TestScanner):
         
         return False
     
-    def _get_defined_helper_functions(self, tree: ast.AST) -> Dict[str, int]:
-        """Extract helper function names defined in this file (not imported).
-        
-        Returns:
-            Dictionary mapping function name to line number
-        """
-        helpers = {}
-        
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                func_name = node.name
-                # Check if it matches helper patterns
-                for pattern in self.HELPER_PATTERNS:
-                    if re.match(pattern, func_name, re.IGNORECASE):
-                        helpers[func_name] = node.lineno
-                        break
-        
-        return helpers
+    def _end_current_block(self, blocks: List, current_block_start: int, end_line: int, current_block_lines: List[str]) -> None:
+        """End the current block and add it to blocks list."""
+        blocks.append((current_block_start, end_line, current_block_lines))
     
-    def _get_helper_calls_in_file(self, tree: ast.AST, content: str) -> Set[str]:
-        """Extract all helper function names that are called in this file.
-        
-        Returns:
-            Set of helper function names that are called
-        """
-        helper_calls = set()
-        helper_functions = self._get_helper_functions(tree, content)
-        
-        # Walk through all call nodes to find helper function calls
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                func_name = None
-                if isinstance(node.func, ast.Name):
-                    func_name = node.func.id
-                elif isinstance(node.func, ast.Attribute):
-                    # Handle self.given_*() calls
-                    if isinstance(node.func.value, ast.Name) and node.func.value.id == 'self':
-                        func_name = node.func.attr
-                
-                if func_name and func_name in helper_functions:
-                    helper_calls.add(func_name)
-        
-        return helper_calls
+    def _reset_block_state(self):
+        """Reset block tracking state variables."""
+        return None, [], False, 0
     
     def scan_cross_file(
         self,

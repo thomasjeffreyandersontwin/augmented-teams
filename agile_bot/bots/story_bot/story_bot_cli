@@ -1,13 +1,8 @@
 #!/bin/bash
-    # Story Bot CLI Wrapper
 
-    # Get script directory
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    # Prefer setting WORKING_DIR explicitly for runtime file I/O. If not set,
-    # derive a sensible default from the script location.
     export WORKING_DIR="${WORKING_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
-    # Run Python CLI script (it resolves WORKING_AREA itself)
     python3 "$SCRIPT_DIR/src/story_bot_cli.py" "$@"
     

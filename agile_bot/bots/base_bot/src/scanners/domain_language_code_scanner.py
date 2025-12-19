@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class DomainLanguageCodeScanner(CodeScanner):
@@ -97,8 +100,8 @@ class DomainLanguageCodeScanner(CodeScanner):
                     )
                     violations.extend(func_violations)
         
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

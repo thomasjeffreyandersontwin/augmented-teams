@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class NoGuardClausesScanner(TestScanner):
@@ -37,8 +40,8 @@ class NoGuardClausesScanner(TestScanner):
             violations.extend(self._check_guard_clause_patterns(lines, file_path, rule_obj))
             violations.extend(self._check_ast_guard_clauses(file_path, rule_obj))
         
-        except (UnicodeDecodeError, SyntaxError, Exception):
-            pass
+        except (UnicodeDecodeError, SyntaxError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -115,8 +118,8 @@ class NoGuardClausesScanner(TestScanner):
                 if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                     violations.extend(self._check_function_guard_clauses(node, file_path, rule_obj))
         
-        except (SyntaxError, UnicodeDecodeError, Exception):
-            pass
+        except (SyntaxError, UnicodeDecodeError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

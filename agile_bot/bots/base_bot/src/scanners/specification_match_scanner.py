@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class SpecificationMatchScanner(TestScanner):
@@ -34,9 +37,8 @@ class SpecificationMatchScanner(TestScanner):
             if knowledge_graph:
                 violations.extend(self._check_specification_matches(tree, content, file_path, rule_obj, knowledge_graph))
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -68,15 +70,10 @@ class SpecificationMatchScanner(TestScanner):
                 is_thin_wrapper = self._is_thin_wrapper(node)
                 
                 if is_vague and not is_thin_wrapper:
-                    line_number = node.lineno if hasattr(node, 'lineno') else None
-                    violation = Violation(
-                        rule=rule_obj,
-                        violation_message=f'Test method "{node.name}" has vague name - should clearly describe behavior from specification scenario',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='warning'
-                    ).to_dict()
-                    violations.append(violation)
+                    violations.append(self._create_violation_with_line_number(
+                        rule_obj, file_path, node,
+                        f'Test method "{node.name}" has vague name - should clearly describe behavior from specification scenario'
+                    ))
         
         return violations
     
@@ -91,6 +88,35 @@ class SpecificationMatchScanner(TestScanner):
             if isinstance(stmt, ast.Return) and isinstance(stmt.value, ast.Call):
                 return True
         return False
+    
+    def _create_violation_with_line_number(
+        self,
+        rule_obj: Any,
+        file_path: Path,
+        node: ast.AST,
+        message: str,
+        severity: str = 'warning'
+    ) -> Dict[str, Any]:
+        """Create a violation with line number from AST node.
+        
+        Args:
+            rule_obj: Rule object
+            file_path: Path to file
+            node: AST node (for line number)
+            message: Violation message
+            severity: Severity level ('error', 'warning', 'info')
+            
+        Returns:
+            Violation dictionary
+        """
+        line_number = node.lineno if hasattr(node, 'lineno') else None
+        return Violation(
+            rule=rule_obj,
+            violation_message=message,
+            location=str(file_path),
+            line_number=line_number,
+            severity=severity
+        ).to_dict()
     
     def _check_variable_names(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         """Check variable names match specification exactly.
@@ -120,15 +146,10 @@ class SpecificationMatchScanner(TestScanner):
                             if var_name.lower() in generic_names:
                                 # Check if it's part of a helper function call (these are OK)
                                 if not self._is_in_helper_call(child, test_method):
-                                    line_number = child.lineno if hasattr(child, 'lineno') else None
-                                    violation = Violation(
-                                        rule=rule_obj,
-                                        violation_message=f'Line {line_number} uses generic variable name "{var_name}" - use exact variable names from specification',
-                                        location=str(file_path),
-                                        line_number=line_number,
-                                        severity='warning'
-                                    ).to_dict()
-                                    violations.append(violation)
+                                    violations.append(self._create_violation_with_line_number(
+                                        rule_obj, file_path, child,
+                                        f'Line {child.lineno if hasattr(child, "lineno") else "?"} uses generic variable name "{var_name}" - use exact variable names from specification'
+                                    ))
         
         return violations
     
@@ -180,15 +201,10 @@ class SpecificationMatchScanner(TestScanner):
                     # Check for implementation detail patterns
                     for pattern in implementation_patterns:
                         if re.search(pattern, assertion_line, re.IGNORECASE):
-                            line_number = child.lineno if hasattr(child, 'lineno') else None
-                            violation = Violation(
-                                rule=rule_obj,
-                                violation_message=f'Line {line_number} assertion checks implementation detail - verify exactly what specification states, no more, no less',
-                                location=str(file_path),
-                                line_number=line_number,
-                                severity='warning'
-                            ).to_dict()
-                            violations.append(violation)
+                            violations.append(self._create_violation_with_line_number(
+                                rule_obj, file_path, child,
+                                f'Line {child.lineno if hasattr(child, "lineno") else "?"} assertion checks implementation detail - verify exactly what specification states, no more, no less'
+                            ))
                             break
         
         return violations
@@ -231,17 +247,11 @@ class SpecificationMatchScanner(TestScanner):
                 violations.extend(assertion_matches)
             elif scenario:
                 # Test has scenario but no matching story found
-                line_number = test_method.lineno if hasattr(test_method, 'lineno') else None
-                violations.append(Violation(
-                    rule=rule_obj,
-                    violation_message=(
-                        f'Test "{test_method.name}" has scenario but no matching story found in specification. '
-                        f'Scenario: {scenario[:100]}...'
-                    ),
-                    location=str(file_path),
-                    line_number=line_number,
-                    severity='warning'
-                ).to_dict())
+                violations.append(self._create_violation_with_line_number(
+                    rule_obj, file_path, test_method,
+                    f'Test "{test_method.name}" has scenario but no matching story found in specification. '
+                    f'Scenario: {scenario[:100]}...'
+                ))
         
         return violations
     
@@ -467,16 +477,12 @@ class SpecificationMatchScanner(TestScanner):
             if not matches_domain_term:
                 # Get sample domain terms for error message
                 sample_terms = sorted(list(domain_terms))[:10]
-                violations.append(Violation(
-                    rule=rule_obj,
-                    violation_message=(
-                        f'Variable "{var_name}" in test "{test_method.name}" doesn\'t match domain terms. '
-                        f'Use terms from specification: {", ".join(sample_terms)}...'
-                    ),
-                    location=str(file_path),
-                    line_number=line_number,
-                    severity='info'
-                ).to_dict())
+                violations.append(self._create_violation_with_line_number(
+                    rule_obj, file_path, test_method,
+                    f'Variable "{var_name}" in test "{test_method.name}" doesn\'t match domain terms. '
+                    f'Use terms from specification: {", ".join(sample_terms)}...',
+                    'info'
+                ))
         
         return violations
     
@@ -537,17 +543,11 @@ class SpecificationMatchScanner(TestScanner):
         
         # If test has no assertions but story has acceptance criteria, that's a violation
         if total_assertions == 0 and len(acceptance_criteria) > 0:
-            line_number = test_method.lineno if hasattr(test_method, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
-                violation_message=(
-                    f'Test "{test_method.name}" has no assertions but story has {len(acceptance_criteria)} acceptance criteria. '
-                    f'Add assertions to verify acceptance criteria.'
-                ),
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict())
+            violations.append(self._create_violation_with_line_number(
+                rule_obj, file_path, test_method,
+                f'Test "{test_method.name}" has no assertions but story has {len(acceptance_criteria)} acceptance criteria. '
+                f'Add assertions to verify acceptance criteria.'
+            ))
         
         return violations
     

@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class ImportPlacementScanner(CodeScanner):
@@ -36,9 +39,8 @@ class ImportPlacementScanner(CodeScanner):
             # Find all import statements and check if they're in the import section
             violations.extend(self._check_import_placement(lines, import_section_end, file_path, rule_obj))
         
-        except (UnicodeDecodeError, SyntaxError, Exception):
-            # Skip binary files, files with encoding issues, or syntax errors
-            pass
+        except (UnicodeDecodeError, SyntaxError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -281,7 +283,8 @@ class ImportPlacementScanner(CodeScanner):
             import_nodes = self._find_import_nodes(tree)
             import_line_numbers = {node.lineno for node in import_nodes}
             function_def_lines = self._find_function_def_lines(tree)
-        except (SyntaxError, Exception):
+        except (SyntaxError, Exception) as e:
+            logger.debug(f'AST parsing failed for {file_path}, falling back to line-by-line checking: {type(e).__name__}: {e}')
             # If AST parsing fails, fall back to simple line-by-line checking
             import_line_numbers = set()
             function_def_lines = set()

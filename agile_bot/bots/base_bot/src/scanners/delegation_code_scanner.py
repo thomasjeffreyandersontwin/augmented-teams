@@ -3,8 +3,11 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class DelegationCodeScanner(CodeScanner):
@@ -25,8 +28,8 @@ class DelegationCodeScanner(CodeScanner):
                     class_violations = self._check_delegation(node, content, file_path, rule_obj)
                     violations.extend(class_violations)
         
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

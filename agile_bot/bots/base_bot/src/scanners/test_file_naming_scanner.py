@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class TestFileNamingScanner(TestScanner):
@@ -155,9 +158,8 @@ class TestFileNamingScanner(TestScanner):
                                     sub_epic = self._find_sub_epic_for_method(item.name, class_name, knowledge_graph)
                                     if sub_epic:
                                         sub_epics.add(self._to_snake_case(sub_epic))
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return sub_epics
     

@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class TestBoundaryBehaviorScanner(TestScanner):
@@ -23,9 +26,8 @@ class TestBoundaryBehaviorScanner(TestScanner):
             # Check for boundary test patterns
             violations.extend(self._check_boundary_tests(content, file_path, rule_obj))
         
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        except (UnicodeDecodeError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

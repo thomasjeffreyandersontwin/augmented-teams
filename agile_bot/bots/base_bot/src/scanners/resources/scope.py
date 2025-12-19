@@ -1,0 +1,45 @@
+"""Scope resource representing what is being scanned."""
+
+from typing import List, Set, TYPE_CHECKING
+from pathlib import Path
+from .file import File
+
+if TYPE_CHECKING:
+    from .block import Block
+
+
+class Scope:
+    """Represents the scope of a scan (one or more files)."""
+    
+    def __init__(self, files: List[Path]):
+        """Initialize scope.
+        
+        Args:
+            files: List of file paths to scan
+        """
+        self._file_paths = files
+        self._files: List[File] = []
+        self._blocks: List['Block'] = []  # type: ignore
+    
+    @property
+    def files(self) -> List[File]:
+        """Get files in this scope."""
+        if not self._files:
+            self._load_files()
+        return self._files
+    
+    @property
+    def blocks(self) -> List['Block']:
+        """Get all blocks from all files in scope."""
+        if not self._blocks:
+            for file in self.files:
+                self._blocks.extend(file.blocks)
+        return self._blocks
+    
+    def _load_files(self):
+        """Load File resources from paths."""
+        for path in self._file_paths:
+            if path.exists() and path.is_file():
+                file = File(path, self)
+                self._files.append(file)
+

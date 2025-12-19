@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class IntentionRevealingNamesScanner(CodeScanner):
@@ -66,9 +69,8 @@ class IntentionRevealingNamesScanner(CodeScanner):
             # Check class names
             violations.extend(self._check_class_names(tree, file_path, rule_obj, domain_terms))
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -115,15 +117,9 @@ class IntentionRevealingNamesScanner(CodeScanner):
                     if var_name in acceptable_single_letter_names:
                         continue  # OK - it's a loop/comprehension/exception variable
                     # Not in an acceptable context - flag it
-                    line_number = node.lineno if hasattr(node, 'lineno') else None
-                    violation = Violation(
-                        rule=rule_obj,
-                        violation_message=f'Variable "{var_name}" uses single-letter name - use intention-revealing name',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='error'
-                    ).to_dict()
-                    violations.append(violation)
+                    violations.append(self._create_generic_name_violation(
+                        rule_obj, file_path, node, var_name, 'variable', 'single-letter'
+                    ))
                     continue
                 
                 # Check for generic names (excluding acceptable context names and domain terms)
@@ -134,15 +130,9 @@ class IntentionRevealingNamesScanner(CodeScanner):
                         continue
                     # Check if it's acceptable in context
                     if not self._is_acceptable_in_context(node, tree, content):
-                        line_number = node.lineno if hasattr(node, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Variable "{var_name}" uses generic name - use intention-revealing name',
-                            location=str(file_path),
-                            line_number=line_number,
-                            severity='error'
-                        ).to_dict()
-                        violations.append(violation)
+                        violations.append(self._create_generic_name_violation(
+                            rule_obj, file_path, node, var_name, 'variable', 'generic'
+                        ))
                 # Also check if variable name matches domain terms using compound term matching
                 elif domain_terms:
                     # Use compound term matching (from CodeScanner base class)
@@ -150,6 +140,49 @@ class IntentionRevealingNamesScanner(CodeScanner):
                         continue  # Matches domain term - likely acceptable
         
         return violations
+    
+    def _create_generic_name_violation(
+        self, 
+        rule_obj: Any, 
+        file_path: Path, 
+        node: ast.AST, 
+        name: str, 
+        name_type: str, 
+        issue_type: str,
+        severity: str = 'error'
+    ) -> Dict[str, Any]:
+        """Create a violation for generic or single-letter names.
+        
+        Args:
+            rule_obj: Rule object
+            file_path: Path to file
+            node: AST node (for line number)
+            name: Name that violates rule
+            name_type: Type of name ('variable', 'function', 'class')
+            issue_type: Type of issue ('single-letter', 'generic')
+            severity: Severity level ('error', 'warning')
+            
+        Returns:
+            Violation dictionary
+        """
+        line_number = node.lineno if hasattr(node, 'lineno') else None
+        
+        if issue_type == 'single-letter':
+            message = f'{name_type.capitalize()} "{name}" uses single-letter name - use intention-revealing name'
+        elif name_type == 'function':
+            message = f'Function "{name}" uses generic name - use intention-revealing name that explains purpose'
+        elif name_type == 'class':
+            message = f'Class "{name}" uses generic name - use intention-revealing name that explains purpose'
+        else:  # variable generic
+            message = f'Variable "{name}" uses generic name - use intention-revealing name'
+        
+        return Violation(
+            rule=rule_obj,
+            violation_message=message,
+            location=str(file_path),
+            line_number=line_number,
+            severity=severity
+        ).to_dict()
     
     def _collect_loop_and_comprehension_var_names(self, tree: ast.AST) -> set:
         """Collect all variable NAMES that are defined in acceptable single-letter contexts.
@@ -242,15 +275,9 @@ class IntentionRevealingNamesScanner(CodeScanner):
                 generic_names = ['process', 'handle', 'do', 'execute', 'run', 'main']
                 # Only flag if it's standalone generic name, not part of a descriptive name
                 if func_name_lower in generic_names and len(func_name.split('_')) == 1:
-                    line_number = node.lineno if hasattr(node, 'lineno') else None
-                    violation = Violation(
-                        rule=rule_obj,
-                        violation_message=f'Function "{func_name}" uses generic name - use intention-revealing name that explains purpose',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='error'
-                    ).to_dict()
-                    violations.append(violation)
+                    violations.append(self._create_generic_name_violation(
+                        rule_obj, file_path, node, func_name, 'function', 'generic'
+                    ))
         
         return violations
     
@@ -282,26 +309,14 @@ class IntentionRevealingNamesScanner(CodeScanner):
                 generic_names = ['Manager', 'Handler', 'Processor', 'Util', 'Helper', 'Service']
                 # Only flag if class name IS the generic name or ends with it without descriptive prefix
                 if class_name in generic_names:
-                    line_number = node.lineno if hasattr(node, 'lineno') else None
-                    violation = Violation(
-                        rule=rule_obj,
-                        violation_message=f'Class "{class_name}" uses generic name - use intention-revealing name that explains purpose',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='error'
-                    ).to_dict()
-                    violations.append(violation)
+                    violations.append(self._create_generic_name_violation(
+                        rule_obj, file_path, node, class_name, 'class', 'generic', 'error'
+                    ))
                 # Flag if class name ends with generic name without descriptive prefix (e.g., "MyHandler" is OK, "Handler" is not)
                 elif any(class_name.endswith(g) and len(class_name) <= len(g) + 2 for g in generic_names):
-                    line_number = node.lineno if hasattr(node, 'lineno') else None
-                    violation = Violation(
-                        rule=rule_obj,
-                        violation_message=f'Class "{class_name}" uses generic name - use intention-revealing name that explains purpose',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='warning'
-                    ).to_dict()
-                    violations.append(violation)
+                    violations.append(self._create_generic_name_violation(
+                        rule_obj, file_path, node, class_name, 'class', 'generic', 'warning'
+                    ))
         
         return violations
     

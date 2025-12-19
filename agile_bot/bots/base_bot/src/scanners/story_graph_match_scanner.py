@@ -3,8 +3,11 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class StoryGraphMatchScanner(TestScanner):
@@ -29,9 +32,8 @@ class StoryGraphMatchScanner(TestScanner):
             # Check test classes match stories
             violations.extend(self._check_test_classes_match_stories(tree, story_names, file_path, rule_obj))
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

@@ -4206,3 +4206,321 @@ class TestResolveBotPaths:
             if original_working_area:
                 os.environ['WORKING_AREA'] = original_working_area
 
+
+# ============================================================================
+# HELPER FUNCTIONS - Filter Action Based on Scope
+# ============================================================================
+
+def given_story_graph_with_epics_and_increments():
+    """Given: Story graph with epics and increments."""
+    return {
+        'epics': [
+            {
+                'name': 'Epic A',
+                'sub_epics': [
+                    {
+                        'name': 'Sub-Epic A1',
+                        'story_groups': [
+                            {
+                                'type': 'and',
+                                'connector': None,
+                                'stories': [
+                                    {'name': 'Story A1'},
+                                    {'name': 'Story A2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                'name': 'Epic B',
+                'sub_epics': [
+                    {
+                        'name': 'Sub-Epic B1',
+                        'story_groups': [
+                            {
+                                'type': 'and',
+                                'connector': None,
+                                'stories': [
+                                    {'name': 'Story B1'},
+                                    {'name': 'Story B2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        'increments': [
+            {
+                'name': 'Increment 1',
+                'priority': 1,
+                'epics': [
+                    {
+                        'name': 'Epic A',
+                        'features': [
+                            {
+                                'stories': [
+                                    {'name': 'Story A1'},
+                                    {'name': 'Story A2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                'name': 'Increment 2',
+                'priority': 2,
+                'epics': [
+                    {
+                        'name': 'Epic B',
+                        'features': [
+                            {
+                                'stories': [
+                                    {'name': 'Story B1'},
+                                    {'name': 'Story B2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def when_build_scope_filters_story_graph(scope_type, scope_value, story_graph, bot_paths=None):
+    """When: BuildScope filters story graph."""
+    from agile_bot.bots.base_bot.src.actions.build.build_scope import BuildScope
+    parameters = {'scope': {'type': scope_type}}
+    if scope_value is not None:
+        parameters['scope']['value'] = scope_value
+    build_scope = BuildScope(parameters, bot_paths)
+    return build_scope.filter_story_graph(story_graph)
+
+
+def when_validation_scope_filters_story_graph(scope_type, scope_value, story_graph, bot_paths=None, behavior_name=None):
+    """When: ValidationScope filters story graph."""
+    from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+    parameters = {'scope': {'type': scope_type}}
+    if scope_value is not None:
+        parameters['scope']['value'] = scope_value
+    validation_scope = ValidationScope(parameters, bot_paths, behavior_name)
+    return validation_scope.filter_story_graph(story_graph)
+
+
+def when_render_scope_filters_story_graph(scope_type, scope_value, story_graph, bot_paths=None):
+    """When: RenderScope filters story graph."""
+    from agile_bot.bots.base_bot.src.actions.render.render_scope import RenderScope
+    parameters = {'scope': {'type': scope_type}}
+    if scope_value is not None:
+        parameters['scope']['value'] = scope_value
+    render_scope = RenderScope(parameters, bot_paths)
+    return render_scope.filter_story_graph(story_graph)
+
+
+def then_story_graph_contains_epic(filtered_graph, epic_name):
+    """Then: Story graph contains epic."""
+    epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
+    assert epic_name in epic_names
+
+
+def then_story_graph_contains_story(filtered_graph, story_name):
+    """Then: Story graph contains story."""
+    story_names = []
+    for epic in filtered_graph.get('epics', []):
+        for sub_epic in epic.get('sub_epics', []):
+            for story_group in sub_epic.get('story_groups', []):
+                for story in story_group.get('stories', []):
+                    if isinstance(story, dict):
+                        story_names.append(story.get('name'))
+                    else:
+                        story_names.append(story)
+    assert story_name in story_names
+
+
+def then_story_graph_contains_increment(filtered_graph, increment_name):
+    """Then: Story graph contains increment."""
+    increment_names = [inc.get('name') for inc in filtered_graph.get('increments', [])]
+    assert increment_name in increment_names
+
+
+def then_story_graph_contains_all_epics(filtered_graph, expected_count):
+    """Then: Story graph contains all epics."""
+    assert len(filtered_graph.get('epics', [])) == expected_count
+
+
+def then_story_graph_contains_all_increments(filtered_graph, expected_count):
+    """Then: Story graph contains all increments."""
+    assert len(filtered_graph.get('increments', [])) == expected_count
+
+
+# ============================================================================
+# STORY: Filter Action Based on Scope (Epic: Perform Behavior Action)
+# ============================================================================
+
+class TestFilterActionBasedOnScope:
+    """Story: Filter Action Based on Scope (Epic: Perform Behavior Action)"""
+    
+    def test_build_scope_filters_by_story_names(self):
+        """
+        SCENARIO: BuildScope filters story graph by story names
+        GIVEN: Story graph with multiple stories
+        WHEN: BuildScope filters with story names
+        THEN: Story graph contains only matching stories and their parent epics
+        """
+        # Given: Story graph with stories
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: BuildScope filters by story names
+        filtered_graph = when_build_scope_filters_story_graph('story', ['Story A1'], story_graph)
+        
+        # Then: Only matching story and its parent epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        then_story_graph_contains_story(filtered_graph, 'Story A1')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+    
+    def test_build_scope_filters_by_epic_names(self):
+        """
+        SCENARIO: BuildScope filters story graph by epic names
+        GIVEN: Story graph with multiple epics
+        WHEN: BuildScope filters with epic names
+        THEN: Story graph contains only matching epics and their increments
+        """
+        # Given: Story graph with epics
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: BuildScope filters by epic names
+        filtered_graph = when_build_scope_filters_story_graph('epic', ['Epic A'], story_graph)
+        
+        # Then: Only matching epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+    
+    def test_build_scope_filters_by_increment_priorities(self):
+        """
+        SCENARIO: BuildScope filters story graph by increment priorities
+        GIVEN: Story graph with increments having different priorities
+        WHEN: BuildScope filters with increment priorities
+        THEN: Story graph contains only matching increments and their stories
+        """
+        # Given: Story graph with increments
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: BuildScope filters by increment priorities
+        filtered_graph = when_build_scope_filters_story_graph('increment', [1], story_graph)
+        
+        # Then: Only matching increment present
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+        assert 'Increment 2' not in [inc.get('name') for inc in filtered_graph.get('increments', [])]
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+    
+    def test_build_scope_returns_all_when_scope_is_all(self):
+        """
+        SCENARIO: BuildScope returns all when scope is all
+        GIVEN: Story graph with multiple epics and increments
+        WHEN: BuildScope filters with scope type 'all'
+        THEN: Story graph contains all epics and increments
+        """
+        # Given: Story graph with epics and increments
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: BuildScope filters with scope 'all'
+        filtered_graph = when_build_scope_filters_story_graph('all', None, story_graph)
+        
+        # Then: All epics and increments present
+        then_story_graph_contains_all_epics(filtered_graph, 2)
+        then_story_graph_contains_all_increments(filtered_graph, 2)
+    
+    def test_validation_scope_filters_by_story_names(self):
+        """
+        SCENARIO: ValidationScope filters story graph by story names
+        GIVEN: Story graph with multiple stories
+        WHEN: ValidationScope filters with story names
+        THEN: Story graph contains only matching stories and their parent epics
+        """
+        # Given: Story graph with stories
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: ValidationScope filters by story names
+        filtered_graph = when_validation_scope_filters_story_graph('story', ['Story A1'], story_graph)
+        
+        # Then: Only matching story and its parent epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        then_story_graph_contains_story(filtered_graph, 'Story A1')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+    
+    def test_validation_scope_filters_by_epic_names(self):
+        """
+        SCENARIO: ValidationScope filters story graph by epic names
+        GIVEN: Story graph with multiple epics
+        WHEN: ValidationScope filters with epic names
+        THEN: Story graph contains only matching epics and their increments
+        """
+        # Given: Story graph with epics
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: ValidationScope filters by epic names
+        filtered_graph = when_validation_scope_filters_story_graph('epic', ['Epic A'], story_graph)
+        
+        # Then: Only matching epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+    
+    def test_render_scope_filters_by_story_names(self):
+        """
+        SCENARIO: RenderScope filters story graph by story names
+        GIVEN: Story graph with multiple stories
+        WHEN: RenderScope filters with story names
+        THEN: Story graph contains only matching stories and their parent epics
+        """
+        # Given: Story graph with stories
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: RenderScope filters by story names
+        filtered_graph = when_render_scope_filters_story_graph('story', ['Story A1'], story_graph)
+        
+        # Then: Only matching story and its parent epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        then_story_graph_contains_story(filtered_graph, 'Story A1')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+    
+    def test_render_scope_filters_by_epic_names(self):
+        """
+        SCENARIO: RenderScope filters story graph by epic names
+        GIVEN: Story graph with multiple epics
+        WHEN: RenderScope filters with epic names
+        THEN: Story graph contains only matching epics and their increments
+        """
+        # Given: Story graph with epics
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: RenderScope filters by epic names
+        filtered_graph = when_render_scope_filters_story_graph('epic', ['Epic A'], story_graph)
+        
+        # Then: Only matching epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+    
+    def test_render_scope_returns_all_when_scope_is_all(self):
+        """
+        SCENARIO: RenderScope returns all when scope is all
+        GIVEN: Story graph with multiple epics and increments
+        WHEN: RenderScope filters with scope type 'all'
+        THEN: Story graph contains all epics and increments
+        """
+        # Given: Story graph with epics and increments
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: RenderScope filters with scope 'all'
+        filtered_graph = when_render_scope_filters_story_graph('all', None, story_graph)
+        
+        # Then: All epics and increments present
+        then_story_graph_contains_all_epics(filtered_graph, 2)
+        then_story_graph_contains_all_increments(filtered_graph, 2)
+

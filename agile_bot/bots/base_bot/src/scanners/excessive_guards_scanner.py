@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class ExcessiveGuardsScanner(CodeScanner):
@@ -49,9 +52,8 @@ class ExcessiveGuardsScanner(CodeScanner):
                     func_violations = self._check_function_guards(node, file_path, rule_obj, lines)
                     violations.extend(func_violations)
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -190,23 +192,14 @@ class ExcessiveGuardsScanner(CodeScanner):
         if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
             if isinstance(test.operand, ast.Name):
                 var_name = test.operand.id.lower()
-                # Common patterns for optional config/parameters/collections
-                optional_patterns = ['config', 'template', 'option', 'setting', 'file', 'dir', 'path', 
-                                    'pattern', 'spec', 'rule', 'violation', 'action', 'behavior', 
-                                    'trigger', 'command', 'desc', 'instruction', 'error', 'info',
-                                    'name', 'obj', 'instance', 'module', 'class']
-                if any(pattern in var_name for pattern in optional_patterns):
+                if self._check_optional_pattern(var_name):
                     return True  # Likely optional - don't flag
         
         # Check for truthiness checks on variables (if variable:, if not variable:)
         # These are often checking optional values
         if isinstance(test, ast.Name):
             var_name = test.id.lower()
-            optional_patterns = ['config', 'template', 'option', 'setting', 'file', 'dir', 'path',
-                                'pattern', 'spec', 'rule', 'violation', 'action', 'behavior',
-                                'trigger', 'command', 'desc', 'instruction', 'error', 'info',
-                                'name', 'obj', 'instance', 'module', 'class', 'background']
-            if any(pattern in var_name for pattern in optional_patterns):
+            if self._check_optional_pattern(var_name):
                 return True
         
         # Check for None comparisons on optional return values
@@ -218,23 +211,23 @@ class ExcessiveGuardsScanner(CodeScanner):
                             # Check if comparing a variable that might be optional
                             if isinstance(test.left, ast.Name):
                                 var_name = test.left.id.lower()
-                                optional_patterns = ['config', 'template', 'option', 'setting', 'file', 'dir', 'path',
-                                                    'pattern', 'spec', 'rule', 'violation', 'action', 'behavior',
-                                                    'trigger', 'command', 'desc', 'instruction', 'error', 'info',
-                                                    'name', 'obj', 'instance', 'module', 'class', 'behavior']
-                                if any(pattern in var_name for pattern in optional_patterns):
+                                if self._check_optional_pattern(var_name):
                                     return True
                         if isinstance(comparator, ast.NameConstant) and comparator.value is None:
                             if isinstance(test.left, ast.Name):
                                 var_name = test.left.id.lower()
-                                optional_patterns = ['config', 'template', 'option', 'setting', 'file', 'dir', 'path',
-                                                    'pattern', 'spec', 'rule', 'violation', 'action', 'behavior',
-                                                    'trigger', 'command', 'desc', 'instruction', 'error', 'info',
-                                                    'name', 'obj', 'instance', 'module', 'class', 'behavior']
-                                if any(pattern in var_name for pattern in optional_patterns):
+                                if self._check_optional_pattern(var_name):
                                     return True
         
         return False
+    
+    def _check_optional_pattern(self, var_name: str) -> bool:
+        """Check if variable name matches optional pattern (config, template, etc.)."""
+        optional_patterns = ['config', 'template', 'option', 'setting', 'file', 'dir', 'path',
+                            'pattern', 'spec', 'rule', 'violation', 'action', 'behavior',
+                            'trigger', 'command', 'desc', 'instruction', 'error', 'info',
+                            'name', 'obj', 'instance', 'module', 'class', 'background']
+        return any(pattern in var_name for pattern in optional_patterns)
     
     def _is_followed_by_creation_logic(self, guard_node: ast.If, source_lines: List[str]) -> bool:
         """Check if file existence check is followed by file/directory creation logic."""

@@ -235,7 +235,7 @@ class ValidationReportWriter:
         lines = []
         lines.extend(self.builder.build_header())
         lines.extend(self.builder.build_metadata())
-        lines.extend(self.builder.build_summary(validation_rules))
+        lines.extend(self.builder.build_summary(validation_rules, files))
         lines.extend(self.builder.build_content_validated(files, self.file_link_builder.get_relative_path, self._build_scanned_files_section))
         lines.extend(self.scanner_status_formatter.build_scanner_status(validation_rules))
         lines.extend(self.scanner_status_builder.build_validation_rules(validation_rules))

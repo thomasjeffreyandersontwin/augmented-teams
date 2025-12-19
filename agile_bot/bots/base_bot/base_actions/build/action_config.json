@@ -1,5 +1,6 @@
 {
   "name": "build",
+  "description": "Build knowledge graph and artifacts based on gathered context and approach decisions",
   "order": 1,
   "instructions": [
     "Build knowledge graph for build",
@@ -12,6 +13,7 @@
     "Top-level features should follow the schema"
   ]
 }
+
 
 
 

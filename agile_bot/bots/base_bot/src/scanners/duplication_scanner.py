@@ -4,10 +4,13 @@ from typing import List, Dict, Any, Optional, Tuple, Set
 from pathlib import Path
 import ast
 from datetime import datetime
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
 import hashlib
 from difflib import SequenceMatcher
+
+logger = logging.getLogger(__name__)
 
 # Timeout for individual file scans (seconds)
 FILE_SCAN_TIMEOUT = 60  # 60 seconds per file max
@@ -1006,8 +1009,7 @@ class DuplicationScanner(CodeScanner):
                     func_name = self._get_function_name(stmt.value.func)
                     if func_name:
                         # Check if function name matches helper patterns
-                        is_helper = any(func_name.startswith(pattern) for pattern in helper_patterns)
-                        if not is_helper:
+                        if not self._check_helper_pattern_match(func_name, helper_patterns):
                             # Not a helper call - this is actual implementation
                             return False
                 else:
@@ -1017,8 +1019,7 @@ class DuplicationScanner(CodeScanner):
                 # Expression statement with function call (no assignment)
                 func_name = self._get_function_name(stmt.value.func)
                 if func_name:
-                    is_helper = any(func_name.startswith(pattern) for pattern in helper_patterns)
-                    if not is_helper:
+                    if not self._check_helper_pattern_match(func_name, helper_patterns):
                         return False
             elif isinstance(stmt, ast.Assert):
                 # Assertions are fine - they're verification, not duplication
@@ -1029,6 +1030,10 @@ class DuplicationScanner(CodeScanner):
         
         # All statements are helper calls - not duplication
         return True
+    
+    def _check_helper_pattern_match(self, func_name: str, helper_patterns: List[str]) -> bool:
+        """Check if function name matches any helper pattern."""
+        return any(func_name.startswith(pattern) for pattern in helper_patterns)
     
     def _get_function_name(self, func_node: ast.expr) -> Optional[str]:
         """Extract function name from AST node."""
@@ -1869,8 +1874,8 @@ class DuplicationScanner(CodeScanner):
                 try:
                     with open(status_file_path, 'a', encoding='utf-8') as f:
                         f.write(msg + '\n')
-                except Exception:
-                    pass  # Don't fail on status write errors
+                except Exception as e:
+                    logger.debug(f'Could not write to status file: {type(e).__name__}: {e}')
         
         write_status(f"\n## Cross-File Duplication Analysis")
         write_status(f"Scanning {len(all_files)} files...")
@@ -1892,7 +1897,8 @@ class DuplicationScanner(CodeScanner):
                 if file_size > 500_000:  # Skip files larger than 500KB
                     _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                     continue
-            except Exception:
+            except Exception as e:
+                logger.debug(f'Error checking file size for {file_path}: {type(e).__name__}: {e}')
                 continue
             
             try:
@@ -1920,7 +1926,8 @@ class DuplicationScanner(CodeScanner):
                         block['lines'] = lines
                         all_blocks.append(block)
                         
-            except (SyntaxError, UnicodeDecodeError):
+            except (SyntaxError, UnicodeDecodeError) as e:
+                logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
                 continue
             except Exception as e:
                 _safe_print(f"Error processing {file_path} for cross-file scan: {e}")

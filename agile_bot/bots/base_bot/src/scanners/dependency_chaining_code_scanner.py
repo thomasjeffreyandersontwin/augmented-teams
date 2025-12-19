@@ -3,8 +3,11 @@
 from typing import List, Dict, Any, Optional, Set
 from pathlib import Path
 import ast
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class DependencyChainingCodeScanner(CodeScanner):
@@ -31,8 +34,8 @@ class DependencyChainingCodeScanner(CodeScanner):
                     class_violations = self._check_dependency_chaining(node, file_path, rule_obj)
                     violations.extend(class_violations)
         
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

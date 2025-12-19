@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class RealImplementationsScanner(TestScanner):
@@ -35,10 +38,8 @@ class RealImplementationsScanner(TestScanner):
             fake_violations = self._check_fake_implementations(lines, file_path, rule_obj)
             violations.extend(fake_violations)
         
-        except (UnicodeDecodeError, SyntaxError, Exception):
-            # Skip binary files, syntax errors, or files with encoding issues
-            # Syntax errors might indicate incomplete code, which is actually what we want to catch
-            pass
+        except (UnicodeDecodeError, SyntaxError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

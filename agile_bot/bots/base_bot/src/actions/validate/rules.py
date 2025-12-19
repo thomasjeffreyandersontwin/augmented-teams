@@ -37,7 +37,7 @@ class ValidationContext:
         story_graph = StoryGraph(behavior.bot_paths, behavior.bot_paths.workspace_directory, knowledge_graph_spec=knowledge.knowledge_graph_spec)
         validation_scope = ValidationScope(parameters or {}, behavior.bot_paths, behavior_name=behavior.name)
         scope_config = validation_scope.scope
-        scope_keys = {'story_names', 'increment_priorities', 'epic_names', 'all'}
+        scope_keys = {'story_names', 'increment_priorities', 'epic_names', 'increment_names', 'all'}
         has_scope_in_params = any((key in scope_config for key in scope_keys))
         if has_scope_in_params:
             story_graph['_validation_scope'] = scope_config

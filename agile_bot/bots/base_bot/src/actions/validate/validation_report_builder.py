@@ -17,9 +17,29 @@ class ValidationReportBuilder:
     def build_metadata(self) -> List[str]:
         return [f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", f'**Project:** {self.workspace_directory.name}', f'**Behavior:** {self.behavior_name}', f'**Action:** validate', '']
 
-    def build_summary(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
+    def build_summary(self, validation_rules: List[Dict[str, Any]], files: Dict[str, List[Path]] = None) -> List[str]:
         total_rules = len(validation_rules)
-        return ['## Summary', '', f'Validated story map and domain model against **{total_rules} validation rules**.', '']
+        summary_text = self._build_summary_text(files)
+        return ['## Summary', '', f'Validated {summary_text} against **{total_rules} validation rules**.', '']
+    
+    def _build_summary_text(self, files: Dict[str, List[Path]] = None) -> str:
+        """Build context-aware summary text based on what was actually validated."""
+        if not files:
+            return 'content'
+        test_files = files.get('test', [])
+        code_files = files.get('src', [])
+        clarification_file, planning_file, rendered_outputs = self._find_content_files()
+        has_story_content = bool(clarification_file or planning_file or rendered_outputs)
+        parts = []
+        if has_story_content:
+            parts.append('story map and domain model')
+        if code_files:
+            parts.append(f'{len(code_files)} code file(s)')
+        if test_files:
+            parts.append(f'{len(test_files)} test file(s)')
+        if not parts:
+            return 'content'
+        return ' and '.join(parts)
 
     def build_content_validated(self, files: Dict[str, List[Path]], get_relative_path_fn, build_scanned_files_section_fn) -> List[str]:
         lines = ['## Content Validated', '']

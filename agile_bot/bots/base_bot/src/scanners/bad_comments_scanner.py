@@ -3,8 +3,11 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class BadCommentsScanner(CodeScanner):
@@ -33,9 +36,8 @@ class BadCommentsScanner(CodeScanner):
             # Check for misleading TODO comments
             violations.extend(self._check_misleading_todos(lines, file_path, rule_obj))
         
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        except (UnicodeDecodeError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -69,14 +71,7 @@ class BadCommentsScanner(CodeScanner):
                     else:
                         # End of commented block
                         if commented_block_start:
-                            violation = Violation(
-                                rule=rule_obj,
-                                violation_message=f"Line {commented_block_start} has commented-out code - delete it (it's in git history if needed)",
-                                location=str(file_path),
-                                line_number=commented_block_start,
-                                severity='warning'
-                            ).to_dict()
-                            violations.append(violation)
+                            violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
                             commented_block_start = None
                 else:
                     # Not commented code, reset
@@ -84,28 +79,24 @@ class BadCommentsScanner(CodeScanner):
             else:
                 # Not a comment line - end any commented block
                 if commented_block_start:
-                    violation = Violation(
-                        rule=rule_obj,
-                        violation_message=f"Line {commented_block_start} has commented-out code - delete it (it's in git history if needed)",
-                        location=str(file_path),
-                        line_number=commented_block_start,
-                        severity='warning'
-                    ).to_dict()
-                    violations.append(violation)
+                    violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
                     commented_block_start = None
         
         # Check for any remaining commented block at end of file
         if commented_block_start:
-            violation = Violation(
-                rule=rule_obj,
-                violation_message=f"Line {commented_block_start} has commented-out code - delete it (it's in git history if needed)",
-                location=str(file_path),
-                line_number=commented_block_start,
-                severity='warning'
-            ).to_dict()
-            violations.append(violation)
+            violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
         
         return violations
+    
+    def _create_commented_code_violation(self, rule_obj: Any, file_path: Path, line_num: int) -> Dict[str, Any]:
+        """Create a violation for commented-out code."""
+        return Violation(
+            rule=rule_obj,
+            violation_message=f"Line {line_num} has commented-out code - delete it (it's in git history if needed)",
+            location=str(file_path),
+            line_number=line_num,
+            severity='warning'
+        ).to_dict()
     
     def _is_actual_commented_code(self, comment_content: str, lines: List[str], line_num: int) -> bool:
         """Check if comment content is actual executable code, not just a comment about code.

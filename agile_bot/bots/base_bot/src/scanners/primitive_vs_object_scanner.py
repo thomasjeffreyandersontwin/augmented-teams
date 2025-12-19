@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class PrimitiveVsObjectScanner(CodeScanner):
@@ -54,9 +57,8 @@ class PrimitiveVsObjectScanner(CodeScanner):
                     if return_violation:
                         violations.append(return_violation)
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -103,27 +105,17 @@ class PrimitiveVsObjectScanner(CodeScanner):
                 if type_name and type_name in self.PRIMITIVE_TYPES:
                     # Check if parameter name suggests it should be an object
                     if self._suggests_object_should_be_passed(arg.arg):
-                        line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Function "{func_node.name}" takes primitive "{arg.arg}: {type_name}" - consider passing domain object instead',
-                            location=str(file_path),
-                            line_number=line_number,
-                            severity='warning'
-                        ).to_dict()
-                        violations.append(violation)
+                        violations.append(self._create_primitive_violation(
+                            rule_obj, file_path, func_node, arg, type_name,
+                            f'Function "{func_node.name}" takes primitive "{arg.arg}: {type_name}" - consider passing domain object instead'
+                        ))
             
             # Even without type annotation, check parameter name patterns
             elif self._suggests_object_should_be_passed(arg.arg):
-                line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-                violation = Violation(
-                    rule=rule_obj,
-                    violation_message=f'Function "{func_node.name}" takes "{arg.arg}" which suggests a primitive ID - consider passing domain object instead',
-                    location=str(file_path),
-                    line_number=line_number,
-                    severity='warning'
-                ).to_dict()
-                violations.append(violation)
+                violations.append(self._create_primitive_violation(
+                    rule_obj, file_path, func_node, arg, None,
+                    f'Function "{func_node.name}" takes "{arg.arg}" which suggests a primitive ID - consider passing domain object instead'
+                ))
         
         return violations
     
@@ -144,14 +136,10 @@ class PrimitiveVsObjectScanner(CodeScanner):
                 object_return_patterns = ['create', 'build', 'make', 'get', 'find', 'load', 'process', 'generate']
                 
                 if any(pattern in func_name_lower for pattern in object_return_patterns):
-                    line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-                    return Violation(
-                        rule=rule_obj,
-                        violation_message=f'Function "{func_node.name}" returns "{return_type_name}" - consider returning domain object instead',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='warning'
-                    ).to_dict()
+                    return self._create_primitive_violation(
+                        rule_obj, file_path, func_node, None, return_type_name,
+                        f'Function "{func_node.name}" returns "{return_type_name}" - consider returning domain object instead'
+                    )
         
         return None
     

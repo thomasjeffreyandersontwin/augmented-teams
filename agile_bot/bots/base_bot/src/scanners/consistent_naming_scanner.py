@@ -3,9 +3,12 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 
 class ConsistentNamingScanner(CodeScanner):
@@ -37,9 +40,8 @@ class ConsistentNamingScanner(CodeScanner):
             # Classes often use PascalCase while functions use snake_case - that's OK
             violations.extend(self._check_naming_consistency(function_names, class_names, file_path, rule_obj))
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

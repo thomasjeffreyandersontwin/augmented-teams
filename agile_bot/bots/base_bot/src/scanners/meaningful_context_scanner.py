@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class MeaningfulContextScanner(CodeScanner):
@@ -27,9 +30,8 @@ class MeaningfulContextScanner(CodeScanner):
             # Check for numbered variables (data1, data2)
             violations.extend(self._check_numbered_variables(content, file_path, rule_obj))
         
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        except (UnicodeDecodeError, Exception) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -141,8 +143,7 @@ class MeaningfulContextScanner(CodeScanner):
                                     if isinstance(target.attr, str) and numbered_var_pattern.match(target.attr):
                                         check_name(target.attr, target.lineno)
         
-        except (SyntaxError, ValueError):
-            # If AST parsing fails, skip this check (file might have syntax errors)
-            pass
+        except (SyntaxError, ValueError) as e:
+            logger.debug(f'AST parsing failed for {file_path}, skipping numbered variable check: {type(e).__name__}: {e}')
         
         return violations

@@ -3,8 +3,11 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
+import logging
 from .code_scanner import CodeScanner
 from .complexity_metrics import ComplexityMetrics
+
+logger = logging.getLogger(__name__)
 
 
 class FunctionSizeScanner(CodeScanner):
@@ -34,9 +37,8 @@ class FunctionSizeScanner(CodeScanner):
                     if violation:
                         violations.append(violation)
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     

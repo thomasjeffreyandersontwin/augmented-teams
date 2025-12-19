@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 import re
+import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class TestQualityScanner(TestScanner):
@@ -33,9 +36,8 @@ class TestQualityScanner(TestScanner):
             violations.extend(self._check_test_independence(tree, content, file_path, rule_obj))
             violations.extend(self._check_test_names_quality(tree, file_path, rule_obj))
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
         
         return violations
     
@@ -72,16 +74,15 @@ class TestQualityScanner(TestScanner):
         """Check for test independence violations (tests depending on each other)."""
         violations = []
         
-        # Check for global state mutations
-        lines = content.split('\n')
-        for line_num, line in enumerate(lines, 1):
-            # Check for global variable assignments
-            if re.search(r'global\s+\w+', line, re.IGNORECASE):
+        # Check for global state mutations using AST, not regex (avoids false positives)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Global):
+                line_number = node.lineno if hasattr(node, 'lineno') else None
                 violation = Violation(
                     rule=rule_obj,
-                    violation_message=f'Line {line_num} uses global state - tests should be independent, not share state',
+                    violation_message=f'Line {line_number} uses global state - tests should be independent, not share state',
                     location=str(file_path),
-                    line_number=line_num,
+                    line_number=line_number,
                     severity='error'
                 ).to_dict()
                 violations.append(violation)
@@ -91,21 +92,25 @@ class TestQualityScanner(TestScanner):
     def _check_test_names_quality(self, tree: ast.AST, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         """Check test names are descriptive (not generic)."""
         violations = []
+        generic_names = ['test_1', 'test_2', 'test_basic', 'test_simple', 'test_default']
         
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith('test_'):
-                    # Check for generic test names
-                    if node.name in ['test_1', 'test_2', 'test_basic', 'test_simple', 'test_default']:
-                        line_number = node.lineno if hasattr(node, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Test "{node.name}" uses generic name - use descriptive name that explains what is being tested',
-                            location=str(file_path),
-                            line_number=line_number,
-                            severity='error'
-                        ).to_dict()
-                        violations.append(violation)
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            if not node.name.startswith('test_'):
+                continue
+            if node.name not in generic_names:
+                continue
+            
+            line_number = node.lineno if hasattr(node, 'lineno') else None
+            violation = Violation(
+                rule=rule_obj,
+                violation_message=f'Test "{node.name}" uses generic name - use descriptive name that explains what is being tested',
+                location=str(file_path),
+                line_number=line_number,
+                severity='error'
+            ).to_dict()
+            violations.append(violation)
         
         return violations
     

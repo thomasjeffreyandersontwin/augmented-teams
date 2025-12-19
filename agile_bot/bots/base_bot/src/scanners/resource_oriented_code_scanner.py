@@ -4,8 +4,11 @@ from typing import List, Dict, Any, Optional, Set, Tuple
 from pathlib import Path
 import ast
 import re
+import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+
+logger = logging.getLogger(__name__)
 
 
 class ResourceOrientedCodeScanner(CodeScanner):
@@ -67,7 +70,8 @@ class ResourceOrientedCodeScanner(CodeScanner):
                             if node.name.endswith(pattern):
                                 loader_classes[node.name] = (file_path, node, pattern)
                                 break
-            except (SyntaxError, UnicodeDecodeError):
+            except (SyntaxError, UnicodeDecodeError) as e:
+                logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
                 continue
         
         # Second pass: check if each loader class is owned by a domain object

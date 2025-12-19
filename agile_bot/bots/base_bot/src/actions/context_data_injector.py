@@ -41,6 +41,12 @@ class ContextDataInjector:
         workspace_directory = bot_paths.workspace_directory
         docs_path = bot_paths.documentation_path
         context_dir = workspace_directory / docs_path / 'context'
+        
+        # Create context directory if it doesn't exist
+        if not context_dir.exists():  # scanner ignore
+            context_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created context directory: {context_dir}")
+        
         context_files = []
         for file_path in context_dir.iterdir():
             if file_path.is_file():

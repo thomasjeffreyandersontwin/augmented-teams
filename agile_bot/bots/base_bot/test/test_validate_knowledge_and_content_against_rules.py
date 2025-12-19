@@ -735,6 +735,38 @@ def _scan_files_via_scan_method(scanner_instance: TestScanner, bad_example: dict
 
 
 
+def _convert_scope_config_to_unified_format(scope_config: dict) -> dict:
+    """Convert old scope_config format to new unified scope format."""
+    if not scope_config:
+        return {}
+    
+    # Handle validate_all
+    if scope_config.get('validate_all'):
+        return {'scope': {'type': 'all'}}
+    
+    # Handle story_names
+    if 'story_names' in scope_config:
+        return {'scope': {'type': 'story', 'value': scope_config['story_names']}}
+    
+    # Handle epic_names
+    if 'epic_names' in scope_config:
+        return {'scope': {'type': 'epic', 'value': scope_config['epic_names']}}
+    
+    # Handle increment_priorities
+    if 'increment_priorities' in scope_config:
+        return {'scope': {'type': 'increment', 'value': scope_config['increment_priorities']}}
+    
+    # Handle increment_names
+    if 'increment_names' in scope_config:
+        return {'scope': {'type': 'increment', 'value': scope_config['increment_names']}}
+    
+    # If it's already in unified format, return as-is
+    if 'scope' in scope_config and isinstance(scope_config.get('scope'), dict):
+        return scope_config.copy()
+    
+    # Otherwise, preserve other parameters
+    return scope_config.copy()
+
 def when_parameters_created(scope=None, test_files=None, code_files=None):
     """
     Consolidated function for creating parameters.
@@ -742,7 +774,7 @@ def when_parameters_created(scope=None, test_files=None, code_files=None):
     when_create_test_files_parameter, when_create_code_files_parameter, when_create_empty_parameters
     """
     if scope is not None:
-        return scope.copy() if scope else {}
+        return _convert_scope_config_to_unified_format(scope) if scope else {}
     elif test_files is not None:
         # Handle both single Path and list of Paths
         if isinstance(test_files, (list, tuple)):
@@ -4467,8 +4499,8 @@ class TestCreateValidationScope:
         ({'test': ['test1.py'], 'src': ['src1.py']}, {'test': ['test1.py'], 'src': ['src1.py']}),
         # Example 4: Validate all
         ({'validate_all': True}, {'all': True}),
-        # Example 5: Story names
-        ({'story_names': ['Story1']}, {'story_names': ['Story1']}),
+        # Example 5: Story names via scope
+        ({'scope': {'type': 'story', 'value': ['Story1']}}, {'story_names': ['Story1']}),
     ])
     def test_validation_scope_created_with_different_parameter_combinations(self, parameters, expected_scope_contains):
         """

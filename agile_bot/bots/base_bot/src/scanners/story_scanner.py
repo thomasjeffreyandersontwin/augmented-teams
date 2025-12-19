@@ -2,11 +2,7 @@ from abc import abstractmethod
 from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from .scanner import Scanner
 from .story_map import StoryMap, StoryNode, StoryGroup
-
-if TYPE_CHECKING:
-    from .domain_concept_node import DomainConceptNode
-else:
-    from .domain_concept_node import DomainConceptNode
+from .domain_concept_node import DomainConceptNode
 
 
 class StoryScanner(Scanner):

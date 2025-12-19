@@ -115,7 +115,29 @@ class StoryGroup(StoryNode):
         return children
 
 
-class Scenario:
+class ScenarioBase:
+    """Base class for Scenario and ScenarioOutline with shared methods."""
+    
+    @property
+    def steps(self) -> List[str]:
+        """Extract steps from data, handling both string and list formats."""
+        steps_value = self.data.get('steps', '')
+        if isinstance(steps_value, str):
+            return [s.strip() for s in steps_value.split('\n') if s.strip()]
+        return steps_value if isinstance(steps_value, list) else []
+    
+    @property
+    def default_test_method(self) -> str:
+        """Generate default test method name from scenario name."""
+        scenario_name = self.name
+        if not scenario_name:
+            return ""
+        words = scenario_name.split()
+        method_name = "_".join(word.lower() for word in words)
+        return f"test_{method_name}"
+
+
+class Scenario(ScenarioBase):
     """Legacy compatibility wrapper for Scenario (not a node in old model)."""
     
     def __init__(self, data: Dict[str, Any], story: 'Story', scenario_idx: int):
@@ -136,31 +158,15 @@ class Scenario:
         return self.data.get('background', [])
     
     @property
-    def steps(self) -> List[str]:
-        steps_value = self.data.get('steps', '')
-        if isinstance(steps_value, str):
-            return [s.strip() for s in steps_value.split('\n') if s.strip()]
-        return steps_value if isinstance(steps_value, list) else []
-    
-    @property
     def test_method(self) -> Optional[str]:
         return self.data.get('test_method')
-    
-    @property
-    def default_test_method(self) -> str:
-        scenario_name = self.name
-        if not scenario_name:
-            return ""
-        words = scenario_name.split()
-        method_name = "_".join(word.lower() for word in words)
-        return f"test_{method_name}"
     
     def map_location(self, field: str = 'name') -> str:
         story_location = self.story.map_location('scenarios')
         return f"{story_location}[{self.scenario_idx}].{field}"
 
 
-class ScenarioOutline:
+class ScenarioOutline(ScenarioBase):
     """Legacy compatibility wrapper for ScenarioOutline (not a node in old model)."""
     
     def __init__(self, data: Dict[str, Any], story: 'Story', scenario_outline_idx: int):
@@ -181,13 +187,6 @@ class ScenarioOutline:
         return self.data.get('background', [])
     
     @property
-    def steps(self) -> List[str]:
-        steps_value = self.data.get('steps', '')
-        if isinstance(steps_value, str):
-            return [s.strip() for s in steps_value.split('\n') if s.strip()]
-        return steps_value if isinstance(steps_value, list) else []
-    
-    @property
     def examples(self) -> Dict[str, Any]:
         return self.data.get('examples', {})
     
@@ -202,15 +201,6 @@ class ScenarioOutline:
     @property
     def test_method(self) -> Optional[str]:
         return self.data.get('test_method')
-    
-    @property
-    def default_test_method(self) -> str:
-        scenario_name = self.name
-        if not scenario_name:
-            return ""
-        words = scenario_name.split()
-        method_name = "_".join(word.lower() for word in words)
-        return f"test_{method_name}"
     
     def map_location(self, field: str = 'name') -> str:
         story_location = self.story.map_location('scenario_outlines')
