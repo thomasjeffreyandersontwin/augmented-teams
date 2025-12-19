@@ -255,40 +255,33 @@ class TriggerRouter:
         trigger_file = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / bot_name / 'trigger_words.json'
         return self._load_patterns_from_file(trigger_file)
     
+    def _load_triggers_from_behavior_file(self, behavior_file: Path) -> list:
+        """Load trigger patterns from behavior.json file."""
+        if not behavior_file.exists():
+            return []
+        try:
+            content = behavior_file.read_text(encoding='utf-8')
+            behavior_data = json.loads(content)
+            return behavior_data.get('trigger_words', {}).get('patterns', [])
+        except Exception:
+            return []
+    
     def _load_behavior_triggers(self, bot_name: str) -> Dict[str, List[str]]:
-        """Load behavior-level trigger patterns for all behaviors.
-        
-        Args:
-            bot_name: Name of the bot
-        
-        Returns:
-            Dict mapping behavior name -> trigger patterns
-        """
+        """Load behavior-level trigger patterns for all behaviors."""
         behaviors_dir = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / bot_name / 'behaviors'
         
         if not behaviors_dir.exists():
             return {}
         
         behavior_triggers = {}
-        
         for behavior_dir in behaviors_dir.iterdir():
             if not behavior_dir.is_dir() or behavior_dir.name.startswith('_'):
                 continue
             
             behavior_name = self._extract_behavior_name(behavior_dir.name)
-            behavior_file = behavior_dir / 'behavior.json'
-            
-            # Load from behavior.json (new format)
-            if behavior_file.exists():
-                try:
-                    content = behavior_file.read_text(encoding='utf-8')
-                    behavior_data = json.loads(content)
-                    trigger_words = behavior_data.get('trigger_words', {})
-                    patterns = trigger_words.get('patterns', [])
-                    if patterns:
-                        behavior_triggers[behavior_name] = patterns
-                except Exception:
-                    pass
+            patterns = self._load_triggers_from_behavior_file(behavior_dir / 'behavior.json')
+            if patterns:
+                behavior_triggers[behavior_name] = patterns
         
         return behavior_triggers
     
@@ -315,21 +308,28 @@ class TriggerRouter:
                 continue
             
             behavior_name = self._extract_behavior_name(behavior_dir.name)
-            action_triggers[behavior_name] = {}
-            
-            # Look for action directories with trigger_words.json
-            for action_dir in behavior_dir.iterdir():
-                if not action_dir.is_dir() or action_dir.name.startswith('_'):
-                    continue
-                
-                trigger_file = action_dir / 'trigger_words.json'
-                if trigger_file.exists():
-                    action_name = self._extract_action_name(action_dir.name)
-                    patterns = self._load_patterns_from_file(trigger_file)
-                    if patterns:
-                        action_triggers[behavior_name][action_name] = patterns
+            behavior_action_triggers = self._load_action_triggers_for_behavior(behavior_dir)
+            if behavior_action_triggers:
+                action_triggers[behavior_name] = behavior_action_triggers
         
         return action_triggers
+    
+    def _load_action_triggers_for_behavior(self, behavior_dir: Path) -> Dict[str, List[str]]:
+        """Load action triggers for a single behavior directory."""
+        triggers = {}
+        for action_dir in behavior_dir.iterdir():
+            if not action_dir.is_dir() or action_dir.name.startswith('_'):
+                continue
+            
+            trigger_file = action_dir / 'trigger_words.json'
+            if not trigger_file.exists():
+                continue
+            
+            action_name = self._extract_action_name(action_dir.name)
+            patterns = self._load_patterns_from_file(trigger_file)
+            if patterns:
+                triggers[action_name] = patterns
+        return triggers
     
     def _extract_behavior_name(self, dir_name: str) -> str:
         """Extract behavior name from directory name.

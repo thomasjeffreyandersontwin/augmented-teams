@@ -23,36 +23,43 @@ class Behaviors:
         self.bot_paths = bot_paths
         
         self._behaviors: List['Behavior'] = []
-        # Discover behaviors from folder structure and load their order from behavior.json
-        behaviors_dir = self.bot_paths.bot_directory / 'behaviors'
-        if behaviors_dir.exists():
-            behavior_orders = []
-            for item in behaviors_dir.iterdir():
-                if item.is_dir() and not item.name.startswith('_') and not item.name.startswith('.'):
-                    # Verify it has a behavior.json
-                    behavior_json_path = item / 'behavior.json'
-                    if behavior_json_path.exists():
-                        try:
-                            config = read_json_file(behavior_json_path)
-                            order = config.get('order', 999)  # Default to end if no order
-                            behavior = Behavior(
-                                name=item.name,
-                                bot_paths=self.bot_paths,
-                                bot_instance=None
-                            )
-                            behavior_orders.append((order, behavior))
-                        except Exception as e:
-                            # If config load fails, skip this behavior
-                            logger.warning(f"Failed to load behavior {item.name}: {e}")
-                            logger.debug(f"Traceback: {traceback.format_exc()}")
-                            continue
-            
-            # Sort by order from behavior.json
-            behavior_orders.sort(key=lambda x: x[0])
-            self._behaviors = [behavior for _, behavior in behavior_orders]
+        self._discover_behaviors()
         
         self._current_index: Optional[int] = None
         self.load_state()
+    
+    def _load_behavior_from_dir(self, item: Path) -> tuple:
+        """Load a behavior from directory. Returns (order, behavior) or None if failed."""
+        behavior_json_path = item / 'behavior.json'
+        if not behavior_json_path.exists():
+            return None
+        
+        try:
+            config = read_json_file(behavior_json_path)
+            order = config.get('order', 999)
+            behavior = Behavior(name=item.name, bot_paths=self.bot_paths, bot_instance=None)
+            return (order, behavior)
+        except Exception as e:
+            logger.warning(f"Failed to load behavior {item.name}: {e}")
+            logger.debug(f"Traceback: {traceback.format_exc()}")
+            return None
+    
+    def _discover_behaviors(self) -> None:
+        """Discover behaviors from folder structure and load their order from behavior.json."""
+        behaviors_dir = self.bot_paths.bot_directory / 'behaviors'
+        if not behaviors_dir.exists():
+            return
+        
+        behavior_orders = []
+        for item in behaviors_dir.iterdir():
+            if not item.is_dir() or item.name.startswith('_') or item.name.startswith('.'):
+                continue
+            result = self._load_behavior_from_dir(item)
+            if result:
+                behavior_orders.append(result)
+        
+        behavior_orders.sort(key=lambda x: x[0])
+        self._behaviors = [behavior for _, behavior in behavior_orders]
     
     @property
     def current(self) -> Optional['Behavior']:
@@ -81,7 +88,8 @@ class Behaviors:
         return None
     
     def next(self) -> Optional['Behavior']:
-        # Caller must ensure current_index is set - fail fast if not
+        if self._current_index is None:
+            return None
         next_index = self._current_index + 1
         if next_index < len(self._behaviors):
             return self._behaviors[next_index]
@@ -170,44 +178,50 @@ class Behaviors:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
     
+    def _init_to_first_behavior(self) -> None:
+        """Initialize to first behavior if behaviors exist."""
+        if self._behaviors:
+            self._current_index = 0
+    
+    def _find_behavior_index(self, behavior_name: str) -> int:
+        """Find index of behavior by name. Returns -1 if not found."""
+        for i, behavior in enumerate(self._behaviors):
+            if behavior.name == behavior_name:
+                return i
+        return -1
+    
+    def _extract_behavior_name_from_state(self, current_behavior_full: str) -> str:
+        """Extract behavior name from format 'bot_name.behavior_name'."""
+        if not current_behavior_full:
+            return None
+        parts = current_behavior_full.split('.')
+        if len(parts) >= 2:
+            return '.'.join(parts[1:])
+        return None
+    
     def load_state(self):
         if self.bot_paths is None:
-            if len(self._behaviors) > 0:
-                self._current_index = 0
+            self._init_to_first_behavior()
             return
         
         workspace_dir = self.bot_paths.workspace_directory
         state_file = workspace_dir / 'behavior_action_state.json'
         
-        # If no state file, set first behavior as current
-        if not state_file.exists() or len(self._behaviors) == 0:
-            if len(self._behaviors) > 0:
-                self._current_index = 0
+        if not state_file.exists() or not self._behaviors:
+            self._init_to_first_behavior()
             return
         
         try:
             state_data = json.loads(state_file.read_text(encoding='utf-8'))
-            current_behavior_full = state_data.get('current_behavior', '')
-            
-            # Extract behavior name from format "bot_name.behavior_name"
-            if current_behavior_full:
-                parts = current_behavior_full.split('.')
-                if len(parts) >= 2:
-                    saved_behavior_name = '.'.join(parts[1:])  # Handle behaviors with dots in name
-                    
-                    # Find and set current behavior
-                    for i, behavior in enumerate(self._behaviors):
-                        if behavior.name == saved_behavior_name:
-                            self._current_index = i
-                            return
-            
-            # If saved behavior not found, default to first
-            if len(self._behaviors) > 0:
-                self._current_index = 0
+            behavior_name = self._extract_behavior_name_from_state(state_data.get('current_behavior', ''))
+            if behavior_name:
+                idx = self._find_behavior_index(behavior_name)
+                if idx >= 0:
+                    self._current_index = idx
+                    return
+            self._init_to_first_behavior()
         except Exception:
-            # If loading fails, default to first behavior
-            if len(self._behaviors) > 0:
-                self._current_index = 0
+            self._init_to_first_behavior()
     
     def initialize_state(self, confirmed_behavior: str):
         """Initialize behavior_action_state.json with confirmed behavior and first action."""

@@ -675,7 +675,8 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     bootstrap_env(bot_dir, workspace_dir)
     
     if setup_type == 'minimal':
-        # Minimal setup: just bootstrap and create bot config
+        # Minimal setup: bootstrap, create bot config, and base_actions
+        create_base_actions_structure(bot_dir)
         return create_bot_config_file(bot_dir, bot_name, behaviors)
     
     # Standard and other setups: create base actions structure
@@ -919,16 +920,18 @@ def when_activity_tracks_start(tracker, action_state):
         tracker: ActivityTracker instance
         action_state: Action state string (e.g., 'bot_name.behavior.action') or dict with bot_name, behavior, action
     """
+    from agile_bot.bots.base_bot.src.actions.activity_tracker import ActionState
+    
     if isinstance(action_state, str):
         # Parse action_state like 'bot_name.behavior.action'
         parts = action_state.split('.')
         if len(parts) == 3:
             bot_name, behavior, action = parts
-            tracker.track_start(bot_name, behavior, action)
+            tracker.track_start(ActionState(bot_name, behavior, action))
         else:
             raise ValueError(f"Invalid action_state format: {action_state}")
     elif isinstance(action_state, dict):
-        tracker.track_start(action_state['bot_name'], action_state['behavior'], action_state['action'])
+        tracker.track_start(ActionState(action_state['bot_name'], action_state['behavior'], action_state['action']))
     else:
         raise ValueError(f"Invalid action_state type: {type(action_state)}")
 
@@ -1953,6 +1956,18 @@ def create_behavior_folder_with_json(bot_dir: Path, folder_name: str) -> Path:
     }
     behavior_file = behavior_folder / 'behavior.json'
     behavior_file.write_text(json.dumps(behavior_config, indent=2), encoding='utf-8')
+    
+    # Create base_actions structure - no fallback in production code
+    base_actions_dir = bot_dir / 'base_actions'
+    action_configs = [
+        ('clarify', 1), ('strategy', 2), ('build', 3), ('validate', 4), ('render', 5)
+    ]
+    for action_name, order in action_configs:
+        action_dir = base_actions_dir / action_name
+        action_dir.mkdir(parents=True, exist_ok=True)
+        (action_dir / 'action_config.json').write_text(json.dumps({
+            'name': action_name, 'order': order, 'instructions': [f'{action_name} base instructions']
+        }), encoding='utf-8')
     
     return behavior_folder
 

@@ -37,9 +37,10 @@ def given_bot_config_and_directory_setup(workspace_root: Path, bot_name: str, be
     
     
     """
-    from conftest import create_bot_config_file
+    from conftest import create_bot_config_file, create_base_actions_structure
     bot_dir = workspace_root / 'agile_bot' / 'bots' / bot_name
     bot_dir.mkdir(parents=True, exist_ok=True)
+    create_base_actions_structure(bot_dir)
     config_file = create_bot_config_file(bot_dir, bot_name, behaviors)
     return config_file, bot_dir
 

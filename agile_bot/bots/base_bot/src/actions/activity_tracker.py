@@ -1,8 +1,24 @@
 from pathlib import Path
 from datetime import datetime
+from dataclasses import dataclass, field
 from tinydb import TinyDB
-from typing import Optional
+from typing import Optional, Dict, Any
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+
+
+@dataclass
+class ActionState:
+    """Identifies a specific action execution - groups bot_name, behavior, action."""
+    bot_name: str
+    behavior: str
+    action: str
+    outputs: Optional[Dict[str, Any]] = None
+    duration: Optional[int] = None
+    
+    @property
+    def state_key(self) -> str:
+        """Get the action state key string."""
+        return f'{self.bot_name}.{self.behavior}.{self.action}'
 
 
 class ActivityTracker:
@@ -18,25 +34,27 @@ class ActivityTracker:
     def file(self) -> Path:
         return self._bot_paths.workspace_directory / 'activity_log.json'
     
-    def track_start(self, bot_name: str, behavior: str, action: str):
+    def track_start(self, state: ActionState):
+        """Track the start of an action execution."""
         self.file.parent.mkdir(parents=True, exist_ok=True)
         with TinyDB(self.file) as db:
             db.insert({
-                'action_state': f'{bot_name}.{behavior}.{action}',
+                'action_state': state.state_key,
                 'status': 'started',
                 'timestamp': datetime.now().isoformat()
             })
     
-    def track_completion(self, bot_name: str, behavior: str, action: str, outputs: dict = None, duration: int = None):
+    def track_completion(self, state: ActionState):
+        """Track the completion of an action execution."""
         self.file.parent.mkdir(parents=True, exist_ok=True)
         with TinyDB(self.file) as db:
             entry = {
-                'action_state': f'{bot_name}.{behavior}.{action}',
+                'action_state': state.state_key,
                 'status': 'completed',
                 'timestamp': datetime.now().isoformat()
             }
-            if outputs:
-                entry['outputs'] = outputs
-            if duration:
-                entry['duration'] = duration
+            if state.outputs:
+                entry['outputs'] = state.outputs
+            if state.duration:
+                entry['duration'] = state.duration
             db.insert(entry)

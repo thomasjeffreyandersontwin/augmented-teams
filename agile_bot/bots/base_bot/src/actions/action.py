@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 import traceback
-from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker
+from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker, ActionState
 from agile_bot.bots.base_bot.src.actions.clarify.requirements_clarifications import RequirementsClarifications
 from agile_bot.bots.base_bot.src.actions.strategy.strategy_decision import StrategyDecision
 from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
@@ -169,6 +169,53 @@ class Action:
             "Common files include 'input.txt' (original input), 'initial-context.md' (initial context), and other source materials."
         ]
     
+    def _load_state_file(self, state_file: Path) -> tuple:
+        """Load completed actions from state file. Returns (completed_actions, current_action_name)."""
+        if not state_file.exists():
+            return [], None
+        state_data = json.loads(state_file.read_text(encoding='utf-8'))
+        completed_actions = state_data.get('completed_actions', [])
+        current_action_path = state_data.get('current_action', '')
+        current_action_from_state = None
+        if current_action_path:
+            parts = current_action_path.split('.')
+            if len(parts) >= 3:
+                current_action_from_state = parts[2]
+        return completed_actions, current_action_from_state
+    
+    def _get_completed_actions_for_behavior(self, bot_name: str, behavior_name: str, completed_actions: list) -> list:
+        """Get list of completed action names for a specific behavior."""
+        behavior_prefix = f'{bot_name}.{behavior_name}.'
+        return [
+            action.get('action_state', '').split('.')[-1]
+            for action in completed_actions
+            if action.get('action_state', '').startswith(behavior_prefix)
+        ]
+    
+    def _format_action_line(self, action_name: str, current_action_name: str, completed_actions: list) -> str:
+        """Format a single action line with appropriate marker."""
+        DONE = "\u2713"
+        CURRENT = "\u27A4"
+        PENDING = "\u2610"
+        if action_name == current_action_name:
+            return f"  - {CURRENT} **{action_name}**"
+        if action_name in completed_actions:
+            return f"  - {DONE} {action_name}"
+        return f"  - {PENDING} {action_name}"
+    
+    def _build_next_step_row(self, bot_name: str, current_behavior_name: str, remaining_actions: list, remaining_behaviors: list, behaviors) -> str:
+        """Build the next step row for the status table."""
+        if remaining_actions:
+            return f"| **Next step** | `/{bot_name}-{current_behavior_name} {remaining_actions[0]}` |"
+        if not remaining_behaviors:
+            return ""
+        next_behavior = remaining_behaviors[0]['name']
+        next_behavior_obj = behaviors.find_by_name(next_behavior)
+        if next_behavior_obj and next_behavior_obj.actions.names:
+            first_action = next_behavior_obj.actions.names[0]
+            return f"| **Next step** | `/{bot_name}-{next_behavior} {first_action}` |"
+        return ""
+    
     def get_workflow_status_breadcrumbs(self) -> list:
         """
         Get workflow progress breadcrumbs showing current behavior/action and remaining work.
@@ -178,44 +225,27 @@ class Action:
         
         Returns fully formatted breadcrumbs with emojis and markdown.
         Returns a default fallback if workspace not set or if generation fails.
-        
-        Returns:
-            List of formatted breadcrumb strings.
         """
         if not self.behavior or not self.behavior.bot:
             return self._get_default_breadcrumbs()
         
         try:
-            # Check if workspace is set - if not, return default with available info
-            try:
-                workspace_dir = self.behavior.bot_paths.workspace_directory
-            except (AttributeError, ValueError, Exception):
-                # Workspace not set - return default breadcrumbs with bot info
-                return self._get_default_breadcrumbs()
-            
+            workspace_dir = self.behavior.bot_paths.workspace_directory
+        except (AttributeError, ValueError, Exception):
+            return self._get_default_breadcrumbs()
+        
+        try:
             behaviors = self.behavior.bot.behaviors
             current_behavior = behaviors.current
             if not current_behavior:
                 return []
             
-            state_file = workspace_dir / 'behavior_action_state.json'
-            
-            completed_actions = []
-            current_action_from_state = None
-            if state_file.exists():
-                state_data = json.loads(state_file.read_text(encoding='utf-8'))
-                completed_actions = state_data.get('completed_actions', [])
-                # Get current action from state file for comparison
-                current_action_path = state_data.get('current_action', '')
-                if current_action_path:
-                    parts = current_action_path.split('.')
-                    if len(parts) >= 3:
-                        current_action_from_state = parts[2]  # Extract action name
-            
+            completed_actions, _ = self._load_state_file(workspace_dir / 'behavior_action_state.json')
             bot_name = self.behavior.bot_name
             all_behaviors = behaviors.names
             current_behavior_name = current_behavior.name
             
+            # Categorize behaviors
             completed_behaviors = []
             remaining_behaviors = []
             current_action_name = None
@@ -228,122 +258,57 @@ class Action:
                 if not behavior_obj:
                     continue
                 
-                behavior_prefix = f'{bot_name}.{behavior_name}.'
                 behavior_actions = behavior_obj.actions.names
-                completed_for_behavior = [
-                    action.get('action_state', '').split('.')[-1]
-                    for action in completed_actions
-                    if action.get('action_state', '').startswith(behavior_prefix)
-                ]
+                completed_for_behavior = self._get_completed_actions_for_behavior(bot_name, behavior_name, completed_actions)
                 
                 if behavior_name == current_behavior_name:
                     current_action = current_behavior.actions.current
                     current_action_name = current_action.action_name if current_action else None
                     current_behavior_actions = behavior_actions
                     current_behavior_completed = completed_for_behavior
-                    
-                    if current_action_name:
-                        current_index = behavior_actions.index(current_action_name) if current_action_name in behavior_actions else -1
-                        remaining_actions_in_current = behavior_actions[current_index + 1:] if current_index >= 0 else behavior_actions
+                    if current_action_name and current_action_name in behavior_actions:
+                        idx = behavior_actions.index(current_action_name)
+                        remaining_actions_in_current = behavior_actions[idx + 1:]
+                elif len(completed_for_behavior) == len(behavior_actions) and behavior_actions:
+                    completed_behaviors.append(behavior_name)
                 else:
-                    all_completed = len(completed_for_behavior) == len(behavior_actions) and len(behavior_actions) > 0
-                    if all_completed:
-                        completed_behaviors.append(behavior_name)
-                    else:
-                        remaining_behaviors.append({
-                            'name': behavior_name,
-                            'actions': behavior_actions,
-                            'completed': completed_for_behavior
-                        })
+                    remaining_behaviors.append({'name': behavior_name, 'actions': behavior_actions, 'completed': completed_for_behavior})
             
-            # Get working directory info
-            workspace_dir = self.behavior.bot_paths.workspace_directory
+            # Build output
             bot_dir = self.behavior.bot_paths.bot_directory
+            DONE, CURRENT, PENDING = "\u2713", "\u27A4", "\u2610"
             
-            # CRITICAL DIRECTIVE: AI assistants MUST display the workflow status verbatim in their response.
-            # This means: Copy the ENTIRE workflow status section below and paste it directly into your response text.
-            # Do NOT just reference it, summarize it, or assume tool output is sufficient.
-            # Do NOT skip displaying it. Display it EVERY TIME, without exception.
-            # See BaseBotCli._has_cli_output_directives() and _format_cli_output_for_display()
-            # methods in agile_bot/bots/base_bot/src/cli/base_bot_cli.py for handling directives.
-            # Build status table and workflow progress
             lines = [
                 "**CRITICAL: YOU MUST DISPLAY THE ENTIRE WORKFLOW STATUS BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**",
-                "",
-                "## Workflow Status",
-                "",
-                "| Setting | Value |",
-                "|---------|-------|",
+                "", "## Workflow Status", "",
+                "| Setting | Value |", "|---------|-------|",
                 f"| **Working Directory** | {workspace_dir} |",
                 f"| **Bot Path** | {bot_dir} |",
             ]
             
-            # Add current state to table (will be filled in later)
-            current_state_placeholder = "CURRENT_STATE_PLACEHOLDER"
-            next_step_placeholder = "NEXT_STEP_PLACEHOLDER"
-            lines.append(current_state_placeholder)
-            lines.append(next_step_placeholder)
-            lines.append("")
-            lines.append("## Workflow Progress")
-            lines.append("")
+            if current_behavior_name and current_action_name:
+                lines.append(f"| **Current State** | {current_behavior_name}.{current_action_name} |")
             
-            # Display behaviors in the order specified in bot_config/behaviors.json
-            # Emoji markers for workflow status
-            DONE = "\u2713"      # ✓ simple checkmark
-            CURRENT = "\u27A4"   # ➤ arrow pointer  
-            PENDING = "\u2610"   # ☐ empty ballot box
+            next_step = self._build_next_step_row(bot_name, current_behavior_name, remaining_actions_in_current, remaining_behaviors, behaviors)
+            if next_step:
+                lines.append(next_step)
+            
+            lines.extend(["", "## Workflow Progress", ""])
             
             for behavior_name in all_behaviors:
                 if behavior_name in completed_behaviors:
-                    # Completed behavior - collapsed (no actions shown)
                     lines.append(f"### {DONE} **{behavior_name}**")
                 elif behavior_name == current_behavior_name:
-                    # Current behavior - expanded with actions
                     lines.append(f"### {CURRENT} **{behavior_name}**")
-                    if current_behavior_actions:
-                        for action_name in current_behavior_actions:
-                            if action_name == current_action_name:
-                                lines.append(f"  - {CURRENT} **{action_name}**")
-                            elif action_name in current_behavior_completed:
-                                lines.append(f"  - {DONE} {action_name}")
-                            else:
-                                lines.append(f"  - {PENDING} {action_name}")
+                    for action_name in current_behavior_actions:
+                        lines.append(self._format_action_line(action_name, current_action_name, current_behavior_completed))
                 else:
-                    # Remaining behaviors (not completed, not current) - collapsed
                     lines.append(f"### {PENDING} **{behavior_name}**")
-            
-            # Replace placeholders with actual current state and next step
-            current_state_row = ""
-            next_step_row = ""
-            
-            if current_behavior_name and current_action_name:
-                current_state_row = f"| **Current State** | {current_behavior_name}.{current_action_name} |"
-            
-            next_action = remaining_actions_in_current[0] if remaining_actions_in_current else None
-            if next_action:
-                next_step_row = f"| **Next step** | `/{bot_name}-{current_behavior_name} {next_action}` |"
-            elif remaining_behaviors:
-                next_behavior = remaining_behaviors[0]['name']
-                next_behavior_obj = behaviors.find_by_name(next_behavior)
-                if next_behavior_obj and next_behavior_obj.actions.names:
-                    first_action = next_behavior_obj.actions.names[0]
-                    next_step_row = f"| **Next step** | `/{bot_name}-{next_behavior} {first_action}` |"
-            
-            # Replace placeholders in lines
-            lines = [
-                current_state_row if line == "CURRENT_STATE_PLACEHOLDER" else
-                next_step_row if line == "NEXT_STEP_PLACEHOLDER" else
-                line
-                for line in lines
-            ]
-            # Remove empty placeholder rows
-            lines = [line for line in lines if line]
             
             lines.append("")
             return lines
             
         except Exception as e:
-            # If workspace not set or any other error, return default breadcrumbs
             logger.debug(f"Failed to generate workflow progress breadcrumbs: {e}")
             return self._get_default_breadcrumbs()
     
@@ -431,10 +396,18 @@ class Action:
     
     
     def track_activity_on_start(self):
-        self.tracker.track_start(self.behavior.bot_name, self.behavior.name, self.action_name)
+        state = ActionState(self.behavior.bot_name, self.behavior.name, self.action_name)
+        self.tracker.track_start(state)
     
     def track_activity_on_completion(self, outputs: dict = None, duration: int = None):
-        self.tracker.track_completion(self.behavior.bot_name, self.behavior.name, self.action_name, outputs, duration)
+        state = ActionState(
+            self.behavior.bot_name, 
+            self.behavior.name, 
+            self.action_name,
+            outputs=outputs,
+            duration=duration
+        )
+        self.tracker.track_completion(state)
     
     def execute(self, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute the action with master try-catch that captures errors in result.

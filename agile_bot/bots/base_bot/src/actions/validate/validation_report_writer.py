@@ -174,6 +174,23 @@ class ValidationReportWriter:
         self.bot_paths = bot_paths
         self.workspace_directory = bot_paths.workspace_directory
     
+    def _check_violation_severities(self, scanner_results: Dict[str, Any]) -> tuple:
+        """Check if scanner results contain errors or warnings. Returns (has_errors, has_warnings)."""
+        has_errors = False
+        has_warnings = False
+        
+        for key in ('file_by_file', 'cross_file'):
+            if key not in scanner_results:
+                continue
+            for v in scanner_results[key].get('violations', []):
+                severity = v.get('severity')
+                if severity == 'error':
+                    has_errors = True
+                elif severity == 'warning':
+                    has_warnings = True
+        
+        return has_errors, has_warnings
+    
     def write(self, instructions: Dict[str, Any], validation_rules: List[Dict[str, Any]], files: Dict[str, List[Path]]) -> None:
         report_path = self._get_report_path()
         
@@ -388,20 +405,7 @@ class ValidationReportWriter:
                 
                 # Check violation severities
                 scanner_results = rule_dict.get('scanner_results', {})
-                has_errors = False
-                has_warnings = False
-                if 'file_by_file' in scanner_results:
-                    for v in scanner_results['file_by_file'].get('violations', []):
-                        if v.get('severity') == 'error':
-                            has_errors = True
-                        elif v.get('severity') == 'warning':
-                            has_warnings = True
-                if 'cross_file' in scanner_results:
-                    for v in scanner_results['cross_file'].get('violations', []):
-                        if v.get('severity') == 'error':
-                            has_errors = True
-                        elif v.get('severity') == 'warning':
-                            has_warnings = True
+                has_errors, has_warnings = self._check_violation_severities(scanner_results)
                 
                 if has_errors:
                     rules_with_errors += 1
@@ -624,18 +628,7 @@ class ValidationReportWriter:
             has_warnings = False
             if status == 'EXECUTED':
                 scanner_results = rule_dict.get('scanner_results', {})
-                if 'file_by_file' in scanner_results:
-                    for v in scanner_results['file_by_file'].get('violations', []):
-                        if v.get('severity') == 'error':
-                            has_errors = True
-                        elif v.get('severity') == 'warning':
-                            has_warnings = True
-                if 'cross_file' in scanner_results:
-                    for v in scanner_results['cross_file'].get('violations', []):
-                        if v.get('severity') == 'error':
-                            has_errors = True
-                        elif v.get('severity') == 'warning':
-                            has_warnings = True
+                has_errors, has_warnings = self._check_violation_severities(scanner_results)
             
             rule_status_lookup[rule_file] = {
                 'status': status,
@@ -792,62 +785,57 @@ class ValidationReportWriter:
         
         return file_by_file_violations_by_rule, cross_file_violations_by_rule
     
+    def _format_multiline_message_parts(self, remaining_parts: List[str]) -> List[str]:
+        """Format remaining parts of a multiline message for markdown list context."""
+        result = []
+        in_code_block = False
+        for part in remaining_parts:
+            if part.strip().startswith('```'):
+                in_code_block = not in_code_block
+                result.append(f"    {part}")
+            elif in_code_block:
+                result.append(f"    {part}")
+            elif part.strip() == '':
+                result.append("")
+            else:
+                result.append(f"  {part}")
+        return result
+    
+    def _format_violation_line(self, violation: Dict[str, Any]) -> List[str]:
+        """Format a single violation as markdown list item(s)."""
+        location = violation.get('location', 'unknown')
+        message = violation.get('violation_message', 'No message')
+        severity = violation.get('severity', 'error')
+        line_number = violation.get('line_number')
+        severity_icon = '🔴' if severity == 'error' else '🟡' if severity == 'warning' else '🔵'
+        
+        location_link = self._create_file_link(location, line_number)
+        test_info = self._extract_test_info(message, location, line_number)
+        formatted_message = self._format_violation_message(message)
+        
+        if test_info:
+            return [f"- {severity_icon} **{severity.upper()}** - {location_link}: {test_info}"]
+        
+        if '\n' not in formatted_message:
+            return [f"- {severity_icon} **{severity.upper()}** - {location_link}: {formatted_message}"]
+        
+        parts = formatted_message.split('\n')
+        first_line = parts[0] if parts else formatted_message
+        lines = [f"- {severity_icon} **{severity.upper()}** - {location_link}: {first_line}"]
+        lines.extend(self._format_multiline_message_parts(parts[1:]))
+        return lines
+    
     def _build_violations_by_type(self, violations_by_rule: Dict[str, List[Dict[str, Any]]], title: str, description: str) -> List[str]:
-        lines = [
-            f"### {title}",
-            "",
-            description,
-            ""
-        ]
+        lines = [f"### {title}", "", description, ""]
         
         for rule_name, violations in violations_by_rule.items():
-            # Add anchor ID for linking from summary section
             violations_anchor_id = f"{rule_name.replace('_', '-').lower()}-violations"
             rule_display_name = rule_name.replace('_', ' ').title()
             lines.append(f"#### <span id=\"{violations_anchor_id}\">{rule_display_name}: {len(violations)} violation(s)</span>")
             lines.append("")
             
             for violation in violations:
-                location = violation.get('location', 'unknown')
-                message = violation.get('violation_message', 'No message')
-                severity = violation.get('severity', 'error')
-                line_number = violation.get('line_number')
-                severity_icon = '🔴' if severity == 'error' else '🟡' if severity == 'warning' else '🔵'
-                
-                location_link = self._create_file_link(location, line_number)
-                test_info = self._extract_test_info(message, location, line_number)
-                
-                # Format message - if it contains code blocks, preserve them
-                formatted_message = self._format_violation_message(message)
-                
-                if test_info:
-                    lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {test_info}")
-                else:
-                    # If message contains code blocks or multiple lines, format it properly
-                    if '\n' in formatted_message:
-                        # Split message into parts
-                        parts = formatted_message.split('\n')
-                        # First line goes on the bullet point
-                        first_line = parts[0] if parts else formatted_message
-                        remaining_parts = parts[1:] if len(parts) > 1 else []
-                        
-                        lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {first_line}")
-                        # Add remaining parts - code blocks need proper indentation in markdown lists
-                        in_code_block = False
-                        for part in remaining_parts:
-                            # Code blocks in markdown lists need 4-space indentation
-                            if part.strip().startswith('```'):
-                                in_code_block = not in_code_block
-                                lines.append(f"    {part}")
-                            elif in_code_block:
-                                # Inside code block, preserve indentation
-                                lines.append(f"    {part}")
-                            elif part.strip() == '':
-                                lines.append("")
-                            else:
-                                lines.append(f"  {part}")
-                    else:
-                        lines.append(f"- {severity_icon} **{severity.upper()}** - {location_link}: {formatted_message}")
+                lines.extend(self._format_violation_line(violation))
             
             lines.append("")
         

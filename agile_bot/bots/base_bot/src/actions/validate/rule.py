@@ -232,46 +232,43 @@ class Rule:
             else:
                 formatted.append(f"- {content}")
     
+    def _format_example_block(self, example_content: dict, label: str, formatted: list) -> None:
+        """Format a single do/dont example block."""
+        desc = example_content.get('description', '')
+        content = example_content.get('content', '')
+        if isinstance(content, list):
+            content = '\n'.join(content)
+        formatted.append(f"\n**{label}:** {desc}")
+        formatted.append(content)
+    
+    def _format_inline_examples(self, formatted: list) -> None:
+        """Format examples that are inline in the rule content."""
+        examples = self._rule_content.get('examples', [])
+        for example in examples:
+            if 'do' in example:
+                self._format_example_block(example['do'], 'DO', formatted)
+            if 'dont' in example:
+                self._format_example_block(example['dont'], "DON'T", formatted)
+    
     def formatted_text(self) -> List[str]:
         formatted = []
         
-        rule_description = self.description
-        
         formatted.append(f"\n**Rule:** {self.rule_file}")
-        if rule_description:
-            formatted.append(f"{rule_description}")
+        if self.description:
+            formatted.append(f"{self.description}")
         
-        if 'do' in self._rule_content:
-            do_examples = self._rule_content.get('do', {}).get('examples', [])
-            if do_examples:
-                formatted.append("\n**DO:**")
-                self._format_examples(do_examples, formatted)
+        do_examples = self._rule_content.get('do', {}).get('examples', [])
+        if do_examples:
+            formatted.append("\n**DO:**")
+            self._format_examples(do_examples, formatted)
         
-        if 'dont' in self._rule_content:
-            dont_examples = self._rule_content.get('dont', {}).get('examples', [])
-            if dont_examples:
-                formatted.append("\n**DON'T:**")
-                self._format_examples(dont_examples, formatted)
+        dont_examples = self._rule_content.get('dont', {}).get('examples', [])
+        if dont_examples:
+            formatted.append("\n**DON'T:**")
+            self._format_examples(dont_examples, formatted)
         
         if 'examples' in self._rule_content:
-            examples = self._rule_content.get('examples', [])
-            for example in examples:
-                if 'do' in example:
-                    do_content = example.get('do', {})
-                    desc = do_content.get('description', '')
-                    content = do_content.get('content', '')
-                    if isinstance(content, list):
-                        content = '\n'.join(content)
-                    formatted.append(f"\n**DO:** {desc}")
-                    formatted.append(content)
-                if 'dont' in example:
-                    dont_content = example.get('dont', {})
-                    desc = dont_content.get('description', '')
-                    content = dont_content.get('content', '')
-                    if isinstance(content, list):
-                        content = '\n'.join(content)
-                    formatted.append(f"\n**DON'T:** {desc}")
-                    formatted.append(content)
+            self._format_inline_examples(formatted)
         
         formatted.append("")
         return formatted

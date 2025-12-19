@@ -13,6 +13,21 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 
+def _is_mcp_server_process(proc_info: dict, bot_name: str = None) -> bool:
+    """Check if process info matches an MCP server process."""
+    name = proc_info.get('name', '').lower()
+    if 'python' not in name:
+        return False
+    
+    cmdline = proc_info.get('cmdline') or []
+    cmdline_str = ' '.join(cmdline)
+    
+    if 'mcp_server' not in cmdline_str:
+        return False
+    
+    return bot_name is None or bot_name in cmdline_str
+
+
 def find_mcp_server_processes(bot_name: str = None) -> List[int]:
     """
     Find all running MCP server processes.
@@ -28,15 +43,8 @@ def find_mcp_server_processes(bot_name: str = None) -> List[int]:
     try:
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
-                cmdline = proc.info.get('cmdline') or []
-                cmdline_str = ' '.join(cmdline)
-                
-                # Look for Python processes running mcp_server
-                if ('python' in proc.info.get('name', '').lower() and 
-                    'mcp_server' in cmdline_str):
-                    # If bot_name specified, filter by bot name
-                    if bot_name is None or bot_name in cmdline_str:
-                        pids.append(proc.info['pid'])
+                if _is_mcp_server_process(proc.info, bot_name):
+                    pids.append(proc.info['pid'])
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
     except Exception as e:

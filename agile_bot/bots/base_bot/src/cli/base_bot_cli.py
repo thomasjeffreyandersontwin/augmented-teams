@@ -7,7 +7,7 @@ import logging
 import re
 import traceback
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
 from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory, get_bot_directory, get_python_workspace_root
 from agile_bot.bots.base_bot.src.utils import read_json_file

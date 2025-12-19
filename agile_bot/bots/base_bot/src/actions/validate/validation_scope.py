@@ -22,6 +22,20 @@ class ValidationScope:
         """Check if a file should be included in validation scope."""
         return file_path.name not in self.EXCLUDED_FILES
     
+    def _expand_directory_to_files(self, dir_path: Path) -> List[Path]:
+        """Expand a directory path to list of .py files within it."""
+        abs_dir_path = dir_path.resolve()
+        abs_dir_str = str(abs_dir_path).replace('\\', '/')
+        
+        result = []
+        for f in dir_path.rglob('*.py'):
+            if not self._should_include_file(f):
+                continue
+            f_abs_str = str(f.resolve()).replace('\\', '/')
+            if f_abs_str.startswith(abs_dir_str + '/') or f_abs_str == abs_dir_str:
+                result.append(f)
+        return result
+    
     def _behavior_to_directory(self, behavior_name: Optional[str]) -> Optional[str]:
         """Map behavior name to directory name.
         
@@ -99,26 +113,8 @@ class ValidationScope:
             # If path is a directory, expand it to include all matching files
             # CRITICAL: Only scan files within this specific directory tree
             if file_path.exists() and file_path.is_dir():
-                # Resolve to absolute path to ensure correct comparison
-                abs_dir_path = file_path.resolve()
-                # Normalize path separators for comparison (Windows vs Unix)
-                abs_dir_str = str(abs_dir_path).replace('\\', '/')
-                
-                # Find all .py files recursively, but ONLY within this directory
-                all_py_files = list(file_path.rglob('*.py'))
-                # Filter to ensure files are actually within the directory (not parent directories)
-                # Check that the file's absolute path starts with the directory's absolute path
-                for f in all_py_files:
-                    # Skip excluded files like __init__.py
-                    if not self._should_include_file(f):
-                        continue
-                    f_abs_str = str(f.resolve()).replace('\\', '/')
-                    # Ensure the file path starts with the directory path + separator
-                    # This prevents matching parent directories
-                    if f_abs_str.startswith(abs_dir_str + '/') or f_abs_str == abs_dir_str:
-                        resolved_paths.append(f)
+                resolved_paths.extend(self._expand_directory_to_files(file_path))
             elif file_path.exists() and file_path.is_file():
-                # It's a file, add it directly
                 resolved_paths.append(file_path)
             else:
                 # Path doesn't exist, but add it anyway (might be created later or error will be caught)
