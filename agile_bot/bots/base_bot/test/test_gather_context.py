@@ -909,9 +909,10 @@ class TestLoadBaseActionConfig:
         action = when_action_config_loaded(action_name, behavior)
         
         # Then: Config loaded and properties accessible
+        # Note: when_action_config_loaded passes action_config=None, so values come from real base_actions config
         then_action_config_properties_accessible(action)
-        then_action_order_is(action, 1)
-        then_action_next_action_is(action, 'strategy')
+        then_action_order_is(action, 2)  # From real base_actions/clarify/action_config.json
+        then_action_next_action_is(action, 'decide_strategy')
 
 
 class TestAccessActions:

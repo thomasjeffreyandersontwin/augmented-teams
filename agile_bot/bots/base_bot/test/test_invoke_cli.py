@@ -49,7 +49,19 @@ class TriggerTestSetup:
     def setup_bot(self):
         """Set up bot with all behaviors and actions."""
         workspace_root = self.bot_directory.parent.parent.parent
+        # Ensure bot_config is created in the same location as self.bot_directory
+        # setup_bot_for_testing creates in workspace_root/agile_bot/bots/bot_name
+        # which should match self.bot_directory (tmp_path/agile_bot/bots/story_bot)
         self.bot_config = setup_bot_for_testing(workspace_root, self.bot_name, self.behaviors)
+        # Verify bot_config is in the expected location
+        expected_bot_dir = workspace_root / 'agile_bot' / 'bots' / self.bot_name
+        if self.bot_directory != expected_bot_dir:
+            # If they don't match, create bot_config in self.bot_directory instead
+            from agile_bot.bots.base_bot.test.conftest import create_bot_config_file, create_base_actions_structure
+            from agile_bot.bots.base_bot.test.test_invoke_cli import _create_base_action_instructions
+            self.bot_config = create_bot_config_file(self.bot_directory, self.bot_name, self.behaviors)
+            create_base_actions_structure(self.bot_directory)
+            _create_base_action_instructions(self.bot_directory)
         self._setup_behavior_folders_and_knowledge_graphs(workspace_root)
         self._create_story_graph_file()
         return self
@@ -57,8 +69,10 @@ class TriggerTestSetup:
     def _setup_behavior_folders_and_knowledge_graphs(self, workspace_root: Path):
         """Set up behavior folders with behavior.json files and knowledge graph configs."""
         from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-        behaviors_dir = workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'behaviors'
+        # Ensure behaviors are created in the same location as bot_directory
+        # workspace_root / 'agile_bot' / 'bots' / bot_name should match self.bot_directory
         bot_dir = workspace_root / 'agile_bot' / 'bots' / self.bot_name
+        behaviors_dir = bot_dir / 'behaviors'
         for behavior in self.behaviors:
             behavior_dir = behaviors_dir / behavior
             behavior_dir.mkdir(parents=True, exist_ok=True)

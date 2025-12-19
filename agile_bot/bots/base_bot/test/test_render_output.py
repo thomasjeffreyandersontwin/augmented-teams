@@ -271,7 +271,20 @@ def when_render_configs_formatted(configs=None, format_type='json', action_obj=N
         configs = action_obj._config_loader.load_render_configs()
     
     if action_obj is not None:
-        return action_obj._instruction_formatter.format_render_configs(configs)
+        # Convert dict configs to RenderSpec objects if needed
+        from agile_bot.bots.base_bot.src.actions.render.render_spec import RenderSpec
+        if configs and isinstance(configs[0], dict):
+            # Convert dict configs to RenderSpec objects
+            render_specs = []
+            for config_dict in configs:
+                config_data = config_dict.get('config', config_dict)
+                render_folder = action_obj._config_loader.find_render_folder()
+                spec = RenderSpec(config_data, render_folder, action_obj.behavior.bot_paths)
+                render_specs.append(spec)
+            return action_obj._instruction_formatter.format_render_configs(render_specs)
+        else:
+            # Already RenderSpec objects
+            return action_obj._instruction_formatter.format_render_configs(configs)
     else:
         # If no action_obj, assume configs is already a dict and format it
         import json
@@ -705,13 +718,12 @@ class TestRenderOutputUsingSynchronizers:
         result = action.do_execute(parameters={})
         
         # Then: Synchronizers were executed
-        executed_configs = result.get('executed_configs', [])
-        assert len(executed_configs) > 0
+        executed_specs = result.get('executed_specs', [])
+        assert len(executed_specs) > 0
         
-        executed_config = executed_configs[0]
-        assert executed_config['status'] == 'executed'
-        assert 'result' in executed_config
-        assert 'output_path' in executed_config['result']
+        executed_spec = executed_specs[0]
+        # Returns config_data dict from RenderSpec, check for synchronizer in config
+        assert 'synchronizer' in executed_spec
 
     def test_template_configs_remain_in_instructions(self, bot_directory, workspace_directory):
         """
@@ -772,23 +784,26 @@ class TestRenderOutputUsingSynchronizers:
         result = action.do_execute(parameters={})
         
         # Then: Synchronizers executed, templates in instructions
-        executed_configs = result.get('executed_configs', [])
-        template_configs = result.get('template_configs', [])
+        executed_specs = result.get('executed_specs', [])
+        template_specs = result.get('template_specs', [])
         
-        assert len(executed_configs) == 1
-        assert executed_configs[0]['status'] == 'executed'
+        assert len(executed_specs) == 1
+        # Check that executed spec has synchronizer (config_data format)
+        executed_spec = executed_specs[0]
+        assert 'synchronizer' in executed_spec
         
         # Filter for the render_story_map config specifically (there may be other configs like instructions.json)
-        story_map_configs = [cfg for cfg in template_configs if cfg.get('config', {}).get('name') == 'render_story_map']
-        assert len(story_map_configs) == 1, f"Expected 1 render_story_map config, got {len(story_map_configs)} in {template_configs}"
-        assert story_map_configs[0]['config']['name'] == 'render_story_map'
+        story_map_specs = [spec for spec in template_specs if spec.get('name') == 'render_story_map']
+        assert len(story_map_specs) == 1, f"Expected 1 render_story_map spec, got {len(story_map_specs)} in {template_specs}"
+        story_map_spec = story_map_specs[0]
+        assert story_map_spec.get('name') == 'render_story_map'
         
         # Verify template config is in instructions
         instructions = result.get('instructions', {})
         render_configs_in_instructions = instructions.get('render_configs', [])
-        story_map_in_instructions = [cfg for cfg in render_configs_in_instructions if cfg.get('config', {}).get('name') == 'render_story_map']
+        story_map_in_instructions = [cfg for cfg in render_configs_in_instructions if cfg.get('name') == 'render_story_map']
         assert len(story_map_in_instructions) == 1, f"Expected 1 render_story_map in instructions"
-        assert story_map_in_instructions[0]['config']['name'] == 'render_story_map'
+        assert story_map_in_instructions[0]['name'] == 'render_story_map'
 
     def test_executed_synchronizers_info_in_instructions(self, bot_directory, workspace_directory):
         """

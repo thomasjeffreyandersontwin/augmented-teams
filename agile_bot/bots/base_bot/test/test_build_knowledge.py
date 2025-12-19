@@ -10,7 +10,7 @@ import pytest
 from pathlib import Path
 import json
 from agile_bot.bots.base_bot.src.actions.build.build_action import BuildKnowledgeAction
-from agile_bot.bots.base_bot.src.actions.validate.scanners.story_map import (
+from agile_bot.bots.base_bot.src.scanners.story_map import (
     StoryMap, Epic, SubEpic, StoryGroup, Story, Scenario, ScenarioOutline
 )
 from agile_bot.bots.base_bot.test.test_helpers import (
@@ -457,7 +457,7 @@ def then_location_matches(item, type=None, field=None):
     """
     # Auto-detect type if not provided
     if type is None:
-        from agile_bot.bots.base_bot.src.actions.validate.scanners.story_map import Epic, SubEpic, Story, Scenario, ScenarioOutline
+        from agile_bot.bots.base_bot.src.scanners.story_map import Epic, SubEpic, Story, Scenario, ScenarioOutline
         if isinstance(item, Epic):
             type = 'epic'
         elif isinstance(item, SubEpic):
