@@ -220,13 +220,16 @@ def given_bot_config_and_behavior(bot_directory, bot_name, behaviors):
         behaviors: List of behavior names or single behavior name (string)
     """
     from pathlib import Path
-    from conftest import create_bot_config_file
+    from conftest import create_bot_config_file, create_base_actions_structure
     from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
     from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
     
     # Handle single behavior name as string
     if isinstance(behaviors, str):
         behaviors = [behaviors]
+    
+    # Create base_actions structure - no fallback in production code
+    create_base_actions_structure(bot_directory)
     
     config_path = create_bot_config_file(bot_directory, bot_name, behaviors)
     

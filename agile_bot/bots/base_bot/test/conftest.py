@@ -204,6 +204,19 @@ def bot_directory(tmp_path):
     """Fixture: Bot directory for test bot."""
     bot_dir = tmp_path / 'agile_bot' / 'bots' / 'story_bot'
     bot_dir.mkdir(parents=True)
+    
+    # Create base_actions structure - no fallback in production code
+    base_actions_dir = bot_dir / 'base_actions'
+    action_configs = [
+        ('clarify', 1), ('strategy', 2), ('build', 3), ('validate', 4), ('render', 5)
+    ]
+    for action_name, order in action_configs:
+        action_dir = base_actions_dir / action_name
+        action_dir.mkdir(parents=True, exist_ok=True)
+        (action_dir / 'action_config.json').write_text(json.dumps({
+            'name': action_name, 'order': order, 'instructions': [f'{action_name} base instructions']
+        }), encoding='utf-8')
+    
     return bot_dir
 
 @pytest.fixture

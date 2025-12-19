@@ -123,7 +123,8 @@ class Actions:
         return None
     
     def next(self) -> Optional[Action]:
-        # Caller must ensure current_index is set - fail fast if not
+        if self._current_index is None:
+            return None
         next_index = self._current_index + 1
         if next_index < len(self._actions):
             return self._actions[next_index]
@@ -140,6 +141,22 @@ class Actions:
         
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
     
+    def _filter_completed_actions_after_target(self, completed_actions: list, target_index: int) -> list:
+        """Filter out completed actions that are after the target index in current behavior."""
+        action_names_after_target = [a.action_name for a in self._actions[target_index + 1:]]
+        expected_behavior_prefix = f'{self.behavior.bot_name}.{self.behavior.name}.'
+        
+        filtered = []
+        for completed_action in completed_actions:
+            action_state = completed_action.get('action_state', '')
+            if not action_state.startswith(expected_behavior_prefix):
+                filtered.append(completed_action)
+                continue
+            completed_action_name = action_state.split('.')[-1]
+            if completed_action_name not in action_names_after_target:
+                filtered.append(completed_action)
+        return filtered
+    
     def navigate_to(self, action_name: str, out_of_order: bool = False):
         action = self.find_by_name(action_name)
         if action is None:
@@ -152,30 +169,18 @@ class Actions:
                 self._current_index = i
                 break
         
-        # target_index must be set after find_by_name succeeds
-        if out_of_order and self.behavior.bot_paths:
-            workspace_dir = self.behavior.bot_paths.workspace_directory
-            state_file = workspace_dir / 'behavior_action_state.json'
-            
-            state_data = json.loads(state_file.read_text(encoding='utf-8'))
-            completed_actions = state_data.get('completed_actions', [])
-            
-            if completed_actions:
-                action_names_after_target = [a.action_name for a in self._actions[target_index + 1:]]
-                
-                expected_behavior_prefix = f'{self.behavior.bot_name}.{self.behavior.name}.'
-                filtered_completed = []
-                for completed_action in completed_actions:
-                    action_state = completed_action.get('action_state', '')
-                    if action_state.startswith(expected_behavior_prefix):
-                        completed_action_name = action_state.split('.')[-1]
-                        if completed_action_name not in action_names_after_target:
-                            filtered_completed.append(completed_action)
-                    else:
-                        filtered_completed.append(completed_action)
-                
-                state_data['completed_actions'] = filtered_completed
-                state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+        if not out_of_order or not self.behavior.bot_paths:
+            self.save_state()
+            return
+        
+        workspace_dir = self.behavior.bot_paths.workspace_directory
+        state_file = workspace_dir / 'behavior_action_state.json'
+        state_data = json.loads(state_file.read_text(encoding='utf-8'))
+        completed_actions = state_data.get('completed_actions', [])
+        
+        if completed_actions:
+            state_data['completed_actions'] = self._filter_completed_actions_after_target(completed_actions, target_index)
+            state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
         
         self.save_state()
     
@@ -342,57 +347,77 @@ class Actions:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
     
+    def _find_action_index(self, action_name: str) -> int:
+        """Find index of action by name, returns -1 if not found."""
+        for i, action in enumerate(self._actions):
+            if action.action_name == action_name:
+                return i
+        return -1
+    
+    def _get_last_completed_action_for_behavior(self, completed_actions: list) -> str:
+        """Get the name of the last completed action for this behavior."""
+        expected_prefix = f'{self.behavior.bot_name}.{self.behavior.name}.'
+        for completed in reversed(completed_actions):
+            action_state = completed.get('action_state', '')
+            if action_state.startswith(expected_prefix):
+                return action_state.split('.')[-1]
+        return None
+    
+    def _set_index_from_current_action(self, current_action_full: str) -> bool:
+        """Set index from current action in state. Returns True if set."""
+        if not current_action_full:
+            return False
+        parts = current_action_full.split('.')
+        if len(parts) < 3:
+            return False
+        idx = self._find_action_index(parts[-1])
+        if idx >= 0:
+            self._current_index = idx
+            return True
+        return False
+    
+    def _set_index_from_completed_actions(self, completed_actions: list) -> bool:
+        """Set index based on last completed action. Returns True if set."""
+        last_completed = self._get_last_completed_action_for_behavior(completed_actions)
+        if not last_completed:
+            return False
+        idx = self._find_action_index(last_completed)
+        if idx < 0:
+            return False
+        self._current_index = idx + 1 if idx + 1 < len(self._actions) else idx
+        return True
+    
+    def _init_first_action(self) -> None:
+        """Initialize to first action if actions exist."""
+        if self._actions:
+            self._current_index = 0
+    
     def load_state(self):
-        # bot_paths and actions must exist - fail fast if not
         workspace_dir = self.behavior.bot_paths.workspace_directory
         state_file = workspace_dir / 'behavior_action_state.json'
         
-        # State file must exist - fail fast if not
+        if not state_file.exists():
+            self._init_first_action()
+            return
+        
         try:
             state_data = json.loads(state_file.read_text(encoding='utf-8'))
-            current_action_full = state_data.get('current_action', '')
-            current_behavior_full = state_data.get('current_behavior', '')
-            
-            expected_behavior = f'{self.behavior.bot_name}.{self.behavior.name}'
-            if current_behavior_full != expected_behavior:
-                if len(self._actions) > 0:
-                    self._current_index = 0
-                return
-            
-            if current_action_full:
-                parts = current_action_full.split('.')
-                if len(parts) >= 3:
-                    saved_action_name = parts[-1]
-                    
-                    for i, action in enumerate(self._actions):
-                        if action.action_name == saved_action_name:
-                            self._current_index = i
-                            return
-            
-            completed_actions = state_data.get('completed_actions', [])
-            if completed_actions:
-                last_completed_action_name = None
-                expected_behavior_prefix = f'{self.behavior.bot_name}.{self.behavior.name}.'
-                for completed_action in reversed(completed_actions):
-                    action_state = completed_action.get('action_state', '')
-                    if action_state.startswith(expected_behavior_prefix):
-                        last_completed_action_name = action_state.split('.')[-1]
-                        break
-                
-                if last_completed_action_name:
-                    for i, action in enumerate(self._actions):
-                        if action.action_name == last_completed_action_name:
-                            if i + 1 < len(self._actions):
-                                self._current_index = i + 1
-                            else:
-                                self._current_index = i
-                            return
-            
-            if len(self._actions) > 0:
-                self._current_index = 0
         except Exception:
-            if len(self._actions) > 0:
-                self._current_index = 0
+            self._init_first_action()
+            return
+        
+        expected_behavior = f'{self.behavior.bot_name}.{self.behavior.name}'
+        if state_data.get('current_behavior', '') != expected_behavior:
+            self._init_first_action()
+            return
+        
+        if self._set_index_from_current_action(state_data.get('current_action', '')):
+            return
+        
+        if self._set_index_from_completed_actions(state_data.get('completed_actions', [])):
+            return
+        
+        self._init_first_action()
     
     def _save_completed_action(self, action_name: str):
         # bot_paths must exist - fail fast if not
@@ -425,9 +450,13 @@ class Actions:
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
     
     def is_action_completed(self, action_name: str) -> bool:
-        # bot_paths and state file must exist - fail fast if not
+        # bot_paths must exist - fail fast if not
         workspace_dir = self.behavior.bot_paths.workspace_directory
         state_file = workspace_dir / 'behavior_action_state.json'
+        
+        # No state file = nothing completed yet
+        if not state_file.exists():
+            return False
         
         state_data = json.loads(state_file.read_text(encoding='utf-8'))
         completed_actions = state_data.get('completed_actions', [])

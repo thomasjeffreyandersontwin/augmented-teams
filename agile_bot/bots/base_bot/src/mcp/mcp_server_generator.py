@@ -692,6 +692,30 @@ if __name__ == '__main__':
             'rules_file': rules_path
         }
     
+    def _extract_trigger_words(self, trigger_words_data) -> list:
+        """Extract trigger words from various data formats."""
+        if isinstance(trigger_words_data, dict):
+            return trigger_words_data.get('patterns', [])
+        if isinstance(trigger_words_data, list):
+            return trigger_words_data
+        return []
+    
+    def _load_behavior_trigger_info(self, behavior: str) -> dict:
+        """Load trigger words and description for a behavior. Returns None on failure."""
+        behavior_file = self.bot_directory / 'behaviors' / behavior / 'behavior.json'
+        try:
+            if not behavior_file.exists():
+                return None
+            behavior_data = read_json_file(behavior_file)
+            description = behavior_data.get('description', '')
+            trigger_words = self._extract_trigger_words(behavior_data.get('trigger_words', {}))
+            if not trigger_words:
+                trigger_words = self._load_trigger_words_from_behavior_folder(behavior=behavior, action=None)
+            return {'description': description, 'trigger_words': trigger_words}
+        except Exception as e:
+            logging.getLogger(__name__).debug(f"Failed to load trigger words for {behavior}: {e}")
+            return None
+    
     def _generate_workspace_rules_file(self) -> Path:
         # Use centralized repository root
         repo_root = get_python_workspace_root()
@@ -714,34 +738,11 @@ if __name__ == '__main__':
         behavior_trigger_words = {}
         behavior_descriptions = {}
         for behavior in behaviors:
-            # Load from behavior.json (new format)
-            # Behavior folder is directly named (no numbered prefixes)
-            behavior_folder = self.bot_directory / 'behaviors' / behavior
-            behavior_file = behavior_folder / 'behavior.json'
-            try:
-                if behavior_file.exists():
-                    behavior_data = read_json_file(behavior_file)
-                    behavior_descriptions[behavior] = behavior_data.get('description', '')
-                    # Load trigger words directly from behavior_data
-                    trigger_words_data = behavior_data.get('trigger_words', {})
-                    if isinstance(trigger_words_data, dict):
-                        trigger_words = trigger_words_data.get('patterns', [])
-                    elif isinstance(trigger_words_data, list):
-                        trigger_words = trigger_words_data
-                    else:
-                        trigger_words = []
-                    # If not found in behavior_data, try loading via method
-                    if not trigger_words:
-                        trigger_words = self._load_trigger_words_from_behavior_folder(
-                            behavior=behavior,
-                            action=None  # Get behavior-level trigger words
-                        )
-                    if trigger_words:
-                        behavior_trigger_words[behavior] = trigger_words
-            except (FileNotFoundError, Exception) as e:
-                logger = logging.getLogger(__name__)
-                logger.debug(f"Failed to load trigger words for {behavior}: {e}")
-                pass
+            result = self._load_behavior_trigger_info(behavior)
+            if result:
+                behavior_descriptions[behavior] = result['description']
+                if result['trigger_words']:
+                    behavior_trigger_words[behavior] = result['trigger_words']
         
         # Build behavior sections (one section per behavior)
         behavior_sections = []

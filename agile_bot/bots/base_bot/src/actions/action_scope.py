@@ -23,41 +23,39 @@ class ActionScope:
         self._scope_config: Dict[str, Any] = {}
         self._build_scope()
     
+    def _handle_scope_parameter(self, scope_value) -> None:
+        """Handle the convenience 'scope' parameter."""
+        if scope_value == 'all':
+            self._scope_config['all'] = True
+            return
+        
+        if 'increment_names' not in self._scope_config:
+            self._scope_config['increment_names'] = []
+        
+        if isinstance(scope_value, str):
+            self._scope_config['increment_names'].append(scope_value)
+        elif isinstance(scope_value, list):
+            self._scope_config['increment_names'].extend(scope_value)
+    
+    def _handle_standard_parameter(self, key: str, value) -> bool:
+        """Handle standard scope parameters. Returns True if handled."""
+        if key in ['story_names', 'increment_priorities', 'epic_names', 'increment_names']:
+            self._scope_config[key] = [value] if not isinstance(value, list) else value
+            return True
+        if key == 'all' and value is True:
+            self._scope_config['all'] = True
+            return True
+        return False
+    
     def _build_scope(self):
         """Build scope configuration from parameters. Subclasses can override to add custom parameters."""
-        # Handle convenience 'scope' parameter - convert to appropriate scope type
         if 'scope' in self._parameters:
-            scope_value = self._parameters['scope']
-            if scope_value == 'all':
-                self._scope_config['all'] = True
-            else:
-                # Assume it's an increment name or epic name
-                # Try to determine which - could be either, so we'll set both for flexibility
-                # The story graph resolver will handle matching
-                if 'increment_names' not in self._scope_config:
-                    self._scope_config['increment_names'] = []
-                if isinstance(scope_value, str):
-                    self._scope_config['increment_names'].append(scope_value)
-                elif isinstance(scope_value, list):
-                    self._scope_config['increment_names'].extend(scope_value)
+            self._handle_scope_parameter(self._parameters['scope'])
         
-        # Handle explicit scope parameters
         for key, value in self._parameters.items():
-            if value is None:
+            if value is None or key == 'scope':
                 continue
-            
-            if key == 'scope':
-                # Already handled above
-                continue
-            elif key in ['story_names', 'increment_priorities', 'epic_names', 'increment_names']:
-                # Standard story graph scope parameters
-                if not isinstance(value, list):
-                    value = [value]
-                self._scope_config[key] = value
-            elif key == 'all' and value is True:
-                self._scope_config['all'] = True
-            else:
-                # Allow subclasses to handle custom parameters
+            if not self._handle_standard_parameter(key, value):
                 self._handle_custom_parameter(key, value)
     
     def _handle_custom_parameter(self, key: str, value: Any):

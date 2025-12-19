@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional, Iterator, Dict, Any, TYPE_CHECKING
+from typing import List, Optional, Iterator, Dict, Any, TYPE_CHECKING, Callable
 from pathlib import Path
 from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
 
 if TYPE_CHECKING:
     pass
+
+
+@dataclass
+class ValidationCallbacks:
+    """Callbacks for validation progress - groups on_scanner_start, on_scanner_complete, on_file_scanned."""
+    on_scanner_start: Optional[Callable] = None
+    on_scanner_complete: Optional[Callable] = None
+    on_file_scanned: Optional[Callable] = None
 
 
 class Rules:
@@ -60,35 +69,36 @@ class Rules:
         
         return bot_rules
     
+    def _create_rule(self, rule_file: Path) -> Rule:
+        """Create a Rule object from a rule file path."""
+        return Rule(
+            rule_file_path=rule_file,
+            behavior_name=self.behavior_name,
+            bot_name=self.bot_name
+        )
+    
+    def _load_rules_from_subdir(self, subdir: Path, behavior_rules_dir: Path) -> List[Rule]:
+        """Load rules from a subdirectory, skipping already loaded rules."""
+        rules = []
+        for rule_file in subdir.rglob('*.json'):
+            if behavior_rules_dir.exists() and rule_file.is_relative_to(behavior_rules_dir):
+                continue
+            try:
+                rules.append(self._create_rule(rule_file))
+            except Exception:
+                continue
+        return rules
+    
     def _load_behavior_rules(self) -> List[Rule]:
-        behavior_rules = []
         behavior_folder = self.bot_paths.bot_directory / 'behaviors' / self.behavior_name
         behavior_rules_dir = behavior_folder / 'rules'
         
-        for rule_file in behavior_rules_dir.glob('*.json'):
-            rule_obj = Rule(
-                rule_file_path=rule_file,
-                behavior_name=self.behavior_name,
-                bot_name=self.bot_name
-            )
-            behavior_rules.append(rule_obj)
+        behavior_rules = [self._create_rule(f) for f in behavior_rules_dir.glob('*.json')]
         
-        rule_subdirs = ['3_rules', 'rules']
-        for subdir_name in rule_subdirs:
+        for subdir_name in ['3_rules', 'rules']:
             subdir = behavior_folder / subdir_name
             if subdir != behavior_rules_dir:
-                for rule_file in subdir.rglob('*.json'):
-                    if behavior_rules_dir.exists() and rule_file.is_relative_to(behavior_rules_dir):
-                        continue
-                    try:
-                        rule_obj = Rule(
-                            rule_file_path=rule_file,
-                            behavior_name=self.behavior_name,
-                            bot_name=self.bot_name
-                        )
-                        behavior_rules.append(rule_obj)
-                    except Exception:
-                        continue
+                behavior_rules.extend(self._load_rules_from_subdir(subdir, behavior_rules_dir))
         
         return behavior_rules
     
@@ -160,160 +170,140 @@ class Rules:
         
         return "\n".join(formatted_sections)
     
+    def _extract_error_message(self, execution_status: str, scanner_results: Any) -> str:
+        """Extract error message from scanner results."""
+        if execution_status.startswith('EXECUTION_FAILED'):
+            return execution_status
+        if not isinstance(scanner_results, dict):
+            return f"Scanner execution failed: {execution_status}"
+        if 'error' in scanner_results:
+            return scanner_results['error']
+        file_by_file = scanner_results.get('file_by_file', {})
+        if isinstance(file_by_file, dict) and 'error' in file_by_file:
+            return file_by_file['error']
+        return f"Scanner execution failed: {execution_status}"
+    
+    def _has_scanner_error(self, execution_status: str, scanner_results: Any) -> bool:
+        """Check if scanner execution had an error."""
+        if execution_status.startswith('EXECUTION_FAILED') or execution_status.startswith('EXECUTION_SKIPPED'):
+            return True
+        if not isinstance(scanner_results, dict):
+            return False
+        if 'error' in scanner_results:
+            return True
+        file_by_file = scanner_results.get('file_by_file', {})
+        return isinstance(file_by_file, dict) and 'error' in file_by_file
+    
+    def _flush_logger_handlers(self, logger) -> None:
+        """Flush all logger handlers."""
+        for handler in logger.handlers:
+            handler.flush()
+    
+    def _process_scanner_result(self, rule, rule_result: dict, scanner_results: Any, scanner_path: str, scanner_name: str, logger) -> str:
+        """Process scanner result and return status summary line."""
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        execution_status = rule.scanner_execution_status or 'SUCCESS'
+        
+        if self._has_scanner_error(execution_status, scanner_results):
+            error_msg = self._extract_error_message(execution_status, scanner_results)
+            logger.info(f"[{timestamp}] Completed scanner: {scanner_name} (rule: {rule.rule_file}) - FAILED: {error_msg}")
+            self._flush_logger_handlers(logger)
+            rule_result['scanner_status'] = {'status': 'EXECUTION_FAILED', 'scanner_path': scanner_path, 'error': error_msg}
+            return f"  [ERROR] {rule.rule_file}: {error_msg}"
+        
+        violations_count = len(rule.violations)
+        logger.info(f"[{timestamp}] Completed scanner: {scanner_name} (rule: {rule.rule_file}) - SUCCESS ({violations_count} violations)")
+        self._flush_logger_handlers(logger)
+        rule_result['scanner_status'] = {'status': 'EXECUTED', 'scanner_path': scanner_path, 'execution_status': execution_status, 'violations_found': violations_count}
+        self.add_violations(rule.violations)
+        return f"  [OK] {rule.rule_file}: Scanner executed successfully ({violations_count} violations)"
+    
+    def _execute_scanner(self, rule, rule_result: dict, knowledge_graph: Dict, files: Dict, scanner_path: str, on_scanner_start, on_file_scanned, logger) -> str:
+        """Execute a scanner and return status summary line."""
+        scanner_name = scanner_path.split('.')[-1] if '.' in scanner_path else scanner_path
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        logger.info(f"[{timestamp}] Starting scanner: {scanner_name} (rule: {rule.rule_file})")
+        self._flush_logger_handlers(logger)
+        
+        if on_scanner_start:
+            on_scanner_start(rule.rule_file, scanner_path)
+        
+        try:
+            scanner_results = rule.scan(knowledge_graph, files, on_file_scanned=on_file_scanned)
+            rule_result['scanner_results'] = scanner_results
+            return self._process_scanner_result(rule, rule_result, scanner_results, scanner_path, scanner_name, logger)
+        except Exception as e:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            error_msg = f"Scanner execution failed: {str(e)}"
+            logger.error(f"[{timestamp}] Completed scanner: {scanner_name} (rule: {rule.rule_file}) - EXCEPTION: {error_msg}")
+            self._flush_logger_handlers(logger)
+            logger.error(f"Scanner execution failed for rule {rule.rule_file}: {e}", exc_info=True)
+            rule_result['scanner_status'] = {'status': 'EXECUTION_FAILED', 'scanner_path': scanner_path, 'error': error_msg}
+            raise
+    
+    def _process_rule(self, rule, rule_result: dict, knowledge_graph: Dict, files: Dict, on_scanner_start, on_file_scanned, logger) -> str:
+        """Process a single rule and return status summary line."""
+        scanner_path = rule.scanner_path
+        
+        if not scanner_path:
+            rule_result['scanner_status'] = {'status': 'NO_SCANNER', 'scanner_path': None}
+            return f"  [SKIP] {rule.rule_file}: No scanner defined"
+        
+        if not rule.has_scanner:
+            load_error = rule.scanner_load_error or "Unknown error - scanner class is None"
+            rule_result['scanner_status'] = {'status': 'LOAD_FAILED', 'scanner_path': scanner_path, 'error': load_error}
+            logger.error(f"Scanner failed to load for rule {rule.rule_file}: {load_error}")
+            return f"  [FAILED] {rule.rule_file}: Scanner failed to load - {load_error}"
+        
+        return self._execute_scanner(rule, rule_result, knowledge_graph, files, scanner_path, on_scanner_start, on_file_scanned, logger)
+    
     def validate(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]] = None, 
-                 on_scanner_start: Optional[Any] = None, on_scanner_complete: Optional[Any] = None,
-                 on_file_scanned: Optional[Any] = None, skiprule: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+                 callbacks: Optional[ValidationCallbacks] = None,
+                 skiprule: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """Validate knowledge graph and files against all rules.
         
         Args:
-            knowledge_graph: The knowledge graph to validate
-            files: Dict of file lists keyed by type ('src', 'test')
-            on_scanner_start: Optional callback(rule_file, scanner_path) called before each scanner
-            on_scanner_complete: Optional callback(rule_result) called after each scanner completes
-            on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
-            skiprule: Optional list of rule names to skip (matched against rule filename without .json)
-        
-        Returns:
-            List of rule results with scanner status and violations
+            knowledge_graph: The story graph data to validate against
+            files: Dict with 'test_files' and 'code_files' lists of Paths
+            callbacks: ValidationCallbacks with on_scanner_start, on_scanner_complete, on_file_scanned
+            skiprule: List of rule names to skip
         """
         logger = logging.getLogger(__name__)
         logger.info("=== Starting rules validation ===")
         logger.info(f"Files to validate: {sum(len(f) for f in (files or {}).values())} files")
         
+        callbacks = callbacks or ValidationCallbacks()
         files = files or {}
         processed_rules = []
-        
-        logger.info("Loading rules...")
         rules_list = list(self)
         logger.info(f"Loaded {len(rules_list)} rules")
         
         scanner_status_summary = []
-        
-        logger.info("Processing rules and executing scanners...")
         skiprule_set = set(skiprule) if skiprule else set()
         if skiprule_set:
             logger.info(f"Skipping rules: {skiprule_set}")
         
         for idx, rule in enumerate(rules_list, 1):
-            # Check if this rule should be skipped
-            rule_name = Path(rule.rule_file).stem  # Get filename without .json
+            rule_name = Path(rule.rule_file).stem
             if rule_name in skiprule_set:
                 logger.info(f"Skipping rule {idx}/{len(rules_list)}: {rule.rule_file} (--skiprule)")
                 scanner_status_summary.append(f"  [SKIP] {rule.rule_file}: Skipped by --skiprule")
                 continue
             
             logger.info(f"Processing rule {idx}/{len(rules_list)}: {rule.rule_file}")
-            rule_result = {
-                'rule_file': rule.rule_file,
-                'rule_content': rule.rule_content,
-                'scanner_status': {}
-            }
+            rule_result = {'rule_file': rule.rule_file, 'rule_content': rule.rule_content, 'scanner_status': {}}
             
-            scanner_path = rule.scanner_path
-            if scanner_path:
-                if rule.has_scanner:
-                    # Log before scanner execution
-                    scanner_name = scanner_path.split('.')[-1] if '.' in scanner_path else scanner_path
-                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    logger.info(f"[{timestamp}] Starting scanner: {scanner_name} (rule: {rule.rule_file})")
-                    # Force flush to ensure log appears immediately
-                    for handler in logger.handlers:
-                        handler.flush()
-                    
-                    # Notify callback that scanner is starting
-                    if on_scanner_start:
-                        on_scanner_start(rule.rule_file, scanner_path)
-                    
-                    try:
-                        scanner_results = rule.scan(knowledge_graph, files, on_file_scanned=on_file_scanned)
-                        rule_result['scanner_results'] = scanner_results
-                        
-                        # Log after scanner execution
-                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        
-                        # Check if execution actually failed (exception was caught internally)
-                        execution_status = rule.scanner_execution_status or 'SUCCESS'
-                        has_error = (
-                            execution_status.startswith('EXECUTION_FAILED') or
-                            execution_status.startswith('EXECUTION_SKIPPED') or
-                            (isinstance(scanner_results, dict) and 'error' in scanner_results) or
-                            (isinstance(scanner_results, dict) and 'file_by_file' in scanner_results and 'error' in scanner_results.get('file_by_file', {}))
-                        )
-                        
-                        if has_error:
-                            # Scanner execution failed internally (exception was caught)
-                            error_msg = execution_status if execution_status.startswith('EXECUTION_FAILED') else f"Scanner execution failed: {execution_status}"
-                            if isinstance(scanner_results, dict):
-                                if 'error' in scanner_results:
-                                    error_msg = scanner_results['error']
-                                elif 'file_by_file' in scanner_results and 'error' in scanner_results.get('file_by_file', {}):
-                                    error_msg = scanner_results['file_by_file']['error']
-                            
-                            logger.info(f"[{timestamp}] Completed scanner: {scanner_name} (rule: {rule.rule_file}) - FAILED: {error_msg}")
-                            for handler in logger.handlers:
-                                handler.flush()
-                            
-                            rule_result['scanner_status'] = {
-                                'status': 'EXECUTION_FAILED',
-                                'scanner_path': scanner_path,
-                                'error': error_msg
-                            }
-                            scanner_status_summary.append(f"  [ERROR] {rule.rule_file}: {error_msg}")
-                        else:
-                            # Scanner executed successfully
-                            violations_count = len(rule.violations)
-                            logger.info(f"[{timestamp}] Completed scanner: {scanner_name} (rule: {rule.rule_file}) - SUCCESS ({violations_count} violations)")
-                            for handler in logger.handlers:
-                                handler.flush()
-                            
-                            rule_result['scanner_status'] = {
-                                'status': 'EXECUTED',
-                                'scanner_path': scanner_path,
-                                'execution_status': execution_status,
-                                'violations_found': violations_count
-                            }
-                            scanner_status_summary.append(f"  [OK] {rule.rule_file}: Scanner executed successfully ({violations_count} violations)")
-                            self.add_violations(rule.violations)
-                    except Exception as e:
-                        # Log after scanner execution exception
-                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        error_msg = f"Scanner execution failed: {str(e)}"
-                        logger.error(f"[{timestamp}] Completed scanner: {scanner_name} (rule: {rule.rule_file}) - EXCEPTION: {error_msg}")
-                        for handler in logger.handlers:
-                            handler.flush()
-                        
-                        logger.error(f"Scanner execution failed for rule {rule.rule_file}: {e}", exc_info=True)
-                        rule_result['scanner_status'] = {
-                            'status': 'EXECUTION_FAILED',
-                            'scanner_path': scanner_path,
-                            'error': error_msg
-                        }
-                        scanner_status_summary.append(f"  [ERROR] {rule.rule_file}: {error_msg}")
-                        # Re-raise exception - do not swallow errors
-                        raise
-                else:
-                    load_error = rule.scanner_load_error or "Unknown error - scanner class is None"
-                    rule_result['scanner_status'] = {
-                        'status': 'LOAD_FAILED',
-                        'scanner_path': scanner_path,
-                        'error': load_error
-                    }
-                    scanner_status_summary.append(f"  [FAILED] {rule.rule_file}: Scanner failed to load - {load_error}")
-                    logger.error(f"Scanner failed to load for rule {rule.rule_file}: {load_error}")
-            else:
-                rule_result['scanner_status'] = {
-                    'status': 'NO_SCANNER',
-                    'scanner_path': None
-                }
-                scanner_status_summary.append(f"  [SKIP] {rule.rule_file}: No scanner defined")
+            try:
+                status_line = self._process_rule(rule, rule_result, knowledge_graph, files, callbacks, logger)
+                scanner_status_summary.append(status_line)
+            except Exception:
+                scanner_status_summary.append(f"  [ERROR] {rule.rule_file}: Scanner execution failed")
+                raise
             
             processed_rules.append(rule_result)
-            
-            # Notify callback that scanner completed - enables real-time reporting
-            if on_scanner_complete:
-                on_scanner_complete(rule_result)
+            if callbacks.on_scanner_complete:
+                callbacks.on_scanner_complete(rule_result)
         
-        # Log scanner status summary
         if scanner_status_summary:
             logger.info("=== SCANNER EXECUTION STATUS ===")
             for status_line in scanner_status_summary:
