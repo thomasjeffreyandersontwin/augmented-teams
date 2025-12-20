@@ -8,7 +8,6 @@ from agile_bot.bots.base_bot.src.utils import read_json_file
 import json
 
 class DescriptionExtractor:
-    """Extracts descriptions for behaviors, actions, and bots from configuration files."""
 
     def __init__(self, bot_name: str, bot_directory: Path, formatter):
         self.bot_name = bot_name
@@ -16,7 +15,6 @@ class DescriptionExtractor:
         self.formatter = formatter
 
     def get_behavior_description(self, cmd_name: str) -> str:
-        """Get description for a behavior command."""
         if cmd_name == self.bot_name:
             bot_desc = self.get_bot_description()
             if bot_desc:
@@ -27,7 +25,6 @@ class DescriptionExtractor:
         return self.get_behavior_description_from_file(behavior_name)
 
     def get_bot_description(self) -> Optional[str]:
-        """Get bot description from bot_config.json."""
         bot_config_path = self.bot_directory / 'bot_config.json'
         if not bot_config_path.exists():
             return None
@@ -40,7 +37,6 @@ class DescriptionExtractor:
             return None
 
     def get_special_behavior_description(self, behavior_name: str) -> str:
-        """Get description for special behaviors like 'continue' and 'help'."""
         if behavior_name == 'continue':
             return 'Close current action and continue to next action in workflow'
         if behavior_name == 'help':
@@ -48,7 +44,6 @@ class DescriptionExtractor:
         return behavior_name.replace('_', ' ').title()
 
     def get_behavior_description_from_file(self, behavior_name: str) -> str:
-        """Get behavior description from behavior.json file."""
         behavior_file_path = self.bot_directory / 'behaviors' / behavior_name / 'behavior.json'
         if not behavior_file_path.exists():
             return behavior_name.replace('_', ' ').title()
@@ -65,7 +60,6 @@ class DescriptionExtractor:
         return behavior_name.replace('_', ' ').title()
 
     def extract_behavior_description_from_data(self, behavior_data: dict) -> Optional[str]:
-        """Extract description from behavior data dictionary."""
         instructions = behavior_data.get('instructions', [])
         if instructions:
             return '\n'.join(instructions) if isinstance(instructions, list) else str(instructions)
@@ -82,14 +76,10 @@ class DescriptionExtractor:
         return ' | '.join(description_parts[:3]) if description_parts else None
 
     def get_action_description(self, action_name: str) -> str:
-        """Get description for an action from action_config.json."""
         base_actions_dir = get_base_actions_directory()
         action_prefixes = {'clarify': 'clarify', 'strategy': 'strategy', 'build': 'build', 'render': 'render', 'validate': 'validate'}
         action_folder = action_prefixes.get(action_name, action_name)
         config_path = base_actions_dir / action_folder / 'action_config.json'
-        # #region agent log
-        import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "description_extractor.py:get_action_description", "message": "Looking for action config", "data": {"action_name": action_name, "action_folder": action_folder, "config_path": str(config_path), "exists": config_path.exists()}, "hypothesisId": "D,E", "timestamp": __import__('time').time()}) + '\n')
-        # #endregion
         if not config_path.exists():
             return action_name.replace('_', ' ').title()
         try:
@@ -106,7 +96,6 @@ class DescriptionExtractor:
         return action_name.replace('_', ' ').title()
 
     def extract_first_instruction(self, instructions: list) -> Optional[str]:
-        """Extract the first meaningful instruction from a list."""
         if not isinstance(instructions, list):
             return None
         for line in instructions:
@@ -117,7 +106,6 @@ class DescriptionExtractor:
         return None
 
     def get_action_names_from_behavior(self, behavior_name: str) -> Optional[str]:
-        """Get action names from behavior.json as a pipe-separated string."""
         behavior_file_path = self.bot_directory / 'behaviors' / behavior_name / 'behavior.json'
         if not behavior_file_path.exists():
             return None
@@ -128,5 +116,3 @@ class DescriptionExtractor:
             return '|'.join(action_names) if action_names else None
         except Exception:
             return None
-
-

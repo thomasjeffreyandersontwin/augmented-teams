@@ -1,31 +1,35 @@
 # Validation Report - Code
 
-**Generated:** 2025-12-20 15:43:28
+**Generated:** 2025-12-20 16:16:19
 **Project:** base_bot
 **Behavior:** code
 **Action:** validate
 
 ## Summary
 
-Validated story map and domain model and 2 code file(s) against **34 validation rules**.
+Validated story map and domain model and 5 code file(s) against **34 validation rules**.
 
 ## Content Validated
 
 - **Rendered Outputs:**
   - `story-graph.json`
 - **Code Files Scanned:**
-  - `src\actions\action.py`
-  - `src\actions\instructions.py`
-  - **Total:** 2 src file(s)
+  - `src\actions\help_action.py`
+  - `src\actions\workflow_status_builder.py`
+  - `src\cli\cli_help_generator.py`
+  - `src\cli\description_extractor.py`
+  - `src\cli\unified_help_generator.py`
+  - **Total:** 5 src file(s)
 
 ## Scanner Execution Status
 
-### 🟩 Overall Status: ALL CLEAN
+### 🟨 Overall Status: GOOD - Minor Issues
 
 | Status | Count | Description |
 |--------|-------|-------------|
 | 🟩 Executed Successfully | 32 | Scanners ran without errors |
-| 🟩 Clean Rules | 32 | No violations found |
+| 🟩 Clean Rules | 30 | No violations found |
+| 🟥 Rules with Errors | 2 | Found 3 error violation(s) |
 | [i] No Scanner | 2 | Rule has no scanner configured |
 
 **Total Rules:** 34
@@ -35,6 +39,10 @@ Validated story map and domain model and 2 code file(s) against **34 validation 
 
 ### 🟩 Successfully Executed Scanners
 
+- 🟥 **[Eliminate Duplication](#eliminate-duplication)** - 2 violation(s) (EXECUTION_SUCCESS) - [View Details](#eliminate-duplication-violations)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner`
+- 🟥 **[Use Resource Oriented Design](#use-resource-oriented-design)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#use-resource-oriented-design-violations)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.resource_oriented_code_scanner.ResourceOrientedCodeScanner`
 - 🟩 **[Avoid Excessive Guards](#avoid-excessive-guards)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.excessive_guards_scanner.ExcessiveGuardsScanner`
 - 🟩 **[Avoid Unnecessary Parameter Passing](#avoid-unnecessary-parameter-passing)** - 0 violations (EXECUTION_SUCCESS)
@@ -45,8 +53,6 @@ Validated story map and domain model and 2 code file(s) against **34 validation 
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.exception_classification_scanner.ExceptionClassificationScanner`
 - 🟩 **[Delegate To Lowest Level](#delegate-to-lowest-level)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.delegation_code_scanner.DelegationCodeScanner`
-- 🟩 **[Eliminate Duplication](#eliminate-duplication)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner`
 - 🟩 **[Enforce Encapsulation](#enforce-encapsulation)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.encapsulation_scanner.EncapsulationScanner`
 - 🟩 **[Favor Code Representation](#favor-code-representation)** - 0 violations (EXECUTION_SUCCESS)
@@ -97,8 +103,6 @@ Validated story map and domain model and 2 code file(s) against **34 validation 
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.explicit_dependencies_scanner.ExplicitDependenciesScanner`
 - 🟩 **[Use Natural English](#use-natural-english)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.natural_english_code_scanner.NaturalEnglishCodeScanner`
-- 🟩 **[Use Resource Oriented Design](#use-resource-oriented-design)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.resource_oriented_code_scanner.ResourceOrientedCodeScanner`
 
 ### <span style="color: gray;">[i] Rules Without Scanners</span>
 
@@ -106,6 +110,16 @@ Validated story map and domain model and 2 code file(s) against **34 validation 
 - <span style="color: gray;">[i]</span> **[Refactor Tests With Production Code](#refactor-tests-with-production-code)** - No scanner configured
 
 ## Validation Rules Checked
+
+### 🟥 Rule: <span id="eliminate-duplication">Eliminate Duplication</span> - 2 ERROR(S) - [View Details](#eliminate-duplication-violations)
+**Description:** CRITICAL: Every piece of knowledge should have a single, authoritative representation (DRY principle). Extract repeated logic into reusable functions and use abstraction to capture common patterns.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
+### 🟥 Rule: <span id="use-resource-oriented-design">Use Resource Oriented Design</span> - 1 ERROR(S) - [View Details](#use-resource-oriented-design-violations)
+**Description:** CRITICAL: Code must use resource-oriented, object-oriented design. Use object-oriented classes (singular or collection) with responsibilities that encapsulate logic over manager/doer/loader patterns. Maximize encapsulation through collaborator relationships.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.resource_oriented_code_scanner.ResourceOrientedCodeScanner`
+**Execution Status:** EXECUTION_SUCCESS
 
 ### 🟩 Rule: <span id="avoid-excessive-guards">Avoid Excessive Guards</span> - CLEAN (0 violations)
 **Description:** Excessive guard clauses add to cyclomatic complexity and make code harder to read. Centralize error handling in one place rather than scattering defensive checks throughout the code. Let code fail fast with clear errors rather than silently handling missing components.
@@ -130,11 +144,6 @@ Validated story map and domain model and 2 code file(s) against **34 validation 
 ### 🟩 Rule: <span id="delegate-to-lowest-level">Delegate To Lowest Level</span> - CLEAN (0 violations)
 **Description:** CRITICAL: Code must delegate responsibilities to the lowest-level object that can handle them. If a collection class can do something, delegate to it rather than implementing it in the parent.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.delegation_code_scanner.DelegationCodeScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
-### 🟩 Rule: <span id="eliminate-duplication">Eliminate Duplication</span> - CLEAN (0 violations)
-**Description:** CRITICAL: Every piece of knowledge should have a single, authoritative representation (DRY principle). Extract repeated logic into reusable functions and use abstraction to capture common patterns.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.duplication_scanner.DuplicationScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
 ### 🟩 Rule: <span id="enforce-encapsulation">Enforce Encapsulation</span> - CLEAN (0 violations)
@@ -202,16 +211,64 @@ Validated story map and domain model and 2 code file(s) against **34 validation 
 **Scanner:** `agile_bot.bots.base_bot.src.scanners.prefer_object_model_over_config_scanner.PreferObjectModelOverConfigScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟩 Rule: <span id="provide-meaningful-context">Provide Meaningful Context</span> - CLEAN (0 violations)
-**Description:** Names should provide appropriate context without redundancy. Use longer names for longer scopes and replace magic numbers with named constants.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.meaningful_context_scanner.MeaningfulContextScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
 *... and 14 more rules*
 
 ## Violations Found
 
-🟩 **No violations found.** All rules passed validation.
+**Total Violations:** 3
+- **File-by-File Violations:** 0
+- **Cross-File Violations:** 3
+
+### Cross-File Violations (Pass 2)
+
+These violations were detected by analyzing all files together to find patterns that span multiple files.
+
+#### <span id="eliminate-duplication-violations">Eliminate Duplication: 2 violation(s)</span>
+
+- <span style="color: red;">[X]</span> **ERROR** - [`src\actions\help_action.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/help_action.py:26): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (help_action.py:_add_help_content_to_display (lines 26-30)):
+    ```python
+    instructions.add_display('---')
+    instructions.add_display('')
+    instructions.add_display('## Action Help')
+    instructions.add_display('')
+    self._add_action_help(instructions)
+    ```
+
+  Location 2 (cli_help_generator.py:_build_help_instructions (lines 69-73)):
+    ```python
+    help_inst.add_display('---')
+    help_inst.add_display('')
+    help_inst.add_display('## Action Help')
+    help_inst.add_display('')
+    self._add_action_help_to_display(help_inst)
+    ```
+- <span style="color: red;">[X]</span> **ERROR** - [`src\actions\help_action.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/help_action.py:52): Duplicate code detected across files - extract to shared function.
+
+  Location 1 (help_action.py:get_command_order (lines 52-57)):
+    ```python
+    cmd_name = cmd_file.stem
+    behavior_name = cmd_name.replace(f'{bot_name}-', '').replace('-', '_')
+    if behavior_name in ['', 'continue', 'help', 'get_working_dir', 'set_working_dir'] or cmd_name == bot_name:
+        return (0, cmd_name)
+    order = self._get_behavior_order(bot_directory, behavior_name)
+    return (...
+    ```
+
+  Location 2 (cli_help_generator.py:get_command_order (lines 106-111)):
+    ```python
+    cmd_name = cmd_file.stem
+    behavior_name = cmd_name.replace(f'{self.bot_name}-', '').replace('-', '_')
+    if behavior_name in ['', 'continue', 'help', 'get_working_dir', 'set_working_dir'] or cmd_name == self.bot_name:
+        return (0, cmd_name)
+    order = self._get_behavior_order_from_config(behavior_name)
+    r...
+    ```
+
+#### <span id="use-resource-oriented-design-violations">Use Resource Oriented Design: 1 violation(s)</span>
+
+- <span style="color: red;">[X]</span> **ERROR** - [`src\actions\workflow_status_builder.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/workflow_status_builder.py:20): Class "BehaviorActionStatusBuilder" uses manager/doer/loader pattern but is not owned by a domain object. Use resource-oriented design instead (e.g., make it a property of a domain object like "BehaviorActionStatus").
 
 ## Validation Instructions
 
@@ -227,7 +284,7 @@ The following validation steps were performed:
 8. - **Original input:** `{project_area}/docs/context/input.txt` and other original context files
 9. 
 10. These files contain critical requirements, decisions, and context that MUST be checked against during validation.
-*... and 244 more instructions*
+*... and 248 more instructions*
 
 ## Report Location
 

@@ -5,7 +5,7 @@
 
 **CRITICAL: YOU MUST POLL THE STATUS FILE EVERY 10 SECONDS UNTIL VALIDATION COMPLETES**
 
-Validation has been started in the background. It will scan 2 file(s).
+Validation has been started in the background. It will scan 5 file(s).
 
 **Status File:**
   agile_bot\bots\story_bot\docs\stories\code-validation-status.md

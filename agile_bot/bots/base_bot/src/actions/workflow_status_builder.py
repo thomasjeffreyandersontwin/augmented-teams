@@ -1,12 +1,21 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, TYPE_CHECKING
+from typing import Dict, Any, List, TYPE_CHECKING, NamedTuple
 from agile_bot.bots.base_bot.src.utils import read_json_file
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
     from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
 logger = logging.getLogger(__name__)
+
+
+class CurrentBehaviorContext(NamedTuple):
+    name: str
+    icon: str
+    actions: List[str]
+    current_action: str
+    completed: List[str]
+
 
 class BehaviorActionStatusBuilder:
 
@@ -106,24 +115,28 @@ class BehaviorActionStatusBuilder:
         DONE, CURRENT, PENDING = ('✓', '➤', '☐')
         completed_behaviors = categorization['completed_behaviors']
         current_behavior_name = categorization['current_behavior_name']
-        current_behavior_actions = categorization['current_behavior_actions']
-        current_action_name = categorization['current_action_name']
-        current_behavior_completed = categorization['current_behavior_completed']
         ordered_behaviors = self._get_ordered_behaviors(all_behaviors)
         for behavior_name in ordered_behaviors:
             if behavior_name in completed_behaviors:
                 lines.append(f'### {DONE} **{behavior_name}**')
             elif behavior_name == current_behavior_name:
-                lines.extend(self._build_current_behavior_section(behavior_name, CURRENT, current_behavior_actions, current_action_name, current_behavior_completed))
+                ctx = CurrentBehaviorContext(
+                    name=behavior_name,
+                    icon=CURRENT,
+                    actions=categorization['current_behavior_actions'],
+                    current_action=categorization['current_action_name'],
+                    completed=categorization['current_behavior_completed']
+                )
+                lines.extend(self._build_current_behavior_section(ctx))
             else:
                 lines.append(f'### {PENDING} **{behavior_name}**')
         lines.append('')
         return lines
 
-    def _build_current_behavior_section(self, behavior_name, CURRENT, current_behavior_actions, current_action_name, current_behavior_completed):
-        lines = [f'### {CURRENT} **{behavior_name}**']
-        for action_name in current_behavior_actions:
-            lines.append(self._format_action_line(action_name, current_action_name, current_behavior_completed))
+    def _build_current_behavior_section(self, ctx: CurrentBehaviorContext):
+        lines = [f'### {ctx.icon} **{ctx.name}**']
+        for action_name in ctx.actions:
+            lines.append(self._format_action_line(action_name, ctx.current_action, ctx.completed))
         return lines
 
     def _format_action_line(self, action_name: str, current_action_name: str, completed_actions: list) -> str:
@@ -135,33 +148,26 @@ class BehaviorActionStatusBuilder:
         return f'  - {PENDING} {action_name}'
 
     def _get_ordered_behaviors(self, all_behaviors: list) -> list:
-        """Get behaviors ordered according to order field in each behavior's behavior.json."""
-        # #region agent log
-        import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "workflow_status_builder.py:_get_ordered_behaviors", "message": "Entry", "data": {"all_behaviors": all_behaviors}, "hypothesisId": "A", "timestamp": __import__('time').time()}) + '\n')
-        # #endregion
         if not self.behavior or not self.behavior.bot:
             return all_behaviors
         try:
             bot_directory = self.behavior.bot_paths.bot_directory
-            behaviors_with_order = []
-            for behavior_name in all_behaviors:
-                behavior_json_path = bot_directory / 'behaviors' / behavior_name / 'behavior.json'
-                order = 999
-                if behavior_json_path.exists():
-                    try:
-                        config = read_json_file(behavior_json_path)
-                        order = config.get('order', 999)
-                    except Exception:
-                        pass
-                behaviors_with_order.append((order, behavior_name))
+            behaviors_with_order = [(self._get_behavior_order(bot_directory, name), name) for name in all_behaviors]
             behaviors_with_order.sort(key=lambda x: x[0])
-            ordered_list = [name for _, name in behaviors_with_order]
-            # #region agent log
-            import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "workflow_status_builder.py:_get_ordered_behaviors", "message": "Sorted by behavior.json order", "data": {"behaviors_with_order": behaviors_with_order, "ordered_list": ordered_list}, "hypothesisId": "A", "timestamp": __import__('time').time()}) + '\n')
-            # #endregion
-            return ordered_list
+            return [name for _, name in behaviors_with_order]
         except Exception:
             return all_behaviors
+
+    def _get_behavior_order(self, bot_directory: Path, behavior_name: str) -> int:
+        behavior_json_path = bot_directory / 'behaviors' / behavior_name / 'behavior.json'
+        if not behavior_json_path.exists():
+            return 999
+        try:
+            config = read_json_file(behavior_json_path)
+            return config.get('order', 999)
+        except Exception:
+            logger.debug(f'Failed to read behavior order for {behavior_name}')
+            return 999
 
     def _get_default_breadcrumbs(self) -> list:
         PENDING = '☐'
