@@ -79,7 +79,13 @@ class BehaviorActionStatusBuilder:
         return [action.get('action_state', '').split('.')[-1] for action in completed_actions if action.get('action_state', '').startswith(behavior_prefix)]
 
     def _build_behavior_action_table(self, workspace_dir, categorization):
-        lines = ['**CRITICAL: YOU MUST DISPLAY THE ENTIRE BEHAVIOR/ACTION STATUS BELOW VERBATIM IN YOUR RESPONSE. DO NOT SKIP THIS. COPY AND PASTE IT DIRECTLY INTO YOUR MESSAGE.**', '', '## Behavior/Action Status', '', '| Setting | Value |', '|---------|-------|', f'| **Working Directory** | {workspace_dir} |', f'| **Bot Path** | {self.behavior.bot_paths.bot_directory} |']
+        lines = ['',
+                 '## Behavior/Action Status',
+                 '',
+                 '| Setting | Value |',
+                 '|---------|-------|',
+                 f'| **Working Directory** | {workspace_dir} |',
+                 f'| **Bot Path** | {self.behavior.bot_paths.bot_directory} |']
         current_behavior_name = categorization['current_behavior_name']
         current_action_name = categorization['current_action_name']
         if current_behavior_name and current_action_name:
@@ -129,22 +135,30 @@ class BehaviorActionStatusBuilder:
         return f'  - {PENDING} {action_name}'
 
     def _get_ordered_behaviors(self, all_behaviors: list) -> list:
-        """Get behaviors ordered according to bot_config.json."""
+        """Get behaviors ordered according to order field in each behavior's behavior.json."""
+        # #region agent log
+        import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "workflow_status_builder.py:_get_ordered_behaviors", "message": "Entry", "data": {"all_behaviors": all_behaviors}, "hypothesisId": "A", "timestamp": __import__('time').time()}) + '\n')
+        # #endregion
         if not self.behavior or not self.behavior.bot:
             return all_behaviors
         try:
-            bot_config_path = self.behavior.bot_paths.bot_directory / 'bot_config.json'
-            if not bot_config_path.exists():
-                return all_behaviors
-            config = read_json_file(bot_config_path)
-            behavior_order = config.get('behaviors', [])
-            if not behavior_order:
-                return all_behaviors
-            behavior_set = set(all_behaviors)
-            ordered_list = [b for b in behavior_order if b in behavior_set]
-            for b in all_behaviors:
-                if b not in behavior_order:
-                    ordered_list.append(b)
+            bot_directory = self.behavior.bot_paths.bot_directory
+            behaviors_with_order = []
+            for behavior_name in all_behaviors:
+                behavior_json_path = bot_directory / 'behaviors' / behavior_name / 'behavior.json'
+                order = 999
+                if behavior_json_path.exists():
+                    try:
+                        config = read_json_file(behavior_json_path)
+                        order = config.get('order', 999)
+                    except Exception:
+                        pass
+                behaviors_with_order.append((order, behavior_name))
+            behaviors_with_order.sort(key=lambda x: x[0])
+            ordered_list = [name for _, name in behaviors_with_order]
+            # #region agent log
+            import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "workflow_status_builder.py:_get_ordered_behaviors", "message": "Sorted by behavior.json order", "data": {"behaviors_with_order": behaviors_with_order, "ordered_list": ordered_list}, "hypothesisId": "A", "timestamp": __import__('time').time()}) + '\n')
+            # #endregion
             return ordered_list
         except Exception:
             return all_behaviors

@@ -1,7 +1,10 @@
 from typing import List, Dict, Any, Optional
+import logging
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from agile_bot.bots.base_bot.src.scanners.violation import Violation
+
+logger = logging.getLogger(__name__)
 
 try:
     import spacy
@@ -83,26 +86,41 @@ class ActiveLanguageScanner(StoryScanner):
         return 'unknown'
     
     def _check_passive_voice(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        if SPACY_AVAILABLE and nlp is not None:
-            try:
-                doc = nlp(name)
-                tokens = [token for token in doc if not token.is_punct]
-                
-                for i, token in enumerate(tokens):
-                    if token.lemma_.lower() in ['be', 'is', 'are', 'was', 'were', 'been', 'being']:
-                        if i + 1 < len(tokens):
-                            next_token = tokens[i + 1]
-                            if next_token.tag_ in ['VBN', 'VBD']:
-                                location = node.map_location()
-                                return Violation(
-                                    rule=rule_obj,
-                                    violation_message=f'{node_type.capitalize()} name "{name}" uses passive voice - use active voice (e.g., "Places Order" not "Order is placed")',
-                                    location=location,
-                                    severity='error'
-                                ).to_dict()
-            except Exception:
-                pass
+        """Check if story name uses passive voice."""
+        # Try spacy-based detection first
+        violation = self._check_passive_voice_spacy(name, node, node_type, rule_obj)
+        if violation:
+            return violation
         
+        # Fallback to regex patterns
+        return self._check_passive_voice_regex(name, node, node_type, rule_obj)
+    
+    def _check_passive_voice_spacy(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        """Check passive voice using spacy NLP."""
+        if not SPACY_AVAILABLE or nlp is None:
+            return None
+        
+        try:
+            doc = nlp(name)
+            tokens = [token for token in doc if not token.is_punct]
+            
+            for i, token in enumerate(tokens):
+                if token.lemma_.lower() not in ['be', 'is', 'are', 'was', 'were', 'been', 'being']:
+                    continue
+                
+                if i + 1 >= len(tokens):
+                    continue
+                
+                next_token = tokens[i + 1]
+                if next_token.tag_ in ['VBN', 'VBD']:
+                    return self._create_passive_voice_violation(name, node, node_type, rule_obj)
+        except Exception as e:
+            logger.debug(f'Spacy NLP failed for passive voice check on "{name}": {e}, falling back to regex')
+        
+        return None
+    
+    def _check_passive_voice_regex(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        """Check passive voice using regex patterns."""
         passive_voice_patterns = [
             r'\b(is|are|was|were|be|been|being)\s+\w+ed\b',
             r'\b(is|are|was|were|be|been|being)\s+\w+en\b',
@@ -110,72 +128,128 @@ class ActiveLanguageScanner(StoryScanner):
         
         for pattern in passive_voice_patterns:
             if re.search(pattern, name, re.IGNORECASE):
-                location = node.map_location()
-                return Violation(
-                    rule=rule_obj,
-                    violation_message=f'{node_type.capitalize()} name "{name}" uses passive voice - use active voice (e.g., "Places Order" not "Order is placed")',
-                    location=location,
-                    severity='error'
-                ).to_dict()
+                return self._create_passive_voice_violation(name, node, node_type, rule_obj)
         
         return None
     
+    def _create_passive_voice_violation(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Dict[str, Any]:
+        """Create a violation for passive voice usage."""
+        location = node.map_location()
+        return Violation(
+            rule=rule_obj,
+            violation_message=f'{node_type.capitalize()} name "{name}" uses passive voice - use active voice (e.g., "Places Order" not "Order is placed")',
+            location=location,
+            severity='error'
+        ).to_dict()
+    
     def _check_capability_nouns(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        if SPACY_AVAILABLE and nlp is not None:
-            try:
-                doc = nlp(name)
-                tokens = [token for token in doc if not token.is_punct]
-                
-                for idx, token in enumerate(tokens):
-                    is_last = (idx == len(tokens) - 1)
-                    has_three_or_more_words = (len(tokens) >= 3)
-                    if token.tag_ == 'VBG' and token.pos_ == 'NOUN' and is_last:
-                        # Allow gerund as last word when name has 3 or more words (per user rule)
-                        if has_three_or_more_words:
-                            continue
-                        if not any(exclude.lower() in name.lower() for exclude in ["User Story", "Epic", "Feature"]):
-                            location = node.map_location()
-                            return Violation(
-                                rule=rule_obj,
-                                violation_message=f'{node_type.capitalize()} name "{name}" uses capability noun (gerund) - use active behavioral language (e.g., "Processes Payments" not "Payment Processing")',
-                                location=location,
-                                severity='error'
-                            ).to_dict()
-                    
-                    if token.tag_ in ['NN', 'NNS'] and any(token.text.endswith(suffix) for suffix in ['ment', 'ance', 'ence']) and is_last:
-                        # Allow abstract-noun suffix as last word when name has 3 or more words (per user rule)
-                        if has_three_or_more_words:
-                            continue
-                        if not any(exclude.lower() in name.lower() for exclude in ["User Story", "Epic", "Feature"]):
-                            location = node.map_location()
-                            return Violation(
-                                rule=rule_obj,
-                                violation_message=f'{node_type.capitalize()} name "{name}" uses capability noun - use active behavioral language (e.g., "Processes Payments" not "Payment Processing")',
-                                location=location,
-                                severity='error'
-                            ).to_dict()
-            except Exception:
-                pass
+        """Check if story name uses capability nouns."""
+        # Try spacy-based detection first
+        violation = self._check_capability_nouns_spacy(name, node, node_type, rule_obj)
+        if violation:
+            return violation
         
-        # Regex fallback: only flag if the last word ends with capability/gerund suffix
+        # Fallback to regex patterns
+        return self._check_capability_nouns_regex(name, node, node_type, rule_obj)
+    
+    def _check_capability_nouns_spacy(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        """Check capability nouns using spacy NLP."""
+        if not SPACY_AVAILABLE or nlp is None:
+            return None
+        
+        try:
+            doc = nlp(name)
+            tokens = [token for token in doc if not token.is_punct]
+            token_count = len(tokens)
+            has_three_or_more_words = token_count >= 3
+            
+            for idx, token in enumerate(tokens):
+                is_last = (idx == token_count - 1)
+                
+                # Check for gerund as last word
+                violation = self._check_gerund_capability_noun(token, is_last, has_three_or_more_words, name, node, node_type, rule_obj)
+                if violation:
+                    return violation
+                
+                # Check for abstract noun suffix
+                violation = self._check_abstract_noun_suffix(token, is_last, has_three_or_more_words, name, node, node_type, rule_obj)
+                if violation:
+                    return violation
+        except Exception as e:
+            logger.debug(f'Spacy NLP failed for capability noun check on "{name}": {e}, falling back to regex')
+        
+        return None
+    
+    def _check_gerund_capability_noun(self, token: Any, is_last: bool, has_three_or_more_words: bool, 
+                                      name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        """Check if token is a gerund capability noun."""
+        if token.tag_ != 'VBG' or token.pos_ != 'NOUN' or not is_last:
+            return None
+        
+        # Allow gerund as last word when name has 3 or more words
+        if has_three_or_more_words:
+            return None
+        
+        # Skip if name contains excluded terms
+        if any(exclude.lower() in name.lower() for exclude in ["User Story", "Epic", "Feature"]):
+            return None
+        
+        return self._create_capability_noun_violation(name, node, node_type, rule_obj, "gerund")
+    
+    def _check_abstract_noun_suffix(self, token: Any, is_last: bool, has_three_or_more_words: bool,
+                                    name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        """Check if token has abstract noun suffix."""
+        if token.tag_ not in ['NN', 'NNS'] or not is_last:
+            return None
+        
+        if not any(token.text.endswith(suffix) for suffix in ['ment', 'ance', 'ence']):
+            return None
+        
+        # Allow abstract-noun suffix as last word when name has 3 or more words
+        if has_three_or_more_words:
+            return None
+        
+        # Skip if name contains excluded terms
+        if any(exclude.lower() in name.lower() for exclude in ["User Story", "Epic", "Feature"]):
+            return None
+        
+        return self._create_capability_noun_violation(name, node, node_type, rule_obj, "abstract noun")
+    
+    def _check_capability_nouns_regex(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        """Check capability nouns using regex patterns."""
         capability_noun_patterns = [
             r'\b[A-Z]\w+(ing|ment|ance|ence)\b$',
             r'.*\s+[A-Z]\w+(ing|ment|ance|ence)\b$',
         ]
         
         for pattern in capability_noun_patterns:
-            if re.search(pattern, name):
-                # Allow when the name has 3 or more words (per user rule)
-                if len(name.split()) >= 3:
-                    break
-                if not any(re.search(r'\b' + exclude + r'\b', name, re.IGNORECASE) for exclude in ["User Story", "Epic", "Feature"]):
-                    location = node.map_location()
-                    return Violation(
-                        rule=rule_obj,
-                        violation_message=f'{node_type.capitalize()} name "{name}" uses capability noun - use active behavioral language (e.g., "Processes Payments" not "Payment Processing")',
-                        location=location,
-                        severity='error'
-                    ).to_dict()
+            if not re.search(pattern, name):
+                continue
+            
+            # Allow when the name has 3 or more words
+            if len(name.split()) >= 3:
+                break
+            
+            # Skip if name contains excluded terms
+            if any(re.search(r'\b' + exclude + r'\b', name, re.IGNORECASE) for exclude in ["User Story", "Epic", "Feature"]):
+                continue
+            
+            return self._create_capability_noun_violation(name, node, node_type, rule_obj, "capability noun")
         
         return None
+    
+    def _create_capability_noun_violation(self, name: str, node: StoryNode, node_type: str, rule_obj: Any, noun_type: str) -> Dict[str, Any]:
+        """Create a violation for capability noun usage."""
+        location = node.map_location()
+        message = f'{node_type.capitalize()} name "{name}" uses capability noun'
+        if noun_type == "gerund":
+            message += ' (gerund)'
+        message += ' - use active behavioral language (e.g., "Processes Payments" not "Payment Processing")'
+        
+        return Violation(
+            rule=rule_obj,
+            violation_message=message,
+            location=location,
+            severity='error'
+        ).to_dict()
 

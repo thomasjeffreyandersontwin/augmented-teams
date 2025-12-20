@@ -16,21 +16,17 @@ class AbstractionLevelsScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    violation = self._check_mixed_abstraction_levels(node, content, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                violation = self._check_mixed_abstraction_levels(node, content, file_path, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

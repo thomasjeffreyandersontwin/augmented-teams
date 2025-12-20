@@ -39,7 +39,7 @@ class StrategyAction(Action):
         instructions.update(self.strategy.instructions)
         if parameters.get('decisions_made') or parameters.get('assumptions_made'):
             self.save_strategy(parameters)
-        return {'instructions': instructions}
+        return {'instructions': instructions.to_dict()}
 
     def save_strategy(self, parameters: Dict[str, Any]):
         strategy_decision = StrategyDecision(behavior_name=self.behavior.name, bot_paths=self.behavior.bot_paths, strategy=self.strategy, decisions_made=parameters.get('decisions_made', {}), assumptions_made=parameters.get('assumptions_made', []))

@@ -8,6 +8,7 @@ Tests for all stories in the 'Invoke CLI' sub-epic:
 - Get Help for Command Line Functions
 - Detect Trigger Words Through Extension
 - Save Through CLI
+- CLI Parameter Parsing (infrastructure tests)
 
 Tests use BaseBotCli pattern from cli_invocation_pattern.md.
 CLI routes to bot, bot executes. Tests verify CLI routing and bot execution.
@@ -15,6 +16,8 @@ CLI routes to bot, bot executes. Tests verify CLI routing and bot execution.
 import pytest
 from pathlib import Path
 import json
+import argparse
+import sys
 from conftest import (
     create_bot_config_file,
     create_workflow_state_file,
@@ -28,6 +31,7 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     create_base_action_instructions
 )
 from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+from agile_bot.bots.base_bot.src.cli.cli_parameter_parser import CliParameterParser
 
 # ============================================================================
 # HELPER CLASSES
@@ -952,3 +956,269 @@ class TestMatchTextAgainstTriggers:
         
         # Then: Returns True
         then_matches_returns(result, True)
+
+
+# ============================================================================
+# CLI PARAMETER PARSING TESTS (Infrastructure)
+# ============================================================================
+
+# HELPER FUNCTIONS - Reusable test operations
+
+def create_params_with_scope(scope_string):
+    return {'scope': scope_string}
+
+def create_params_with_multiple_keys(**kwargs):
+    return kwargs
+
+def create_cli_args_namespace(**kwargs):
+    defaults = {
+        'behavior': 'code',
+        'action': 'validate',
+        'scope': None,
+        'skip_cross_file': False,
+        'user_message': None,
+        'skiprule': None,
+        'exclude': None
+    }
+    defaults.update(kwargs)
+    return argparse.Namespace(**defaults)
+
+def verify_scope_contains_files(scope_dict, expected_files):
+    assert isinstance(scope_dict, dict)
+    assert scope_dict['type'] == 'files'
+    assert scope_dict['value'] == expected_files
+
+def verify_scope_has_file_count(scope_dict, expected_count):
+    assert isinstance(scope_dict, dict)
+    assert len(scope_dict['value']) == expected_count
+
+def simulate_cli_invocation(cli_args_list):
+    original_argv = sys.argv
+    sys.argv = ['test'] + cli_args_list
+    try:
+        args, params = CliParameterParser.parse_arguments()
+        return args, params
+    finally:
+        sys.argv = original_argv
+
+def create_validation_cli_args(scope_value):
+    return [
+        '--behavior', 'code',
+        '--action', 'validate',
+        '--scope', scope_value
+    ]
+
+def verify_json_array_not_corrupted(normalized_string, expected_values):
+    parsed_scope = json.loads(normalized_string)
+    assert isinstance(parsed_scope['value'], list)
+    assert len(parsed_scope['value']) == len(expected_values)
+    for i, expected_value in enumerate(expected_values):
+        assert parsed_scope['value'][i] == expected_value
+    assert '["' not in normalized_string or normalized_string.count('["') == 1
+    assert '"]' not in normalized_string or normalized_string.count('"]') == 1
+
+
+# FIXTURES - Test setup
+
+@pytest.fixture
+def python_dict_with_single_file():
+    return "{'type': 'files', 'value': ['file1.py']}"
+
+@pytest.fixture
+def python_dict_with_multiple_files():
+    return "{'type': 'files', 'value': ['file1.py', 'file2.py', 'file3.py']}"
+
+@pytest.fixture
+def json_string_with_double_quotes():
+    return '{"type": "files", "value": ["file1.py"]}'
+
+
+# ORCHESTRATOR TESTS - Test flows with Given-When-Then
+
+class TestCliAcceptsScopeWithPythonDictSyntax:
+    
+    def test_cli_accepts_scope_with_single_file_when_python_dict_syntax_used(self, python_dict_with_single_file):
+        # Given: Parameters with scope as Python dict string
+        params = create_params_with_scope(python_dict_with_single_file)
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Scope becomes dict object with file
+        verify_scope_contains_files(processed_params['scope'], ['file1.py'])
+    
+    def test_cli_accepts_scope_with_multiple_files_when_python_dict_syntax_used(self, python_dict_with_multiple_files):
+        # Given: Parameters with scope containing multiple files
+        params = create_params_with_scope(python_dict_with_multiple_files)
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: All files are preserved
+        verify_scope_has_file_count(processed_params['scope'], 3)
+        verify_scope_contains_files(processed_params['scope'], ['file1.py', 'file2.py', 'file3.py'])
+    
+    def test_cli_accepts_scope_with_json_syntax_when_double_quotes_used(self, json_string_with_double_quotes):
+        # Given: Parameters with scope as valid JSON
+        params = create_params_with_scope(json_string_with_double_quotes)
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Scope becomes dict object
+        verify_scope_contains_files(processed_params['scope'], ['file1.py'])
+    
+    def test_cli_preserves_nested_paths_when_scope_has_subdirectories(self):
+        # Given: Parameters with nested file paths
+        params = create_params_with_scope("{'type': 'files', 'value': ['dir/file1.py', 'dir/subdir/file2.py']}")
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Nested paths are preserved
+        scope_files = processed_params['scope']['value']
+        assert scope_files[0] == 'dir/file1.py'
+        assert scope_files[1] == 'dir/subdir/file2.py'
+    
+    def test_cli_preserves_exclude_patterns_when_scope_has_exclusions(self):
+        # Given: Parameters with scope containing exclude patterns
+        params = create_params_with_scope("{'type': 'files', 'value': ['file1.py'], 'exclude': ['*test*']}")
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Exclude patterns are preserved
+        assert processed_params['scope']['exclude'] == ['*test*']
+    
+    def test_cli_keeps_regular_strings_unchanged_when_not_json(self):
+        # Given: Parameters with regular string values
+        params = create_params_with_multiple_keys(
+            user_message='Hello world',
+            behavior='code'
+        )
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Strings remain unchanged
+        assert processed_params['user_message'] == 'Hello world'
+        assert processed_params['behavior'] == 'code'
+    
+    def test_cli_handles_malformed_scope_gracefully_when_syntax_invalid(self):
+        # Given: Parameters with malformed scope string
+        params = create_params_with_scope("{'type': 'files', 'value': [unclosed")
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Scope remains as string
+        assert isinstance(processed_params['scope'], str)
+
+
+class TestCliNormalizesPythonDictToJson:
+    
+    def test_cli_replaces_single_quotes_with_double_quotes_when_normalizing(self):
+        # Given: Python dict string with single quotes
+        python_dict_string = "{'key': 'value'}"
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(python_dict_string)
+        
+        # Then: Single quotes become double quotes
+        assert normalized_string == '{"key": "value"}'
+    
+    def test_cli_normalizes_array_syntax_when_python_list_used(self):
+        # Given: Python dict with list using single quotes
+        python_dict_string = "{'files': ['file1.py', 'file2.py']}"
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(python_dict_string)
+        
+        # Then: Array becomes valid JSON array
+        assert normalized_string == '{"files": ["file1.py", "file2.py"]}'
+    
+    def test_cli_preserves_json_when_already_valid(self):
+        # Given: Already valid JSON string
+        json_string = '{"type": "files", "value": ["file.py"]}'
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(json_string)
+        
+        # Then: JSON remains unchanged
+        assert normalized_string == json_string
+
+
+class TestCliBuildsParametersFromArguments:
+    
+    def test_cli_recognizes_scope_as_dict_when_building_parameters(self):
+        # Given: Arguments with scope as Python dict string
+        args = create_cli_args_namespace(
+            scope="{'type': 'files', 'value': ['file1.py']}"
+        )
+        
+        # When: Parameters are built from arguments
+        params = CliParameterParser._build_params_from_args(args, [])
+        
+        # Then: Scope is dict object
+        verify_scope_contains_files(params['scope'], ['file1.py'])
+    
+    def test_cli_preserves_boolean_flags_when_building_parameters(self):
+        # Given: Arguments with skip_cross_file flag set
+        args = create_cli_args_namespace(skip_cross_file=True)
+        
+        # When: Parameters are built from arguments
+        params = CliParameterParser._build_params_from_args(args, [])
+        
+        # Then: Flag is preserved
+        assert params['skip_cross_file'] is True
+
+
+class TestCliHandlesScopeInRealUsage:
+    
+    def test_cli_accepts_single_file_scope_when_validating_one_file(self):
+        # Given: CLI invoked with scope for single file
+        cli_args = create_validation_cli_args("{'type': 'files', 'value': ['agile_bot/bots/base_bot/src/actions/instructions.py']}")
+        cli_args.append('--skip-cross-file')
+        
+        # When: CLI processes arguments
+        args, params = simulate_cli_invocation(cli_args)
+        
+        # Then: Scope contains exactly one file
+        assert params['scope']['value'][0] == 'agile_bot/bots/base_bot/src/actions/instructions.py'
+        assert params.get('skip_cross_file') is True
+    
+    def test_cli_accepts_multiple_files_scope_when_validating_many_files(self):
+        # Given: CLI invoked with scope for multiple files
+        cli_args = create_validation_cli_args("{'type': 'files', 'value': ['file1.py', 'file2.py', 'file3.py']}")
+        
+        # When: CLI processes arguments
+        args, params = simulate_cli_invocation(cli_args)
+        
+        # Then: Scope contains all files
+        verify_scope_has_file_count(params['scope'], 3)
+        assert 'file1.py' in params['scope']['value']
+        assert 'file2.py' in params['scope']['value']
+        assert 'file3.py' in params['scope']['value']
+    
+    def test_cli_handles_windows_paths_when_scope_uses_backslashes(self):
+        # Given: CLI invoked with Windows-style paths
+        cli_args = create_validation_cli_args("{'type': 'files', 'value': ['agile_bot\\\\bots\\\\base_bot\\\\src\\\\file.py']}")
+        
+        # When: CLI processes arguments
+        args, params = simulate_cli_invocation(cli_args)
+        
+        # Then: Windows paths are preserved
+        assert 'agile_bot\\bots\\base_bot\\src\\file.py' in params['scope']['value'][0]
+
+
+class TestCliPreservesArrayValuesInScope:
+    
+    def test_cli_does_not_corrupt_array_values_when_normalizing_syntax(self):
+        # Given: Python dict with array values
+        python_dict_string = "{'type': 'files', 'value': ['file1.py', 'file2.py']}"
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(python_dict_string)
+        
+        # Then: Array values are NOT mangled
+        verify_json_array_not_corrupted(normalized_string, ['file1.py', 'file2.py'])

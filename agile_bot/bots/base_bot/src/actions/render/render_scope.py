@@ -9,3 +9,5 @@ class RenderScope(ActionScope):
         if not self._scope_config or not any((key in self._scope_config for key in ['story_names', 'increment_priorities', 'epic_names', 'increment_names', 'all'])):
             self._scope_config['all'] = True
 
+
+

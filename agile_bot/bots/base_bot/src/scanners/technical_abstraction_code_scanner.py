@@ -16,21 +16,17 @@ class TechnicalAbstractionCodeScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    violation = self._check_technical_abstraction(node, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                violation = self._check_technical_abstraction(node, file_path, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

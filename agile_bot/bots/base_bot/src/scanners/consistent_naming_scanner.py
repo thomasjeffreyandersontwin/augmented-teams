@@ -17,31 +17,27 @@ class ConsistentNamingScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Collect naming patterns
-            function_names = []
-            class_names = []
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    # Skip private methods and special methods
-                    if not (node.name.startswith('_') and node.name != '__init__'):
-                        function_names.append(node.name)
-                elif isinstance(node, ast.ClassDef):
-                    class_names.append(node.name)
-            
-            # Check for inconsistent naming patterns (only check functions, not classes)
-            # Classes often use PascalCase while functions use snake_case - that's OK
-            violations.extend(self._check_naming_consistency(function_names, class_names, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Collect naming patterns
+        function_names = []
+        class_names = []
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Skip private methods and special methods
+                if not (node.name.startswith('_') and node.name != '__init__'):
+                    function_names.append(node.name)
+            elif isinstance(node, ast.ClassDef):
+                class_names.append(node.name)
+        
+        # Check for inconsistent naming patterns (only check functions, not classes)
+        # Classes often use PascalCase while functions use snake_case - that's OK
+        violations.extend(self._check_naming_consistency(function_names, class_names, file_path, rule_obj))
         
         return violations
     

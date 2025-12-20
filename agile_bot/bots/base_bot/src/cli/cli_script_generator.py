@@ -33,3 +33,4 @@ class CliScriptGenerator:
         script_content = f"""# {self.bot_name.title().replace('_', ' ')} CLI Wrapper (PowerShell)\n\n    $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path\n\n    if (-not $env:WORKING_DIR) {{\n        $env:WORKING_DIR = (Resolve-Path "$SCRIPT_DIR\\..\\..\\..").Path\n    }}\n\n    python "$SCRIPT_DIR\\src\\{self.bot_name}_cli.py" $args\n    """
         script_file.write_text(script_content, encoding='utf-8')
         return script_file
+

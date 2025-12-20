@@ -22,6 +22,7 @@ class MCPToolRegistrar:
     def register_all_tools(self, mcp_server: FastMCP, behaviors: list, load_trigger_words_fn):
         self.register_bot_tool(mcp_server)
         self.register_get_working_dir_tool(mcp_server)
+        self.register_set_working_dir_tool(mcp_server)
         self.register_close_current_action_tool(mcp_server)
         self.register_confirm_out_of_order_tool(mcp_server)
         self.register_restart_server_tool(mcp_server)
@@ -56,6 +57,25 @@ class MCPToolRegistrar:
             working_dir = get_workspace_directory()
             return {'working_dir': str(working_dir), 'message': f'Working directory from WORKING_AREA: {working_dir}'}
         self.registered_tools.append({'name': tool_name, 'type': 'get_working_dir_tool', 'description': f'Get current working directory'})
+
+    def register_set_working_dir_tool(self, mcp_server: FastMCP):
+        tool_name = 'set_working_dir'
+
+        @mcp_server.tool(name=tool_name, description="Update the working directory (WORKING_AREA/WORKING_DIR). Triggers: update working directory, change working path, change working folder, set workspace")
+        async def set_working_dir(new_path: str, persist: bool=True):
+            if not new_path:
+                return {'error': 'missing_path', 'message': 'new_path is required'}
+            try:
+                previous = str(self.bot.bot_paths.workspace_directory)
+            except Exception:
+                previous = None
+            try:
+                resolved = str(self.bot.bot_paths.update_workspace_directory(new_path, persist=persist))
+                return {'working_dir': resolved, 'previous_working_dir': previous, 'persisted': bool(persist), 'message': f'Working directory updated to {resolved}'}
+            except Exception as e:
+                logger.error(f'Failed to set working directory: {e}', exc_info=True)
+                return {'error': 'failed_to_set_working_dir', 'message': str(e)}
+        self.registered_tools.append({'name': tool_name, 'type': 'set_working_dir_tool', 'description': 'Update working directory (WORKING_AREA/WORKING_DIR)'})
 
     def register_close_current_action_tool(self, mcp_server: FastMCP):
         tool_name = 'close_current_action'

@@ -32,10 +32,10 @@ class ClarifyContextAction(Action):
 
     def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         instructions = self.instructions.copy()
-        instructions['guardrails'] = {'required_context': self.required_context.instructions}
+        instructions.set('guardrails', {'required_context': self.required_context.instructions})
         if parameters.get('key_questions_answered') or parameters.get('evidence_provided'):
             self.save_clarification(parameters)
-        return {'instructions': instructions}
+        return {'instructions': instructions.to_dict()}
 
     def save_clarification(self, parameters: Dict[str, Any]):
         clarifications = RequirementsClarifications(behavior_name=self.behavior.name, bot_paths=self.behavior.bot_paths, required_context=self.required_context, key_questions_answered=parameters.get('key_questions_answered', {}), evidence_provided=parameters.get('evidence_provided', {}))

@@ -38,3 +38,58 @@ Validation failed with error: Expecting ',' delimiter: line 56 column 1 (char 29
 ## ERROR
 
 Validation failed with error: Expecting ',' delimiter: line 56 column 1 (char 2941)
+
+
+## ERROR
+
+Validation failed with error: multiple repeat at position 8
+
+
+## ERROR
+
+Validation failed with error: multiple repeat at position 8
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'
+
+
+## ERROR
+
+Validation failed with error: 'Violation' object has no attribute 'get'

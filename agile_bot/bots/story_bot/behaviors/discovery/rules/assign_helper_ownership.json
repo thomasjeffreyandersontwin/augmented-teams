@@ -1,0 +1,23 @@
+{
+  "description": "Assign helpers (Checker, Analyzer, Validator) to the domain concept that uses them most. Avoid orphaned or duplicate helpers.",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.helper_ownership_scanner.HelperOwnershipScanner",
+  "examples": [
+    {
+      "do": {
+        "description": "Assign helpers to primary user",
+        "content": [
+          "Helper used by one concept: assign to that concept",
+          "Helper shared: assign to most frequent user or make shared utility",
+          "Example: FileNamingChecker used by File → assign to File"
+        ]
+      },
+      "dont": {
+        "description": "Don't leave helpers orphaned",
+        "content": [
+          "Don't create helpers without clear ownership",
+          "Don't duplicate helpers across concepts"
+        ]
+      }
+    }
+  ]
+}

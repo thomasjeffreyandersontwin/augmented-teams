@@ -13,22 +13,17 @@ class VerticalDensityScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    violation = self._check_variable_declaration_distance(node, content, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                violation = self._check_variable_declaration_distance(node, content, file_path, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

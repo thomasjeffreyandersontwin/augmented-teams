@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import List
 from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
 
+logger = logging.getLogger(__name__)
+
 class RuleLoader:
 
     def __init__(self, bot_name: str, behavior_name: str, bot_paths, behavior=None):
@@ -25,8 +27,10 @@ class RuleLoader:
                 behavior = self.behavior_name if self.behavior_name else 'common'
         rules = []
         for rule_file in rules_dir.glob(pattern):
-            if not self._is_in_disabled_folder(rule_file):
-                rules.append(Rule(rule_file_path=rule_file, behavior_name=behavior, bot_name=self.bot_name))
+            if self._is_in_disabled_folder(rule_file):
+                logger.debug(f'Skipping disabled rule: {rule_file.name}')
+                continue
+            rules.append(Rule(rule_file_path=rule_file, behavior_name=behavior, bot_name=self.bot_name))
         return rules
 
     def _load_specialization_rules(self, bot_rules_dir: Path) -> List[Rule]:
@@ -35,8 +39,10 @@ class RuleLoader:
             return []
         rules = []
         for rule_file in specializations_dir.rglob('*.json'):
-            if not self._is_in_disabled_folder(rule_file):
-                rules.append(Rule(rule_file_path=rule_file, behavior_name='common', bot_name=self.bot_name))
+            if self._is_in_disabled_folder(rule_file):
+                logger.debug(f'Skipping disabled rule: {rule_file.name}')
+                continue
+            rules.append(Rule(rule_file_path=rule_file, behavior_name='common', bot_name=self.bot_name))
         return rules
 
     def load_behavior_rules(self) -> List[Rule]:
@@ -44,12 +50,15 @@ class RuleLoader:
         behavior_rules_dir = behavior_folder / 'rules'
         behavior_rules = []
         for rule_file in behavior_rules_dir.glob('*.json'):
-            if not self._is_in_disabled_folder(rule_file):
-                behavior_rules.append(self._create_rule(rule_file))
+            if self._is_in_disabled_folder(rule_file):
+                logger.debug(f'Skipping disabled rule: {rule_file.name}')
+                continue
+            behavior_rules.append(self._create_rule(rule_file))
         for subdir_name in ['3_rules', 'rules']:
             subdir = behavior_folder / subdir_name
             if subdir != behavior_rules_dir:
                 behavior_rules.extend(self._load_rules_from_subdir(subdir, behavior_rules_dir))
+        logger.info(f'Loaded {len(behavior_rules)} behavior rules for {self.behavior_name}')
         return behavior_rules
 
     def _create_rule(self, rule_file: Path) -> Rule:
@@ -59,6 +68,7 @@ class RuleLoader:
         rules = []
         for rule_file in subdir.rglob('*.json'):
             if self._is_in_disabled_folder(rule_file):
+                logger.debug(f'Skipping disabled rule: {rule_file.name}')
                 continue
             if behavior_rules_dir.exists() and rule_file.is_relative_to(behavior_rules_dir):
                 continue
@@ -69,5 +79,9 @@ class RuleLoader:
         return rules
 
     def _is_in_disabled_folder(self, file_path: Path) -> bool:
-        parts = file_path.parts
-        return 'disabled' in parts
+        """Check if a rule file is in a 'disabled' folder anywhere in its path.
+        
+        Rules in disabled folders are skipped during rule loading.
+        Example: rules/disabled/some_rule.json will be skipped.
+        """
+        return 'disabled' in file_path.parts

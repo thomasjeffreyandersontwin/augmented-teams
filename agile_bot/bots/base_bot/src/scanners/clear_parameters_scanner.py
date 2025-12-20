@@ -49,18 +49,17 @@ class ClearParametersScanner(CodeScanner):
         if self.knowledge_graph:
             domain_terms = self._extract_domain_terms(self.knowledge_graph)
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    violation = self._check_parameters(node, file_path, rule_obj, domain_terms)
-                    if violation:
-                        violations.append(violation)
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        content, lines, tree = parsed
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                violation = self._check_parameters(node, file_path, rule_obj, domain_terms)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

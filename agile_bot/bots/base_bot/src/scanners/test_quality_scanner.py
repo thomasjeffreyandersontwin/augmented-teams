@@ -28,16 +28,15 @@ class TestQualityScanner(TestScanner):
         if not self._is_test_file(file_path):
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Check for test quality issues
-            violations.extend(self._check_test_independence(tree, content, file_path, rule_obj))
-            violations.extend(self._check_test_names_quality(tree, file_path, rule_obj))
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        content, lines, tree = parsed
+        
+        # Check for test quality issues
+        violations.extend(self._check_test_independence(tree, content, file_path, rule_obj))
+        violations.extend(self._check_test_names_quality(tree, file_path, rule_obj))
         
         return violations
     

@@ -66,13 +66,13 @@
       "create.*test.*file",
       "implement.*step.*definitions",
       "generate.*acceptance.*tests",
-      "create.*bdd.*tests",
+      "create.*story.*tests",
       "generate.*test.*implementation",
       "create.*test.*cases",
       "implement.*feature.*tests",
       "specification.*tests",
       "test.*code.*generation",
-      "bdd.*test.*code",
+      "story.*test.*code",
       "write.*tests"
     ]
   }

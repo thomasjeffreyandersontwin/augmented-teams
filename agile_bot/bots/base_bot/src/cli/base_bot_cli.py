@@ -161,8 +161,37 @@ class BaseBotCli:
             self._handle_error(e)
 
     def help_cursor_commands(self):
+        """Route help to the help action."""
         try:
-            self.help_generator.help_cursor_commands(self._get_breadcrumbs_from_action)
+            # Create help action directly (doesn't need a behavior workflow)
+            from agile_bot.bots.base_bot.src.actions.help_action import HelpAction
+            from agile_bot.bots.base_bot.src.utils import read_json_file
+            from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
+            
+            # Load help action config from base_actions
+            base_actions_dir = get_base_actions_directory()
+            help_config_path = base_actions_dir / 'help' / 'action_config.json'
+            help_config = read_json_file(help_config_path)
+            
+            # Create a minimal behavior wrapper for the help action
+            # Help action needs access to bot_name and bot_paths
+            class HelpBehaviorWrapper:
+                def __init__(self, bot, bot_name, bot_paths):
+                    self.bot = bot
+                    self.bot_name = bot_name
+                    self.name = 'help'
+                    self.bot_paths = bot_paths
+                    self.actions = None  # Help action doesn't participate in workflow
+            
+            behavior_wrapper = HelpBehaviorWrapper(self.bot, self.bot_name, self.bot.bot_paths)
+            help_action = HelpAction(behavior_wrapper, help_config, 'help')
+            
+            # Execute the help action
+            result = help_action.execute({})
+            
+            # Output the result
+            self.executor._output_result(result)
+            return result
         except Exception as e:
             self._handle_error(e)
 

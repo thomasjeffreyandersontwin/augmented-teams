@@ -26,6 +26,7 @@ class CliParameterParser:
         parser.add_argument('--skiprule', nargs='*', help='Rule names to skip during validation (e.g., eliminate_duplication)')
         parser.add_argument('--exclude', nargs='*', help='File patterns to exclude from validation (e.g., "agile_bot/bots/base_bot/src:*scanner*")')
         parser.add_argument('--skip-cross-file', action='store_true', help='Skip cross-file duplicate checking (default: False, meaning cross-file check runs)')
+        parser.add_argument('--scope', nargs='?', help='Scope parameter: JSON dict like {"type": "files", "value": ["path/to/file.py"]} or simple file path')
         parser.add_argument('context', nargs='*', help='Additional context (file paths, parameters, etc.)')
         return parser
 
@@ -50,6 +51,9 @@ class CliParameterParser:
                 params['exclude'] = exclude_list
         if args.skip_cross_file:
             params['skip_cross_file'] = True
+        if args.scope:
+            params['scope'] = args.scope
+        
         # Parse JSON strings in parameters
         params = CliParameterParser._parse_json_parameters(params)
         return params
@@ -84,9 +88,6 @@ class CliParameterParser:
         """Parse key=value argument. Returns number of arguments consumed."""
         key, value = arg.split('=', 1)
         key = key.lstrip('--')
-        if key in ['test', 'src'] and ',' in value:
-            params[key] = [f.strip() for f in value.split(',')]
-            return 1
         # Check if value looks like start of JSON that might be split
         value_stripped = value.strip()
         if (value_stripped.startswith('{') or value_stripped.startswith('[')) and not CliParameterParser._is_complete_json(value_stripped):
@@ -131,31 +132,8 @@ class CliParameterParser:
         return False
 
     @staticmethod
-    def _parse_file_list_arg(unknown_args: list, start_idx: int, key: str, params: Dict) -> int:
-        file_list = []
-        i = start_idx
-        while i < len(unknown_args):
-            next_arg = unknown_args[i]
-            if not CliParameterParser._looks_like_file_path(next_arg) and (not CliParameterParser._looks_like_directory_path(next_arg)):
-                break
-            file_list.append(next_arg.lstrip('@'))
-            i += 1
-        if file_list:
-            params[key] = file_list if len(file_list) > 1 else file_list[0]
-        return i
-
-    @staticmethod
     def _parse_file_path_arg(arg: str, params: Dict) -> None:
         file_path = arg.lstrip('@')
-        if CliParameterParser._looks_like_directory_path(arg):
-            CliParameterParser._append_to_param(params, 'src', file_path)
-            return
-        if file_path.endswith('.py'):
-            file_name = Path(file_path).name
-            is_test_file = file_name.startswith('test_') or file_name.endswith('_test.py')
-            target_key = 'test' if is_test_file else 'src'
-            CliParameterParser._append_to_param(params, target_key, file_path)
-            return
         if 'increment_file' not in params:
             params['increment_file'] = file_path
         else:
@@ -200,10 +178,6 @@ class CliParameterParser:
         if '=' in arg:
             consumed = CliParameterParser._parse_key_value_arg(arg, unknown_args, i, params)
             return (i + consumed, has_src_path)
-        if arg in ['--test', '--src']:
-            key = arg.lstrip('--')
-            new_i = CliParameterParser._parse_file_list_arg(unknown_args, i + 1, key, params)
-            return (new_i, has_src_path or key == 'src')
         if arg.startswith('--'):
             return (i + 1, has_src_path)
         if arg.lower() == 'exclude':
@@ -284,19 +258,8 @@ class CliParameterParser:
 
     @staticmethod
     def _try_fix_json(value: str) -> str:
-        """Try to fix common JSON issues like unquoted keys/values."""
-        import re
-        # Pattern: key: value (unquoted key, possibly unquoted value)
-        # Try to quote unquoted keys
-        value = re.sub(r'(\w+):', r'"\1":', value)
-        # Try to quote unquoted string values (values that aren't already quoted, numbers, booleans, null)
-        # This is a simple heuristic - look for : followed by space and a word that's not a number/boolean/null
-        def quote_value(match):
-            val = match.group(1)
-            # Don't quote if it's already quoted, a number, boolean, or null
-            if val.startswith('"') or val.lower() in ('true', 'false', 'null') or val.replace('.', '').replace('-', '').isdigit():
-                return f': {val}'
-            # Quote it
-            return f': "{val}"'
-        value = re.sub(r':\s+([^,}\]]+)', quote_value, value)
-        return value
+        """Try to fix common JSON issues like unquoted keys/values and Python dict syntax."""
+        # Convert Python dict syntax to JSON (single quotes to double quotes)
+        # This handles: {'key': 'value'} -> {"key": "value"}
+        # For most Python dict strings, this is sufficient
+        return value.replace("'", '"')

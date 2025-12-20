@@ -15,20 +15,17 @@ class UbiquitousLanguageScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            
-            # Extract domain terms from knowledge graph
-            domain_terms = self._extract_domain_terms(knowledge_graph)
-            
-            # Check for ubiquitous language violations
-            violations.extend(self._check_ubiquitous_language(content, domain_terms, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (UnicodeDecodeError, Exception) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Extract domain terms from knowledge graph
+        domain_terms = self._extract_domain_terms(knowledge_graph)
+        
+        # Check for ubiquitous language violations
+        violations.extend(self._check_ubiquitous_language(content, domain_terms, file_path, rule_obj))
         
         return violations
     

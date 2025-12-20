@@ -26,21 +26,17 @@ class ImportPlacementScanner(CodeScanner):
         """
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            
-            # Find the end of the import section (after docstrings/comments)
-            import_section_end = self._find_import_section_end(lines)
-            
-            # Find all import statements and check if they're in the import section
-            violations.extend(self._check_import_placement(lines, import_section_end, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (UnicodeDecodeError, SyntaxError, Exception) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Find the end of the import section (after docstrings/comments)
+        import_section_end = self._find_import_section_end(lines)
+        
+        # Find all import statements and check if they're in the import section
+        violations.extend(self._check_import_placement(lines, import_section_end, file_path, rule_obj))
         
         return violations
     

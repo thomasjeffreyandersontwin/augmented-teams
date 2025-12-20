@@ -1,9 +1,12 @@
 from pathlib import Path
 import os
+import json
 import logging
 from typing import Dict, Any
 from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory, get_bot_directory, get_base_actions_directory, get_python_workspace_root
 from agile_bot.bots.base_bot.src.utils import read_json_file
+
+logger = logging.getLogger(__name__)
 
 class BotPaths:
 
@@ -56,6 +59,24 @@ class BotPaths:
         absolute_path = path.resolve()
         return str(absolute_path)
 
+    def update_workspace_directory(self, new_path: Path, persist: bool=True) -> Path:
+        """
+        Update the working directory (WORKING_AREA/WORKING_DIR) for the bot.
+
+        Args:
+            new_path: Target directory path.
+            persist: When True, write the value back to bot_config.json so it survives restarts.
+        """
+        resolved_path = Path(new_path).expanduser().resolve()
+        previous = getattr(self, '_workspace_directory', None)
+        os.environ['WORKING_AREA'] = str(resolved_path)
+        os.environ['WORKING_DIR'] = str(resolved_path)
+        self._workspace_directory = resolved_path
+        if persist:
+            self._persist_workspace_directory(resolved_path)
+        logger.info(f'Updated working directory to {resolved_path} (previous={previous})')
+        return resolved_path
+
     def is_path_like(self, value: str) -> bool:
         return '/' in value or '\\' in value or ('.' in value and any((value.endswith(ext) for ext in ('.py', '.md', '.json', '.txt', '.yaml', '.yml'))))
 
@@ -68,6 +89,28 @@ class BotPaths:
         if 'increment_file' in resolved and isinstance(resolved['increment_file'], str):
             resolved['increment_file'] = self.resolve_path_to_absolute(resolved['increment_file'])
         return resolved
+
+    def _persist_workspace_directory(self, resolved_path: Path) -> None:
+        """Persist WORKING_AREA to bot_config.json (or create it if missing)."""
+        candidate_paths = [
+            self._bot_directory / 'bot_config.json',
+            self._bot_directory / 'config' / 'bot_config.json'
+        ]
+        for config_path in candidate_paths:
+            if config_path.exists():
+                config = read_json_file(config_path)
+                self._write_workspace_to_config(config_path, config, resolved_path)
+                return
+        # If no config exists, create a minimal one at the root
+        default_config_path = candidate_paths[0]
+        default_config_path.parent.mkdir(parents=True, exist_ok=True)
+        config = {'name': self._bot_directory.name, 'mcp': {'env': {}}}
+        self._write_workspace_to_config(default_config_path, config, resolved_path)
+
+    def _write_workspace_to_config(self, config_path: Path, config: Dict[str, Any], resolved_path: Path) -> None:
+        config.setdefault('mcp', {}).setdefault('env', {})
+        config['mcp']['env']['WORKING_AREA'] = str(resolved_path)
+        config_path.write_text(json.dumps(config, indent=2), encoding='utf-8')
 
     def _resolve_list_param(self, resolved: Dict[str, Any], key: str) -> None:
         if key not in resolved:

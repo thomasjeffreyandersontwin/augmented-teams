@@ -35,35 +35,23 @@ class GivenWhenThenHelpersScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Get all helper function names defined in the file and imported
-            helper_functions = self._get_helper_functions(tree, content)
-            
-            # Check each test method
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    if node.name.startswith('test_'):
-                        test_violations = self._check_test_method(
-                            node, content, file_path, rule_obj, helper_functions, tree
-                        )
-                        violations.extend(test_violations)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            # Skip files with syntax errors - log but don't fail
-            violation = Violation(
-                rule=rule_obj,
-                violation_message=f'File has syntax error, cannot scan: {e}',
-                location=str(file_path),
-                line_number=1,
-                severity='warning'
-            ).to_dict()
-            violations.append(violation)
+        # Get all helper function names defined in the file and imported
+        helper_functions = self._get_helper_functions(tree, content)
+        
+        # Check each test method
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                if node.name.startswith('test_'):
+                    test_violations = self._check_test_method(
+                        node, content, file_path, rule_obj, helper_functions, tree
+                    )
+                    violations.extend(test_violations)
         
         return violations
     

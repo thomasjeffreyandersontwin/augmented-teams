@@ -80,13 +80,22 @@ class UnifiedHelpGenerator:
     def _render_action_help_section(self) -> None:
         """Render action help section."""
         from agile_bot.bots.base_bot.src.cli.help_context import ActionHelpContext
+        # #region agent log
+        import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "unified_help_generator.py:_render_action_help_section", "message": "Entry", "data": {"action_order": self.action_order}, "hypothesisId": "D,E", "timestamp": __import__('time').time()}) + '\n')
+        # #endregion
         self.renderer.render_action_help_section_header()
         for action_name in self.action_order:
             action_description = self.description_extractor.get_action_description(action_name)
+            # #region agent log
+            import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "unified_help_generator.py:_render_action_help_section", "message": "Processing action", "data": {"action_name": action_name, "has_description": bool(action_description)}, "hypothesisId": "D,E", "timestamp": __import__('time').time()}) + '\n')
+            # #endregion
             if not action_description:
                 continue
             parameters = self._get_action_parameters(action_name)
             parameter_descriptions = self._get_parameter_descriptions(action_name, parameters)
+            # #region agent log
+            import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "unified_help_generator.py:_render_action_help_section", "message": "Action params", "data": {"action_name": action_name, "parameters": parameters, "param_desc_keys": list(parameter_descriptions.keys())}, "hypothesisId": "D,E", "timestamp": __import__('time').time()}) + '\n')
+            # #endregion
             context = ActionHelpContext(
                 bot_name=self.bot_name,
                 action_name=action_name,

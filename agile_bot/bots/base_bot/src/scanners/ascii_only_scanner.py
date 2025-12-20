@@ -17,22 +17,17 @@ class AsciiOnlyScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            
-            for line_num, line in enumerate(lines, 1):
-                # Check for Unicode characters (non-ASCII)
-                violation = self._check_unicode_characters(line, file_path, line_num, rule_obj)
-                if violation:
-                    violations.append(violation)
+        content, lines, tree = parsed
         
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        for line_num, line in enumerate(lines, 1):
+            # Check for Unicode characters (non-ASCII)
+            violation = self._check_unicode_characters(line, file_path, line_num, rule_obj)
+            if violation:
+                violations.append(violation)
         
         return violations
     

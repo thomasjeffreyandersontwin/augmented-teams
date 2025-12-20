@@ -87,7 +87,14 @@ class ServerDeployer:
         if not self.config_path.exists():
             return self.catalog
         behaviors = self._discover_behaviors_from_folders()
-        base_tools = [ToolEntry(name='tool', trigger_patterns=[], description=f'Bot tool for {self.bot_name} - routes to current behavior and action'), ToolEntry(name='get_working_dir', trigger_patterns=[], description='Get the current working directory from WORKING_AREA'), ToolEntry(name='close_current_action', trigger_patterns=[], description=f'Close current action tool for {self.bot_name} - marks current action complete and transitions to next'), ToolEntry(name='confirm_out_of_order', trigger_patterns=[], description=f'Confirm out-of-order behavior execution for {self.bot_name}'), ToolEntry(name='restart_server', trigger_patterns=[], description=f'Restart MCP server for {self.bot_name} - terminates processes, clears cache, and restarts to load code changes')]
+        base_tools = [
+            ToolEntry(name='tool', trigger_patterns=[], description=f'Bot tool for {self.bot_name} - routes to current behavior and action'),
+            ToolEntry(name='get_working_dir', trigger_patterns=[], description='Get the current working directory from WORKING_AREA'),
+            ToolEntry(name='set_working_dir', trigger_patterns=['working directory', 'working path', 'working folder', 'change working directory', 'update working path'], description='Update WORKING_AREA/WORKING_DIR to a new path (persist to bot_config)'),
+            ToolEntry(name='close_current_action', trigger_patterns=[], description=f'Close current action tool for {self.bot_name} - marks current action complete and transitions to next'),
+            ToolEntry(name='confirm_out_of_order', trigger_patterns=[], description=f'Confirm out-of-order behavior execution for {self.bot_name}'),
+            ToolEntry(name='restart_server', trigger_patterns=[], description=f'Restart MCP server for {self.bot_name} - terminates processes, clears cache, and restarts to load code changes')
+        ]
         for tool in base_tools:
             self.catalog.add_tool(tool)
         for behavior in behaviors:

@@ -31,20 +31,17 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         if self._is_test_file(file_path):
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Find all class definitions
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    class_violations = self._check_class(node, file_path, rule_obj, lines, content)
-                    violations.extend(class_violations)
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            # Skip files with syntax errors
-            logging.getLogger(__name__).debug(f'Skipping file {file_path} due to syntax/decode error: {e}')
+        content, lines, tree = parsed
+        
+        # Find all class definitions
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                class_violations = self._check_class(node, file_path, rule_obj, lines, content)
+                violations.extend(class_violations)
         
         return violations
     

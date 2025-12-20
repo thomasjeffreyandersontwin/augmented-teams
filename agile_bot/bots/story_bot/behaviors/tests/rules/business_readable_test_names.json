@@ -1,5 +1,5 @@
 {
-  "description": "Test names must read like plain English business language. Use domain language stakeholders understand, not technical jargon. Test names should read naturally when spoken aloud. Describe WHAT happens (behavior), not HOW it works (implementation). Combines BDD Rule 1 (Business Readable Language) with pytest orchestrator pattern.",
+  "description": "Test names must read like plain English stories. Use domain language stakeholders understand, not technical jargon. Test names should read naturally when spoken aloud. Describe WHAT happens (behavior), not HOW it works (implementation). Principle adapted from BDD Rule 1 (Business Readable Language) for Given When Then story-based testing.",
   "examples": [
     {
       "do": {

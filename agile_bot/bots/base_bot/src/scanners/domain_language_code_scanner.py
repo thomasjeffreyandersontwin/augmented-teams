@@ -72,36 +72,35 @@ class DomainLanguageCodeScanner(CodeScanner):
         # Generic names that are acceptable in specific contexts
         generic_names = {'self', 'result', 'value', 'data', 'item', 'obj', 'workspace', 'root', 'path', 'config'}
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Process classes and their methods with context
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    class_violations = self._check_domain_language(node, file_path, rule_obj, domain_terms, generic_names)
-                    violations.extend(class_violations)
-                    
-                    # Check methods within this class, passing class context
-                    for child in node.body:
-                        if isinstance(child, ast.FunctionDef):
-                            func_violations = self._check_function_domain_language(
-                                child, file_path, rule_obj, domain_terms, generic_names,
-                                enclosing_class=node.name
-                            )
-                            violations.extend(func_violations)
-            
-            # Check module-level functions (no enclosing class)
-            for node in ast.iter_child_nodes(tree):
-                if isinstance(node, ast.FunctionDef):
-                    func_violations = self._check_function_domain_language(
-                        node, file_path, rule_obj, domain_terms, generic_names,
-                        enclosing_class=None
-                    )
-                    violations.extend(func_violations)
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        content, lines, tree = parsed
+        
+        # Process classes and their methods with context
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                class_violations = self._check_domain_language(node, file_path, rule_obj, domain_terms, generic_names)
+                violations.extend(class_violations)
+                
+                # Check methods within this class, passing class context
+                for child in node.body:
+                    if isinstance(child, ast.FunctionDef):
+                        func_violations = self._check_function_domain_language(
+                            child, file_path, rule_obj, domain_terms, generic_names,
+                            enclosing_class=node.name
+                        )
+                        violations.extend(func_violations)
+        
+        # Check module-level functions (no enclosing class)
+        for node in ast.iter_child_nodes(tree):
+            if isinstance(node, ast.FunctionDef):
+                func_violations = self._check_function_domain_language(
+                    node, file_path, rule_obj, domain_terms, generic_names,
+                    enclosing_class=None
+                )
+                violations.extend(func_violations)
         
         return violations
     

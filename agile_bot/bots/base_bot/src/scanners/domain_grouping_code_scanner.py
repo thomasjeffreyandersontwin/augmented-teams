@@ -40,18 +40,17 @@ class DomainGroupingCodeScanner(CodeScanner):
                 )
                 break
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    violation = self._check_class_name(node, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        content, lines, tree = parsed
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                violation = self._check_class_name(node, file_path, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

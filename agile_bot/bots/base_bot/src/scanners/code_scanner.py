@@ -294,6 +294,33 @@ class CodeScanner(Scanner):
         except (SyntaxError, UnicodeDecodeError):
             return None
     
+    def _read_and_parse_file(self, file_path: Path) -> Optional[Tuple[str, List[str], ast.AST]]:
+        """Read and parse a code file, returning content, lines, and AST tree.
+        
+        Common helper method used by many scanners to avoid duplication.
+        Handles file existence check, reading, parsing, and exception handling with logging.
+        
+        Args:
+            file_path: Path to code file
+            
+        Returns:
+            Tuple of (content, lines, tree) or None if file cannot be read/parsed
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if not file_path.exists():
+            return None
+        
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            lines = content.split('\n')
+            tree = ast.parse(content, filename=str(file_path))
+            return (content, lines, tree)
+        except (SyntaxError, UnicodeDecodeError) as e:
+            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+            return None
+    
     def _get_all_code_files_parsed(
         self, 
         test_files: Optional[List[Path]] = None,

@@ -13,19 +13,14 @@ class FixturePlacementScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Check for fixture imports (should be defined in file)
-            violations.extend(self._check_fixture_imports(tree, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        # Check for fixture imports (should be defined in file)
+        violations.extend(self._check_fixture_imports(tree, file_path, rule_obj))
         
         return violations
     

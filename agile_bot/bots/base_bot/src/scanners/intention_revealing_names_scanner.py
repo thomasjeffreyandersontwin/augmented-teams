@@ -53,24 +53,23 @@ class IntentionRevealingNamesScanner(CodeScanner):
         if self.knowledge_graph:
             domain_terms = self._extract_domain_terms(self.knowledge_graph)
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Build docstring line ranges to exclude from scanning
-            docstring_ranges = self._get_docstring_ranges(tree)
-            
-            # Check variable names
-            violations.extend(self._check_variable_names(tree, file_path, rule_obj, content, domain_terms, docstring_ranges))
-            
-            # Check function names
-            violations.extend(self._check_function_names(tree, file_path, rule_obj, domain_terms))
-            
-            # Check class names
-            violations.extend(self._check_class_names(tree, file_path, rule_obj, domain_terms))
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        content, lines, tree = parsed
+        
+        # Build docstring line ranges to exclude from scanning
+        docstring_ranges = self._get_docstring_ranges(tree)
+        
+        # Check variable names
+        violations.extend(self._check_variable_names(tree, file_path, rule_obj, content, domain_terms, docstring_ranges))
+        
+        # Check function names
+        violations.extend(self._check_function_names(tree, file_path, rule_obj, domain_terms))
+        
+        # Check class names
+        violations.extend(self._check_class_names(tree, file_path, rule_obj, domain_terms))
         
         return violations
     

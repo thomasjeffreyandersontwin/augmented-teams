@@ -27,6 +27,10 @@ class DomainLanguageScanner(StoryScanner):
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
+        # Only scan DomainConceptNodes, skip Story/Epic/SubEpic nodes
+        if not isinstance(node, DomainConceptNode):
+            return violations
+        
         # Check node name for generic terms
         node_name_lower = node.name.lower()
         for term in ['data', 'config', 'parameter', 'result']:

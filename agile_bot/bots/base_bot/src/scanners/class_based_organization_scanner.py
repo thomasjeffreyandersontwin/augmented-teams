@@ -35,35 +35,34 @@ class ClassBasedOrganizationScanner(TestScanner):
         if violation:
             violations.append(violation)
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Extract story names from knowledge graph
-            story_names = self._extract_story_names(knowledge_graph)
-            
-            # Find test classes
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    if node.name.startswith('Test'):
-                        # Check if class name matches a story name
-                        violation = self._check_class_name_matches_story(node.name, story_names, file_path, rule_obj)
-                        if violation:
-                            violations.append(violation)
-                        
-                        # Check test methods in this class
-                        for item in node.body:
-                            if isinstance(item, ast.FunctionDef):
-                                if item.name.startswith('test_'):
-                                    # Check method name matches scenario
-                                    violation = self._check_method_name_matches_scenario(
-                                        item.name, node.name, story_names, knowledge_graph, file_path, rule_obj
-                                    )
-                                    if violation:
-                                        violations.append(violation)
-        except (SyntaxError, UnicodeDecodeError) as e:
-            # Skip files with syntax errors
-            pass
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
+            return violations
+        
+        content, lines, tree = parsed
+        
+        # Extract story names from knowledge graph
+        story_names = self._extract_story_names(knowledge_graph)
+        
+        # Find test classes
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                if node.name.startswith('Test'):
+                    # Check if class name matches a story name
+                    violation = self._check_class_name_matches_story(node.name, story_names, file_path, rule_obj)
+                    if violation:
+                        violations.append(violation)
+                    
+                    # Check test methods in this class
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef):
+                            if item.name.startswith('test_'):
+                                # Check method name matches scenario
+                                violation = self._check_method_name_matches_scenario(
+                                    item.name, node.name, story_names, knowledge_graph, file_path, rule_obj
+                                )
+                                if violation:
+                                    violations.append(violation)
         
         return violations
     

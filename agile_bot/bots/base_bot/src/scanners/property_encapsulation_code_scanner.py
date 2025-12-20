@@ -14,20 +14,16 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    class_violations = self._check_encapsulation(node, content, file_path, rule_obj)
-                    violations.extend(class_violations)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                class_violations = self._check_encapsulation(node, content, file_path, rule_obj)
+                violations.extend(class_violations)
         
         return violations
     

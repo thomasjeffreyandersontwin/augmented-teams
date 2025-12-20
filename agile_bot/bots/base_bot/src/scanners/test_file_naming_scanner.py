@@ -17,6 +17,7 @@ class TestFileNamingScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
+        # File existence check not needed - we're checking the file name, not reading content
         if not file_path.exists():
             return violations
         

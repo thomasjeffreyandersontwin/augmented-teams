@@ -1,0 +1,71 @@
+{
+  "description": "CRITICAL: Domain objects must know how to create themselves from their context. Objects should have creation methods that show what context/parameters they need, rather than delegating creation to other objects. Self-creation methods belong to the object being created.",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.self_creating_objects_scanner.SelfCreatingObjectsScanner",
+  "examples": [
+    {
+      "do": {
+        "description": "Objects create themselves",
+        "content": [
+          "Objects know how to create themselves from context",
+          "Creation methods show what context/parameters are needed",
+          "Self-creation methods belong to the object being created",
+          "Factory methods for selection belong to registry/selector, not created object",
+          "",
+          "Correct Examples (self-creating objects):",
+          "",
+          "Violation",
+          "    Creates from rule and context: Rule",
+          "    (Violation knows how to create itself from rule and context)",
+          "",
+          "Block",
+          "    Creates from file and AST node: File, ASTNode",
+          "    (Block knows how to create itself from file and AST)",
+          "",
+          "Scan",
+          "    Creates for scope: Scope, Rule",
+          "    (Scan knows how to create itself for a scope and rule)",
+          "",
+          "Domain Model Pattern:",
+          "DomainObject",
+          "    Creates from context: ContextType",
+          "    Creates with parameters: ParamType1, ParamType2"
+        ]
+      },
+      "dont": {
+        "description": "Don't delegate object creation to other objects",
+        "content": [
+          "Don't have other objects create domain objects",
+          "Don't delegate creation to external factories",
+          "Don't hide creation logic in unrelated objects",
+          "",
+          "Wrong Examples (delegated creation):",
+          "",
+          "Rule",
+          "    Creates violation: Violation",
+          "    (Violation should create itself, not Rule)",
+          "",
+          "File",
+          "    Creates block: Block",
+          "    (Block should create itself, not File)",
+          "",
+          "Scanner",
+          "    Creates scan: Scan",
+          "    (Scan should create itself, Scanner selects/uses it)",
+          "",
+          "Self-Creation Violation Indicators (REJECT):",
+          "- Objects delegating creation to other objects",
+          "- Creation methods on objects that don't logically create the target",
+          "- External factories creating domain objects instead of self-creation",
+          "- Creation logic hidden in unrelated domain objects",
+          "",
+          "Exception:",
+          "Factory methods for SELECTION belong to registry/selector:",
+          "ScannerRegistry",
+          "    Finds scanner by rule: Rule",
+          "    (Selection, not creation - this is OK)"
+        ]
+      }
+    }
+  ]
+}
+

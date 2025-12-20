@@ -17,21 +17,17 @@ class MeaningfulContextScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            
-            # Check for magic numbers
-            violations.extend(self._check_magic_numbers(lines, file_path, rule_obj))
-            
-            # Check for numbered variables (data1, data2)
-            violations.extend(self._check_numbered_variables(content, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (UnicodeDecodeError, Exception) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Check for magic numbers
+        violations.extend(self._check_magic_numbers(lines, file_path, rule_obj))
+        
+        # Check for numbered variables (data1, data2)
+        violations.extend(self._check_numbered_variables(content, file_path, rule_obj))
         
         return violations
     

@@ -19,26 +19,21 @@ class FunctionSizeScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    # Skip private methods and special methods
-                    if node.name.startswith('_') and node.name != '__init__':
-                        continue
-                    
-                    violation = self._check_function_size(node, file_path, rule_obj, lines, content)
-                    if violation:
-                        violations.append(violation)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Skip private methods and special methods
+                if node.name.startswith('_') and node.name != '__init__':
+                    continue
+                
+                violation = self._check_function_size(node, file_path, rule_obj, lines, content)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

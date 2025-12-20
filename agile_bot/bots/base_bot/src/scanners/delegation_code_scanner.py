@@ -16,20 +16,16 @@ class DelegationCodeScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    class_violations = self._check_delegation(node, content, file_path, rule_obj)
-                    violations.extend(class_violations)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                class_violations = self._check_delegation(node, content, file_path, rule_obj)
+                violations.extend(class_violations)
         
         return violations
     
@@ -70,6 +66,10 @@ class DelegationCodeScanner(CodeScanner):
                                 # Check if it's a plain list/dict (not a collection class)
                                 if self._is_plain_collection(class_node, collection_name, content):
                                     continue  # Plain lists are fine to iterate
+                                
+                                # Check if it's a class constant (PATTERNS, RULES, etc.)
+                                if self._is_class_constant(class_node, collection_name):
+                                    continue  # Class constants are fine to iterate
                                 
                                 # Check if name indicates a collection class (not a plain list)
                                 if self._is_collection_name(collection_name):
@@ -134,6 +134,44 @@ class DelegationCodeScanner(CodeScanner):
         
         return False
     
+    def _is_class_constant(self, class_node: ast.ClassDef, attr_name: str) -> bool:
+        """Check if attribute is a class-level constant (PATTERNS, RULES, etc.).
+        
+        Class constants are typically:
+        - UPPER_CASE names
+        - Defined at class level (not in __init__)
+        - Assigned to list/dict literals or tuples
+        """
+        attr_name_upper = attr_name.upper()
+        
+        # Check if name looks like a constant (all uppercase or mostly uppercase)
+        if attr_name == attr_name_upper or attr_name.isupper():
+            # Check if it's defined at class level as a constant
+            for node in class_node.body:
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and target.id == attr_name:
+                            # Check if RHS is a list/dict/tuple literal
+                            if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
+                                return True
+                        elif isinstance(target, ast.Attribute) and target.attr == attr_name:
+                            # Class attribute assignment
+                            if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
+                                return True
+                
+                # Check for annotated assignments (type hints)
+                if isinstance(node, ast.AnnAssign):
+                    if isinstance(node.target, ast.Name) and node.target.id == attr_name:
+                        if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
+                            return True
+        
+        # Also check for common constant name patterns
+        constant_patterns = ['PATTERNS', 'RULES', 'PATTERN', 'RULE', 'CONSTANTS', 'CONFIG', 'SETTINGS']
+        if attr_name in constant_patterns or any(attr_name.endswith(f'_{p}') for p in constant_patterns):
+            return True
+        
+        return False
+    
     def _is_collection_name(self, name: str) -> bool:
         """Check if name indicates a collection class (not a plain list)."""
         name_lower = name.lower()
@@ -143,6 +181,10 @@ class DelegationCodeScanner(CodeScanner):
             plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element']
             if any(indicator in name_lower for indicator in plain_list_indicators):
                 return False
+        
+        # Skip if it's uppercase (likely a constant)
+        if name.isupper() or name == name.upper():
+            return False
         
         # Only flag if it looks like a collection class name
         # e.g., "behaviors", "actions" (plural nouns representing collections of objects)

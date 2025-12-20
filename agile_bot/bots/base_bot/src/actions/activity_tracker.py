@@ -5,6 +5,20 @@ from tinydb import TinyDB
 from typing import Optional, Dict, Any
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 
+
+def make_json_serializable(obj: Any) -> Any:
+    """Convert objects to JSON-serializable format."""
+    from agile_bot.bots.base_bot.src.actions.instructions import Instructions
+    
+    if isinstance(obj, Instructions):
+        return obj.to_dict()
+    elif isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [make_json_serializable(item) for item in obj]
+    else:
+        return obj
+
 @dataclass
 class ActionState:
     bot_name: str
@@ -41,7 +55,7 @@ class ActivityTracker:
         with TinyDB(self.file) as db:
             entry = {'action_state': state.state_key, 'status': 'completed', 'timestamp': datetime.now().isoformat()}
             if state.outputs:
-                entry['outputs'] = state.outputs
+                entry['outputs'] = make_json_serializable(state.outputs)
             if state.duration:
                 entry['duration'] = state.duration
             db.insert(entry)

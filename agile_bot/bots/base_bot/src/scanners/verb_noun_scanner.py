@@ -26,6 +26,10 @@ except LookupError:
 
 class VerbNounScanner(StoryScanner):
     
+    def scan_domain_concept(self, node: Any, rule_obj: Any) -> List[Dict[str, Any]]:
+        """Domain concepts are nouns (classes/objects) and should NOT be checked for verb-noun format."""
+        return []
+    
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         name = node.name

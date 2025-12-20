@@ -30,30 +30,25 @@ class ExcessiveGuardsScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Check for excessive guards using AST
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    # Skip test functions (covered by NoGuardClausesScanner)
-                    if node.name.startswith('test_'):
-                        continue
-                    
-                    # Skip private methods (they might need guards for internal validation)
-                    if node.name.startswith('_') and node.name != '__init__':
-                        continue
-                    
-                    func_violations = self._check_function_guards(node, file_path, rule_obj, lines)
-                    violations.extend(func_violations)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Check for excessive guards using AST
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Skip test functions (covered by NoGuardClausesScanner)
+                if node.name.startswith('test_'):
+                    continue
+                
+                # Skip private methods (they might need guards for internal validation)
+                if node.name.startswith('_') and node.name != '__init__':
+                    continue
+                
+                func_violations = self._check_function_guards(node, file_path, rule_obj, lines)
+                violations.extend(func_violations)
         
         return violations
     
@@ -226,7 +221,8 @@ class ExcessiveGuardsScanner(CodeScanner):
         optional_patterns = ['config', 'template', 'option', 'setting', 'file', 'dir', 'path',
                             'pattern', 'spec', 'rule', 'violation', 'action', 'behavior',
                             'trigger', 'command', 'desc', 'instruction', 'error', 'info',
-                            'name', 'obj', 'instance', 'module', 'class', 'background']
+                            'name', 'obj', 'instance', 'module', 'class', 'background',
+                            'parsed', 'result', 'content', 'tree', 'lines']  # Parsing/processing results that can fail
         return any(pattern in var_name for pattern in optional_patterns)
     
     def _is_followed_by_creation_logic(self, guard_node: ast.If, source_lines: List[str]) -> bool:

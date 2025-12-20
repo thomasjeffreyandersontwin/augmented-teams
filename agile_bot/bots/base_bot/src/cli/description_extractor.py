@@ -87,6 +87,9 @@ class DescriptionExtractor:
         action_prefixes = {'clarify': 'clarify', 'strategy': 'strategy', 'build': 'build', 'render': 'render', 'validate': 'validate'}
         action_folder = action_prefixes.get(action_name, action_name)
         config_path = base_actions_dir / action_folder / 'action_config.json'
+        # #region agent log
+        import json as _json; open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a').write(_json.dumps({"location": "description_extractor.py:get_action_description", "message": "Looking for action config", "data": {"action_name": action_name, "action_folder": action_folder, "config_path": str(config_path), "exists": config_path.exists()}, "hypothesisId": "D,E", "timestamp": __import__('time').time()}) + '\n')
+        # #endregion
         if not config_path.exists():
             return action_name.replace('_', ' ').title()
         try:

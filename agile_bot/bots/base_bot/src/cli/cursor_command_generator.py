@@ -32,12 +32,41 @@ class CursorCommandGenerator:
         commands = {}
         commands[f'{self.bot_name}'] = self._write_command_file(commands_dir / f'{self.bot_name}.md', python_command)
         commands[f'{self.bot_name}-continue'] = self._write_command_file(commands_dir / f'{self.bot_name}-continue.md', f'{python_command} --close')
-        commands[f'{self.bot_name}-help'] = self._write_command_file(commands_dir / f'{self.bot_name}-help.md', f'{python_command} --help-cursor')
+        help_content = self._build_help_command_content(python_command)
+        commands[f'{self.bot_name}-help'] = self._write_command_file(commands_dir / f'{self.bot_name}-help.md', help_content)
+        # Base tools (not behavior-scoped)
+        commands[f'{self.bot_name}-get_working_dir'] = self._write_command_file(
+            commands_dir / f'{self.bot_name}-get_working_dir.md',
+            f'{python_command} --action get_working_dir'
+        )
+        set_working_dir_syntax = (
+            f"{python_command} --action set_working_dir "
+            "${1:/path/to/workspace}${2:+ }${2:persist=true|false}"
+        )
+        commands[f'{self.bot_name}-set_working_dir'] = self._write_command_file(
+            commands_dir / f'{self.bot_name}-set_working_dir.md',
+            set_working_dir_syntax
+        )
         return commands
+
+    def _build_help_command_content(self, python_command: str) -> str:
+        """Build help command content with display instructions."""
+        lines = [
+            f"{python_command} --help-cursor",
+            "",
+            "## Display Instructions",
+            "",
+            "After running the command above:",
+            "1. Read the status.md file path shown in the output",
+            "2. Display the file contents EXACTLY as written - do not reformat into tables or summarize",
+            "3. Do NOT wrap the output in a code fence - render it as markdown directly",
+            "4. Preserve all formatting, headers, and structure from the original file",
+        ]
+        return "\n".join(lines)
 
     def _generate_behavior_commands(self, commands_dir: Path, python_command: str, behaviors: list, commands: dict):
         for behavior_name in behaviors:
-            behavior_command = f'{python_command} --behavior {behavior_name} --action ${{1:}}${{2:+ }}${{2:}}'
+            behavior_command = self._build_behavior_command_with_actions(python_command, behavior_name)
             commands[f'{self.bot_name}-{behavior_name}'] = self._write_command_file(commands_dir / f'{self.bot_name}-{behavior_name}.md', behavior_command)
 
     def _get_current_command_files(self, commands_dir: Path) -> Set[Path]:
@@ -54,6 +83,63 @@ class CursorCommandGenerator:
         for file_path in existing_files:
             if file_path not in current_file_paths:
                 file_path.unlink(missing_ok=True)
+
+    def _build_behavior_command_with_actions(self, python_command: str, behavior_name: str) -> str:
+        """Build comprehensive command documentation with all actions and their parameters."""
+        # Use raw strings and format separately to avoid escaping issues
+        scope_epic = "{'type': 'epic', 'value': ['Epic Name']}"
+        scope_story = "{'type': 'story', 'value': ['Story Name']}"
+        scope_increment = "{'type': 'increment', 'value': [1, 2]}"
+        scope_files = "{'type': 'files', 'value': ['path/to/file'], 'exclude': ['*.test.js']}"
+        
+        lines = [
+            f"# {self.bot_name}-{behavior_name} - Available Actions",
+            "",
+            "## Quick Execute (with action prompt)",
+            f"{python_command} --behavior {behavior_name} --action ${{1:action}}${{2:+ }}${{2:params}}",
+            "",
+            "## Available Actions:",
+            "",
+            "### clarify - Gather context",
+            f"{python_command} --behavior {behavior_name} --action clarify",
+            '  # Optional: --key_questions_answered \'{"q1": "answer"}\' --evidence_provided \'{"type": "content"}\'',
+            "",
+            "### strategy - Decide approach", 
+            f"{python_command} --behavior {behavior_name} --action strategy",
+            '  # Optional: --decisions_made \'{"decision": "value"}\' --assumptions_made \'["assumption"]\'',
+            "",
+            "### build - Build knowledge graph",
+            f"{python_command} --behavior {behavior_name} --action build",
+            "  # Scope all: (default)",
+            f"  # Scope epic: --scope \"{scope_epic}\"",
+            f"  # Scope story: --scope \"{scope_story}\"",
+            f"  # Scope increment: --scope \"{scope_increment}\"",
+            "",
+            "### validate - Validate against rules",
+            f"{python_command} --behavior {behavior_name} --action validate",
+            "  # Scope all: (default)",
+            f"  # Scope epic: --scope \"{scope_epic}\"",
+            f"  # Scope story: --scope \"{scope_story}\"",
+            f"  # Scope files: --scope \"{scope_files}\"",
+            "  # Skip rules: --skiprule rule_name",
+            "",
+            "### render - Generate output artifacts",
+            f"{python_command} --behavior {behavior_name} --action render",
+            "  # Scope all: (default)",
+            f"  # Scope epic: --scope \"{scope_epic}\"",
+            f"  # Scope story: --scope \"{scope_story}\"",
+            "",
+            "## Common Patterns:",
+            "  # Work on specific epic:",
+            f"  {python_command} --behavior {behavior_name} --action build --scope \"{scope_epic}\"",
+            "",
+            "  # Validate with exclusions:",
+            f"  {python_command} --behavior {behavior_name} --action validate --skiprule rule_to_skip",
+            "",
+            "  # Work on multiple stories:",
+            f"  {python_command} --behavior {behavior_name} --action build --scope \"{{' type': 'story', 'value': ['Story 1', 'Story 2']}}\"",
+        ]
+        return "\n".join(lines)
 
     def _write_command_file(self, file_path: Path, command: str) -> Path:
         file_path.write_text(command, encoding='utf-8')

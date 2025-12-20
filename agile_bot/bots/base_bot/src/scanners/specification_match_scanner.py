@@ -17,28 +17,24 @@ class SpecificationMatchScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Check test method names match specification
-            violations.extend(self._check_test_method_names(tree, file_path, rule_obj))
-            
-            # Check variable names match specification (exact names)
-            violations.extend(self._check_variable_names(tree, content, file_path, rule_obj))
-            
-            # Check assertions match specification exactly
-            violations.extend(self._check_assertions(tree, content, file_path, rule_obj))
-            
-            # NEW: Knowledge graph integration - match tests to specification
-            if knowledge_graph:
-                violations.extend(self._check_specification_matches(tree, content, file_path, rule_obj, knowledge_graph))
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Check test method names match specification
+        violations.extend(self._check_test_method_names(tree, file_path, rule_obj))
+        
+        # Check variable names match specification (exact names)
+        violations.extend(self._check_variable_names(tree, content, file_path, rule_obj))
+        
+        # Check assertions match specification exactly
+        violations.extend(self._check_assertions(tree, content, file_path, rule_obj))
+        
+        # NEW: Knowledge graph integration - match tests to specification
+        if knowledge_graph:
+            violations.extend(self._check_specification_matches(tree, content, file_path, rule_obj, knowledge_graph))
         
         return violations
     

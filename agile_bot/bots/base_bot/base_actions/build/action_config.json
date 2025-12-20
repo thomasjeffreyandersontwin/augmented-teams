@@ -6,7 +6,6 @@
     "Build knowledge graph for build",
     "Base instructions for build",
     "Use verb-noun format for actions",
-    "{{rules}}",
     "{{schema}}",
     "{{description}}",
     "Epics should be organized in verb-noun format",

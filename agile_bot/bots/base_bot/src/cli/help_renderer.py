@@ -12,24 +12,53 @@ class HelpRenderer(ABC):
         pass
     
     @abstractmethod
+    def _format_behavior_command(self, context: BehaviorHelpContext, action_list: str) -> str:
+        """Format the command line for a behavior (format-specific)."""
+        pass
+    
+    @abstractmethod
+    def _format_behavior_title(self, context: BehaviorHelpContext) -> str:
+        """Format the behavior section title (format-specific)."""
+        pass
+    
+    @abstractmethod
+    def _format_action_command(self, context: ActionHelpContext) -> str:
+        """Format the command line for an action (format-specific)."""
+        pass
+    
     def render_behavior_section(self, context: BehaviorHelpContext) -> None:
-        """Render behavior section with actions."""
-        pass
+        """Render behavior section with actions (shared implementation)."""
+        print(f'\n{self._format_behavior_title(context)}\n')
+        print(f'{context.behavior_description}\n')
+        print('```')
+        action_list = '|'.join(context.actions)
+        print(self._format_behavior_command(context, action_list))
+        print()
+        self._render_action_list_and_context(action_list)
+        self._render_additional_options(context.additional_options or {})
+        print('```\n')
     
-    @abstractmethod
     def render_action_help_section_header(self) -> None:
-        """Render action help section header."""
-        pass
+        """Render action help section header (shared implementation)."""
+        print('\n---\n')
+        print('## Action Help\n')
     
-    @abstractmethod
     def render_action_help(self, context: ActionHelpContext) -> None:
-        """Render action help with parameters."""
-        pass
+        """Render action help with parameters (shared implementation)."""
+        print(f'### {context.action_name}\n')
+        print(f'{context.action_description}\n')
+        print('```')
+        print(self._format_action_command(context))
+        if context.parameters:
+            print()
+            for param in context.parameters:
+                param_desc = context.parameter_descriptions.get(param, "Optional parameter")
+                self._render_parameter_description(param, param_desc)
+        print('```\n')
     
-    @abstractmethod
     def render_separator(self) -> None:
-        """Render separator."""
-        pass
+        """Render separator (shared implementation)."""
+        print('---\n')
     
     def _render_parameter_description(self, param: str, param_desc: str) -> None:
         """Render a single parameter description (shared helper)."""

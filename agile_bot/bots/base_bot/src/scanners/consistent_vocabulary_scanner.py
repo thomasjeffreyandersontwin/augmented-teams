@@ -13,21 +13,17 @@ class ConsistentVocabularyScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            
-            # Extract domain terms from knowledge graph
-            domain_terms = self._extract_domain_terms(knowledge_graph)
-            
-            # Check for inconsistent vocabulary
-            violations.extend(self._check_vocabulary_consistency(content, domain_terms, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (UnicodeDecodeError, Exception):
-            # Skip binary files or files with encoding issues
-            pass
+        # Extract domain terms from knowledge graph
+        domain_terms = self._extract_domain_terms(knowledge_graph)
+        
+        # Check for inconsistent vocabulary
+        violations.extend(self._check_vocabulary_consistency(content, domain_terms, file_path, rule_obj))
         
         return violations
     

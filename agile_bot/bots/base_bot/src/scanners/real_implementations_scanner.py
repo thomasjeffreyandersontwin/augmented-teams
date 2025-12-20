@@ -21,25 +21,21 @@ class RealImplementationsScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            
-            # Parse AST to analyze test structure
-            method_violations = self._check_test_methods_call_production_code(
-                content, lines, file_path, rule_obj, knowledge_graph
-            )
-            violations.extend(method_violations)
-            
-            # Check for fake/stub implementations
-            fake_violations = self._check_fake_implementations(lines, file_path, rule_obj)
-            violations.extend(fake_violations)
+        content, lines, tree = parsed
         
-        except (UnicodeDecodeError, SyntaxError, Exception) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Parse AST to analyze test structure
+        method_violations = self._check_test_methods_call_production_code(
+            content, lines, file_path, rule_obj, knowledge_graph
+        )
+        violations.extend(method_violations)
+        
+        # Check for fake/stub implementations
+        fake_violations = self._check_fake_implementations(lines, file_path, rule_obj)
+        violations.extend(fake_violations)
         
         return violations
     

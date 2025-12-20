@@ -44,18 +44,24 @@ class BuildKnowledgeAction(Action):
         instructions = self.instructions.copy()
         instructions.update(self.knowledge.instructions)
         build_scope = BuildScope(parameters or {}, self.behavior.bot_paths)
-        instructions['scope'] = build_scope.scope
+        instructions.set('scope', build_scope.scope)
         story_graph = self.knowledge_graph_spec.knowledge_graph
         story_names = build_scope.get_story_names(story_graph.content)
-        instructions['scope_story_names'] = list(story_names)
+        instructions.set('scope_story_names', list(story_names) if story_names else [])
         self._add_update_instructions(instructions, story_graph)
         self.inject_rules(instructions)
-        return {'instructions': instructions}
+        return {'instructions': instructions.to_dict()}
 
-    def _add_update_instructions(self, instructions: Dict[str, Any], story_graph) -> None:
-        instructions['existing_file'] = {'path': str(story_graph.path), 'exists': True}
-        instructions['update_mode'] = True
-        instructions['update_instructions'] = {'mode': 'update_existing', 'message': f"**CRITICAL: Output file '{story_graph.path.name}' already exists. You MUST UPDATE this existing file by adding/modifying only the content needed for this behavior. DO NOT create a new file.**", 'existing_file_path': str(story_graph.path), 'preserve_existing': self._get_preserve_existing(story_graph), 'add_or_modify': self._determine_add_or_modify_content()}
+    def _add_update_instructions(self, instructions, story_graph) -> None:
+        file_exists = story_graph.path.exists()
+        instructions.set('existing_file', {'path': str(story_graph.path), 'exists': file_exists})
+        
+        if file_exists:
+            instructions.set('update_mode', True)
+            instructions.set('update_instructions', {'mode': 'update_existing', 'message': f"**CRITICAL: Output file '{story_graph.path.name}' already exists. You MUST UPDATE this existing file by adding/modifying only the content needed for this behavior. DO NOT create a new file.**", 'existing_file_path': str(story_graph.path), 'preserve_existing': self._get_preserve_existing(story_graph), 'add_or_modify': self._determine_add_or_modify_content()})
+        else:
+            instructions.set('create_mode', True)
+            instructions.set('create_instructions', {'mode': 'create_new', 'message': f"**CRITICAL: Output file '{story_graph.path.name}' does not exist. You MUST CREATE this file with the complete structure based on the provided template and rules.**", 'output_file_path': str(story_graph.path)})
 
     def _get_preserve_existing(self, story_graph) -> list:
         return [item for item in ['epics' if story_graph.has_epics else None, 'increments' if story_graph.has_increments else None, 'domain_concepts' if story_graph.has_domain_concepts else None] if item is not None]
@@ -64,19 +70,41 @@ class BuildKnowledgeAction(Action):
         behavior_to_content = {'shape': [], 'prioritization': ['increments'], 'discovery': ['story refinements', 'increments', 'domain_concepts'], 'exploration': ['acceptance_criteria', 'domain_concepts'], 'scenarios': ['scenarios', 'domain_concepts'], 'tests': ['test_implementations', 'domain_concepts']}
         return behavior_to_content.get(self.behavior.name, [])
 
-    def inject_rules(self, instructions: Dict[str, Any]) -> None:
+    def inject_rules(self, instructions) -> None:
         validate_action = self.rules
         rules_obj = validate_action.rules
         rules_text = rules_obj.formatted_rules()
         rules_data = validate_action.inject_behavior_specific_and_bot_rules()
         all_rules = rules_data.get('validation_rules', [])
+        
+        # Get existing base_instructions (these are the CUSTOM INSTRUCTIONS - keep them FIRST)
+        existing_instructions = instructions.get('base_instructions', [])
         new_instructions = []
-        for line in instructions['base_instructions']:
+        rules_section = []
+        
+        # Process each instruction, removing {{rules}} placeholder if present
+        # Keep ALL other instructions as-is (they are the custom instructions)
+        for line in existing_instructions:
             if isinstance(line, str) and '{{rules}}' in line:
-                if rules_text != 'No validation rules found.':
-                    rules_lines = rules_text.split('\n')
-                    new_instructions.extend(rules_lines)
+                # Remove the placeholder line - we'll add rules at the very end
+                pass  # Don't add this line
             else:
+                # Keep all custom instructions
                 new_instructions.append(line)
-        instructions['base_instructions'] = new_instructions
-        instructions['rules'] = all_rules
+        
+        # Prepare rules section to append at the END
+        if rules_text != 'No validation rules found.':
+            rules_lines = rules_text.split('\n')
+            rules_section.extend(rules_lines)
+        
+        # CRITICAL: Append rules section at the VERY END (after ALL custom instructions)
+        # This ensures: CUSTOM INSTRUCTIONS FIRST, RULES LAST
+        if rules_section:
+            new_instructions.append('')  # Blank line separator
+            new_instructions.append('**VALIDATION RULES:**')  # Section header
+            new_instructions.append('')  # Blank line
+            new_instructions.extend(rules_section)
+        
+        # Replace base_instructions with: [custom instructions] + [rules at end]
+        instructions._data['base_instructions'] = new_instructions
+        instructions.set('rules', all_rules)

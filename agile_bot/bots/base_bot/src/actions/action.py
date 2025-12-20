@@ -8,6 +8,7 @@ import traceback
 from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker, ActionState
 from agile_bot.bots.base_bot.src.actions.workflow_status_builder import BehaviorActionStatusBuilder
 from agile_bot.bots.base_bot.src.actions.context_data_injector import ContextDataInjector
+from agile_bot.bots.base_bot.src.actions.instructions import Instructions
 from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
 from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
 from agile_bot.bots.base_bot.src.utils import read_json_file
@@ -100,20 +101,30 @@ class Action:
         return breadcrumbs
 
     @property
-    def instructions(self) -> Dict[str, Any]:
+    def instructions(self) -> Instructions:
         base_instructions = self._base_config.get('instructions', [])
-        merged = {'base_instructions': base_instructions if isinstance(base_instructions, list) else []}
+        inst = Instructions(base_instructions if isinstance(base_instructions, list) else [], bot_paths=self.behavior.bot_paths)
+        
+        # Add context instructions (clarification, strategy, context files) at the beginning
         context_instructions = []
-        context_instructions.extend(self._inject_status_update_breadcrumbs(merged))
         try:
-            context_instructions.extend(self._inject_clarification_data(merged))
-            context_instructions.extend(self._inject_strategy_data(merged))
+            context_instructions.extend(self._inject_clarification_data({}))
+            context_instructions.extend(self._inject_strategy_data({}))
         except FileNotFoundError as e:
             logger.debug(f'Clarification or strategy data files not found: {e}')
             raise
-        context_instructions.extend(self._inject_context_files(merged))
-        merged['base_instructions'] = context_instructions + merged['base_instructions']
-        return merged
+        context_instructions.extend(self._inject_context_files({}))
+        
+        # Add context instructions to the beginning
+        for line in reversed(context_instructions):
+            inst._data['base_instructions'].insert(0, line)
+        
+        # Add workflow status breadcrumbs to display_content (for deterministic display)
+        breadcrumbs = self._inject_status_update_breadcrumbs({})
+        for line in breadcrumbs:
+            inst.add_display(line)
+        
+        return inst
 
     @property
     def tracker(self) -> ActivityTracker:
@@ -143,12 +154,44 @@ class Action:
         self.track_activity_on_start()
         try:
             result = self.do_execute(parameters or {})
+            
+            # Write display content to file after action completes
+            result = self._finalize_display_content(result)
+            
             if not result.get('_background_execution', False):
                 self.track_activity_on_completion(outputs=result)
             return self._inject_reminders_if_final(result)
         except Exception as e:
             self._handle_execution_error(e, parameters)
             raise
+    
+    def _finalize_display_content(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        if 'instructions' not in result or not isinstance(result['instructions'], dict):
+            return result
+        
+        instructions_dict = result['instructions']
+        
+        # Check if there's display content (stored in the dict from Instructions.to_dict())
+        display_content_list = instructions_dict.get('display_content', [])
+        if not display_content_list:
+            return result
+        
+        # Write display content to file
+        inst = Instructions(bot_paths=self.behavior.bot_paths)
+        for line in display_content_list:
+            inst.add_display(line)
+        
+        display_file = inst.write_display_to_file('status.md')
+        if display_file:
+            # Add instruction to read the file
+            if 'base_instructions' not in instructions_dict:
+                instructions_dict['base_instructions'] = []
+            instructions_dict['base_instructions'].append('')
+            instructions_dict['base_instructions'].append(f'CRITICAL: You MUST read the file `{display_file}` and display its ENTIRE contents in a markdown code fence to the user.')
+            instructions_dict['base_instructions'].append(f'Use the read_file tool to read `{display_file}` and then display the full contents.')
+            instructions_dict['base_instructions'].append(f'DO NOT just reference the file - actually READ it and SHOW its contents to the user.')
+        
+        return result
 
     def _handle_execution_error(self, e: Exception, parameters: Dict[str, Any]) -> None:
         error_type = type(e).__name__

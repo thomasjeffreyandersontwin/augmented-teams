@@ -39,7 +39,7 @@ class RenderOutputAction(Action):
                 except Exception as e:
                     logger.error(f'Failed to execute synchronizer for {spec.name}: {e}')
                     spec.mark_failed(str(e))
-        instructions = MergedInstructions(base_instructions=self.instructions.get('base_instructions', []), render_instructions=render_instructions).merge()
+        instructions = MergedInstructions(base_instructions=self.instructions.get('base_instructions', []) if isinstance(self.instructions, dict) else self.instructions['base_instructions'], render_instructions=render_instructions).merge()
         self._instruction_formatter.inject_render_data(instructions, render_instructions, render_specs)
         executed_specs = [spec for spec in render_specs if spec.is_executed]
         template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]

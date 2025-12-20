@@ -22,3 +22,5 @@ class ValidationStats:
     @property
     def has_violations(self) -> bool:
         return self.total_violations > 0
+
+

@@ -14,25 +14,20 @@ class ExactVariableNamesScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Extract domain concepts from knowledge graph
-            domain_concepts = self._extract_domain_concepts(knowledge_graph)
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    if node.name.startswith('test_'):
-                        # Check variable names in test
-                        violations.extend(self._check_variable_names(node, domain_concepts, file_path, rule_obj))
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError):
-            # Skip files with syntax errors
-            pass
+        # Extract domain concepts from knowledge graph
+        domain_concepts = self._extract_domain_concepts(knowledge_graph)
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                if node.name.startswith('test_'):
+                    # Check variable names in test
+                    violations.extend(self._check_variable_names(node, domain_concepts, file_path, rule_obj))
         
         return violations
     

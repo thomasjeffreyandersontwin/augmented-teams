@@ -21,26 +21,22 @@ class BusinessReadableTestNamesScanner(TestScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        if not file_path.exists():
+        parsed = self._read_and_parse_file(file_path)
+        if not parsed:
             return violations
         
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            
-            # Extract domain language from story graph
-            domain_language = self._extract_domain_language(knowledge_graph)
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    if node.name.startswith('test_'):
-                        # Check if test name is business-readable
-                        violation = self._check_business_readable(node.name, file_path, node, rule_obj, domain_language)
-                        if violation:
-                            violations.append(violation)
+        content, lines, tree = parsed
         
-        except (SyntaxError, UnicodeDecodeError) as e:
-            logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+        # Extract domain language from story graph
+        domain_language = self._extract_domain_language(knowledge_graph)
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                if node.name.startswith('test_'):
+                    # Check if test name is business-readable
+                    violation = self._check_business_readable(node.name, file_path, node, rule_obj, domain_language)
+                    if violation:
+                        violations.append(violation)
         
         return violations
     
