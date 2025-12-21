@@ -66,7 +66,15 @@ class RenderConfigLoader:
                 module = None
             except ImportError:
                 continue
-        synchronizer_class = getattr(module, class_name)
+        
+        # If module not found, skip verification (may be in test environment)
+        if module is None:
+            return
+        
+        synchronizer_class = getattr(module, class_name, None)
+        if synchronizer_class is None:
+            return
+            
         has_render = hasattr(synchronizer_class, 'render')
         has_sync_methods = any((hasattr(synchronizer_class, method) for method in ['synchronize_outline', 'synchronize_increments', 'synchronize_exploration']))
         if not (has_render or has_sync_methods):

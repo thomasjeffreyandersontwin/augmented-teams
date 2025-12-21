@@ -14,17 +14,34 @@ class Actions:
 
     def __init__(self, behavior: 'Behavior'):
         self.behavior = behavior
-        actions_workflow = behavior._config.get('actions_workflow', {})
-        actions_list = actions_workflow.get('actions', [])
-        actions_list = sorted(actions_list, key=lambda x: x.get('order', 0))
+        actions_list = behavior.actions_workflow
+        
+        # Separate workflow actions (have order) from non-workflow actions (no order)
+        workflow_actions = [a for a in actions_list if a.get('order') is not None]
+        non_workflow_actions = [a for a in actions_list if a.get('order') is None]
+        
+        # Sort workflow actions by order
+        workflow_actions = sorted(workflow_actions, key=lambda x: x.get('order', 0))
+        
         self._factory = ActionFactory(behavior)
         self._state_manager = ActionStateManager(behavior)
+        
+        # _actions contains only workflow actions (for sequencing)
         self._actions: List[Action] = []
-        for action_dict in actions_list:
+        for action_dict in workflow_actions:
             action_name = action_dict.get('name', '')
             if action_name:
                 action_instance = self._factory.create_action_instance(action_name=action_name, action_config=action_dict)
                 self._actions.append(action_instance)
+        
+        # _non_workflow_actions contains actions that can be invoked but don't participate in workflow
+        self._non_workflow_actions: List[Action] = []
+        for action_dict in non_workflow_actions:
+            action_name = action_dict.get('name', '')
+            if action_name:
+                action_instance = self._factory.create_action_instance(action_name=action_name, action_config=action_dict)
+                self._non_workflow_actions.append(action_instance)
+        
         self._current_index: Optional[int] = None
         self.load_state()
 
@@ -55,7 +72,12 @@ class Actions:
         return [name for name in remaining if not self.is_action_completed(name)]
 
     def find_by_name(self, action_name: str) -> Optional[Action]:
+        # First check workflow actions
         for action in self._actions:
+            if action.action_name == action_name:
+                return action
+        # Then check non-workflow actions
+        for action in self._non_workflow_actions:
             if action.action_name == action_name:
                 return action
         return None
@@ -89,6 +111,13 @@ class Actions:
         action = self.find_by_name(action_name)
         if action is None:
             raise ValueError(f"Action '{action_name}' not found")
+        
+        # Check if this is a non-workflow action (no order)
+        is_non_workflow = action in self._non_workflow_actions
+        if is_non_workflow:
+            # Non-workflow actions don't affect workflow state
+            return
+        
         target_index = None
         for i, a in enumerate(self._actions):
             if a.action_name == action_name:

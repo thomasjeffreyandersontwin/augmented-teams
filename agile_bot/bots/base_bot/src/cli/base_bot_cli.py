@@ -160,10 +160,6 @@ class BaseBotCli:
     def help_behaviors_and_actions(self):
         try:
             self.help_generator.help_behaviors_and_actions()
-            breadcrumbs = self._get_breadcrumbs_from_action()
-            if breadcrumbs:
-                print()
-                self.help_generator._output_breadcrumbs(breadcrumbs)
         except Exception as e:
             self._handle_error(e)
 
@@ -277,22 +273,16 @@ class BaseBotCli:
         return self.help_generator.parameter_builder.infer_parameter_description(cmd_name, param_num, cmd_content)
 
     def _get_breadcrumbs_from_action(self) -> list:
-        if not self.bot:
-            return []
         try:
             current_behavior = self.bot.behaviors.current
-            if not current_behavior:
-                if self.bot.behaviors.first:
-                    self.bot.behaviors.navigate_to(self.bot.behaviors.first.name)
-                    current_behavior = self.bot.behaviors.current
-                if not current_behavior:
-                    return []
+            if current_behavior is None and self.bot.behaviors.first:
+                self.bot.behaviors.navigate_to(self.bot.behaviors.first.name)
+                current_behavior = self.bot.behaviors.current
+            
             current_behavior.actions.load_state()
             current_action = current_behavior.actions.current
-            if not current_action:
-                return []
             breadcrumbs = current_action.get_workflow_status_breadcrumbs()
             return breadcrumbs if breadcrumbs else []
-        except Exception as e:
+        except (AttributeError, TypeError) as e:
             logger.debug(f'Failed to get breadcrumbs from action: {e}')
             return []

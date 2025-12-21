@@ -335,7 +335,8 @@ class GivenWhenThenHelpersScanner(TestScanner):
         test_files: Optional[List[Path]] = None,
         code_files: Optional[List[Path]] = None,
         all_test_files: Optional[List[Path]] = None,
-        all_code_files: Optional[List[Path]] = None
+        all_code_files: Optional[List[Path]] = None,
+        status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan across all test files for cross-file violations.
         

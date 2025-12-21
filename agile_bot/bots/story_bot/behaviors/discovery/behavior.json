@@ -47,6 +47,12 @@
         "instructions": [
           "discovery: render story map increments in scope using all rendering specifications mentioned in the behavior instructions"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

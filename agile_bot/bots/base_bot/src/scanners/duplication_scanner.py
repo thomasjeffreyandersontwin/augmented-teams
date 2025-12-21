@@ -1824,7 +1824,8 @@ class DuplicationScanner(CodeScanner):
         test_files: Optional[List[Path]] = None,
         code_files: Optional[List[Path]] = None,
         all_test_files: Optional[List[Path]] = None,
-        all_code_files: Optional[List[Path]] = None
+        all_code_files: Optional[List[Path]] = None,
+        status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         violations = []
         
@@ -1857,28 +1858,11 @@ class DuplicationScanner(CodeScanner):
             _safe_print(f"\n[CROSS-FILE] Full scan: Scanning {len(all_files)} files for cross-file duplication...")
         import sys
         
-        # Find status file path from the first file's directory structure
-        status_file_path = None
-        if all_files:
-            # Look for docs/stories directory relative to file paths
-            first_file = all_files[0]
-            # Walk up to find a docs/stories directory
-            current = first_file.parent
-            for _ in range(10):  # Max 10 levels up
-                docs_stories = current / 'docs' / 'stories'
-                if docs_stories.exists():
-                    status_file_path = docs_stories / 'code-validation-status.md'
-                    break
-                if current.parent == current:
-                    break
-                current = current.parent
-        
         def write_status(msg: str):
-            """Write progress to status file."""
-            if status_file_path:
+            """Write progress to status file using the status writer."""
+            if status_writer and hasattr(status_writer, 'write_cross_file_progress'):
                 try:
-                    with open(status_file_path, 'a', encoding='utf-8') as f:
-                        f.write(msg + '\n')
+                    status_writer.write_cross_file_progress(msg)
                 except Exception as e:
                     logger.debug(f'Could not write to status file: {type(e).__name__}: {e}')
         

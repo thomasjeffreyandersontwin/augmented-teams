@@ -28,11 +28,20 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior exploration --ac
   # Scope files: --scope "{'type': 'files', 'value': ['path/to/file'], 'exclude': ['*.test.js']}"
   # Skip rules: --skiprule rule_name
 
+  **NOTE:** For code behavior, validation runs in background.
+  **AI MUST:** Poll status file every 10 seconds and report progress until complete.
+
 ### render - Generate output artifacts
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior exploration --action render
   # Scope all: (default)
   # Scope epic: --scope "{'type': 'epic', 'value': ['Epic Name']}"
   # Scope story: --scope "{'type': 'story', 'value': ['Story Name']}"
+
+### rules - Inject rules into AI context
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior exploration --action rules
+  # Optional: --message "your request here"
+  # Non-workflow action: Can be invoked anytime
+  # Loads behavior rules and user message into AI context
 
 ## Common Patterns:
   # Work on specific epic:

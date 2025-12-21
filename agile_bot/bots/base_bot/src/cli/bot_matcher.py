@@ -29,27 +29,21 @@ class BotMatcher:
 
     def _load_bot_registry(self) -> Dict[str, Dict]:
         registry_path = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / 'registry.json'
-        if not registry_path.exists():
-            return {}
         try:
             content = registry_path.read_text(encoding='utf-8')
             return json.loads(content)
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, IOError, FileNotFoundError):
             return {}
 
     def _load_bot_triggers(self) -> BotTriggers:
-        if not self.bot_name:
-            return BotTriggers()
         trigger_file = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'trigger_words.json'
         patterns = self._load_patterns_from_file(trigger_file)
         return BotTriggers(patterns=patterns)
 
     def _load_patterns_from_file(self, file_path: Path) -> list:
-        if not file_path.exists():
-            return []
         try:
             content = file_path.read_text(encoding='utf-8')
             data = json.loads(content)
             return data.get('patterns', [])
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, IOError, FileNotFoundError):
             return []

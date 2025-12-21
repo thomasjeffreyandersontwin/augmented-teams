@@ -33,12 +33,10 @@ class UnifiedHelpGenerator:
     
     def _get_behavior_order(self, behavior) -> int:
         behavior_json_path = self.bot_directory / 'behaviors' / behavior.name / 'behavior.json'
-        if not behavior_json_path.exists():
-            return 999
         try:
             config = read_json_file(behavior_json_path)
             return config.get('order', 999)
-        except Exception:
+        except (FileNotFoundError, KeyError):
             return 999
     
     def _render_behavior(self, behavior) -> None:
@@ -58,9 +56,7 @@ class UnifiedHelpGenerator:
     
     def _get_behavior_actions(self, behavior) -> List[str]:
         action_names_str = self.description_extractor.get_action_names_from_behavior(behavior.name)
-        if not action_names_str:
-            return []
-        return action_names_str.split('|')
+        return action_names_str.split('|') if action_names_str else []
     
     def _get_additional_options(self, behavior_name: str) -> dict:
         if behavior_name == 'code':
@@ -75,8 +71,6 @@ class UnifiedHelpGenerator:
         self.renderer.render_action_help_section_header()
         for action_name in self.action_order:
             action_description = self.description_extractor.get_action_description(action_name)
-            if not action_description:
-                continue
             if action_name == 'validate':
                 action_description += '\n\n**NOTE:** For code behavior, validation runs in background. You MUST poll the status file every 10 seconds and report progress until complete.'
             parameters = self._get_action_parameters(action_name)

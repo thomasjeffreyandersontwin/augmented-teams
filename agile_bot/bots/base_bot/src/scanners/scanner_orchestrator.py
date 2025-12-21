@@ -6,7 +6,7 @@ from pathlib import Path
 if TYPE_CHECKING:
     from .scan import Scan
     from .scope import Scope
-    from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+    from agile_bot.bots.base_bot.src.actions.rules.rule import Rule
     from .scanner import Scanner
     from .scanner_registry import ScannerRegistry
 

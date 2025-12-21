@@ -2,9 +2,8 @@ from typing import Dict, Any, List, Type
 import logging
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, ValidateActionContext
-from agile_bot.bots.base_bot.src.actions.validate.rules import Rules
+from agile_bot.bots.base_bot.src.actions.rules.rules import Rules
 from agile_bot.bots.base_bot.src.actions.validate.validation_executor import ValidationExecutor
-from agile_bot.bots.base_bot.src.actions.validate.background_validation_handler import BackgroundValidationHandler
 from agile_bot.bots.base_bot.src.utils import read_json_file
 
 logger = logging.getLogger(__name__)
@@ -25,7 +24,6 @@ class ValidateRulesAction(Action):
         super().__init__(behavior=behavior, action_config=action_config)
         self._rules = Rules(behavior=self.behavior, bot_paths=self.behavior.bot_paths)
         self._executor = ValidationExecutor(self.behavior, self._rules)
-        self._background_handler = BackgroundValidationHandler(self.behavior, self._executor)
 
     @property
     def action_name(self) -> str:
@@ -42,13 +40,8 @@ class ValidateRulesAction(Action):
     def do_execute(self, context: ValidateActionContext) -> Dict[str, Any]:
         logger.info('=== Starting validation ===')
         logger.info(f'Behavior: {self.behavior.name}')
-        logger.info(f'Context: scope={context.scope}, background={context.background}, skip_cross_file={context.skip_cross_file}')
-        default_background = self.behavior.name == 'code'
-        run_in_background = context.background if context.background is not None else default_background
-        if run_in_background:
-            return self._background_handler.execute_background(context, self.track_activity_on_completion)
-        else:
-            return self._executor.execute_synchronous(context)
+        logger.info(f'Context: scope={context.scope}, skip_cross_file={context.skip_cross_file}')
+        return self._executor.execute_synchronous(context)
 
     def inject_common_bot_rules(self) -> Dict[str, Any]:
         base_bot_rules_dir = self.bot_dir.parent / 'base_bot' / 'rules'

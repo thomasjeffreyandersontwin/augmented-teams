@@ -24,11 +24,7 @@ class CliCommandRouter:
         """
         if action_name:
             behavior_obj = self.bot.behaviors.find_by_name(behavior_name) if behavior_name else None
-            if not behavior_obj:
-                raise ValueError(f"Behavior '{behavior_name}' not found")
             action_obj = behavior_obj.actions.find_by_name(action_name)
-            if not action_obj:
-                raise ValueError(f"Action '{action_name}' not found in behavior '{behavior_name}'")
             return self._route_to_specific_action(behavior_obj, action_obj, cli_args)
         return self._route_to_behavior(behavior_name)
         # Note: _route_to_current_behavior_and_action not reached from here
@@ -46,8 +42,6 @@ class CliCommandRouter:
 
     def _route_to_behavior(self, behavior_name: str):
         behavior_obj = self.bot.behaviors.find_by_name(behavior_name)
-        if not behavior_obj:
-            raise ValueError(f"Behavior '{behavior_name}' not found")
         return self._execute_current_action(behavior_obj)
 
     def _route_to_current_behavior_and_action(self):
@@ -56,20 +50,13 @@ class CliCommandRouter:
 
     def _navigate_to_first_behavior_if_needed(self):
         current_behavior = self.bot.behaviors.current
-        if current_behavior is None:
-            if self.bot.behaviors.first:
-                self.bot.behaviors.navigate_to(self.bot.behaviors.first.name)
-                current_behavior = self.bot.behaviors.current
-            else:
-                raise ValueError('No behaviors available')
-        if current_behavior is None:
-            raise ValueError('No current behavior')
+        if current_behavior is None and self.bot.behaviors.first:
+            self.bot.behaviors.navigate_to(self.bot.behaviors.first.name)
+            current_behavior = self.bot.behaviors.current
         return current_behavior
 
     def _execute_current_action(self, behavior):
         action = behavior.actions.forward_to_current()
-        if action is None:
-            raise ValueError(f'No current action found for behavior {behavior.name}')
         result_data = action.execute()
         result = BotResult('completed', behavior.name, action.action_name, result_data)
         return self._format_result(result)

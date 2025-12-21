@@ -1430,7 +1430,7 @@ def then_instructions_have_structure(instructions, structure='validation_rules')
         assert len(validation_rules) > 0, "Instructions should contain validation rules"
         
         # Validate each rule structure (accepts Rule objects or dicts)
-        from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+        from agile_bot.bots.base_bot.src.actions.rules.rule import Rule
         from agile_bot.bots.base_bot.test.test_validate_knowledge_and_content_against_rules import validate_violation_structure
         
         for rule in validation_rules:
@@ -1534,7 +1534,7 @@ def then_action_instructions_match(action, knowledge_graph=None, test_files=None
         knowledge_graph: Expected knowledge graph dict (optional)
         test_files: Expected test file paths list (optional)
     """
-    from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext, ValidationCallbacks
+    from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext, ValidationCallbacks
     files = {'test': test_files} if test_files else {}
     validation_context = ValidationContext(
         knowledge_graph=knowledge_graph,

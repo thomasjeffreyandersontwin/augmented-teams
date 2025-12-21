@@ -108,7 +108,17 @@ class ValidateActionContext(ScopeActionContext):
     """
     background: Optional[bool] = None
     skip_cross_file: bool = False
-    force_full: bool = False
+    all_files: bool = False
+
+
+@dataclass
+class RulesActionContext(ActionContext):
+    """Context for rules action - getting rules digest with optional message.
+    
+    The behavior is already available via self.behavior in the action.
+    The message is the user's actual request that should be processed with rules context.
+    """
+    message: Optional[str] = None
 
 
 # Type alias for context class type hints

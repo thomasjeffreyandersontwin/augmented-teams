@@ -34,8 +34,8 @@ class CliParameterParser:
         # Add explicit flags that actions need
         if args.skip_cross_file:
             remaining.append('--skip-cross-file')
-        if args.force_full:
-            remaining.append('--force-full')
+        if args.all_files:
+            remaining.append('--all-files')
         if args.scope:
             remaining.append(f'--scope={args.scope}')
         
@@ -52,7 +52,7 @@ class CliParameterParser:
         parser.add_argument('--help-cursor', action='store_true', help='List all cursor commands and parameters')
         parser.add_argument('-h', '--help', action='store_true', help='Show this help message and exit')
         parser.add_argument('--skip-cross-file', action='store_true', help='Skip cross-file duplicate checking (default: False, meaning cross-file check runs)')
-        parser.add_argument('--force-full', action='store_true', help='Force full scan of all files, ignoring timestamps (default: False, meaning incremental scan)')
+        parser.add_argument('--all-files', action='store_true', help='Scan all files instead of only changed files (default: False, meaning incremental scan)')
         parser.add_argument('--scope', nargs='?', help='Scope parameter: JSON dict like {"type": "files", "value": ["path/to/file.py"], "exclude": ["pattern"], "skiprule": ["rule"]}')
         parser.add_argument('context', nargs='*', help='Additional context (file paths, parameters, etc.)')
         return parser
@@ -80,8 +80,8 @@ class CliParameterParser:
             params['user_message'] = args.user_message
         if args.skip_cross_file:
             params['skip_cross_file'] = True
-        if args.force_full:
-            params['force_full'] = True
+        if args.all_files:
+            params['all_files'] = True
         if args.scope:
             params['scope'] = args.scope
         
@@ -91,15 +91,11 @@ class CliParameterParser:
 
     @staticmethod
     def _looks_like_file_path(arg: str) -> bool:
-        if not arg:
-            return False
         arg_clean = arg.lstrip('@')
         return '.' in arg_clean and (arg_clean.endswith(('.txt', '.md', '.json', '.yaml', '.yml', '.py', '.js', '.ts')) or '/' in arg_clean or '\\' in arg_clean) or arg_clean.startswith(('./', '../')) or '/' in arg_clean or ('\\' in arg_clean)
 
     @staticmethod
     def _looks_like_directory_path(arg: str) -> bool:
-        if not arg:
-            return False
         arg_clean = arg.lstrip('@')
         has_separator = '/' in arg_clean or '\\' in arg_clean
         has_extension = '.' in arg_clean and any((arg_clean.endswith(ext) for ext in ('.txt', '.md', '.json', '.yaml', '.yml', '.py', '.js', '.ts', '.ps1', '.sh', '.bat')))
@@ -145,8 +141,6 @@ class CliParameterParser:
     @staticmethod
     def _is_complete_json(value: str) -> bool:
         """Check if a string looks like complete JSON by checking bracket/brace balance."""
-        if not value:
-            return False
         value = value.strip()
         if not (value.startswith('{') or value.startswith('[')):
             return False
@@ -185,12 +179,8 @@ class CliParameterParser:
         i = 0
         while i < len(unrecognized_flags):
             arg = unrecognized_flags[i]
-            if not arg:
-                i += 1
-                continue
             
             if arg.startswith('--'):
-                # Unrecognized flag - this is an error
                 raise ValueError(f"Unrecognized flag: {arg}")
             
             if '=' in arg:
@@ -200,7 +190,6 @@ class CliParameterParser:
                 CliParameterParser._parse_file_path_arg(arg, params)
                 i += 1
             else:
-                # Unrecognized non-flag in argparse unknown - treat as context
                 CliParameterParser._parse_context_arg(arg, params)
                 i += 1
 
@@ -210,9 +199,6 @@ class CliParameterParser:
         i = 0
         while i < len(context_args):
             arg = context_args[i]
-            if not arg:
-                i += 1
-                continue
             
             if '=' in arg:
                 consumed = CliParameterParser._parse_key_value_arg(arg, context_args, i, params)

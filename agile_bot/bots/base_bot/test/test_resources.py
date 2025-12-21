@@ -25,7 +25,7 @@ def create_scope_with_files(tmp_path: Path, files: list) -> Scope:
 
 def create_rule(tmp_path: Path, name: str = 'test_rule', scanner_path: str = None):
     """Helper: Create rule object for tests."""
-    from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+    from agile_bot.bots.base_bot.src.actions.rules.rule import Rule
     rule_file = tmp_path / f'{name}.json'
     rule_content = {
         'name': name,

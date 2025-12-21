@@ -141,6 +141,11 @@ class StreamingValidationReportWriter:
         if self._status_file:
             self._status_file.flush()
 
+    def write_cross_file_progress(self, message: str) -> None:
+        """Write cross-file scan progress to status file."""
+        self._write_line(message)
+        self._flush()
+
     def _get_status_path(self) -> str:
         docs_path = self.bot_paths.documentation_path
         docs_dir = self.workspace_directory / docs_path / 'reports'
