@@ -57,10 +57,16 @@ The `Instructions` class provides two output channels:
 
 ### Solution: Compact Digest Format
 
-| Channel | Format | Size | Method |
-|---------|--------|------|--------|
-| AI Context | Digest | ~60 lines | `formatted_rules_digest()` |
-| User Display | Full | ~2000 lines | `formatted_rules()` |
+**CRITICAL:** The digest goes to BOTH channels - user sees it AND AI has it.
+
+| Channel | Content | Size | Method |
+|---------|---------|------|--------|
+| User Display (`add_display()`) | Digest | ~60 lines | `formatted_rules_digest()` |
+| AI Context (`add()`) | Digest | ~60 lines | `formatted_rules_digest()` |
+
+Both channels receive the **same digest** so:
+- User can verify which rules are being applied
+- AI has the rules in context to reference while working
 
 ### Digest Format Example
 
@@ -194,21 +200,24 @@ class RulesAction(Action):
     def do_execute(self, context: RulesActionContext) -> Dict[str, Any]:
         # Load rules for this behavior
         rules = Rules(behavior=self.behavior, bot_paths=self.behavior.bot_paths)
+        rules_digest = rules.formatted_rules_digest()  # Compact format
         
         instructions = self.instructions.copy()
         
         # =====================================================
-        # DISPLAY CONTENT - Full format for user reference
+        # DISPLAY CONTENT - Digest goes to BOTH channels
         # Uses add_display() -> writes to .cursor/display/status.md
+        # User sees the digest printed on screen
         # =====================================================
         instructions.add_display(f"## Rules Digest: {self.behavior.name}")
         instructions.add_display(f"_{len(rules)} rules loaded_")
         instructions.add_display("")
-        instructions.add_display(rules.formatted_rules())  # FULL format with examples
+        instructions.add_display(rules_digest)  # DIGEST to display
         
         # =====================================================
-        # AI CONTEXT - Compact digest only (~60 lines vs ~2000)
+        # AI CONTEXT - Digest ALSO goes to AI instructions
         # Uses add() -> goes into AI's context window
+        # AI has rules to reference while working
         # =====================================================
         
         # Add the user's message first
@@ -218,15 +227,21 @@ class RulesAction(Action):
             instructions.add(context.message)
             instructions.add("")
         
-        # Add DIGEST to AI context (compact - name + description only)
+        # Add DIGEST to AI context (SAME digest goes to BOTH channels)
         instructions.add("")
-        instructions.add(rules.formatted_rules_digest())  # COMPACT format
+        instructions.add(rules_digest)  # DIGEST to AI context
         instructions.add("")
         instructions.add("CRITICAL: Follow the rules above when responding to the user request.")
         instructions.add("Cite specific rule names when making decisions.")
         
         return {'instructions': instructions.to_dict()}
 ```
+
+**IMPORTANT:** The same `rules_digest` goes to BOTH:
+1. `add_display()` → User sees it printed (via `.cursor/display/status.md`)
+2. `add()` → AI has it in context for guidance
+
+This ensures the user can verify which rules are being applied AND the AI has them for reference.
 
 **Flow:**
 1. User invokes: `story_bot --behavior code --action rules --message "help me refactor"`

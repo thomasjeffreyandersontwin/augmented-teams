@@ -671,11 +671,25 @@ class TestDetectTriggerWordsThroughExtension:
 # ============================================================================
 
 def given_mock_bot_created(tmp_path: Path, bot_name: str = 'test_bot'):
-    """Given: Mock bot created."""
+    """Given: Mock bot created with proper Path attributes including bot_paths."""
     from unittest.mock import Mock
     mock_bot = Mock()
     mock_bot.name = bot_name
-    mock_bot.bot_directory = tmp_path / bot_name
+    bot_dir = tmp_path / bot_name
+    bot_dir.mkdir(parents=True, exist_ok=True)
+    mock_bot.bot_directory = bot_dir
+    
+    # BaseBotCli accesses bot.bot_paths.bot_directory, so we need to mock that
+    mock_bot_paths = Mock()
+    mock_bot_paths.bot_directory = bot_dir
+    mock_bot.bot_paths = mock_bot_paths
+    
+    # Create the CLI script path that CliHelpGenerator expects
+    src_dir = bot_dir / 'src'
+    src_dir.mkdir(parents=True, exist_ok=True)
+    cli_script = src_dir / f'{bot_name}_cli.py'
+    cli_script.write_text('# Mock CLI script', encoding='utf-8')
+    
     return mock_bot
 
 
