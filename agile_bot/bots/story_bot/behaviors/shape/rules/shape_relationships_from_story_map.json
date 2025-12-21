@@ -1,0 +1,16 @@
+{
+  "description": "When shaping, identify initial relationships and responsibilities between core domain objects by walking through the story map. Shape the basic domain structure alongside stories.",
+  "context": "when shaping stories and domain",
+  "examples": [
+    {
+      "do": {
+        "description": "Extract keywords from story map and identify initial relationships",
+        "content": "Extract keywords from story titles/descriptions, identify core domain concepts, map basic relationships, document initial responsibilities"
+      },
+      "dont": {
+        "description": "Don't skip keyword identification or ignore domain concepts",
+        "content": "Skip story analysis, ignore domain terms in stories, separate story structure from domain concepts"
+      }
+    }
+  ]
+}

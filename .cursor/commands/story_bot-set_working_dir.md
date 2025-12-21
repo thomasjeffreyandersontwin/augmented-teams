@@ -1,0 +1,1 @@
+python agile_bot/bots/story_bot/src/story_bot_cli.py --action set_working_dir ${1:/path/to/workspace}${2:+ }${2:persist=true|false}

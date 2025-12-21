@@ -317,7 +317,8 @@ def given_environment_action_and_empty_parameters(bot_directory: Path, workspace
 
     """When step: Action injects questions and evidence."""
     # Call do_execute to get instructions with guardrails injected
-    result = action.do_execute({})
+    from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
+    result = action.do_execute(ClarifyActionContext())
     instructions = result.get('instructions', {})
     # Return just the guardrails portion for testing
     return {'guardrails': instructions.get('guardrails', {})}
@@ -333,8 +334,14 @@ def given_malformed_guardrails_json_exists(bot_directory: Path, behavior: str):
     return questions_file
 
 def when_action_executes_with_clarification_parameters(action: ClarifyContextAction, parameters: dict):
-    """When step: Action executes with clarification parameters."""
-    action.do_execute(parameters)
+    """When step: Action executes with clarification parameters (converts dict to typed context)."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
+    
+    context = ClarifyActionContext(
+        key_questions_answered=parameters.get('key_questions_answered'),
+        evidence_provided=parameters.get('evidence_provided')
+    )
+    action.do_execute(context)
 
 def then_clarification_json_file_exists(workspace_directory: Path, bot_paths: BotPaths = None):
     """Then step: clarification.json file exists."""
@@ -909,9 +916,10 @@ class TestLoadBaseActionConfig:
         action = when_action_config_loaded(action_name, behavior)
         
         # Then: Config loaded and properties accessible
+        # Note: when_action_config_loaded passes action_config=None, so values come from real base_actions config
         then_action_config_properties_accessible(action)
-        then_action_order_is(action, 1)
-        then_action_next_action_is(action, 'strategy')
+        then_action_order_is(action, 2)  # From real base_actions/clarify/action_config.json
+        then_action_next_action_is(action, 'decide_strategy')
 
 
 class TestAccessActions:

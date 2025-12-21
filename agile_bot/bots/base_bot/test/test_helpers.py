@@ -1221,12 +1221,14 @@ def when_action_injects(action, content='next_action'):
         return action.inject_next_action_instructions()
     elif content == 'questions_and_evidence':
         # For gather_context actions, call do_execute to get instructions with guardrails injected
-        result = action.do_execute({})
+        from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
+        result = action.do_execute(ClarifyActionContext())
         instructions = result.get('instructions', {})
         return instructions
     elif content == 'strategy_criteria_and_assumptions':
         # For strategy actions, call do_execute to get instructions with planning criteria injected
-        result = action.do_execute({})
+        from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext
+        result = action.do_execute(StrategyActionContext())
         instructions = result.get('instructions', {})
         return instructions
     else:
@@ -1249,8 +1251,8 @@ def when_scanner_scans(scanner_instance, bad_example, rule_obj, scanner_type='au
         scanner_type: Type of scanner ('test', 'code', 'story', or 'auto' to detect)
     """
     from pathlib import Path
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
+    from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
+    from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
     
     # Auto-detect scanner type if not specified
     if scanner_type == 'auto':
@@ -1540,6 +1542,7 @@ def then_action_instructions_match(action, knowledge_graph=None, test_files=None
         callbacks=ValidationCallbacks(),
         skiprule=[],
         exclude=[],
+        skip_cross_file=False,
         behavior=action.behavior,
         bot_paths=action.behavior.bot_paths,
         working_dir=action.behavior.bot_paths.workspace_directory
@@ -1590,8 +1593,8 @@ def when_scanner_scans(scanner_instance, bad_example, rule_obj, scanner_type='au
         scanner_type: Type of scanner ('auto', 'test', 'code', 'story'). 'auto' uses rule.scan() (preferred)
     """
     from pathlib import Path
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
+    from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
+    from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
     
     if scanner_type == 'auto':
         # NEW DOMAIN MODEL: Use rule.scan() instead of calling scanner directly
@@ -2368,7 +2371,7 @@ def given_scanner_spy(scanner_type='test', record=None):
         Tuple of (recorded_data_list, SpyScannerClass)
     """
     from typing import Dict, List, Any
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
+    from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
     
     if scanner_type == 'test' and record == 'knowledge_graph':
         received_knowledge_graphs = []
@@ -2563,7 +2566,7 @@ def then_scenario_outlines_match(scenario, expected_count=None, expected_names=N
         expected_count: Expected number of scenario outlines (None = don't check count)
         expected_names: Expected names (list or None = don't check names)
     """
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.story_map import Story
+    from agile_bot.bots.base_bot.src.scanners.story_map import Story
     if isinstance(scenario, Story):
         outlines = scenario.scenario_outlines
     else:
@@ -2814,8 +2817,9 @@ def when_action_executes(action_type, bot_directory, behavior, **execution_param
             raise ValueError(f"Unsupported action_type: {action_type}")
     
     if execute:
-        # Execute action
-        result = action_obj.do_execute({})
+        # Execute action with typed context
+        from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext
+        result = action_obj.do_execute(ScopeActionContext())
         instructions = result.get('instructions', result)
     else:
         # Just return merged instructions without executing

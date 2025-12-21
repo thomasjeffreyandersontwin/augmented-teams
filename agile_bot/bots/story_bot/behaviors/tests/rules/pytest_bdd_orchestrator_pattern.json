@@ -1,5 +1,5 @@
 {
-  "description": "MASTER RULE: Use pytest with orchestrator pattern for BDD-style tests. NO FEATURE FILES. Test classes contain orchestrator methods (under 20 lines) that show Given-When-Then flow by calling helper functions. Production code follows clean code principles: single responsibility, explicit dependencies, small functions. Tests drive production code through RED-GREEN-REFACTOR cycle.",
+  "description": "MASTER RULE: Use pytest with orchestrator pattern for story-based tests. NO FEATURE FILES. Test classes contain orchestrator methods (under 20 lines) that show Given-When-Then flow by calling helper functions. Tests read like stories. Production code follows clean code principles: single responsibility, explicit dependencies, small functions. Tests drive production code through RED-GREEN-REFACTOR cycle.",
   "principles": [
     "1. Orchestrator Pattern: Test methods show flow, delegate to helpers",
     "2. Given-When-Then Structure: Clear sections with comments in each test",

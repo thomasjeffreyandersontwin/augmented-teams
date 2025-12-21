@@ -1,4 +1,4 @@
-{"name": "validate_rules", "workflow": true, "order": 5, "next_action": "render_output", 
+{"name": "validate_rules", "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance", "workflow": true, "order": 5, "next_action": "render_output", 
     "instructions": [
       "**MANDATORY: Before validating any content, you MUST load and review the project's context files:**",
       "1. Load `{project_area}/docs/stories/clarification.json` - Contains key questions and evidence (generated file)",

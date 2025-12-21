@@ -1,0 +1,75 @@
+{
+  "description": "Use typed objects (dataclasses, classes) instead of dictionaries for structured data. Dict[str, Any] and untyped lists hide the structure of data, prevent IDE autocomplete, and allow runtime errors that could be caught at compile time. Define explicit types for action contexts, configuration, and any structured data passed between components.",
+  "do": {
+    "examples": [
+      {
+        "description": "Use typed dataclasses/classes for structured parameters",
+        "content": [
+          "Define explicit types for action parameters:",
+          "",
+          "@dataclass",
+          "class ValidateActionContext:",
+          "    scope: Optional[ScopeConfig] = None",
+          "    background: bool = False",
+          "    skip_cross_file: bool = False",
+          "",
+          "def do_execute(self, context: ValidateActionContext) -> ValidationResult:",
+          "    if context.background:  # IDE autocomplete works!",
+          "        ...",
+          "",
+          "Benefits:",
+          "- IDE autocomplete and type checking",
+          "- Compile-time error detection",
+          "- Self-documenting code structure",
+          "- Easier refactoring with type safety",
+          "",
+          "Where to use typed objects:",
+          "- Action parameters (ActionContext subclasses)",
+          "- Configuration objects",
+          "- API request/response objects",
+          "- Any data with known structure"
+        ]
+      }
+    ]
+  },
+  "dont": {
+    "examples": [
+      {
+        "description": "Don't use Dict[str, Any] for structured data",
+        "content": [
+          "Avoid generic dictionaries when structure is known:",
+          "",
+          "# WRONG - hides structure, no type safety",
+          "def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:",
+          "    scope = parameters.get('scope')  # What keys does scope have?",
+          "    background = parameters.get('background', False)  # Easy to typo",
+          "",
+          "# WRONG - spreads kwargs obscures what's accepted",
+          "def execute(self, **kwargs):",
+          "    scope = kwargs.get('scope')",
+          "",
+          "# WRONG - List[Any] hides element types",
+          "def process(self, items: List[Any]) -> List[Any]:",
+          "    ...",
+          "",
+          "Anti-patterns to avoid:",
+          "- parameters: Dict[str, Any] for action methods",
+          "- Return type Dict[str, Any] when structure is known",
+          "- parameters.get('key') scattered throughout code",
+          "- **kwargs when parameter set is known",
+          "- Passing dicts between components when structure is fixed"
+        ]
+      }
+    ]
+  },
+  "scanner": "agile_bot.bots.base_bot.src.scanners.type_safety_scanner.TypeSafetyScanner",
+  "violation_messages": {
+    "dict_any_parameter": "Line {line}: Method '{method}' uses Dict[str, Any] parameter '{param}'. Define a typed dataclass/class instead.",
+    "dict_any_return": "Line {line}: Method '{method}' returns Dict[str, Any]. Define a typed result class instead.",
+    "parameters_get_pattern": "Line {line}: Found 'parameters.get()' pattern. Use typed context object with direct attribute access.",
+    "kwargs_abuse": "Line {line}: Method '{method}' uses **kwargs when parameter set is known. Define explicit typed parameters.",
+    "list_any_type": "Line {line}: Found List[Any] type hint. Specify the element type (e.g., List[str], List[ValidationResult])."
+  }
+}
+
+

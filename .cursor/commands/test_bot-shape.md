@@ -1,0 +1,1 @@
+python test_bot_cli.py --behavior shape --action ${1:}${2:+ }${2:}

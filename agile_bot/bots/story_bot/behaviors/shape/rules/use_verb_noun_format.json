@@ -1,0 +1,49 @@
+{
+  "description": "Use verb-noun format consistently for all story elements (epics, features, stories, scenarios). Maintain consistency across hierarchy levels.",
+  "context": "when shaping stories",
+  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner",
+  "do": {
+    "examples": [
+      {
+        "description": "Use verb-noun format at all levels",
+        "content": [
+          "Epic: Manage Orders, Process Payment",
+          "Feature/Sub-Epic: Place Order, Validate Payment",
+          "Story: User places order, System validates payment",
+          "Scenario: When user submits form, then system processes request"
+        ]
+      },
+      {
+        "description": "Use base verb forms (infinitive/imperative), not gerunds or third-person singular",
+        "content": [
+          "Correct: Select Tokens, Group Minions, Add To Mob",
+          "Wrong: Selects Tokens (3rd person), Selecting Tokens (gerund), Grouping Minions (gerund)"
+        ]
+      },
+      {
+        "description": "Maintain consistency across hierarchy",
+        "content": [
+          "Epic: Manage Orders → Feature: Place Order → Story: Customer places order"
+        ]
+      }
+    ]
+  },
+  "dont": {
+    "examples": [
+      {
+        "description": "Don't use noun-only or capability-based names",
+        "content": [
+          "Order Management, Payment Processing, Character System"
+        ]
+      },
+      {
+        "description": "Don't mix formats between hierarchy levels",
+        "content": [
+          "Epic: Order Management → Feature: Place Order (inconsistent)"
+        ]
+      }
+    ]
+  }
+}
+
+
