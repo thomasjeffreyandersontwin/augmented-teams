@@ -35,6 +35,12 @@
           "Validate that all source files, classes, and functions are properly mapped to story-graph.json",
           "MANDATORY: Discover and pass code_files parameter - CodeScanner requires explicit file paths to scan for violations"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

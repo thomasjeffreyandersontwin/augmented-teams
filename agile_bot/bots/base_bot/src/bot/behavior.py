@@ -97,7 +97,7 @@ class Behavior:
     @property
     def rules(self):
         if self._rules is None:
-            from agile_bot.bots.base_bot.src.actions.validate.rules import Rules
+            from agile_bot.bots.base_bot.src.actions.rules.rules import Rules
             self._rules = Rules(behavior=self, bot_paths=self.bot_paths)
         return self._rules
 

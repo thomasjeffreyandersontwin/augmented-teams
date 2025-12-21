@@ -42,14 +42,17 @@ class ContextDataInjector:
         docs_path = bot_paths.documentation_path
         context_dir = workspace_directory / docs_path / 'context'
         
-        # Create context directory if it doesn't exist
-        if not context_dir.exists():  # scanner ignore
-            context_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Created context directory: {context_dir}")
+        # If context directory doesn't exist, don't add context_files key
+        if not context_dir.exists():
+            return []
         
         context_files = []
         for file_path in context_dir.iterdir():
             if file_path.is_file():
                 context_files.append(file_path.name)
-        instructions['context_files'] = context_files
-        return ['', '**ORIGINAL CONTEXT FILES AVAILABLE:**', f"The following original context files are available in the docs/context/ folder: {', '.join(context_files)}", 'These files contain the original input files, prompts, and source material provided at the start of the project.', 'You can read these files directly from the docs/context/ folder when you need additional context or to reference the original requirements.', "Common files include 'input.txt' (original input), 'initial-context.md' (initial context), and other source materials."]
+        
+        # Only add context_files key if there are files
+        if context_files:
+            instructions['context_files'] = context_files
+            return ['', '**ORIGINAL CONTEXT FILES AVAILABLE:**', f"The following original context files are available in the docs/context/ folder: {', '.join(context_files)}", 'These files contain the original input files, prompts, and source material provided at the start of the project.', 'You can read these files directly from the docs/context/ folder when you need additional context or to reference the original requirements.', "Common files include 'input.txt' (original input), 'initial-context.md' (initial context), and other source materials."]
+        return []

@@ -17,7 +17,9 @@ class BackgroundValidationHandler:
 
     def execute_background(self, context: 'ValidateActionContext', track_completion_fn) -> Dict[str, Any]:
         total_files = self._get_file_count(context)
-        status_path = self._get_status_path()
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        status_path = self._get_status_path(timestamp)
+        context.timestamp = timestamp
         self._start_validation_thread(context, track_completion_fn, status_path)
         status_path_relative = status_path.relative_to(self.behavior.bot_paths.workspace_directory)
         return self._build_background_response(status_path_relative, total_files)
@@ -30,8 +32,7 @@ class BackgroundValidationHandler:
             logging.getLogger(__name__).warning(f'Could not pre-compute file count: {e}')
             return 0
 
-    def _get_status_path(self) -> Path:
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    def _get_status_path(self, timestamp: str) -> Path:
         docs_path = self.behavior.bot_paths.documentation_path
         reports_dir = self.behavior.bot_paths.workspace_directory / docs_path / 'reports'
         reports_dir.mkdir(parents=True, exist_ok=True)

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from .resources.scan import Scan
     from .resources.scope import Scope
     from .resources.violation import Violation
-    from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
+    from agile_bot.bots.base_bot.src.actions.rules.rule import Rule
     from .resources.block import Block
     from .resources.file import File
 
@@ -112,7 +112,8 @@ class Scanner(ABC):
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
         all_test_files: Optional[List['Path']] = None,
-        all_code_files: Optional[List['Path']] = None
+        all_code_files: Optional[List['Path']] = None,
+        status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan across all files for cross-file violations (second pass).
         

@@ -25,9 +25,8 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action va
   # Scope all: (default)
   # Scope epic: --scope "{'type': 'epic', 'value': ['Epic Name']}"
   # Scope story: --scope "{'type': 'story', 'value': ['Story Name']}"
-  # Scope files: --scope "{'type': 'files', 'value': ['path/to/file'], 'exclude': ['*.test.js'], 'skiprule': ['rule_name']}"
-  # Force full scan: --force-full
-  # Skip cross-file scan: --skip-cross-file
+  # Scope files: --scope "{'type': 'files', 'value': ['path/to/file'], 'exclude': ['*.test.js']}"
+  # Skip rules: --skiprule rule_name
 
   **NOTE:** For code behavior, validation runs in background.
   **AI MUST:** Poll status file every 10 seconds and report progress until complete.
@@ -38,18 +37,18 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action re
   # Scope epic: --scope "{'type': 'epic', 'value': ['Epic Name']}"
   # Scope story: --scope "{'type': 'story', 'value': ['Story Name']}"
 
+### rules - Inject rules into AI context
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action rules
+  # Optional: --message "your request here"
+  # Non-workflow action: Can be invoked anytime
+  # Loads behavior rules and user message into AI context
+
 ## Common Patterns:
   # Work on specific epic:
   python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action build --scope "{'type': 'epic', 'value': ['Epic Name']}"
 
-  # Validate specific files with exclusions and skip rules:
-  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate --scope "{'type': 'files', 'value': ['path/to/file.py'], 'exclude': ['test_*.py'], 'skiprule': ['eliminate_duplication']}"
-
-  # Full validation scan (all files, all rules):
-  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate --force-full
-
-  # Quick validation (skip cross-file duplication check):
-  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate --skip-cross-file
+  # Validate with exclusions:
+  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate --skiprule rule_to_skip
 
   # Work on multiple stories:
-  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action build --scope "{'type': 'story', 'value': ['Story 1', 'Story 2']}"
+  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action build --scope "{' type': 'story', 'value': ['Story 1', 'Story 2']}"

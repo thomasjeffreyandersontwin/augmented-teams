@@ -120,6 +120,62 @@ Generate production source code from domain model and story specifications
 /story_bot-code
 ```
 
+## story_bot-code-rules
+
+Load code behavior rules into AI context for guidance on writing clean, maintainable production code
+
+```
+/story_bot-code-rules
+```
+
+## story_bot-discovery-rules
+
+Load discovery behavior rules into AI context for guidance on story decomposition and flow
+
+```
+/story_bot-discovery-rules
+```
+
+## story_bot-exploration-rules
+
+Load exploration behavior rules into AI context for guidance on defining acceptance criteria
+
+```
+/story_bot-exploration-rules
+```
+
+## story_bot-prioritization-rules
+
+Load prioritization behavior rules into AI context for guidance on organizing delivery increments
+
+```
+/story_bot-prioritization-rules
+```
+
+## story_bot-scenarios-rules
+
+Load scenarios behavior rules into AI context for guidance on writing clear, testable scenarios
+
+```
+/story_bot-scenarios-rules
+```
+
+## story_bot-shape-rules
+
+Load shape behavior rules into AI context for guidance on story mapping and domain modeling
+
+```
+/story_bot-shape-rules
+```
+
+## story_bot-tests-rules
+
+Load tests behavior rules into AI context for guidance on writing effective, well-structured tests
+
+```
+/story_bot-tests-rules
+```
+
 ---
 
 ## Action Help
@@ -148,7 +204,7 @@ Decide approach by presenting assumptions and decision criteria, then capturing 
 
 ### build
 
-Build knowledge graph and artifacts based on gathered context and approach decisions
+build action
 
 ```
 /story_bot-<behavior> build [parameters]
@@ -165,7 +221,9 @@ Validate knowledge graph and/or artifacts against behavior-specific rules, check
 ```
 /story_bot-<behavior> validate [parameters]
 
---scope <dict>:   Scope: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>}
+--scope <dict>:   Scope: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>, 'skiprule': <rule_names>}
+--all-files:   Scan all files instead of only changed files (flag: presence = scan all)
+--skip-cross-file:   Skip cross-file duplicate checking (flag: presence = skip cross-file scan)
 ```
 
 ### render

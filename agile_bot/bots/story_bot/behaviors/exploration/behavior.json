@@ -48,6 +48,12 @@
         "instructions": [
           "exploration: render feature documents with AC"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

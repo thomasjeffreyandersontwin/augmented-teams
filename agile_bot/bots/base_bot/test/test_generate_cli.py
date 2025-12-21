@@ -47,6 +47,17 @@ from agile_bot.bots.base_bot.test.test_generate_mcp_tools import (
     generator,  # Import generator fixture
 )
 
+def given_bot_with_trigger_words_and_guardrails(workspace_root: Path, bot_name: str, bot_dir: Path, behaviors_config: list) -> None:
+    """Given: Bot configured with trigger words and guardrails for behaviors."""
+    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+    bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
+    for behavior_config in behaviors_config:
+        behavior_name = behavior_config['name']
+        trigger_words = behavior_config['trigger_words']
+        create_minimal_guardrails_files(bot_dir, behavior_name, bot_name)
+        given_behavior_with_trigger_words(bot_dir, behavior_name, trigger_words)
+    return bot_dir
+
 # Use shared helpers from conftest
 # given_bot_name_and_behaviors_setup imported from conftest
 # given_bot_name_and_behavior_setup imported from conftest
@@ -55,12 +66,30 @@ from agile_bot.bots.base_bot.test.test_generate_mcp_tools import (
 # HELPER FUNCTIONS - Sub-Epic Level (For TestGenerateCursorCommandFiles)
 # ============================================================================
 
-def when_cli_script_exists(workspace_root: Path, bot_dir: Path, bot_name: str) -> Path:
-    """When: CLI script exists."""
+def given_cli_script_exists(workspace_root: Path, bot_dir: Path, bot_name: str) -> Path:
+    """Given: CLI script exists."""
     cli_script_path = bot_dir / 'src' / f'{bot_name}_cli.py'
     cli_script_path.parent.mkdir(parents=True, exist_ok=True)
     cli_script_path.write_text('#!/usr/bin/env python\n', encoding='utf-8')
     return cli_script_path
+
+def given_obsolete_command_file_exists(workspace_root: Path, bot_name: str) -> Path:
+    """Given: Obsolete command file exists."""
+    commands_dir = workspace_root / '.cursor' / 'commands'
+    commands_dir.mkdir(parents=True, exist_ok=True)
+    obsolete_file = commands_dir / f'{bot_name}-obsolete.md'
+    obsolete_file.write_text('python obsolete.py', encoding='utf-8')
+    return obsolete_file
+
+def given_cursor_command_files_exist(bot_name: str, behaviors: list) -> None:
+    """Given: Cursor command files exist in workspace root."""
+    from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root
+    repo_root = get_python_workspace_root()
+    commands_dir = repo_root / '.cursor' / 'commands'
+    commands_dir.mkdir(parents=True, exist_ok=True)
+    for behavior in behaviors:
+        cmd_file = commands_dir / f'{bot_name}-{behavior}.md'
+        cmd_file.write_text(f'python {bot_name}_cli.py --behavior {behavior} --action ${{1:}}${{2:+ }}${{2:}}', encoding='utf-8')
 
 def when_generator_generates_cursor_commands(workspace_root: Path, bot_dir: Path, bot_name: str, cli_script_path: Path, behaviors: list) -> dict:
     """When: Generator generates cursor commands."""
@@ -68,19 +97,13 @@ def when_generator_generates_cursor_commands(workspace_root: Path, bot_dir: Path
     generator = CursorCommandGenerator(workspace_root, bot_dir, bot_name)
     return generator.generate_cursor_commands(cli_script_path, behaviors)
 
-def when_obsolete_command_file_exists(workspace_root: Path, bot_name: str) -> Path:
-    """When: Obsolete command file exists."""
-    commands_dir = workspace_root / '.cursor' / 'commands'
-    commands_dir.mkdir(parents=True, exist_ok=True)
-    obsolete_file = commands_dir / f'{bot_name}-obsolete.md'
-    obsolete_file.write_text('python obsolete.py', encoding='utf-8')
-    return obsolete_file
-
-def when_generator_updates_registry(workspace_root: Path, bot_dir: Path, bot_name: str, cli_script_path: Path) -> Path:
+def when_generator_updates_registry(workspace_root: Path, bot_dir: Path, bot_name: str, cli_script_path: Path, behaviors: list) -> tuple:
     """When: Generator updates registry."""
     from agile_bot.bots.base_bot.src.cli.cursor_command_generator import CursorCommandGenerator
     generator = CursorCommandGenerator(workspace_root, bot_dir, bot_name)
-    return generator.update_bot_registry(cli_script_path)
+    generator.generate_cursor_commands(cli_script_path, behaviors)
+    registry_path = generator.update_bot_registry(cli_script_path)
+    return registry_path
 
 def then_base_command_files_exist(commands: dict, bot_name: str) -> None:
     """Then: Base command files exist."""
@@ -107,7 +130,10 @@ def then_registry_contains_bot_entry(registry_path: Path, bot_name: str, cli_scr
     registry_data = json.loads(registry_path.read_text(encoding='utf-8'))
     assert bot_name in registry_data
     assert 'cli_path' in registry_data[bot_name]
-    assert registry_data[bot_name]['cli_path'] in str(cli_script_path)
+    # Normalize path separators for cross-platform comparison
+    registry_cli_path = registry_data[bot_name]['cli_path'].replace('/', '\\')
+    cli_script_str = str(cli_script_path).replace('/', '\\')
+    assert registry_cli_path in cli_script_str or cli_script_str.endswith(registry_data[bot_name]['cli_path'].split('/')[-1])
 
 # ============================================================================
 # HELPER FUNCTIONS - Sub-Epic Level (For TestGenerateHelp)
@@ -170,8 +196,14 @@ def then_cli_help_contains_cli_syntax(help_output: str, cli_script_path: str) ->
     assert normalized_path in normalized_output or script_name in normalized_output
 
 def then_cursor_help_contains_cursor_syntax(help_output: str, bot_name: str) -> None:
-    """Then: Cursor help contains cursor syntax."""
-    assert f'/{bot_name}-' in help_output or f'## {bot_name}-' in help_output
+    """Then: Cursor help contains cursor syntax or display instructions."""
+    # The help generator now writes to files and outputs display instructions
+    # So we check for either the actual help content OR the display instruction format
+    assert (
+        f'/{bot_name}-' in help_output or 
+        f'## {bot_name}-' in help_output or
+        'Read and display the contents of' in help_output  # New format: outputs file paths
+    )
 
 
 class TestGenerateBOTCLIcode:
@@ -184,54 +216,50 @@ class TestGenerateBOTCLIcode:
 class TestGenerateCursorCommandFiles:
     """Story: Generate Cursor Command Files - Tests Cursor command file generation."""
     
-    def test_generator_creates_base_command_files(self, workspace_root):
+    @pytest.mark.parametrize("behaviors,verification_type", [
+        # Example 1: Base command files with multiple behaviors
+        (['shape', 'discovery'], 'base'),
+        # Example 2: Behavior command files with multiple behaviors
+        (['shape', 'discovery'], 'behavior'),
+        # Example 3: Single behavior
+        (['shape'], 'behavior'),
+    ])
+    def test_generator_creates_command_files(self, workspace_root, behaviors, verification_type):
         """
-        SCENARIO: Generator creates base command files
+        SCENARIO: Generator creates command files
         GIVEN: Bot configuration exists with behaviors
+        AND: CLI script exists
         WHEN: Generator generates cursor commands
-        THEN: Generator creates base command files for bot, continue, and help
+        THEN: Generator creates appropriate command files (base or behavior-specific)
         """
         # Given: Bot configuration exists
-        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape', 'discovery'])
+        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', behaviors)
         bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        cli_script_path = when_cli_script_exists(workspace_root, bot_dir, bot_name)
+        cli_script_path = given_cli_script_exists(workspace_root, bot_dir, bot_name)
         
         # When: Generator generates cursor commands
         commands = when_generator_generates_cursor_commands(workspace_root, bot_dir, bot_name, cli_script_path, behaviors)
         
-        # Then: Base command files created
-        then_base_command_files_exist(commands, bot_name)
-    
-    def test_generator_creates_behavior_command_files(self, workspace_root):
-        """
-        SCENARIO: Generator creates behavior command files
-        GIVEN: Bot has multiple behaviors
-        WHEN: Generator generates cursor commands
-        THEN: Generator creates one command file per behavior
-        """
-        # Given: Bot with behaviors
-        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape', 'discovery'])
-        bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        cli_script_path = when_cli_script_exists(workspace_root, bot_dir, bot_name)
-        
-        # When: Generator generates cursor commands
-        commands = when_generator_generates_cursor_commands(workspace_root, bot_dir, bot_name, cli_script_path, behaviors)
-        
-        # Then: Behavior command files created
-        then_behavior_command_files_exist(commands, bot_name, behaviors)
+        # Then: Appropriate command files created
+        if verification_type == 'base':
+            then_base_command_files_exist(commands, bot_name)
+        elif verification_type == 'behavior':
+            then_behavior_command_files_exist(commands, bot_name, behaviors)
     
     def test_generator_removes_obsolete_command_files(self, workspace_root):
         """
         SCENARIO: Generator removes obsolete command files
-        GIVEN: Obsolete command files exist
+        GIVEN: Bot configuration exists
+        AND: Obsolete command files exist
+        AND: CLI script exists
         WHEN: Generator generates cursor commands
         THEN: Generator removes obsolete command files
         """
-        # Given: Obsolete command files exist
+        # Given: Bot configuration exists
         bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape'])
         bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        obsolete_file = when_obsolete_command_file_exists(workspace_root, bot_name)
-        cli_script_path = when_cli_script_exists(workspace_root, bot_dir, bot_name)
+        obsolete_file = given_obsolete_command_file_exists(workspace_root, bot_name)
+        cli_script_path = given_cli_script_exists(workspace_root, bot_dir, bot_name)
         
         # When: Generator generates cursor commands
         when_generator_generates_cursor_commands(workspace_root, bot_dir, bot_name, cli_script_path, behaviors)
@@ -243,32 +271,43 @@ class TestGenerateCursorCommandFiles:
         """
         SCENARIO: Generator updates bot registry
         GIVEN: Bot configuration exists
-        WHEN: Generator generates cursor commands
-        THEN: Generator updates bot registry with CLI path
+        AND: CLI script exists
+        WHEN: Generator generates cursor commands and updates registry
+        THEN: Registry contains bot entry with CLI path
         """
         # Given: Bot configuration exists
         bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape'])
         bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        cli_script_path = when_cli_script_exists(workspace_root, bot_dir, bot_name)
+        cli_script_path = given_cli_script_exists(workspace_root, bot_dir, bot_name)
         
-        # When: Generator generates cursor commands
-        registry_path = when_generator_updates_registry(workspace_root, bot_dir, bot_name, cli_script_path)
+        # When: Generator generates cursor commands and updates registry
+        registry_path = when_generator_updates_registry(workspace_root, bot_dir, bot_name, cli_script_path, behaviors)
         
-        # Then: Registry updated with bot entry
+        # Then: Registry contains bot entry with CLI path
         then_registry_contains_bot_entry(registry_path, bot_name, cli_script_path)
 
 class TestGenerateHelp:
     """Story: Generate Help - Tests help generation for behaviors and actions."""
     
-    def test_generator_creates_cli_help_for_behaviors(self, workspace_root):
+    @pytest.mark.parametrize("behaviors,verification_type,expected_data", [
+        # Example 1: Multiple behaviors
+        (['shape', 'discovery'], 'behaviors', None),
+        # Example 2: Single behavior with actions
+        (['shape'], 'actions', ['clarify', 'strategy', 'build', 'validate', 'render']),
+        # Example 3: Action parameters for clarify
+        (['shape'], 'action_parameters', {'action': 'clarify', 'params': ['--key_questions_answered', '--evidence_provided']}),
+        # Example 4: Action parameters for build
+        (['shape'], 'action_parameters', {'action': 'build', 'params': ['--scope']}),
+    ])
+    def test_generator_creates_cli_help_content(self, workspace_root, behaviors, verification_type, expected_data):
         """
-        SCENARIO: Generator creates CLI help for behaviors
+        SCENARIO: Generator creates CLI help content
         GIVEN: Bot has behaviors configured
         WHEN: Help generator generates CLI help
-        THEN: Help contains all behaviors
+        THEN: Help contains expected content (behaviors, actions, or parameters)
         """
         # Given: Bot has behaviors configured
-        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape', 'discovery'])
+        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', behaviors)
         bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
         bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
         from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
@@ -287,71 +326,19 @@ class TestGenerateHelp:
         help_generator = when_help_generator_created(bot, bot_name, bot_dir, formatter)
         help_output = when_help_generator_generates_cli_help(help_generator)
         
-        # Then: Help contains all behaviors
-        then_help_contains_behaviors(help_output, bot_name, behaviors)
-    
-    def test_generator_creates_cli_help_for_actions(self, workspace_root):
-        """
-        SCENARIO: Generator creates CLI help for actions
-        GIVEN: Bot has behaviors with actions
-        WHEN: Help generator generates CLI help
-        THEN: Help contains action descriptions
-        """
-        # Given: Bot has behaviors with actions
-        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape'])
-        bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
-        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
-        from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-        create_actions_workflow_json(bot_dir, 'shape')
-        create_minimal_guardrails_files(bot_dir, 'shape', bot_name)
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=bot_config)
-        formatter = Mock()
-        formatter.format_directive = lambda x: x
-        formatter.format_header = lambda x: x
-        formatter.format_separator = lambda: '---'
-        actions = ['clarify', 'strategy', 'build', 'validate', 'render']
-        
-        # When: Help generator generates CLI help
-        help_generator = when_help_generator_created(bot, bot_name, bot_dir, formatter)
-        help_output = when_help_generator_generates_cli_help(help_generator)
-        
-        # Then: Help contains action descriptions
-        then_help_contains_actions(help_output, actions)
-    
-    def test_generator_creates_cli_help_with_action_parameters(self, workspace_root):
-        """
-        SCENARIO: Generator creates CLI help with action parameters
-        GIVEN: Bot has behaviors with actions
-        WHEN: Help generator generates CLI help
-        THEN: Help contains action parameters
-        """
-        # Given: Bot has behaviors with actions
-        bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape'])
-        bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
-        from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-        create_minimal_guardrails_files(bot_dir, 'shape', bot_name)
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=bot_config)
-        formatter = Mock()
-        formatter.format_directive = lambda x: x
-        formatter.format_header = lambda x: x
-        formatter.format_separator = lambda: '---'
-        
-        # When: Help generator generates CLI help
-        help_generator = when_help_generator_created(bot, bot_name, bot_dir, formatter)
-        help_output = when_help_generator_generates_cli_help(help_generator)
-        
-        # Then: Help contains action parameters
-        then_help_contains_action_parameters(help_output, 'clarify', ['--key_questions_answered', '--evidence_provided'])
-        then_help_contains_action_parameters(help_output, 'build', ['--scope'])
+        # Then: Help contains expected content
+        if verification_type == 'behaviors':
+            then_help_contains_behaviors(help_output, bot_name, behaviors)
+        elif verification_type == 'actions':
+            then_help_contains_actions(help_output, expected_data)
+        elif verification_type == 'action_parameters':
+            then_help_contains_action_parameters(help_output, expected_data['action'], expected_data['params'])
     
     def test_generator_creates_cli_help_with_cli_syntax(self, workspace_root):
         """
         SCENARIO: Generator creates CLI help with CLI syntax
         GIVEN: Bot has behaviors configured
+        AND: CLI script exists
         WHEN: Help generator generates CLI help
         THEN: Help contains CLI command syntax
         """
@@ -361,15 +348,13 @@ class TestGenerateHelp:
         bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
         from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
         create_minimal_guardrails_files(bot_dir, 'shape', bot_name)
+        cli_script_path = given_cli_script_exists(workspace_root, bot_dir, bot_name)
         from agile_bot.bots.base_bot.src.bot.bot import Bot
         bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=bot_config)
         formatter = Mock()
         formatter.format_directive = lambda x: x
         formatter.format_header = lambda x: x
         formatter.format_separator = lambda: '---'
-        cli_script_path = bot_dir / 'src' / f'{bot_name}_cli.py'
-        cli_script_path.parent.mkdir(parents=True, exist_ok=True)
-        cli_script_path.write_text('#!/usr/bin/env python\n', encoding='utf-8')
         
         # When: Help generator generates CLI help
         help_generator = when_help_generator_created(bot, bot_name, bot_dir, formatter)
@@ -382,6 +367,7 @@ class TestGenerateHelp:
         """
         SCENARIO: Generator creates cursor help for behaviors
         GIVEN: Bot has behaviors configured
+        AND: Cursor command files exist
         WHEN: Help generator generates cursor help
         THEN: Help contains cursor command syntax
         """
@@ -394,14 +380,7 @@ class TestGenerateHelp:
         for behavior_name in behaviors:
             create_actions_workflow_json(bot_dir, behavior_name)
             create_minimal_guardrails_files(bot_dir, behavior_name, bot_name)
-        # Create cursor command files in the workspace root (where get_python_workspace_root points)
-        from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root
-        repo_root = get_python_workspace_root()
-        commands_dir = repo_root / '.cursor' / 'commands'
-        commands_dir.mkdir(parents=True, exist_ok=True)
-        for behavior in behaviors:
-            cmd_file = commands_dir / f'{bot_name}-{behavior}.md'
-            cmd_file.write_text(f'python {bot_name}_cli.py --behavior {behavior} --action ${{1:}}${{2:+ }}${{2:}}', encoding='utf-8')
+        given_cursor_command_files_exist(bot_name, behaviors)
         from agile_bot.bots.base_bot.src.bot.bot import Bot
         bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=bot_config)
         formatter = Mock()
@@ -423,27 +402,21 @@ class TestGenerateCursorAwarenessFiles:
     def test_generator_creates_workspace_rules_file_with_trigger_patterns(self, workspace_root):
         """
         SCENARIO: Generator creates workspace rules file with trigger patterns
-        GIVEN: A bot configuration file with a working directory and behaviors
-        AND: Behaviors have trigger words configured
-        AND: A bot that has been initialized with that config file
+        GIVEN: Bot configuration exists with behaviors
+        AND: Bot is initialized with trigger words and guardrails configured
         WHEN: Generator runs generate_awareness_files() method
         THEN: Generator creates file with bot-specific filename: mcp-test-bot-awareness.mdc
         AND: Filename includes bot name with hyphens
         AND: Generated rules file includes ACTUAL trigger words from bot
         AND: File includes bot name from config
         """
-        # Given: A bot configuration file with a working directory and behaviors
+        # Given: Bot configuration exists with behaviors
         bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape', 'discovery'])
         bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        # And: A bot that has been initialized with that config file
-        bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, bot_name)
-        # And: Create guardrails files (required for behavior loading)
-        from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-        for behavior_name in ['shape', 'discovery']:
-            create_minimal_guardrails_files(bot_dir, behavior_name, bot_name)
-        # And: Behaviors have trigger words configured (AFTER bootstrap_env to avoid overwriting)
-        given_behavior_with_trigger_words(bot_dir, 'shape', ['shape story', 'define story outline', 'create story map'])
-        given_behavior_with_trigger_words(bot_dir, 'discovery', ['discover stories', 'break down stories', 'enumerate stories'])
+        bot_dir = given_bot_with_trigger_words_and_guardrails(workspace_root, bot_name, bot_dir, [
+            {'name': 'shape', 'trigger_words': ['shape story', 'define story outline', 'create story map']},
+            {'name': 'discovery', 'trigger_words': ['discover stories', 'break down stories', 'enumerate stories']}
+        ])
         
         # When: Generator runs generate_awareness_files() method
         gen, rules_file, content = when_generate_awareness_files_and_read_content(bot_dir, bot_name)

@@ -48,6 +48,12 @@
         "instructions": [
           "specification_scenarios: render story documents with scenarios"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

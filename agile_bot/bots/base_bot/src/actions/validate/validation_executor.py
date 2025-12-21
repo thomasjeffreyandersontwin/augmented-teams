@@ -2,7 +2,7 @@ import logging
 import traceback
 from pathlib import Path
 from typing import Dict, Any, List, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.actions.validate.rules import Rules, ValidationContext, ValidationCallbacks
+from agile_bot.bots.base_bot.src.actions.rules.rules import Rules, ValidationContext, ValidationCallbacks
 from agile_bot.bots.base_bot.src.actions.validate.validation_report_writer import ValidationReportWriter, StreamingValidationReportWriter
 from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
 from agile_bot.bots.base_bot.src.utils import read_json_file
@@ -21,7 +21,8 @@ class ValidationExecutor:
         try:
             validation_context = ValidationContext.from_action_context(behavior=self.behavior, context=context)
             logger.info(f'Files to validate: {sum((len(f) for f in validation_context.files.values()))} files')
-            streaming_writer = self._setup_streaming_writer(validation_context)
+            timestamp = getattr(context, 'timestamp', None)
+            streaming_writer = self._setup_streaming_writer(validation_context, timestamp)
             result = self._inject_validation_instructions(validation_context, streaming_writer)
             self._finalize_reports(result, validation_context, streaming_writer)
             return result
@@ -29,10 +30,11 @@ class ValidationExecutor:
             self._log_error(e, context, logger)
             raise
 
-    def _setup_streaming_writer(self, validation_context: ValidationContext) -> StreamingValidationReportWriter:
-        streaming_writer = StreamingValidationReportWriter(self.behavior.name, self.behavior.bot_paths)
+    def _setup_streaming_writer(self, validation_context: ValidationContext, timestamp: str = None) -> StreamingValidationReportWriter:
+        streaming_writer = StreamingValidationReportWriter(self.behavior.name, self.behavior.bot_paths, timestamp)
         streaming_writer.start(validation_context.files)
         validation_context.callbacks = ValidationCallbacks(on_scanner_start=streaming_writer.on_scanner_start, on_scanner_complete=streaming_writer.on_scanner_complete, on_file_scanned=streaming_writer.on_file_scanned)
+        validation_context.status_writer = streaming_writer
         return streaming_writer
 
     def _finalize_reports(self, result: Dict[str, Any], validation_context: ValidationContext, streaming_writer: StreamingValidationReportWriter) -> None:

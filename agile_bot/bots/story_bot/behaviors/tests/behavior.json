@@ -52,6 +52,12 @@
           "specification_tests: validate test code AND domain model refinements",
           "Validate that all test files, classes, and methods are properly mapped to story-graph.json"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

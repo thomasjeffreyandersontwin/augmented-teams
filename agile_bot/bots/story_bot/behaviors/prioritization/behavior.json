@@ -48,6 +48,12 @@
         "instructions": [
           "prioritization: render increment backlog"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

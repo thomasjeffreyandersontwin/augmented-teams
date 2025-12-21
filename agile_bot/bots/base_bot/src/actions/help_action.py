@@ -102,6 +102,10 @@ class HelpAction(Action):
         if cmd_name == f'{bot_name}-set_working_dir':
             return "Set Working Dir"
         behavior_name = cmd_name.replace(f'{bot_name}-', '')
+        # Try to extract description from cursor command markdown file first
+        description = self._extract_description_from_command_file(cmd_name)
+        if description:
+            return description
         return self._get_behavior_description(behavior_name)
     
     def _get_behavior_description(self, behavior_name: str) -> str:
@@ -113,7 +117,32 @@ class HelpAction(Action):
                     return description
         except Exception:
             logger.debug(f'Failed to get description for behavior {behavior_name}')
+        
+        # Try to extract description from cursor command markdown file
+        description = self._extract_description_from_command_file(behavior_name)
+        if description:
+            return description
+        
         return f'{behavior_name} behavior'
+    
+    def _extract_description_from_command_file(self, cmd_name: str) -> str:
+        """Extract description from the cursor command markdown file."""
+        try:
+            repo_root = get_python_workspace_root()
+            commands_dir = repo_root / '.cursor' / 'commands'
+            cmd_file = commands_dir / f'{cmd_name}.md'
+            if cmd_file.exists():
+                content = cmd_file.read_text(encoding='utf-8')
+                lines = content.strip().split('\n')
+                if len(lines) >= 2:
+                    # Third line (index 2) should be the description (after title and blank line)
+                    desc_line = lines[2].strip()
+                    # Skip if it's empty or a markdown header
+                    if desc_line and not desc_line.startswith('#'):
+                        return desc_line
+        except Exception:
+            logger.debug(f'Failed to extract description from command file for {cmd_name}')
+        return None
     
     def _add_action_help(self, instructions):
         base_actions_dir = get_base_actions_directory()
@@ -132,7 +161,7 @@ class HelpAction(Action):
             ],
             'validate': [
                 ('--scope <dict>', "Scope: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>, 'skiprule': <rule_names>}"),
-                ('--force-full', 'Force full scan of all files, ignoring timestamps (flag: presence = full scan)'),
+                ('--all-files', 'Scan all files instead of only changed files (flag: presence = scan all)'),
                 ('--skip-cross-file', 'Skip cross-file duplicate checking (flag: presence = skip cross-file scan)')
             ],
             'render': [

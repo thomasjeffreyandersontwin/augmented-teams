@@ -53,6 +53,12 @@
         "instructions": [
           "shape: render story map documents AND domain model documents"
         ]
+      },
+      {
+        "name": "rules",
+        "instructions": [
+          "Display digested rules for this behavior as AI context"
+        ]
       }
     ]
   },

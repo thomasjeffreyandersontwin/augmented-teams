@@ -12,7 +12,10 @@ class RenderSpec:
         self._config_data = config_data.copy()
         self._render_folder = render_folder
         self._bot_paths = bot_paths
-        self._config_data['file'] = str(config_file.relative_to(bot_paths.bot_directory))
+        if config_file is not None:
+            self._config_data['file'] = str(config_file.relative_to(bot_paths.bot_directory))
+        elif 'file' not in self._config_data:
+            self._config_data['file'] = 'unknown'
         self._input = config_data.get('input')
         self._output = config_data.get('output')
         self._instructions = config_data.get('instructions', [])

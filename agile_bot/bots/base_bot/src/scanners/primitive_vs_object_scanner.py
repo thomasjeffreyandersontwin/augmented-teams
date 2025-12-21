@@ -163,4 +163,24 @@ class PrimitiveVsObjectScanner(CodeScanner):
                 return True
         
         return False
+    
+    def _create_primitive_violation(
+        self,
+        rule_obj: Any,
+        file_path: Path,
+        func_node: ast.FunctionDef,
+        arg: Optional[ast.arg],
+        type_name: Optional[str],
+        message: str
+    ) -> Dict[str, Any]:
+        """Create a violation dict for primitive usage."""
+        line_number = func_node.lineno if func_node else None
+        
+        return Violation(
+            rule=rule_obj,
+            violation_message=message,
+            line_number=line_number,
+            location=str(file_path),
+            severity='warning'
+        ).to_dict()
 

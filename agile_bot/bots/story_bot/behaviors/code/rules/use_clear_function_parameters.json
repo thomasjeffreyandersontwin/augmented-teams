@@ -1,5 +1,5 @@
 {
-  "description": "Function signatures should be simple and intention-revealing. Prefer 0-2 parameters; use objects for more complex needs.",
+  "description": "CRITICAL: Function signatures must be simple and intention-revealing. Prefer 0-2 parameters. NEVER pass Dict[str, Any] or List[str] for complex data - create typed objects instead. Examples: parameters dict → ParametersObject, files dict → FilesCollection, exclude list → ExcludePatterns.",
   "examples": [
     {
       "do": {

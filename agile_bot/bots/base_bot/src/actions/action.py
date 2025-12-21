@@ -111,13 +111,19 @@ class Action:
         
         # Add context instructions (clarification, strategy, context files) at the beginning
         context_instructions = []
+        # Use shared dict to capture injected data
+        injected_data = {}
         try:
-            context_instructions.extend(self._inject_clarification_data({}))
-            context_instructions.extend(self._inject_strategy_data({}))
+            context_instructions.extend(self._inject_clarification_data(injected_data))
+            context_instructions.extend(self._inject_strategy_data(injected_data))
         except FileNotFoundError as e:
             logger.debug(f'Clarification or strategy data files not found: {e}')
             raise
-        context_instructions.extend(self._inject_context_files({}))
+        context_instructions.extend(self._inject_context_files(injected_data))
+        
+        # Add injected data (clarification, strategy) to instructions
+        for key, value in injected_data.items():
+            inst._data[key] = value
         
         # Add context instructions to the beginning
         for line in reversed(context_instructions):

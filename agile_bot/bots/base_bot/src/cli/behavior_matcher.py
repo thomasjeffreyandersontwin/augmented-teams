@@ -46,54 +46,42 @@ class BehaviorMatcher:
         return False
 
     def _load_behavior_triggers(self) -> BehaviorTriggers:
-        if not self.bot_name:
-            return BehaviorTriggers()
         behaviors_dir = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'behaviors'
-        if not behaviors_dir.exists():
-            return BehaviorTriggers()
         behavior_triggers = {}
         for behavior_dir in behaviors_dir.iterdir():
-            if not behavior_dir.is_dir() or behavior_dir.name.startswith('_'):
-                continue
-            behavior_name = self._extract_behavior_name(behavior_dir.name)
-            patterns = self._load_triggers_from_behavior_file(behavior_dir / 'behavior.json')
-            if patterns:
-                behavior_triggers[behavior_name] = patterns
+            if behavior_dir.is_dir() and not behavior_dir.name.startswith('_'):
+                behavior_name = self._extract_behavior_name(behavior_dir.name)
+                patterns = self._load_triggers_from_behavior_file(behavior_dir / 'behavior.json')
+                if patterns:
+                    behavior_triggers[behavior_name] = patterns
         return BehaviorTriggers(triggers=behavior_triggers)
 
     def _load_action_triggers(self) -> ActionTriggers:
-        if not self.bot_name:
-            return ActionTriggers()
         behaviors_dir = self.bot_paths.python_workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'behaviors'
-        if not behaviors_dir.exists():
-            return ActionTriggers()
         action_triggers = {}
         for behavior_dir in behaviors_dir.iterdir():
-            if not behavior_dir.is_dir() or behavior_dir.name.startswith('_'):
-                continue
-            behavior_name = self._extract_behavior_name(behavior_dir.name)
-            behavior_action_triggers = self._load_action_triggers_for_behavior(behavior_dir)
-            if behavior_action_triggers:
-                action_triggers[behavior_name] = behavior_action_triggers
+            if behavior_dir.is_dir() and not behavior_dir.name.startswith('_'):
+                behavior_name = self._extract_behavior_name(behavior_dir.name)
+                behavior_action_triggers = self._load_action_triggers_for_behavior(behavior_dir)
+                if behavior_action_triggers:
+                    action_triggers[behavior_name] = behavior_action_triggers
         return ActionTriggers(triggers=action_triggers)
 
     def _load_action_triggers_for_behavior(self, behavior_dir: Path) -> Dict[str, List[str]]:
         triggers = {}
         for action_dir in behavior_dir.iterdir():
-            if not action_dir.is_dir() or action_dir.name.startswith('_'):
-                continue
-            trigger_file = action_dir / 'trigger_words.json'
-            if not trigger_file.exists():
-                continue
-            action_name = self._extract_action_name(action_dir.name)
-            patterns = self._load_patterns_from_file(trigger_file)
-            if patterns:
-                triggers[action_name] = patterns
+            if action_dir.is_dir() and not action_dir.name.startswith('_'):
+                trigger_file = action_dir / 'trigger_words.json'
+                try:
+                    action_name = self._extract_action_name(action_dir.name)
+                    patterns = self._load_patterns_from_file(trigger_file)
+                    if patterns:
+                        triggers[action_name] = patterns
+                except FileNotFoundError:
+                    pass
         return triggers
 
     def _load_json_from_file(self, file_path: Path) -> dict:
-        if not file_path.exists():
-            return {}
         try:
             content = file_path.read_text(encoding='utf-8')
             return json.loads(content)

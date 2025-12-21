@@ -256,7 +256,8 @@ class CodeScanner(Scanner):
         test_files: Optional[List[Path]] = None,
         code_files: Optional[List[Path]] = None,
         all_test_files: Optional[List[Path]] = None,
-        all_code_files: Optional[List[Path]] = None
+        all_code_files: Optional[List[Path]] = None,
+        status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """Scan across all code files for cross-file violations.
         
@@ -268,6 +269,9 @@ class CodeScanner(Scanner):
             rule_obj: Rule object reference
             test_files: List of test file paths to analyze together
             code_files: List of code file paths to analyze together
+            all_test_files: All test files in the codebase (for context)
+            all_code_files: All code files in the codebase (for context)
+            status_writer: Optional status writer for progress reporting
             
         Returns:
             List of violation dictionaries for cross-file issues
