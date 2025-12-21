@@ -1,59 +1,56 @@
 {
-  "description": "CRITICAL: Code must hide calculation timing. Properties hide when calculations occur—they may be computed on-demand, cached, pre-computed, or loaded from storage. The caller shouldn't know or care when the value was calculated.",
+  "description": "CRITICAL: Code must hide calculations. Properties hide logic that occurs—it may be computed on-demand, cached, pre-computed, or loaded from storage. The caller shouldn't know or care when the values are calculated / determined.",
   "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.calculation_timing_code_scanner.CalculationTimingCodeScanner",
   "examples": [
     {
       "do": {
-        "description": "Use properties that hide calculation timing",
+        "description": "Hide the inner workings of business logic and functions",
         "content": [
-          "Use @property for computed values",
-          "Properties hide when calculations occur (on-demand, cached, pre-computed)",
-          "Callers shouldn't know when value was calculated",
+          "Expose only what the caller needs to know; hide internal business logic details",
+          "Keep interfaces simple and focused on business concepts, not implementation details",
+          "Callers should not know or care how results are produced, only that they are correct",
           "",
-          "Correct Examples (timing hidden):",
-          "class Portfolio:",
-          "    @property",
-          "    def total_value(self) -> Money:",
-          "        # Could be computed on-demand, cached, pre-computed, or loaded from DB",
-          "        # Caller doesn't know or care when it was calculated",
-          "        if not hasattr(self, '_total_value'):",
-          "            self._total_value = sum(",
-          "                position.market_value",
-          "                for position in self.holdings.get_many_positions()",
-          "            )",
-          "        return self._total_value",
+          "Correct Examples (logic hidden):",
+          "class OrderService:",
+          "    def approve(self, user: User) -> ApprovalResult:",
+          "        # Logic for validation, third-party checks, notifications are all hidden from caller",
+          "        # Caller only cares about result, not how it is produced",
+          "        ...",
           "",
-          "    # OR it could be pre-computed and stored:",
-          "    # @property",
-          "    # def total_value(self) -> Money:",
-          "    #     return self._cached_total_value  # Calculated two weeks ago? Caller doesn't know"
+          "class ShoppingCart:",
+          "    def total(self) -> Money:",
+          "        # Returns total cost; discounts, taxes, and special offers are handled internally",
+          "        ...",
+          "",
+          "# External API hides if value is loaded, fetched, calculated, etc.",
+          "order_service.status  # May involve complex rule checks or state machines, but all hidden"
         ]
       },
       "dont": {
-        "description": "Don't expose calculation timing in method names",
+        "description": "Don't reveal business logic, strategies, or implementation decisions in public methods",
         "content": [
-          "Don't use method names like 'calculate_X', 'compute_X'",
-          "Don't use 'get_cached_X', 'get_precomputed_X'",
-          "Don't reveal when or how calculations happen",
+          "Don't use method names or signatures that describe how results are produced (e.g., 'validate_and_apply_discounts()', 'fetch_and_cache_data()')",
+          "Don't leak the steps or strategies used within your public interface",
+          "Don't require the caller to understand internal processes or logic branches",
           "",
-          "Wrong Examples (timing exposed):",
-          "class Portfolio:",
-          "    def calculate_total_value(self, holdings: List[Position]) -> Money:",
-          "        # Name reveals it's calculated NOW",
-          "        return sum(position.market_value for position in holdings)",
+          "Wrong Examples (logic exposed):",
+          "class ShoppingCart:",
+          "    def calculate_total_with_discounts_and_tax(self) -> Money:",
+          "        # Caller is aware of and must think about how the value is arrived at",
+          "        ...",
           "",
-          "    def get_cached_total_value(self) -> Money:",
-          "        # Name reveals it's cached (timing exposed)",
-          "        return self._cached_value",
+          "class UserAccount:",
+          "    def fetch_and_merge_external_profiles(self):",
+          "        # Implementation strategy exposed to caller",
+          "        ...",
           "",
-          "Timing Exposure Indicators (REFACTOR):",
-          "- Methods starting with 'calculate', 'compute', 'derive'",
-          "- Methods mentioning 'cached', 'pre-computed', 'on-demand' in name",
-          "- Methods that reveal implementation timing"
+          "Logic Exposure Indicators (REFACTOR):",
+          "- Methods naming specific logic or strategies ('validate_and_x', 'process_then_y', 'with_cache')",
+          "- Interfaces that require caller to invoke internal workflow steps directly",
+          "- Public methods or attributes reflecting the order of internal operations"
         ]
       }
     }
   ]
 }
-
 

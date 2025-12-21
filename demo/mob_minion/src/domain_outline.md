@@ -1,28 +1,34 @@
-# Domain Outline: Mob Minion
+ActorTemplate
+    Define minion type: MinionMember,FoundryActor
 
-## Domain Concepts
+BoardToken
+    Represent minion visually: MinionMember,FoundryScene
+
+CombatAction
+    Apply to target: CombatTarget,MinionMember
+
+CombatTarget
+    Receive mob attack: BoardToken,CombatAction
+
+MinionMember
+    Participate in mob: Mob
+    Perform individual action: BoardToken,CombatAction
 
 Mob
-    Groups minions into coordinated unit: Minion
-    Tracks member minions: Minion
-
-Minion
-    Individual token/actor in Foundry VTT: 
-    Can belong to one mob: Mob
-
-Strategy
-    Determines target selection algorithm: Target
-    Defines mob combat behavior: Mob
-
-Target
-    Entity selected for mob attack: Strategy
+    Group minions together: MinionMember
+    Execute collective actions: CombatAction,TargetingStrategy
 
 MobTemplate
-    Stores reusable mob configuration: Mob, Strategy
-    Spawns new mob instances: Mob
+    Define mob composition: Mob,ActorTemplate
+    Spawn mob instances: Mob,FoundryScene
 
-## Instructions
-- Use clear, concise domain concepts and responsibilities.
-- List each responsibility as: {responsibility}: {collaborator},{collaborator},...
-- Only include meaningful relationships; avoid unnecessary boilerplate or filler.
-- Ensure each domain concept is followed by its set of responsibilities.
+MovementPath
+    Represent path waypoints: PathfindingStrategy,FoundryScene
+    Validate path accessibility: Mob,BoardToken
+
+PathfindingStrategy
+    Get movement path: Mob,FoundryScene
+    Identify obstacles: FoundryScene,BoardToken
+
+TargetingStrategy
+    Identify targets by criteria: CombatTarget,Mob

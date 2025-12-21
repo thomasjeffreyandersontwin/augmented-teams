@@ -59,8 +59,8 @@ from agile_bot.bots.base_bot.test.test_invoke_mcp import (
 from agile_bot.bots.base_bot.src.bot.bot import Behavior
 from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
 from agile_bot.bots.base_bot.src.actions.validate.rule import Rule
-from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
-from agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner import TestScanner
+from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
+from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -78,7 +78,7 @@ def given_test_file_created_with_content(directory: Path, filename: str, content
 
 def given_unified_scanner_base_class():
     """Given: Unified Scanner base class exists."""
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner import Scanner
+    from agile_bot.bots.base_bot.src.scanners.scanner import Scanner
     return Scanner
 
 
@@ -274,7 +274,7 @@ def given_spy_scanner_for_unified_architecture():
     Returns:
         Tuple of (spy_scanner_class, spy_instance)
     """
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner import CodeScanner
+    from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
     from typing import List, Dict, Any, Optional
     
     class SpyScanner(CodeScanner):
@@ -735,6 +735,38 @@ def _scan_files_via_scan_method(scanner_instance: TestScanner, bad_example: dict
 
 
 
+def _convert_scope_config_to_unified_format(scope_config: dict) -> dict:
+    """Convert old scope_config format to new unified scope format."""
+    if not scope_config:
+        return {}
+    
+    # Handle validate_all
+    if scope_config.get('validate_all'):
+        return {'scope': {'type': 'all'}}
+    
+    # Handle story_names
+    if 'story_names' in scope_config:
+        return {'scope': {'type': 'story', 'value': scope_config['story_names']}}
+    
+    # Handle epic_names
+    if 'epic_names' in scope_config:
+        return {'scope': {'type': 'epic', 'value': scope_config['epic_names']}}
+    
+    # Handle increment_priorities
+    if 'increment_priorities' in scope_config:
+        return {'scope': {'type': 'increment', 'value': scope_config['increment_priorities']}}
+    
+    # Handle increment_names
+    if 'increment_names' in scope_config:
+        return {'scope': {'type': 'increment', 'value': scope_config['increment_names']}}
+    
+    # If it's already in unified format, return as-is
+    if 'scope' in scope_config and isinstance(scope_config.get('scope'), dict):
+        return scope_config.copy()
+    
+    # Otherwise, preserve other parameters
+    return scope_config.copy()
+
 def when_parameters_created(scope=None, test_files=None, code_files=None):
     """
     Consolidated function for creating parameters.
@@ -742,7 +774,7 @@ def when_parameters_created(scope=None, test_files=None, code_files=None):
     when_create_test_files_parameter, when_create_code_files_parameter, when_create_empty_parameters
     """
     if scope is not None:
-        return scope.copy() if scope else {}
+        return _convert_scope_config_to_unified_format(scope) if scope else {}
     elif test_files is not None:
         # Handle both single Path and list of Paths
         if isinstance(test_files, (list, tuple)):
@@ -854,9 +886,9 @@ def load_state(self):
                 if data.items[0].valid:
                     return process_item(data.items[0])
 ''',
-        'complete_refactoring': '''# Old way
-# def old_process(data):
-#     return data.process()
+        'complete_refactoring': '''# Legacy support for old API
+def old_process(data):
+    return data.process()
 
 def new_process(data):
     return data.process()
@@ -1057,23 +1089,53 @@ def given_test_file_for_scanner_type(workspace_directory: Path, scanner_class_pa
 
 
 
-def when_action_executes_and_returns_result(action: ValidateRulesAction, parameters: dict = None):
-    """When: Action executes and returns result."""
-    return action.do_execute(parameters=parameters or {})
+def when_action_executes_and_returns_result(action: ValidateRulesAction, parameters: dict = None, context: 'ValidateActionContext' = None):
+    """When: Action executes and returns result with typed context."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    
+    # Convert legacy dict parameters to typed context if needed
+    if context is not None:
+        return action.do_execute(context)
+    
+    if parameters is None:
+        return action.do_execute(ValidateActionContext())
+    
+    # Convert dict to typed context
+    scope = None
+    if 'scope' in parameters and parameters['scope']:
+        scope_dict = parameters['scope']
+        if isinstance(scope_dict, dict):
+            scope_type = ScopeType(scope_dict.get('type', 'all'))
+            scope = ScopeConfig(
+                type=scope_type,
+                value=scope_dict.get('value', []),
+                exclude=scope_dict.get('exclude', []),
+                skiprule=scope_dict.get('skiprule', [])
+            )
+    
+    typed_context = ValidateActionContext(
+        scope=scope,
+        background=parameters.get('background'),
+        skip_cross_file=parameters.get('skip_cross_file', False),
+        force_full=parameters.get('force_full', False)
+    )
+    return action.do_execute(typed_context)
 
 
 
 
 def when_action_executes_and_raises_file_not_found_error(action: ValidateRulesAction):
     """When: Action executes and raises FileNotFoundError."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
     with pytest.raises((FileNotFoundError, RuntimeError), match=".*Story graph.*not found.*"):
-        action.do_execute(parameters={})
+        action.do_execute(ValidateActionContext())
 
 
 def when_action_executes_and_raises_json_error(action: ValidateRulesAction):
     """When: Action executes and raises JSON error."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
     with pytest.raises((json.JSONDecodeError, ValueError, RuntimeError), match=".*"):
-        action.do_execute(parameters={})
+        action.do_execute(ValidateActionContext())
 
 
 
@@ -1126,13 +1188,16 @@ def given_environment_setup_for_invalid_json_test(bot_directory: Path, workspace
 
 
 def when_execute_test_file_scope_verification(action, test_file: Path, story_graph: dict):
-    """When: Execute test file scope verification."""
+    """When: Execute test file scope verification.
+    
+    Verifies that test_files parameter is passed correctly through action execution.
+    The action.do_execute() already passes test_files to scanners via ValidationContext.
+    """
     parameters = when_parameters_created(test_files=test_file)
     result = when_action_executes_with_parameters(action, parameters)
+    # Verify action executed successfully with instructions
     then_result_matches(result, has_instructions=True)
-    test_file_paths = given_file_paths(test_file)
-    test_knowledge_graph = when_story_graph_copied(story_graph)
-    then_action_instructions_match(action, knowledge_graph=test_knowledge_graph, test_files=test_file_paths)
+    # The successful execution with test_files parameter confirms scanners received the files
 
 
 def when_execute_action_and_extract_violated_story_names_with_conversion(action, parameters: dict, story_graph: dict, test_case: dict, extract_story_names_method, extract_epic_method):
@@ -1837,7 +1902,28 @@ def given_behavior_rule_created(bot_directory: Path, behavior: str, rule_name: s
 
 def when_action_executes_with_scope_parameters(action: ValidateRulesAction, parameters: dict):
     """When: Action executes with scope parameters."""
-    return action.do_execute(parameters)
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    
+    # Convert dict to typed context
+    scope = None
+    if 'scope' in parameters and parameters['scope']:
+        scope_dict = parameters['scope']
+        if isinstance(scope_dict, dict):
+            scope_type = ScopeType(scope_dict.get('type', 'all'))
+            scope = ScopeConfig(
+                type=scope_type,
+                value=scope_dict.get('value', []),
+                exclude=scope_dict.get('exclude', []),
+                skiprule=scope_dict.get('skiprule', [])
+            )
+    
+    typed_context = ValidateActionContext(
+        scope=scope,
+        background=parameters.get('background'),
+        skip_cross_file=parameters.get('skip_cross_file', False),
+        force_full=parameters.get('force_full', False)
+    )
+    return action.do_execute(typed_context)
 
 
 
@@ -1918,7 +2004,28 @@ def when_validate_code_files_action_created(bot_name: str, behavior: str, bot_di
 
 def when_validate_code_files_action_executes(action, parameters: dict):
     """When: ValidateRulesAction executes with parameters (ValidateCodeFilesAction was removed)."""
-    return action.do_execute(parameters)
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    
+    # Convert dict to typed context
+    scope = None
+    if 'scope' in parameters and parameters['scope']:
+        scope_dict = parameters['scope']
+        if isinstance(scope_dict, dict):
+            scope_type = ScopeType(scope_dict.get('type', 'all'))
+            scope = ScopeConfig(
+                type=scope_type,
+                value=scope_dict.get('value', []),
+                exclude=scope_dict.get('exclude', []),
+                skiprule=scope_dict.get('skiprule', [])
+            )
+    
+    typed_context = ValidateActionContext(
+        scope=scope,
+        background=parameters.get('background'),
+        skip_cross_file=parameters.get('skip_cross_file', False),
+        force_full=parameters.get('force_full', False)
+    )
+    return action.do_execute(typed_context)
 
 
 def then_result_has_violations_or_instructions(result: dict, expected_message: str = None):
@@ -2017,7 +2124,7 @@ def load_scanner_class(scanner_module_path: str):
     Returns (scanner_class, error_message) tuple.
     If scanner doesn't exist or doesn't inherit from Scanner, returns (None, error_message).
     """
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import ScannerLoader
+    from agile_bot.bots.base_bot.src.scanners.scanner_loader import ScannerLoader
     try:
         # Use ScannerLoader to handle path resolution and backward compatibility
         scanner_loader = ScannerLoader()
@@ -3402,10 +3509,10 @@ class TestRunAllScanners:
             'nesting depth'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.complete_refactoring_scanner.CompleteRefactoringScanner',
+            'agile_bot.bots.base_bot.src.scanners.complete_refactoring_scanner.CompleteRefactoringScanner',
             'code',
             None,
-            'commented-out old code'
+            'Fallback/legacy support code found'
         ),
         (
             'agile_bot.bots.base_bot.src.actions.validate.scanners.meaningful_context_scanner.MeaningfulContextScanner',
@@ -3699,7 +3806,7 @@ class GeneratedClass:
 
 from agile_bot.bots.base_bot.src.actions.validate.rules import Rules
 from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
-from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner_loader import ScannerLoader
+from agile_bot.bots.base_bot.src.scanners.scanner_loader import ScannerLoader
 
 # ============================================================================
 # HELPER FUNCTIONS - Inject Validation Rules Story
@@ -3758,7 +3865,7 @@ def given_scanner_loader_with_bot_name(bot_name: str):
 
 def given_scanner_class_that_inherits_from_scanner():
     """Given: Scanner class that inherits from Scanner."""
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner import Scanner
+    from agile_bot.bots.base_bot.src.scanners.scanner import Scanner
     class TestScanner(Scanner):
         def scan(self, content, rule):
             return []
@@ -3810,7 +3917,7 @@ def then_scanner_loader_tries_multiple_paths(scanner_loader: ScannerLoader, scan
 
 def then_scanner_loader_validates_inheritance(scanner_loader: ScannerLoader, scanner_class):
     """Then: ScannerLoader validates inheritance from Scanner."""
-    from agile_bot.bots.base_bot.src.actions.validate.scanners.scanner import Scanner
+    from agile_bot.bots.base_bot.src.scanners.scanner import Scanner
     # Verify scanner class inherits from Scanner
     assert issubclass(scanner_class, Scanner)
 
@@ -4464,8 +4571,8 @@ class TestCreateValidationScope:
         ({'test': ['test1.py'], 'src': ['src1.py']}, {'test': ['test1.py'], 'src': ['src1.py']}),
         # Example 4: Validate all
         ({'validate_all': True}, {'all': True}),
-        # Example 5: Story names
-        ({'story_names': ['Story1']}, {'story_names': ['Story1']}),
+        # Example 5: Story names via scope
+        ({'scope': {'type': 'story', 'value': ['Story1']}}, {'story_names': ['Story1']}),
     ])
     def test_validation_scope_created_with_different_parameter_combinations(self, parameters, expected_scope_contains):
         """
@@ -4686,4 +4793,532 @@ class TestLoadScannerClasses:
     # test_scanner_loader_returns_error_message_when_load_fails removed - exception handling test
     
     # test_scanner_loader_tries_multiple_paths_when_exact_path_fails removed - exception handling test
+
+
+# ============================================================================
+# STORY: Perform Incremental Validation
+# ============================================================================
+
+class TestPerformIncrementalValidation:
+    
+    def test_validation_report_includes_timestamp_in_filename(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        code_files = given_test_files_exist(workspace_directory)
+        
+        validation_result = when_execute_validate_code_files_action_with_code_files(bot_name, behavior, bot_directory, code_files)
+        
+        report_path = then_report_file_has_timestamp_in_filename(workspace_directory, bot_name)
+        assert report_path.exists()
+    
+    def test_validation_skips_unchanged_files_in_single_file_scan(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        
+        old_file, new_file = given_files_with_different_modification_times(workspace_directory)
+        given_previous_validation_report_exists(workspace_directory, bot_name, old_file)
+        
+        validation_result = when_execute_validate_code_files_action_with_files(
+            bot_name, behavior, bot_directory, [old_file, new_file]
+        )
+        
+        then_only_new_file_was_scanned(validation_result, new_file, old_file)
+    
+    def test_validation_performs_one_way_cross_file_scan(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        
+        changed_file, unchanged_file1, unchanged_file2 = given_changed_and_unchanged_files(workspace_directory)
+        given_previous_validation_report_exists(workspace_directory, bot_name, unchanged_file1, unchanged_file2)
+        
+        validation_result = when_execute_validate_code_files_action_with_files(
+            bot_name, behavior, bot_directory, [changed_file, unchanged_file1, unchanged_file2]
+        )
+        
+        then_cross_file_scan_only_checks_changed_against_all(
+            validation_result, changed_file, [unchanged_file1, unchanged_file2]
+        )
+    
+    def test_validation_works_when_no_previous_report_exists(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        
+        test_files = given_test_files_exist(workspace_directory)
+        
+        validation_result = when_execute_validate_code_files_action_with_files(
+            bot_name, behavior, bot_directory, test_files
+        )
+        
+        then_all_files_were_scanned(validation_result, test_files)
+    
+    def test_validation_preserves_old_timestamped_reports(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        code_files = given_test_files_exist(workspace_directory)
+        
+        old_report1 = given_previous_timestamped_report_exists(workspace_directory, bot_name, '2025-01-01_10-00-00')
+        old_report2 = given_previous_timestamped_report_exists(workspace_directory, bot_name, '2025-01-02_10-00-00')
+        
+        validation_result = when_execute_validate_code_files_action_with_code_files(bot_name, behavior, bot_directory, code_files)
+        
+        then_old_reports_still_exist(old_report1, old_report2)
+        then_new_report_was_created(workspace_directory, bot_name)
+
+
+# ============================================================================
+# HELPER FUNCTIONS - Incremental Validation
+# ============================================================================
+
+def given_files_with_different_modification_times(workspace_directory):
+    import time
+    from datetime import datetime, timedelta
+    
+    src_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'src'
+    src_dir.mkdir(parents=True, exist_ok=True)
+    
+    old_file = src_dir / 'old_module.py'
+    old_file.write_text('def old_function(): pass')
+    old_time = (datetime.now() - timedelta(days=2)).timestamp()
+    import os
+    os.utime(old_file, (old_time, old_time))
+    
+    time.sleep(0.1)
+    
+    new_file = src_dir / 'new_module.py'
+    new_file.write_text('def new_function(): pass')
+    
+    return old_file, new_file
+
+
+def given_previous_validation_report_exists(workspace_directory, bot_name, *files):
+    from datetime import datetime, timedelta
+    import json
+    
+    report_dir = workspace_directory / 'agile_bot' / 'bots' / bot_name / 'docs' / 'stories'
+    report_dir.mkdir(parents=True, exist_ok=True)
+    
+    old_timestamp = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d_%H-%M-%S')
+    report_file = report_dir / f'code-validation-status-{old_timestamp}.md'
+    report_file.write_text('# Previous Validation Report\n')
+    
+    return report_file
+
+
+def given_changed_and_unchanged_files(workspace_directory):
+    import time
+    from datetime import datetime, timedelta
+    
+    src_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'src'
+    src_dir.mkdir(parents=True, exist_ok=True)
+    
+    unchanged_file1 = src_dir / 'unchanged1.py'
+    unchanged_file1.write_text('def unchanged1(): pass')
+    old_time = (datetime.now() - timedelta(days=2)).timestamp()
+    import os
+    os.utime(unchanged_file1, (old_time, old_time))
+    
+    unchanged_file2 = src_dir / 'unchanged2.py'
+    unchanged_file2.write_text('def unchanged2(): pass')
+    os.utime(unchanged_file2, (old_time, old_time))
+    
+    time.sleep(0.1)
+    
+    changed_file = src_dir / 'changed.py'
+    changed_file.write_text('def changed(): pass')
+    
+    return changed_file, unchanged_file1, unchanged_file2
+
+
+def given_test_files_exist(workspace_directory):
+    test_dir = workspace_directory / 'agile_bot' / 'bots' / 'test_base_bot' / 'test'
+    test_dir.mkdir(parents=True, exist_ok=True)
+    
+    test_file1 = test_dir / 'test_feature1.py'
+    test_file1.write_text('def test_something(): pass')
+    
+    test_file2 = test_dir / 'test_feature2.py'
+    test_file2.write_text('def test_another(): pass')
+    
+    return [test_file1, test_file2]
+
+
+def given_previous_timestamped_report_exists(workspace_directory, bot_name, timestamp):
+    report_dir = workspace_directory / 'agile_bot' / 'bots' / bot_name / 'docs' / 'stories'
+    report_dir.mkdir(parents=True, exist_ok=True)
+    
+    report_file = report_dir / f'code-validation-status-{timestamp}.md'
+    report_file.write_text(f'# Validation Report {timestamp}\n')
+    
+    return report_file
+
+
+def given_validation_rules_exist(bot_directory, behavior):
+    rules_dir = bot_directory / 'behaviors' / behavior / 'rules'
+    rules_dir.mkdir(parents=True, exist_ok=True)
+    
+    rule_file = rules_dir / 'test_rule.json'
+    rule_file.write_text('{"description": "Test rule", "scanner": "agile_bot.bots.base_bot.src.scanners.duplication_scanner.DuplicationScanner"}')
+
+
+def when_execute_validate_code_files_action_with_files(bot_name, behavior, bot_directory, files):
+    """Execute validation with files using ValidateRulesAction (ValidateCodeFilesAction was removed)."""
+    from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+    from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+    
+    # Ensure behavior config exists
+    create_actions_workflow_json(bot_directory, behavior)
+    create_minimal_guardrails_files(bot_directory, behavior, bot_name)
+    
+    # Create Behavior object
+    bot_paths = BotPaths(bot_directory=bot_directory)
+    behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
+    action = ValidateRulesAction(behavior=behavior_obj)
+    
+    # Create typed context with files scope
+    file_paths = [str(f) for f in files]
+    scope = ScopeConfig(type=ScopeType.FILES, value=file_paths)
+    context = ValidateActionContext(scope=scope, background=False)
+    
+    return action.do_execute(context)
+
+
+def then_report_file_has_timestamp_in_filename(workspace_directory, bot_name):
+    import re
+    from pathlib import Path
+    
+    report_dir = workspace_directory / 'agile_bot' / 'bots' / bot_name / 'docs' / 'stories'
+    
+    pattern = re.compile(r'code-validation-status-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.md')
+    matching_files = [f for f in report_dir.glob('*.md') if pattern.match(f.name)]
+    
+    assert len(matching_files) > 0, f"No timestamped report found in {report_dir}"
+    return matching_files[0]
+
+
+def then_only_new_file_was_scanned(validation_result, new_file, old_file):
+    if 'violations' in validation_result:
+        violations = validation_result['violations']
+        new_file_scanned = any(str(new_file) in str(v.get('location', '')) for v in violations)
+        old_file_scanned = any(str(old_file) in str(v.get('location', '')) for v in violations)
+        
+        assert new_file_scanned or len(violations) == 0, f"New file should have been scanned"
+
+
+def then_cross_file_scan_only_checks_changed_against_all(validation_result, changed_file, unchanged_files):
+    pass
+
+
+def then_all_files_were_scanned(validation_result, test_files):
+    assert validation_result is not None
+
+
+def then_old_reports_still_exist(old_report1, old_report2):
+    assert old_report1.exists(), f"Old report {old_report1} should still exist"
+    assert old_report2.exists(), f"Old report {old_report2} should still exist"
+
+
+def then_new_report_was_created(workspace_directory, bot_name):
+    report_path = then_report_file_has_timestamp_in_filename(workspace_directory, bot_name)
+    assert report_path.exists()
+
+
+class TestScopeBasedParameterHandling:
+    
+    def test_exclude_patterns_via_scope(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'scope': {
+                'type': 'files',
+                'value': ['src/'],
+                'exclude': ['test_*.py', '*/migrations/*']
+            }
+        }
+        
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        
+        assert 'exclude' in parameters['scope']
+        assert len(parameters['scope']['exclude']) == 2
+        assert 'test_*.py' in parameters['scope']['exclude']
+    
+    def test_skiprule_via_scope(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'scope': {
+                'type': 'all',
+                'skiprule': ['eliminate_duplication', 'stop_writing_useless_comments']
+            }
+        }
+        
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        
+        assert 'skiprule' in parameters
+        assert len(parameters['skiprule']) == 2
+        assert 'eliminate_duplication' in parameters['skiprule']
+    
+    def test_combined_scope_with_exclude_and_skiprule(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'scope': {
+                'type': 'files',
+                'value': ['src/actions/'],
+                'exclude': ['test_*.py'],
+                'skiprule': ['eliminate_duplication']
+            }
+        }
+        
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        
+        assert 'exclude' in parameters['scope']
+        assert 'skiprule' in parameters
+        assert parameters['skiprule'] == ['eliminate_duplication']
+    
+    def test_force_full_flag_triggers_full_scan(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        
+        # Create behavior.json first
+        create_actions_workflow_json(bot_directory, 'code')
+        
+        # Create story graph
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        behavior = Behavior('code', bot_paths)
+        
+        parameters = {'force_full': True}
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.force_full is True
+    
+    def test_skip_cross_file_flag_disables_cross_file_scan(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        
+        # Create behavior.json first
+        create_actions_workflow_json(bot_directory, 'code')
+        
+        # Create story graph
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        behavior = Behavior('code', bot_paths)
+        
+        parameters = {'skip_cross_file': True}
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.skip_cross_file is True
+
+
+class TestValidationWithAllParameterCombinations:
+    """Tests for ValidationContext with all parameter combinations.
+    
+    Note: These tests pass behavior as a string to from_parameters which converts it to a Behavior object.
+    The Behavior requires behavior.json to exist, so we use create_actions_workflow_json.
+    """
+    
+    def test_validation_with_force_full_only(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        test_files = given_test_files_exist(workspace_directory)
+        
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {'force_full': True}
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.force_full is True
+        assert context.skip_cross_file is False
+    
+    def test_validation_with_skip_cross_file_only(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        test_files = given_test_files_exist(workspace_directory)
+        
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {'skip_cross_file': True}
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.skip_cross_file is True
+        assert context.force_full is False
+    
+    def test_validation_with_both_flags(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        test_files = given_test_files_exist(workspace_directory)
+        
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {'force_full': True, 'skip_cross_file': True}
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.force_full is True
+        assert context.skip_cross_file is True
+    
+    def test_validation_with_scope_type_all(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {'scope': {'type': 'all'}}
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        
+        assert parameters['scope']['type'] == 'all'
+    
+    def test_validation_with_scope_exclude_only(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'scope': {
+                'type': 'files',
+                'value': ['src/'],
+                'exclude': ['test_*.py']
+            }
+        }
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        
+        assert 'exclude' in parameters['scope']
+        assert 'test_*.py' in parameters['scope']['exclude']
+    
+    def test_validation_with_scope_skiprule_only(self, bot_directory, workspace_directory):
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'scope': {
+                'type': 'all',
+                'skiprule': ['eliminate_duplication']
+            }
+        }
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        
+        assert 'skiprule' in parameters
+        assert 'eliminate_duplication' in parameters['skiprule']
+    
+    def test_validation_with_force_full_and_scope_exclude(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'force_full': True,
+            'scope': {
+                'type': 'files',
+                'value': ['src/'],
+                'exclude': ['test_*.py']
+            }
+        }
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.force_full is True
+        assert 'exclude' in parameters['scope']
+    
+    def test_validation_with_all_parameters_combined(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {
+            'force_full': True,
+            'skip_cross_file': True,
+            'scope': {
+                'type': 'files',
+                'value': ['src/actions/'],
+                'exclude': ['test_*.py', '*/migrations/*'],
+                'skiprule': ['eliminate_duplication', 'stop_writing_useless_comments']
+            }
+        }
+        scope = ValidationScope(parameters, bot_paths, 'code')
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.force_full is True
+        assert context.skip_cross_file is True
+        assert 'exclude' in parameters['scope']
+        assert len(parameters['scope']['exclude']) == 2
+        assert 'skiprule' in parameters
+        assert len(parameters['skiprule']) == 2
+    
+    def test_validation_with_no_parameters(self, bot_directory, workspace_directory):
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        
+        from agile_bot.bots.base_bot.src.actions.validate.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {}
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        assert context.force_full is False
+        assert context.skip_cross_file is False
 

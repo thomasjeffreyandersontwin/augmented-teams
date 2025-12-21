@@ -294,10 +294,10 @@ def when_instructions_load_and_merge(action, base_instructions=None, behavior_in
         behavior_instructions: Optional behavior instructions dict
     
     Returns:
-        Merged instructions dict
+        Instructions object or merged instructions dict
     """
     if base_instructions is None and behavior_instructions is None:
-        # Use the instructions property which calls _load_and_merge_instructions internally
+        # Use the instructions property which returns an Instructions object
         return action.instructions
     else:
         # If base_instructions and behavior_instructions provided, merge them
@@ -316,26 +316,34 @@ def then_merged_instructions_contain(merged_instructions, content):
     Replaces: then_merged_instructions_contain_expected, then_merged_instructions_contain_base_and_action
     
     Args:
-        merged_instructions: Merged instructions dict
+        merged_instructions: Instructions object or merged instructions dict
         content: Content to check for - can be:
             - 'base_instructions' (string) - checks that base_instructions key exists
             - dict with keys to check - checks that all keys exist in merged_instructions
             - list of strings - checks that all keys exist
     """
+    from agile_bot.bots.base_bot.src.actions.instructions import Instructions
+    
+    # If it's an Instructions object, convert to dict for checking
+    if isinstance(merged_instructions, Instructions):
+        merged_dict = merged_instructions.to_dict()
+    else:
+        merged_dict = merged_instructions
+    
     if isinstance(content, str):
         # Single key check
         if content == 'base_instructions':
-            assert 'base_instructions' in merged_instructions, "base_instructions not found in merged instructions"
+            assert 'base_instructions' in merged_dict, "base_instructions not found in merged instructions"
         else:
-            assert content in merged_instructions, f"{content} not found in merged instructions"
+            assert content in merged_dict, f"{content} not found in merged instructions"
     elif isinstance(content, dict):
         # Check all keys exist
         for key in content.keys():
-            assert key in merged_instructions, f"{key} not found in merged instructions"
+            assert key in merged_dict, f"{key} not found in merged instructions"
     elif isinstance(content, list):
         # Check all keys in list exist
         for key in content:
-            assert key in merged_instructions, f"{key} not found in merged instructions"
+            assert key in merged_dict, f"{key} not found in merged instructions"
 
 
 def given_bot_name_and_behavior_setup(bot_name: str, behavior: str):
@@ -402,19 +410,27 @@ def then_action_uses_class(action, class_name):
         action: Action object to check
         class_name: Expected class name (e.g., 'Instructions', 'MergedInstructions', 'ClarifyContextAction')
     """
+    from agile_bot.bots.base_bot.src.actions.instructions import Instructions
+    from agile_bot.bots.base_bot.src.actions.render.render_action import RenderOutputAction
+    
     if class_name in ['Instructions', 'MergedInstructions']:
         # Check for instructions class usage by checking structure
         instructions = action.instructions
         if class_name == 'Instructions':
-            assert 'base_instructions' in instructions or 'instructions' in instructions, \
-                "Action does not use Instructions class structure"
-            assert hasattr(action, '_instructions') or hasattr(action, 'instructions'), \
-                "Action does not have instructions attribute"
+            # Check that instructions is an Instructions object
+            assert isinstance(instructions, Instructions), \
+                f"Action does not use Instructions class, got {type(instructions)}"
+            # Check that it has base_instructions
+            assert 'base_instructions' in instructions.to_dict(), \
+                "Instructions object does not contain base_instructions"
         elif class_name == 'MergedInstructions':
-            # Check for merged instructions structure
-            assert isinstance(instructions, dict), "Merged instructions should be a dict"
-            assert 'base_instructions' in instructions or 'instructions' in instructions, \
-                "Action does not use MergedInstructions class structure"
+            # For RenderOutputAction, check that it's a RenderOutputAction (which uses MergedInstructions internally)
+            # The instructions property still returns Instructions, but do_execute uses MergedInstructions
+            assert isinstance(action, RenderOutputAction), \
+                f"Expected RenderOutputAction which uses MergedInstructions internally, got {type(action)}"
+            # Verify it has the render config loader
+            assert hasattr(action, '_config_loader'), \
+                "RenderOutputAction should have _config_loader for MergedInstructions"
     else:
         # Check for action class name
         action_class_name = action.__class__.__name__
@@ -485,7 +501,7 @@ class TestInvokeBotTool:
         if clarify_action is None:
             raise ValueError("Action 'clarify' not found")
         shape_behavior.actions.navigate_to('clarify')
-        result_data = clarify_action.execute({})
+        result_data = clarify_action.execute()
         # Create BotResult from action execution
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         action_result = BotResult(status='completed', behavior='shape', action='clarify', data=result_data)
@@ -532,7 +548,7 @@ class TestInvokeBotTool:
         if clarify_action is None:
             raise ValueError("Action 'clarify' not found")
         exploration_behavior.actions.navigate_to('clarify')
-        result_data = clarify_action.execute({})
+        result_data = clarify_action.execute()
         # Create BotResult from action execution
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         action_result = BotResult(status='completed', behavior='exploration', action='clarify', data=result_data)
@@ -642,7 +658,7 @@ class TestForwardToCurrentBehaviorAndCurrentAction:
         current_action = current_behavior.actions.current
         if current_action is None:
             raise ValueError("No current action")
-        result_data = current_action.execute({})
+        result_data = current_action.execute()
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         bot_response = BotResult(
             status='completed',
@@ -685,7 +701,7 @@ class TestForwardToCurrentBehaviorAndCurrentAction:
         current_action = current_behavior.actions.current
         if current_action is None:
             raise ValueError("No current action")
-        result_data = current_action.execute({})
+        result_data = current_action.execute()
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         bot_response = BotResult(
             status='completed',
@@ -724,7 +740,7 @@ class TestForwardToCurrentAction:
         current_action = discovery_behavior.actions.current
         if current_action is None:
             raise ValueError("No current action")
-        result_data = current_action.execute({})
+        result_data = current_action.execute()
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         action_result = BotResult(
             status='completed',
@@ -758,7 +774,7 @@ class TestForwardToCurrentAction:
         current_action = exploration_behavior.actions.current
         if current_action is None:
             raise ValueError("No current action")
-        result_data = current_action.execute({})
+        result_data = current_action.execute()
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         action_result = BotResult(
             status='completed',
@@ -792,7 +808,7 @@ class TestForwardToCurrentAction:
         current_action = shape_behavior.actions.current
         if current_action is None:
             raise ValueError("No current action")
-        result_data = current_action.execute({})
+        result_data = current_action.execute()
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         action_result = BotResult(
             status='completed',
@@ -837,7 +853,7 @@ class TestForwardToCurrentAction:
         if clarify_action is None:
             raise ValueError("Action 'clarify' not found")
         shape_behavior.actions.navigate_to('clarify')
-        result_data = clarify_action.execute({})
+        result_data = clarify_action.execute()
         # Create BotResult from action execution
         from agile_bot.bots.base_bot.src.bot.bot import BotResult
         action_result = BotResult(status='completed', behavior='shape', action='clarify', data=result_data)
@@ -900,335 +916,3 @@ class TestTrackActivityForWorkspace:
         
         # Then: Activity log has entry
         then_activity_log_has_entry_with_action_state(workspace_directory, 'test_bot.shape.gather_context', 'started')
-
-
-# ============================================================================
-# HELPER FUNCTIONS - Domain Classes (Stories 3-5: Instructions)
-# ============================================================================
-
-from unittest.mock import Mock
-from agile_bot.bots.base_bot.src.bot.instructions import Instructions
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-
-
-def given_action_with_instructions(instructions: list):
-    """Given: Action with instructions (BaseActionConfig merged into Action)."""
-    action = Mock(spec=Action)
-    action._base_config = {'instructions': instructions}
-    return action
-
-
-def given_action_with_string_instructions(instructions: str):
-    """Given: Action with string instructions (BaseActionConfig merged into Action)."""
-    action = Mock(spec=Action)
-    action._base_config = {'instructions': instructions}
-    return action
-
-
-def given_action_with_none_instructions():
-    """Given: Action with None instructions (BaseActionConfig merged into Action)."""
-    action = Mock(spec=Action)
-    action._base_config = {'instructions': None}
-    return action
-
-
-def given_behavior_with_instructions(instructions: dict):
-    """Given: Behavior with instructions (BehaviorConfig merged into Behavior)."""
-    behavior = Mock(spec=Behavior)
-    # Use behavior.instructions directly since BehaviorConfig was merged
-    behavior.instructions = instructions
-    return behavior
-
-
-def when_instructions_instantiated(action, behavior):
-    """When: Instructions instantiated (updated to use Action instead of BaseActionConfig)."""
-    return Instructions(action, behavior)
-
-
-def when_base_instructions_accessed(instructions: Instructions):
-    """When: base_instructions property accessed."""
-    return instructions.base_instructions
-
-
-def when_behavior_instructions_accessed(instructions: Instructions):
-    """When: behavior_instructions property accessed."""
-    return instructions.behavior_instructions
-
-
-def when_merge_called(instructions: Instructions):
-    """When: merge() called."""
-    return instructions.merge()
-
-
-def then_base_instructions_are(result: list, expected: list):
-    """Then: Base instructions are expected."""
-    assert result == expected
-
-
-def then_behavior_instructions_are(result: dict, expected: dict):
-    """Then: Behavior instructions are expected."""
-    assert result == expected
-
-
-def then_merged_contains_base_instructions(merged: dict, expected: list):
-    """Then: Merged dict contains base instructions."""
-    assert merged['base_instructions'] == expected
-
-
-def then_merged_contains_behavior_instructions(merged: dict, expected: dict):
-    """Then: Merged dict contains behavior instructions."""
-    assert merged['behavior_instructions'] == expected
-
-
-def then_merged_instructions_list_contains_all(merged: dict, base: list, behavior: list):
-    """Then: Merged instructions list contains all instructions."""
-    assert 'instructions' in merged
-    assert merged['instructions'] == base + behavior
-
-
-# ============================================================================
-# TEST CLASSES - Domain Classes (Stories 3-5: Instructions)
-# ============================================================================
-
-class TestGetBaseInstructions:
-    """Story: Get Base Instructions (Sub-epic: Invoke MCP)"""
-    
-    def test_base_instructions_property_returns_list_from_config(self):
-        """
-        SCENARIO: Base instructions property returns list from config
-        GIVEN: BaseActionConfig with list instructions ['instruction1', 'instruction2']
-        WHEN: base_instructions property accessed
-        THEN: Returns ['instruction1', 'instruction2']
-        """
-        # Given: BaseActionConfig with list instructions
-        action = given_action_with_instructions(['instruction1', 'instruction2'])
-        behavior = given_behavior_with_instructions({})
-        
-        # When: Instructions instantiated and base_instructions accessed
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_base_instructions_accessed(instructions)
-        
-        # Then: Base instructions are from config
-        then_base_instructions_are(result, ['instruction1', 'instruction2'])
-    
-    def test_base_instructions_property_converts_string_to_list(self):
-        """
-        SCENARIO: Base instructions property converts string to list
-        GIVEN: BaseActionConfig with string instructions 'single instruction'
-        WHEN: base_instructions property accessed
-        THEN: Returns ['single instruction']
-        """
-        # Given: BaseActionConfig with string instructions
-        action = given_action_with_string_instructions('single instruction')
-        behavior = given_behavior_with_instructions({})
-        
-        # When: Instructions instantiated and base_instructions accessed
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_base_instructions_accessed(instructions)
-        
-        # Then: Base instructions are converted to list
-        then_base_instructions_are(result, ['single instruction'])
-    
-    def test_base_instructions_property_returns_empty_list_when_none(self):
-        """
-        SCENARIO: Base instructions property returns empty list when none
-        GIVEN: BaseActionConfig with None instructions
-        WHEN: base_instructions property accessed
-        THEN: Returns []
-        """
-        # Given: BaseActionConfig with None instructions
-        action = given_action_with_none_instructions()
-        behavior = given_behavior_with_instructions({})
-        
-        # When: Instructions instantiated and base_instructions accessed
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_base_instructions_accessed(instructions)
-        
-        # Then: Base instructions are empty list
-        then_base_instructions_are(result, [])
-
-
-class TestGetBehaviorInstructions:
-    """Story: Get Behavior Instructions (Sub-epic: Invoke MCP)"""
-    
-    def test_behavior_instructions_property_returns_from_behavior_config(self):
-        """
-        SCENARIO: Behavior instructions property returns from behavior config
-        GIVEN: Behavior with instructions {'instructions': ['behavior1', 'behavior2']}
-        WHEN: behavior_instructions property accessed
-        THEN: Returns instructions dict from behavior config
-        """
-        # Given: Behavior with instructions
-        behavior_instructions = {'instructions': ['behavior1', 'behavior2']}
-        action = given_action_with_instructions(['base1'])
-        behavior = given_behavior_with_instructions(behavior_instructions)
-        
-        # When: Instructions instantiated and behavior_instructions accessed
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_behavior_instructions_accessed(instructions)
-        
-        # Then: Behavior instructions are from config
-        then_behavior_instructions_are(result, behavior_instructions)
-    
-    def test_behavior_instructions_property_returns_empty_dict_when_none(self):
-        """
-        SCENARIO: Behavior instructions property returns empty dict when none
-        GIVEN: Behavior with no instructions
-        WHEN: behavior_instructions property accessed
-        THEN: Returns {}
-        """
-        # Given: Behavior with no instructions
-        action = given_action_with_instructions(['base1'])
-        behavior = given_behavior_with_instructions({})
-        
-        # When: Instructions instantiated and behavior_instructions accessed
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_behavior_instructions_accessed(instructions)
-        
-        # Then: Behavior instructions are empty dict
-        then_behavior_instructions_are(result, {})
-
-
-class TestMergeInstructions:
-    """Story: Merge Instructions (Sub-epic: Invoke MCP)"""
-    
-    def test_merge_combines_base_and_behavior_instructions(self):
-        """
-        SCENARIO: Merge combines base and behavior instructions
-        GIVEN: BaseActionConfig with ['base1', 'base2'] and Behavior with {'instructions': ['behavior1', 'behavior2']}
-        WHEN: merge() called
-        THEN: Returns dict with base_instructions, behavior_instructions, and combined instructions list
-        """
-        # Given: BaseActionConfig and Behavior with instructions
-        action = given_action_with_instructions(['base1', 'base2'])
-        behavior_instructions = {'instructions': ['behavior1', 'behavior2']}
-        behavior = given_behavior_with_instructions(behavior_instructions)
-        
-        # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_merge_called(instructions)
-        
-        # Then: Merged dict contains both instruction sets
-        then_merged_contains_base_instructions(result, ['base1', 'base2'])
-        then_merged_contains_behavior_instructions(result, behavior_instructions)
-        then_merged_instructions_list_contains_all(result, ['base1', 'base2'], ['behavior1', 'behavior2'])
-    
-    def test_merge_handles_behavior_instructions_without_instructions_key(self):
-        """
-        SCENARIO: Merge handles behavior instructions without instructions key
-        GIVEN: BaseActionConfig with ['base1'] and Behavior with {'other_key': 'value'}
-        WHEN: merge() called
-        THEN: Returns dict with base_instructions only
-        """
-        # Given: Behavior with instructions dict without 'instructions' key
-        action = given_action_with_instructions(['base1'])
-        behavior_instructions = {'other_key': 'value'}
-        behavior = given_behavior_with_instructions(behavior_instructions)
-        
-        # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_merge_called(instructions)
-        
-        # Then: Merged dict contains base instructions only
-        then_merged_contains_base_instructions(result, ['base1'])
-        then_merged_contains_behavior_instructions(result, behavior_instructions)
-        assert result['instructions'] == ['base1']
-    
-def given_behavior_with_non_dict_instructions():
-    """Given: Behavior with non-dict instructions (BehaviorConfig merged into Behavior)."""
-    behavior = Mock(spec=Behavior)
-    # Use behavior.instructions directly since BehaviorConfig was merged
-    behavior.instructions = 'not a dict'
-    return behavior
-
-
-def then_merged_instructions_list_equals(merged: dict, expected: list):
-    """Then: Merged instructions list equals expected."""
-    assert merged['instructions'] == expected
-
-
-class TestMergeInstructions:
-    """Story: Merge Instructions (Sub-epic: Invoke MCP)"""
-    
-    def test_merge_combines_base_and_behavior_instructions(self):
-        """
-        SCENARIO: Merge combines base and behavior instructions
-        GIVEN: BaseActionConfig with ['base1', 'base2'] and Behavior with {'instructions': ['behavior1', 'behavior2']}
-        WHEN: merge() called
-        THEN: Returns dict with base_instructions, behavior_instructions, and combined instructions list
-        """
-        # Given: BaseActionConfig and Behavior with instructions
-        action = given_action_with_instructions(['base1', 'base2'])
-        behavior_instructions = {'instructions': ['behavior1', 'behavior2']}
-        behavior = given_behavior_with_instructions(behavior_instructions)
-        
-        # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_merge_called(instructions)
-        
-        # Then: Merged dict contains both instruction sets
-        then_merged_contains_base_instructions(result, ['base1', 'base2'])
-        then_merged_contains_behavior_instructions(result, behavior_instructions)
-        then_merged_instructions_list_contains_all(result, ['base1', 'base2'], ['behavior1', 'behavior2'])
-    
-    def test_merge_handles_behavior_instructions_without_instructions_key(self):
-        """
-        SCENARIO: Merge handles behavior instructions without instructions key
-        GIVEN: BaseActionConfig with ['base1'] and Behavior with {'other_key': 'value'}
-        WHEN: merge() called
-        THEN: Returns dict with base_instructions only
-        """
-        # Given: Behavior with instructions dict without 'instructions' key
-        action = given_action_with_instructions(['base1'])
-        behavior_instructions = {'other_key': 'value'}
-        behavior = given_behavior_with_instructions(behavior_instructions)
-        
-        # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_merge_called(instructions)
-        
-        # Then: Merged dict contains base instructions only
-        then_merged_contains_base_instructions(result, ['base1'])
-        then_merged_contains_behavior_instructions(result, behavior_instructions)
-        then_merged_instructions_list_equals(result, ['base1'])
-    
-    def test_merge_handles_non_dict_behavior_instructions(self):
-        """
-        SCENARIO: Merge handles non-dict behavior instructions
-        GIVEN: BaseActionConfig with ['base1'] and Behavior with non-dict instructions
-        WHEN: merge() called
-        THEN: Returns dict with base_instructions only
-        """
-        # Given: Behavior with non-dict instructions
-        action = given_action_with_instructions(['base1'])
-        behavior = given_behavior_with_non_dict_instructions()
-        
-        # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_merge_called(instructions)
-        
-        # Then: Merged dict contains base instructions only
-        then_merged_contains_base_instructions(result, ['base1'])
-        then_merged_instructions_list_equals(result, ['base1'])
-    
-    def test_merge_handles_empty_behavior_instructions_list(self):
-        """
-        SCENARIO: Merge handles empty behavior instructions list
-        GIVEN: BaseActionConfig with ['base1', 'base2'] and Behavior with {'instructions': []}
-        WHEN: merge() called
-        THEN: Returns dict with only base_instructions
-        """
-        # Given: Behavior with empty instructions list
-        action = given_action_with_instructions(['base1', 'base2'])
-        behavior_instructions = {'instructions': []}
-        behavior = given_behavior_with_instructions(behavior_instructions)
-        
-        # When: Instructions instantiated and merge() called
-        instructions = when_instructions_instantiated(action, behavior)
-        result = when_merge_called(instructions)
-        
-        # Then: Merged dict contains only base instructions
-        then_merged_contains_base_instructions(result, ['base1', 'base2'])
-        assert result['instructions'] == ['base1', 'base2']
-

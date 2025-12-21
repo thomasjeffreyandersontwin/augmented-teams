@@ -1,488 +1,737 @@
-# Validation Status - code
-Started: 2025-12-18 21:43:46
-Files: 172
-
-## avoid_excessive_guards
-**action.py** - 4 violation(s)
-
-[!] WARNING (line 37)
-Line 37: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
-[!] WARNING (line 240)
-Line 240: Variable truthiness check detected (if not current_behavior:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 258)
-Line 258: Variable truthiness check detected (if not behavior_obj:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 376)
-Line 376: Variable truthiness check detected (if context_instructions:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**actions.py** - 3 violation(s)
-
-[!] WARNING (line 126)
-Line 126: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
-[!] WARNING (line 256)
-Line 256: Variable truthiness check detected (if current_action_obj:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 270)
-Line 270: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
----
-
-## avoid_excessive_guards
-**action_scope.py** - 1 violation(s)
-
-[!] WARNING (line 119)
-Line 119: Variable truthiness check detected (if not scope_config:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**behavior.py** - 1 violation(s)
-
-[!] WARNING (line 98)
-Line 98: Variable truthiness check detected (if next_action:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**behaviors.py** - 3 violation(s)
-
-[!] WARNING (line 91)
-Line 91: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
-[!] WARNING (line 292)
-Line 292: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
-[!] WARNING (line 296)
-Line 296: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
----
-
-## avoid_excessive_guards
-**trigger_router.py** - 4 violation(s)
-
-[!] WARNING (line 81)
-Line 81: Variable truthiness check detected (if route:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 86)
-Line 86: Variable truthiness check detected (if route:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 91)
-Line 91: Variable truthiness check detected (if route:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 96)
-Line 96: Variable truthiness check detected (if route:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**mcp_server_generator.py** - 2 violation(s)
-
-[!] WARNING (line 545)
-Line 545: File existence check detected. Let file operations fail if file missing - handle errors centrally.
-
-[!] WARNING (line 670)
-Line 670: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
----
-
-## avoid_excessive_guards
-**nodes.py** - 1 violation(s)
-
-[!] WARNING (line 557)
-Line 557: hasattr() guard clause detected. Assume attributes exist - let AttributeError propagate if missing.
-
----
-
-## avoid_excessive_guards
-**build_action.py** - 1 violation(s)
-
-[!] WARNING (line 64)
-Line 64: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
----
-
-## avoid_excessive_guards
-**knowledge_graph_spec.py** - 2 violation(s)
-
-[!] WARNING (line 76)
-Line 76: Variable truthiness check detected (if not template_filename:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 85)
-Line 85: Variable truthiness check detected (if not template_filename:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**render_config_loader.py** - 2 violation(s)
-
-[!] WARNING (line 111)
-Line 111: None check guard clause detected. Assume variables are initialized - let code fail fast if None.
-
-[!] WARNING (line 105)
-Line 105: hasattr() guard clause detected. Assume attributes exist - let AttributeError propagate if missing.
-
----
-
-## avoid_excessive_guards
-**render_instruction_formatter.py** - 1 violation(s)
-
-[!] WARNING (line 71)
-Line 71: Variable truthiness check detected (if not render_configs:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**render_spec.py** - 1 violation(s)
-
-[!] WARNING (line 13)
-Line 13: Variable truthiness check detected (if config_file:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**rule.py** - 2 violation(s)
-
-[!] WARNING (line 26)
-Line 26: Variable truthiness check detected (if scanner_path:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 163)
-Line 163: Variable truthiness check detected (if violations_cross_file:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**rules.py** - 3 violation(s)
-
-[!] WARNING (line 66)
-Line 66: Variable truthiness check detected (if has_scope_in_params:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 244)
-Line 244: Variable truthiness check detected (if not rules:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 269)
-Line 269: Variable truthiness check detected (if not formatted_sections:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**validate_action.py** - 1 violation(s)
-
-[!] WARNING (line 64)
-Line 64: Variable truthiness check detected (if run_in_background:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**validation_report_writer.py** - 3 violation(s)
-
-[!] WARNING (line 100)
-Line 100: Variable truthiness check detected (if not violations:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 688)
-Line 688: Variable truthiness check detected (if has_errors:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 690)
-Line 690: Variable truthiness check detected (if has_warnings:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_excessive_guards
-**validation_scope.py** - 6 violation(s)
-
-[!] WARNING (line 88)
-Line 88: Variable truthiness check detected (if files_list:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 102)
-Line 102: File existence check detected. Let file operations fail if file missing - handle errors centrally.
-
-[!] WARNING (line 183)
-Line 183: Variable truthiness check detected (if files:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 156)
-Line 156: Variable truthiness check detected (if files:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 191)
-Line 191: Variable truthiness check detected (if files:). Assume variable exists - let code fail fast if missing.
-
-[!] WARNING (line 167)
-Line 167: Variable truthiness check detected (if files:). Assume variable exists - let code fail fast if missing.
-
----
-
-## avoid_technical_abstractions
-**render_config_loader.py** - 1 violation(s)
-
-[!] WARNING (line 10)
-Class "RenderConfigLoader" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.
-
----
-
-## avoid_unnecessary_parameter_passing
-**validation_scope.py** - 1 violation(s)
-
-[!] WARNING (line 259)
-Line 259: Passing self._behavior_name as parameter to _behavior_to_directory(). Access it directly in the method through self._behavior_name instead.
-
----
-
-## chain_dependencies_properly
-**action.py** - 2 violation(s)
-
-[!] WARNING (line 186)
-Method "_get_completed_actions_for_behavior" in class "Action" takes parameter "behavior" that is already injected in __init__. Use self.behavior instead.
-
-[!] WARNING (line 195)
-Method "_format_action_line" in class "Action" takes parameter "action_name" that is already injected in __init__. Use self.action_name instead.
-
----
-
-## chain_dependencies_properly
-**actions.py** - 1 violation(s)
-
-[!] WARNING (line 40)
-Method "_create_action_instance" in class "Actions" takes parameter "behavior" that is already injected in __init__. Use self.behavior instead.
-
----
-
-## chain_dependencies_properly
-**trigger_router.py** - 3 violation(s)
-
-[!] WARNING (line 254)
-Method "_load_bot_triggers" in class "TriggerRouter" takes parameter "bot_name" that is already injected in __init__. Use self.bot_name instead.
-
-[!] WARNING (line 278)
-Method "_load_behavior_triggers" in class "TriggerRouter" takes parameter "bot_name" that is already injected in __init__. Use self.bot_name instead.
-
-[!] WARNING (line 304)
-Method "_load_action_triggers" in class "TriggerRouter" takes parameter "bot_name" that is already injected in __init__. Use self.bot_name instead.
-
----
-
-## chain_dependencies_properly
-**requirements_clarifications.py** - 1 violation(s)
-
-[!] WARNING (line 40)
-Method "load_all" in class "RequirementsClarifications" takes parameter "bot_paths" that is already injected in __init__. Use self.bot_paths instead.
-
----
-
-## chain_dependencies_properly
-**strategy_decision.py** - 1 violation(s)
-
-[!] WARNING (line 47)
-Method "load_all" in class "StrategyDecision" takes parameter "bot_paths" that is already injected in __init__. Use self.bot_paths instead.
-
----
-
-## chain_dependencies_properly
-**validation_scope.py** - 1 violation(s)
-
-[!] WARNING (line 39)
-Method "_behavior_to_directory" in class "ValidationScope" takes parameter "behavior_name" that is already injected in __init__. Use self.behavior_name instead.
-
----
-
-## delegate_to_lowest_level
-**actions.py** - 3 violation(s)
-
-[i] INFO (line 114)
-Method "find_by_name" in class "Actions" iterates through "_actions" instead of delegating to collection class. Delegate to collection class instead.
-
-[i] INFO (line 120)
-Method "find_by_order" in class "Actions" iterates through "_actions" instead of delegating to collection class. Delegate to collection class instead.
-
-[i] INFO (line 134)
-Method "__iter__" in class "Actions" iterates through "_actions" instead of delegating to collection class. Delegate to collection class instead.
-
----
-
-## delegate_to_lowest_level
-**behaviors.py** - 2 violation(s)
-
-[i] INFO (line 85)
-Method "find_by_name" in class "Behaviors" iterates through "_behaviors" instead of delegating to collection class. Delegate to collection class instead.
-
-[i] INFO (line 99)
-Method "__iter__" in class "Behaviors" iterates through "_behaviors" instead of delegating to collection class. Delegate to collection class instead.
-
----
-
-## delegate_to_lowest_level
-**bot.py** - 1 violation(s)
-
-[i] INFO (line 43)
-Method "__init__" in class "Bot" iterates through "behaviors" instead of delegating to collection class. Delegate to collection class instead.
-
----
-
-## delegate_to_lowest_level
-**render_action.py** - 2 violation(s)
-
-[i] INFO (line 101)
-Method "templates" in class "RenderOutputAction" iterates through "_render_specs" instead of delegating to collection class. Delegate to collection class instead.
-
-[i] INFO (line 109)
-Method "synchronizers" in class "RenderOutputAction" iterates through "_render_specs" instead of delegating to collection class. Delegate to collection class instead.
-
----
-
-## eliminate_duplication
-**action.py** - 1 violation(s)
-
-[X] ERROR (line 113)
-Duplicate code blocks detected (2 locations) - extract to helper function.
-
-Location (_inject_clarification_data:113-127):
-```python
-bot_paths = self.behavior.bot_paths
-clarification_data = RequirementsClarifications.load_all(bot_paths)
-if not clarification_data:
-    return []
-instructions['clarification'] = clarification_data
-retu...
-```
-
-Location (_inject_strategy_data:130-144):
-```python
-bot_paths = self.behavior.bot_paths
-strategy_data = StrategyDecision.load_all(bot_paths)
-if not strategy_data:
-    return []
-instructions['strategy'] = strategy_data
-return ['', '**STRATEGY DATA AVAIL...
-```
-
----
-
-## eliminate_duplication
-**trigger_domain.py** - 4 violation(s)
-
-[X] ERROR (line 38)
-Duplicate code detected: functions __getitem__, __getitem__ have identical bodies - extract to shared function
-
-[X] ERROR (line 41)
-Duplicate code detected: functions __contains__, __contains__ have identical bodies - extract to shared function
-
-[X] ERROR (line 44)
-Duplicate code detected: functions items, items have identical bodies - extract to shared function
-
-[X] ERROR (line 47)
-Duplicate code detected: functions keys, keys have identical bodies - extract to shared function
-
----
-
-## eliminate_duplication
-**trigger_router.py** - 1 violation(s)
-
-[X] ERROR (line 271)
-Duplicate code blocks detected (2 locations) - extract to helper function.
-
-Location (_load_triggers_from_behavior_file:271-276):
-```python
-content = behavior_file.read_text(encoding='utf-8')
-behavior_data = json.loads(content)
-return behavior_data.get('trigger_words', {}).get('patterns', [])
-```
-
-Location (_load_patterns_from_file:384-389):
-```python
-content = file_path.read_text(encoding='utf-8')
-data = json.loads(content)
-return data.get('patterns', [])
-```
-
----
-
-## eliminate_duplication
-**domain.py** - 1 violation(s)
-
-[X] ERROR (line 16)
-Duplicate code detected: functions __str__, __str__ have identical bodies - extract to shared function
-
----
-
-## eliminate_duplication
-**nodes.py** - 1 violation(s)
-
-[X] ERROR (line 329)
-Duplicate code detected: functions steps, steps have identical bodies - extract to shared function
-
----
-
-## eliminate_duplication
-**render_instruction_formatter.py** - 1 violation(s)
-
-[X] ERROR (line 132)
-Duplicate code blocks detected (2 locations) - extract to helper function.
-
-Location (format_executed_synchronizers:132-136):
-```python
-parts = []
-parts.append('**Synchronizers Already Executed:**')
-parts.append('')
-parts.append('The following render configurations have been automatically executed via synchronizers:')
-parts.append('')
-```
-
-Location (format_template_instructions:163-167):
-```python
-parts = []
-parts.append('**Template-Based Render Configurations Requiring AI Handling:**')
-parts.append('')
-parts.append('The following render configurations use templates and require AI assistance to...
-```
-
----
-
-## eliminate_duplication
-**validation_report_writer.py** - 1 violation(s)
-
-[X] ERROR (line 840)
-Duplicate code blocks detected (2 locations) - extract to helper function.
-
-Location (_format_violation_line:840-846):
-```python
-location = violation.get('location', 'unknown')
-message = violation.get('violation_message', 'No message')
-severity = violation.get('severity', 'error')
-line_number = violation.get('line_number')
-seve...
-```
-
-Location (sort_key:679-684):
-```python
-rule_file = rule_dict.get('rule_file', 'unknown')
-status_info = rule_status_lookup.get(rule_file, {})
-status = status_info.get('status', 'UNKNOWN')
-has_errors = status_info.get('has_errors', False)
-ha...
-```
-
----
-
 
 ## Cross-File Duplication Analysis
-Scanning 62 files...
-Extracted 1295 code blocks
-Starting 837865 pairwise comparisons...
-Comparing: 46% (1,036,969/2,208,151) - 11 violations - ETA: 496s
-Comparing: 9% (82,088/837,865) - 0 violations - ETA: 368s
-Comparing: 2% (20,088/837,865) - 0 violations - ETA: 407s
-Comparing: 47% (1,054,332/2,208,151) - 11 violations - ETA: 492s
-Comparing: 11% (100,182/837,865) - 0 violations - ETA: 368s
-Comparing: 4% (35,639/837,865) - 0 violations - ETA: 450s
-Comparing: 49% (1,082,188/2,208,151) - 13 violations - ETA: 478s
-Comparing: 14% (122,058/837,865) - 0 violations - ETA: 351s
-Comparing: 6% (57,762/837,865) - 0 violations - ETA: 405s
-Comparing: 49% (1,101,702/2,208,151) - 14 violations - ETA: 472s
-Comparing: 16% (141,209/837,865) - 0 violations - ETA: 345s
-Comparing: 9% (81,766/837,865) - 0 violations - ETA: 369s
-Comparing: 50% (1,124,687/2,208,151) - 14 violations - ETA: 462s
-Comparing: 19% (162,618/837,865) - 0 violations - ETA: 332s
-Comparing: 11% (99,254/837,865) - 0 violations - ETA: 372s
+Scanning 223 files...
+Extracted 2995 code blocks
+Starting 4483515 pairwise comparisons...
+Comparing: 0% (29,695/4,483,515) - 0 violations - ETA: 1499s  
+Comparing: 1% (51,066/4,483,515) - 0 violations - ETA: 1736s  
+Comparing: 1% (70,957/4,483,515) - 0 violations - ETA: 1865s  
+Comparing: 2% (94,175/4,483,515) - 0 violations - ETA: 1864s  
+Comparing: 2% (111,508/4,483,515) - 0 violations - ETA: 1960s  
+Comparing: 3% (139,907/4,483,515) - 0 violations - ETA: 1862s  
+Comparing: 3% (153,067/4,483,515) - 0 violations - ETA: 1980s  
+Comparing: 3% (164,870/4,483,515) - 0 violations - ETA: 2095s  
+Comparing: 3% (176,090/4,483,515) - 0 violations - ETA: 2201s  
+Comparing: 4% (192,066/4,483,515) - 0 violations - ETA: 2234s  
+Comparing: 4% (217,669/4,483,515) - 0 violations - ETA: 2155s  
+Comparing: 5% (237,277/4,483,515) - 0 violations - ETA: 2147s  
+Comparing: 5% (252,955/4,483,515) - 0 violations - ETA: 2174s  
+Comparing: 6% (280,865/4,483,515) - 0 violations - ETA: 2094s  
+Comparing: 6% (293,044/4,483,515) - 0 violations - ETA: 2145s  
+Comparing: 6% (308,874/4,483,515) - 0 violations - ETA: 2162s  
+Comparing: 7% (322,050/4,483,515) - 0 violations - ETA: 2196s  
+Comparing: 7% (343,373/4,483,515) - 0 violations - ETA: 2170s  
+Comparing: 8% (370,384/4,483,515) - 1 violations - ETA: 2110s  
+Comparing: 8% (400,852/4,483,515) - 1 violations - ETA: 2037s  
+Comparing: 9% (421,360/4,483,515) - 1 violations - ETA: 2024s  
+Comparing: 9% (436,261/4,483,515) - 1 violations - ETA: 2041s  
+Comparing: 10% (473,896/4,483,515) - 2 violations - ETA: 1946s  
+Comparing: 11% (509,443/4,483,515) - 2 violations - ETA: 1872s  
+Comparing: 11% (536,732/4,483,515) - 2 violations - ETA: 1838s  
+Comparing: 12% (559,926/4,483,515) - 2 violations - ETA: 1822s  
+Comparing: 12% (580,378/4,483,515) - 2 violations - ETA: 1815s  
+Comparing: 13% (610,943/4,483,515) - 3 violations - ETA: 1774s  
+Comparing: 14% (640,899/4,483,515) - 3 violations - ETA: 1738s  
+Comparing: 14% (672,402/4,483,515) - 3 violations - ETA: 1700s  
+Comparing: 15% (690,893/4,483,515) - 3 violations - ETA: 1701s  
+Comparing: 15% (704,353/4,483,515) - 3 violations - ETA: 1717s  
+Found 10 violations so far...
+Found 20 violations so far...
+Found 30 violations so far...
+Comparing: 16% (732,216/4,483,515) - 31 violations - ETA: 1690s  
+Comparing: 16% (759,801/4,483,515) - 31 violations - ETA: 1666s  
+Comparing: 17% (789,604/4,483,515) - 31 violations - ETA: 1637s  
+Comparing: 18% (810,681/4,483,515) - 31 violations - ETA: 1631s  
+Comparing: 18% (832,090/4,483,515) - 31 violations - ETA: 1623s  
+Comparing: 19% (855,563/4,483,515) - 31 violations - ETA: 1611s  
+Comparing: 19% (874,123/4,483,515) - 31 violations - ETA: 1610s  
+Comparing: 19% (890,243/4,483,515) - 31 violations - ETA: 1614s  
+Comparing: 20% (905,616/4,483,515) - 31 violations - ETA: 1619s  
+
+## Cross-File Duplication Analysis
+Scanning 223 files...
+Extracted 2995 code blocks
+Starting 4483515 pairwise comparisons...
+Comparing: 20% (924,430/4,483,515) - 31 violations - ETA: 1617s  
+Comparing: 0% (27,824/4,483,515) - 0 violations - ETA: 1601s  
+Comparing: 20% (939,220/4,483,515) - 31 violations - ETA: 1622s  
+Comparing: 1% (47,248/4,483,515) - 0 violations - ETA: 1877s  
+Comparing: 21% (966,252/4,483,515) - 32 violations - ETA: 1601s  
+Comparing: 1% (67,027/4,483,515) - 0 violations - ETA: 1976s  
+Comparing: 22% (993,025/4,483,515) - 32 violations - ETA: 1581s  
+Comparing: 1% (88,608/4,483,515) - 0 violations - ETA: 1984s  
+Comparing: 22% (1,021,687/4,483,515) - 32 violations - ETA: 1558s  
+Comparing: 2% (104,929/4,483,515) - 0 violations - ETA: 2086s  
+Comparing: 23% (1,055,847/4,483,515) - 32 violations - ETA: 1525s  
+Comparing: 2% (127,620/4,483,515) - 0 violations - ETA: 2047s  
+Comparing: 24% (1,102,001/4,483,515) - 32 violations - ETA: 1472s  
+Comparing: 3% (145,422/4,483,515) - 0 violations - ETA: 2088s  
+Comparing: 25% (1,137,409/4,483,515) - 32 violations - ETA: 1441s  
+Comparing: 3% (157,466/4,483,515) - 0 violations - ETA: 2197s  
+Comparing: 25% (1,161,131/4,483,515) - 32 violations - ETA: 1430s  
+Comparing: 3% (167,945/4,483,515) - 0 violations - ETA: 2312s  
+Comparing: 26% (1,188,015/4,483,515) - 37 violations - ETA: 1414s  
+Comparing: 3% (177,884/4,483,515) - 0 violations - ETA: 2420s  
+Comparing: 26% (1,207,574/4,483,515) - 37 violations - ETA: 1410s  
+Comparing: 4% (194,757/4,483,515) - 0 violations - ETA: 2422s  
+Comparing: 27% (1,228,400/4,483,515) - 37 violations - ETA: 1404s  
+Comparing: 4% (218,417/4,483,515) - 0 violations - ETA: 2343s  
+Comparing: 27% (1,249,746/4,483,515) - 38 violations - ETA: 1397s  
+Comparing: 5% (236,939/4,483,515) - 0 violations - ETA: 2330s  
+Comparing: 28% (1,264,297/4,483,515) - 39 violations - ETA: 1400s  
+Comparing: 5% (252,113/4,483,515) - 0 violations - ETA: 2349s  
+Comparing: 29% (1,304,724/4,483,515) - 39 violations - ETA: 1364s  
+Comparing: 6% (279,718/4,483,515) - 0 violations - ETA: 2254s  
+Comparing: 29% (1,335,298/4,483,515) - 39 violations - ETA: 1343s  
+Comparing: 6% (291,928/4,483,515) - 0 violations - ETA: 2297s  
+Comparing: 30% (1,359,638/4,483,515) - 39 violations - ETA: 1332s  
+Comparing: 6% (306,501/4,483,515) - 0 violations - ETA: 2316s  
+Comparing: 30% (1,385,545/4,483,515) - 39 violations - ETA: 1319s  
+Comparing: 7% (319,360/4,483,515) - 0 violations - ETA: 2347s  
+Comparing: 31% (1,401,760/4,483,515) - 39 violations - ETA: 1319s  
+Comparing: 7% (339,814/4,483,515) - 0 violations - ETA: 2317s  
+Comparing: 31% (1,419,008/4,483,515) - 39 violations - ETA: 1317s  
+Comparing: 8% (361,606/4,483,515) - 1 violations - ETA: 2279s  
+Comparing: 31% (1,432,158/4,483,515) - 39 violations - ETA: 1321s  
+Comparing: 8% (388,707/4,483,515) - 1 violations - ETA: 2212s  
+Comparing: 32% (1,445,658/4,483,515) - 39 violations - ETA: 1323s  
+Comparing: 9% (413,397/4,483,515) - 1 violations - ETA: 2166s  
+Comparing: 32% (1,458,108/4,483,515) - 39 violations - ETA: 1327s  
+Comparing: 9% (429,172/4,483,515) - 1 violations - ETA: 2172s  
+Comparing: 32% (1,468,563/4,483,515) - 39 violations - ETA: 1334s  
+Comparing: 9% (446,964/4,483,515) - 1 violations - ETA: 2167s  
+Comparing: 33% (1,479,655/4,483,515) - 39 violations - ETA: 1339s  
+Comparing: 10% (484,369/4,483,515) - 2 violations - ETA: 2064s  
+Comparing: 33% (1,489,106/4,483,515) - 39 violations - ETA: 1347s  
+Comparing: 11% (514,226/4,483,515) - 2 violations - ETA: 2007s  
+Comparing: 33% (1,498,439/4,483,515) - 39 violations - ETA: 1354s  
+Comparing: 12% (539,159/4,483,515) - 2 violations - ETA: 1975s  
+Comparing: 33% (1,515,232/4,483,515) - 39 violations - ETA: 1351s  
+Comparing: 12% (560,706/4,483,515) - 2 violations - ETA: 1959s  
+Comparing: 34% (1,537,644/4,483,515) - 39 violations - ETA: 1341s  
+Comparing: 12% (578,923/4,483,515) - 2 violations - ETA: 1956s  
+Comparing: 34% (1,554,394/4,483,515) - 39 violations - ETA: 1338s  
+Comparing: 13% (606,803/4,483,515) - 3 violations - ETA: 1916s  
+Comparing: 35% (1,582,347/4,483,515) - 39 violations - ETA: 1320s  
+Comparing: 14% (633,496/4,483,515) - 3 violations - ETA: 1884s  
+Comparing: 35% (1,603,416/4,483,515) - 39 violations - ETA: 1311s  
+Comparing: 14% (665,514/4,483,515) - 3 violations - ETA: 1835s  
+Comparing: 36% (1,620,040/4,483,515) - 39 violations - ETA: 1308s  
+Comparing: 15% (684,958/4,483,515) - 3 violations - ETA: 1830s  
+Comparing: 36% (1,624,724/4,483,515) - 39 violations - ETA: 1319s  
+Comparing: 15% (698,155/4,483,515) - 3 violations - ETA: 1843s  
+Comparing: 36% (1,629,332/4,483,515) - 39 violations - ETA: 1331s  
+Found 10 violations so far...
+Comparing: 15% (717,102/4,483,515) - 17 violations - ETA: 1838s  
+Found 20 violations so far...
+Found 30 violations so far...
+Comparing: 36% (1,633,819/4,483,515) - 39 violations - ETA: 1343s  
+Comparing: 16% (741,989/4,483,515) - 31 violations - ETA: 1815s  
+Comparing: 36% (1,638,388/4,483,515) - 39 violations - ETA: 1354s  
+Comparing: 17% (767,911/4,483,515) - 31 violations - ETA: 1790s  
+Comparing: 36% (1,642,773/4,483,515) - 39 violations - ETA: 1366s  
+Comparing: 17% (794,243/4,483,515) - 31 violations - ETA: 1765s  
+Comparing: 37% (1,662,715/4,483,515) - 39 violations - ETA: 1357s  
+Found 40 violations so far...
+Comparing: 18% (812,725/4,483,515) - 31 violations - ETA: 1761s  
+Comparing: 37% (1,678,274/4,483,515) - 46 violations - ETA: 1354s  
+Comparing: 18% (832,620/4,483,515) - 31 violations - ETA: 1754s  
+Comparing: 37% (1,690,310/4,483,515) - 46 violations - ETA: 1355s  
+Comparing: 19% (855,047/4,483,515) - 31 violations - ETA: 1739s  
+Comparing: 37% (1,699,759/4,483,515) - 46 violations - ETA: 1359s  
+Comparing: 19% (872,585/4,483,515) - 31 violations - ETA: 1738s  
+Comparing: 38% (1,724,200/4,483,515) - 46 violations - ETA: 1344s  
+Comparing: 19% (887,985/4,483,515) - 31 violations - ETA: 1741s  
+Comparing: 38% (1,742,995/4,483,515) - 46 violations - ETA: 1336s  
+Comparing: 20% (900,654/4,483,515) - 31 violations - ETA: 1750s  
+Comparing: 39% (1,766,940/4,483,515) - 46 violations - ETA: 1322s  
+Comparing: 20% (920,702/4,483,515) - 31 violations - ETA: 1741s  
+Comparing: 40% (1,799,920/4,483,515) - 46 violations - ETA: 1297s  
+Comparing: 20% (935,659/4,483,515) - 31 violations - ETA: 1744s  
+Comparing: 40% (1,823,869/4,483,515) - 46 violations - ETA: 1283s  
+Comparing: 21% (959,078/4,483,515) - 32 violations - ETA: 1727s  
+Comparing: 41% (1,844,052/4,483,515) - 46 violations - ETA: 1273s  
+Comparing: 21% (982,875/4,483,515) - 32 violations - ETA: 1709s  
+Comparing: 41% (1,865,693/4,483,515) - 47 violations - ETA: 1262s  
+Comparing: 22% (1,007,784/4,483,515) - 32 violations - ETA: 1690s  
+Comparing: 41% (1,881,778/4,483,515) - 48 violations - ETA: 1258s  
+Comparing: 23% (1,042,997/4,483,515) - 32 violations - ETA: 1649s  
+Comparing: 42% (1,895,029/4,483,515) - 48 violations - ETA: 1256s  
+Comparing: 24% (1,080,690/4,483,515) - 32 violations - ETA: 1605s  
+Comparing: 42% (1,917,780/4,483,515) - 48 violations - ETA: 1244s  
+Comparing: 25% (1,121,727/4,483,515) - 32 violations - ETA: 1558s  
+Comparing: 43% (1,931,686/4,483,515) - 48 violations - ETA: 1241s  
+Comparing: 25% (1,151,809/4,483,515) - 32 violations - ETA: 1533s  
+Comparing: 43% (1,941,754/4,483,515) - 48 violations - ETA: 1243s  
+Comparing: 26% (1,170,656/4,483,515) - 32 violations - ETA: 1528s  
+Comparing: 43% (1,960,300/4,483,515) - 48 violations - ETA: 1235s  
+Comparing: 26% (1,199,329/4,483,515) - 37 violations - ETA: 1506s  
+Comparing: 44% (1,982,160/4,483,515) - 48 violations - ETA: 1224s  
+Comparing: 27% (1,214,008/4,483,515) - 37 violations - ETA: 1508s  
+Comparing: 44% (1,999,173/4,483,515) - 48 violations - ETA: 1217s  
+Comparing: 27% (1,241,668/4,483,515) - 38 violations - ETA: 1488s  
+Comparing: 44% (2,014,600/4,483,515) - 48 violations - ETA: 1213s  
+Comparing: 28% (1,256,733/4,483,515) - 38 violations - ETA: 1489s  
+Comparing: 45% (2,029,135/4,483,515) - 48 violations - ETA: 1209s  
+Comparing: 28% (1,284,056/4,483,515) - 39 violations - ETA: 1470s  
+Comparing: 45% (2,042,409/4,483,515) - 48 violations - ETA: 1207s  
+Comparing: 29% (1,319,473/4,483,515) - 39 violations - ETA: 1438s  
+Comparing: 45% (2,054,434/4,483,515) - 48 violations - ETA: 1206s  
+Comparing: 30% (1,345,690/4,483,515) - 39 violations - ETA: 1422s  
+Comparing: 46% (2,066,481/4,483,515) - 48 violations - ETA: 1204s  
+Comparing: 30% (1,369,730/4,483,515) - 39 violations - ETA: 1409s  
+Comparing: 46% (2,076,806/4,483,515) - 48 violations - ETA: 1205s  
+Comparing: 31% (1,392,719/4,483,515) - 39 violations - ETA: 1398s  
+Comparing: 46% (2,088,699/4,483,515) - 48 violations - ETA: 1203s  
+Found 50 violations so far...
+Comparing: 31% (1,408,553/4,483,515) - 39 violations - ETA: 1397s  
+Comparing: 47% (2,120,257/4,483,515) - 50 violations - ETA: 1181s  
+Comparing: 31% (1,423,729/4,483,515) - 39 violations - ETA: 1397s  
+Comparing: 47% (2,144,474/4,483,515) - 50 violations - ETA: 1167s  
+Comparing: 32% (1,437,817/4,483,515) - 39 violations - ETA: 1398s  
+Comparing: 48% (2,163,244/4,483,515) - 50 violations - ETA: 1158s  
+Comparing: 32% (1,449,657/4,483,515) - 39 violations - ETA: 1402s  
+Comparing: 48% (2,183,255/4,483,515) - 50 violations - ETA: 1148s  
+Comparing: 32% (1,461,978/4,483,515) - 39 violations - ETA: 1405s  
+Comparing: 48% (2,192,919/4,483,515) - 50 violations - ETA: 1149s  
+Comparing: 32% (1,472,412/4,483,515) - 39 violations - ETA: 1411s  
+Comparing: 49% (2,228,503/4,483,515) - 51 violations - ETA: 1123s  
+Comparing: 33% (1,482,678/4,483,515) - 39 violations - ETA: 1416s  
+Comparing: 50% (2,253,163/4,483,515) - 51 violations - ETA: 1108s  
+Found 60 violations so far...
+Found 70 violations so far...
+Found 80 violations so far...
+Found 90 violations so far...
+Found 100 violations so far...
+Comparing: 33% (1,491,835/4,483,515) - 39 violations - ETA: 1423s  
+Found 110 violations so far...
+Found 120 violations so far...
+Found 130 violations so far...
+Comparing: 50% (2,281,478/4,483,515) - 138 violations - ETA: 1090s  
+Found 140 violations so far...
+Found 150 violations so far...
+Found 160 violations so far...
+Comparing: 33% (1,500,543/4,483,515) - 39 violations - ETA: 1431s  
+Found 170 violations so far...
+Found 180 violations so far...
+Comparing: 51% (2,306,046/4,483,515) - 184 violations - ETA: 1076s  
+Found 190 violations so far...
+Comparing: 33% (1,521,303/4,483,515) - 39 violations - ETA: 1421s  
+Comparing: 51% (2,330,002/4,483,515) - 197 violations - ETA: 1062s  
+Found 200 violations so far...
+Comparing: 34% (1,542,216/4,483,515) - 39 violations - ETA: 1411s  
+Comparing: 52% (2,353,984/4,483,515) - 209 violations - ETA: 1049s  
+Comparing: 34% (1,564,319/4,483,515) - 39 violations - ETA: 1399s  
+Found 210 violations so far...
+Comparing: 53% (2,385,651/4,483,515) - 210 violations - ETA: 1028s  
+Comparing: 35% (1,589,208/4,483,515) - 39 violations - ETA: 1384s  
+Comparing: 53% (2,406,793/4,483,515) - 210 violations - ETA: 1018s  
+Comparing: 35% (1,611,086/4,483,515) - 39 violations - ETA: 1372s  
+Comparing: 54% (2,425,789/4,483,515) - 210 violations - ETA: 1009s  
+Comparing: 36% (1,622,157/4,483,515) - 39 violations - ETA: 1375s  
+Comparing: 54% (2,442,681/4,483,515) - 210 violations - ETA: 1002s  
+Comparing: 36% (1,626,955/4,483,515) - 39 violations - ETA: 1387s  
+Comparing: 54% (2,458,592/4,483,515) - 210 violations - ETA: 996s  
+Comparing: 36% (1,631,685/4,483,515) - 39 violations - ETA: 1398s  
+Comparing: 55% (2,472,346/4,483,515) - 210 violations - ETA: 992s  
+Comparing: 36% (1,636,511/4,483,515) - 39 violations - ETA: 1409s  
+Comparing: 55% (2,493,233/4,483,515) - 210 violations - ETA: 981s  
+Comparing: 36% (1,641,066/4,483,515) - 39 violations - ETA: 1420s  
+Found 220 violations so far...
+Found 230 violations so far...
+Found 240 violations so far...
+Found 250 violations so far...
+Comparing: 56% (2,518,590/4,483,515) - 251 violations - ETA: 967s  
+Comparing: 36% (1,655,373/4,483,515) - 39 violations - ETA: 1418s  
+Comparing: 56% (2,546,829/4,483,515) - 259 violations - ETA: 950s  
+Found 260 violations so far...
+Found 40 violations so far...
+Comparing: 37% (1,674,125/4,483,515) - 46 violations - ETA: 1409s  
+Found 270 violations so far...
+Found 280 violations so far...
+Found 290 violations so far...
+Found 300 violations so far...
+Found 310 violations so far...
+Comparing: 57% (2,573,446/4,483,515) - 314 violations - ETA: 935s  
+Comparing: 37% (1,687,422/4,483,515) - 46 violations - ETA: 1408s  
+Comparing: 57% (2,599,875/4,483,515) - 317 violations - ETA: 920s  
+Comparing: 37% (1,698,102/4,483,515) - 46 violations - ETA: 1410s  
+Found 320 violations so far...
+Comparing: 58% (2,625,184/4,483,515) - 321 violations - ETA: 906s  
+Comparing: 38% (1,721,322/4,483,515) - 46 violations - ETA: 1396s  
+Found 330 violations so far...
+Found 340 violations so far...
+Comparing: 59% (2,653,864/4,483,515) - 343 violations - ETA: 889s  
+Comparing: 38% (1,741,521/4,483,515) - 46 violations - ETA: 1385s  
+Found 350 violations so far...
+Found 360 violations so far...
+Found 370 violations so far...
+Comparing: 59% (2,676,038/4,483,515) - 370 violations - ETA: 878s  
+Found 380 violations so far...
+Found 390 violations so far...
+Comparing: 39% (1,765,882/4,483,515) - 46 violations - ETA: 1369s  
+Found 400 violations so far...
+Comparing: 60% (2,704,588/4,483,515) - 403 violations - ETA: 861s  
+Comparing: 40% (1,800,931/4,483,515) - 46 violations - ETA: 1340s  
+Comparing: 61% (2,737,126/4,483,515) - 409 violations - ETA: 842s  
+Found 410 violations so far...
+Found 420 violations so far...
+Comparing: 40% (1,825,144/4,483,515) - 46 violations - ETA: 1325s  
+Found 430 violations so far...
+Found 440 violations so far...
+Found 450 violations so far...
+Found 460 violations so far...
+Comparing: 61% (2,766,365/4,483,515) - 465 violations - ETA: 825s  
+Found 470 violations so far...
+Found 480 violations so far...
+Found 490 violations so far...
+Found 500 violations so far...
+Found 510 violations so far...
+Found 520 violations so far...
+Found 530 violations so far...
+Comparing: 41% (1,846,947/4,483,515) - 46 violations - ETA: 1313s  
+Comparing: 62% (2,792,799/4,483,515) - 531 violations - ETA: 811s  
+Comparing: 41% (1,869,110/4,483,515) - 47 violations - ETA: 1300s  
+Comparing: 62% (2,816,869/4,483,515) - 531 violations - ETA: 798s  
+Found 540 violations so far...
+Found 550 violations so far...
+Found 560 violations so far...
+Found 570 violations so far...
+Found 580 violations so far...
+Found 590 violations so far...
+Comparing: 41% (1,882,867/4,483,515) - 48 violations - ETA: 1298s  
+Comparing: 63% (2,847,112/4,483,515) - 599 violations - ETA: 781s  
+Comparing: 42% (1,899,663/4,483,515) - 48 violations - ETA: 1292s  
+Found 600 violations so far...
+Found 610 violations so far...
+Found 620 violations so far...
+Comparing: 64% (2,870,864/4,483,515) - 625 violations - ETA: 769s  
+Found 630 violations so far...
+Comparing: 42% (1,920,403/4,483,515) - 48 violations - ETA: 1281s  
+Found 640 violations so far...
+Found 650 violations so far...
+Comparing: 64% (2,900,505/4,483,515) - 650 violations - ETA: 753s  
+Comparing: 43% (1,935,805/4,483,515) - 48 violations - ETA: 1276s  
+Comparing: 65% (2,929,613/4,483,515) - 657 violations - ETA: 737s  
+Comparing: 43% (1,943,424/4,483,515) - 48 violations - ETA: 1280s  
+Comparing: 66% (2,964,776/4,483,515) - 657 violations - ETA: 717s  
+Comparing: 43% (1,966,763/4,483,515) - 48 violations - ETA: 1266s  
+Comparing: 66% (2,997,265/4,483,515) - 657 violations - ETA: 699s  
+Comparing: 44% (1,988,575/4,483,515) - 48 violations - ETA: 1254s  
+Comparing: 67% (3,030,738/4,483,515) - 657 violations - ETA: 680s  
+Comparing: 44% (2,005,328/4,483,515) - 48 violations - ETA: 1248s  
+Comparing: 68% (3,062,076/4,483,515) - 657 violations - ETA: 663s  
+Comparing: 45% (2,021,100/4,483,515) - 48 violations - ETA: 1242s  
+Comparing: 68% (3,093,603/4,483,515) - 657 violations - ETA: 647s  
+Comparing: 45% (2,035,409/4,483,515) - 48 violations - ETA: 1238s  
+Comparing: 69% (3,124,653/4,483,515) - 657 violations - ETA: 630s  
+Comparing: 45% (2,048,896/4,483,515) - 48 violations - ETA: 1235s  
+Comparing: 70% (3,146,029/4,483,515) - 657 violations - ETA: 620s  
+Comparing: 45% (2,061,511/4,483,515) - 48 violations - ETA: 1233s  
+Comparing: 70% (3,169,506/4,483,515) - 657 violations - ETA: 609s  
+Comparing: 46% (2,072,378/4,483,515) - 48 violations - ETA: 1233s  
+Comparing: 71% (3,189,128/4,483,515) - 657 violations - ETA: 600s  
+Comparing: 46% (2,083,176/4,483,515) - 48 violations - ETA: 1232s  
+Found 50 violations so far...
+Comparing: 71% (3,205,200/4,483,515) - 657 violations - ETA: 594s  
+Comparing: 47% (2,108,363/4,483,515) - 50 violations - ETA: 1216s  
+Comparing: 71% (3,219,502/4,483,515) - 657 violations - ETA: 588s  
+Comparing: 47% (2,137,272/4,483,515) - 50 violations - ETA: 1196s  
+Comparing: 72% (3,232,555/4,483,515) - 657 violations - ETA: 584s  
+Found 660 violations so far...
+Found 670 violations so far...
+Found 680 violations so far...
+Comparing: 48% (2,157,752/4,483,515) - 50 violations - ETA: 1185s  
+Found 690 violations so far...
+Found 700 violations so far...
+Found 710 violations so far...
+Found 720 violations so far...
+Found 730 violations so far...
+Found 740 violations so far...
+Found 750 violations so far...
+Comparing: 72% (3,257,223/4,483,515) - 756 violations - ETA: 572s  
+Found 760 violations so far...
+Found 770 violations so far...
+Found 780 violations so far...
+Found 790 violations so far...
+Found 800 violations so far...
+Found 810 violations so far...
+Found 820 violations so far...
+Found 830 violations so far...
+Found 840 violations so far...
+Found 850 violations so far...
+Found 860 violations so far...
+Found 870 violations so far...
+Comparing: 48% (2,176,084/4,483,515) - 50 violations - ETA: 1177s  
+Found 880 violations so far...
+Found 890 violations so far...
+Found 900 violations so far...
+Found 910 violations so far...
+Found 920 violations so far...
+Found 930 violations so far...
+Found 940 violations so far...
+Found 950 violations so far...
+Found 960 violations so far...
+Found 970 violations so far...
+Found 980 violations so far...
+Comparing: 73% (3,291,647/4,483,515) - 983 violations - ETA: 554s  
+Comparing: 48% (2,190,602/4,483,515) - 50 violations - ETA: 1172s  
+Found 990 violations so far...
+Found 1000 violations so far...
+Comparing: 74% (3,318,256/4,483,515) - 1006 violations - ETA: 540s  
+Found 1010 violations so far...
+Found 1020 violations so far...
+Comparing: 49% (2,219,329/4,483,515) - 51 violations - ETA: 1152s  
+Found 1030 violations so far...
+Comparing: 74% (3,341,198/4,483,515) - 1037 violations - ETA: 529s  
+Found 1040 violations so far...
+Comparing: 50% (2,246,602/4,483,515) - 51 violations - ETA: 1135s  
+Found 60 violations so far...
+Found 70 violations so far...
+Found 80 violations so far...
+Found 90 violations so far...
+Comparing: 75% (3,368,047/4,483,515) - 1047 violations - ETA: 516s  
+Found 100 violations so far...
+Found 110 violations so far...
+Found 120 violations so far...
+Comparing: 50% (2,275,815/4,483,515) - 126 violations - ETA: 1115s  
+Found 130 violations so far...
+Found 1050 violations so far...
+Found 140 violations so far...
+Found 1060 violations so far...
+Found 150 violations so far...
+Found 160 violations so far...
+Comparing: 75% (3,401,879/4,483,515) - 1061 violations - ETA: 499s  
+Found 170 violations so far...
+Found 180 violations so far...
+Comparing: 51% (2,303,265/4,483,515) - 180 violations - ETA: 1098s  
+Found 190 violations so far...
+Comparing: 76% (3,433,090/4,483,515) - 1063 violations - ETA: 483s  
+Comparing: 51% (2,327,407/4,483,515) - 194 violations - ETA: 1083s  
+Found 200 violations so far...
+Comparing: 77% (3,460,782/4,483,515) - 1064 violations - ETA: 469s  
+Comparing: 52% (2,352,399/4,483,515) - 209 violations - ETA: 1069s  
+Comparing: 77% (3,479,970/4,483,515) - 1064 violations - ETA: 461s  
+Found 1070 violations so far...
+Found 1080 violations so far...
+Found 210 violations so far...
+Found 1090 violations so far...
+Found 1100 violations so far...
+Found 1110 violations so far...
+Found 1120 violations so far...
+Found 1130 violations so far...
+Found 1140 violations so far...
+Found 1150 violations so far...
+Found 1160 violations so far...
+Comparing: 53% (2,383,416/4,483,515) - 210 violations - ETA: 1048s  
+Found 1170 violations so far...
+Found 1180 violations so far...
+Found 1190 violations so far...
+Found 1200 violations so far...
+Found 1210 violations so far...
+Comparing: 78% (3,511,103/4,483,515) - 1215 violations - ETA: 445s  
+Found 1220 violations so far...
+Found 1230 violations so far...
+Found 1240 violations so far...
+Found 1250 violations so far...
+Found 1260 violations so far...
+Comparing: 53% (2,405,007/4,483,515) - 210 violations - ETA: 1037s  
+Comparing: 78% (3,539,691/4,483,515) - 1265 violations - ETA: 431s  
+Found 1270 violations so far...
+Found 1280 violations so far...
+Comparing: 54% (2,424,576/4,483,515) - 210 violations - ETA: 1027s  
+Comparing: 79% (3,567,935/4,483,515) - 1286 violations - ETA: 418s  
+Comparing: 54% (2,441,779/4,483,515) - 210 violations - ETA: 1020s  
+Comparing: 80% (3,594,630/4,483,515) - 1289 violations - ETA: 405s  
+Comparing: 54% (2,457,955/4,483,515) - 210 violations - ETA: 1013s  
+Comparing: 80% (3,624,844/4,483,515) - 1289 violations - ETA: 390s  
+Found 1290 violations so far...
+Comparing: 55% (2,471,510/4,483,515) - 210 violations - ETA: 1009s  
+Found 1300 violations so far...
+Found 1310 violations so far...
+Comparing: 81% (3,655,258/4,483,515) - 1316 violations - ETA: 376s  
+Found 1320 violations so far...
+Found 1330 violations so far...
+Found 1340 violations so far...
+Comparing: 55% (2,491,561/4,483,515) - 210 violations - ETA: 999s  
+Found 1350 violations so far...
+Comparing: 82% (3,683,762/4,483,515) - 1354 violations - ETA: 362s  
+Comparing: 56% (2,513,783/4,483,515) - 212 violations - ETA: 987s  
+Found 220 violations so far...
+Found 230 violations so far...
+Found 240 violations so far...
+Found 250 violations so far...
+Found 1360 violations so far...
+Comparing: 82% (3,713,441/4,483,515) - 1365 violations - ETA: 348s  
+Found 1370 violations so far...
+Comparing: 56% (2,541,651/4,483,515) - 259 violations - ETA: 970s  
+Found 260 violations so far...
+Comparing: 83% (3,738,665/4,483,515) - 1371 violations - ETA: 336s  
+Found 270 violations so far...
+Found 280 violations so far...
+Found 290 violations so far...
+Found 300 violations so far...
+Found 310 violations so far...
+Comparing: 57% (2,569,321/4,483,515) - 311 violations - ETA: 953s  
+Comparing: 83% (3,757,530/4,483,515) - 1371 violations - ETA: 328s  
+Comparing: 57% (2,596,842/4,483,515) - 317 violations - ETA: 937s  
+Comparing: 84% (3,780,053/4,483,515) - 1377 violations - ETA: 318s  
+Found 1380 violations so far...
+Found 320 violations so far...
+Comparing: 58% (2,621,677/4,483,515) - 321 violations - ETA: 923s  
+Comparing: 84% (3,805,555/4,483,515) - 1387 violations - ETA: 306s  
+Found 330 violations so far...
+Found 1390 violations so far...
+Found 340 violations so far...
+Found 1400 violations so far...
+Comparing: 59% (2,650,273/4,483,515) - 343 violations - ETA: 906s  
+Comparing: 85% (3,834,071/4,483,515) - 1409 violations - ETA: 293s  
+Comparing: 59% (2,667,933/4,483,515) - 347 violations - ETA: 898s  
+Found 350 violations so far...
+Found 360 violations so far...
+Found 370 violations so far...
+Found 380 violations so far...
+Found 390 violations so far...
+Comparing: 85% (3,855,283/4,483,515) - 1409 violations - ETA: 283s  
+Found 1410 violations so far...
+Found 400 violations so far...
+Comparing: 60% (2,697,159/4,483,515) - 403 violations - ETA: 880s  
+Found 1420 violations so far...
+Comparing: 86% (3,887,156/4,483,515) - 1421 violations - ETA: 268s  
+Comparing: 60% (2,723,513/4,483,515) - 407 violations - ETA: 865s  
+Found 410 violations so far...
+Comparing: 87% (3,916,874/4,483,515) - 1427 violations - ETA: 254s  
+Found 1430 violations so far...
+Found 420 violations so far...
+Found 430 violations so far...
+Found 440 violations so far...
+Comparing: 61% (2,755,726/4,483,515) - 442 violations - ETA: 846s  
+Found 450 violations so far...
+Found 460 violations so far...
+Found 470 violations so far...
+Found 480 violations so far...
+Found 490 violations so far...
+Found 500 violations so far...
+Comparing: 88% (3,946,183/4,483,515) - 1434 violations - ETA: 241s  
+Found 510 violations so far...
+Found 520 violations so far...
+Found 530 violations so far...
+Comparing: 62% (2,780,251/4,483,515) - 531 violations - ETA: 833s  
+Comparing: 88% (3,968,254/4,483,515) - 1434 violations - ETA: 231s  
+Comparing: 62% (2,802,832/4,483,515) - 531 violations - ETA: 821s  
+Comparing: 88% (3,985,376/4,483,515) - 1434 violations - ETA: 223s  
+Found 540 violations so far...
+Found 550 violations so far...
+Found 560 violations so far...
+Found 570 violations so far...
+Comparing: 63% (2,829,369/4,483,515) - 572 violations - ETA: 806s  
+Found 580 violations so far...
+Found 590 violations so far...
+Comparing: 89% (4,004,242/4,483,515) - 1434 violations - ETA: 215s  
+Comparing: 63% (2,855,203/4,483,515) - 599 violations - ETA: 792s  
+Found 600 violations so far...
+Found 610 violations so far...
+Found 620 violations so far...
+Comparing: 89% (4,023,423/4,483,515) - 1434 violations - ETA: 206s  
+Found 630 violations so far...
+Comparing: 64% (2,882,275/4,483,515) - 636 violations - ETA: 777s  
+Found 640 violations so far...
+Comparing: 90% (4,035,717/4,483,515) - 1434 violations - ETA: 201s  
+Found 650 violations so far...
+Comparing: 64% (2,909,055/4,483,515) - 657 violations - ETA: 763s  
+Comparing: 90% (4,055,736/4,483,515) - 1434 violations - ETA: 193s  
+Comparing: 65% (2,941,583/4,483,515) - 657 violations - ETA: 744s  
+Comparing: 90% (4,079,237/4,483,515) - 1435 violations - ETA: 182s  
+Comparing: 66% (2,970,437/4,483,515) - 657 violations - ETA: 728s  
+Comparing: 91% (4,095,540/4,483,515) - 1435 violations - ETA: 175s  
+Comparing: 66% (3,003,898/4,483,515) - 657 violations - ETA: 709s  
+Comparing: 91% (4,115,507/4,483,515) - 1435 violations - ETA: 166s  
+Comparing: 67% (3,038,286/4,483,515) - 657 violations - ETA: 689s  
+Comparing: 92% (4,135,466/4,483,515) - 1435 violations - ETA: 157s  
+Comparing: 68% (3,068,363/4,483,515) - 657 violations - ETA: 673s  
+Comparing: 92% (4,158,871/4,483,515) - 1439 violations - ETA: 146s  
+Comparing: 69% (3,100,023/4,483,515) - 657 violations - ETA: 656s  
+Comparing: 93% (4,179,972/4,483,515) - 1439 violations - ETA: 137s  
+Comparing: 69% (3,127,040/4,483,515) - 657 violations - ETA: 642s  
+Comparing: 93% (4,203,009/4,483,515) - 1439 violations - ETA: 126s  
+Comparing: 70% (3,147,859/4,483,515) - 657 violations - ETA: 632s  
+Comparing: 94% (4,224,161/4,483,515) - 1439 violations - ETA: 117s  
+Comparing: 70% (3,169,682/4,483,515) - 657 violations - ETA: 621s  
+Comparing: 94% (4,243,288/4,483,515) - 1439 violations - ETA: 108s  
+Comparing: 71% (3,189,074/4,483,515) - 657 violations - ETA: 612s  
+Comparing: 95% (4,260,624/4,483,515) - 1439 violations - ETA: 100s  
+Comparing: 71% (3,205,234/4,483,515) - 657 violations - ETA: 606s  
+Comparing: 95% (4,283,366/4,483,515) - 1439 violations - ETA: 90s  
+Comparing: 71% (3,219,971/4,483,515) - 657 violations - ETA: 600s  
+Found 1440 violations so far...
+Found 1450 violations so far...
+Found 1460 violations so far...
+Found 1470 violations so far...
+Comparing: 96% (4,306,505/4,483,515) - 1470 violations - ETA: 80s  
+Found 1480 violations so far...
+Comparing: 72% (3,233,599/4,483,515) - 657 violations - ETA: 595s  
+Found 660 violations so far...
+Found 1490 violations so far...
+Found 670 violations so far...
+Found 680 violations so far...
+Found 1500 violations so far...
+Found 690 violations so far...
+Found 700 violations so far...
+Found 710 violations so far...
+Found 720 violations so far...
+Found 730 violations so far...
+Found 740 violations so far...
+Found 750 violations so far...
+Comparing: 96% (4,329,023/4,483,515) - 1503 violations - ETA: 69s  
+Comparing: 72% (3,259,753/4,483,515) - 758 violations - ETA: 581s  
+Found 760 violations so far...
+Found 770 violations so far...
+Found 780 violations so far...
+Found 790 violations so far...
+Found 800 violations so far...
+Found 810 violations so far...
+Found 820 violations so far...
+Found 830 violations so far...
+Found 840 violations so far...
+Found 850 violations so far...
+Found 860 violations so far...
+Found 870 violations so far...
+Comparing: 97% (4,350,872/4,483,515) - 1507 violations - ETA: 60s  
+Found 880 violations so far...
+Found 890 violations so far...
+Found 900 violations so far...
+Found 910 violations so far...
+Found 920 violations so far...
+Found 930 violations so far...
+Found 940 violations so far...
+Found 950 violations so far...
+Found 960 violations so far...
+Found 970 violations so far...
+Found 980 violations so far...
+Comparing: 73% (3,294,324/4,483,515) - 983 violations - ETA: 563s  
+Found 990 violations so far...
+Comparing: 97% (4,372,665/4,483,515) - 1508 violations - ETA: 50s  
+Found 1000 violations so far...
+Found 1010 violations so far...
+Comparing: 74% (3,322,370/4,483,515) - 1012 violations - ETA: 548s  
+Found 1020 violations so far...
+Found 1030 violations so far...
+Comparing: 98% (4,396,618/4,483,515) - 1508 violations - ETA: 39s  
+Found 1040 violations so far...
+Comparing: 74% (3,344,891/4,483,515) - 1040 violations - ETA: 537s  
+Found 1510 violations so far...
+Found 1520 violations so far...
+Found 1530 violations so far...
+Found 1540 violations so far...
+Found 1550 violations so far...
+Comparing: 98% (4,417,623/4,483,515) - 1554 violations - ETA: 29s  
+Found 1560 violations so far...
+Found 1570 violations so far...
+Found 1580 violations so far...
+Comparing: 75% (3,375,178/4,483,515) - 1047 violations - ETA: 522s  
+Found 1050 violations so far...
+Found 1060 violations so far...
+Comparing: 99% (4,447,964/4,483,515) - 1582 violations - ETA: 16s  
+Found 1590 violations so far...
+Comparing: 76% (3,411,038/4,483,515) - 1061 violations - ETA: 503s  
+Comparing: 99% (4,478,135/4,483,515) - 1593 violations - ETA: 2s  
+Found 1600 violations so far...
+Complete: 4483515 comparisons, 1605 violations
+
+Comparing: 76% (3,437,254/4,483,515) - 1063 violations - ETA: 490s  
+Comparing: 77% (3,464,287/4,483,515) - 1064 violations - ETA: 476s  
+Found 1070 violations so far...
+Found 1080 violations so far...
+Found 1090 violations so far...
+Comparing: 77% (3,486,060/4,483,515) - 1098 violations - ETA: 466s  
+Found 1100 violations so far...
+Found 1110 violations so far...
+Found 1120 violations so far...
+Found 1130 violations so far...
+Found 1140 violations so far...
+Found 1150 violations so far...
+Found 1160 violations so far...
+Found 1170 violations so far...
+Found 1180 violations so far...
+Found 1190 violations so far...
+Found 1200 violations so far...
+Found 1210 violations so far...
+Found 1220 violations so far...
+Found 1230 violations so far...
+Found 1240 violations so far...
+Found 1250 violations so far...
+Comparing: 78% (3,520,150/4,483,515) - 1250 violations - ETA: 448s  
+Found 1260 violations so far...
+Found 1270 violations so far...
+Found 1280 violations so far...
+Comparing: 79% (3,548,480/4,483,515) - 1286 violations - ETA: 434s  
+Comparing: 79% (3,578,211/4,483,515) - 1289 violations - ETA: 420s  
+Comparing: 80% (3,605,384/4,483,515) - 1289 violations - ETA: 406s  
+Found 1290 violations so far...
+Comparing: 81% (3,637,557/4,483,515) - 1292 violations - ETA: 390s  
+Found 1300 violations so far...
+Found 1310 violations so far...
+Found 1320 violations so far...
+Found 1330 violations so far...
+Found 1340 violations so far...
+Comparing: 81% (3,667,183/4,483,515) - 1341 violations - ETA: 376s  
+Found 1350 violations so far...
+Comparing: 82% (3,696,111/4,483,515) - 1354 violations - ETA: 362s  
+Found 1360 violations so far...
+Found 1370 violations so far...
+Comparing: 83% (3,727,472/4,483,515) - 1371 violations - ETA: 346s  
+Comparing: 83% (3,751,196/4,483,515) - 1371 violations - ETA: 335s  
+Comparing: 84% (3,769,840/4,483,515) - 1371 violations - ETA: 327s  
+Found 1380 violations so far...
+Comparing: 84% (3,798,510/4,483,515) - 1381 violations - ETA: 313s  
+Found 1390 violations so far...
+Found 1400 violations so far...
+Comparing: 85% (3,830,049/4,483,515) - 1409 violations - ETA: 298s  
+Comparing: 85% (3,855,087/4,483,515) - 1409 violations - ETA: 286s  
+Found 1410 violations so far...
+Found 1420 violations so far...
+Comparing: 86% (3,891,122/4,483,515) - 1423 violations - ETA: 269s  
+Found 1430 violations so far...
+Comparing: 87% (3,925,351/4,483,515) - 1434 violations - ETA: 253s  
+Comparing: 88% (3,955,741/4,483,515) - 1434 violations - ETA: 238s  
+Comparing: 88% (3,978,111/4,483,515) - 1434 violations - ETA: 228s  
+Comparing: 89% (3,996,043/4,483,515) - 1434 violations - ETA: 220s  
+Comparing: 89% (4,020,251/4,483,515) - 1434 violations - ETA: 209s  
+Comparing: 89% (4,034,442/4,483,515) - 1434 violations - ETA: 203s  
+Comparing: 90% (4,055,722/4,483,515) - 1434 violations - ETA: 194s  
+Comparing: 91% (4,080,734/4,483,515) - 1435 violations - ETA: 182s  
+Comparing: 91% (4,099,112/4,483,515) - 1435 violations - ETA: 174s  
+Comparing: 91% (4,123,242/4,483,515) - 1435 violations - ETA: 163s  
+Comparing: 92% (4,140,135/4,483,515) - 1435 violations - ETA: 155s  
+Comparing: 92% (4,169,351/4,483,515) - 1439 violations - ETA: 142s  
+Comparing: 93% (4,190,373/4,483,515) - 1439 violations - ETA: 132s  
+Comparing: 94% (4,217,110/4,483,515) - 1439 violations - ETA: 120s  
+Comparing: 94% (4,235,627/4,483,515) - 1439 violations - ETA: 112s  
+Comparing: 94% (4,257,644/4,483,515) - 1439 violations - ETA: 102s  
+Comparing: 95% (4,280,352/4,483,515) - 1439 violations - ETA: 92s  
+Found 1440 violations so far...
+Found 1450 violations so far...
+Comparing: 95% (4,303,140/4,483,515) - 1455 violations - ETA: 81s  
+Found 1460 violations so far...
+Found 1470 violations so far...
+Found 1480 violations so far...
+Found 1490 violations so far...
+Found 1500 violations so far...
+Comparing: 96% (4,326,867/4,483,515) - 1502 violations - ETA: 70s  
+Comparing: 97% (4,350,365/4,483,515) - 1507 violations - ETA: 60s  
+Comparing: 97% (4,372,725/4,483,515) - 1508 violations - ETA: 50s  
+Comparing: 98% (4,398,326/4,483,515) - 1508 violations - ETA: 38s  
+Found 1510 violations so far...
+Found 1520 violations so far...
+Found 1530 violations so far...
+Found 1540 violations so far...
+Found 1550 violations so far...
+Found 1560 violations so far...
+Comparing: 98% (4,420,031/4,483,515) - 1562 violations - ETA: 28s  
+Found 1570 violations so far...
+Found 1580 violations so far...
+Found 1590 violations so far...
+Comparing: 99% (4,456,196/4,483,515) - 1593 violations - ETA: 12s  
+Found 1600 violations so far...
+Complete: 4483515 comparisons, 1605 violations
+

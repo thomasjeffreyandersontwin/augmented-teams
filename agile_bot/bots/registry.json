@@ -1,4 +1,8 @@
 {
+  "base_bot": {
+    "cli_path": "agile_bot/bots/base_bot/src/base_bot_cli.py",
+    "trigger_patterns": []
+  },
   "story_bot": {
     "cli_path": "agile_bot/bots/story_bot/src/story_bot_cli.py",
     "trigger_patterns": []

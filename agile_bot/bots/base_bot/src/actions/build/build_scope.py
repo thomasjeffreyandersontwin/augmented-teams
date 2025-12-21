@@ -1,27 +1,26 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 from agile_bot.bots.base_bot.src.actions.action_scope import ActionScope
 
+if TYPE_CHECKING:
+    from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext
 
 class BuildScope(ActionScope):
-    """
-    Scope for build action.
-    
-    Extends ActionScope with build-specific behavior.
-    Default scope is 'all' if not specified.
-    """
-    
-    def __init__(self, parameters: Dict[str, Any], bot_paths: Optional[BotPaths] = None):
+
+    def __init__(self, parameters: Dict[str, Any], bot_paths: Optional[BotPaths]=None):
         super().__init__(parameters, bot_paths)
-        # If no scope specified, default to 'all'
-        if not self._scope_config or not any(key in self._scope_config for key in 
-            ['story_names', 'increment_priorities', 'epic_names', 'increment_names', 'all']):
+        if not self._scope_config or not any((key in self._scope_config for key in ['story_names', 'increment_priorities', 'epic_names', 'increment_names', 'all'])):
             self._scope_config['all'] = True
-
-
-
-
-
-
-
-
+    
+    @classmethod
+    def from_context(cls, context: 'ScopeActionContext', bot_paths: Optional[BotPaths] = None) -> 'BuildScope':
+        """Create BuildScope from typed ScopeActionContext."""
+        from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig
+        
+        # Convert typed context to parameters dict for now
+        # TODO: Refactor ActionScope to work directly with ScopeConfig
+        params = {}
+        if context.scope:
+            params['scope'] = context.scope.to_dict()
+        
+        return cls(params, bot_paths)

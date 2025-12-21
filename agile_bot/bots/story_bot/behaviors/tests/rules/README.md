@@ -1,13 +1,13 @@
-# pytest BDD Orchestrator Pattern - Test Rules
+# pytest Given When Then Orchestrator Pattern - Test Rules
 
 ## Overview
 
-These rules define how to write BDD-style tests using **pytest with orchestrator pattern** - NO FEATURE FILES.
+These rules define how to write **story-based tests** using **pytest with orchestrator pattern** - NO FEATURE FILES. Tests read like stories using Given-When-Then structure.
 
 ### Core Philosophy
 
 1. **Orchestrator Pattern**: Test methods show the flow; helper functions do the work
-2. **Given-When-Then**: Clear BDD structure in every test
+2. **Given-When-Then**: Clear story structure in every test
 3. **Test-Driven Development**: RED-GREEN-REFACTOR cycle drives production code
 4. **Clean Code**: Both tests AND production code follow clean code principles
 
@@ -76,7 +76,7 @@ class TestAgentInitialization:
 
 6. **`ubiquitous_language.json`** - Use SAME language in domain model, stories, AND code (DDD Ubiquitous Language)
 7. **`self_documenting_tests.json`** - Tests are self-documenting through code (no verbose "TEST WILL FAIL" comments)
-8. **`business_readable_test_names.json`** - Test names read like plain English (BDD Rule 1)
+8. **`business_readable_test_names.json`** - Test names read like plain English stories (from BDD Rule 1)
 9. **`consistent_vocabulary.json`** - One word per concept: create/verify/load (Clean Code 2.2)
 10. **`use_descriptive_function_names.json`** - Intention-revealing names
 11. **`match_specification_scenarios.json`** - Match specification scenarios exactly
@@ -84,11 +84,11 @@ class TestAgentInitialization:
 ### Test Implementation Rules
 
 12. **`design_api_through_failing_tests.json`** - Write tests against real expected API before implementation (no dummies/placeholders)
-13. **`call_production_code_directly.json`** - Call real code, let tests fail naturally (BDD Rule 8.4)
-14. **`cover_all_behavior_paths.json`** - Test normal, edge, and failure paths (BDD Rule 3)
-15. **`mock_only_boundaries.json`** - Mock external APIs only, not business logic (BDD Rule 8.2)
+13. **`call_production_code_directly.json`** - Call real code, let tests fail naturally (from BDD Rule 8.4)
+14. **`cover_all_behavior_paths.json`** - Test normal, edge, and failure paths (from BDD Rule 3)
+15. **`mock_only_boundaries.json`** - Mock external APIs only, not business logic (from BDD Rule 8.2)
 16. **`use_real_implementations.json`** - Use real temp files, not mocks
-17. **`helper_extraction_and_reuse.json`** - Extract duplicate setup to helpers/factories (BDD Rules 8.3 & 4)
+17. **`helper_extraction_and_reuse.json`** - Extract duplicate setup to helpers/factories (from BDD Rules 8.3 & 4)
 18. **`test_driven_development.json`** - RED-GREEN-REFACTOR cycle
 
 ### Production Code Rules
@@ -103,24 +103,24 @@ class TestAgentInitialization:
 24. **`use_ascii_only.json`** - ASCII characters only (Windows compatibility)
 25. **`use_exact_variable_names.json`** - Use exact variable names from specification consistently
 
-## Mined BDD & Clean Code Principles
+## Principles Mined from BDD & Clean Code Sources
 
 These rules incorporate principles mined from:
-- **BDD Rule (bdd-rule.mdc)**: Business-readable language, comprehensive coverage, observable behavior, API design
+- **BDD Rule (bdd-rule.mdc)**: Business-readable language, comprehensive coverage, observable behavior, API design (principles adapted for Given When Then story-based testing)
 - **Clean Code (clean-code-rule.mdc)**: Consistent vocabulary, DRY, separation of concerns, meaningful names
 - **Clean Code Python (clean-code-python-rule.mdc)**: Python-specific implementations
 
-### Key Mined Principles Applied:
+### Key Principles Applied (from source materials):
 
 1. **Ubiquitous Language (DDD Core Principle)** → `ubiquitous_language.json`
 2. **API Design Through Tests (TDD + BDD)** → `design_api_through_failing_tests.json`
-3. **Business-Readable Language (BDD Rule 1)** → `business_readable_test_names.json`
+3. **Business-Readable Language (from BDD Rule 1)** → `business_readable_test_names.json`
 4. **Consistent Vocabulary (Clean Code 2.2)** → `consistent_vocabulary.json`
-5. **Comprehensive Coverage (BDD Rule 3)** → `cover_all_behavior_paths.json`
-6. **Helper Extraction (BDD Rules 8.3 & 4)** → `helper_extraction_and_reuse.json`
-7. **Mock Only Boundaries (BDD Rule 8.2)** → `mock_only_boundaries.json`
-8. **Natural Test Failures (BDD Rule 8.4)** → `call_production_code_directly.json`
-9. **ASCII Only (BDD Rule 10)** → `use_ascii_only.json`
+5. **Comprehensive Coverage (from BDD Rule 3)** → `cover_all_behavior_paths.json`
+6. **Helper Extraction (from BDD Rules 8.3 & 4)** → `helper_extraction_and_reuse.json`
+7. **Mock Only Boundaries (from BDD Rule 8.2)** → `mock_only_boundaries.json`
+8. **Natural Test Failures (from BDD Rule 8.4)** → `call_production_code_directly.json`
+9. **ASCII Only (from BDD Rule 10)** → `use_ascii_only.json`
 
 ## Key Principles
 

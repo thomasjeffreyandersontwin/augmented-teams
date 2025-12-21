@@ -8,6 +8,7 @@ Tests for all stories in the 'Invoke CLI' sub-epic:
 - Get Help for Command Line Functions
 - Detect Trigger Words Through Extension
 - Save Through CLI
+- CLI Parameter Parsing (infrastructure tests)
 
 Tests use BaseBotCli pattern from cli_invocation_pattern.md.
 CLI routes to bot, bot executes. Tests verify CLI routing and bot execution.
@@ -15,6 +16,8 @@ CLI routes to bot, bot executes. Tests verify CLI routing and bot execution.
 import pytest
 from pathlib import Path
 import json
+import argparse
+import sys
 from conftest import (
     create_bot_config_file,
     create_workflow_state_file,
@@ -28,6 +31,7 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     create_base_action_instructions
 )
 from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+from agile_bot.bots.base_bot.src.cli.cli_parameter_parser import CliParameterParser
 
 # ============================================================================
 # HELPER CLASSES
@@ -49,7 +53,19 @@ class TriggerTestSetup:
     def setup_bot(self):
         """Set up bot with all behaviors and actions."""
         workspace_root = self.bot_directory.parent.parent.parent
+        # Ensure bot_config is created in the same location as self.bot_directory
+        # setup_bot_for_testing creates in workspace_root/agile_bot/bots/bot_name
+        # which should match self.bot_directory (tmp_path/agile_bot/bots/story_bot)
         self.bot_config = setup_bot_for_testing(workspace_root, self.bot_name, self.behaviors)
+        # Verify bot_config is in the expected location
+        expected_bot_dir = workspace_root / 'agile_bot' / 'bots' / self.bot_name
+        if self.bot_directory != expected_bot_dir:
+            # If they don't match, create bot_config in self.bot_directory instead
+            from agile_bot.bots.base_bot.test.conftest import create_bot_config_file, create_base_actions_structure
+            from agile_bot.bots.base_bot.test.test_invoke_cli import _create_base_action_instructions
+            self.bot_config = create_bot_config_file(self.bot_directory, self.bot_name, self.behaviors)
+            create_base_actions_structure(self.bot_directory)
+            _create_base_action_instructions(self.bot_directory)
         self._setup_behavior_folders_and_knowledge_graphs(workspace_root)
         self._create_story_graph_file()
         return self
@@ -57,8 +73,10 @@ class TriggerTestSetup:
     def _setup_behavior_folders_and_knowledge_graphs(self, workspace_root: Path):
         """Set up behavior folders with behavior.json files and knowledge graph configs."""
         from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-        behaviors_dir = workspace_root / 'agile_bot' / 'bots' / self.bot_name / 'behaviors'
+        # Ensure behaviors are created in the same location as bot_directory
+        # workspace_root / 'agile_bot' / 'bots' / bot_name should match self.bot_directory
         bot_dir = workspace_root / 'agile_bot' / 'bots' / self.bot_name
+        behaviors_dir = bot_dir / 'behaviors'
         for behavior in self.behaviors:
             behavior_dir = behaviors_dir / behavior
             behavior_dir.mkdir(parents=True, exist_ok=True)
@@ -193,10 +211,12 @@ class TriggerRouterTestHelper:
         if route.get('action_name') == 'close_current_action':
             result = cli.close_current_action()
         else:
+            # Note: trigger_message was previously passed as 'context' but the 
+            # typed context system now handles parameters differently via cli_args
             result = cli.run(
                 behavior_name=route.get('behavior_name'),
                 action_name=route.get('action_name'),
-                context=trigger_message
+                cli_args=[]  # No additional CLI args for trigger-based execution
             )
         
         return result
@@ -938,3 +958,740 @@ class TestMatchTextAgainstTriggers:
         
         # Then: Returns True
         then_matches_returns(result, True)
+
+
+# ============================================================================
+# CLI PARAMETER PARSING TESTS (Infrastructure)
+# ============================================================================
+
+# HELPER FUNCTIONS - Reusable test operations
+
+def create_params_with_scope(scope_string):
+    return {'scope': scope_string}
+
+def create_params_with_multiple_keys(**kwargs):
+    return kwargs
+
+def create_cli_args_namespace(**kwargs):
+    defaults = {
+        'behavior': 'code',
+        'action': 'validate',
+        'scope': None,
+        'skip_cross_file': False,
+        'force_full': False,
+        'user_message': None
+    }
+    defaults.update(kwargs)
+    return argparse.Namespace(**defaults)
+
+# Alias for backward compatibility
+create_args_namespace = create_cli_args_namespace
+
+def verify_scope_contains_files(scope_dict, expected_files):
+    assert isinstance(scope_dict, dict)
+    assert scope_dict['type'] == 'files'
+    assert scope_dict['value'] == expected_files
+
+def verify_scope_has_file_count(scope_dict, expected_count):
+    assert isinstance(scope_dict, dict)
+    assert len(scope_dict['value']) == expected_count
+
+def simulate_cli_invocation(cli_args_list):
+    """Simulate CLI invocation and return args plus parsed params dict for tests.
+    
+    The new CliParameterParser returns (args, remaining_args_list), but tests 
+    expect a params dict. This helper builds a params dict for backward compatibility.
+    """
+    original_argv = sys.argv
+    sys.argv = ['test'] + cli_args_list
+    try:
+        args, remaining_args = CliParameterParser.parse_arguments()
+        
+        # Build params dict from args for backward compatibility with tests
+        # Use empty list for unrecognized args since flags are already parsed in args
+        params = CliParameterParser._build_params_from_args(args, [])
+        return args, params
+    finally:
+        sys.argv = original_argv
+
+def create_validation_cli_args(scope_value):
+    return [
+        '--behavior', 'code',
+        '--action', 'validate',
+        '--scope', scope_value
+    ]
+
+def verify_json_array_not_corrupted(normalized_string, expected_values):
+    parsed_scope = json.loads(normalized_string)
+    assert isinstance(parsed_scope['value'], list)
+    assert len(parsed_scope['value']) == len(expected_values)
+    for i, expected_value in enumerate(expected_values):
+        assert parsed_scope['value'][i] == expected_value
+    assert '["' not in normalized_string or normalized_string.count('["') == 1
+    assert '"]' not in normalized_string or normalized_string.count('"]') == 1
+
+
+# FIXTURES - Test setup
+
+@pytest.fixture
+def python_dict_with_single_file():
+    return "{'type': 'files', 'value': ['file1.py']}"
+
+@pytest.fixture
+def python_dict_with_multiple_files():
+    return "{'type': 'files', 'value': ['file1.py', 'file2.py', 'file3.py']}"
+
+@pytest.fixture
+def json_string_with_double_quotes():
+    return '{"type": "files", "value": ["file1.py"]}'
+
+
+# ORCHESTRATOR TESTS - Test flows with Given-When-Then
+
+class TestCliAcceptsScopeWithPythonDictSyntax:
+    
+    def test_cli_accepts_scope_with_single_file_when_python_dict_syntax_used(self, python_dict_with_single_file):
+        # Given: Parameters with scope as Python dict string
+        params = create_params_with_scope(python_dict_with_single_file)
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Scope becomes dict object with file
+        verify_scope_contains_files(processed_params['scope'], ['file1.py'])
+    
+    def test_cli_accepts_scope_with_multiple_files_when_python_dict_syntax_used(self, python_dict_with_multiple_files):
+        # Given: Parameters with scope containing multiple files
+        params = create_params_with_scope(python_dict_with_multiple_files)
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: All files are preserved
+        verify_scope_has_file_count(processed_params['scope'], 3)
+        verify_scope_contains_files(processed_params['scope'], ['file1.py', 'file2.py', 'file3.py'])
+    
+    def test_cli_accepts_scope_with_json_syntax_when_double_quotes_used(self, json_string_with_double_quotes):
+        # Given: Parameters with scope as valid JSON
+        params = create_params_with_scope(json_string_with_double_quotes)
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Scope becomes dict object
+        verify_scope_contains_files(processed_params['scope'], ['file1.py'])
+    
+    def test_cli_preserves_nested_paths_when_scope_has_subdirectories(self):
+        # Given: Parameters with nested file paths
+        params = create_params_with_scope("{'type': 'files', 'value': ['dir/file1.py', 'dir/subdir/file2.py']}")
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Nested paths are preserved
+        scope_files = processed_params['scope']['value']
+        assert scope_files[0] == 'dir/file1.py'
+        assert scope_files[1] == 'dir/subdir/file2.py'
+    
+    def test_cli_preserves_exclude_patterns_when_scope_has_exclusions(self):
+        # Given: Parameters with scope containing exclude patterns
+        params = create_params_with_scope("{'type': 'files', 'value': ['file1.py'], 'exclude': ['*test*']}")
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Exclude patterns are preserved
+        assert processed_params['scope']['exclude'] == ['*test*']
+    
+    def test_cli_keeps_regular_strings_unchanged_when_not_json(self):
+        # Given: Parameters with regular string values
+        params = create_params_with_multiple_keys(
+            user_message='Hello world',
+            behavior='code'
+        )
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Strings remain unchanged
+        assert processed_params['user_message'] == 'Hello world'
+        assert processed_params['behavior'] == 'code'
+    
+    def test_cli_handles_malformed_scope_gracefully_when_syntax_invalid(self):
+        # Given: Parameters with malformed scope string
+        params = create_params_with_scope("{'type': 'files', 'value': [unclosed")
+        
+        # When: Parameters are processed
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        
+        # Then: Scope remains as string
+        assert isinstance(processed_params['scope'], str)
+
+
+class TestCliNormalizesPythonDictToJson:
+    
+    def test_cli_replaces_single_quotes_with_double_quotes_when_normalizing(self):
+        # Given: Python dict string with single quotes
+        python_dict_string = "{'key': 'value'}"
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(python_dict_string)
+        
+        # Then: Single quotes become double quotes
+        assert normalized_string == '{"key": "value"}'
+    
+    def test_cli_normalizes_array_syntax_when_python_list_used(self):
+        # Given: Python dict with list using single quotes
+        python_dict_string = "{'files': ['file1.py', 'file2.py']}"
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(python_dict_string)
+        
+        # Then: Array becomes valid JSON array
+        assert normalized_string == '{"files": ["file1.py", "file2.py"]}'
+    
+    def test_cli_preserves_json_when_already_valid(self):
+        # Given: Already valid JSON string
+        json_string = '{"type": "files", "value": ["file.py"]}'
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(json_string)
+        
+        # Then: JSON remains unchanged
+        assert normalized_string == json_string
+
+
+class TestCliBuildsParametersFromArguments:
+    
+    def test_cli_recognizes_scope_as_dict_when_building_parameters(self):
+        # Given: Arguments with scope as Python dict string
+        args = create_cli_args_namespace(
+            scope="{'type': 'files', 'value': ['file1.py']}"
+        )
+        
+        # When: Parameters are built from arguments
+        params = CliParameterParser._build_params_from_args(args, [])
+        
+        # Then: Scope is dict object
+        verify_scope_contains_files(params['scope'], ['file1.py'])
+    
+    def test_cli_preserves_boolean_flags_when_building_parameters(self):
+        # Given: Arguments with skip_cross_file flag set
+        args = create_cli_args_namespace(skip_cross_file=True)
+        
+        # When: Parameters are built from arguments
+        params = CliParameterParser._build_params_from_args(args, [])
+        
+        # Then: Flag is preserved
+        assert params['skip_cross_file'] is True
+
+
+class TestCliHandlesScopeInRealUsage:
+    
+    def test_cli_accepts_single_file_scope_when_validating_one_file(self):
+        # Given: CLI invoked with scope for single file
+        cli_args = create_validation_cli_args("{'type': 'files', 'value': ['agile_bot/bots/base_bot/src/actions/instructions.py']}")
+        cli_args.append('--skip-cross-file')
+        
+        # When: CLI processes arguments
+        args, params = simulate_cli_invocation(cli_args)
+        
+        # Then: Scope contains exactly one file
+        assert params['scope']['value'][0] == 'agile_bot/bots/base_bot/src/actions/instructions.py'
+        assert params.get('skip_cross_file') is True
+    
+    def test_cli_accepts_multiple_files_scope_when_validating_many_files(self):
+        # Given: CLI invoked with scope for multiple files
+        cli_args = create_validation_cli_args("{'type': 'files', 'value': ['file1.py', 'file2.py', 'file3.py']}")
+        
+        # When: CLI processes arguments
+        args, params = simulate_cli_invocation(cli_args)
+        
+        # Then: Scope contains all files
+        verify_scope_has_file_count(params['scope'], 3)
+        assert 'file1.py' in params['scope']['value']
+        assert 'file2.py' in params['scope']['value']
+        assert 'file3.py' in params['scope']['value']
+    
+    def test_cli_handles_windows_paths_when_scope_uses_backslashes(self):
+        # Given: CLI invoked with Windows-style paths
+        cli_args = create_validation_cli_args("{'type': 'files', 'value': ['agile_bot\\\\bots\\\\base_bot\\\\src\\\\file.py']}")
+        
+        # When: CLI processes arguments
+        args, params = simulate_cli_invocation(cli_args)
+        
+        # Then: Windows paths are preserved
+        assert 'agile_bot\\bots\\base_bot\\src\\file.py' in params['scope']['value'][0]
+
+
+class TestCliPreservesArrayValuesInScope:
+    
+    def test_cli_does_not_corrupt_array_values_when_normalizing_syntax(self):
+        # Given: Python dict with array values
+        python_dict_string = "{'type': 'files', 'value': ['file1.py', 'file2.py']}"
+        
+        # When: String is normalized
+        normalized_string = CliParameterParser._try_fix_json(python_dict_string)
+        
+        # Then: Array values are NOT mangled
+        verify_json_array_not_corrupted(normalized_string, ['file1.py', 'file2.py'])
+
+
+class TestScopeBasedParameterHandling:
+    
+    def test_scope_accepts_exclude_within_scope_dict(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['file1.py'], 'exclude': ['test_*.py']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['exclude'] == ['test_*.py']
+    
+    def test_scope_accepts_skiprule_within_scope_dict(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['file1.py'], 'skiprule': ['eliminate_duplication']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['skiprule'] == ['eliminate_duplication']
+    
+    def test_scope_accepts_both_exclude_and_skiprule_within_scope_dict(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['file1.py'], 'exclude': ['test_*.py'], 'skiprule': ['eliminate_duplication', 'stop_writing_useless_comments']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['exclude'] == ['test_*.py']
+        assert processed_params['scope']['skiprule'] == ['eliminate_duplication', 'stop_writing_useless_comments']
+    
+    def test_cli_does_not_accept_standalone_exclude_parameter(self):
+        args = create_args_namespace()
+        if hasattr(args, 'exclude'):
+            delattr(args, 'exclude')
+        params = CliParameterParser._build_params_from_args(args, [])
+        assert 'exclude' not in params
+    
+    def test_cli_does_not_accept_standalone_skiprule_parameter(self):
+        args = create_args_namespace()
+        if hasattr(args, 'skiprule'):
+            delattr(args, 'skiprule')
+        params = CliParameterParser._build_params_from_args(args, [])
+        assert 'skiprule' not in params
+
+
+class TestValidationParameterVariations:
+    
+    def test_force_full_flag_alone(self):
+        args = create_args_namespace(force_full=True)
+        params = CliParameterParser._build_params_from_args(args, [])
+        assert params.get('force_full') is True
+        assert params.get('skip_cross_file') is None or params.get('skip_cross_file') is False
+    
+    def test_skip_cross_file_flag_alone(self):
+        args = create_args_namespace(skip_cross_file=True)
+        params = CliParameterParser._build_params_from_args(args, [])
+        assert params.get('skip_cross_file') is True
+        assert params.get('force_full') is None or params.get('force_full') is False
+    
+    def test_both_flags_together(self):
+        args = create_args_namespace(force_full=True, skip_cross_file=True)
+        params = CliParameterParser._build_params_from_args(args, [])
+        assert params.get('force_full') is True
+        assert params.get('skip_cross_file') is True
+    
+    def test_scope_with_type_all(self):
+        params = create_params_with_scope("{'type': 'all'}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['type'] == 'all'
+    
+    def test_scope_with_type_story(self):
+        params = create_params_with_scope("{'type': 'story', 'value': ['Story Name']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['type'] == 'story'
+        assert processed_params['scope']['value'] == ['Story Name']
+    
+    def test_scope_with_type_epic(self):
+        params = create_params_with_scope("{'type': 'epic', 'value': ['Epic Name']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['type'] == 'epic'
+        assert processed_params['scope']['value'] == ['Epic Name']
+    
+    def test_scope_with_type_increment(self):
+        params = create_params_with_scope("{'type': 'increment', 'value': [1, 2]}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['type'] == 'increment'
+        assert processed_params['scope']['value'] == [1, 2]
+    
+    def test_scope_with_type_files(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['file1.py', 'file2.py']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['type'] == 'files'
+        assert processed_params['scope']['value'] == ['file1.py', 'file2.py']
+    
+    def test_scope_with_single_exclude_pattern(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['src/'], 'exclude': ['test_*.py']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['exclude'] == ['test_*.py']
+    
+    def test_scope_with_multiple_exclude_patterns(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['src/'], 'exclude': ['test_*.py', '*/migrations/*', '*_generated.py']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert len(processed_params['scope']['exclude']) == 3
+        assert 'test_*.py' in processed_params['scope']['exclude']
+        assert '*/migrations/*' in processed_params['scope']['exclude']
+    
+    def test_scope_with_single_skiprule(self):
+        params = create_params_with_scope("{'type': 'all', 'skiprule': ['eliminate_duplication']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['skiprule'] == ['eliminate_duplication']
+    
+    def test_scope_with_multiple_skiprules(self):
+        params = create_params_with_scope("{'type': 'all', 'skiprule': ['eliminate_duplication', 'stop_writing_useless_comments', 'avoid_excessive_guards']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert len(processed_params['scope']['skiprule']) == 3
+        assert 'eliminate_duplication' in processed_params['scope']['skiprule']
+        assert 'stop_writing_useless_comments' in processed_params['scope']['skiprule']
+    
+    def test_scope_with_exclude_and_skiprule(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['src/'], 'exclude': ['test_*.py'], 'skiprule': ['eliminate_duplication']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['exclude'] == ['test_*.py']
+        assert processed_params['scope']['skiprule'] == ['eliminate_duplication']
+    
+    def test_scope_with_all_parameters(self):
+        params = create_params_with_scope("{'type': 'files', 'value': ['src/actions/', 'src/bot/'], 'exclude': ['test_*.py', '*/migrations/*'], 'skiprule': ['eliminate_duplication', 'stop_writing_useless_comments']}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['type'] == 'files'
+        assert len(processed_params['scope']['value']) == 2
+        assert len(processed_params['scope']['exclude']) == 2
+        assert len(processed_params['scope']['skiprule']) == 2
+    
+    def test_force_full_with_scope(self):
+        args = create_args_namespace(
+            force_full=True,
+            scope="{'type': 'files', 'value': ['file1.py']}"
+        )
+        params = CliParameterParser._build_params_from_args(args, [])
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params.get('force_full') is True
+        assert processed_params['scope']['type'] == 'files'
+    
+    def test_skip_cross_file_with_scope(self):
+        args = create_args_namespace(
+            skip_cross_file=True,
+            scope="{'type': 'files', 'value': ['file1.py']}"
+        )
+        params = CliParameterParser._build_params_from_args(args, [])
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params.get('skip_cross_file') is True
+        assert processed_params['scope']['type'] == 'files'
+    
+    def test_both_flags_with_scope(self):
+        args = create_args_namespace(
+            force_full=True,
+            skip_cross_file=True,
+            scope="{'type': 'files', 'value': ['file1.py']}"
+        )
+        params = CliParameterParser._build_params_from_args(args, [])
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params.get('force_full') is True
+        assert processed_params.get('skip_cross_file') is True
+        assert processed_params['scope']['type'] == 'files'
+    
+    def test_flags_with_scope_containing_exclude_and_skiprule(self):
+        args = create_args_namespace(
+            force_full=True,
+            skip_cross_file=True,
+            scope="{'type': 'files', 'value': ['src/'], 'exclude': ['test_*.py'], 'skiprule': ['eliminate_duplication']}"
+        )
+        params = CliParameterParser._build_params_from_args(args, [])
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params.get('force_full') is True
+        assert processed_params.get('skip_cross_file') is True
+        assert processed_params['scope']['exclude'] == ['test_*.py']
+        assert processed_params['scope']['skiprule'] == ['eliminate_duplication']
+    
+    def test_empty_scope(self):
+        params = create_params_with_scope("{}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope'] == {}
+    
+    def test_scope_with_empty_exclude(self):
+        params = create_params_with_scope("{'type': 'all', 'exclude': []}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['exclude'] == []
+    
+    def test_scope_with_empty_skiprule(self):
+        params = create_params_with_scope("{'type': 'all', 'skiprule': []}")
+        processed_params = CliParameterParser._parse_json_parameters(params)
+        assert processed_params['scope']['skiprule'] == []
+    
+    def test_no_parameters_at_all(self):
+        args = create_args_namespace()
+        params = CliParameterParser._build_params_from_args(args, [])
+        assert params.get('force_full') is None or params.get('force_full') is False
+        assert params.get('skip_cross_file') is None or params.get('skip_cross_file') is False
+        assert params.get('scope') is None
+
+
+# ============================================================================
+# HELPER FUNCTIONS - CLI Type Safety (Typed ActionContext)
+# ============================================================================
+
+def given_action_with_context_class(action_class):
+    """Given: An action class with its declared context_class."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ActionContext
+    return action_class, getattr(action_class, 'context_class', ActionContext)
+
+
+def given_scope_config_for_files(file_paths: list, exclude_patterns: list = None):
+    """Given: A typed ScopeConfig targeting specific files."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig, ScopeType
+    return ScopeConfig(
+        type=ScopeType.FILES,
+        value=file_paths,
+        exclude=exclude_patterns or []
+    )
+
+
+def given_validate_action_context(scope=None, skip_cross_file=False, force_full=False):
+    """Given: A typed ValidateActionContext with optional parameters."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+    return ValidateActionContext(
+        scope=scope,
+        skip_cross_file=skip_cross_file,
+        force_full=force_full
+    )
+
+
+def when_context_built_from_cli_args(cli_args: list):
+    """When: CLI arguments are parsed and context is built."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+    from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+    
+    builder = CliContextBuilder()
+    # Build parser for ValidateActionContext and parse args
+    parser = builder.build_parser_from_context_class(ValidateActionContext)
+    parsed, _ = parser.parse_known_args(cli_args)
+    context = builder._build_context_from_parsed(ValidateActionContext, parsed)
+    return context
+
+
+def when_parser_generator_generates_for_action(action_class):
+    """When: Parser generator creates parser code for action's context class."""
+    from agile_bot.bots.base_bot.src.cli.cli_parser_generator import CliParserGenerator
+    
+    generator = CliParserGenerator()
+    context_class = getattr(action_class, 'context_class', None)
+    if context_class:
+        return generator.generate_parser_for_context_class(context_class)
+    return None
+
+
+def then_context_is_typed_with_values(context, expected_type, **expected_values):
+    """Then: Context is of expected type with expected attribute values."""
+    assert isinstance(context, expected_type), f"Expected {expected_type}, got {type(context)}"
+    for attr, expected_value in expected_values.items():
+        actual_value = getattr(context, attr, None)
+        assert actual_value == expected_value, f"Expected {attr}={expected_value}, got {actual_value}"
+
+
+def then_generated_parser_has_arguments(parser_code: str, expected_args: list):
+    """Then: Generated parser code includes expected CLI arguments."""
+    for arg in expected_args:
+        assert arg in parser_code, f"Expected '{arg}' in parser code, not found"
+
+
+def then_scope_is_typed_config(scope, expected_type, expected_value: list):
+    """Then: Scope is a typed ScopeConfig with expected type and value."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig, ScopeType
+    assert isinstance(scope, ScopeConfig), f"Expected ScopeConfig, got {type(scope)}"
+    assert scope.type == expected_type, f"Expected type {expected_type}, got {scope.type}"
+    assert scope.value == expected_value, f"Expected value {expected_value}, got {scope.value}"
+
+
+# ============================================================================
+# TEST CLASSES - CLI Type Safety (Typed ActionContext)
+# ============================================================================
+
+class TestCliTypeSafeActionContext:
+    """Story: CLI Passes Typed ActionContext to Actions
+    
+    When CLI receives parameters, it builds a typed ActionContext
+    and passes it to the action's execute() method.
+    """
+    
+    def test_validate_action_declares_typed_context_class(self):
+        """
+        SCENARIO: ValidateRulesAction declares ValidateActionContext as its context_class
+        GIVEN: ValidateRulesAction class
+        WHEN: Inspecting its context_class attribute
+        THEN: context_class is ValidateActionContext
+        """
+        from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        
+        # Given: ValidateRulesAction class
+        action_class, context_class = given_action_with_context_class(ValidateRulesAction)
+        
+        # Then: context_class is ValidateActionContext
+        assert context_class == ValidateActionContext
+    
+    def test_build_action_declares_scope_context_class(self):
+        """
+        SCENARIO: BuildKnowledgeAction declares ScopeActionContext as its context_class
+        GIVEN: BuildKnowledgeAction class
+        WHEN: Inspecting its context_class attribute
+        THEN: context_class is ScopeActionContext
+        """
+        from agile_bot.bots.base_bot.src.actions.build.build_action import BuildKnowledgeAction
+        from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext
+        
+        # Given: BuildKnowledgeAction class
+        action_class, context_class = given_action_with_context_class(BuildKnowledgeAction)
+        
+        # Then: context_class is ScopeActionContext
+        assert context_class == ScopeActionContext
+    
+    def test_clarify_action_declares_clarify_context_class(self):
+        """
+        SCENARIO: ClarifyContextAction declares ClarifyActionContext as its context_class
+        GIVEN: ClarifyContextAction class
+        WHEN: Inspecting its context_class attribute
+        THEN: context_class is ClarifyActionContext
+        """
+        from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction
+        from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
+        
+        # Given: ClarifyContextAction class
+        action_class, context_class = given_action_with_context_class(ClarifyContextAction)
+        
+        # Then: context_class is ClarifyActionContext
+        assert context_class == ClarifyActionContext
+    
+    def test_strategy_action_declares_strategy_context_class(self):
+        """
+        SCENARIO: StrategyAction declares StrategyActionContext as its context_class
+        GIVEN: StrategyAction class
+        WHEN: Inspecting its context_class attribute
+        THEN: context_class is StrategyActionContext
+        """
+        from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction
+        from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext
+        
+        # Given: StrategyAction class
+        action_class, context_class = given_action_with_context_class(StrategyAction)
+        
+        # Then: context_class is StrategyActionContext
+        assert context_class == StrategyActionContext
+
+
+class TestCliContextBuilderParsesTypedContext:
+    """Story: CliContextBuilder Parses CLI Args into Typed Context
+    
+    When CLI arguments are parsed, CliContextBuilder creates a typed
+    ActionContext with proper attribute values.
+    """
+    
+    def test_context_builder_creates_validate_context_from_cli_args(self):
+        """
+        SCENARIO: CliContextBuilder creates ValidateActionContext from CLI args
+        GIVEN: CLI args with --skip-cross-file flag
+        WHEN: Context is built from CLI args
+        THEN: Context is ValidateActionContext with skip_cross_file=True
+        """
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        
+        # Given: CLI args with --skip-cross-file flag
+        cli_args = ['--skip-cross-file']
+        
+        # When: Context is built from CLI args
+        context = when_context_built_from_cli_args(cli_args)
+        
+        # Then: Context is ValidateActionContext with skip_cross_file=True
+        then_context_is_typed_with_values(context, ValidateActionContext, skip_cross_file=True)
+    
+    def test_context_builder_creates_typed_scope_config(self):
+        """
+        SCENARIO: CliContextBuilder creates typed ScopeConfig from JSON scope arg
+        GIVEN: CLI args with --scope as JSON for files
+        WHEN: Context is built from CLI args
+        THEN: Context.scope is ScopeConfig with type=FILES and value list
+        """
+        from agile_bot.bots.base_bot.src.actions.action_context import (
+            ValidateActionContext, ScopeConfig, ScopeType
+        )
+        
+        # Given: CLI args with --scope as JSON for files
+        cli_args = ['--scope', '{"type": "files", "value": ["file1.py", "file2.py"]}']
+        
+        # When: Context is built from CLI args
+        context = when_context_built_from_cli_args(cli_args)
+        
+        # Then: Context.scope is ScopeConfig with type=FILES
+        assert isinstance(context, ValidateActionContext)
+        then_scope_is_typed_config(context.scope, ScopeType.FILES, ['file1.py', 'file2.py'])
+    
+    def test_context_builder_handles_all_validate_parameters(self):
+        """
+        SCENARIO: CliContextBuilder handles all ValidateActionContext parameters
+        GIVEN: CLI args with scope, skip-cross-file, and force-full
+        WHEN: Context is built from CLI args
+        THEN: All parameters are correctly set in typed context
+        """
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        
+        # Given: CLI args with multiple parameters
+        cli_args = [
+            '--scope', '{"type": "all"}',
+            '--skip-cross-file',
+            '--force-full'
+        ]
+        
+        # When: Context is built from CLI args
+        context = when_context_built_from_cli_args(cli_args)
+        
+        # Then: All parameters are correctly set
+        then_context_is_typed_with_values(
+            context, ValidateActionContext,
+            skip_cross_file=True,
+            force_full=True
+        )
+
+
+class TestCliParserGeneratorCreatesActionParsers:
+    """Story: CLI Parser Generator Creates Type-Safe Parsers
+    
+    When parser generator runs, it creates argument parsers
+    that match each action's context_class fields.
+    """
+    
+    def test_parser_generator_creates_validate_parser_with_correct_args(self):
+        """
+        SCENARIO: Parser generator creates parser for ValidateActionContext
+        GIVEN: ValidateRulesAction with ValidateActionContext
+        WHEN: Parser generator generates parser code
+        THEN: Generated code includes --scope, --skip-cross-file, --force-full args
+        """
+        from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
+        
+        # Given: ValidateRulesAction with ValidateActionContext
+        action_class = ValidateRulesAction
+        
+        # When: Parser generator generates parser code
+        parser_code = when_parser_generator_generates_for_action(action_class)
+        
+        # Then: Generated code includes expected args
+        then_generated_parser_has_arguments(
+            parser_code,
+            ['--scope', '--skip-cross-file', '--force-full']
+        )
+    
+    def test_parser_generator_creates_scope_parser_for_build_action(self):
+        """
+        SCENARIO: Parser generator creates parser for ScopeActionContext
+        GIVEN: BuildKnowledgeAction with ScopeActionContext
+        WHEN: Parser generator generates parser code
+        THEN: Generated code includes --scope arg
+        """
+        from agile_bot.bots.base_bot.src.actions.build.build_action import BuildKnowledgeAction
+        
+        # Given: BuildKnowledgeAction with ScopeActionContext
+        action_class = BuildKnowledgeAction
+        
+        # When: Parser generator generates parser code
+        parser_code = when_parser_generator_generates_for_action(action_class)
+        
+        # Then: Generated code includes --scope arg
+        then_generated_parser_has_arguments(parser_code, ['--scope'])

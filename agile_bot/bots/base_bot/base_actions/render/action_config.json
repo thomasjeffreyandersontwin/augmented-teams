@@ -1,5 +1,6 @@
 {
   "name": "render_output",
+  "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
   "workflow": true,
   "order": 6,
   "instructions": [
@@ -48,6 +49,7 @@
     "When this action is complete, AI MUST pause and wait for human feedback. render_output is the terminal action for this behavior - there is no automatic next step. After human says 'done' or confirms completion, the workflow is complete for this behavior and will proceed to the next behavior when the user is ready."
   ]
 }
+
 
 
 

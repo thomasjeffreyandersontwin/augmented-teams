@@ -1,4 +1,4 @@
-{"name": "decide_strategy", "workflow": true, "order": 3, "next_action": "build_knowledge", 
+{"name": "decide_strategy", "description": "Decide approach by presenting assumptions and decision criteria, then capturing decisions and assumptions", "workflow": true, "order": 3, "next_action": "build_knowledge", 
     "instructions": [
       "**CRITICAL WORKFLOW ENFORCEMENT - NO EXCEPTIONS:**",
       "",

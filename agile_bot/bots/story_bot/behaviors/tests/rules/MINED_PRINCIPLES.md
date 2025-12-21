@@ -1,10 +1,10 @@
-# Mined BDD & Clean Code Principles
+# Principles Mined from BDD & Clean Code Sources
 
-This document shows how principles were extracted from the BDD and Clean Code rulesets and integrated into pytest orchestrator pattern rules.
+This document shows how principles were extracted from BDD and Clean Code rulesets and adapted for pytest Given When Then story-based testing (orchestrator pattern).
 
 ## Source Rules
 
-- **`agile_bot/bots/bdd_bot/rules/bdd-rule.mdc`** - Framework-agnostic BDD testing practices (800 lines)
+- **`agile_bot/bots/bdd_bot/rules/bdd-rule.mdc`** - Framework-agnostic BDD testing practices (800 lines) - principles adapted for story-based testing
 - **`agile_bot/bots/clean_code_bot/rules/clean-code-rule.mdc`** - Universal clean code principles (458 lines)
 - **`agile_bot/bots/clean_code_bot/rules/specializations/python/clean-code-python-rule.mdc`** - Python-specific patterns (778 lines)
 

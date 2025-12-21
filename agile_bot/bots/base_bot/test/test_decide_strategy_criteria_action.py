@@ -34,8 +34,50 @@ from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
 # ============================================================================
 
 def when_action_executes_with_parameters(action, parameters: dict):
-    """When: Action executes with parameters."""
-    return action.do_execute(parameters)
+    """When: Action executes with parameters (converts dict to typed context).
+    
+    Determines the appropriate context type based on the action class.
+    """
+    from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext, ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction
+    from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
+    
+    if isinstance(action, StrategyAction):
+        # Strategy action context
+        context = StrategyActionContext(
+            decisions_made=parameters.get('decisions_made'),
+            assumptions_made=parameters.get('assumptions_made')
+        )
+    elif isinstance(action, ValidateRulesAction):
+        # Validate action context - convert test_files to scope
+        scope = None
+        if 'test_files' in parameters:
+            test_files = parameters.get('test_files')
+            if isinstance(test_files, (str, type(None).__class__)):
+                file_paths = [str(test_files)] if test_files else []
+            else:
+                file_paths = [str(f) for f in test_files] if test_files else []
+            scope = ScopeConfig(type=ScopeType.FILES, value=file_paths)
+        elif 'scope' in parameters:
+            scope_dict = parameters.get('scope', {})
+            if isinstance(scope_dict, dict):
+                scope = ScopeConfig(
+                    type=ScopeType(scope_dict.get('type', 'all')),
+                    value=scope_dict.get('value', []),
+                    exclude=scope_dict.get('exclude', []),
+                    skiprule=scope_dict.get('skiprule', [])
+                )
+        context = ValidateActionContext(
+            scope=scope,
+            background=parameters.get('background', False),
+            skip_cross_file=parameters.get('skip_cross_file', False),
+            force_full=parameters.get('force_full', False)
+        )
+    else:
+        # Fallback - use the action's default context class
+        context = action.context_class()
+    
+    return action.do_execute(context)
 
 # ============================================================================
 # GIVEN/WHEN/THEN HELPER FUNCTIONS
@@ -130,7 +172,8 @@ def given_strategy_json_exists_with_data(workspace_directory: Path, behavior: st
 def when_action_injects_strategy_criteria_and_assumptions(action: StrategyAction):
     """When step: Action injects decision criteria and assumptions."""
     # Call do_execute to get instructions with planning criteria injected
-    result = action.do_execute({})
+    from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext
+    result = action.do_execute(StrategyActionContext())
     instructions = result.get('instructions', {})
     # Return just the strategy criteria portion for testing
     return {

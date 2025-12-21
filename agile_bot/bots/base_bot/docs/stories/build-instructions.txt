@@ -1,0 +1,29 @@
+
+======================================================================
+**VALIDATION RUNNING IN BACKGROUND**
+======================================================================
+
+**CRITICAL: YOU MUST POLL THE STATUS FILE EVERY 10 SECONDS UNTIL VALIDATION COMPLETES**
+
+Validation has been started in the background. It will scan 223 file(s).
+
+**Status File:**
+  docs\stories\reports\code-validation-status-2025-12-21_12-24-18.md
+
+**AI ASSISTANT DIRECTIVES:**
+1. YOU MUST read the status file every 10 seconds to check progress
+2. YOU MUST report the current status summary to the user each time you check
+3. Continue polling every 10 seconds until validation is complete
+4. When complete, YOU MUST read and report the final summary from the status file
+5. Also check the full report at: docs/stories/code-validation-report.md
+
+The validation is running asynchronously and will update the status file in real-time.
+The status file shows progress as scanners complete their work.
+
+**Status File Location:**
+  docs\stories\reports\code-validation-status-2025-12-21_12-24-18.md
+
+**Report File Location (when complete):**
+  docs/stories/code-validation-report.md
+
+======================================================================

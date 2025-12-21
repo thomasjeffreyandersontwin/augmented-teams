@@ -5,12 +5,14 @@ Tests for all stories in the 'Build Knowledge' sub-epic:
 - Track Activity for Build Knowledge Action
 - Proceed To Render Output
 - Load Story Graph Into Memory
+- Create Build Scope
+- Filter Knowledge Graph
 """
 import pytest
 from pathlib import Path
 import json
 from agile_bot.bots.base_bot.src.actions.build.build_action import BuildKnowledgeAction
-from agile_bot.bots.base_bot.src.actions.validate.scanners.story_map import (
+from agile_bot.bots.base_bot.src.scanners.story_map import (
     StoryMap, Epic, SubEpic, StoryGroup, Story, Scenario, ScenarioOutline
 )
 from agile_bot.bots.base_bot.test.test_helpers import (
@@ -457,7 +459,7 @@ def then_location_matches(item, type=None, field=None):
     """
     # Auto-detect type if not provided
     if type is None:
-        from agile_bot.bots.base_bot.src.actions.validate.scanners.story_map import Epic, SubEpic, Story, Scenario, ScenarioOutline
+        from agile_bot.bots.base_bot.src.scanners.story_map import Epic, SubEpic, Story, Scenario, ScenarioOutline
         if isinstance(item, Epic):
             type = 'epic'
         elif isinstance(item, SubEpic):
@@ -791,18 +793,35 @@ def then_build_scope_contains_all_expected(build_scope, expected_scope_contains:
 
 
 def then_action_uses_build_scope_class(action: BuildKnowledgeAction, parameters: dict):
-    """Then: Action uses BuildScope class."""
+    """Then: Action uses BuildScope class (converts dict to typed context)."""
+    from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext, ScopeConfig, ScopeType
+    
+    # Convert dict parameters to typed context
+    scope = None
+    if 'scope' in parameters and parameters['scope']:
+        scope_dict = parameters['scope']
+        if isinstance(scope_dict, dict):
+            scope_type = ScopeType(scope_dict.get('type', 'all'))
+            scope = ScopeConfig(
+                type=scope_type,
+                value=scope_dict.get('value', []),
+                exclude=scope_dict.get('exclude', [])
+            )
+    context = ScopeActionContext(scope=scope)
+    
     # Verify action uses BuildScope by checking if scope is in instructions
-    result = action.do_execute(parameters)
+    result = action.do_execute(context)
     assert 'instructions' in result
     assert 'scope' in result['instructions']
     scope_config = result['instructions']['scope']
     assert isinstance(scope_config, dict)
 
 
-def given_build_parameters_with_scope(scope_value='all'):
+def given_build_parameters_with_scope(scope_type='all', scope_value=None):
     """Given: Build parameters with scope."""
-    return {'scope': scope_value}
+    if scope_type == 'all':
+        return {'scope': {'type': 'all'}}
+    return {'scope': {'type': scope_type, 'value': scope_value}}
 
 
 def given_build_parameters_with_story_names(story_names):
@@ -1226,26 +1245,23 @@ class TestCreateBuildScope:
     
     @pytest.mark.parametrize("parameters,expected_scope_contains", [
         # Example 1: Scope 'all'
-        ({'scope': 'all'}, {'all': True}),
+        ({'scope': {'type': 'all'}}, {'all': True}),
         # Example 2: Story names
-        ({'story_names': ['Story1']}, {'story_names': ['Story1']}),
+        ({'scope': {'type': 'story', 'value': ['Story1']}}, {'story_names': ['Story1']}),
         # Example 3: Multiple story names
-        ({'story_names': ['Story1', 'Story2']}, {'story_names': ['Story1', 'Story2']}),
+        ({'scope': {'type': 'story', 'value': ['Story1', 'Story2']}}, {'story_names': ['Story1', 'Story2']}),
         # Example 4: Increment priorities
-        ({'increment_priorities': [1]}, {'increment_priorities': [1]}),
+        ({'scope': {'type': 'increment', 'value': [1]}}, {'increment_priorities': [1]}),
         # Example 5: Multiple increment priorities
-        ({'increment_priorities': [1, 2]}, {'increment_priorities': [1, 2]}),
+        ({'scope': {'type': 'increment', 'value': [1, 2]}}, {'increment_priorities': [1, 2]}),
         # Example 6: Epic names
-        ({'epic_names': ['Epic A']}, {'epic_names': ['Epic A']}),
+        ({'scope': {'type': 'epic', 'value': ['Epic A']}}, {'epic_names': ['Epic A']}),
         # Example 7: Multiple epic names
-        ({'epic_names': ['Epic A', 'Epic B']}, {'epic_names': ['Epic A', 'Epic B']}),
+        ({'scope': {'type': 'epic', 'value': ['Epic A', 'Epic B']}}, {'epic_names': ['Epic A', 'Epic B']}),
         # Example 8: Increment names
-        ({'scope': 'Increment 1'}, {'increment_names': ['Increment 1']}),
+        ({'scope': {'type': 'increment', 'value': ['Increment 1']}}, {'increment_names': ['Increment 1']}),
         # Example 9: No parameters (defaults to 'all')
         ({}, {'all': True}),
-        # Example 10: Combined story_names and epic_names
-        ({'story_names': ['Story1'], 'epic_names': ['Epic A']}, 
-         {'story_names': ['Story1'], 'epic_names': ['Epic A']}),
     ])
     def test_build_scope_created_with_different_parameter_combinations(self, parameters, expected_scope_contains):
         """
@@ -1307,3 +1323,226 @@ class TestCreateBuildScope:
         # When: Action executes with scope parameters
         # Then: Uses BuildScope class
         then_action_uses_build_scope_class(action, parameters)
+
+
+# ============================================================================
+# HELPER FUNCTIONS - Filter Knowledge Graph (Story: Filter Knowledge Graph)
+# ============================================================================
+
+def given_story_graph_with_epics_and_increments():
+    """Given: Story graph with epics and increments."""
+    return {
+        'epics': [
+            {
+                'name': 'Epic A',
+                'sub_epics': [
+                    {
+                        'name': 'Sub-epic A1',
+                        'story_groups': [
+                            {
+                                'stories': [
+                                    {'name': 'Story A1'},
+                                    {'name': 'Story A2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                'name': 'Epic B',
+                'sub_epics': [
+                    {
+                        'name': 'Sub-epic B1',
+                        'story_groups': [
+                            {
+                                'stories': [
+                                    {'name': 'Story B1'},
+                                    {'name': 'Story B2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        'increments': [
+            {
+                'name': 'Increment 1',
+                'priority': 1,
+                'epics': [
+                    {
+                        'name': 'Epic A',
+                        'features': [
+                            {
+                                'stories': [
+                                    {'name': 'Story A1'},
+                                    {'name': 'Story A2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                'name': 'Increment 2',
+                'priority': 2,
+                'epics': [
+                    {
+                        'name': 'Epic B',
+                        'features': [
+                            {
+                                'stories': [
+                                    {'name': 'Story B1'},
+                                    {'name': 'Story B2'}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def when_scoping_parameter_filters_story_graph(scope_type, scope_value, story_graph):
+    """When: ScopingParameter filters story graph."""
+    from agile_bot.bots.base_bot.src.actions.scoping_parameter import ScopingParameter
+    scope = {'type': scope_type}
+    if scope_value is not None:
+        scope['value'] = scope_value
+    scoping_param = ScopingParameter(scope)
+    return scoping_param.filter_story_graph(story_graph)
+
+
+def then_story_graph_contains_epic(filtered_graph, epic_name):
+    """Then: Story graph contains epic."""
+    epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
+    assert epic_name in epic_names
+
+
+def then_story_graph_contains_story(filtered_graph, story_name):
+    """Then: Story graph contains story."""
+    story_names = []
+    for epic in filtered_graph.get('epics', []):
+        for sub_epic in epic.get('sub_epics', []):
+            for story_group in sub_epic.get('story_groups', []):
+                for story in story_group.get('stories', []):
+                    if isinstance(story, dict):
+                        story_names.append(story.get('name'))
+                    else:
+                        story_names.append(story)
+    assert story_name in story_names
+
+
+def then_story_graph_contains_increment(filtered_graph, increment_name):
+    """Then: Story graph contains increment."""
+    increment_names = [inc.get('name') for inc in filtered_graph.get('increments', [])]
+    assert increment_name in increment_names
+
+
+def then_story_graph_contains_all_epics(filtered_graph, expected_count):
+    """Then: Story graph contains all epics."""
+    assert len(filtered_graph.get('epics', [])) == expected_count
+
+
+def then_story_graph_contains_all_increments(filtered_graph, expected_count):
+    """Then: Story graph contains all increments."""
+    assert len(filtered_graph.get('increments', [])) == expected_count
+
+
+# ============================================================================
+# STORY: Filter Knowledge Graph (Sub-epic: Build Knowledge)
+# ============================================================================
+
+class TestFilterKnowledgeGraph:
+    """Story: Filter Knowledge Graph (Sub-epic: Build Knowledge)"""
+    
+    def test_filter_returns_all_when_scope_is_all(self):
+        """
+        SCENARIO: Filter returns all when scope is all
+        GIVEN: Story graph with multiple epics and increments
+        WHEN: ScopingParameter filters with scope type 'all'
+        THEN: Story graph contains all epics and increments
+        """
+        # Given: Story graph with epics and increments
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: Filter with scope 'all'
+        filtered_graph = when_scoping_parameter_filters_story_graph('all', None, story_graph)
+        
+        # Then: All epics and increments present
+        then_story_graph_contains_all_epics(filtered_graph, 2)
+        then_story_graph_contains_all_increments(filtered_graph, 2)
+    
+    def test_filter_by_story_names_returns_matching_stories(self):
+        """
+        SCENARIO: Filter by story names returns matching stories
+        GIVEN: Story graph with multiple stories
+        WHEN: ScopingParameter filters with story names
+        THEN: Story graph contains only matching stories and their parent epics
+        """
+        # Given: Story graph with stories
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: Filter by story names
+        filtered_graph = when_scoping_parameter_filters_story_graph('story', ['Story A1'], story_graph)
+        
+        # Then: Only matching story and its parent epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        then_story_graph_contains_story(filtered_graph, 'Story A1')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+    
+    def test_filter_by_epic_names_returns_matching_epics(self):
+        """
+        SCENARIO: Filter by epic names returns matching epics
+        GIVEN: Story graph with multiple epics
+        WHEN: ScopingParameter filters with epic names
+        THEN: Story graph contains only matching epics and their increments
+        """
+        # Given: Story graph with epics
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: Filter by epic names
+        filtered_graph = when_scoping_parameter_filters_story_graph('epic', ['Epic A'], story_graph)
+        
+        # Then: Only matching epic present
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+        assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+    
+    def test_filter_by_increment_priorities_returns_matching_increments(self):
+        """
+        SCENARIO: Filter by increment priorities returns matching increments
+        GIVEN: Story graph with increments having different priorities
+        WHEN: ScopingParameter filters with increment priorities
+        THEN: Story graph contains only matching increments and their stories
+        """
+        # Given: Story graph with increments
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: Filter by increment priorities
+        filtered_graph = when_scoping_parameter_filters_story_graph('increment', [1], story_graph)
+        
+        # Then: Only matching increment present
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+        assert 'Increment 2' not in [inc.get('name') for inc in filtered_graph.get('increments', [])]
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
+    
+    def test_filter_by_increment_names_returns_matching_increments(self):
+        """
+        SCENARIO: Filter by increment names returns matching increments
+        GIVEN: Story graph with increments having different names
+        WHEN: ScopingParameter filters with increment names
+        THEN: Story graph contains only matching increments and their stories
+        """
+        # Given: Story graph with increments
+        story_graph = given_story_graph_with_epics_and_increments()
+        
+        # When: Filter by increment names
+        filtered_graph = when_scoping_parameter_filters_story_graph('increment', ['Increment 1'], story_graph)
+        
+        # Then: Only matching increment present
+        then_story_graph_contains_increment(filtered_graph, 'Increment 1')
+        assert 'Increment 2' not in [inc.get('name') for inc in filtered_graph.get('increments', [])]
+        then_story_graph_contains_epic(filtered_graph, 'Epic A')
