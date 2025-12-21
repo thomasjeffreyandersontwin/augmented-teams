@@ -1,6 +1,9 @@
 # Bun runtime and cache directories
 **/.bun/
 
+# Runtime artifacts
+**/activity_log.json
+
 # Python
 __pycache__/
 *.py[cod]
