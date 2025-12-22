@@ -6,6 +6,7 @@ import ast
 import re
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 
 class DescriptiveFunctionNamesScanner(TestScanner):
@@ -19,12 +20,12 @@ class DescriptiveFunctionNamesScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if not node.name.startswith('test_'):
-                    violation = self._check_descriptive_name(node, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if not function.node.name.startswith('test_'):
+                violation = self._check_descriptive_name(function.node, file_path, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     
@@ -55,17 +56,35 @@ class DescriptiveFunctionNamesScanner(TestScanner):
         if func_name_lower in acceptable_domain_terms:
             return None
         
+        # Read file content for snippet extraction
+        try:
+            content = file_path.read_text(encoding='utf-8')
+        except Exception:
+            content = None
+        
         # Vague/abbreviated names
         vague_names = ['setup', 'do', 'handle', 'process', 'run', 'main', 'helper', 'util', 'func']
         if func_name_lower in vague_names or len(func_name_lower) < 5:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'Helper function "{func_node.name}" uses vague/abbreviated name - use descriptive name that reveals purpose',
-                location=str(file_path),
-                line_number=line_number,
-                severity='error'
-            ).to_dict()
+            if content:
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Helper function "{func_node.name}" uses vague/abbreviated name - use descriptive name that reveals purpose',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='error',
+                    content=content,
+                    ast_node=func_node,
+                    max_lines=3
+                )
+            else:
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=f'Helper function "{func_node.name}" uses vague/abbreviated name - use descriptive name that reveals purpose',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='error'
+                ).to_dict()
         
         # Common acceptable abbreviations that should NOT be flagged
         acceptable_abbrevs = {
@@ -98,13 +117,25 @@ class DescriptiveFunctionNamesScanner(TestScanner):
         # Only flag if we found truly cryptic abbreviations or unknown acronyms
         if cryptic_acronyms:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'Helper function "{func_node.name}" contains cryptic abbreviations or acronyms ({", ".join(cryptic_acronyms)}) - use full descriptive words',
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict()
+            if content:
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Helper function "{func_node.name}" contains cryptic abbreviations or acronyms ({", ".join(cryptic_acronyms)}) - use full descriptive words',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='warning',
+                    content=content,
+                    ast_node=func_node,
+                    max_lines=3
+                )
+            else:
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=f'Helper function "{func_node.name}" contains cryptic abbreviations or acronyms ({", ".join(cryptic_acronyms)}) - use full descriptive words',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='warning'
+                ).to_dict()
         
         return None
 

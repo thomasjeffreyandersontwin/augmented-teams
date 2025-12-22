@@ -7,6 +7,7 @@ import re
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +41,14 @@ class PrimitiveVsObjectScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                func_violations = self._check_function_parameters(node, content, file_path, rule_obj)
-                violations.extend(func_violations)
-                
-                return_violation = self._check_return_type(node, content, file_path, rule_obj)
-                if return_violation:
-                    violations.append(return_violation)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            func_violations = self._check_function_parameters(function.node, content, file_path, rule_obj)
+            violations.extend(func_violations)
+            
+            return_violation = self._check_return_type(function.node, content, file_path, rule_obj)
+            if return_violation:
+                violations.append(return_violation)
         
         return violations
     
@@ -151,11 +152,24 @@ class PrimitiveVsObjectScanner(CodeScanner):
     ) -> Dict[str, Any]:
         line_number = func_node.lineno if func_node else None
         
-        return Violation(
-            rule=rule_obj,
-            violation_message=message,
-            line_number=line_number,
-            location=str(file_path),
-            severity='warning'
-        ).to_dict()
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
+                violation_message=message,
+                file_path=file_path,
+                line_number=line_number,
+                severity='warning',
+                content=content,
+                ast_node=func_node,
+                max_lines=5
+            )
+        except Exception:
+            return Violation(
+                rule=rule_obj,
+                violation_message=message,
+                line_number=line_number,
+                location=str(file_path),
+                severity='warning'
+            ).to_dict()
 

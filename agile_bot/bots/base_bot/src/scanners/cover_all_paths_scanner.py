@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 
 class CoverAllPathsScanner(TestScanner):
@@ -19,10 +20,8 @@ class CoverAllPathsScanner(TestScanner):
         content, lines, tree = parsed
         
         # Find all test methods
-        test_methods = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
-                test_methods.append(node)
+        functions = Functions(tree)
+        test_methods = [function.node for function in functions.get_many_functions if function.node.name.startswith('test_')]
         
         for test_method in test_methods:
             has_code = False
@@ -41,6 +40,7 @@ class CoverAllPathsScanner(TestScanner):
                         break
             
             if not has_code:
+                # No code snippet for empty test method violations (method definition line)
                 violations.append(Violation(
                     rule=rule_obj,
                     violation_message=f'Test method "{test_method.name}" has no actual test code - tests must exercise behavior paths, not just contain pass statements',

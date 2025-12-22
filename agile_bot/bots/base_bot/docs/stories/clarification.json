@@ -1,0 +1,121 @@
+{
+  "shape": {
+    "key_questions": {
+      "questions": [
+        "Who are the distinct types of users (e.g., operational users, power users, compliance consumers, content creators, producers)?",
+        "What are the key goals, behaviors, or decisions each group is trying to accomplish using this capability?",
+        "Who are the primary users or stakeholder groups impacted?",
+        "What is the first thing users will try to do with this new capability or system?",
+        "What problems, inefficiencies, or workarounds is this request trying to eliminate?",
+        "Where are users currently struggling, getting stuck, or experiencing delays in the process we're aiming to improve?",
+        "What are the key drivers for customer value or business value that this capability addresses?",
+        "What specific customer or business outcomes are we trying to achieve?",
+        "What is the user journey from start to finish for the primary use case?",
+        "What are the key stages or steps in the user journey?",
+        "Where in the user journey are users experiencing frustration, friction, or unhappiness?",
+        "What moments of delight or value should users experience during their journey?",
+        "What are the critical pain points that prevent users from achieving their goals?",
+        "What other systems, data sources, or tools does this capability need to interact with in order to deliver value?",
+        "What are the key behaviors or integration points that define how these systems support or depend on one another?",
+        "What is the business domain we are modeling?",
+        "What are the core business concepts and their relationships?",
+        "What are the distinct sub-domains or business capabilities?",
+        "What are the boundaries between different parts of the domain?",
+        "What domain events occur in this business domain?",
+        "What are the key business rules and constraints?",
+        "What domain language do business experts use to describe this domain?"
+      ],
+      "answers": {
+        "users": "AI Assistants (Cursor/Claude), Human Developers, Bot Authors",
+        "user_goals": "Execute complex multi-step workflows without losing context; Run autonomous workflows with pause points; Define workflows with loops/branches easily",
+        "primary_stakeholders": "Human developers and AI assistants using StoryBot",
+        "first_action": "Run a TDD workflow with automatic test-code loops and human review checkpoints",
+        "problems_to_eliminate": "Rigid linear workflow; Workflow creation friction; Need foundation for future agentic capabilities. Core need: Make it really easy to create custom multi-step workflows with arbitrary flow patterns",
+        "pain_points": "Manual re-invocation when validation fails; Loss of context between behaviors; No pause/resume capability",
+        "critical_blockers": "Cannot express loop-until-pass patterns; Cannot mix autonomous and interactive modes; Cannot checkpoint and resume",
+        "value_drivers": "Reduced manual intervention; Reliable state via checkpointing; Declarative workflow definition",
+        "outcomes": "Zero breaking changes; LangGraph purely additive via --workflow flag; Single ActionNode class; Two execution modes",
+        "user_journey": "Invoke --workflow -> LangGraph executes nodes -> Checkpoints saved -> Pause at interactive points -> Resume with --continue -> Complete",
+        "journey_stages": "Invoke, Execute, Checkpoint, Pause, Resume, Complete",
+        "frustration_points": "Absence of this capability - must manually orchestrate complex workflows",
+        "delight_moments": "Autonomous TDD loops; Resume exactly where left off; Checkpoint history as audit trail",
+        "integrations": "LangGraph, SQLite checkpoints, Existing Actions, CLI flags",
+        "integration_points": "CLI detects --workflow routes to LangGraphRunner; ActionNode wraps action.execute; SqliteSaver persists state",
+        "domain": "Workflow orchestration for AI-assisted development",
+        "core_concepts": "Workflow, ActionNode, Checkpoint, ExecutionMode, LangGraphRunner",
+        "sub_domains": "Graph Building, Node Execution, State Management, Mode Switching",
+        "boundaries": "Default workflow uses legacy files; LangGraph uses checkpoints.db - completely separate systems",
+        "domain_events": "WorkflowStarted, NodeExecuted, CheckpointSaved, WorkflowPaused, WorkflowResumed, WorkflowCompleted",
+        "business_rules": "LangGraph opt-in via --workflow; Default untouched; Two-pass pattern; Autonomous vs Interactive modes",
+        "domain_language": "Workflow, Graph, Node, Edge, Behavior, Action, Checkpoint, Resume, Autonomous, Interactive"
+      }
+    },
+    "evidence": {
+      "required": [
+        "Business model canvas",
+        "Journey maps or other design thinking artifacts",
+        "Technical specifications",
+        "Product charters",
+        "Business cases",
+        "Business models",
+        "Impact maps",
+        "R&D maps",
+        "User research",
+        "User journey maps",
+        "Similar systems",
+        "User interviews",
+        "Business process documentation",
+        "Domain expert interviews",
+        "Existing system documentation",
+        "Business glossaries or dictionaries",
+        "Financial statements",
+        "Industry literature",
+        "Event storming outputs",
+        "Domain models from similar systems"
+      ],
+      "provided": {
+        "planning_document": "langgraph-orchestration.md - Complete architecture and implementation plan",
+        "system_documentation": "bots-overview.md - Framework documentation",
+        "existing_story_map": "complete-story-tree.txt - Current story structure"
+      }
+    }
+  },
+  "prioritization": {
+    "key_questions": {
+      "questions": [
+        "Which areas of the story map carry the most business or delivery risk?",
+        "Which areas are expected to deliver the most value if delivered early?",
+        "Which areas are the most complex or hardest to implement, relative to their value?",
+        "Do you want thin slices to be as end-to-end as possible?",
+        "Are there any components, capabilities, or services that need to be reused across multiple stories or features?",
+        "Are there any project or program constraints that impact delivery order?",
+        "Are there users or groups that must go first to enable others to follow?"
+      ],
+      "answers": {
+        "risk_areas": "Graph building complexity, checkpoint persistence reliability, state adapter wrapping",
+        "early_value": "Basic workflow execution, checkpointing, Base Action Node",
+        "complex_areas": "Behavior Graph Builder, State Adapter, Execution Mode handling",
+        "thin_slices": "Yes - end-to-end testable workflow capabilities",
+        "reusable_components": "Base Action Node, LangGraphRunner, Checkpoint, Behavior Graph Builder",
+        "constraints": "Zero breaking changes, additive only via --workflow flag, foundation components first",
+        "users_first": "Foundation components (Base Action Node, Behavior Graph Builder, State Adapter) before orchestration"
+      }
+    },
+    "evidence": {
+      "required": [
+        "Story map from Shape stage (epics, features, and initial story breakdown)",
+        "Business cases or initiative briefs",
+        "Project charters and delivery timelines",
+        "Capability or architectural dependency maps",
+        "User rollout or onboarding strategies",
+        "Risk registers or readiness checklists",
+        "Value modeling or impact estimation docs"
+      ],
+      "provided": {
+        "story_map": "LangGraph stories in Generate LangGraph Framework and Orchestrate Workflow sub-epics",
+        "planning_document": "langgraph-orchestration.md",
+        "system_documentation": "bots-overview.md"
+      }
+    }
+  }
+}

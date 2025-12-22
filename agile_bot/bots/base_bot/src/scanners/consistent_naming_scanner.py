@@ -7,6 +7,7 @@ import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
 from collections import defaultdict
+from .resources.ast_elements import Functions, Classes
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +26,15 @@ class ConsistentNamingScanner(CodeScanner):
         function_names = []
         class_names = []
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                # Skip private methods and special methods
-                if not (node.name.startswith('_') and node.name != '__init__'):
-                    function_names.append(node.name)
-            elif isinstance(node, ast.ClassDef):
-                class_names.append(node.name)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            # Skip private methods and special methods
+            if not (function.node.name.startswith('_') and function.node.name != '__init__'):
+                function_names.append(function.node.name)
+        
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            class_names.append(cls.node.name)
         
         # Classes often use PascalCase while functions use snake_case - that's OK
         violations.extend(self._check_naming_consistency(function_names, class_names, file_path, rule_obj))

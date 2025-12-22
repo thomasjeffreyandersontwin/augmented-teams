@@ -9,13 +9,15 @@ from .violation import Violation
 def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
     scope_config = knowledge_graph.get('_validation_scope', {})
     
-    # If 'all' is True, validate everything
     if scope_config.get('all') is True:
         return None
     
+    if not scope_config:
+        return None
+    
+    story_map = StoryMap(knowledge_graph)
     story_names = set()
     
-    # Explicit story names list
     if 'story_names' in scope_config:
         story_names_list = scope_config['story_names']
         if isinstance(story_names_list, list):
@@ -23,104 +25,66 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
         elif isinstance(story_names_list, str):
             story_names.add(story_names_list)
     
-    if 'increment_priorities' in scope_config:
-        priorities = scope_config['increment_priorities']
-        if isinstance(priorities, list):
-            for priority in priorities:
-                increment_stories = _get_increment_story_names(knowledge_graph, priority)
-                story_names.update(increment_stories)
-        elif isinstance(priorities, (int, str)):
-            # Single priority (convert to list)
-            increment_stories = _get_increment_story_names(knowledge_graph, priorities)
-            story_names.update(increment_stories)
-    
     if 'epic_names' in scope_config:
         epic_names_list = scope_config['epic_names']
-        if isinstance(epic_names_list, list):
-            for epic_name in epic_names_list:
-                epic_stories = _get_epic_story_names(knowledge_graph, epic_name)
-                story_names.update(epic_stories)
-        elif isinstance(epic_names_list, str):
-            epic_stories = _get_epic_story_names(knowledge_graph, epic_names_list)
-            story_names.update(epic_stories)
+        epic_names_list = epic_names_list if isinstance(epic_names_list, list) else [epic_names_list]
+        for epic_name in epic_names_list:
+            epic = story_map.find_epic_by_name(epic_name)
+            if epic:
+                story_names.update(s.name for s in epic.all_stories)
     
-    # If no scope specified at all, validate all (return None means validate all)
-    if not scope_config:
-        return None
+    if 'increment_priorities' in scope_config:
+        priorities = scope_config['increment_priorities']
+        priorities = priorities if isinstance(priorities, list) else [priorities]
+        for priority in priorities:
+            story_names.update(_get_increment_story_names(knowledge_graph, priority))
     
-    # If scope_config exists but story_names is empty, it means no stories match the scope
-    # This is different from None (validate all) - return empty set to mean "validate nothing"
-    # But if scope_config has story_names explicitly set, we should return them even if empty
-    # Actually, if story_names is explicitly provided in scope_config, return them (even if empty)
-    # This allows explicit empty scope to mean "validate nothing"
     if 'story_names' in scope_config or 'increment_priorities' in scope_config or 'epic_names' in scope_config:
-        # Scope was explicitly provided - return the story_names set (even if empty)
         return story_names
     
-    # If scope_config exists but doesn't have explicit scope keys, validate all
     return None
 
 
 def _get_increment_story_names(knowledge_graph: Dict[str, Any], priority: int) -> Set[str]:
-    story_names = set()
     increments = knowledge_graph.get('increments', [])
-    
-    # Find increment with matching priority
     for increment in increments:
         inc_priority = increment.get('priority', 999)
         if isinstance(inc_priority, str):
             priority_map = {'NOW': 1, 'LATER': 2, 'SOON': 1, 'NEXT': 2}
             inc_priority = priority_map.get(inc_priority.upper(), 999)
-        
         if inc_priority == priority:
-            # Recursively extract all story names from this increment
-            _extract_story_names_from_increment(increment, story_names)
-            break  # Only process matching increment
-    
-    return story_names
+            return _extract_story_names_from_increment(increment)
+    return set()
 
 
-def _get_epic_story_names(knowledge_graph: Dict[str, Any], epic_name: str) -> Set[str]:
+def _extract_story_names_from_increment(increment_data: Dict[str, Any]) -> Set[str]:
     story_names = set()
-    epics = knowledge_graph.get('epics', [])
-    
-    # Find epic with matching name
-    for epic in epics:
-        if epic.get('name') == epic_name:
-            # Recursively extract all story names from this epic
-            _extract_story_names_from_epic(epic, story_names)
-            break  # Only process matching epic
-    
-    return story_names
-
-
-def _extract_story_names_from_increment(increment_data: Dict[str, Any], story_names: Set[str]) -> None:
     for story in increment_data.get('stories', []):
         if isinstance(story, dict) and 'name' in story:
             story_names.add(story['name'])
         elif isinstance(story, str):
             story_names.add(story)
-    
     for epic in increment_data.get('epics', []):
-        _extract_story_names_from_epic(epic, story_names)
+        story_names.update(_extract_story_names_from_epic(epic))
+    return story_names
 
 
-def _extract_story_names_from_epic(epic_data: Dict[str, Any], story_names: Set[str]) -> None:
+def _extract_story_names_from_epic(epic_data: Dict[str, Any]) -> Set[str]:
+    story_names = set()
     for story in epic_data.get('stories', []):
         if isinstance(story, dict) and 'name' in story:
             story_names.add(story['name'])
         elif isinstance(story, str):
             story_names.add(story)
-    
     for story_group in epic_data.get('story_groups', []):
         for story in story_group.get('stories', []):
             if isinstance(story, dict) and 'name' in story:
                 story_names.add(story['name'])
             elif isinstance(story, str):
                 story_names.add(story)
-    
     for sub_epic in epic_data.get('sub_epics', []):
-        _extract_story_names_from_epic(sub_epic, story_names)
+        story_names.update(_extract_story_names_from_epic(sub_epic))
+    return story_names
 
 
 class ScenariosOnStoryDocsScanner(StoryScanner):

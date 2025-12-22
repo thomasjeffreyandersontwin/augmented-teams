@@ -7,6 +7,7 @@ import re
 import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -42,22 +43,23 @@ class SpecificationMatchScanner(TestScanner):
             r'^test_\w+_(init|setup|create|new|get|set|run|execute|do|handle|process|check|verify)$',
         ]
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if function.node.name.startswith('test_'):
                 is_vague = False
                 for pattern in vague_patterns:
-                    if re.match(pattern, node.name, re.IGNORECASE):
+                    if re.match(pattern, function.node.name, re.IGNORECASE):
                         is_vague = True
                         break
                 
                 # Also check if it's a thin wrapper delegating to helper
                 # (these are acceptable even if name is vague)
-                is_thin_wrapper = self._is_thin_wrapper(node)
+                is_thin_wrapper = self._is_thin_wrapper(function.node)
                 
                 if is_vague and not is_thin_wrapper:
                     violations.append(self._create_violation_with_line_number(
-                        rule_obj, file_path, node,
-                        f'Test method "{node.name}" has vague name - should clearly describe behavior from specification scenario'
+                        rule_obj, file_path, function.node,
+                        f'Test method "{function.node.name}" has vague name - should clearly describe behavior from specification scenario'
                     ))
         
         return violations
@@ -80,14 +82,33 @@ class SpecificationMatchScanner(TestScanner):
         message: str,
         severity: str = 'warning'
     ) -> Dict[str, Any]:
+        # Read file content for snippet extraction
+        try:
+            content = file_path.read_text(encoding='utf-8')
+        except Exception:
+            content = None
+        
         line_number = node.lineno if hasattr(node, 'lineno') else None
-        return Violation(
-            rule=rule_obj,
-            violation_message=message,
-            location=str(file_path),
-            line_number=line_number,
-            severity=severity
-        ).to_dict()
+        
+        if content:
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
+                violation_message=message,
+                file_path=file_path,
+                line_number=line_number,
+                severity=severity,
+                content=content,
+                ast_node=node,
+                max_lines=5
+            )
+        else:
+            return Violation(
+                rule=rule_obj,
+                violation_message=message,
+                location=str(file_path),
+                line_number=line_number,
+                severity=severity
+            ).to_dict()
     
     def _check_variable_names(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

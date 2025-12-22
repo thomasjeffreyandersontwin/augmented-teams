@@ -7,6 +7,7 @@ import re
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -51,14 +52,14 @@ class ResourceOrientedCodeScanner(CodeScanner):
                 content = file_path.read_text(encoding='utf-8')
                 tree = ast.parse(content, filename=str(file_path))
                 
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.ClassDef):
-                        all_classes[(file_path, node.name)] = node
-                        
-                        for pattern in self.MANAGER_PATTERNS:
-                            if node.name.endswith(pattern):
-                                loader_classes[node.name] = (file_path, node, pattern)
-                                break
+                classes = Classes(tree)
+                for cls in classes.get_many_classes:
+                    all_classes[(file_path, cls.node.name)] = cls.node
+                    
+                    for pattern in self.MANAGER_PATTERNS:
+                        if cls.node.name.endswith(pattern):
+                            loader_classes[cls.node.name] = (file_path, cls.node, pattern)
+                            break
             except (SyntaxError, UnicodeDecodeError) as e:
                 logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
                 continue
@@ -66,6 +67,7 @@ class ResourceOrientedCodeScanner(CodeScanner):
         # Second pass: check if each loader class is owned by a domain object
         for loader_class_name, (loader_file, loader_node, pattern) in loader_classes.items():
             if not self._is_owned_by_domain_object(loader_class_name, loader_node, all_files, all_classes):
+                # No code snippet for class-level design violations (class definition line)
                 violation = Violation(
                     rule=rule_obj,
                     violation_message=f'Class "{loader_class_name}" uses manager/doer/loader pattern but is not owned by a domain object. Use resource-oriented design instead (e.g., make it a property of a domain object like "{loader_class_name.replace(pattern, "")}").',

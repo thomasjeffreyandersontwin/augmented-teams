@@ -56,43 +56,6 @@ class CliExecutor:
         return {'working_dir': str(updated), 'message': f'Working directory updated to {updated}'}
 
     def _output_result(self, result: Dict[str, Any]):
-        data = result.get('data', {})
-        instructions = data.get('instructions', {})
-        base_instructions = []
-        if isinstance(instructions, dict):
-            base_instructions = instructions.pop('base_instructions', [])
-        
         result_json = json.dumps(result, indent=2)
         print(result_json)
-        sys.stdout.flush()
-        
-        if isinstance(base_instructions, list) and len(base_instructions) > 0:
-            self._write_instructions_log_async(base_instructions)
-            self._print_base_instructions(base_instructions)
-        
-        Path(r'c:\dev\augmented-teams\.cursor\debug.log').open('a').write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'E','location':'cli_executor.py:87','message':'Output complete - NO FILE GENERATION CODE HERE','data':{'instructions_printed':len(base_instructions)},'timestamp':__import__('time').time()*1000})+'\n')
-    
-    def _write_instructions_log_async(self, base_instructions: list) -> None:
-        try:
-            import threading
-            def write_instructions_log():
-                try:
-                    log_file = Path(self.cli.bot.bot_paths.workspace_directory) / 'docs' / 'stories' / 'build-instructions.txt'
-                    log_file.parent.mkdir(parents=True, exist_ok=True)
-                    with log_file.open('w', encoding='utf-8') as f:
-                        f.write('\n'.join(base_instructions))
-                except Exception as e:
-                    logger.debug(f"Failed to write instructions log: {e}")
-            threading.Thread(target=write_instructions_log, daemon=True).start()
-        except Exception as e:
-            logger.debug(f"Failed to start logging thread: {e}")
-    
-    def _print_base_instructions(self, base_instructions: list) -> None:
-        print()
-        for instruction in base_instructions:
-            try:
-                print(instruction)
-            except UnicodeEncodeError:
-                safe_instruction = instruction.encode('ascii', errors='replace').decode('ascii')
-                print(safe_instruction)
         sys.stdout.flush()

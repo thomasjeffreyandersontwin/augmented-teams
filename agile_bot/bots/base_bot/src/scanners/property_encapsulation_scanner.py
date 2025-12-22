@@ -2,13 +2,12 @@
 
 from typing import List, Dict, Any, Optional
 import re
-from .story_scanner import StoryScanner
-from .story_map import StoryMap, StoryNode
+from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
 
 
-class PropertyEncapsulationScanner(StoryScanner):
+class PropertyEncapsulationScanner(DomainScanner):
     
     EXPOSED_STATE_PATTERNS = [
         r'\blist\b',
@@ -26,10 +25,6 @@ class PropertyEncapsulationScanner(StoryScanner):
         r'^compute\s+',
         r'^derive\s+',
     ]
-    
-    def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
-        # This scanner is for domain concepts, not story nodes
-        return []
     
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

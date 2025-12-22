@@ -34,6 +34,7 @@ class ConsistentIndentationScanner(CodeScanner):
                 has_spaces = True
         
         if has_tabs and has_spaces:
+            # No code snippet for file-level indentation violations
             violation = Violation(
                 rule=rule_obj,
                 violation_message='File mixes tabs and spaces for indentation - use consistent indentation (prefer spaces)',

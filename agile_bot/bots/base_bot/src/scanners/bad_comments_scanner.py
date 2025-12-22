@@ -70,13 +70,28 @@ class BadCommentsScanner(CodeScanner):
         return violations
     
     def _create_commented_code_violation(self, rule_obj: Any, file_path: Path, line_num: int) -> Dict[str, Any]:
-        return Violation(
-            rule=rule_obj,
-            violation_message=f"Line {line_num} has commented-out code - delete it (it's in git history if needed)",
-            location=str(file_path),
-            line_number=line_num,
-            severity='warning'
-        ).to_dict()
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
+                violation_message=f"Has commented-out code - delete it (it's in git history if needed)",
+                file_path=file_path,
+                line_number=line_num,
+                severity='warning',
+                content=content,
+                start_line=line_num,
+                end_line=line_num,
+                context_before=1,
+                max_lines=3
+            )
+        except Exception:
+            return Violation(
+                rule=rule_obj,
+                violation_message=f"Line {line_num} has commented-out code - delete it (it's in git history if needed)",
+                location=str(file_path),
+                line_number=line_num,
+                severity='warning'
+            ).to_dict()
     
     def _is_actual_commented_code(self, comment_content: str, lines: List[str], line_num: int) -> bool:
         if not comment_content:
@@ -174,13 +189,28 @@ class BadCommentsScanner(CodeScanner):
             if comment_text:
                 for pattern in html_patterns:
                     if re.search(pattern, comment_text, re.IGNORECASE):
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Line contains HTML markup in comment - remove HTML, use plain text',
-                            location=str(file_path),
-                            line_number=line_num,
-                            severity='error'
-                        ).to_dict()
+                        try:
+                            content = file_path.read_text(encoding='utf-8')
+                            violation = self._create_violation_with_snippet(
+                                rule_obj=rule_obj,
+                                violation_message=f'Line contains HTML markup in comment - remove HTML, use plain text',
+                                file_path=file_path,
+                                line_number=line_num,
+                                severity='error',
+                                content=content,
+                                start_line=line_num,
+                                end_line=line_num,
+                                context_before=1,
+                                max_lines=3
+                            )
+                        except Exception:
+                            violation = Violation(
+                                rule=rule_obj,
+                                violation_message=f'Line contains HTML markup in comment - remove HTML, use plain text',
+                                location=str(file_path),
+                                line_number=line_num,
+                                severity='error'
+                            ).to_dict()
                         violations.append(violation)
                         break
         
@@ -258,13 +288,28 @@ class BadCommentsScanner(CodeScanner):
                     )
                     
                     if has_implementation:
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Misleading TODO comment: "{line.strip()}" - code IS implemented, update or delete TODO',
-                            location=str(file_path),
-                            line_number=line_num,
-                            severity='warning'
-                        ).to_dict()
+                        try:
+                            content = file_path.read_text(encoding='utf-8')
+                            violation = self._create_violation_with_snippet(
+                                rule_obj=rule_obj,
+                                violation_message=f'Misleading TODO comment: "{line.strip()}" - code IS implemented, update or delete TODO',
+                                file_path=file_path,
+                                line_number=line_num,
+                                severity='warning',
+                                content=content,
+                                start_line=line_num,
+                                end_line=line_num,
+                                context_before=1,
+                                max_lines=5
+                            )
+                        except Exception:
+                            violation = Violation(
+                                rule=rule_obj,
+                                violation_message=f'Misleading TODO comment: "{line.strip()}" - code IS implemented, update or delete TODO',
+                                location=str(file_path),
+                                line_number=line_num,
+                                severity='warning'
+                            ).to_dict()
                         violations.append(violation)
         
         return violations

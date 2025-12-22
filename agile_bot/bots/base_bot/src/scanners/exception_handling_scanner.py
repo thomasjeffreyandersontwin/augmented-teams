@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import TryBlocks
 
 
 class ExceptionHandlingScanner(CodeScanner):
@@ -26,20 +27,21 @@ class ExceptionHandlingScanner(CodeScanner):
         violations = []
         lines = content.split('\n')
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Try):
-                for handler in node.handlers:
-                    handler_body = handler.body
-                    if len(handler_body) == 0:
-                        line_number = handler.lineno if hasattr(handler, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
-                            violation_message=f'Empty except block at line {line_number} - exceptions should be logged or rethrown, never swallowed',
-                            location=str(file_path),
-                            line_number=line_number,
-                            severity='error'
-                        ).to_dict()
-                        violations.append(violation)
+        try_blocks = TryBlocks(tree)
+        for try_block in try_blocks.get_many_try_blocks:
+            for handler in try_block.node.handlers:
+                handler_body = handler.body
+                if len(handler_body) == 0:
+                    line_number = handler.lineno if hasattr(handler, 'lineno') else None
+                    # No code snippet for empty except blocks
+                    violation = Violation(
+                        rule=rule_obj,
+                        violation_message=f'Empty except block at line {line_number} - exceptions should be logged or rethrown, never swallowed',
+                        location=str(file_path),
+                        line_number=line_number,
+                        severity='error'
+                    ).to_dict()
+                    violations.append(violation)
         
         return violations
 

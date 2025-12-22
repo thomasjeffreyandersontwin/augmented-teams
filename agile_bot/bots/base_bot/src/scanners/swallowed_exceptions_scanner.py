@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import TryBlocks
 
 
 class SwallowedExceptionsScanner(CodeScanner):
@@ -25,15 +26,28 @@ class SwallowedExceptionsScanner(CodeScanner):
     def _check_swallowed_exceptions(self, tree: ast.AST, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
         violations = []
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Try):
-                for handler in node.handlers:
-                    handler_body = handler.body
-                    if len(handler_body) == 0:
+        try_blocks = TryBlocks(tree)
+        for try_block in try_blocks.get_many_try_blocks:
+            for handler in try_block.exception_handlers:
+                handler_body = handler.body
+                if len(handler_body) == 0:
+                    line_number = handler.lineno if hasattr(handler, 'lineno') else None
+                    violation = self._create_violation_with_snippet(
+                        rule_obj=rule_obj,
+                        violation_message=f'Empty except block at line {line_number} - exceptions must be logged or rethrown, never swallowed',
+                        file_path=file_path,
+                        line_number=line_number,
+                        severity='error',
+                        content=content,
+                        ast_node=handler
+                    )
+                    violations.append(violation)
+                elif len(handler_body) == 1:
+                    if isinstance(handler_body[0], ast.Pass):
                         line_number = handler.lineno if hasattr(handler, 'lineno') else None
                         violation = self._create_violation_with_snippet(
                             rule_obj=rule_obj,
-                            violation_message=f'Empty except block at line {line_number} - exceptions must be logged or rethrown, never swallowed',
+                            violation_message=f'Except block only contains pass at line {line_number} - exceptions must be logged or rethrown, never swallowed',
                             file_path=file_path,
                             line_number=line_number,
                             severity='error',
@@ -41,19 +55,6 @@ class SwallowedExceptionsScanner(CodeScanner):
                             ast_node=handler
                         )
                         violations.append(violation)
-                    elif len(handler_body) == 1:
-                        if isinstance(handler_body[0], ast.Pass):
-                            line_number = handler.lineno if hasattr(handler, 'lineno') else None
-                            violation = self._create_violation_with_snippet(
-                                rule_obj=rule_obj,
-                                violation_message=f'Except block only contains pass at line {line_number} - exceptions must be logged or rethrown, never swallowed',
-                                file_path=file_path,
-                                line_number=line_number,
-                                severity='error',
-                                content=content,
-                                ast_node=handler
-                            )
-                            violations.append(violation)
         
         return violations
 

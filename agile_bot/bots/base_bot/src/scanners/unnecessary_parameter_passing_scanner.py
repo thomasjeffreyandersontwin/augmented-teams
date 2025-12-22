@@ -6,6 +6,7 @@ import ast
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 
 class UnnecessaryParameterPassingScanner(CodeScanner):
@@ -27,10 +28,10 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         content, lines, tree = parsed
         
         # Find all class definitions
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_violations = self._check_class(node, file_path, rule_obj, lines, content)
-                violations.extend(class_violations)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            class_violations = self._check_class(cls.node, file_path, rule_obj, lines, content)
+            violations.extend(class_violations)
         
         return violations
     
@@ -99,6 +100,7 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
                 # Check if it's actually used in a way that suggests it's being passed unnecessarily
                 if self._parameter_used_like_instance_attr(method_node, arg.arg):
                     line_number = method_node.lineno if hasattr(method_node, 'lineno') else None
+                    # No code snippet for method-level parameter violations (method definition line)
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Internal method "{method_node.name}" receives parameter "{arg.arg}" that matches instance attribute. Consider accessing via self.{arg.arg} instead.',
@@ -162,6 +164,7 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
                                                 if assignment['line'] < stmt.lineno:
                                                     # Found pattern: var = self.attr; self._method(var)
                                                     line_number = stmt.lineno if hasattr(stmt, 'lineno') else None
+                                                    # No code snippet for property extraction violations
                                                     violation = Violation(
                                                         rule=rule_obj,
                                                         violation_message=f'Instance property "self.{assignment["attr_path"]}" is extracted to variable "{assignment["var_name"]}" and passed to internal method "{method_name}". Access via self.{assignment["attr_path"]} directly instead.',

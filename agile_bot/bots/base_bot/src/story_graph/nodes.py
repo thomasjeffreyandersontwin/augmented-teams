@@ -67,6 +67,31 @@ class Epic(StoryNode):
     def children(self) -> List['StoryNode']:
         return self._children
 
+    @property
+    def all_stories(self) -> List['Story']:
+        stories = []
+        for child in self.children:
+            if isinstance(child, Story):
+                stories.append(child)
+            elif isinstance(child, (SubEpic, StoryGroup)):
+                stories.extend(self._get_stories_from_node(child))
+        return stories
+
+    def _get_stories_from_node(self, node: StoryNode) -> List['Story']:
+        stories = []
+        for child in node.children:
+            if isinstance(child, Story):
+                stories.append(child)
+            elif hasattr(child, 'children'):
+                stories.extend(self._get_stories_from_node(child))
+        return stories
+
+    def find_sub_epic_by_name(self, sub_epic_name: str) -> Optional['SubEpic']:
+        for child in self.children:
+            if isinstance(child, SubEpic) and child.name == sub_epic_name:
+                return child
+        return None
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Epic':
         domain_concepts = [DomainConcept.from_dict(dc) for dc in data.get('domain_concepts', [])]
@@ -274,8 +299,8 @@ class ScenarioOutline(StoryNode):
 
 @dataclass
 class AcceptanceCriteria(StoryNode):
-    sequential_order: float
-    text: str
+    text: str = ''
+    sequential_order: float = 0.0
     _parent: Optional[StoryNode] = field(default=None, repr=False)
 
     def __post_init__(self):
@@ -299,8 +324,8 @@ class AcceptanceCriteria(StoryNode):
 
 @dataclass
 class Step(StoryNode):
-    sequential_order: float
-    text: str
+    text: str = ''
+    sequential_order: float = 0.0
     _parent: Optional[StoryNode] = field(default=None, repr=False)
 
     def __post_init__(self):
@@ -345,3 +370,91 @@ class StoryMap:
         yield node
         for child in node.children:
             yield from self.walk(child)
+
+    @property
+    def all_stories(self) -> List['Story']:
+        stories = []
+        for epic in self._epics:
+            for node in self.walk(epic):
+                if isinstance(node, Story):
+                    stories.append(node)
+        return stories
+
+    @property
+    def all_scenarios(self) -> List['Scenario']:
+        scenarios = []
+        for epic in self._epics:
+            for node in self.walk(epic):
+                if isinstance(node, Story):
+                    scenarios.extend(node.scenarios)
+        return scenarios
+
+    @property
+    def all_domain_concepts(self) -> List[DomainConcept]:
+        concepts = []
+        for epic in self._epics:
+            if epic.domain_concepts:
+                concepts.extend(epic.domain_concepts)
+        return concepts
+
+    def filter_by_epic_names(self, epic_names: set) -> 'StoryMap':
+        filtered_epics = [e for e in self._epics if e.name in epic_names]
+        filtered_graph = {'epics': [self._epic_to_dict(e) for e in filtered_epics]}
+        return StoryMap(filtered_graph)
+
+    def filter_by_story_names(self, story_names: set) -> List['Story']:
+        stories = []
+        for epic in self._epics:
+            for node in self.walk(epic):
+                if isinstance(node, Story) and node.name in story_names:
+                    stories.append(node)
+        return stories
+
+    def find_epic_by_name(self, epic_name: str) -> Optional[Epic]:
+        for epic in self._epics:
+            if epic.name == epic_name:
+                return epic
+        return None
+
+    def find_story_by_name(self, story_name: str) -> Optional['Story']:
+        for epic in self._epics:
+            for node in self.walk(epic):
+                if isinstance(node, Story) and node.name == story_name:
+                    return node
+        return None
+
+    def _epic_to_dict(self, epic: Epic) -> Dict[str, Any]:
+        return {
+            'name': epic.name,
+            'domain_concepts': [dc.__dict__ for dc in epic.domain_concepts] if epic.domain_concepts else [],
+            'sub_epics': [self._sub_epic_to_dict(child) for child in epic.children if isinstance(child, SubEpic)],
+            'story_groups': [self._story_group_to_dict(child) for child in epic.children if isinstance(child, StoryGroup)]
+        }
+
+    def _sub_epic_to_dict(self, sub_epic: SubEpic) -> Dict[str, Any]:
+        return {
+            'name': sub_epic.name,
+            'sequential_order': sub_epic.sequential_order,
+            'sub_epics': [self._sub_epic_to_dict(child) for child in sub_epic.children if isinstance(child, SubEpic)],
+            'story_groups': [self._story_group_to_dict(child) for child in sub_epic.children if isinstance(child, StoryGroup)]
+        }
+
+    def _story_group_to_dict(self, story_group: StoryGroup) -> Dict[str, Any]:
+        return {
+            'name': story_group.name,
+            'sequential_order': story_group.sequential_order,
+            'type': story_group.group_type,
+            'connector': story_group.connector,
+            'stories': [self._story_to_dict(child) for child in story_group.children if isinstance(child, Story)]
+        }
+
+    def _story_to_dict(self, story: Story) -> Dict[str, Any]:
+        return {
+            'name': story.name,
+            'sequential_order': story.sequential_order,
+            'connector': story.connector,
+            'story_type': story.story_type,
+            'users': [str(u) for u in story.users] if story.users else [],
+            'test_file': story.test_file,
+            'test_class': story.test_class
+        }

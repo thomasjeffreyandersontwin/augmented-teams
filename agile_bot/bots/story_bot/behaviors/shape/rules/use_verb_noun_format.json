@@ -1,7 +1,7 @@
 {
   "description": "Use verb-noun format consistently for all story elements (epics, features, stories, scenarios). Maintain consistency across hierarchy levels.",
   "context": "when shaping stories",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner",
   "do": {
     "examples": [
       {

@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Domain concepts must stay at the domain level, even if concrete. Don't separate technical details from domain concepts—they should be the same (class vs object vs file—all represent the same domain concept).",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.technical_abstraction_scanner.TechnicalAbstractionScanner",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.technical_abstraction_scanner.TechnicalAbstractionScanner",
   "examples": [
     {
       "do": {

@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 
 class SimplifyControlFlowScanner(CodeScanner):
@@ -18,11 +19,11 @@ class SimplifyControlFlowScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                violation = self._check_nesting_depth(node, file_path, rule_obj, content)
-                if violation:
-                    violations.append(violation)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            violation = self._check_nesting_depth(function.node, file_path, rule_obj, content)
+            if violation:
+                violations.append(violation)
         
         return violations
     

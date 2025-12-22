@@ -6,6 +6,7 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 
 class TechnicalAbstractionCodeScanner(CodeScanner):
@@ -21,11 +22,11 @@ class TechnicalAbstractionCodeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                violation = self._check_technical_abstraction(node, file_path, rule_obj)
-                if violation:
-                    violations.append(violation)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            violation = self._check_technical_abstraction(cls.node, file_path, rule_obj)
+            if violation:
+                violations.append(violation)
         
         return violations
     
@@ -34,13 +35,27 @@ class TechnicalAbstractionCodeScanner(CodeScanner):
         
         for pattern in self.TECHNICAL_ABSTRACTION_PATTERNS:
             if class_name.endswith(pattern):
-                return Violation(
-                    rule=rule_obj,
-                    violation_message=f'Class "{class_name}" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.',
-                    location=str(file_path),
-                    line_number=class_node.lineno,
-                    severity='warning'
-                ).to_dict()
+                # Read file content for snippet extraction
+                try:
+                    content = file_path.read_text(encoding='utf-8')
+                    return self._create_violation_with_snippet(
+                        rule_obj=rule_obj,
+                        violation_message=f'Class "{class_name}" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.',
+                        file_path=file_path,
+                        line_number=class_node.lineno,
+                        severity='warning',
+                        content=content,
+                        ast_node=class_node,
+                        max_lines=5
+                    )
+                except Exception:
+                    return Violation(
+                        rule=rule_obj,
+                        violation_message=f'Class "{class_name}" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.',
+                        location=str(file_path),
+                        line_number=class_node.lineno,
+                        severity='warning'
+                    ).to_dict()
         
         return None
 

@@ -149,6 +149,7 @@ class DuplicationScanner(CodeScanner):
                     continue
                 
                 # Multiple functions with same body
+                # No code snippet for duplicate function violations
                 violation = Violation(
                     rule=rule_obj,
                     violation_message=f'Duplicate code detected: functions {", ".join(func_names)} have identical bodies - extract to shared function',
@@ -537,6 +538,7 @@ class DuplicationScanner(CodeScanner):
                 '\n\n'.join(previews)
             )
             
+            # No code snippet for duplicate block violations (previews already included in message)
             violation = Violation(
                 rule=rule_obj,
                 violation_message=violation_message,
@@ -1796,6 +1798,7 @@ class DuplicationScanner(CodeScanner):
                         f'Location 2 ({location2}):\n```python\n{preview2}\n```'
                     )
                     
+                    # No code snippet for cross-file duplication violations (previews already included in message)
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=violation_message,

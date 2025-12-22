@@ -6,6 +6,7 @@ import ast
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,10 @@ class DelegationCodeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_violations = self._check_delegation(node, content, file_path, rule_obj)
-                violations.extend(class_violations)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            class_violations = self._check_delegation(cls.node, content, file_path, rule_obj)
+            violations.extend(class_violations)
         
         return violations
     
@@ -63,6 +64,7 @@ class DelegationCodeScanner(CodeScanner):
                                     continue  # Class constants are fine to iterate
                                 
                                 if self._is_collection_name(collection_name):
+                                    # No code snippet for delegation violations (for loop line)
                                     violations.append(
                                         Violation(
                                             rule=rule_obj,

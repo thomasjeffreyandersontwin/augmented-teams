@@ -26,39 +26,6 @@
           "name": "",
           "users": [],
           "sequential_order": 1,
-          "domain_concepts": [
-            {
-              "name": "",
-              "responsibilities": [
-                {
-                  "name": "",
-                  "collaborators": []
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "",
-              "users": [],
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "stories": [
-                {
-                  "name": "",
-                  "users": [],
-                  "sequential_order": 1
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "sub_epics": [
-        {
-          "name": "",
-          "users": [],
-          "sequential_order": 1,
           "stories": [
             {
               "name": "",
@@ -73,118 +40,15 @@
   "increments": [
     {
       "name": "",
-      "priority": 1,
-      "epics": [
-        {
-          "name": "",
-          "users": [],
-          "sequential_order": 1,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "",
-              "responsibilities": [
-                {
-                  "name": "",
-                  "collaborators": []
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "",
-              "users": [],
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "stories": [
-                {
-                  "name": "",
-                  "users": [],
-                  "sequential_order": 1
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      "priority": 1
     },
     {
       "name": "",
-      "priority": 2,
-      "epics": [
-        {
-          "name": "",
-          "users": [],
-          "sequential_order": 1,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "",
-              "responsibilities": [
-                {
-                  "name": "",
-                  "collaborators": []
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "",
-              "users": [],
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "stories": [
-                {
-                  "name": "",
-                  "users": [],
-                  "sequential_order": 1
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      "priority": 2
     },
     {
       "name": "",
-      "priority": 3,
-      "epics": [
-        {
-          "name": "",
-          "users": [],
-          "sequential_order": 1,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "",
-              "responsibilities": [
-                {
-                  "name": "",
-                  "collaborators": []
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "",
-              "users": [],
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "stories": [
-                {
-                  "name": "",
-                  "users": [],
-                  "sequential_order": 1
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      "priority": 3
     }
   ]
 }
-

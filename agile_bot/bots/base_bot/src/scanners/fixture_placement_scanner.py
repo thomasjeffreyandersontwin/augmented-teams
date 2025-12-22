@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Imports
 
 
 class FixturePlacementScanner(TestScanner):
@@ -25,13 +26,14 @@ class FixturePlacementScanner(TestScanner):
     def _check_fixture_imports(self, tree: ast.AST, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom):
-                if node.module and 'fixture' in node.module.lower():
-                    line_number = node.lineno if hasattr(node, 'lineno') else None
+        imports = Imports(tree)
+        for import_stmt in imports.get_many_imports:
+            if isinstance(import_stmt.node, ast.ImportFrom):
+                if import_stmt.node.module and 'fixture' in import_stmt.node.module.lower():
+                    line_number = import_stmt.node.lineno if hasattr(import_stmt.node, 'lineno') else None
                     violation = Violation(
                         rule=rule_obj,
-                        violation_message=f'Fixtures imported from "{node.module}" - fixtures should be defined in test file, not imported',
+                        violation_message=f'Fixtures imported from "{import_stmt.node.module}" - fixtures should be defined in test file, not imported',
                         location=str(file_path),
                         line_number=line_number,
                         severity='warning'

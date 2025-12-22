@@ -42,14 +42,30 @@ class AsciiOnlyScanner(TestScanner):
                 # Common Unicode characters to flag
                 problematic = [c for c in unicode_chars if ord(c) > 127]
                 if problematic:
-                    location = f"{file_path}:{line_num}"
-                    return Violation(
-                        rule=rule_obj,
-                        violation_message=f'Line contains Unicode characters: {", ".join(set(problematic[:3]))} - use ASCII alternatives like [PASS], [ERROR], [FAIL]',
-                        location=location,
-                        line_number=line_num,
-                        severity='error'
-                    ).to_dict()
+                    # Read file content for snippet extraction
+                    try:
+                        content = file_path.read_text(encoding='utf-8')
+                        return self._create_violation_with_snippet(
+                            rule_obj=rule_obj,
+                            violation_message=f'Line contains Unicode characters: {", ".join(set(problematic[:3]))} - use ASCII alternatives like [PASS], [ERROR], [FAIL]',
+                            file_path=file_path,
+                            line_number=line_num,
+                            severity='error',
+                            content=content,
+                            start_line=line_num,
+                            end_line=line_num,
+                            context_before=1,
+                            max_lines=3
+                        )
+                    except Exception:
+                        location = f"{file_path}:{line_num}"
+                        return Violation(
+                            rule=rule_obj,
+                            violation_message=f'Line contains Unicode characters: {", ".join(set(problematic[:3]))} - use ASCII alternatives like [PASS], [ERROR], [FAIL]',
+                            location=location,
+                            line_number=line_num,
+                            severity='error'
+                        ).to_dict()
         
         return None
 

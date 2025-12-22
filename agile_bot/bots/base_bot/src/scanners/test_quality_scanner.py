@@ -7,6 +7,7 @@ import re
 import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -71,18 +72,17 @@ class TestQualityScanner(TestScanner):
         violations = []
         generic_names = ['test_1', 'test_2', 'test_basic', 'test_simple', 'test_default']
         
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.FunctionDef):
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if not function.node.name.startswith('test_'):
                 continue
-            if not node.name.startswith('test_'):
-                continue
-            if node.name not in generic_names:
+            if function.node.name not in generic_names:
                 continue
             
-            line_number = node.lineno if hasattr(node, 'lineno') else None
+            line_number = function.node.lineno if hasattr(function.node, 'lineno') else None
             violation = Violation(
                 rule=rule_obj,
-                violation_message=f'Test "{node.name}" uses generic name - use descriptive name that explains what is being tested',
+                violation_message=f'Test "{function.node.name}" uses generic name - use descriptive name that explains what is being tested',
                 location=str(file_path),
                 line_number=line_number,
                 severity='error'

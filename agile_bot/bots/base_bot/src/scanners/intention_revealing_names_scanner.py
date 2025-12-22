@@ -7,6 +7,7 @@ import re
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Functions, Classes
 
 logger = logging.getLogger(__name__)
 
@@ -145,13 +146,26 @@ class IntentionRevealingNamesScanner(CodeScanner):
         else:  # variable generic
             message = f'Variable "{name}" uses generic name - use intention-revealing name'
         
-        return Violation(
-            rule=rule_obj,
-            violation_message=message,
-            location=str(file_path),
-            line_number=line_number,
-            severity=severity
-        ).to_dict()
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
+                violation_message=message,
+                file_path=file_path,
+                line_number=line_number,
+                severity=severity,
+                content=content,
+                ast_node=node,
+                max_lines=3
+            )
+        except Exception:
+            return Violation(
+                rule=rule_obj,
+                violation_message=message,
+                location=str(file_path),
+                line_number=line_number,
+                severity=severity
+            ).to_dict()
     
     def _collect_loop_and_comprehension_var_names(self, tree: ast.AST) -> set:
         acceptable_names = set()
@@ -203,28 +217,28 @@ class IntentionRevealingNamesScanner(CodeScanner):
         if domain_terms is None:
             domain_terms = set()
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                func_name = node.name
-                func_name_lower = func_name.lower()
-                
-                # Skip private methods and special methods
-                if func_name.startswith('_') and func_name != '__init__':
-                    continue
-                
-                if func_name_lower in self.ACCEPTABLE_DOMAIN_TERMS:
-                    continue
-                
-                if domain_terms:
-                    if self._matches_domain_term(func_name, domain_terms):
-                        continue  # Matches domain term - likely acceptable
-                
-                generic_names = ['process', 'handle', 'do', 'execute', 'run', 'main']
-                # Only flag if it's standalone generic name, not part of a descriptive name
-                if func_name_lower in generic_names and len(func_name.split('_')) == 1:
-                    violations.append(self._create_generic_name_violation(
-                        rule_obj, file_path, node, func_name, 'function', 'generic'
-                    ))
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            func_name = function.node.name
+            func_name_lower = func_name.lower()
+            
+            # Skip private methods and special methods
+            if func_name.startswith('_') and func_name != '__init__':
+                continue
+            
+            if func_name_lower in self.ACCEPTABLE_DOMAIN_TERMS:
+                continue
+            
+            if domain_terms:
+                if self._matches_domain_term(func_name, domain_terms):
+                    continue  # Matches domain term - likely acceptable
+            
+            generic_names = ['process', 'handle', 'do', 'execute', 'run', 'main']
+            # Only flag if it's standalone generic name, not part of a descriptive name
+            if func_name_lower in generic_names and len(func_name.split('_')) == 1:
+                violations.append(self._create_generic_name_violation(
+                    rule_obj, file_path, function.node, func_name, 'function', 'generic'
+                ))
         
         return violations
     
@@ -237,29 +251,29 @@ class IntentionRevealingNamesScanner(CodeScanner):
         # Acceptable class name patterns (e.g., Scanner, CodeScanner, TestScanner are OK)
         acceptable_class_patterns = ['Scanner', 'CodeScanner', 'TestScanner', 'StoryScanner']
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_name = node.name
-                class_name_lower = class_name.lower()
-                
-                if any(pattern in class_name for pattern in acceptable_class_patterns):
-                    continue
-                
-                if domain_terms:
-                    if self._matches_domain_term(class_name, domain_terms):
-                        continue  # Matches domain term - likely acceptable
-                
-                generic_names = ['Manager', 'Handler', 'Processor', 'Util', 'Helper', 'Service']
-                # Only flag if class name IS the generic name or ends with it without descriptive prefix
-                if class_name in generic_names:
-                    violations.append(self._create_generic_name_violation(
-                        rule_obj, file_path, node, class_name, 'class', 'generic', 'error'
-                    ))
-                # Flag if class name ends with generic name without descriptive prefix (e.g., "MyHandler" is OK, "Handler" is not)
-                elif any(class_name.endswith(g) and len(class_name) <= len(g) + 2 for g in generic_names):
-                    violations.append(self._create_generic_name_violation(
-                        rule_obj, file_path, node, class_name, 'class', 'generic', 'warning'
-                    ))
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            class_name = cls.node.name
+            class_name_lower = class_name.lower()
+            
+            if any(pattern in class_name for pattern in acceptable_class_patterns):
+                continue
+            
+            if domain_terms:
+                if self._matches_domain_term(class_name, domain_terms):
+                    continue  # Matches domain term - likely acceptable
+            
+            generic_names = ['Manager', 'Handler', 'Processor', 'Util', 'Helper', 'Service']
+            # Only flag if class name IS the generic name or ends with it without descriptive prefix
+            if class_name in generic_names:
+                violations.append(self._create_generic_name_violation(
+                    rule_obj, file_path, cls.node, class_name, 'class', 'generic', 'error'
+                ))
+            # Flag if class name ends with generic name without descriptive prefix (e.g., "MyHandler" is OK, "Handler" is not)
+            elif any(class_name.endswith(g) and len(class_name) <= len(g) + 2 for g in generic_names):
+                violations.append(self._create_generic_name_violation(
+                    rule_obj, file_path, cls.node, class_name, 'class', 'generic', 'warning'
+                ))
         
         return violations
     

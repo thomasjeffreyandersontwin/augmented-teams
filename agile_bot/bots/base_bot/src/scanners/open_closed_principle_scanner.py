@@ -42,6 +42,7 @@ class OpenClosedPrincipleScanner(CodeScanner):
             
             for pattern in type_switch_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
+                    # No code snippet for type-switch pattern violations
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Line {line_num} uses type-based conditional - use polymorphism instead to follow open-closed principle',

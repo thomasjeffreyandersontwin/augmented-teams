@@ -6,6 +6,7 @@ import ast
 import re
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 
 class ExactVariableNamesScanner(TestScanner):
@@ -21,10 +22,10 @@ class ExactVariableNamesScanner(TestScanner):
         
         domain_concepts = self._extract_domain_concepts(knowledge_graph)
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith('test_'):
-                    violations.extend(self._check_variable_names(node, domain_concepts, file_path, rule_obj))
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if function.node.name.startswith('test_'):
+                violations.extend(self._check_variable_names(function.node, domain_concepts, file_path, rule_obj))
         
         return violations
     

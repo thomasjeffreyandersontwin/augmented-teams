@@ -6,6 +6,7 @@ import ast
 import logging
 from .code_scanner import CodeScanner
 from .complexity_metrics import ComplexityMetrics
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +22,15 @@ class FunctionSizeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                # Skip private methods and special methods
-                if node.name.startswith('_') and node.name != '__init__':
-                    continue
-                
-                violation = self._check_function_size(node, file_path, rule_obj, lines, content)
-                if violation:
-                    violations.append(violation)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            # Skip private methods and special methods
+            if function.node.name.startswith('_') and function.node.name != '__init__':
+                continue
+            
+            violation = self._check_function_size(function.node, file_path, rule_obj, lines, content)
+            if violation:
+                violations.append(violation)
         
         return violations
     

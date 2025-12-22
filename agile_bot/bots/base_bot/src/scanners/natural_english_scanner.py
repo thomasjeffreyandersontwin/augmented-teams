@@ -2,13 +2,12 @@
 
 from typing import List, Dict, Any, Optional
 import re
-from .story_scanner import StoryScanner
-from .story_map import StoryMap, StoryNode
+from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
 
 
-class NaturalEnglishScanner(StoryScanner):
+class NaturalEnglishScanner(DomainScanner):
     
     TECHNICAL_NOTATION_PATTERNS = [
         r'\[0\.\.1\]',
@@ -22,9 +21,6 @@ class NaturalEnglishScanner(StoryScanner):
         r'\[0\.\.n\]',
         r'\[1\.\.n\]',
     ]
-    
-    def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
-        return []
     
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

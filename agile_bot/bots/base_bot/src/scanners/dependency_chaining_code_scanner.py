@@ -6,6 +6,7 @@ import ast
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,10 @@ class DependencyChainingCodeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_violations = self._check_dependency_chaining(node, file_path, rule_obj)
-                violations.extend(class_violations)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            class_violations = self._check_dependency_chaining(cls.node, file_path, rule_obj)
+            violations.extend(class_violations)
         
         return violations
     
@@ -65,15 +66,30 @@ class DependencyChainingCodeScanner(CodeScanner):
                 # Check if method takes parameters that are in __init__ (should use self.param instead)
                 for param in method_params:
                     if param in init_params:
-                        violations.append(
-                            Violation(
-                                rule=rule_obj,
-                                violation_message=f'Method "{node.name}" in class "{class_node.name}" takes parameter "{param}" that is already injected in __init__. Use self.{param} instead.',
-                                location=str(file_path),
-                                line_number=node.lineno,
-                                severity='warning'
-                            ).to_dict()
-                        )
+                        try:
+                            content = file_path.read_text(encoding='utf-8')
+                            violations.append(
+                                self._create_violation_with_snippet(
+                                    rule_obj=rule_obj,
+                                    violation_message=f'Method "{node.name}" in class "{class_node.name}" takes parameter "{param}" that is already injected in __init__. Use self.{param} instead.',
+                                    file_path=file_path,
+                                    line_number=node.lineno,
+                                    severity='warning',
+                                    content=content,
+                                    ast_node=node,
+                                    max_lines=5
+                                )
+                            )
+                        except Exception:
+                            violations.append(
+                                Violation(
+                                    rule=rule_obj,
+                                    violation_message=f'Method "{node.name}" in class "{class_node.name}" takes parameter "{param}" that is already injected in __init__. Use self.{param} instead.',
+                                    location=str(file_path),
+                                    line_number=node.lineno,
+                                    severity='warning'
+                                ).to_dict()
+                            )
                 
                 if node.name.startswith('_') and not (node.name.startswith('__') and node.name.endswith('__')):
                     violations.extend(self._check_method_calls_for_instance_attrs(
@@ -132,13 +148,28 @@ class DependencyChainingCodeScanner(CodeScanner):
             if isinstance(arg_node.value, ast.Name) and arg_node.value.id == 'self':
                 attr_name = arg_node.attr
                 if attr_name in instance_attrs:
-                    return Violation(
-                        rule=rule_obj,
-                        violation_message=f'Line {line_num}: Passing self.{attr_name} as parameter to {method_name}(). Access it directly in the method through self.{attr_name} instead.',
-                        location=str(file_path),
-                        line_number=line_num,
-                        severity='warning'
-                    ).to_dict()
+                    try:
+                        content = file_path.read_text(encoding='utf-8')
+                        return self._create_violation_with_snippet(
+                            rule_obj=rule_obj,
+                            violation_message=f'Passing self.{attr_name} as parameter to {method_name}(). Access it directly in the method through self.{attr_name} instead.',
+                            file_path=file_path,
+                            line_number=line_num,
+                            severity='warning',
+                            content=content,
+                            start_line=line_num,
+                            end_line=line_num,
+                            context_before=2,
+                            max_lines=5
+                        )
+                    except Exception:
+                        return Violation(
+                            rule=rule_obj,
+                            violation_message=f'Line {line_num}: Passing self.{attr_name} as parameter to {method_name}(). Access it directly in the method through self.{attr_name} instead.',
+                            location=str(file_path),
+                            line_number=line_num,
+                            severity='warning'
+                        ).to_dict()
         
         return None
 

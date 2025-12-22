@@ -6,6 +6,7 @@ import ast
 import re
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 
 class GivenWhenThenHelpersScanner(TestScanner):
@@ -34,13 +35,13 @@ class GivenWhenThenHelpersScanner(TestScanner):
         
         helper_functions = self._get_helper_functions(tree, content)
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith('test_'):
-                    test_violations = self._check_test_method(
-                        node, content, file_path, rule_obj, helper_functions, tree
-                    )
-                    violations.extend(test_violations)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if function.node.name.startswith('test_'):
+                test_violations = self._check_test_method(
+                    function.node, content, file_path, rule_obj, helper_functions, tree
+                )
+                violations.extend(test_violations)
         
         return violations
     

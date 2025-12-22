@@ -3609,7 +3609,7 @@ class TestRunAllScanners:
             'redundant noun'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.technical_language_scanner.TechnicalLanguageScanner',
+            'agile_bot.bots.base_bot.src.scanners.technical_language_scanner.TechnicalLanguageScanner',
             'shape',
             {'epics': [{'name': 'Implement Order System'}]},
             'technical implementation'

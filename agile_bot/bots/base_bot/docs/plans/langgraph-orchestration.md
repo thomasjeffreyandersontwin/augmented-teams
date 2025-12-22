@@ -1,24 +1,48 @@
 # BaseBot → LangGraph Integration Plan
 
-> ⚠️ **DRAFT — PRELIMINARY IDEAS ONLY**
+> ⚠️ **DRAFT — DOMAIN MODEL & ARCHITECTURE**
 >
-> This document captures initial architectural thinking and rough ideas for integrating LangGraph.  
-> **All code examples are suggestions** — they are illustrative, not production-ready.
+> This document defines the architecture for integrating LangGraph as an **optional** orchestration layer.
+>
+> **Key Principle:** LangGraph is opt-in for complex workflows. Default workflows remain unchanged.
 >
 > **Before implementation, this plan requires:**
 > 1. **Shape** — Define the problem boundaries and key trade-offs
 > 2. **Discovery** — Elaborate domain concepts, responsibilities, and collaborations  
 > 3. **Exploration** — Define acceptance criteria and scenarios
->
-> The class names, file locations, method signatures, and overall structure will likely change  
-> significantly through proper story work. Do not implement directly from this document.
+
+---
+
+## Executive Summary
+
+**Problem:** BaseBot needs advanced workflow capabilities (conditionals, parallelism, loops, human-in-the-loop) without breaking existing simple workflows.
+
+**Solution:** Two completely separate paths:
+1. **Default Path** — Current code stays exactly as-is (legacy files kept)
+2. **Custom Path** — LangGraph-based orchestration via `--workflow` flag
+
+**Key Innovation:** Single `ActionNode` class with two-pass pattern (instructions → confirmation) handles ALL behavior/action combinations.
+
+**Migration:** Zero breaking changes. LangGraph workflows are purely additive.
 
 ---
 
 ## Objective
 
-Integrate **LangGraph** into **BaseBot** as a hidden orchestration layer.  
-LangGraph becomes the execution engine that drives behavior workflows, with **StoryBot** (and future bots) providing declarative configuration.
+Integrate **LangGraph** into **BaseBot** as an **optional** orchestration layer for complex workflows.
+
+**Two Completely Separate Paths:**
+
+1. **Default Workflow (Untouched)** — Current code stays exactly as-is
+   - CLI → Bot → Behavior → Action
+   - No changes, no new parameters, no routing logic
+   - **We do not touch this code path**
+
+2. **Custom Workflow (LangGraph)** — Entirely new capability
+   - CLI → LangGraphRunner → Graph Nodes → action.execute(context)
+   - Enabled via `--workflow <name>` flag
+   - For conditional branching, parallel execution, loops, human-in-the-loop
+   - **Completely additive — no changes to existing code**
 
 ---
 
@@ -42,8 +66,8 @@ agile_bot/bots/base_bot/
 │   │   ├── action.py              # Base Action class
 │   │   ├── actions.py             # Actions collection (workflow management)
 │   │   ├── action_factory.py      # Dynamic action instantiation
-│   │   ├── action_state_manager.py # REMOVE - replaced by LangGraph
-│   │   ├── activity_tracker.py    # REMOVE - replaced by LangGraph
+│   │   ├── action_state_manager.py # KEEP (legacy default workflow)
+│   │   ├── activity_tracker.py    # KEEP (legacy default workflow)
 │   │   ├── instructions.py        # Instructions builder
 │   │   ├── workflow_status_builder.py # Status breadcrumbs
 │   │   │
@@ -109,20 +133,27 @@ agile_bot/bots/story_bot/
 
 ---
 
-## Files to Remove (Replaced by LangGraph)
+## Legacy Files — KEEP (Default Workflow Only)
 
-| File | Current Purpose | Replacement |
-|------|-----------------|-------------|
-| `action_state_manager.py` | Tracks current/completed actions | LangGraph checkpoints |
-| `activity_tracker.py` | Logs start/complete timestamps | LangGraph checkpoint history |
-| `behavior_action_state.json` | Workflow state file | LangGraph checkpoint DB |
-| `activity_log.json` | TinyDB activity log | LangGraph checkpoint history |
+| File | Purpose | Used By |
+|------|---------|---------|
+| `action_state_manager.py` | Tracks current/completed actions | Default workflow ONLY |
+| `activity_tracker.py` | Logs start/complete timestamps | Default workflow ONLY |
+| `behavior_action_state.json` | Workflow state file | Default workflow ONLY |
+| `activity_log.json` | TinyDB activity log | Default workflow ONLY |
 
-**Why remove?** LangGraph checkpoints provide:
-- Full state snapshots (not just "action started/completed")
-- Resume capability from any checkpoint
-- Temporal history with metadata
-- Thread-based isolation
+**CRITICAL: LangGraph workflows do NOT touch these files.**
+
+These are **legacy files** for the default workflow. The two systems are completely separate:
+
+| Aspect | Default Workflow (Legacy) | LangGraph Workflows (New) |
+|--------|---------------------------|---------------------------|
+| State tracking | `action_state_manager.py` | LangGraph checkpoints |
+| Activity log | `activity_tracker.py` | LangGraph checkpoint history |
+| State file | `behavior_action_state.json` | `.graph/checkpoints.db` |
+| Audit trail | `activity_log.json` | Checkpoint metadata |
+
+**No sharing, no interaction between the two systems.**
 
 ---
 
@@ -136,60 +167,130 @@ agile_bot/bots/story_bot/
 
 ---
 
-## Current Execution Flow
+## Execution Flows
+
+### Path A: Default Workflow (UNTOUCHED)
 
 ```
-1. CLI: story_bot_cli --behavior discovery --action build
+CLI: story_bot_cli --behavior discovery --action build
 
-2. BaseBotCli.main()
-   → CliCommandRouter.route(args)
-   → CliExecutor.execute_and_output(args, params)
+BaseBotCli.main()
+  → CliCommandRouter.route(args)
+  → CliExecutor.execute_and_output(args, params)
 
-3. Bot.__init__(bot_name, bot_directory, config_path)
-   → Loads bot_config.json
-   → Creates Behaviors collection
-   → Each Behavior loads behavior.json
+Bot → Behavior → Actions → Action.execute(parameters)
+  → Returns instructions dict
 
-4. Behavior.actions → Actions.__init__(behavior)
-   → Reads actions_workflow from behavior.json
-   → ActionFactory.create_action_instance() for each action
-
-5. Action.execute(parameters)
-   → do_execute(parameters) → Returns instructions dict
-
-6. CliExecutor._output_result(result)
-   → Prints JSON + base_instructions for AI to execute
+CliExecutor._output_result(result)
+  → Prints JSON + base_instructions for AI to execute
 ```
+
+**This code path is NOT modified. Legacy files continue to work.**
+
+### Path B: LangGraph Workflow (NEW)
+
+```
+CLI: story_bot_cli --workflow tdd_workflow --mode autonomous
+
+BaseBotCli.main()
+  → Detects --workflow flag
+  → Routes to Bot
+  → Bot routes to LangGraphRunner
+
+LangGraphRunner.run(workflow_name)
+  → Finds workflow in story_bot/orchestration/graphs/
+  → Loads workflow definition (Python code)
+  → Compiles graph with checkpointer
+  → Executes graph
+
+Graph Execution:
+  Node A (ActionNode) → calls action.execute(context)
+    → If autonomous: get_instructions() → AI call → confirm_with_response()
+    → If interactive: get_instructions() → PAUSE → return prompt
+  [checkpoint saved]
+  Node B (ActionNode) → ...
+  [checkpoint saved]
+  Decision Node → routes based on result
+  ...
+  
+Results returned to CLI
+```
+
+**Key:** LangGraph owns its own state. Never touches legacy files.
 
 ---
 
-## New Execution Flow (With LangGraph)
+## Node Execution Model
+
+### Two-Pass Pattern
+
+Every action follows a two-pass pattern:
+
+1. **Instructions Pass** → Action generates instructions/prompts for AI
+2. **Confirmation Pass** → AI has responded, confirm with the response
+
+### Execution Modes
+
+| Mode | Behavior | AI Calls | CLI Round-trip |
+|------|----------|----------|----------------|
+| **Autonomous** | Node calls AI directly, no pause | Internal via API key | None |
+| **Interactive** | Returns prompt, pauses for human/Cursor | Cursor/Human | Yes |
+
+### ActionNode: Single Universal Node Class
+
+**Key insight:** One node class handles ALL behavior/action combinations. Just pass different behavior and action names.
+
+**Architecture:**
+- `get_instructions()` — First pass: get prompt from action
+- `confirm_with_response()` — Second pass: confirm with AI/human response
+- `run_autonomous()` — Calls AI directly, no pause
+- `run_interactive()` — Returns prompt, pauses for human
+- `__call__()` — LangGraph entry point, routes based on mode
+
+**LangGraph only cares about `__call__()`** — internal structure is entirely ours.
+
+### Example: TDD Workflow
 
 ```
-1. CLI: story_bot_cli --behavior discovery --action build
+TEST LOOP (mode=autonomous)
+  test.rules → [AI call] → confirm → next
+  test.build → [AI call] → confirm → next
+  test.validate → [AI call] → confirm → check result
+  [Loops internally until pass or max iterations]
+        ↓
+HUMAN REVIEW (mode=interactive)
+  → Returns prompt, pauses
+  → Human reviews test results
+  → Human runs --continue
+        ↓
+CODE LOOP (mode=autonomous)
+  code.rules → [AI call] → confirm → next
+  code.build → [AI call] → confirm → next
+  code.validate → [AI call] → confirm → check result
+  [Loops internally until pass or max iterations]
+        ↓
+FINAL APPROVAL (mode=interactive)
+  → Returns prompt with options
+  → Human chooses: approve / restart / abort
+```
 
-2. BaseBotCli routes to LangGraphRunner
+### CLI Commands
 
-3. LangGraphRunner:
-   → Loads state from checkpoint (if resuming) or creates fresh state
-   → Builds graph from behavior.json actions_workflow
-   → Executes graph starting at specified action
+```bash
+# Start workflow in autonomous mode
+story_bot_cli --workflow tdd_workflow --mode autonomous
 
-4. Graph execution:
-   Node: clarify → checkpoint saved
-   Node: strategy → checkpoint saved
-   Node: build → checkpoint saved    ← User requested this action
-   Node: validate → checkpoint saved
+# Start in interactive mode (default)
+story_bot_cli --workflow tdd_workflow
 
-5. Each node:
-   → ActionFactory creates Action instance
-   → Action.do_execute(parameters)
-   → Returns instructions for AI
+# Resume after interactive pause
+story_bot_cli --workflow tdd_workflow --continue
 
-6. Checkpoint contains:
-   → Full state after each action
-   → Can resume from any point
-   → History of all actions with timestamps
+# Resume with response/decision
+story_bot_cli --workflow tdd_workflow --continue --decision approve
+
+# Check workflow status
+story_bot_cli --workflow tdd_workflow --status
 ```
 
 ---
@@ -200,21 +301,51 @@ agile_bot/bots/story_bot/
 > Class responsibilities, method signatures, and file organization will be refined through  
 > proper shaping and discovery before any implementation begins.
 
-### New Directory Structure
+### Directory Structure
+
+**BaseBot (Framework — Abstract/Base Components Only):**
 
 ```
 agile_bot/bots/base_bot/src/
-├── orchestration/                  # NEW: LangGraph integration
+├── orchestration/                  # NEW: LangGraph framework support
 │   ├── __init__.py
-│   ├── state_adapter.py            # Wraps story-graph.json and context
-│   ├── graph_builder.py            # Builds graph from behavior.json
-│   ├── runner.py                   # LangGraph execution + checkpointing
-│   └── action_nodes.py             # Wraps Action classes as graph nodes
+│   ├── langgraph_runner.py         # Loads graphs, compiles, executes
+│   └── base_nodes/                 # ABSTRACT/BASE nodes (never instantiated directly)
+│       ├── __init__.py
+│       └── base_action_node.py     # Base class for action nodes
 │
-├── bot/                            # Keep (unchanged)
-├── actions/                        # Keep (simplified - remove tracker/state_manager)
-└── cli/                            # Keep (routes to LangGraphRunner)
+├── bot/                            # UNTOUCHED (default workflow uses this)
+├── actions/                        # UNTOUCHED (including tracker/state_manager for legacy)
+└── cli/                            # MODIFIED: Add --workflow flag routing
 ```
+
+**StoryBot (Concrete Implementation):**
+
+```
+agile_bot/bots/story_bot/
+├── orchestration/                  # StoryBot's LangGraph workflows
+│   ├── __init__.py
+│   │
+│   ├── graphs/                     # Workflow definitions (Python code)
+│   │   ├── __init__.py
+│   │   ├── tdd_workflow.py         # TDD: tests → code → approve
+│   │   └── discovery_flow.py       # Discovery workflow
+│   │
+│   ├── nodes/                      # Simple structure
+│   │   ├── __init__.py
+│   │   ├── action_node.py          # ActionNode - ONE class for ALL behavior.action combos
+│   │   ├── decision_nodes.py       # Routing functions
+│   │   └── approval_nodes.py       # Human approval nodes
+│   │
+│   └── state/                      # StoryBot state schemas
+│       ├── __init__.py
+│       └── story_workflow_state.py # TypedDict for story workflows
+│
+├── behaviors/                      # UNTOUCHED
+└── src/                            # UNTOUCHED
+```
+
+**Key Principle:** BaseBot provides framework, StoryBot provides concrete implementations.
 
 ### Step 1: BaseBotStateAdapter
 
@@ -352,62 +483,68 @@ class BehaviorGraphBuilder:
         return [a["name"] for a in sorted_actions]
 ```
 
-### Step 3: Action Node Wrappers
+### Step 3: ActionNode (Universal Node Class)
 
-Wraps existing Action classes as LangGraph node functions.  
-**Note:** Actions are simplified — no ActivityTracker calls.
+**One class handles ALL behavior/action combinations.** Just instantiate with different behavior and action names.
+
+This is defined in `story_bot/orchestration/nodes/action_node.py`:
 
 ```python
-# base_bot/src/orchestration/action_nodes.py
-
-from typing import Dict, Any, Callable
-from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
-
-def create_node_executors(behavior) -> Dict[str, Callable]:
-    """Create LangGraph node executors from existing Action classes.
+class ActionNode:
+    """Universal node for any behavior/action combination.
     
-    Each node executor:
-    1. Creates Action instance via ActionFactory
-    2. Calls action.do_execute(parameters) directly
-    3. Returns state update for LangGraph
+    Two-pass pattern:
+    - get_instructions(): First pass - generate prompt
+    - confirm_with_response(): Second pass - confirm with AI response
     
-    NOTE: We call do_execute() directly, NOT execute().
-    The execute() method contains ActivityTracker calls which we're removing.
-    LangGraph checkpoints replace activity tracking.
+    Execution modes:
+    - autonomous: Calls AI directly, no CLI round-trip
+    - interactive: Returns prompt, pauses for human
     """
-    factory = ActionFactory(behavior)
     
-    def make_node_executor(action_name: str, action_config: dict):
-        def node_executor(state: Dict[str, Any]) -> Dict[str, Any]:
-            # Create action instance
-            action = factory.create_action_instance(
-                action_name=action_name,
-                action_config=action_config
-            )
-            
-            # Execute action logic directly (skip ActivityTracker)
-            parameters = state.get("parameters", {})
-            result = action.do_execute(parameters)
-            
-            # Return state update
-            return {
-                "current_action": action_name,
-                "completed_actions": [action_name],
-                "instructions": result.get("instructions", {})
-            }
-        
-        return node_executor
+    def __init__(self, bot, behavior_name: str, action_name: str):
+        self.bot = bot
+        behavior = bot.behaviors.find_by_name(behavior_name)
+        self.action = behavior.actions.find_by_name(action_name)
     
-    # Build executors for all actions in workflow
-    actions_workflow = behavior._config.get("actions_workflow", {})
-    actions = actions_workflow.get("actions", [])
+    def get_instructions(self, context: dict) -> str:
+        """First pass: Get instructions from action."""
+        result = self.action.execute(context)
+        return result.get("instructions", "")
     
-    executors = {}
-    for action_config in actions:
-        action_name = action_config["name"]
-        executors[action_name] = make_node_executor(action_name, action_config)
+    def confirm_with_response(self, context: dict, response: str) -> dict:
+        """Second pass: Confirm with AI/human response."""
+        return self.action.execute({**context, "response": response})
     
-    return executors
+    def run_autonomous(self, context: dict, ai_client) -> dict:
+        """Autonomous: call AI directly, no pause."""
+        instructions = self.get_instructions(context)
+        ai_response = ai_client.chat(instructions)
+        return self.confirm_with_response(context, ai_response)
+    
+    def run_interactive(self, context: dict) -> dict:
+        """Interactive: return prompt, pause for human."""
+        instructions = self.get_instructions(context)
+        return {"prompt": instructions, "needs_confirmation": True}
+    
+    def __call__(self, state: dict) -> dict:
+        """LangGraph entry point."""
+        if state.get("mode") == "autonomous":
+            return self.run_autonomous(state["context"], state["ai_client"])
+        else:
+            return self.run_interactive(state["context"])
+```
+
+**Usage in workflow:**
+```python
+# In tdd_workflow.py
+test_build = ActionNode(bot, "tests", "build")
+test_validate = ActionNode(bot, "tests", "validate")
+code_build = ActionNode(bot, "code", "build")
+
+graph.add_node("test_build", test_build)
+graph.add_node("test_validate", test_validate)
+graph.add_node("code_build", code_build)
 ```
 
 ### Step 4: LangGraphRunner
@@ -523,47 +660,19 @@ class LangGraphRunner:
         return compiled.invoke(None, config=config)
 ```
 
-### Step 5: Simplified Action Base Class
+### Note: Action Class UNCHANGED
 
-Remove ActivityTracker and ActionStateManager from the Action class.
+**The existing `Action` class is NOT modified.**
 
-```python
-# Modifications to base_bot/src/actions/action.py
+LangGraph workflows call `action.execute(context)` exactly as the default workflow does.
+The ActionNode handles the two-pass pattern (instructions → confirmation) internally.
 
-class Action:
-    """Simplified Action base class.
-    
-    REMOVED:
-    - ActivityTracker (replaced by LangGraph checkpoints)
-    - ActionStateManager references
-    - track_activity_on_start()
-    - track_activity_on_completion()
-    
-    KEPT:
-    - do_execute() - core action logic
-    - instructions property
-    - behavior/bot_paths references
-    """
-    
-    def __init__(self, behavior, action_config=None, action_name=None):
-        self.behavior = behavior
-        self.action_config = action_config
-        self._action_name = action_name or self._derive_action_name_from_class()
-        self._base_config = self._load_base_config()
-        if action_config:
-            self._apply_action_config()
-        self._initialize_properties()
-    
-    # ... keep existing config loading ...
-    
-    def do_execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute action logic. Subclasses implement this."""
-        raise NotImplementedError("Subclasses must implement do_execute()")
-    
-    # REMOVED: execute() wrapper - LangGraph handles orchestration
-    # REMOVED: track_activity_on_start()
-    # REMOVED: track_activity_on_completion()
-```
+No changes to:
+- `action.py`
+- `activity_tracker.py`
+- `action_state_manager.py`
+
+**These files continue to work for the default workflow.**
 
 ### Step 6: Integration Point (CLI)
 
@@ -608,7 +717,7 @@ def run_with_langgraph(behavior_name: str, action_name: str, params: dict):
 
 ---
 
-## Workspace Structure (After Migration)
+## Workspace Structure (With LangGraph Workflows)
 
 ```
 <workspace>/
@@ -616,84 +725,105 @@ def run_with_langgraph(behavior_name: str, action_name: str, params: dict):
 │   ├── story-graph.json           # Main knowledge graph (unchanged)
 │   └── context/                    # Session context (unchanged)
 │
-└── .graph/
-    └── checkpoints.db              # SQLite - ALL workflow state lives here
+├── behavior_action_state.json     # KEPT - default workflow uses this
+├── activity_log.json              # KEPT - default workflow uses this
+│
+└── .graph/                        # NEW - LangGraph workflows ONLY
+    └── checkpoints.db              # SQLite - LangGraph state lives here
 ```
 
-**Removed:**
-- `behavior_action_state.json`
-- `activity_log.json`
+**Note:** Legacy files are KEPT. LangGraph uses its own separate state in `.graph/`.
 
 ---
 
-## LangGraph Checkpoint Provides Everything
+## LangGraph Checkpoints (Custom Workflows Only)
 
-### What Was in behavior_action_state.json
+**Note:** This applies ONLY to custom LangGraph workflows. Default workflow continues to use legacy files.
 
-```json
-{
-  "current_behavior": "story_bot.discovery",
-  "current_action": "story_bot.discovery.build",
-  "completed_actions": [...]
-}
-```
+### Checkpoint State
 
-**Now in checkpoint:**
 ```python
-runner.get_current_state("story_bot.discovery")
-# Returns: {"current_action": "build", "completed_actions": ["clarify", "strategy"], ...}
+runner.get_current_state("tdd_workflow_thread")
+# Returns: {
+#   "mode": "autonomous",
+#   "current_phase": "test_loop",
+#   "completed_actions": ["test.rules", "test.build"],
+#   "loop_count": 2,
+#   ...
+# }
 ```
 
-### What Was in activity_log.json
+### Checkpoint History
 
-```json
-{"action_state": "story_bot.discovery.clarify", "status": "completed", "timestamp": "..."}
-```
-
-**Now in checkpoint history:**
 ```python
-runner.list_history("story_bot.discovery")
+runner.list_history("tdd_workflow_thread")
 # Returns: [
-#   {"step": 1, "current_action": "clarify", "timestamp": "..."},
-#   {"step": 2, "current_action": "strategy", "timestamp": "..."},
-#   {"step": 3, "current_action": "build", "timestamp": "..."},
+#   {"step": 1, "current_action": "test.rules", "timestamp": "..."},
+#   {"step": 2, "current_action": "test.build", "timestamp": "..."},
+#   ...
 # ]
 ```
 
----
+### Resume from Checkpoint
 
-## Files to Delete
-
-| File | Reason |
-|------|--------|
-| `src/actions/activity_tracker.py` | Replaced by `runner.list_history()` |
-| `src/actions/action_state_manager.py` | Replaced by LangGraph checkpoints |
-| References in `action.py` to tracker | Simplify to just `do_execute()` |
-| References in `actions.py` to state manager | LangGraph handles state |
+```python
+# Resume after interactive pause
+runner.resume_from(graph, "tdd_workflow_thread", checkpoint_id)
+```
 
 ---
 
-## Architecture Decisions (Preliminary)
+## Files Status
 
-> These are initial decisions based on exploration of the codebase and LangGraph capabilities.  
-> Each decision should be validated through proper discovery and may change.
+**DO NOT DELETE — Default Workflow Still Uses:**
 
-1. **LangGraph handles ALL workflow state** — no separate state files
-2. **Remove ActivityTracker entirely** — checkpoint history is better
-3. **Remove ActionStateManager entirely** — checkpoint state is better
-4. **Remove behavior_action_state.json** — redundant
-5. **Remove activity_log.json** — redundant
-6. **Action.do_execute() is the core** — no tracking wrapper needed
-7. **Single source of truth** — `.graph/checkpoints.db`
+| File | Status | Used By |
+|------|--------|---------|
+| `src/actions/activity_tracker.py` | KEEP | Default workflow |
+| `src/actions/action_state_manager.py` | KEEP | Default workflow |
+| `behavior_action_state.json` | KEEP | Default workflow |
+| `activity_log.json` | KEEP | Default workflow |
+
+**NEW FILES — For LangGraph Workflows:**
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `langgraph_runner.py` | `base_bot/src/orchestration/` | Load, compile, run graphs |
+| `base_action_node.py` | `base_bot/src/orchestration/base_nodes/` | Abstract base for action nodes |
+| `action_node.py` | `story_bot/orchestration/nodes/` | Concrete ActionNode class |
+| `decision_nodes.py` | `story_bot/orchestration/nodes/` | Routing functions |
+| `approval_nodes.py` | `story_bot/orchestration/nodes/` | Human approval nodes |
+| `tdd_workflow.py` | `story_bot/orchestration/graphs/` | TDD workflow definition |
+| `.graph/checkpoints.db` | `<workspace>/` | LangGraph checkpoint storage |
+
+---
+
+## Architecture Decisions
+
+1. **Two completely separate systems (no interaction):**
+   - Default workflow → Legacy files (activity_tracker, action_state_manager, JSON files)
+   - LangGraph workflows → LangGraph checkpoints (`.graph/checkpoints.db`)
+
+2. **Legacy files are ONLY for default workflow** — LangGraph does NOT touch them
+
+3. **LangGraph workflows use ONLY LangGraph checkpoints** — No legacy file access
+
+4. **Single ActionNode class** — Handles ALL behavior/action combinations
+
+5. **Two-pass pattern** — `get_instructions()` → `confirm_with_response()`
+
+6. **Mode determines AI execution:**
+   - Autonomous: Node calls AI directly via API
+   - Interactive: Returns prompt, pauses for human
+
+7. **Graphs defined in Python code** — Not JSON config files (LangGraph standard)
 
 ### Open Questions (To Address in Discovery)
 
-- How does LangGraph handle human-in-the-loop vs autonomous execution?
-- What's the right granularity for checkpoints — per action or more fine-grained?
-- How do we handle parallel behavior runs (multiple stories in progress)?
-- Should the graph be built once at startup or dynamically per invocation?
-- How do we migrate existing state files during transition?
-- What's the rollback strategy if LangGraph integration fails?
+- How do we handle AI API errors in autonomous mode?
+- Should action.execute() support async for parallel nodes?
+- How is action result transformed into LangGraph state update?
+- What's the right granularity for checkpoints?
 
 ---
 
@@ -711,9 +841,10 @@ runner.list_history("story_bot.discovery")
 
 ## Result
 
-- **Single source of truth** — `.graph/checkpoints.db` replaces 4 separate state mechanisms
-- **Simpler Action class** — just `do_execute()`, no tracking boilerplate
-- **Better history** — full state snapshots, not just "started/completed"
-- **Resume capability** — can resume from any checkpoint
-- **StoryBot unchanged** — remains purely declarative
-- **CLI experience unchanged** — hidden orchestration
+- **Zero breaking changes** — Default workflow completely untouched
+- **Optional complexity** — LangGraph only when needed via `--workflow` flag
+- **Powerful workflows** — Conditionals, loops, parallelism, human-in-the-loop
+- **Single ActionNode class** — No proliferation of node classes per action
+- **Two-pass pattern** — Clean separation of instruction generation and confirmation
+- **Mode flexibility** — Same workflow can run autonomous or interactive
+- **Framework/Implementation separation** — BaseBot = runner + base nodes, StoryBot = concrete graphs + nodes

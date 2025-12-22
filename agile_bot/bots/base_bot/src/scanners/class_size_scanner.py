@@ -7,6 +7,7 @@ import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .complexity_metrics import ComplexityMetrics
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +23,11 @@ class ClassSizeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                violation = self._check_class_size(node, file_path, rule_obj, content)
-                if violation:
-                    violations.append(violation)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            violation = self._check_class_size(cls.node, file_path, rule_obj, content)
+            if violation:
+                violations.append(violation)
         
         return violations
     

@@ -6,6 +6,7 @@ import ast
 import re
 import logging
 from .test_scanner import TestScanner
+from .story_map import StoryMap, SubEpic
 from .violation import Violation
 
 logger = logging.getLogger(__name__)
@@ -33,22 +34,13 @@ class TestFileNamingScanner(TestScanner):
         return violations
     
     def _extract_sub_epic_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+        story_map = StoryMap(knowledge_graph)
         sub_epic_names = []
-        epics = knowledge_graph.get('epics', [])
-        for epic in epics:
-            self._extract_sub_epic_names_recursive(epic.get('sub_epics', []), sub_epic_names)
+        for epic in story_map.epics:
+            for node in story_map.walk(epic):
+                if isinstance(node, SubEpic):
+                    sub_epic_names.append(node.name)
         return sub_epic_names
-    
-    def _extract_sub_epic_names_recursive(self, sub_epics: List[Dict[str, Any]], result: List[str]) -> None:
-        for sub_epic in sub_epics:
-            sub_epic_name = sub_epic.get('name', '')
-            if sub_epic_name:
-                # Store original name (will be normalized during comparison)
-                result.append(sub_epic_name)
-            # Recursively process nested sub-epics
-            nested_sub_epics = sub_epic.get('sub_epics', [])
-            if nested_sub_epics:
-                self._extract_sub_epic_names_recursive(nested_sub_epics, result)
     
     def _to_snake_case(self, name: str) -> str:
         # Replace HTML entity &amp; with 'and' first
@@ -96,6 +88,7 @@ class TestFileNamingScanner(TestScanner):
             suggestion_list = ", ".join([f"test_{s}.py" for s in suggestions_normalized[:5]])
             suggestion_text = f" Suggested names: {suggestion_list}"
         
+        # No code snippet for file-level violations (no specific line)
         return Violation(
             rule=rule_obj,
             violation_message=f'Test file name "{file_name}" does not match any sub-epic name and test methods do not span multiple sub-epics - file should be named test_<sub_epic_name>.py.{suggestion_text}',

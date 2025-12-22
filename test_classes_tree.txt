@@ -1,0 +1,130 @@
+(E) Build Agile Bots
+    test_build_agile_bots.py (helper file)
+    
+    (E) Generate MCP Tools
+        test_generate_mcp_tools.py
+
+            [MISSING test_class] TestRestartMCPServerToLoadCodeChanges -> Story exists "Restart MCP Server To Load Code Changes"
+    
+    (E) Generate CLI
+        test_generate_cli.py
+            [MISSING test_class] TestGenerateBOTCLIcode -> Story exists "Generate BOT CLI code"
+
+            [MISSING STORY] TestGenerateHelp
+            [MISSING STORY] TestGenerateCursorAwarenessFiles
+            [INFRA] TestGenerateHelpParametersFromActionContextClasses
+
+(E) Invoke Bot
+    test_invoke_bot.py (helper file)
+    
+    (E) Init Project
+        test_init_project.py
+            [MISSING STORY] TestBootstrapWorkspace
+    
+    (E) Invoke MCP
+        test_invoke_mcp.py
+
+            [MISSING STORY] TestTrackActivityForWorkspace
+    
+    (E) Invoke CLI
+        test_invoke_cli.py
+            [INFRA] TestDetectTriggerWordsThroughExtension
+            [INFRA] TestGetTriggerPriority
+            [INFRA] TestMatchTextAgainstTriggers
+            [INFRA] TestCliAcceptsScopeWithPythonDictSyntax
+            [INFRA] TestCliNormalizesPythonDictToJson
+            [INFRA] TestCliBuildsParametersFromArguments
+            [INFRA] TestCliHandlesScopeInRealUsage
+            [INFRA] TestCliPreservesArrayValuesInScope
+            [INFRA] TestScopeBasedParameterHandling
+            [INFRA] TestValidationParameterVariations
+            [INFRA] TestCliTypeSafeActionContext
+            [INFRA] TestCliContextBuilderParsesTypedContext
+            [INFRA] TestCliParserGeneratorCreatesActionParsers
+
+(E) Execute Behavior Actions
+    test_execute_behavior_actions.py (helper file)
+    
+    (E) Gather Context
+            [OK] TestProceedToDecidePlanning -> "Proceed To Decide Planning"
+            [OK] TestInjectGuardrailsAsPartOfClarifyRequirements -> "Inject Guardrails As Part Of Clarify Requirements"
+            [OK] TestStoreClarificationData -> "Store Clarification Data"
+            [INFRA] TestLoadBaseActionConfig
+            [INFRA] TestAccessActions
+            [INFRA] TestInitializeAction
+            [INFRA] TestLoadGuardrails
+    
+    (E) Decide Planning Criteria Action
+        test_decide_strategy_criteria_action.py
+            [NAME MISMATCH] TestTrackActivityForStrategyAction -> Story has "Track Activity for Planning Action" with TestTrackActivityForPlanningAction
+            [OK] TestProceedToBuildKnowledge -> "Proceed To Build Knowledge"
+            [INFRA] TestInjectStrategyIntoInstructions
+            [INFRA] TestStoreStrategyData
+    
+    (E) Build Knowledge
+        test_build_knowledge.py
+
+            [MISSING STORY] TestCreateBuildScope
+            [MISSING STORY] TestFilterKnowledgeGraph
+    
+    (E) Render Output
+        test_render_output.py
+
+            [INFRA] TestInjectRenderInstructionsAndConfigs
+            [INFRA] TestGetRenderInstructions
+            [INFRA] TestMergeBaseAndRenderInstructions
+            [INFRA] TestRenderOutputUsingSynchronizers
+    
+    (E) Validate Knowledge & Content Against Rules
+        test_validate_knowledge_and_content_against_rules.py
+
+            [MISSING test_class] TestDiscoversScanners -> Story exists "Discovers Scanners"
+            [MISSING test_class] TestRunScannersAgainstKnowledgeGraph -> Story exists "Run Scanners against Knowledge Graph"
+
+            [MISSING test_class] TestInjectValidationRulesForValidateRulesAction -> Story exists "Inject Validation Rules for Validate Rules Action"
+            [INFRA] TestHandleValidateRulesExceptions
+            [INFRA] TestRunAllScanners
+            [INFRA] TestRunScannersAgainstTestCode
+            [INFRA] TestRunScannersAgainstCode
+            [INFRA] TestLoadRulesCollection
+            [INFRA] TestFindRuleByName
+            [INFRA] TestIterateRules
+            [INFRA] TestLoadRuleFromFile
+            [INFRA] TestLoadScannerForRule
+            [INFRA] TestGetRuleProperties
+            [INFRA] TestCreateValidationScope
+            [INFRA] TestLoadScannerClass
+            [INFRA] TestLoadScannerClasses
+            [INFRA] TestPerformIncrementalValidation
+            [INFRA] TestScopeBasedParameterHandling
+            [INFRA] TestValidationWithAllParameterCombinations
+            [INFRA] TestInjectRulesIntoAIChatMessage
+            [INFRA] TestExampleStory (multiple examples)
+            [INFRA] TestAnotherStory
+    
+    (E) Perform Behavior Action
+        test_perform_behavior_action.py
+            [OK] TestInjectNextBehaviorReminder -> "Inject Next Behavior Reminder"
+            [OK] TestCloseCurrentAction -> "Close Current Action"
+            [OK] TestInvokeBehaviorActionsInWorkflowOrder -> "Invoke Behavior Actions in Workflow Order"
+            [NAME MISMATCH] TestInvokeBehaviorInActionOrder -> Story has "Invoke Behavior in Workflow Order" with TestInvokeBehaviorInWorkflowOrder
+            [OK] TestExecuteBehavior -> "Execute Behavior"
+            [MISSING STORY] TestInsertContextIntoInstructions
+            [MISSING STORY] TestInjectStatusUpdateBreadcrumbsIntoInstructions
+            [INFRA] TestLoadBotConfiguration
+            [INFRA] TestLoadBehaviorConfiguration
+            [INFRA] TestLoadBotBehaviors
+            [INFRA] TestLoadActions
+            [INFRA] TestLoadBaseActionConfiguration
+            [INFRA] TestAccessBotPaths
+            [INFRA] TestGetBaseInstructions
+            [INFRA] TestLoadBehaviorConfig
+            [INFRA] TestManageBehaviorsCollection
+            [INFRA] TestResolveBotPaths
+            [INFRA] TestFilterActionBasedOnScope
+
+Infrastructure/Helper Files
+    test_helpers.py
+        [OK] TestFindBehaviorFolder -> "Find Behavior Folder"
+
+

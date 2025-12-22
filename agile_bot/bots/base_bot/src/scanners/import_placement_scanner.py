@@ -187,9 +187,9 @@ class ImportPlacementScanner(CodeScanner):
         rule_obj: Any
     ) -> List[Dict[str, Any]]:
         violations = []
+        content = '\n'.join(lines)
         
         try:
-            content = '\n'.join(lines)
             tree = ast.parse(content, filename=str(file_path))
             import_nodes = self._find_import_nodes(tree)
             import_line_numbers = {node.lineno for node in import_nodes}
@@ -236,13 +236,14 @@ class ImportPlacementScanner(CodeScanner):
                     continue
                 
                 # Found import after import section - violation!
-                violation = Violation(
-                    rule=rule_obj,
-                    violation_message=f'Import statement found at line {line_number_1_indexed} after non-import code. Move all imports to the top of the file.',
-                    location=f'{file_path}:{line_number_1_indexed}',
+                violation = self._create_violation_with_snippet(
+                    content=content,
+                    file_path=file_path,
                     line_number=line_number_1_indexed,
+                    message=f'Import statement found after non-import code. Move all imports to the top of the file.',
+                    rule_obj=rule_obj,
                     severity='error'
-                ).to_dict()
+                )
                 violations.append(violation)
             
             line_num += 1
