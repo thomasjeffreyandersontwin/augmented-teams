@@ -101,7 +101,6 @@ def restart_mcp_server(workspace_root: Path, bot_name: str, bot_location: str) -
         return result
 
 def _find_and_terminate_processes(bot_name: str, result: dict) -> List[int]:
-    """Find and terminate MCP server processes."""
     logger.info(f'Finding {bot_name} MCP server processes...')
     pids = find_mcp_server_processes(bot_name)
     if not pids:
@@ -114,7 +113,6 @@ def _find_and_terminate_processes(bot_name: str, result: dict) -> List[int]:
     return pids
 
 def _clear_cache_and_set_status(workspace_root: Path, pids: List[int], result: dict) -> None:
-    """Clear Python cache and set final status."""
     logger.info('Clearing Python bytecode cache...')
     cache_root = workspace_root / 'agile_bot'
     cleared = clear_python_cache(cache_root)
@@ -124,7 +122,6 @@ def _clear_cache_and_set_status(workspace_root: Path, pids: List[int], result: d
     result['message'] = 'Processes terminated and cache cleared. MCP server will restart automatically.'
 
 def _handle_restart_error(e: Exception, result: dict) -> None:
-    """Handle errors during restart."""
     logger.error(f'Error during restart: {e}', exc_info=True)
     result['error'] = str(e)
     result['status'] = 'failed'

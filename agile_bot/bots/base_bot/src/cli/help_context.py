@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class BehaviorHelpContext:
-    """Context object for rendering behavior help sections."""
     bot_name: str
     behavior_name: str
     behavior_description: str
@@ -12,12 +11,12 @@ class BehaviorHelpContext:
 
 @dataclass
 class ActionHelpContext:
-    """Context object for rendering action help sections."""
     bot_name: str
     action_name: str
     action_description: str
     parameters: List[str]
     parameter_descriptions: Dict[str, str]
+
 
 
 

@@ -12,10 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class ClassSizeScanner(CodeScanner):
-    """Validates classes are small and free of dead code.
-    
-    Keep classes under 200-300 lines.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -28,14 +24,13 @@ class ClassSizeScanner(CodeScanner):
         
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                violation = self._check_class_size(node, file_path, rule_obj)
+                violation = self._check_class_size(node, file_path, rule_obj, content)
                 if violation:
                     violations.append(violation)
         
         return violations
     
-    def _check_class_size(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if class exceeds size limit using comprehensive metrics."""
+    def _check_class_size(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any, content: str) -> Optional[Dict[str, Any]]:
         violations = []
         
         # 1. Line count (existing check)
@@ -46,13 +41,16 @@ class ClassSizeScanner(CodeScanner):
         
         if class_size > 300:
             line_number = class_node.lineno if hasattr(class_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
+            violations.append(self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=f'Class "{class_node.name}" is {class_size} lines - should be under 300 lines (extract related methods into separate classes)',
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict())
+                severity='warning',
+                content=content,
+                ast_node=class_node,
+                max_lines=10
+            ))
         
         # 2. LCOM (Lack of Cohesion of Methods) - measures single responsibility via shared attributes
         # DISABLED: LCOM calculation commented out - not effective enough
@@ -87,6 +85,5 @@ class ClassSizeScanner(CodeScanner):
         #         severity='info'
         #     ).to_dict())
         
-        # Return first violation (most critical)
         return violations[0] if violations else None
 

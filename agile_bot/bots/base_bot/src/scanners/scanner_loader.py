@@ -24,18 +24,15 @@ class ScannerLoader:
         try:
             module_path, class_name = scanner_module_path.rsplit('.', 1)
             
-            # Extract scanner name from class name (handle camelCase)
             # Convert VerbNounScanner -> verb_noun
             import re
             scanner_name = re.sub(r'(?<!^)(?=[A-Z])', '_', class_name).lower().replace('_scanner', '').replace('scanner', '')
             
-            # Build paths to try - new scanners location at src/scanners
             paths_to_try = [
                 module_path,  # Exact path from config
                 f'agile_bot.bots.base_bot.src.scanners.{scanner_name}_scanner'
             ]
             
-            # Add bot-specific path if not base_bot
             if self.bot_name and self.bot_name != 'base_bot':
                 paths_to_try.append(f'agile_bot.bots.{self.bot_name}.src.scanners.{scanner_name}_scanner')
             

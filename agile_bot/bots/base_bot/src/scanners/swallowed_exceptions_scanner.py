@@ -8,10 +8,6 @@ from .violation import Violation
 
 
 class SwallowedExceptionsScanner(CodeScanner):
-    """Detects swallowed exceptions (empty catch blocks).
-    
-    CRITICAL: Never swallow exceptions silently.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -22,42 +18,41 @@ class SwallowedExceptionsScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for swallowed exceptions
-        violations.extend(self._check_swallowed_exceptions(tree, file_path, rule_obj))
+        violations.extend(self._check_swallowed_exceptions(tree, file_path, rule_obj, content))
         
         return violations
     
-    def _check_swallowed_exceptions(self, tree: ast.AST, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for swallowed exceptions (empty except blocks)."""
+    def _check_swallowed_exceptions(self, tree: ast.AST, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
         violations = []
         
         for node in ast.walk(tree):
             if isinstance(node, ast.Try):
                 for handler in node.handlers:
-                    # Check if handler body is empty or just 'pass'
                     handler_body = handler.body
                     if len(handler_body) == 0:
-                        # Empty except block
                         line_number = handler.lineno if hasattr(handler, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
+                        violation = self._create_violation_with_snippet(
+                            rule_obj=rule_obj,
                             violation_message=f'Empty except block at line {line_number} - exceptions must be logged or rethrown, never swallowed',
-                            location=str(file_path),
+                            file_path=file_path,
                             line_number=line_number,
-                            severity='error'
-                        ).to_dict()
+                            severity='error',
+                            content=content,
+                            ast_node=handler
+                        )
                         violations.append(violation)
                     elif len(handler_body) == 1:
-                        # Check if it's just 'pass'
                         if isinstance(handler_body[0], ast.Pass):
                             line_number = handler.lineno if hasattr(handler, 'lineno') else None
-                            violation = Violation(
-                                rule=rule_obj,
+                            violation = self._create_violation_with_snippet(
+                                rule_obj=rule_obj,
                                 violation_message=f'Except block only contains pass at line {line_number} - exceptions must be logged or rethrown, never swallowed',
-                                location=str(file_path),
+                                file_path=file_path,
                                 line_number=line_number,
-                                severity='error'
-                            ).to_dict()
+                                severity='error',
+                                content=content,
+                                ast_node=handler
+                            )
                             violations.append(violation)
         
         return violations

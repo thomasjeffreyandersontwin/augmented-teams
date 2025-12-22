@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class DependencyChainingScanner(StoryScanner):
-    """Validates that domain concepts chain dependencies properly with constructor injection."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         return []
@@ -16,7 +15,6 @@ class DependencyChainingScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check if "Instantiated with" is present (constructor injection)
         has_instantiation = False
         instantiation_collaborators = []
         
@@ -30,7 +28,6 @@ class DependencyChainingScanner(StoryScanner):
                 instantiation_collaborators = [c.strip() for c in collaborators]
                 break
         
-        # Check if methods use collaborators that weren't in instantiation
         # This is a simplified check - full implementation would track dependency chain
         if has_instantiation:
             for i, responsibility_data in enumerate(node.responsibilities):
@@ -40,11 +37,9 @@ class DependencyChainingScanner(StoryScanner):
                 
                 collaborators = responsibility_data.get('collaborators', [])
                 
-                # Check if method uses collaborators that should come through owning objects
                 for collab in collaborators:
                     collab = collab.strip()
                     if collab and collab not in instantiation_collaborators:
-                        # Check if it's a sub-collaborator that should be accessed through owner
                         if self._might_be_sub_collaborator(collab, instantiation_collaborators):
                             violations.append(
                                 Violation(
@@ -59,7 +54,6 @@ class DependencyChainingScanner(StoryScanner):
         return violations
     
     def _might_be_sub_collaborator(self, collaborator: str, instantiation_collaborators: List[str]) -> bool:
-        """Heuristic to check if collaborator might be a sub-collaborator."""
         # Simple heuristic: if collaborator is more specific than instantiation collaborators
         # This is a simplified check
         return len(collaborator.split()) > 1

@@ -8,7 +8,6 @@ import re
 
 
 class EnumerateStoriesScanner(StoryScanner):
-    """Validates all stories are explicitly enumerated (no "~X stories" notation)."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -16,7 +15,6 @@ class EnumerateStoriesScanner(StoryScanner):
         if isinstance(node, Epic):
             epic_data = node.data
             
-            # Check for "~X stories" notation
             description = epic_data.get('description', '')
             if '~' in description and re.search(r'~\d+\s+stories?', description, re.IGNORECASE):
                 location = node.map_location('description')
@@ -28,7 +26,6 @@ class EnumerateStoriesScanner(StoryScanner):
                 ).to_dict()
                 violations.append(violation)
             
-            # Check sub-epics
             sub_epics = epic_data.get('sub_epics', [])
             for sub_epic_idx, sub_epic_data in enumerate(sub_epics):
                 violation = self._check_sub_epic_enumeration(sub_epic_data, node, sub_epic_idx, rule_obj)
@@ -38,10 +35,8 @@ class EnumerateStoriesScanner(StoryScanner):
         return violations
     
     def _check_sub_epic_enumeration(self, sub_epic_data: Dict[str, Any], epic_node: StoryNode, sub_epic_idx: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if sub-epic has explicit story enumeration."""
         sub_epic_name = sub_epic_data.get('name', '')
         
-        # Check for story_groups
         story_groups = sub_epic_data.get('story_groups', [])
         if not story_groups or len(story_groups) == 0:
             location = f"{epic_node.map_location()}.sub_epics[{sub_epic_idx}]"

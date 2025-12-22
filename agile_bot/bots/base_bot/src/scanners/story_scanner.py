@@ -19,7 +19,6 @@ class StoryScanner(Scanner):
             raise ValueError("rule_obj parameter is required for StoryScanner")
         
         violations = []
-        # Extract story_graph from knowledge_graph if nested
         story_graph_data = knowledge_graph.get('story_graph', knowledge_graph)
         story_map = StoryMap(story_graph_data)
         
@@ -60,14 +59,12 @@ class StoryScanner(Scanner):
         sub_epic_path: Optional[List[int]],
         rule_obj: Any
     ) -> List[Dict[str, Any]]:
-        """Scan domain concepts for violations."""
         violations = []
         
         for concept_idx, concept_data in enumerate(domain_concepts):
             concept_name = concept_data.get('name', '')
             responsibilities = concept_data.get('responsibilities', [])
             
-            # Create a domain concept node for scanning
             domain_concept_node = DomainConceptNode(
                 concept_data,
                 epic_idx,
@@ -86,7 +83,6 @@ class StoryScanner(Scanner):
         pass
     
     def scan_domain_concept(self, node: 'DomainConceptNode', rule_obj: Any) -> List[Dict[str, Any]]:
-        """Scan a domain concept node. Override in subclasses to validate domain concepts."""
         # Default implementation calls scan_story_node for compatibility
         return self.scan_story_node(node, rule_obj)
 

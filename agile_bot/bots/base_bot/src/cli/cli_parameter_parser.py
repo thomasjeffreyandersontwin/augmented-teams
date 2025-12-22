@@ -7,31 +7,22 @@ class CliParameterParser:
 
     @staticmethod
     def parse_arguments(description: str='Bot CLI') -> Tuple[argparse.Namespace, List[str]]:
-        """Parse CLI arguments, returning base args and remaining action-specific args.
-        
-        Returns:
-            Tuple of (parsed args with behavior/action, remaining CLI args for action)
-        """
         parser = CliParameterParser._create_argument_parser(description)
         args, unknown = parser.parse_known_args()
         unknown = CliParameterParser._relocate_file_path_from_action(args, unknown)
         
-        # Build the list of remaining args for action-specific parsing
         remaining_args = CliParameterParser._build_remaining_args(args, unknown)
         return (args, remaining_args)
     
     @staticmethod
     def _build_remaining_args(args: argparse.Namespace, unknown: List[str]) -> List[str]:
-        """Build list of CLI args to pass to action's context parser."""
         remaining = list(unknown)
         
-        # Add context positional args
         context_args = getattr(args, 'context', []) or []
         for ctx_arg in context_args:
             if ctx_arg not in remaining:
                 remaining.append(ctx_arg)
         
-        # Add explicit flags that actions need
         if args.skip_cross_file:
             remaining.append('--skip-cross-file')
         if args.all_files:
@@ -68,10 +59,8 @@ class CliParameterParser:
     def _build_params_from_args(args: argparse.Namespace, unrecognized_flags: list) -> Dict[str, Any]:
         params = {}
         
-        # Process unrecognized flags from argparse (things it couldn't match)
         CliParameterParser._process_unrecognized_flags(unrecognized_flags, params)
         
-        # Process positional context arguments separately
         context_args = getattr(args, 'context', []) or []
         CliParameterParser._process_context_args(context_args, params)
         
@@ -85,7 +74,6 @@ class CliParameterParser:
         if args.scope:
             params['scope'] = args.scope
         
-        # Parse JSON strings in parameters
         params = CliParameterParser._parse_json_parameters(params)
         return params
 
@@ -112,10 +100,8 @@ class CliParameterParser:
 
     @staticmethod
     def _parse_key_value_arg(arg: str, arg_list: list, i: int, params: Dict) -> int:
-        """Parse key=value argument. Returns number of arguments consumed."""
         key, value = arg.split('=', 1)
         key = key.lstrip('--')
-        # Check if value looks like start of JSON that might be split
         value_stripped = value.strip()
         if (value_stripped.startswith('{') or value_stripped.startswith('[')) and not CliParameterParser._is_complete_json(value_stripped):
             # Try to reconstruct JSON by collecting more arguments
@@ -140,11 +126,9 @@ class CliParameterParser:
 
     @staticmethod
     def _is_complete_json(value: str) -> bool:
-        """Check if a string looks like complete JSON by checking bracket/brace balance."""
         value = value.strip()
         if not (value.startswith('{') or value.startswith('[')):
             return False
-        # Simple balance check
         open_braces = value.count('{')
         close_braces = value.count('}')
         open_brackets = value.count('[')
@@ -175,7 +159,6 @@ class CliParameterParser:
 
     @staticmethod
     def _process_unrecognized_flags(unrecognized_flags: list, params: Dict) -> None:
-        """Process flags that argparse didn't recognize. Error on unknown --flags."""
         i = 0
         while i < len(unrecognized_flags):
             arg = unrecognized_flags[i]
@@ -195,7 +178,6 @@ class CliParameterParser:
 
     @staticmethod
     def _process_context_args(context_args: list, params: Dict) -> None:
-        """Process positional context arguments (file paths, key=value, text)."""
         i = 0
         while i < len(context_args):
             arg = context_args[i]
@@ -212,37 +194,41 @@ class CliParameterParser:
 
     @staticmethod
     def _parse_json_parameters(params: Dict[str, Any]) -> Dict[str, Any]:
-        """Parse JSON strings in parameters. If a parameter value is a string that looks like JSON, parse it."""
         parsed_params = {}
         for key, value in params.items():
-            if isinstance(value, str):
-                value = value.strip()
-                # Check if it looks like JSON (starts with { or [)
-                if value.startswith('{') or value.startswith('['):
-                    try:
-                        parsed_params[key] = json.loads(value)
-                    except (json.JSONDecodeError, ValueError):
-                        # Try to fix common issues (unquoted keys/values from PowerShell)
-                        fixed_value = CliParameterParser._try_fix_json(value)
-                        if fixed_value != value:
-                            try:
-                                parsed_params[key] = json.loads(fixed_value)
-                            except (json.JSONDecodeError, ValueError):
-                                # If still can't parse, keep as string
-                                parsed_params[key] = value
-                        else:
-                            # If fixing didn't change it, keep as string
-                            parsed_params[key] = value
-                else:
-                    parsed_params[key] = value
-            else:
-                parsed_params[key] = value
+            parsed_params[key] = CliParameterParser._parse_single_parameter(value)
         return parsed_params
+    
+    @staticmethod
+    def _parse_single_parameter(value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        
+        value = value.strip()
+        
+        if not (value.startswith('{') or value.startswith('[')):
+            return value
+        
+        return CliParameterParser._parse_json_string(value)
+    
+    @staticmethod
+    def _parse_json_string(value: str) -> Any:
+        parsed = CliParameterParser._try_parse_json(value)
+        if parsed is not None:
+            return parsed
+        
+        fixed_value = CliParameterParser._try_fix_json(value)
+        parsed = CliParameterParser._try_parse_json(fixed_value)
+        
+        return parsed if parsed is not None else value
+    
+    @staticmethod
+    def _try_parse_json(value: str) -> Any:
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return None
 
     @staticmethod
     def _try_fix_json(value: str) -> str:
-        """Try to fix common JSON issues like unquoted keys/values and Python dict syntax."""
-        # Convert Python dict syntax to JSON (single quotes to double quotes)
-        # This handles: {'key': 'value'} -> {"key": "value"}
-        # For most Python dict strings, this is sufficient
         return value.replace("'", '"')

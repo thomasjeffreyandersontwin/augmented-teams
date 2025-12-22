@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class TechnicalAbstractionCodeScanner(CodeScanner):
-    """Validates that code stays at domain level, avoiding unnecessary technical abstractions."""
     
     TECHNICAL_ABSTRACTION_PATTERNS = ['Saver', 'Loader', 'Storage']
     
@@ -31,7 +30,6 @@ class TechnicalAbstractionCodeScanner(CodeScanner):
         return violations
     
     def _check_technical_abstraction(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if class separates technical abstraction."""
         class_name = class_node.name
         
         for pattern in self.TECHNICAL_ABSTRACTION_PATTERNS:

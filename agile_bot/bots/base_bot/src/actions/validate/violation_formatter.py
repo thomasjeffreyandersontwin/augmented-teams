@@ -6,7 +6,6 @@ from typing import Dict, Any, List, Optional, Callable
 logger = logging.getLogger(__name__)
 
 class ViolationFormatter:
-    """Formats violations for validation reports."""
 
     def __init__(self, format_violation_line_fn: Callable, extract_test_info_fn: Callable, format_violation_message_fn: Callable):
         self.format_violation_line = format_violation_line_fn
@@ -14,7 +13,6 @@ class ViolationFormatter:
         self.format_violation_message = format_violation_message_fn
 
     def build_violations(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
-        """Build violations section."""
         lines = ['## Violations Found', '']
         file_by_file_violations_by_rule, cross_file_violations_by_rule = self.organize_violations(validation_rules)
         total_file_by_file = sum((len(v) for v in file_by_file_violations_by_rule.values()))
@@ -35,7 +33,6 @@ class ViolationFormatter:
         return lines
 
     def organize_violations(self, validation_rules: List[Dict[str, Any]]) -> tuple:
-        """Organize violations by rule and type."""
         file_by_file_violations_by_rule = {}
         cross_file_violations_by_rule = {}
         for rule_dict in validation_rules:
@@ -49,7 +46,6 @@ class ViolationFormatter:
         return (file_by_file_violations_by_rule, cross_file_violations_by_rule)
 
     def add_structured_violations(self, scanner_results: Dict, rule_name: str, file_by_file_violations_by_rule: Dict, cross_file_violations_by_rule: Dict):
-        """Add structured violations from scanner results."""
         file_by_file_violations = scanner_results.get('file_by_file', {}).get('violations', [])
         cross_file_violations = scanner_results.get('cross_file', {}).get('violations', [])
         if file_by_file_violations:
@@ -58,13 +54,11 @@ class ViolationFormatter:
             cross_file_violations_by_rule[rule_name] = cross_file_violations
 
     def add_legacy_violations(self, scanner_results: Dict, rule_name: str, file_by_file_violations_by_rule: Dict):
-        """Add legacy violations from scanner results."""
         violations = scanner_results.get('violations', [])
         if violations:
             file_by_file_violations_by_rule[rule_name] = violations
 
     def build_violations_by_type(self, violations_by_rule: Dict[str, List[Dict[str, Any]]], title: str, description: str) -> List[str]:
-        """Build violations section by type."""
         lines = [f'### {title}', '', description, '']
         for rule_name, violations in violations_by_rule.items():
             violations_anchor_id = f"{rule_name.replace('_', '-').lower()}-violations"
@@ -77,7 +71,6 @@ class ViolationFormatter:
         return lines
 
     def format_multiline_message_parts(self, remaining_parts: List[str]) -> List[str]:
-        """Format multiline message parts with proper indentation."""
         result = []
         in_code_block = False
         for part in remaining_parts:
@@ -88,7 +81,6 @@ class ViolationFormatter:
         return result
 
     def _format_message_part(self, part: str, in_code_block: bool) -> str:
-        """Format a single message part."""
         if part.strip().startswith('```') or in_code_block:
             return f'    {part}'
         if part.strip() == '':

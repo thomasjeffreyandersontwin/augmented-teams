@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class ResourceOrientedDesignScanner(StoryScanner):
-    """Validates that domain concepts use resource-oriented design instead of manager/doer/loader patterns."""
     
     MANAGER_PATTERNS = ['manager', 'loader', 'handler', 'doer', 'processor', 'executor']
     
@@ -19,7 +18,6 @@ class ResourceOrientedDesignScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check if node name indicates manager pattern
         node_name_lower = node.name.lower()
         for pattern in self.MANAGER_PATTERNS:
             if pattern in node_name_lower and node_name_lower.endswith(pattern):

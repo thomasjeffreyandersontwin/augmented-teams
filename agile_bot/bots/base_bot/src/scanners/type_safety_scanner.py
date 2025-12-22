@@ -17,21 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class TypeSafetyScanner(CodeScanner):
-    """Detects type-unsafe patterns like Dict[str, Any] parameters and .get() abuse.
-    
-    Patterns detected:
-    - Method parameters typed as Dict[str, Any]
-    - Return types of Dict[str, Any] when structure is known
-    - parameters.get() patterns scattered in code
-    - **kwargs when parameter set is known
-    - List[Any] type hints
-    """
     
     # Methods that are allowed to use Dict[str, Any] (infrastructure, not business logic)
     ALLOWED_DICT_ANY_METHODS = {
         # JSON serialization/deserialization
         'to_dict', 'from_dict', 'to_json', 'from_json', 'serialize', 'deserialize',
-        # Generic utility methods
         'read_json_file', 'write_json_file', 'load_json', 'save_json',
         # Test helpers
         'create_test_data', 'mock_response',
@@ -70,12 +60,10 @@ class TypeSafetyScanner(CodeScanner):
         return violations
     
     def _check_function_type_safety(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
-        """Check a function for type-unsafe patterns."""
         violations = []
         
         func_name = func_node.name
         
-        # Skip allowed methods
         if func_name in self.ALLOWED_DICT_ANY_METHODS:
             return violations
         
@@ -85,22 +73,18 @@ class TypeSafetyScanner(CodeScanner):
             if func_name not in ('do_execute', '_execute', '_process', '_handle'):
                 return violations
         
-        # Check parameter type hints for Dict[str, Any]
         param_violations = self._check_parameter_types(func_node, file_path, rule_obj, content)
         violations.extend(param_violations)
         
-        # Check return type for Dict[str, Any]
         return_violations = self._check_return_type(func_node, file_path, rule_obj, content)
         violations.extend(return_violations)
         
-        # Check for parameters.get() pattern inside function body
         get_violations = self._check_parameters_get_pattern(func_node, file_path, rule_obj, content)
         violations.extend(get_violations)
         
         return violations
     
     def _check_parameter_types(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
-        """Check function parameters for Dict[str, Any] type hints."""
         violations = []
         
         for arg in func_node.args.args:
@@ -137,7 +121,6 @@ class TypeSafetyScanner(CodeScanner):
         return violations
     
     def _check_return_type(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
-        """Check function return type for Dict[str, Any]."""
         violations = []
         
         returns = func_node.returns
@@ -166,7 +149,6 @@ class TypeSafetyScanner(CodeScanner):
         return violations
     
     def _check_parameters_get_pattern(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
-        """Check for parameters.get() pattern inside function."""
         violations = []
         found_lines = set()  # Track lines to avoid duplicate violations
         
@@ -174,7 +156,6 @@ class TypeSafetyScanner(CodeScanner):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
                     if node.func.attr == 'get':
-                        # Check if it's on a variable named 'parameters' or 'params'
                         if isinstance(node.func.value, ast.Name):
                             var_name = node.func.value.id
                             if var_name in ('parameters', 'params', 'kwargs'):
@@ -198,13 +179,9 @@ class TypeSafetyScanner(CodeScanner):
         return violations[:3]
     
     def _is_dict_any_annotation(self, annotation: ast.AST) -> bool:
-        """Check if annotation is Dict[str, Any] or similar."""
-        # Handle subscript like Dict[str, Any]
         if isinstance(annotation, ast.Subscript):
-            # Check if it's Dict
             if isinstance(annotation.value, ast.Name):
                 if annotation.value.id == 'Dict':
-                    # Check if second type arg is Any
                     if isinstance(annotation.slice, ast.Tuple):
                         if len(annotation.slice.elts) >= 2:
                             second_arg = annotation.slice.elts[1]
@@ -219,7 +196,6 @@ class TypeSafetyScanner(CodeScanner):
                             if isinstance(second_arg, ast.Name) and second_arg.id == 'Any':
                                 return True
         
-        # Handle Attribute like typing.Dict
         if isinstance(annotation, ast.Subscript):
             if isinstance(annotation.value, ast.Attribute):
                 if annotation.value.attr == 'Dict':
@@ -232,7 +208,6 @@ class TypeSafetyScanner(CodeScanner):
         return False
     
     def _get_violation_message(self, rule_obj: Any, message_key: str, line_number: int, **format_args) -> str:
-        """Get violation message from rule file or use default."""
         if rule_obj and hasattr(rule_obj, 'rule_content'):
             violation_messages = rule_obj.rule_content.get('violation_messages', {})
             if message_key in violation_messages:
@@ -248,6 +223,7 @@ class TypeSafetyScanner(CodeScanner):
             'list_any_type': f"Line {line_number}: Found List[Any] type hint. Specify the element type."
         }
         return defaults.get(message_key, f'Line {line_number}: Type safety violation detected.')
+
 
 
 

@@ -11,10 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class StoryGraphMatchScanner(TestScanner):
-    """Validates test structure matches story graph exactly.
-    
-    This is similar to ClassBasedOrganizationScanner but more comprehensive.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -25,16 +21,13 @@ class StoryGraphMatchScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Extract story names from knowledge graph
         story_names = self._extract_story_names(knowledge_graph)
         
-        # Check test classes match stories
         violations.extend(self._check_test_classes_match_stories(tree, story_names, file_path, rule_obj))
         
         return violations
     
     def _extract_story_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
-        """Extract story names from knowledge graph."""
         story_names = []
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
@@ -50,13 +43,11 @@ class StoryGraphMatchScanner(TestScanner):
         return story_names
     
     def _check_test_classes_match_stories(self, tree: ast.AST, story_names: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if test classes match story names."""
         violations = []
         
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 if node.name.startswith('Test'):
-                    # Remove 'Test' prefix and check if matches a story
                     story_name_from_class = node.name[4:]  # Remove 'Test'
                     
                     # Convert to story name format for comparison

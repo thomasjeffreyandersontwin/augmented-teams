@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class CalculationTimingCodeScanner(CodeScanner):
-    """Validates that code hides calculation timing."""
     
     TIMING_EXPOSURE_PATTERNS = [
         r'^calculate_',
@@ -39,7 +38,6 @@ class CalculationTimingCodeScanner(CodeScanner):
         return violations
     
     def _check_timing_exposure(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function exposes calculation timing."""
         func_name_lower = func_node.name.lower()
         
         for pattern in self.TIMING_EXPOSURE_PATTERNS:

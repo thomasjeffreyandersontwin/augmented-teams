@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class ExactVariableNamesScanner(TestScanner):
-    """Validates variable names match scenario/AC/domain model concepts exactly."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -20,19 +19,16 @@ class ExactVariableNamesScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Extract domain concepts from knowledge graph
         domain_concepts = self._extract_domain_concepts(knowledge_graph)
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 if node.name.startswith('test_'):
-                    # Check variable names in test
                     violations.extend(self._check_variable_names(node, domain_concepts, file_path, rule_obj))
         
         return violations
     
     def _extract_domain_concepts(self, knowledge_graph: Dict[str, Any]) -> List[str]:
-        """Extract domain concept names from knowledge graph."""
         concepts = []
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
@@ -45,7 +41,6 @@ class ExactVariableNamesScanner(TestScanner):
         return concepts
     
     def _check_variable_names(self, test_node: ast.FunctionDef, domain_concepts: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if variable names match domain concepts."""
         violations = []
         
         # Find variable assignments in test
@@ -55,7 +50,6 @@ class ExactVariableNamesScanner(TestScanner):
                     if isinstance(target, ast.Name):
                         var_name = target.id.lower()
                         
-                        # Check if variable name is generic (not matching domain concepts)
                         if var_name in ['data', 'result', 'value', 'item', 'obj', 'thing']:
                             line_number = target.lineno if hasattr(target, 'lineno') else None
                             violation = Violation(

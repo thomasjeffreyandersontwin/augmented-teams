@@ -12,12 +12,6 @@ class CliExecutor:
         self.cli = cli_instance
 
     def execute_and_output(self, args: argparse.Namespace, cli_args: List[str]):
-        """Execute command with typed context parsing.
-        
-        Args:
-            args: Parsed namespace with behavior/action
-            cli_args: Remaining CLI arguments to parse as action parameters
-        """
         self._log_execution_info(args, cli_args)
         try:
             result = self._execute_command(args, cli_args)
@@ -46,7 +40,6 @@ class CliExecutor:
         if action_name == 'get_working_dir':
             working_dir = self.cli.bot.bot_paths.workspace_directory
             return {'working_dir': str(working_dir), 'message': f'Working directory from WORKING_AREA: {working_dir}'}
-        # Parse working_dir from CLI args
         new_path = None
         for arg in cli_args:
             if arg.startswith('--working-dir='):
@@ -63,48 +56,43 @@ class CliExecutor:
         return {'working_dir': str(updated), 'message': f'Working directory updated to {updated}'}
 
     def _output_result(self, result: Dict[str, Any]):
-        # Extract and remove base_instructions from result before printing JSON
         data = result.get('data', {})
         instructions = data.get('instructions', {})
         base_instructions = []
         if isinstance(instructions, dict):
             base_instructions = instructions.pop('base_instructions', [])
         
-        # Print the JSON result (without base_instructions to keep it smaller)
         result_json = json.dumps(result, indent=2)
         print(result_json)
         sys.stdout.flush()
         
-        # Print base_instructions at the END so they're always visible
         if isinstance(base_instructions, list) and len(base_instructions) > 0:
-            # Write instructions to log file in background (non-blocking)
-            try:
-                import threading
-                def write_instructions_log():
-                    try:
-                        log_file = Path(self.cli.bot.bot_paths.workspace_directory) / 'docs' / 'stories' / 'build-instructions.txt'
-                        log_file.parent.mkdir(parents=True, exist_ok=True)
-                        with log_file.open('w', encoding='utf-8') as f:
-                            f.write('\n'.join(base_instructions))
-                    except Exception:
-                        pass  # Don't block if log write fails
-                threading.Thread(target=write_instructions_log, daemon=True).start()
-            except Exception:
-                pass  # Don't block if threading fails
-            
-            # Print instructions immediately so AI can execute them
-            print()  # blank line separator
-            for instruction in base_instructions:
-                try:
-                    print(instruction)
-                except UnicodeEncodeError:
-                    safe_instruction = instruction.encode('ascii', errors='replace').decode('ascii')
-                    print(safe_instruction)
-            sys.stdout.flush()
-        # #region agent log
+            self._write_instructions_log_async(base_instructions)
+            self._print_base_instructions(base_instructions)
+        
         Path(r'c:\dev\augmented-teams\.cursor\debug.log').open('a').write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'E','location':'cli_executor.py:87','message':'Output complete - NO FILE GENERATION CODE HERE','data':{'instructions_printed':len(base_instructions)},'timestamp':__import__('time').time()*1000})+'\n')
-        # #endregion
-
-    def _print_instructions(self, result: Dict[str, Any]):
-        # Deprecated - now handled in _output_result
-        pass
+    
+    def _write_instructions_log_async(self, base_instructions: list) -> None:
+        try:
+            import threading
+            def write_instructions_log():
+                try:
+                    log_file = Path(self.cli.bot.bot_paths.workspace_directory) / 'docs' / 'stories' / 'build-instructions.txt'
+                    log_file.parent.mkdir(parents=True, exist_ok=True)
+                    with log_file.open('w', encoding='utf-8') as f:
+                        f.write('\n'.join(base_instructions))
+                except Exception as e:
+                    logger.debug(f"Failed to write instructions log: {e}")
+            threading.Thread(target=write_instructions_log, daemon=True).start()
+        except Exception as e:
+            logger.debug(f"Failed to start logging thread: {e}")
+    
+    def _print_base_instructions(self, base_instructions: list) -> None:
+        print()
+        for instruction in base_instructions:
+            try:
+                print(instruction)
+            except UnicodeEncodeError:
+                safe_instruction = instruction.encode('ascii', errors='replace').decode('ascii')
+                print(safe_instruction)
+        sys.stdout.flush()

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="4770" dy="440" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4770" dy="629" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -378,7 +378,7 @@
                     <mxGeometry x="-1478.9999999999995" y="1557.8299999999995" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="257" value="Scan Code with AST based Parsing&amp;nbsp;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1477.9999999999995" y="1448.9999999999998" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1481.4999999999995" y="1464.2399999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="259" value="Produce violation report in real-time" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1724.9999999999995" y="951.9999999999998" width="50" height="50" as="geometry"/>
@@ -441,7 +441,7 @@
                     <mxGeometry x="-1726" y="1064.4400000000005" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="294" value="Refactor Scanners" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1479" y="1731.6899999999998" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1475.75" y="1669.9999999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="296" value="ai vs&amp;nbsp; best prractices tagging" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-3210" y="1500" width="50" height="50" as="geometry"/>

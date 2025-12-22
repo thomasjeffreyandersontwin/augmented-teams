@@ -7,10 +7,6 @@ from .violation import Violation
 
 
 class VerticalSliceScanner(StoryScanner):
-    """Validates increments span multiple epics (vertical slices).
-    
-    Detects single-epic increments (horizontal layer violation).
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -27,19 +23,16 @@ class VerticalSliceScanner(StoryScanner):
         code_files: Optional[List['Path']] = None,
         on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        """Scan increments for vertical slice violations."""
         violations = []
         
         if not rule_obj:
             raise ValueError("rule_obj parameter is required")
         
-        # Check increments
         increments = knowledge_graph.get('increments', [])
         
         for increment_idx, increment in enumerate(increments):
             increment_epics = increment.get('epics', [])
             
-            # Check if increment spans only one epic (horizontal layer violation)
             if len(increment_epics) == 1:
                 location = f"increments[{increment_idx}]"
                 violation = Violation(

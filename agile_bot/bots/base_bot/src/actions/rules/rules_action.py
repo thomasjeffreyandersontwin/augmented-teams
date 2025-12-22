@@ -20,11 +20,9 @@ class RulesAction(Action):
         return {'instructions': instructions.to_dict()}
     
     def _get_rule_names(self, rules: Rules) -> list:
-        """Extract list of rule names from Rules object."""
         return [rule.name for rule in rules]
     
     def _add_rules_list_to_display(self, instructions, rule_names: list) -> None:
-        """Add numbered list of rules to display content."""
         instructions.add_display("")
         instructions.add_display(f"## Rules Available ({len(rule_names)} total)")
         instructions.add_display("")

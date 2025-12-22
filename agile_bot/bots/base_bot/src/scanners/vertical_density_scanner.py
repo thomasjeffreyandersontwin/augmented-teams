@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class VerticalDensityScanner(CodeScanner):
-    """Validates vertical density (related code close together, variables near usage)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -28,20 +27,22 @@ class VerticalDensityScanner(CodeScanner):
         return violations
     
     def _check_variable_declaration_distance(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if variables are declared far from usage."""
         # This is a simplified check - could be enhanced
         # For now, check if function is very long (suggests poor vertical density)
         if hasattr(func_node, 'end_lineno') and func_node.end_lineno:
             func_size = func_node.end_lineno - func_node.lineno + 1
             if func_size > 50:
                 line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-                return Violation(
-                    rule=rule_obj,
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
                     violation_message=f'Function "{func_node.name}" is {func_size} lines - consider improving vertical density by declaring variables near usage',
-                    location=str(file_path),
+                    file_path=file_path,
                     line_number=line_number,
-                    severity='info'
-                ).to_dict()
+                    severity='info',
+                    content=content,
+                    ast_node=func_node,
+                    max_lines=10
+                )
         
         return None
 

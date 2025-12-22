@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class ArrangeActAssertScanner(TestScanner):
-    """Validates tests follow Arrange-Act-Assert structure."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -32,7 +31,6 @@ class ArrangeActAssertScanner(TestScanner):
         return violations
     
     def _check_aaa_structure(self, test_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if test follows AAA structure using AST-based detection."""
         violations = []
         
         # 1. AST-based section detection
@@ -62,11 +60,9 @@ class ArrangeActAssertScanner(TestScanner):
                 severity='error'
             ).to_dict())
         
-        # Return first violation
         return violations[0] if violations else None
     
     def _detect_aaa_sections_ast(self, test_node: ast.FunctionDef, content: str) -> Dict[str, List[ast.stmt]]:
-        """Detect AAA sections using AST structure."""
         sections = {'arrange': [], 'act': [], 'assert': []}
         test_lines = content.split('\n')
         
@@ -79,7 +75,6 @@ class ArrangeActAssertScanner(TestScanner):
                 if isinstance(stmt, ast.Expr) and isinstance(stmt.value, (ast.Constant, ast.Str)):
                     continue
             
-            # Check for section comments
             if hasattr(stmt, 'lineno'):
                 line_num = stmt.lineno - 1
                 if line_num < len(test_lines):
@@ -103,19 +98,16 @@ class ArrangeActAssertScanner(TestScanner):
         return sections
     
     def _classify_statement(self, stmt: ast.stmt) -> Optional[str]:
-        """Classify statement as arrange, act, or assert based on AST."""
         # Assertions are always "assert"
         if isinstance(stmt, ast.Assert):
             return 'assert'
         
-        # Check for assert calls
         for node in ast.walk(stmt):
             if isinstance(node, ast.Call):
                 func_name = self._get_call_name(node)
                 if func_name and ('assert' in func_name.lower() or 'verify' in func_name.lower()):
                     return 'assert'
         
-        # Check for given_/when_/then_ helper calls
         for node in ast.walk(stmt):
             if isinstance(node, ast.Call):
                 func_name = self._get_call_name(node)
@@ -138,7 +130,6 @@ class ArrangeActAssertScanner(TestScanner):
         return None
     
     def _get_call_name(self, call_node: ast.Call) -> Optional[str]:
-        """Extract function name from call node."""
         if isinstance(call_node.func, ast.Name):
             return call_node.func.id
         elif isinstance(call_node.func, ast.Attribute):
@@ -147,7 +138,6 @@ class ArrangeActAssertScanner(TestScanner):
     
     def _validate_aaa_structure(self, sections: Dict[str, List[ast.stmt]], test_node: ast.FunctionDef, 
                                 file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Validate that all three sections exist."""
         has_arrange = len(sections['arrange']) > 0
         has_act = len(sections['act']) > 0
         has_assert = len(sections['assert']) > 0
@@ -162,7 +152,6 @@ class ArrangeActAssertScanner(TestScanner):
         has_when_comment = any('# When' in line or '# Act' in line for line in test_body_lines)
         has_then_comment = any('# Then' in line or '# Assert' in line for line in test_body_lines)
         
-        # Check for helper method names
         has_given_method = False
         has_when_method = False
         has_then_method = False
@@ -196,8 +185,6 @@ class ArrangeActAssertScanner(TestScanner):
     
     def _validate_aaa_order(self, sections: Dict[str, List[ast.stmt]], test_node: ast.FunctionDef,
                            file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Validate that sections appear in correct order (arrange -> act -> assert)."""
-        # Get line numbers for each section
         arrange_lines = [stmt.lineno for stmt in sections['arrange'] if hasattr(stmt, 'lineno')]
         act_lines = [stmt.lineno for stmt in sections['act'] if hasattr(stmt, 'lineno')]
         assert_lines = [stmt.lineno for stmt in sections['assert'] if hasattr(stmt, 'lineno')]
@@ -210,7 +197,6 @@ class ArrangeActAssertScanner(TestScanner):
         max_act = max(act_lines) if act_lines else 0
         min_assert = min(assert_lines) if assert_lines else float('inf')
         
-        # Check order violations
         if max_arrange > min_act:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
             return Violation(
@@ -234,7 +220,6 @@ class ArrangeActAssertScanner(TestScanner):
         return None
     
     def _has_actual_code(self, test_node: ast.FunctionDef) -> bool:
-        """Check if test has actual executable code."""
         if not test_node.body:
             return False
         

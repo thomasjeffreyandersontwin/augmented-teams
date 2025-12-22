@@ -20,20 +20,36 @@ class ActionScope:
         
         if scope_type == 'all':
             self._scope_config['all'] = True
-        elif scope_type == 'story':
+            return
+        
+        if scope_type == 'story':
             self._scope_config['story_names'] = scope_val if isinstance(scope_val, list) else [scope_val]
-        elif scope_type == 'epic':
+            return
+        
+        if scope_type == 'epic':
             self._scope_config['epic_names'] = scope_val if isinstance(scope_val, list) else [scope_val]
-        elif scope_type == 'increment':
-            if scope_val and isinstance(scope_val, list) and len(scope_val) > 0:
-                if isinstance(scope_val[0], int):
-                    self._scope_config['increment_priorities'] = scope_val
-                else:
-                    self._scope_config['increment_names'] = scope_val
-            elif isinstance(scope_val, int):
-                self._scope_config['increment_priorities'] = [scope_val]
-            elif isinstance(scope_val, str):
-                self._scope_config['increment_names'] = [scope_val]
+            return
+        
+        if scope_type == 'increment':
+            self._handle_increment_scope(scope_val)
+
+    def _handle_increment_scope(self, scope_val: Any) -> None:
+        if not scope_val:
+            return
+        
+        if isinstance(scope_val, int):
+            self._scope_config['increment_priorities'] = [scope_val]
+            return
+        
+        if isinstance(scope_val, str):
+            self._scope_config['increment_names'] = [scope_val]
+            return
+        
+        if isinstance(scope_val, list) and len(scope_val) > 0:
+            if isinstance(scope_val[0], int):
+                self._scope_config['increment_priorities'] = scope_val
+            else:
+                self._scope_config['increment_names'] = scope_val
 
     def _build_scope(self):
         if 'scope' in self._parameters:

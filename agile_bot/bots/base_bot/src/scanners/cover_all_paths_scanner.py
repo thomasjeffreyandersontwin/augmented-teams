@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class CoverAllPathsScanner(TestScanner):
-    """Validates all behavior paths are tested."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -25,7 +24,6 @@ class CoverAllPathsScanner(TestScanner):
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                 test_methods.append(node)
         
-        # Check if test methods have actual code (not just pass/TODO)
         for test_method in test_methods:
             has_code = False
             for stmt in test_method.body:
@@ -35,7 +33,6 @@ class CoverAllPathsScanner(TestScanner):
                     # Skip docstrings
                     continue
                 else:
-                    # Check for actual executable code
                     for node in ast.walk(stmt):
                         if isinstance(node, (ast.Call, ast.Assign, ast.Assert, ast.Return, ast.Raise)):
                             has_code = True

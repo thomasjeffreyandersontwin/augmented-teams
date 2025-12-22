@@ -40,7 +40,6 @@ class ValidationReportFormatter:
         return result
 
     def _format_message_part(self, part: str, in_code_block: bool) -> str:
-        """Format a single message part."""
         if part.strip().startswith('```') or in_code_block:
             return f'    {part}'
         if part.strip() == '':

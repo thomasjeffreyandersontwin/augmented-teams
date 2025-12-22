@@ -14,7 +14,6 @@ class BuildScope(ActionScope):
     
     @classmethod
     def from_context(cls, context: 'ScopeActionContext', bot_paths: Optional[BotPaths] = None) -> 'BuildScope':
-        """Create BuildScope from typed ScopeActionContext."""
         from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig
         
         # Convert typed context to parameters dict for now

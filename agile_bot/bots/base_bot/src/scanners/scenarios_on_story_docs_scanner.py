@@ -7,19 +7,6 @@ from .violation import Violation
 
 
 def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
-    """Extract story names based on scope configuration.
-    
-    Scope can be defined in multiple ways:
-    1. _validation_scope.story_names - explicit list of story names
-    2. _validation_scope.increment_priorities - list of increment priorities (e.g., [1, 2])
-    3. _validation_scope.epic_names - list of epic names (e.g., ["Epic A", "Epic B"])
-    4. _validation_scope.all - validate all stories (no filtering)
-    
-    Multiple scope types can be combined (union of all matches).
-    
-    Returns a set of story names that are in scope for validation.
-    If scope is 'all' or not specified, returns None (meaning validate all).
-    """
     scope_config = knowledge_graph.get('_validation_scope', {})
     
     # If 'all' is True, validate everything
@@ -36,7 +23,6 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
         elif isinstance(story_names_list, str):
             story_names.add(story_names_list)
     
-    # Multiple increment priorities
     if 'increment_priorities' in scope_config:
         priorities = scope_config['increment_priorities']
         if isinstance(priorities, list):
@@ -48,7 +34,6 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
             increment_stories = _get_increment_story_names(knowledge_graph, priorities)
             story_names.update(increment_stories)
     
-    # Multiple epic names
     if 'epic_names' in scope_config:
         epic_names_list = scope_config['epic_names']
         if isinstance(epic_names_list, list):
@@ -77,14 +62,12 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
 
 
 def _get_increment_story_names(knowledge_graph: Dict[str, Any], priority: int) -> Set[str]:
-    """Extract all story names from increment with specified priority."""
     story_names = set()
     increments = knowledge_graph.get('increments', [])
     
     # Find increment with matching priority
     for increment in increments:
         inc_priority = increment.get('priority', 999)
-        # Handle both int and string priorities
         if isinstance(inc_priority, str):
             priority_map = {'NOW': 1, 'LATER': 2, 'SOON': 1, 'NEXT': 2}
             inc_priority = priority_map.get(inc_priority.upper(), 999)
@@ -98,7 +81,6 @@ def _get_increment_story_names(knowledge_graph: Dict[str, Any], priority: int) -
 
 
 def _get_epic_story_names(knowledge_graph: Dict[str, Any], epic_name: str) -> Set[str]:
-    """Extract all story names from epic with specified name."""
     story_names = set()
     epics = knowledge_graph.get('epics', [])
     
@@ -113,29 +95,23 @@ def _get_epic_story_names(knowledge_graph: Dict[str, Any], epic_name: str) -> Se
 
 
 def _extract_story_names_from_increment(increment_data: Dict[str, Any], story_names: Set[str]) -> None:
-    """Recursively extract story names from increment structure."""
-    # Extract stories directly in increment
     for story in increment_data.get('stories', []):
         if isinstance(story, dict) and 'name' in story:
             story_names.add(story['name'])
         elif isinstance(story, str):
             story_names.add(story)
     
-    # Extract stories from epics
     for epic in increment_data.get('epics', []):
         _extract_story_names_from_epic(epic, story_names)
 
 
 def _extract_story_names_from_epic(epic_data: Dict[str, Any], story_names: Set[str]) -> None:
-    """Recursively extract story names from epic/sub_epic structure."""
-    # Extract stories directly in epic
     for story in epic_data.get('stories', []):
         if isinstance(story, dict) and 'name' in story:
             story_names.add(story['name'])
         elif isinstance(story, str):
             story_names.add(story)
     
-    # Extract stories from story_groups (new format)
     for story_group in epic_data.get('story_groups', []):
         for story in story_group.get('stories', []):
             if isinstance(story, dict) and 'name' in story:
@@ -143,22 +119,11 @@ def _extract_story_names_from_epic(epic_data: Dict[str, Any], story_names: Set[s
             elif isinstance(story, str):
                 story_names.add(story)
     
-    # Extract stories from sub_epics (recursive)
     for sub_epic in epic_data.get('sub_epics', []):
         _extract_story_names_from_epic(sub_epic, story_names)
 
 
 class ScenariosOnStoryDocsScanner(StoryScanner):
-    """Validates scenarios are in story-graph.json (scenarios or scenario_outlines fields).
-    
-    Only validates stories in scope. Scope is determined by _validation_scope in knowledge_graph:
-    - story_names: explicit list of story names to validate
-    - increment_priorities: list of increment priorities (e.g., [1, 2]) - validates stories in those increments
-    - epic_names: list of epic names (e.g., ["Epic A", "Epic B"]) - validates stories in those epics
-    - all: validate all stories (if scope is 'all' or not specified)
-    
-    Multiple scope types can be combined (union of all matches).
-    """
     
     def __init__(self):
         super().__init__()
@@ -172,7 +137,6 @@ class ScenariosOnStoryDocsScanner(StoryScanner):
         code_files: Optional[List['Path']] = None,
         on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        """Override scan to determine scope."""
         # Determine in-scope story names
         self._in_scope_story_names = _get_story_names_from_scope(knowledge_graph)
         
@@ -193,7 +157,6 @@ class ScenariosOnStoryDocsScanner(StoryScanner):
             scenarios = story_data.get('scenarios', [])
             scenario_outlines = story_data.get('scenario_outlines', [])
             
-            # Check if story has scenarios OR scenario_outlines in JSON
             # Story is valid if it has EITHER scenarios OR scenario_outlines (not requiring both)
             has_scenarios = scenarios and len(scenarios) > 0
             has_scenario_outlines = scenario_outlines and len(scenario_outlines) > 0

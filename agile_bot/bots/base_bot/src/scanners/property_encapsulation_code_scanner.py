@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class PropertyEncapsulationCodeScanner(CodeScanner):
-    """Validates that code encapsulates state and behavior through properties."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -28,19 +27,15 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
         return violations
     
     def _check_encapsulation(self, class_node: ast.ClassDef, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if class follows property encapsulation."""
         violations = []
         class_source = ast.get_source_segment(content, class_node) or ''
         
-        # Check for public fields (no _ prefix) that should be private
         for node in ast.walk(class_node):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         field_name = target.id
-                        # Check if it's a public field (no _ prefix) assigned in __init__
                         if not field_name.startswith('_') and not field_name.startswith('__'):
-                            # Check if it's in __init__
                             parent = self._get_parent_function(node)
                             if parent and isinstance(parent, ast.FunctionDef) and parent.name == '__init__':
                                 violations.append(
@@ -53,10 +48,8 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
                                     ).to_dict()
                                 )
         
-        # Check for methods that return mutable references
         for node in ast.walk(class_node):
             if isinstance(node, ast.FunctionDef) and not node.name.startswith('_'):
-                # Check if method returns self.attribute directly (mutable reference)
                 for stmt in ast.walk(node):
                     if isinstance(stmt, ast.Return) and stmt.value:
                         if isinstance(stmt.value, ast.Attribute):
@@ -70,12 +63,10 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
                                 ).to_dict()
                             )
         
-        # Check for calculate/compute methods that should be properties
         for node in ast.walk(class_node):
             if isinstance(node, ast.FunctionDef):
                 method_name_lower = node.name.lower()
                 if method_name_lower.startswith(('calculate_', 'compute_', 'derive_')):
-                    # Check if it takes no self parameters (besides self)
                     if len(node.args.args) <= 1:  # Only self
                         violations.append(
                             Violation(
@@ -90,7 +81,6 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
         return violations
     
     def _get_parent_function(self, node: ast.AST) -> Optional[ast.FunctionDef]:
-        """Get the parent function of a node."""
         for parent in ast.walk(node):
             if isinstance(parent, ast.FunctionDef):
                 for child in ast.walk(parent):

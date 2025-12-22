@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Optional
 
 class ParameterInfoBuilder:
-    """Builds parameter information for command help generation."""
 
     def __init__(self, bot_name: str, bot_directory: Path, description_extractor):
         self.bot_name = bot_name
@@ -11,7 +10,6 @@ class ParameterInfoBuilder:
         self.description_extractor = description_extractor
 
     def build_param_info(self, cmd_name: str, params: list, cmd_content: str) -> tuple:
-        """Build parameter placeholders and details from parameter numbers."""
         param_placeholders = []
         param_details = []
         for param_num in params:
@@ -22,7 +20,6 @@ class ParameterInfoBuilder:
         return (param_placeholders, param_details)
 
     def add_param_detail(self, param_num: str, cmd_name: str, placeholder: str, param_desc: str, param_details: list):
-        """Add parameter detail line to the details list."""
         handlers = {
             '1': lambda: self._add_param_1_detail(placeholder, param_details),
             '2': lambda: self.add_param_2_details(cmd_name, param_details),
@@ -36,11 +33,9 @@ class ParameterInfoBuilder:
         handler()
 
     def _add_param_1_detail(self, placeholder: str, param_details: list):
-        """Add detail for parameter 1 (action parameter)."""
         param_details.append(f'action:   {placeholder}')
 
     def _add_param_3_detail(self, cmd_name: str, param_details: list):
-        """Add detail for parameter 3 (exclude patterns for code commands)."""
         if 'code' in cmd_name.lower():
             param_details.append('exclude:  File patterns to exclude (--exclude flag added automatically)')
         else:
@@ -48,7 +43,6 @@ class ParameterInfoBuilder:
             param_details.append('param3:   Parameter 3')
 
     def _add_param_4_detail(self, cmd_name: str, param_details: list):
-        """Add detail for parameter 4 (additional exclude patterns for code commands)."""
         if 'code' in cmd_name.lower():
             param_details.append('exclude:  Additional exclude patterns (continues from previous)')
         else:
@@ -56,11 +50,9 @@ class ParameterInfoBuilder:
             param_details.append('param4:   Parameter 4')
 
     def _add_default_param_detail(self, placeholder: str, param_desc: str, param_details: list):
-        """Add default parameter detail."""
         param_details.append(f'{placeholder}:   {param_desc}')
 
     def add_param_2_details(self, cmd_name: str, param_details: list):
-        """Add details for parameter 2 (context parameter)."""
         if 'code' in cmd_name.lower():
             param_details.append("context:  Optional context or file path (e.g., 'src')")
             param_details.append('           Additional options:')
@@ -70,7 +62,6 @@ class ParameterInfoBuilder:
             param_details.append('context:  Optional context or file path')
 
     def infer_parameter_description(self, cmd_name: str, param_num: str, cmd_content: str) -> str:
-        """Infer parameter description from command name and parameter number."""
         if 'continue' in cmd_name or 'help' in cmd_name:
             return 'No parameters'
         if param_num == '1':
@@ -84,7 +75,6 @@ class ParameterInfoBuilder:
         return f'Parameter {param_num}'
 
     def extract_placeholder_name(self, cmd_name: str, param_desc: str, param_num: str) -> str:
-        """Extract placeholder name for a parameter."""
         if param_num == '2':
             return 'context'
         if param_num != '1':
@@ -96,7 +86,6 @@ class ParameterInfoBuilder:
         return action_names if action_names else 'action'
 
     def extract_word_from_description(self, param_desc: str, param_num: str) -> str:
-        """Extract a meaningful word from parameter description for placeholder."""
         skip_words = {'optional', 'action', 'name', 'or', 'file', 'path'}
         words = param_desc.lower().split()
         for word in words:

@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class ObservableBehaviorScanner(TestScanner):
-    """Detects testing of internal calls/framework logic instead of observable behavior."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -20,13 +19,11 @@ class ObservableBehaviorScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Check for internal testing patterns
         violations.extend(self._check_internal_testing(content, file_path, rule_obj))
         
         return violations
     
     def _check_internal_testing(self, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for testing of internal calls/framework logic."""
         violations = []
         lines = content.split('\n')
         

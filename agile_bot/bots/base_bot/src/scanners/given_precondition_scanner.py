@@ -8,7 +8,6 @@ import re
 
 
 class GivenPreconditionScanner(StoryScanner):
-    """Validates Given describes preconditions, not functionality."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -20,7 +19,6 @@ class GivenPreconditionScanner(StoryScanner):
             for scenario_idx, scenario in enumerate(scenarios):
                 scenario_steps = self._get_scenario_steps(scenario)
                 
-                # Check each Given step
                 for step_idx, step in enumerate(scenario_steps):
                     if step.startswith('Given') or step.startswith('And'):
                         violation = self._check_given_is_functionality(step, node, scenario_idx, step_idx, rule_obj)
@@ -30,7 +28,6 @@ class GivenPreconditionScanner(StoryScanner):
         return violations
     
     def _get_scenario_steps(self, scenario: Dict[str, Any]) -> List[str]:
-        """Extract scenario steps from scenario dict."""
         steps = []
         if isinstance(scenario, dict):
             if 'steps' in scenario:
@@ -42,7 +39,6 @@ class GivenPreconditionScanner(StoryScanner):
         return steps
     
     def _check_given_is_functionality(self, step: str, node: StoryNode, scenario_idx: int, step_idx: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if Given step describes functionality rather than preconditions."""
         step_lower = step.lower()
         
         # Functionality indicators (should be in When/Then, not Given)

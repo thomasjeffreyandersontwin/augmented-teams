@@ -7,17 +7,17 @@ from .violation import Violation
 
 
 class PreferObjectModelOverConfigScanner(CodeScanner):
-    """Detects cases where code accesses configuration directly instead of using object properties."""
     
     def __init__(self, rule_obj=None):
         super().__init__()
         self.rule_name = "prefer_object_model_over_config"
         self.rule_obj = rule_obj
         
-        # Patterns that indicate direct config access
+        # Patterns that indicate direct config access from OUTSIDE the class
+        # Only flag when accessing _config on objects other than self
         self.config_access_patterns = [
-            (r'\._config\[', 'Direct access to _config dictionary'),
-            (r'\._config\.get\(', 'Using .get() on _config attribute'),
+            (r'(?<!self)\._config\[', 'Direct access to _config dictionary'),
+            (r'(?<!self)\._config\.get\(', 'Using .get() on _config attribute'),
             (r"hasattr\([^,]+,\s*['\"]_config['\"]", 'Checking for _config attribute existence'),
         ]
         
@@ -34,7 +34,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         ]
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Dict[str, Any] = None) -> List[Violation]:
-        """Scan a file for direct config access violations."""
         violations = []
         
         # Need rule_obj to create violations
@@ -42,8 +41,9 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         if not effective_rule_obj:
             return violations
         
-        # Store rule_obj for creating violations
+        # Store rule_obj and file_path for creating violations
         self.rule_obj = effective_rule_obj
+        self.current_file_path = file_path
         
         # Read the file content
         if not file_path.exists():
@@ -56,7 +56,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         
         lines = content.split('\n')
         
-        # Check if file is in an exception location
         if self._is_exception_file(file_path):
             return violations
         
@@ -65,11 +64,9 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
             if '# scanner ignore' in line or '# noqa' in line:
                 continue
             
-            # Check if we're in an exception context (like __init__)
             if self._is_in_exception_context(lines, line_num):
                 continue
             
-            # Check for direct config access patterns
             for pattern, description in self.config_access_patterns:
                 if re.search(pattern, line):
                     violations.append(self._create_violation(
@@ -77,7 +74,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
                         f"{description}. Use object properties instead of accessing _config directly."
                     ))
             
-            # Check for config file reading
             if re.search(self.config_file_pattern, line):
                 # Only flag if it looks like we're reading config when an object might exist
                 if self._looks_like_object_exists_context(lines, line_num):
@@ -89,7 +85,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         return violations
     
     def _is_exception_file(self, file_path: Path) -> bool:
-        """Check if file is in an exception location."""
         file_str = str(file_path).lower()
         exception_paths = [
             'config',
@@ -103,7 +98,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         return any(exc in file_str for exc in exception_paths)
     
     def _is_in_exception_context(self, lines: List[str], current_line: int) -> bool:
-        """Check if current line is within an exception context (like __init__)."""
         # Look backwards to find the current function/method definition
         # We need to check if we're INSIDE an exception function, not just if one exists nearby
         current_indent = len(lines[current_line - 1]) - len(lines[current_line - 1].lstrip())
@@ -115,7 +109,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
             
             # Found a function/method definition at same or lower indentation
             if line_indent <= current_indent and ('def ' in line):
-                # Check if this function matches an exception pattern
                 for pattern in self.exception_patterns:
                     if re.search(pattern, line):
                         return True
@@ -125,7 +118,6 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         return False
     
     def _looks_like_object_exists_context(self, lines: List[str], current_line: int) -> bool:
-        """Check if context suggests an object model exists."""
         # Look at surrounding lines for object access patterns
         start = max(0, current_line - 5)
         end = min(len(lines), current_line + 5)
@@ -145,10 +137,10 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         return any(re.search(pattern, context) for pattern in object_patterns)
     
     def _create_violation(self, line_num: int, message: str) -> Violation:
-        """Create a violation object."""
         return Violation(
             rule=self.rule_obj,
             violation_message=message,
+            location=str(self.current_file_path),
             line_number=line_num,
             severity='error'
         )

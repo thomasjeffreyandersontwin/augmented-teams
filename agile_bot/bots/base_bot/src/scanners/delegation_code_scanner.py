@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class DelegationCodeScanner(CodeScanner):
-    """Validates that code delegates responsibilities to the lowest-level object."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -30,30 +29,24 @@ class DelegationCodeScanner(CodeScanner):
         return violations
     
     def _check_delegation(self, class_node: ast.ClassDef, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if class delegates properly."""
         violations = []
         
-        # Check if this class IS a collection class (e.g., "Actions", "Behaviors")
         is_collection_class = self._is_collection_class(class_node.name)
         
-        # Check for methods that iterate through collections instead of delegating
         for node in ast.walk(class_node):
             if isinstance(node, ast.FunctionDef):
                 # Skip __init__ methods - setup code is fine
                 if node.name == '__init__':
                     continue
                 
-                # Check if method iterates through self.collection instead of delegating
                 for stmt in ast.walk(node):
                     if isinstance(stmt, ast.For):
-                        # Check if it's iterating through a collection attribute
                         if isinstance(stmt.iter, ast.Attribute):
                             if isinstance(stmt.iter.value, ast.Name) and stmt.iter.value.id == 'self':
                                 collection_name = stmt.iter.attr
                                 
                                 # Skip if this class IS the collection class iterating its own collection
                                 if is_collection_class:
-                                    # Check if attribute name matches the class's collection pattern
                                     # e.g., Actions class with _actions attribute, Behaviors with _behaviors
                                     class_name_lower = class_node.name.lower()
                                     attr_name_lower = collection_name.lower()
@@ -63,15 +56,12 @@ class DelegationCodeScanner(CodeScanner):
                                     if attr_name_lower == f"_{class_name_lower}" or attr_name_lower == class_name_lower or attr_without_underscore == class_name_lower:
                                         continue  # This is fine - collection class iterating its own collection
                                 
-                                # Check if it's a plain list/dict (not a collection class)
                                 if self._is_plain_collection(class_node, collection_name, content):
                                     continue  # Plain lists are fine to iterate
                                 
-                                # Check if it's a class constant (PATTERNS, RULES, etc.)
                                 if self._is_class_constant(class_node, collection_name):
                                     continue  # Class constants are fine to iterate
                                 
-                                # Check if name indicates a collection class (not a plain list)
                                 if self._is_collection_name(collection_name):
                                     violations.append(
                                         Violation(
@@ -86,19 +76,11 @@ class DelegationCodeScanner(CodeScanner):
         return violations
     
     def _is_collection_class(self, class_name: str) -> bool:
-        """Check if class name indicates it's a collection class."""
         name_lower = class_name.lower()
         # Patterns like "Actions", "Behaviors", "Users", etc.
         return (name_lower.endswith('s') and len(name_lower) > 3) or 'collection' in name_lower
     
     def _is_plain_collection(self, class_node: ast.ClassDef, attr_name: str, content: str) -> bool:
-        """Check if attribute is a plain list/dict, not a collection class.
-        
-        Looks for patterns like:
-        - Type hints: _exclude_patterns: List[str]
-        - Initialization: self._exclude_patterns = []
-        - Attribute names that suggest plain lists (patterns, specs, etc.)
-        """
         attr_name_lower = attr_name.lower()
         
         # Skip private attributes that are clearly plain lists
@@ -108,11 +90,9 @@ class DelegationCodeScanner(CodeScanner):
             if any(indicator in attr_name_lower for indicator in plain_list_indicators):
                 return True
         
-        # Check for type hints in class body
         for node in ast.walk(class_node):
             if isinstance(node, ast.AnnAssign):
                 if isinstance(node.target, ast.Name) and node.target.id == attr_name:
-                    # Check if annotation suggests plain list
                     if isinstance(node.annotation, ast.Subscript):
                         if isinstance(node.annotation.value, ast.Name):
                             if node.annotation.value.id in ('List', 'list', 'Dict', 'dict', 'Set', 'set'):
@@ -123,43 +103,29 @@ class DelegationCodeScanner(CodeScanner):
                             if node.annotation.value.id in ('List', 'list', 'Dict', 'dict', 'Set', 'set'):
                                 return True
         
-        # Check for list/dict literal initialization
         for node in ast.walk(class_node):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Attribute) and target.attr == attr_name:
-                        # Check if RHS is a list/dict literal
                         if isinstance(node.value, (ast.List, ast.Dict)):
                             return True
         
         return False
     
     def _is_class_constant(self, class_node: ast.ClassDef, attr_name: str) -> bool:
-        """Check if attribute is a class-level constant (PATTERNS, RULES, etc.).
-        
-        Class constants are typically:
-        - UPPER_CASE names
-        - Defined at class level (not in __init__)
-        - Assigned to list/dict literals or tuples
-        """
         attr_name_upper = attr_name.upper()
         
-        # Check if name looks like a constant (all uppercase or mostly uppercase)
         if attr_name == attr_name_upper or attr_name.isupper():
-            # Check if it's defined at class level as a constant
             for node in class_node.body:
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name) and target.id == attr_name:
-                            # Check if RHS is a list/dict/tuple literal
                             if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
                                 return True
                         elif isinstance(target, ast.Attribute) and target.attr == attr_name:
-                            # Class attribute assignment
                             if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
                                 return True
                 
-                # Check for annotated assignments (type hints)
                 if isinstance(node, ast.AnnAssign):
                     if isinstance(node.target, ast.Name) and node.target.id == attr_name:
                         if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
@@ -173,7 +139,6 @@ class DelegationCodeScanner(CodeScanner):
         return False
     
     def _is_collection_name(self, name: str) -> bool:
-        """Check if name indicates a collection class (not a plain list)."""
         name_lower = name.lower()
         
         # Skip if it's clearly a plain list based on name patterns

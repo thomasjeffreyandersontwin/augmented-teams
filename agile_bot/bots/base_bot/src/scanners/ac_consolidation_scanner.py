@@ -8,7 +8,6 @@ from collections import defaultdict
 
 
 class ACConsolidationScanner(StoryScanner):
-    """Detects duplicate AC and consolidation opportunities."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -17,13 +16,11 @@ class ACConsolidationScanner(StoryScanner):
             story_data = node.data
             acceptance_criteria = story_data.get('acceptance_criteria', [])
             
-            # Check for duplicate AC
             violations.extend(self._check_duplicate_ac(acceptance_criteria, node, rule_obj))
         
         return violations
     
     def _check_duplicate_ac(self, acceptance_criteria: List[Any], node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for duplicate acceptance criteria."""
         violations = []
         
         # Normalize AC text for comparison
@@ -51,7 +48,6 @@ class ACConsolidationScanner(StoryScanner):
         return violations
     
     def _get_ac_text(self, ac: Any) -> str:
-        """Extract AC text from AC dict or string."""
         if isinstance(ac, dict):
             return ac.get('criterion', '') or ac.get('description', '') or str(ac)
         return str(ac)

@@ -67,8 +67,8 @@ class SpecificityScanner(StoryScanner):
                                 location=location,
                                 severity='error'
                             ).to_dict()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Error in scanner: {e}")
             
             if len(words) == 2:
                 location = node.map_location()

@@ -7,7 +7,6 @@ from .violation import Violation
 
 
 class InvestPrinciplesScanner(StoryScanner):
-    """Validates stories follow INVEST principles (Independent, Negotiable, Valuable, Estimable, Small, Testable)."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

@@ -27,7 +27,6 @@ class ValidationScope(ActionScope):
     
     @classmethod
     def from_context(cls, context: 'ValidateActionContext', bot_paths: Optional[BotPaths] = None, behavior_name: Optional[str] = None) -> 'ValidationScope':
-        """Create ValidationScope from typed ValidateActionContext."""
         # Convert typed context to parameters dict for compatibility with parent class
         params = {}
         if context.scope:

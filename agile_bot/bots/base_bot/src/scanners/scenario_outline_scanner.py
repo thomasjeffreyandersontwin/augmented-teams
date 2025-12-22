@@ -8,7 +8,6 @@ import re
 
 
 class ScenarioOutlineScanner(StoryScanner):
-    """Validates Scenario Outlines are used for multiple similar scenarios."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -17,13 +16,10 @@ class ScenarioOutlineScanner(StoryScanner):
             story_data = node.data
             scenarios = story_data.get('scenarios', [])
             
-            # Check for Scenario Outline usage
             for scenario_idx, scenario in enumerate(scenarios):
                 scenario_text = self._get_scenario_text(scenario)
                 
-                # Check if scenario uses Scenario Outline
                 if 'Scenario Outline' in scenario_text:
-                    # Check if it has Examples table
                     has_examples = 'Examples:' in scenario_text or 'examples' in str(scenario).lower()
                     
                     if not has_examples:
@@ -39,7 +35,6 @@ class ScenarioOutlineScanner(StoryScanner):
         return violations
     
     def _get_scenario_text(self, scenario: Dict[str, Any]) -> str:
-        """Extract scenario text from scenario dict."""
         if isinstance(scenario, dict):
             return scenario.get('scenario', '') or scenario.get('name', '') or str(scenario)
         return str(scenario)

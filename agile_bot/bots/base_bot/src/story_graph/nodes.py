@@ -42,7 +42,6 @@ class StoryNode(ABC):
 
     @staticmethod
     def _generate_default_test_method_name(name: str) -> str:
-        """Generate a default test method name from a node name."""
         if not name:
             return ''
         words = name.split()
@@ -50,7 +49,6 @@ class StoryNode(ABC):
         return f'test_{method_name}'
 
     def _filter_children_by_type(self, target_type: type) -> List['StoryNode']:
-        """Filter children by type. Used by subclasses to get typed children."""
         return [child for child in self._children if isinstance(child, target_type)]
 
 @dataclass

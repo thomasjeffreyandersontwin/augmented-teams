@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class DescriptiveFunctionNamesScanner(TestScanner):
-    """Validates helper function names are descriptive and intention-revealing."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -22,7 +21,6 @@ class DescriptiveFunctionNamesScanner(TestScanner):
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                # Check helper functions (not test methods)
                 if not node.name.startswith('test_'):
                     violation = self._check_descriptive_name(node, file_path, rule_obj)
                     if violation:
@@ -31,7 +29,6 @@ class DescriptiveFunctionNamesScanner(TestScanner):
         return violations
     
     def _check_descriptive_name(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function name is descriptive."""
         func_name_lower = func_node.name.lower()
         func_name_original = func_node.name
         
@@ -55,7 +52,6 @@ class DescriptiveFunctionNamesScanner(TestScanner):
             'can',  # Common predicate pattern
         }
         
-        # Check if it's an acceptable domain term
         if func_name_lower in acceptable_domain_terms:
             return None
         
@@ -71,7 +67,6 @@ class DescriptiveFunctionNamesScanner(TestScanner):
                 severity='error'
             ).to_dict()
         
-        # Check for abbreviations - only flag actual acronyms and cryptic abbreviations
         # Common acceptable abbreviations that should NOT be flagged
         acceptable_abbrevs = {
             'init', 'config', 'json', 'cli', 'mcp', 'dir', 'sync', 'var', 'obj', 
@@ -88,17 +83,14 @@ class DescriptiveFunctionNamesScanner(TestScanner):
         cryptic_acronyms = set()  # Track if we find truly cryptic ones
         
         for word_lower, word_original in zip(words_lower, words_original):
-            # Check for all-caps acronyms (like MCP, JSON, CLI)
             if word_original.isupper() and len(word_original) >= 2:
                 # Well-known acronyms are acceptable
                 well_known_acronyms = {'mcp', 'json', 'cli', 'api', 'http', 'html', 'xml', 'yaml', 'sql', 'ui', 'ux', 'io', 'os', 'id', 'db'}
                 if word_lower not in well_known_acronyms:
                     cryptic_acronyms.add(word_original)
             
-            # Check for cryptic abbreviations (short, not in acceptable list)
             # Only flag if it's a standalone word (not part of a longer word)
             if len(word_lower) <= 3 and word_lower not in acceptable_abbrevs:
-                # Check if it's a cryptic abbreviation (like 'cfg', 'mgr', 'acct')
                 cryptic_short = ['cfg', 'mgr', 'acct', 'addr', 'cnt', 'cntr', 'ctrl', 'def', 'doc', 'err', 'exc', 'fn', 'fnc', 'hdlr', 'idx', 'len', 'loc', 'max', 'min', 'num', 'opt', 'prm', 'ptr', 'ref', 'ret', 'src', 'str', 'tmp', 'val', 'wrt']
                 if word_lower in cryptic_short:
                     cryptic_acronyms.add(word_lower)

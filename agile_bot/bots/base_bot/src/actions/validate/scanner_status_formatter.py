@@ -2,19 +2,16 @@ from pathlib import Path
 from typing import Dict, Any, List
 from agile_bot.bots.base_bot.src.actions.validate.validation_stats import ValidationStats
 
-# Status threshold constants
 MAX_VIOLATION_DENSITY_FOR_GOOD_STATUS = 200
 MAX_RULES_WITH_ERRORS_FOR_GOOD_STATUS = 5
 
 class ScannerStatusFormatter:
-    """Formats scanner execution status sections for validation reports."""
 
     def __init__(self, check_violation_severities_fn, rule_name_to_anchor_fn):
         self.check_violation_severities = check_violation_severities_fn
         self.rule_name_to_anchor = rule_name_to_anchor_fn
 
     def build_scanner_status(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
-        """Build the scanner execution status section."""
         lines = ['## Scanner Execution Status', '']
         categorized = self.categorize_scanner_rules(validation_rules)
         stats = self.build_scanner_stats(validation_rules, categorized)
@@ -27,7 +24,6 @@ class ScannerStatusFormatter:
         return lines
 
     def categorize_scanner_rules(self, validation_rules: List[Dict[str, Any]]) -> Dict:
-        """Categorize rules by execution status."""
         executed_rules = []
         load_failed_rules = []
         execution_failed_rules = []
@@ -45,7 +41,6 @@ class ScannerStatusFormatter:
         return {'executed': executed_rules, 'load_failed': load_failed_rules, 'execution_failed': execution_failed_rules, 'no_scanner': no_scanner_rules}
 
     def _get_rule_category(self, rule_dict: Dict) -> str:
-        """Get the category for a rule based on its status."""
         scanner_status = rule_dict.get('scanner_status', {})
         status = scanner_status.get('status', 'UNKNOWN')
         
@@ -60,28 +55,23 @@ class ScannerStatusFormatter:
         return 'no_scanner'
     
     def _get_rule_file(self, rule_dict: Dict) -> str:
-        """Get the rule file path from a rule dictionary."""
         return rule_dict.get('rule_file', 'unknown')
     
     def _build_executed_rule_entry(self, rule_dict: Dict) -> Dict:
-        """Build an executed rule entry."""
         rule_file = self._get_rule_file(rule_dict)
         scanner_status = rule_dict.get('scanner_status', {})
         return self.build_executed_rule_info(rule_dict, rule_file, scanner_status)
     
     def _build_failed_rule_entry(self, rule_dict: Dict) -> Dict:
-        """Build a failed rule entry."""
         rule_file = self._get_rule_file(rule_dict)
         scanner_status = rule_dict.get('scanner_status', {})
         return self._build_failed_rule_info(rule_file, scanner_status)
 
 
     def _build_failed_rule_info(self, rule_file: str, scanner_status: Dict) -> Dict:
-        """Build information dictionary for a failed rule."""
         return {'rule': rule_file, 'scanner_path': scanner_status.get('scanner_path', 'unknown'), 'error': scanner_status.get('error', 'Unknown error')}
 
     def build_executed_rule_info(self, rule_dict: Dict, rule_file: str, scanner_status: Dict) -> Dict:
-        """Build information dictionary for an executed rule."""
         violations = scanner_status.get('violations_found', 0)
         exec_status = scanner_status.get('execution_status', 'SUCCESS')
         scanner_results = rule_dict.get('scanner_results', {})
@@ -89,7 +79,6 @@ class ScannerStatusFormatter:
         return {'rule': rule_file, 'violations': violations, 'execution_status': exec_status, 'scanner_path': scanner_status.get('scanner_path', 'unknown'), 'has_errors': has_errors, 'has_warnings': has_warnings}
 
     def build_scanner_stats(self, validation_rules: List[Dict], categorized: Dict) -> ValidationStats:
-        """Build validation statistics from categorized rules."""
         executed = categorized['executed']
         total_with_scanners = len(executed) + len(categorized['load_failed']) + len(categorized['execution_failed'])
         total_violations = sum(r['violations'] for r in executed)
@@ -99,7 +88,6 @@ class ScannerStatusFormatter:
         return ValidationStats(total_rules=len(validation_rules), total_with_scanners=total_with_scanners, executed_count=len(executed), load_failed_count=len(categorized['load_failed']), execution_failed_count=len(categorized['execution_failed']), no_scanner_count=len(categorized['no_scanner']), total_violations=total_violations, rules_clean=rules_clean, rules_with_warnings=rules_with_warnings, rules_with_errors=rules_with_errors, executed_rules=executed)
 
     def format_executed_rules_section(self, executed_rules: List[Dict]) -> List[str]:
-        """Format the executed rules section."""
         if not executed_rules:
             return []
         lines = ['### 🟩 Successfully Executed Scanners', '']
@@ -110,7 +98,6 @@ class ScannerStatusFormatter:
         return lines
 
     def format_executed_rule_line(self, rule_info: Dict) -> List[str]:
-        """Format a single executed rule line."""
         violations = rule_info['violations']
         rule_name = Path(rule_info['rule']).stem if rule_info['rule'] else 'unknown'
         status_indicator, status_text = self.get_rule_status_indicator(rule_info, violations)
@@ -123,7 +110,6 @@ class ScannerStatusFormatter:
         return [f'- {status_indicator} **[{rule_display_name}]({anchor_link})** - {violations_text} {status_suffix}{details_link}', f"  - Scanner: `{rule_info['scanner_path']}`"]
 
     def get_rule_status_indicator(self, rule_info: Dict, violations: int) -> tuple:
-        """Get status indicator and text for a rule."""
         if rule_info['has_errors']:
             return ('🟥', 'ERRORS')
         if rule_info['has_warnings']:
@@ -133,14 +119,12 @@ class ScannerStatusFormatter:
         return ('🟨', 'VIOLATIONS')
 
     def build_details_link(self, rule_name: str, violations: int) -> str:
-        """Build link to violations section for a rule."""
         if violations <= 0:
             return ''
         violations_anchor = f"#{rule_name.replace('_', '-').lower()}-violations"
         return f' - [View Details]({violations_anchor})'
 
     def format_failed_rules_section(self, failed_rules: List[Dict], title: str, status: str) -> List[str]:
-        """Format failed rules section."""
         if not failed_rules:
             return []
         lines = [f'### 🟥 {title}', '']
@@ -155,7 +139,6 @@ class ScannerStatusFormatter:
         return lines
 
     def format_no_scanner_rules_section(self, no_scanner_rules: List[str]) -> List[str]:
-        """Format rules without scanners section."""
         if not no_scanner_rules:
             return []
         lines = ['### <span style="color: gray;">[i] Rules Without Scanners</span>', '']
@@ -170,7 +153,6 @@ class ScannerStatusFormatter:
         return lines
 
     def build_status_summary(self, stats: ValidationStats) -> List[str]:
-        """Build status summary section."""
         overall_status, overall_text = self.get_overall_status(stats)
         lines = [f'### {overall_status} Overall Status: {overall_text}', '', '| Status | Count | Description |', '|--------|-------|-------------|']
         lines.extend(self.build_summary_table_rows(stats))
@@ -178,7 +160,6 @@ class ScannerStatusFormatter:
         return lines
 
     def get_overall_status(self, stats: ValidationStats) -> tuple:
-        """Get overall status indicator and text."""
         if self._has_critical_issues(stats):
             return ('🟥', 'CRITICAL ISSUES')
         if not stats.has_violations:
@@ -186,11 +167,9 @@ class ScannerStatusFormatter:
         return self._get_violation_status(stats)
 
     def _has_critical_issues(self, stats: ValidationStats) -> bool:
-        """Check if there are critical issues (execution failures or multiple load failures)."""
         return stats.execution_failed_count > 0 or stats.load_failed_count > 2
 
     def _get_violation_status(self, stats: ValidationStats) -> tuple:
-        """Get status based on violation density and error counts."""
         violation_density = stats.total_violations
         if violation_density < 150 and stats.rules_with_errors == 0:
             return ('🟩', 'HEALTHY')
@@ -201,7 +180,6 @@ class ScannerStatusFormatter:
         return ('🟨', 'WARNINGS FOUND')
 
     def build_summary_table_rows(self, stats: ValidationStats) -> List[str]:
-        """Build summary table rows."""
         lines = []
         self._add_executed_row(lines, stats)
         self._add_clean_rules_row(lines, stats)
@@ -212,30 +190,25 @@ class ScannerStatusFormatter:
         return lines
 
     def _add_executed_row(self, lines: List[str], stats: ValidationStats) -> None:
-        """Add executed successfully row."""
         if stats.executed_count > 0:
             desc = 'ran without errors' if stats.rules_clean > 0 else 'executed'
             lines.append(f'| 🟩 Executed Successfully | {stats.executed_count} | Scanners {desc} |')
 
     def _add_clean_rules_row(self, lines: List[str], stats: ValidationStats) -> None:
-        """Add clean rules row."""
         if stats.rules_clean > 0:
             lines.append(f'| 🟩 Clean Rules | {stats.rules_clean} | No violations found |')
 
     def _add_warnings_row(self, lines: List[str], stats: ValidationStats) -> None:
-        """Add warnings row."""
         if stats.rules_with_warnings > 0:
             warning_count = sum((r['violations'] for r in stats.executed_rules if r.get('has_warnings') and (not r.get('has_errors'))))
             lines.append(f'| 🟨 Rules with Warnings | {stats.rules_with_warnings} | Found {warning_count} warning violation(s) |')
 
     def _add_errors_row(self, lines: List[str], stats: ValidationStats) -> None:
-        """Add errors row."""
         if stats.rules_with_errors > 0:
             error_count = sum((r['violations'] for r in stats.executed_rules if r.get('has_errors')))
             lines.append(f'| 🟥 Rules with Errors | {stats.rules_with_errors} | Found {error_count} error violation(s) |')
 
     def _add_failed_rows(self, lines: List[str], stats: ValidationStats) -> None:
-        """Add failed scanner rows."""
         if stats.load_failed_count > 0:
             lines.append(f'| 🟥 Load Failed | {stats.load_failed_count} | Scanner could not be loaded |')
         if stats.execution_failed_count > 0:
@@ -244,7 +217,6 @@ class ScannerStatusFormatter:
             lines.append(f'| [i] No Scanner | {stats.no_scanner_count} | Rule has no scanner configured |')
 
     def build_totals_summary(self, stats: ValidationStats) -> List[str]:
-        """Build totals summary section."""
         lines = [f'**Total Rules:** {stats.total_rules}', f'- **Rules with Scanners:** {stats.total_with_scanners}', f'  - 🟩 **Executed Successfully:** {stats.executed_count}']
         if stats.load_failed_count > 0:
             lines.append(f'  - 🟥 **Load Failed:** {stats.load_failed_count}')

@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class ErrorHandlingIsolationScanner(CodeScanner):
-    """Validates error handling is isolated from business logic."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -19,18 +18,15 @@ class ErrorHandlingIsolationScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for mixed error handling and business logic
         violations.extend(self._check_mixed_error_handling(tree, content, file_path, rule_obj))
         
         return violations
     
     def _check_mixed_error_handling(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if error handling is mixed with business logic."""
         violations = []
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                # Check if function has multiple try-except blocks (suggests mixed concerns)
                 try_blocks = [n for n in ast.walk(node) if isinstance(n, ast.Try)]
                 if len(try_blocks) > 2:
                     line_number = node.lineno if hasattr(node, 'lineno') else None

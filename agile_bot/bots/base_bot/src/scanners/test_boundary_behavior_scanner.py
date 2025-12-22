@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestBoundaryBehaviorScanner(TestScanner):
-    """Validates boundary behavior is tested."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -23,13 +22,11 @@ class TestBoundaryBehaviorScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Check for boundary test patterns
         violations.extend(self._check_boundary_tests(content, file_path, rule_obj))
         
         return violations
     
     def _check_boundary_tests(self, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for boundary test coverage."""
         violations = []
         lines = content.split('\n')
         

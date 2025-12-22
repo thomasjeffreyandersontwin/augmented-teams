@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class ExplicitDependenciesScanner(CodeScanner):
-    """Validates dependencies are explicit (not hidden)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -19,16 +18,13 @@ class ExplicitDependenciesScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for hidden dependencies (global variables, singletons)
         violations.extend(self._check_hidden_dependencies(tree, file_path, rule_obj))
         
         return violations
     
     def _check_hidden_dependencies(self, tree: ast.AST, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for hidden dependencies (globals, singletons)."""
         violations = []
         
-        # Check for global variable usage (hidden dependency)
         for node in ast.walk(tree):
             if isinstance(node, ast.Global):
                 violation = Violation(

@@ -8,7 +8,6 @@ import re
 
 
 class ImplementationDetailsScanner(StoryScanner):
-    """Detects implementation operations that should be steps within stories, not stories themselves."""
     
     # Implementation operation verbs (should be steps, not stories)
     IMPLEMENTATION_VERBS = [
@@ -26,12 +25,9 @@ class ImplementationDetailsScanner(StoryScanner):
         
         name_lower = node.name.lower()
         
-        # Check for implementation operation verbs
         for verb in self.IMPLEMENTATION_VERBS:
-            # Check if verb appears as main action (start of name or after "to")
             pattern = rf'\b{verb}\b'
             if re.search(pattern, name_lower):
-                # Check if it's describing an outcome vs implementation
                 # If it's just "Verb Noun" without user context, it's likely implementation
                 words = name_lower.split()
                 # Check if verb is at the start (most common pattern for implementation operations)

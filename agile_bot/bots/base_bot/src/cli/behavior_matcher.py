@@ -70,16 +70,21 @@ class BehaviorMatcher:
     def _load_action_triggers_for_behavior(self, behavior_dir: Path) -> Dict[str, List[str]]:
         triggers = {}
         for action_dir in behavior_dir.iterdir():
-            if action_dir.is_dir() and not action_dir.name.startswith('_'):
-                trigger_file = action_dir / 'trigger_words.json'
-                try:
-                    action_name = self._extract_action_name(action_dir.name)
-                    patterns = self._load_patterns_from_file(trigger_file)
-                    if patterns:
-                        triggers[action_name] = patterns
-                except FileNotFoundError:
-                    pass
+            self._add_action_triggers_if_valid(action_dir, triggers)
         return triggers
+    
+    def _add_action_triggers_if_valid(self, action_dir: Path, triggers: Dict[str, List[str]]) -> None:
+        if not action_dir.is_dir() or action_dir.name.startswith('_'):
+            return
+        
+        trigger_file = action_dir / 'trigger_words.json'
+        try:
+            action_name = self._extract_action_name(action_dir.name)
+            patterns = self._load_patterns_from_file(trigger_file)
+            if patterns:
+                triggers[action_name] = patterns
+        except FileNotFoundError:
+            pass
 
     def _load_json_from_file(self, file_path: Path) -> dict:
         try:

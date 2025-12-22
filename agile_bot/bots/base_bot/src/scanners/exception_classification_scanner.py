@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class ExceptionClassificationScanner(CodeScanner):
-    """Validates exceptions are classified by caller needs (not by component)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -20,13 +19,11 @@ class ExceptionClassificationScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for component-based exception naming (should be caller-need-based)
         violations.extend(self._check_exception_naming(tree, content, file_path, rule_obj))
         
         return violations
     
     def _check_exception_naming(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if exceptions are named by component (bad) vs caller needs (good)."""
         violations = []
         
         # Component-based exception patterns (bad)

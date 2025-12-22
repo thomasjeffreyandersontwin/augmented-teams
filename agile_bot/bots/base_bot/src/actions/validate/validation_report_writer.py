@@ -142,7 +142,6 @@ class StreamingValidationReportWriter:
             self._status_file.flush()
 
     def write_cross_file_progress(self, message: str) -> None:
-        """Write cross-file scan progress to status file."""
         self._write_line(message)
         self._flush()
 
@@ -318,7 +317,6 @@ class ValidationReportWriter:
         return lines
 
     def _extract_test_info(self, message: str, location: str, line_number: Optional[int] = None) -> Optional[str]:
-        """Extract and format test information from violation message."""
         test_method_patterns = ['Test\\s+method\\s+["\\\']([^"\\\']+)["\\\']', 'Test\\s+["\\\']([^"\\\']+)["\\\']', 'test\\s+method\\s+["\\\']([^"\\\']+)["\\\']']
         test_class_patterns = ['Test\\s+class\\s+["\\\']([^"\\\']+)["\\\']', 'class\\s+["\\\']([^"\\\']+)["\\\']']
         test_method_match = None

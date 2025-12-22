@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class DomainGroupingScanner(StoryScanner):
-    """Validates that domain concepts are grouped by domain area, not technical layers."""
     
     TECHNICAL_LAYER_PATTERNS = [
         r'\blayer\b',
@@ -28,7 +27,6 @@ class DomainGroupingScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check node name for technical layer patterns
         node_name_lower = node.name.lower()
         for pattern in self.TECHNICAL_LAYER_PATTERNS:
             if re.search(pattern, node_name_lower):

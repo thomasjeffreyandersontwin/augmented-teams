@@ -9,17 +9,6 @@ from .violation import Violation
 
 
 class UnnecessaryParameterPassingScanner(CodeScanner):
-    """Detects when instance properties are unnecessarily passed as parameters to internal methods.
-    
-    This scanner identifies cases where:
-    - Instance properties (self.property) are extracted into variables and passed to internal methods
-    - Internal methods (starting with _) receive parameters that match instance properties
-    - The same value is passed through multiple method calls when it could be accessed via self
-    
-    Pattern to detect:
-    - Variable assignment from self.property followed by method call with that variable
-    - Internal method (_method_name) that receives a parameter that could be accessed via self.property
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -46,7 +35,6 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         return violations
     
     def _check_class(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any, lines: List[str], content: str) -> List[Dict[str, Any]]:
-        """Check a class for unnecessary parameter passing patterns."""
         violations = []
         
         # First pass: collect all instance attributes and properties
@@ -55,19 +43,16 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         # Second pass: check methods for unnecessary parameter passing
         for node in class_node.body:
             if isinstance(node, ast.FunctionDef):
-                # Check for internal methods (starting with _)
                 if node.name.startswith('_'):
                     method_violations = self._check_method_parameters(node, instance_attrs, file_path, rule_obj, lines, content)
                     violations.extend(method_violations)
                 
-                # Check for patterns where instance properties are extracted and passed
                 extraction_violations = self._check_property_extraction(node, instance_attrs, file_path, rule_obj, lines, content)
                 violations.extend(extraction_violations)
         
         return violations
     
     def _collect_instance_attributes(self, class_node: ast.ClassDef) -> set:
-        """Collect all instance attributes from __init__ and assignments."""
         attrs = set()
         
         # Find __init__ method
@@ -95,24 +80,20 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
     
     def _check_method_parameters(self, method_node: ast.FunctionDef, instance_attrs: set, 
                                 file_path: Path, rule_obj: Any, lines: List[str], content: str) -> List[Dict[str, Any]]:
-        """Check if method receives parameters that match instance attributes."""
         violations = []
         
         # Skip if not an internal method (doesn't start with _)
         if not method_node.name.startswith('_'):
             return violations
         
-        # Skip special methods
         if method_node.name.startswith('__') and method_node.name.endswith('__'):
             return violations
         
-        # Check each parameter
         for arg in method_node.args.args:
             # Skip self
             if arg.arg == 'self':
                 continue
             
-            # Check if parameter name matches an instance attribute
             if arg.arg in instance_attrs:
                 # This is suspicious - parameter matches instance attribute
                 # Check if it's actually used in a way that suggests it's being passed unnecessarily
@@ -130,7 +111,6 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         return violations
     
     def _parameter_used_like_instance_attr(self, method_node: ast.FunctionDef, param_name: str) -> bool:
-        """Check if parameter is used in a way that suggests it's an instance attribute."""
         # Look for patterns where the parameter is used directly (not modified)
         # This suggests it could be accessed via self instead
         for node in ast.walk(method_node):
@@ -150,7 +130,6 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
     
     def _check_property_extraction(self, method_node: ast.FunctionDef, instance_attrs: set,
                                   file_path: Path, rule_obj: Any, lines: List[str], content: str) -> List[Dict[str, Any]]:
-        """Check for patterns where instance properties are extracted and passed to methods."""
         violations = []
         
         # Look for patterns like: var = self.property; self._method(var)
@@ -158,10 +137,8 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         assignments = []
         for i, stmt in enumerate(method_node.body):
             if isinstance(stmt, ast.Assign):
-                # Check if assignment is from self.property (including nested)
                 for target in stmt.targets:
                     if isinstance(target, ast.Name):
-                        # Check if value is self.attr or self.obj.attr
                         attr_path = self._extract_self_attribute_path(stmt.value)
                         if attr_path:
                             assignments.append({
@@ -170,23 +147,17 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
                                 'line': stmt.lineno if hasattr(stmt, 'lineno') else None
                             })
         
-        # Check if extracted variables are passed to internal methods
         for i, stmt in enumerate(method_node.body):
             if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
                 call = stmt.value
-                # Check if it's a method call on self
                 if isinstance(call.func, ast.Attribute):
                     if isinstance(call.func.value, ast.Name) and call.func.value.id == 'self':
                         method_name = call.func.attr
-                        # Check if it's an internal method
                         if method_name.startswith('_'):
-                            # Check if any argument matches an extracted variable
                             for arg in call.args:
                                 if isinstance(arg, ast.Name):
-                                    # Find matching assignment
                                     for assignment in assignments:
                                         if arg.id == assignment['var_name']:
-                                            # Check if assignment happened before this call
                                             if assignment['line'] and hasattr(stmt, 'lineno'):
                                                 if assignment['line'] < stmt.lineno:
                                                     # Found pattern: var = self.attr; self._method(var)
@@ -203,13 +174,7 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
         return violations
     
     def _extract_self_attribute_path(self, node: ast.AST) -> Optional[str]:
-        """Extract the attribute path from a self.attr or self.obj.attr expression.
-        
-        Returns:
-            String like "attr" or "obj.attr" if node is a self attribute access, None otherwise.
-        """
         if isinstance(node, ast.Attribute):
-            # Check if it starts with self
             current = node
             path_parts = []
             
@@ -217,7 +182,6 @@ class UnnecessaryParameterPassingScanner(CodeScanner):
                 path_parts.insert(0, current.attr)
                 current = current.value
             
-            # Check if the root is self
             if isinstance(current, ast.Name) and current.id == 'self':
                 return '.'.join(path_parts)
         

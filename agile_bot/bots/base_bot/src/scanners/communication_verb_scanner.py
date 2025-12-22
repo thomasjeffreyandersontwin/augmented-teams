@@ -76,8 +76,8 @@ class CommunicationVerbScanner(StoryScanner):
                             location=location,
                             severity='error'
                         ).to_dict()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error in scanner: {e}")
         
         return None
     
@@ -111,8 +111,8 @@ class CommunicationVerbScanner(StoryScanner):
                             location=location,
                             severity='error'
                         ).to_dict()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error in scanner: {e}")
         
         return None
 
