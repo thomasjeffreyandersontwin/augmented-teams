@@ -1,10 +1,10 @@
 {
   "name": "render_domain_model_scaffold",
   "type": "synchronizer",
-  "path": "src",
+  "path": "docs/stories",
   "input": "story-graph.json",
   "synchronizer": "synchronizers.domain_model.DomainModelOutlineSynchronizer",
   "output": "domain_outline.md",
-  "instructions": "Generate domain outline markdown file in the src directory based on the domain_concepts from story-graph.json. Extract domain_concepts from all epics and sub_epics in story-graph.json."
+  "instructions": "Generate domain outline markdown file in the docs/stories directory based on the domain_concepts from story-graph.json. Extract domain_concepts from all epics and sub_epics in story-graph.json."
 }
 

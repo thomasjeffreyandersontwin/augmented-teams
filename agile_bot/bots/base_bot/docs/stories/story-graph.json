@@ -356,460 +356,6 @@
               ]
             }
           ]
-        },
-        {
-          "name": "Generate LangGraph Framework",
-          "sequential_order": 3.0,
-          "domain_concepts": [
-            {
-              "name": "Base Action Node",
-              "responsibilities": [
-                {
-                  "name": "Provide abstract node interface",
-                  "collaborators": [
-                    "ActionNode"
-                  ]
-                },
-                {
-                  "name": "Define two-pass pattern",
-                  "collaborators": [
-                    "ActionNode"
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Behavior Graph Builder",
-              "responsibilities": [
-                {
-                  "name": "Read behavior workflow configuration",
-                  "collaborators": [
-                    "Behavior",
-                    "Workflow"
-                  ]
-                },
-                {
-                  "name": "Create nodes from actions",
-                  "collaborators": [
-                    "Action",
-                    "ActionNode"
-                  ]
-                },
-                {
-                  "name": "Create edges from next_action relationships",
-                  "collaborators": [
-                    "Workflow",
-                    "Action"
-                  ]
-                },
-                {
-                  "name": "Build StateGraph structure",
-                  "collaborators": [
-                    "Workflow",
-                    "LangGraph"
-                  ]
-                }
-              ]
-            }
-          ],
-          "sub_epics": [],
-          "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "stories": [
-                {
-                  "name": "Generate Base Action Node",
-                  "sequential_order": 1,
-                  "connector": null,
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN Generator processes Bot Config with LangGraph support",
-                    "THEN Generator creates base_action_node.py in base_bot/src/orchestration/base_nodes/",
-                    "AND Base node provides abstract interface for action execution",
-                    "AND Base node defines two-pass pattern (get_instructions, confirm_with_response)",
-                    "AND Base node supports both autonomous and interactive modes",
-                    "WHEN base node is generated",
-                    "THEN Node class is abstract and not instantiated directly",
-                    "AND Node provides template for concrete ActionNode implementations"
-                  ]
-                },
-                {
-                  "name": "Generate Behavior Graph Builder",
-                  "sequential_order": 2,
-                  "connector": "and",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN Generator processes Bot Config",
-                    "THEN Generator creates graph_builder.py in base_bot/src/orchestration/",
-                    "AND Graph builder reads actions_workflow from behavior.json",
-                    "AND Graph builder creates StateGraph structure",
-                    "AND Graph builder supports conditional branches and loops",
-                    "WHEN behavior.json specifies workflow",
-                    "THEN Builder creates nodes for each action in workflow order",
-                    "AND Builder creates edges based on next_action relationships",
-                    "AND Builder handles decision nodes for conditional routing"
-                  ]
-                },
-                {
-                  "name": "Generate LangGraph Runner",
-                  "sequential_order": 3,
-                  "connector": "and",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN Generator processes Bot Config",
-                    "THEN Generator creates langgraph_runner.py in base_bot/src/orchestration/",
-                    "AND Runner provides workflow execution with checkpointing",
-                    "AND Runner supports resume from checkpoint",
-                    "AND Runner manages checkpoint storage in SQLite database",
-                    "WHEN runner is generated",
-                    "THEN Runner compiles graphs with checkpointer",
-                    "AND Runner executes workflow graphs",
-                    "AND Runner provides checkpoint history and status"
-                  ]
-                },
-                {
-                  "name": "Generate State Adapter",
-                  "sequential_order": 4,
-                  "connector": "and",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN Generator processes Bot Config",
-                    "THEN Generator creates state_adapter.py in base_bot/src/orchestration/",
-                    "AND Adapter wraps story-graph.json for LangGraph",
-                    "AND Adapter wraps context files for LangGraph",
-                    "AND Adapter provides initial state for workflow runs",
-                    "WHEN adapter is generated",
-                    "THEN Adapter loads essential state files",
-                    "AND Adapter prepares state structure for LangGraph",
-                    "AND Adapter does not touch legacy workflow files"
-                  ]
-                },
-                {
-                  "name": "Build Workflow Graph from Behavior",
-                  "sequential_order": 5,
-                  "connector": "and",
-                  "users": [
-                    "Behavior Graph Builder"
-                  ],
-                  "story_type": "system",
-                  "acceptance_criteria": [
-                    "WHEN BehaviorGraphBuilder receives behavior configuration",
-                    "THEN Builder reads actions_workflow from behavior.json",
-                    "AND Builder creates nodes for each action in workflow order",
-                    "AND Builder creates edges based on next_action relationships",
-                    "AND Builder builds StateGraph with proper structure",
-                    "WHEN behavior.json specifies conditional branches",
-                    "THEN Builder creates decision nodes for routing",
-                    "AND Builder connects decision nodes to appropriate action nodes",
-                    "WHEN graph is built",
-                    "THEN Graph is ready for compilation with checkpointer",
-                    "AND Graph structure matches workflow definition"
-                  ]
-                },
-                {
-                  "name": "Handle Validate Rules Exceptions",
-                  "sequential_order": 6,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestHandleValidateRulesExceptions",
-                  "acceptance_criteria": [
-                    "WHEN Validation encounters exceptions",
-                    "THEN Action handles exceptions gracefully",
-                    "AND Action reports errors appropriately"
-                  ]
-                },
-                {
-                  "name": "Run All Scanners",
-                  "sequential_order": 7,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestRunAllScanners",
-                  "acceptance_criteria": [
-                    "WHEN All scanners need to run",
-                    "THEN Action runs all available scanners",
-                    "AND Scanners execute against target content"
-                  ]
-                },
-                {
-                  "name": "Run Scanners Against Test Code",
-                  "sequential_order": 8,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestRunScannersAgainstTestCode",
-                  "acceptance_criteria": [
-                    "WHEN Scanners need to run against test code",
-                    "THEN Action runs scanners against test code",
-                    "AND Test code violations are detected"
-                  ]
-                },
-                {
-                  "name": "Run Scanners Against Code",
-                  "sequential_order": 9,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestRunScannersAgainstCode",
-                  "acceptance_criteria": [
-                    "WHEN Scanners need to run against code",
-                    "THEN Action runs scanners against code",
-                    "AND Code violations are detected"
-                  ]
-                },
-                {
-                  "name": "Load Rules Collection",
-                  "sequential_order": 10,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestLoadRulesCollection",
-                  "acceptance_criteria": [
-                    "WHEN Rules collection needs to be loaded",
-                    "THEN Action loads rules collection",
-                    "AND Rules are available for validation"
-                  ]
-                },
-                {
-                  "name": "Find Rule By Name",
-                  "sequential_order": 11,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestFindRuleByName",
-                  "acceptance_criteria": [
-                    "WHEN Rule needs to be found by name",
-                    "THEN Action finds rule by name",
-                    "AND Rule is returned if found"
-                  ]
-                },
-                {
-                  "name": "Iterate Rules",
-                  "sequential_order": 12,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestIterateRules",
-                  "acceptance_criteria": [
-                    "WHEN Rules need to be iterated",
-                    "THEN Action iterates through all rules",
-                    "AND Each rule is processed"
-                  ]
-                },
-                {
-                  "name": "Load Rule From File",
-                  "sequential_order": 13,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestLoadRuleFromFile",
-                  "acceptance_criteria": [
-                    "WHEN Rule needs to be loaded from file",
-                    "THEN Action loads rule from file",
-                    "AND Rule configuration is parsed"
-                  ]
-                },
-                {
-                  "name": "Load Scanner For Rule",
-                  "sequential_order": 14,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestLoadScannerForRule",
-                  "acceptance_criteria": [
-                    "WHEN Scanner needs to be loaded for rule",
-                    "THEN Action loads scanner for rule",
-                    "AND Scanner is instantiated"
-                  ]
-                },
-                {
-                  "name": "Get Rule Properties",
-                  "sequential_order": 15,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestGetRuleProperties",
-                  "acceptance_criteria": [
-                    "WHEN Rule properties are needed",
-                    "THEN Action retrieves rule properties",
-                    "AND Properties include rule configuration"
-                  ]
-                },
-                {
-                  "name": "Create Validation Scope",
-                  "sequential_order": 16,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestCreateValidationScope",
-                  "acceptance_criteria": [
-                    "WHEN Validation scope needs to be created",
-                    "THEN Action creates validation scope from parameters",
-                    "AND Scope defines what to validate"
-                  ]
-                },
-                {
-                  "name": "Load Scanner Class",
-                  "sequential_order": 17,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestLoadScannerClass",
-                  "acceptance_criteria": [
-                    "WHEN Scanner class needs to be loaded",
-                    "THEN Action loads scanner class",
-                    "AND Scanner class is available for instantiation"
-                  ]
-                },
-                {
-                  "name": "Load Scanner Classes",
-                  "sequential_order": 18,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestLoadScannerClasses",
-                  "acceptance_criteria": [
-                    "WHEN Multiple scanner classes need to be loaded",
-                    "THEN Action loads all scanner classes",
-                    "AND Scanner classes are available"
-                  ]
-                },
-                {
-                  "name": "Perform Incremental Validation",
-                  "sequential_order": 19,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestPerformIncrementalValidation",
-                  "acceptance_criteria": [
-                    "WHEN Incremental validation is needed",
-                    "THEN Action performs incremental validation",
-                    "AND Only changed content is validated"
-                  ]
-                },
-                {
-                  "name": "Validation With All Parameter Combinations",
-                  "sequential_order": 20,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestValidationWithAllParameterCombinations",
-                  "acceptance_criteria": [
-                    "WHEN Validation runs with different parameter combinations",
-                    "THEN Action handles all parameter combinations",
-                    "AND Validation executes correctly for each combination"
-                  ]
-                },
-                {
-                  "name": "Inject Rules Into AI Chat Message",
-                  "sequential_order": 21,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestInjectRulesIntoAIChatMessage",
-                  "acceptance_criteria": [
-                    "WHEN Rules need to be injected into AI chat",
-                    "THEN Action injects rules into AI chat message",
-                    "AND Rules are available for AI processing"
-                  ]
-                },
-                {
-                  "name": "Example Story",
-                  "sequential_order": 22,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestExampleStory",
-                  "acceptance_criteria": [
-                    "WHEN Example story is tested",
-                    "THEN Example story executes correctly",
-                    "AND Example scenarios are validated"
-                  ]
-                },
-                {
-                  "name": "Another Story",
-                  "sequential_order": 23,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestAnotherStory",
-                  "acceptance_criteria": [
-                    "WHEN Another story is tested",
-                    "THEN Another story executes correctly",
-                    "AND Additional scenarios are validated"
-                  ]
-                }
-              ]
-            }
-          ]
         }
       ]
     },
@@ -1919,7 +1465,7 @@
           "sequential_order": 5.0,
           "domain_concepts": [
             {
-              "name": "Workflow",
+              "name": "LangGraph workflow",
               "responsibilities": [
                 {
                   "name": "Execute nodes in sequence",
@@ -2052,23 +1598,16 @@
               "name": "LangGraphRunner",
               "responsibilities": [
                 {
-                  "name": "Load workflow definition",
-                  "collaborators": [
-                    "Workflow",
-                    "Behavior"
-                  ]
-                },
-                {
                   "name": "Compile graph with checkpointer",
                   "collaborators": [
-                    "Workflow",
+                    "LangGraph workflow",
                     "Checkpoint"
                   ]
                 },
                 {
                   "name": "Execute workflow graph",
                   "collaborators": [
-                    "Workflow",
+                    "LangGraph workflow",
                     "ActionNode"
                   ]
                 },
@@ -2082,7 +1621,58 @@
                   "name": "Resume from checkpoint",
                   "collaborators": [
                     "Checkpoint",
-                    "Workflow"
+                    "LangGraph workflow"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "LangGraph State Container",
+              "responsibilities": [
+                {
+                  "name": "Contain story graph",
+                  "collaborators": [
+                    "Story Graph"
+                  ]
+                },
+                {
+                  "name": "Contain clarification data",
+                  "collaborators": [
+                    "Key Questions",
+                    "Evidence"
+                  ]
+                },
+                {
+                  "name": "Contain strategy data",
+                  "collaborators": [
+                    "Decision Criteria",
+                    "Assumptions"
+                  ]
+                },
+                {
+                  "name": "Contain context files",
+                  "collaborators": [
+                    "Context"
+                  ]
+                },
+                {
+                  "name": "Contain files dictionary",
+                  "collaborators": [
+                    "Source Files",
+                    "Test Files"
+                  ]
+                },
+                {
+                  "name": "Contain workspace directory",
+                  "collaborators": [
+                    "Workspace"
+                  ]
+                },
+                {
+                  "name": "Contain workflow execution state",
+                  "collaborators": [
+                    "Action",
+                    "Instructions"
                   ]
                 }
               ]
@@ -2099,17 +1689,111 @@
                   "sequential_order": 1,
                   "connector": null,
                   "users": [
-                    "Human"
+                    "Bot"
                   ],
                   "story_type": "user",
                   "acceptance_criteria": [
-                    "WHEN Human executes CLI command with --workflow flag",
-                    "THEN CLI detects --workflow parameter",
-                    "AND CLI routes to LangGraphRunner instead of default workflow",
+                    "WHEN Bot receives CLI command with --workflow flag",
+                    "THEN Bot detects --workflow parameter",
+                    "AND Bot routes to LangGraphRunner instead of default workflow",
                     "AND Default workflow code path remains untouched",
                     "WHEN --workflow flag is not present",
-                    "THEN CLI uses default workflow path",
+                    "THEN Bot uses default workflow path",
                     "AND LangGraph code is not invoked"
+                  ]
+                },
+                {
+                  "name": "Collect Action Instructions",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": [
+                    "Node"
+                  ],
+                  "story_type": "system",
+                  "acceptance_criteria": [
+                    "WHEN Node executes action",
+                    "THEN Node collects instructions from action",
+                    "AND Instructions are prepared for AI submission",
+                    "AND Action context is included in instructions"
+                  ]
+                },
+                {
+                  "name": "Submit To AI and Continue",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": [
+                    "Node"
+                  ],
+                  "story_type": "system",
+                  "acceptance_criteria": [
+                    "WHEN Node has collected action instructions",
+                    "THEN Node submits instructions to AI",
+                    "AND Node continues workflow execution automatically",
+                    "AND Checkpoint is saved after AI response"
+                  ]
+                },
+                {
+                  "name": "Confirm AI Action Response",
+                  "sequential_order": 4,
+                  "connector": "and",
+                  "users": [
+                    "Node"
+                  ],
+                  "story_type": "system",
+                  "acceptance_criteria": [
+                    "WHEN AI returns response to action",
+                    "THEN Node confirms AI response",
+                    "AND Node processes response and updates state",
+                    "AND Workflow continues to next step"
+                  ]
+                },
+                {
+                  "name": "Return to chat and pause for human-in-the-loop",
+                  "sequential_order": 5,
+                  "connector": "and",
+                  "users": [
+                    "Node"
+                  ],
+                  "story_type": "system",
+                  "acceptance_criteria": [
+                    "WHEN Node executes in interactive mode",
+                    "THEN Node returns instructions to chat",
+                    "AND Workflow pauses for human input",
+                    "AND Checkpoint is saved at pause point",
+                    "AND Human can review and respond before workflow continues"
+                  ]
+                },
+                {
+                  "name": "Return to Chat and Pause",
+                  "sequential_order": 6,
+                  "connector": "and",
+                  "users": [
+                    "Node"
+                  ],
+                  "story_type": "system",
+                  "acceptance_criteria": [
+                    "WHEN Node needs to pause workflow",
+                    "THEN Node returns control to chat interface",
+                    "AND Workflow pauses at current checkpoint",
+                    "AND State is preserved in checkpoint"
+                  ]
+                },
+                {
+                  "name": "Resume Workflow from Checkpoint",
+                  "sequential_order": 7,
+                  "connector": "and",
+                  "users": [
+                    "Node"
+                  ],
+                  "story_type": "system",
+                  "acceptance_criteria": [
+                    "WHEN Workflow has been paused",
+                    "THEN Node resumes workflow from checkpoint",
+                    "AND Node restores state from checkpoint",
+                    "AND Workflow continues from pause point",
+                    "WHEN Human provides response after pause",
+                    "THEN Node uses response to continue workflow",
+                    "AND Workflow proceeds with updated state"
                   ]
                 },
                 {
@@ -2134,7 +1818,7 @@
                 },
                 {
                   "name": "Manage Checkpoints",
-                  "sequential_order": 3,
+                  "sequential_order": 9,
                   "connector": "and",
                   "users": [
                     "LangGraphRunner"
@@ -4260,11 +3944,6 @@
       "name": "LangGraph Orchestration",
       "priority": 9,
       "stories": [
-        "Generate Base Action Node",
-        "Generate Behavior Graph Builder",
-        "Generate LangGraph Runner",
-        "Generate State Adapter",
-        "Build Workflow Graph from Behavior",
         "Route to LangGraph Workflow",
         "Execute Workflow Nodes",
         "Manage Checkpoints",

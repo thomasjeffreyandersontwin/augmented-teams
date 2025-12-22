@@ -18,15 +18,9 @@ def _load_domain_concepts(input_path: Path) -> Dict[str, Dict]:
     domain_concepts = {}
     for epic in story_graph.get('epics', []):
         epic_name = epic.get('name', '')
-        # Concepts at epic level - assign to epic name as namespace (or first sub-epic if exists)
-        epic_namespace = None
+        # Concepts at epic level - always use epic name as namespace
+        epic_namespace = epic_name
         sub_epics = epic.get('sub_epics', [])
-        if sub_epics:
-            # Use first sub-epic as namespace for epic-level concepts
-            epic_namespace = sub_epics[0].get('name', epic_name)
-        else:
-            # No sub-epics, use epic name as namespace
-            epic_namespace = epic_name
         
         for concept in epic.get('domain_concepts', []):
             name = concept['name']
