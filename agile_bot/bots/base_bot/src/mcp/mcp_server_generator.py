@@ -1,11 +1,10 @@
 from pathlib import Path
 import json
 import logging
-from fastmcp import FastMCP
 from typing import Dict, Any
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.bot.bot import Bot
-from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
+from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory, get_workspace_directory
 from agile_bot.bots.base_bot.src.mcp.mcp_code_generator import MCPCodeGenerator
 from agile_bot.bots.base_bot.src.mcp.mcp_config_generator import MCPConfigGenerator
 
@@ -38,18 +37,16 @@ class MCPServerGenerator:
                 independent_actions.append(item.name)
         return independent_actions
 
-    def create_server_instance(self) -> FastMCP:
-        if not self.config_path.exists():
-            raise FileNotFoundError(f'Bot Config not found at {self.config_path}')
-        try:
-            bot_config = read_json_file(self.config_path)
-        except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(f'Malformed Bot Config at {self.config_path}: {e.msg}', e.doc, e.pos)
-        server_name = self.bot_name
-        mcp_server = FastMCP(server_name)
-        mcp_server.bot_config = bot_config
-        self.bot = Bot(bot_name=self.bot_name, bot_directory=self.bot_directory, config_path=self.config_path)
-        return mcp_server
+    def _ensure_bot_initialized(self) -> None:
+        """Ensure bot instance is initialized. Used by methods that need bot access."""
+        if self.bot is None:
+            if not self.config_path.exists():
+                raise FileNotFoundError(f'Bot Config not found at {self.config_path}')
+            try:
+                read_json_file(self.config_path)
+            except json.JSONDecodeError as e:
+                raise json.JSONDecodeError(f'Malformed Bot Config at {self.config_path}: {e.msg}', e.doc, e.pos)
+            self.bot = Bot(bot_name=self.bot_name, bot_directory=self.bot_directory, config_path=self.config_path)
 
     def _get_bot_behaviors(self) -> list:
         if self.bot and hasattr(self.bot, 'behaviors'):
@@ -57,14 +54,6 @@ class MCPServerGenerator:
             if hasattr(behaviors_collection, 'names'):
                 return behaviors_collection.names
         return []
-
-    def register_all_tools(self, mcp_server: FastMCP):
-        """Deprecated: Tools are now statically generated at code generation time.
-        
-        This method is kept for backward compatibility but does nothing.
-        The MCP server file is generated with static tool registrations via MCPCodeGenerator.
-        """
-        pass
 
     def _infer_working_dir_from_parameters(self, parameters: dict) -> Path:
         return get_workspace_directory()
@@ -121,26 +110,22 @@ class MCPServerGenerator:
         return artifacts
 
     def _load_trigger_words_from_behavior_folder(self, behavior: str, action: str=None) -> list:
-        behavior_folder = self.bot_directory / 'behaviors' / behavior
-        if not behavior_folder.exists():
+        self._ensure_bot_initialized()
+        behavior_obj = self.bot.behaviors.find_by_name(behavior)
+        if behavior_obj is None:
             return []
-        behavior_file = behavior_folder / 'behavior.json'
-        if behavior_file.exists():
-            try:
-                behavior_data = read_json_file(behavior_file)
-                trigger_words = behavior_data.get('trigger_words', {})
-                return trigger_words.get('patterns', [])
-            except Exception as e:
-                logging.getLogger(__name__).debug(f'Failed to load trigger words from {behavior_file}: {e}')
-                raise
+        trigger_words = behavior_obj.trigger_words
+        if isinstance(trigger_words, dict):
+            return trigger_words.get('patterns', [])
+        if isinstance(trigger_words, list):
+            return trigger_words
         return []
 
     def generate_bot_config_file(self, behaviors: list) -> Path:
         return self.config_generator.generate_bot_config_file(behaviors)
 
     def generate_server_entry_point(self) -> Path:
-        if self.bot is None:
-            self.create_server_instance()
+        self._ensure_bot_initialized()
         behaviors = self._get_bot_behaviors()
         return self.code_generator.generate_server_entry_point(behaviors, self.bot)
 
@@ -148,14 +133,8 @@ class MCPServerGenerator:
         return self.config_generator.generate_cursor_mcp_config()
 
     def discover_behaviors_from_folders(self) -> list:
-        behaviors_dir = self.bot_directory / 'behaviors'
-        if not behaviors_dir.exists():
-            return []
-        behaviors = []
-        for item in behaviors_dir.iterdir():
-            if item.is_dir() and (not item.name.startswith('_')):
-                behaviors.append(item.name)
-        return sorted(behaviors)
+        self._ensure_bot_initialized()
+        return self._get_bot_behaviors()
 
     def generate_server(self, behaviors: list=None) -> Dict[str, Path]:
         if behaviors is None:
@@ -166,8 +145,7 @@ class MCPServerGenerator:
         return {'bot_config': bot_config_path, 'server_entry': server_entry_path, 'mcp_config': mcp_config}
 
     def generate_awareness_files(self) -> Dict[str, Path]:
-        if self.bot is None:
-            self.create_server_instance()
+        self._ensure_bot_initialized()
         rules_path = self.config_generator.generate_workspace_rules_file(self.discover_behaviors_from_folders, self._load_behavior_trigger_info)
         return {'rules_file': rules_path}
 
@@ -179,13 +157,13 @@ class MCPServerGenerator:
         return []
 
     def _load_behavior_trigger_info(self, behavior: str) -> dict:
-        behavior_file = self.bot_directory / 'behaviors' / behavior / 'behavior.json'
+        self._ensure_bot_initialized()
+        behavior_obj = self.bot.behaviors.find_by_name(behavior)
+        if behavior_obj is None:
+            return None
         try:
-            if not behavior_file.exists():
-                return None
-            behavior_data = read_json_file(behavior_file)
-            description = behavior_data.get('description', '')
-            trigger_words = self._extract_trigger_words(behavior_data.get('trigger_words', {}))
+            description = behavior_obj.description
+            trigger_words = self._extract_trigger_words(behavior_obj.trigger_words)
             if not trigger_words:
                 trigger_words = self._load_trigger_words_from_behavior_folder(behavior=behavior, action=None)
             return {'description': description, 'trigger_words': trigger_words}

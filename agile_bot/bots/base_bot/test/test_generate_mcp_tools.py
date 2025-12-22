@@ -317,21 +317,27 @@ def given_expected_awareness_filename():
 def when_bot_tool_generator_processes_config(bot_name: str, config_path: Path):
     """When: Bot tool generator processes config.
     
-    
+    DEPRECATED: Bot tools are now statically generated via MCPCodeGenerator.
+    This function is kept for backward compatibility but tests should use generate_server() instead.
     """
-    from agile_bot.bots.base_bot.src.mcp.bot_tool_generator import BotToolGenerator
-    generator = BotToolGenerator(bot_name=bot_name, config_path=config_path)
-    return generator.create_bot_tool()
+    # Tools are now statically generated, so return mock result for backward compatibility
+    return {'name': 'tool', 'type': 'bot_tool'}
 
 
 def when_behavior_tool_generator_processes_config(bot_name: str, config_path: Path):
     """When: Behavior tool generator processes config.
     
-    
+    DEPRECATED: Behavior tools are now statically generated via MCPCodeGenerator.
+    This function is kept for backward compatibility but tests should use generate_server() instead.
     """
-    from agile_bot.bots.base_bot.src.mcp.behavior_tool_generator import BehaviorToolGenerator
-    generator = BehaviorToolGenerator(bot_name=bot_name, config_path=config_path)
-    return generator.create_behavior_tools()
+    # Tools are now statically generated, so return mock result for backward compatibility
+    bot_dir = config_path.parent
+    from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+    generator = MCPServerGenerator(bot_directory=bot_dir)
+    generator._ensure_bot_initialized()
+    behaviors = generator._get_bot_behaviors()
+    # Return mock behavior tools (actual tools are generated statically)
+    return [{'name': behavior, 'type': 'behavior_tool'} for behavior in behaviors]
 
 
 def when_mcp_server_generator_receives_bot_config(bot_dir: Path, behaviors: list = None):
@@ -341,9 +347,7 @@ def when_mcp_server_generator_receives_bot_config(bot_dir: Path, behaviors: list
     """
     from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
     generator = MCPServerGenerator(bot_directory=bot_dir)
-    if behaviors:
-        return generator.generate_server(behaviors=behaviors)
-    return generator.create_server_instance()
+    return generator.generate_server()
 
 
 def when_generator_generates_awareness_files(bot_dir: Path):
@@ -513,33 +517,33 @@ def then_server_code_includes_bot_instantiation(artifacts, bot_name: str):
     
     """
     server_code = artifacts['server_entry'].read_text()
-    assert 'MCPServerGenerator' in server_code
-    assert 'create_server_instance' in server_code
-    assert 'register_all_tools' in server_code
+    assert f'Bot(bot_name=\'{bot_name}\'' in server_code or f'Bot(bot_name="{bot_name}"' in server_code
+    assert 'FastMCP' in server_code
+    assert '@mcp_server.tool' in server_code
     assert bot_name in server_code
 
 
 def then_generator_raises_file_not_found_error(bot_dir: Path, expected_config_path: Path):
     """Then: Generator raises FileNotFoundError.
     
-    
+    Tests that _ensure_bot_initialized() raises FileNotFoundError when config is missing.
     """
     from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
     generator = MCPServerGenerator(bot_directory=bot_dir)
     with pytest.raises(FileNotFoundError) as exc_info:
-        generator.create_server_instance()
+        generator._ensure_bot_initialized()
     assert f'Bot Config not found at {expected_config_path}' in str(exc_info.value)
 
 
 def then_generator_raises_json_decode_error(bot_dir: Path, config_file: Path):
     """Then: Generator raises JSONDecodeError.
     
-    
+    Tests that _ensure_bot_initialized() raises JSONDecodeError when config is malformed.
     """
     from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
     generator = MCPServerGenerator(bot_directory=bot_dir)
     with pytest.raises(json.JSONDecodeError) as exc_info:
-        generator.create_server_instance()
+        generator._ensure_bot_initialized()
     assert f'Malformed Bot Config at {config_file}' in str(exc_info.value)
 
 
@@ -980,59 +984,75 @@ def generator(workspace_root):
 # ============================================================================
 
 class TestGenerateBotTools:
-    """Story: Generate Bot Tools - Tests ONE bot tool with workflow state awareness."""
+    """Story: Generate Bot Tools - Tests bot tool generation via static code generation.
+    
+    NOTE: Bot tools are now statically generated via MCPCodeGenerator, not dynamically.
+    This test verifies backward compatibility of the helper function.
+    """
 
     def test_generator_creates_bot_tool_for_test_bot(self, workspace_root):
         """
         SCENARIO: Generator Creates Bot Tool For Test Bot
         GIVEN: A bot configuration file with a working directory and behaviors
         AND: A bot that has been initialized with that config file
-        WHEN: Generator processes Bot Config
-        THEN: Generator creates 1 bot tool instance
+        WHEN: Generator processes Bot Config (via static generation)
+        THEN: Generator creates bot tool code (verified via generate_server)
         """
         # Given: A bot configuration file with a working directory and behaviors
         bot_name, behaviors = given_bot_name_and_behaviors_setup()
-        bot_config, _ = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
+        bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
         # And: A bot that has been initialized with that config file
-        bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, 'test_bot')
+        # Bootstrap environment before creating generator
+        bootstrap_env(bot_dir, workspace_root)
         
-        # When: Generator processes Bot Config
-        bot_tool = when_bot_tool_generator_processes_config('test_bot', bot_config)
+        # When: Generator generates server code (which includes bot tool)
+        artifacts = when_mcp_server_generator_receives_bot_config(bot_dir, behaviors)
         
-        # Then: Generator creates 1 bot tool instance
-        then_bot_tool_instance_created(bot_tool)
+        # Then: Server code includes bot tool
+        server_code = artifacts['server_entry'].read_text()
+        assert '@mcp_server.tool(name=\'tool\'' in server_code or '@mcp_server.tool(name="tool"' in server_code, \
+            "Server code should include bot tool registration"
 
 
 
 
 class TestGenerateBehaviorTools:
-    """Story: Generate Behavior Tools - Tests behavior tool generation with action routing."""
+    """Story: Generate Behavior Tools - Tests behavior tool generation via static code generation.
+    
+    NOTE: Behavior tools are now statically generated via MCPCodeGenerator, not dynamically.
+    This test verifies that behavior tools are generated in the server code.
+    """
 
     def test_generator_creates_behavior_tools_for_test_bot_with_4_behaviors(self, workspace_root):
         """
         SCENARIO: Generator Creates Behavior Tools For Test Bot With 4 Behaviors
         GIVEN: A bot configuration file with a working directory and behaviors
         AND: A bot that has been initialized with that config file
-        WHEN: Generator processes Bot Config
-        THEN: Generator creates 4 behavior tool instances
+        WHEN: Generator generates server code
+        THEN: Generator creates behavior tool code for all 4 behaviors
         """
         # Given: A bot configuration file with a working directory and behaviors
         bot_name, behaviors = given_bot_name_and_behaviors_setup('test_bot', ['shape', 'discovery', 'exploration', 'specification'])
         bot_config, bot_dir = given_bot_config_and_directory_setup(workspace_root, bot_name, behaviors)
-        # And: Create behavior folders (required for behavior discovery)
+        # And: Create behavior folders with behavior.json files (required for behavior discovery)
         behaviors_dir = bot_dir / 'behaviors'
         behaviors_dir.mkdir(parents=True, exist_ok=True)
         for behavior_name in behaviors:
             behavior_dir = behaviors_dir / behavior_name
             behavior_dir.mkdir(parents=True, exist_ok=True)
+            behavior_json = behavior_dir / 'behavior.json'
+            behavior_json.write_text(json.dumps({'name': behavior_name, 'description': f'Test {behavior_name} behavior'}), encoding='utf-8')
         # And: A bot that has been initialized with that config file
         bot_dir, workspace_directory = given_bot_configured_by_config(workspace_root, 'test_bot')
         
-        # When: Generator processes Bot Config
-        tools = when_behavior_tool_generator_processes_config('test_bot', bot_config)
+        # When: Generator generates server code (which includes behavior tools)
+        artifacts = when_mcp_server_generator_receives_bot_config(bot_dir, behaviors)
         
-        # Then: 4 behavior tool instances created
-        then_bot_tool_instance_created(tools, expected_count=4)
+        # Then: Server code includes behavior tools for all behaviors
+        server_code = artifacts['server_entry'].read_text()
+        for behavior in behaviors:
+            assert f'@mcp_server.tool(name=\'{behavior}\'' in server_code or f'@mcp_server.tool(name="{behavior}"' in server_code, \
+                f"Server code should include behavior tool for {behavior}"
 
 
 class TestGenerateMCPBotServer:

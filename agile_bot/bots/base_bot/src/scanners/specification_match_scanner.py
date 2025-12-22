@@ -90,25 +90,23 @@ class SpecificationMatchScanner(TestScanner):
         
         line_number = node.lineno if hasattr(node, 'lineno') else None
         
-        if content:
-            return self._create_violation_with_snippet(
-                rule_obj=rule_obj,
-                violation_message=message,
-                file_path=file_path,
-                line_number=line_number,
-                severity=severity,
-                content=content,
-                ast_node=node,
-                max_lines=5
-            )
-        else:
-            return Violation(
-                rule=rule_obj,
-                violation_message=message,
-                location=str(file_path),
-                line_number=line_number,
-                severity=severity
-            ).to_dict()
+        violation_dict = Violation(
+            rule=rule_obj,
+            violation_message=message,
+            location=str(file_path),
+            line_number=line_number,
+            severity=severity
+        ).to_dict()
+        
+        # Add snippet if content is available
+        if content and line_number:
+            lines = content.split('\n')
+            start_line = max(0, line_number - 2)
+            end_line = min(len(lines), line_number + 3)
+            snippet_lines = lines[start_line:end_line]
+            violation_dict['snippet'] = '\n'.join(snippet_lines)
+        
+        return violation_dict
     
     def _check_variable_names(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

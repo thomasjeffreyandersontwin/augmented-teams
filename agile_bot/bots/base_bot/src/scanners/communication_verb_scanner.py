@@ -3,18 +3,6 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
 
-try:
-    import spacy
-    SPACY_AVAILABLE = True
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        nlp = None
-        SPACY_AVAILABLE = False
-except ImportError:
-    SPACY_AVAILABLE = False
-    nlp = None
-
 
 class CommunicationVerbScanner(StoryScanner):
     
@@ -62,23 +50,6 @@ class CommunicationVerbScanner(StoryScanner):
                     severity='error'
                 ).to_dict()
         
-        if SPACY_AVAILABLE and nlp is not None:
-            try:
-                doc = nlp(name)
-                tokens = [token for token in doc if not token.is_punct]
-                
-                for token in tokens:
-                    if token.lemma_.lower() in communication_verbs:
-                        location = node.map_location()
-                        return Violation(
-                            rule=rule_obj,
-                            violation_message=f'{node_type.capitalize()} name "{name}" uses communication verb "{token.text}" - use outcome verbs instead (e.g., "Creates Animation" not "Showing Animation")',
-                            location=location,
-                            severity='error'
-                        ).to_dict()
-            except Exception as e:
-                logger.debug(f"Error in scanner: {e}")
-        
         return None
     
     def _check_enablement_verbs(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
@@ -96,23 +67,6 @@ class CommunicationVerbScanner(StoryScanner):
                     location=location,
                     severity='error'
                 ).to_dict()
-        
-        if SPACY_AVAILABLE and nlp is not None:
-            try:
-                doc = nlp(name)
-                tokens = [token for token in doc if not token.is_punct]
-                
-                for token in tokens:
-                    if token.lemma_.lower() in enablement_verbs:
-                        location = node.map_location()
-                        return Violation(
-                            rule=rule_obj,
-                            violation_message=f'{node_type.capitalize()} name "{name}" uses enablement verb "{token.text}" - use outcome verbs instead (e.g., "Creates Configuration" not "Providing Configuration")',
-                            location=location,
-                            severity='error'
-                        ).to_dict()
-            except Exception as e:
-                logger.debug(f"Error in scanner: {e}")
         
         return None
 

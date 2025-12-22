@@ -3471,7 +3471,7 @@ class TestRunAllScanners:
         (
             'agile_bot.bots.base_bot.src.actions.validate.scanners.active_language_scanner.ActiveLanguageScanner',
             'shape',
-            {'epics': [{'name': 'Places Order', 'sub_epics': [{'name': 'Payment Processing'}]}]},  # Capability noun
+            {'epics': [{'name': 'Order Placement', 'sub_epics': [{'name': 'Payment Processing'}]}]},  # Capability noun
             'uses capability noun'
         ),
         (
@@ -5146,7 +5146,7 @@ class TestScopeBasedParameterHandling:
         parameters = {'force_full': True}
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
-        assert context.force_full is True
+        assert context.all_files is True
     
     def test_skip_cross_file_flag_disables_cross_file_scan(self, bot_directory, workspace_directory):
         from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
@@ -5191,7 +5191,7 @@ class TestValidationWithAllParameterCombinations:
         parameters = {'force_full': True}
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
-        assert context.force_full is True
+        assert context.all_files is True
         assert context.skip_cross_file is False
     
     def test_validation_with_skip_cross_file_only(self, bot_directory, workspace_directory):
@@ -5210,7 +5210,7 @@ class TestValidationWithAllParameterCombinations:
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
         assert context.skip_cross_file is True
-        assert context.force_full is False
+        assert context.all_files is False
     
     def test_validation_with_both_flags(self, bot_directory, workspace_directory):
         from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
@@ -5227,7 +5227,7 @@ class TestValidationWithAllParameterCombinations:
         parameters = {'force_full': True, 'skip_cross_file': True}
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
-        assert context.force_full is True
+        assert context.all_files is True
         assert context.skip_cross_file is True
     
     def test_validation_with_scope_type_all(self, bot_directory, workspace_directory):
@@ -5308,7 +5308,7 @@ class TestValidationWithAllParameterCombinations:
         scope = ValidationScope(parameters, bot_paths, 'code')
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
-        assert context.force_full is True
+        assert context.all_files is True
         assert 'exclude' in parameters['scope']
     
     def test_validation_with_all_parameters_combined(self, bot_directory, workspace_directory):
@@ -5336,7 +5336,7 @@ class TestValidationWithAllParameterCombinations:
         scope = ValidationScope(parameters, bot_paths, 'code')
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
-        assert context.force_full is True
+        assert context.all_files is True
         assert context.skip_cross_file is True
         assert 'exclude' in parameters['scope']
         assert len(parameters['scope']['exclude']) == 2
@@ -5357,7 +5357,7 @@ class TestValidationWithAllParameterCombinations:
         parameters = {}
         context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
         
-        assert context.force_full is False
+        assert context.all_files is False
         assert context.skip_cross_file is False
 
 

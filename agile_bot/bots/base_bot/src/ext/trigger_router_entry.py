@@ -1,7 +1,7 @@
 import json
 import sys
 from pathlib import Path
-from agile_bot.bots.base_bot.src.cli.trigger_router import TriggerRouter
+from agile_bot.bots.base_bot.src.ext.trigger_router import TriggerRouter
 from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory, get_workspace_directory
 _here = Path(__file__).resolve()
 _workspace_root = None

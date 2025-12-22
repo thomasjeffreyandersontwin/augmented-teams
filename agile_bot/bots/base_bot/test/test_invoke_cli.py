@@ -183,7 +183,7 @@ class TriggerRouterTestHelper:
             # Also patch in bot_paths module in case it has a cached import
             from agile_bot.bots.base_bot.src.bot import bot_paths as bot_paths_module
             with unittest.mock.patch.object(bot_paths_module, 'get_python_workspace_root', return_value=python_workspace_root):
-                from agile_bot.bots.base_bot.src.cli.trigger_router import TriggerRouter
+                from agile_bot.bots.base_bot.src.ext.trigger_router import TriggerRouter
                 # Use bot_directory and workspace_directory to create router (router will use BotPaths internally)
                 # BotPaths will always use get_python_workspace_root() which is patched in tests
                 router = TriggerRouter(
@@ -733,7 +733,7 @@ class TestCLIExceptions:
 # ============================================================================
 
 from unittest.mock import Mock
-from agile_bot.bots.base_bot.src.bot.trigger_words import TriggerWords
+from agile_bot.bots.base_bot.src.ext.trigger_words import TriggerWords
 from agile_bot.bots.base_bot.src.bot.behavior import Behavior  # BehaviorConfig merged into Behavior
 
 

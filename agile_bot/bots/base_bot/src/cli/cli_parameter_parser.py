@@ -23,11 +23,11 @@ class CliParameterParser:
             if ctx_arg not in remaining:
                 remaining.append(ctx_arg)
         
-        if args.skip_cross_file:
+        if getattr(args, 'skip_cross_file', False):
             remaining.append('--skip-cross-file')
-        if args.all_files:
+        if getattr(args, 'all_files', False):
             remaining.append('--all-files')
-        if args.scope:
+        if getattr(args, 'scope', None):
             remaining.append(f'--scope={args.scope}')
         
         return remaining
@@ -65,13 +65,13 @@ class CliParameterParser:
         CliParameterParser._process_context_args(context_args, params)
         
         # Overlay explicit named flags
-        if args.user_message:
+        if getattr(args, 'user_message', None):
             params['user_message'] = args.user_message
-        if args.skip_cross_file:
+        if getattr(args, 'skip_cross_file', False):
             params['skip_cross_file'] = True
-        if args.all_files:
+        if getattr(args, 'all_files', False):
             params['all_files'] = True
-        if args.scope:
+        if getattr(args, 'scope', None):
             params['scope'] = args.scope
         
         params = CliParameterParser._parse_json_parameters(params)

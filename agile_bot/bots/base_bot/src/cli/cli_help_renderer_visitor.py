@@ -1,12 +1,41 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from agile_bot.bots.base_bot.src.generator.visitor import Visitor
-from agile_bot.bots.base_bot.src.cli.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.generator.action_data_collector import ActionDataCollector
+from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
+from agile_bot.bots.base_bot.src.cli.formatter import CliTerminalFormatter
 
-class CliHelpVisitor(Visitor):
+class CliHelpRendererVisitor(Visitor):
     
-    def __init__(self, cli_script_path: str, formatter):
+    def __init__(self, cli_script_path: str, bot=None):
+        super().__init__(bot=bot)
         self.cli_script_path = cli_script_path
-        self.formatter = formatter
+        self._formatter: Optional[CliTerminalFormatter] = None
+        self._description_extractor: Optional[DescriptionExtractor] = None
+        self._data_collector: Optional[ActionDataCollector] = None
+    
+    @property
+    def formatter(self) -> CliTerminalFormatter:
+        if self._formatter is None:
+            self._formatter = CliTerminalFormatter()
+        return self._formatter
+    
+    @property
+    def description_extractor(self) -> DescriptionExtractor:
+        if self._description_extractor is None:
+            self._description_extractor = DescriptionExtractor(self.bot_name, self.bot_directory, self.formatter)
+        return self._description_extractor
+    
+    @property
+    def data_collector(self) -> ActionDataCollector:
+        if self._data_collector is None:
+            self._data_collector = ActionDataCollector(
+                bot=self.bot,
+                bot_name=self.bot_name,
+                bot_directory=self.bot_directory,
+                description_extractor=self.description_extractor
+            )
+        return self._data_collector
     
     def visit_header(self, bot_name: str) -> None:
         print(f"\n{self.formatter.format_directive('**PLEASE SHOW THIS OUTPUT TO THE USER**')}\n")
@@ -58,3 +87,4 @@ class CliHelpVisitor(Visitor):
     
     def visit_footer(self) -> None:
         pass
+

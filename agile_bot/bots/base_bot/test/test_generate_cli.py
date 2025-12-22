@@ -93,15 +93,25 @@ def given_cursor_command_files_exist(bot_name: str, behaviors: list) -> None:
 
 def when_generator_generates_cursor_commands(workspace_root: Path, bot_dir: Path, bot_name: str, cli_script_path: Path, behaviors: list) -> dict:
     """When: Generator generates cursor commands."""
-    from agile_bot.bots.base_bot.src.cli.cursor_command_generator import CursorCommandGenerator
+    from agile_bot.bots.base_bot.src.cli.cursor.command_generator import CursorCommandGenerator
+    from agile_bot.bots.base_bot.src.bot.bot import Bot
+    # Bootstrap environment before creating Bot
+    bootstrap_env(bot_dir, workspace_root)
     generator = CursorCommandGenerator(workspace_root, bot_dir, bot_name)
-    return generator.generate_cursor_commands(cli_script_path, behaviors)
+    config_path = bot_dir / 'bot_config.json'
+    bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=config_path)
+    return generator.generate_cursor_commands(cli_script_path, bot)
 
 def when_generator_updates_registry(workspace_root: Path, bot_dir: Path, bot_name: str, cli_script_path: Path, behaviors: list) -> tuple:
     """When: Generator updates registry."""
-    from agile_bot.bots.base_bot.src.cli.cursor_command_generator import CursorCommandGenerator
+    from agile_bot.bots.base_bot.src.cli.cursor.command_generator import CursorCommandGenerator
+    from agile_bot.bots.base_bot.src.bot.bot import Bot
+    # Bootstrap environment before creating Bot
+    bootstrap_env(bot_dir, workspace_root)
     generator = CursorCommandGenerator(workspace_root, bot_dir, bot_name)
-    generator.generate_cursor_commands(cli_script_path, behaviors)
+    config_path = bot_dir / 'bot_config.json'
+    bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=config_path)
+    generator.generate_cursor_commands(cli_script_path, bot)
     registry_path = generator.update_bot_registry(cli_script_path)
     return registry_path
 
@@ -295,7 +305,7 @@ class TestGenerateHelp:
         # Example 2: Single behavior with actions
         (['shape'], 'actions', ['clarify', 'strategy', 'build', 'validate', 'render']),
         # Example 3: Action parameters for clarify
-        (['shape'], 'action_parameters', {'action': 'clarify', 'params': ['--key_questions_answered', '--evidence_provided']}),
+        (['shape'], 'action_parameters', {'action': 'clarify', 'params': ['--key-questions-answered', '--evidence-provided']}),
         # Example 4: Action parameters for build
         (['shape'], 'action_parameters', {'action': 'build', 'params': ['--scope']}),
     ])

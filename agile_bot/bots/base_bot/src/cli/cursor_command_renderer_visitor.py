@@ -1,15 +1,44 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from agile_bot.bots.base_bot.src.generator.visitor import Visitor
-from agile_bot.bots.base_bot.src.cli.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.generator.action_data_collector import ActionDataCollector
+from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
+from agile_bot.bots.base_bot.src.cli.formatter import CliTerminalFormatter
 
-class CursorCommandVisitor(Visitor):
+class CursorCommandRendererVisitor(Visitor):
     
-    def __init__(self, python_command: str, bot_name: str, behavior_name: str, output_lines: List[str]):
+    def __init__(self, python_command: str, behavior_name: str, output_lines: List[str], bot=None):
+        super().__init__(bot=bot)
         self.python_command = python_command
-        self.bot_name = bot_name
         self.behavior_name = behavior_name
         self.output_lines = output_lines
+        self._formatter: Optional[CliTerminalFormatter] = None
+        self._description_extractor: Optional[DescriptionExtractor] = None
+        self._data_collector: Optional[ActionDataCollector] = None
+    
+    @property
+    def formatter(self) -> CliTerminalFormatter:
+        if self._formatter is None:
+            self._formatter = CliTerminalFormatter()
+        return self._formatter
+    
+    @property
+    def description_extractor(self) -> DescriptionExtractor:
+        if self._description_extractor is None:
+            self._description_extractor = DescriptionExtractor(self.bot_name, self.bot_directory, self.formatter)
+        return self._description_extractor
+    
+    @property
+    def data_collector(self) -> ActionDataCollector:
+        if self._data_collector is None:
+            self._data_collector = ActionDataCollector(
+                bot=self.bot,
+                bot_name=self.bot_name,
+                bot_directory=self.bot_directory,
+                description_extractor=self.description_extractor
+            )
+        return self._data_collector
     
     def visit_header(self, bot_name: str) -> None:
         pass
@@ -84,3 +113,4 @@ class CursorCommandVisitor(Visitor):
             "  # Work on multiple stories:",
             f"  {self.python_command} --behavior {self.behavior_name} --action build --scope \"{{'type': 'story', 'value': ['Story 1', 'Story 2']}}\"",
         ])
+

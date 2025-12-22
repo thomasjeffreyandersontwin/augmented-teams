@@ -81,6 +81,14 @@ class ValidateActionContext(ScopeActionContext):
     background: Optional[bool] = None
     skip_cross_file: bool = False
     all_files: bool = False
+    force_full: bool = False  # Alias for all_files for backward compatibility
+    
+    def __post_init__(self):
+        # Sync force_full and all_files - they mean the same thing
+        if self.force_full:
+            object.__setattr__(self, 'all_files', True)
+        elif self.all_files:
+            object.__setattr__(self, 'force_full', True)
 
 
 @dataclass

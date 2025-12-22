@@ -83,11 +83,14 @@ class ValidationContext:
                     skiprule=scope_dict.get('skiprule', [])
                 )
         
+        # Handle both all_files and force_full (backward compatibility)
+        all_files = parameters.get('all_files', False) or parameters.get('force_full', False)
+        
         context = ValidateActionContext(
             scope=scope,
             background=parameters.get('background'),
             skip_cross_file=parameters.get('skip_cross_file', False),
-            all_files=parameters.get('all_files', False)
+            all_files=all_files
         )
         
         return cls.from_action_context(behavior, context, callbacks)

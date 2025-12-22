@@ -46,6 +46,7 @@ from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory, get_wor
 from agile_bot.bots.base_bot.src.cli.base_bot_cli import BaseBotCli
 
 
+
 def main():
     """Main CLI entry point.
 

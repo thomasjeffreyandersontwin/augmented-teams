@@ -111,6 +111,6 @@ class Behavior:
     @property
     def trigger_words_obj(self):
         if self._trigger_words_obj is None:
-            from agile_bot.bots.base_bot.src.bot.trigger_words import TriggerWords
+            from agile_bot.bots.base_bot.src.ext.trigger_words import TriggerWords
             self._trigger_words_obj = TriggerWords(self)
         return self._trigger_words_obj
