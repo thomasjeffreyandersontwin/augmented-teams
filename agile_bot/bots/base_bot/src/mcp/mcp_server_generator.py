@@ -6,7 +6,6 @@ from typing import Dict, Any
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.bot.bot import Bot
 from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
-from agile_bot.bots.base_bot.src.mcp.mcp_tool_registrar import MCPToolRegistrar
 from agile_bot.bots.base_bot.src.mcp.mcp_code_generator import MCPCodeGenerator
 from agile_bot.bots.base_bot.src.mcp.mcp_config_generator import MCPConfigGenerator
 
@@ -17,7 +16,6 @@ class MCPServerGenerator:
         self.bot_name = self.bot_directory.name
         self.config_path = self.bot_directory / 'bot_config.json'
         self.bot = None
-        self.registered_tools = []
         self.code_generator = MCPCodeGenerator(self.bot_name, self.bot_directory)
         self.config_generator = MCPConfigGenerator(self.bot_name, self.bot_directory, self.config_path)
         self.workflow_actions = self._discover_workflow_actions()
@@ -61,9 +59,12 @@ class MCPServerGenerator:
         return []
 
     def register_all_tools(self, mcp_server: FastMCP):
-        behaviors = self._get_bot_behaviors()
-        tool_registrar = MCPToolRegistrar(self.bot, self.bot_name, self.bot_directory, self.registered_tools)
-        tool_registrar.register_all_tools(mcp_server, behaviors, self._load_trigger_words_from_behavior_folder)
+        """Deprecated: Tools are now statically generated at code generation time.
+        
+        This method is kept for backward compatibility but does nothing.
+        The MCP server file is generated with static tool registrations via MCPCodeGenerator.
+        """
+        pass
 
     def _infer_working_dir_from_parameters(self, parameters: dict) -> Path:
         return get_workspace_directory()
@@ -138,7 +139,10 @@ class MCPServerGenerator:
         return self.config_generator.generate_bot_config_file(behaviors)
 
     def generate_server_entry_point(self) -> Path:
-        return self.code_generator.generate_server_entry_point()
+        if self.bot is None:
+            self.create_server_instance()
+        behaviors = self._get_bot_behaviors()
+        return self.code_generator.generate_server_entry_point(behaviors, self.bot)
 
     def generate_cursor_mcp_config(self) -> Dict:
         return self.config_generator.generate_cursor_mcp_config()

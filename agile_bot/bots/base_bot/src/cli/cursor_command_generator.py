@@ -1,6 +1,12 @@
 from pathlib import Path
-from typing import Dict, Set
+from typing import Dict, Set, Optional, List
 from agile_bot.bots.base_bot.src.utils import read_json_file
+from agile_bot.bots.base_bot.src.bot.bot import Bot
+from agile_bot.bots.base_bot.src.generator.orchestrator import Orchestrator, GeneratorConfig
+from agile_bot.bots.base_bot.src.cli.action_data_collector import ActionDataCollector
+from agile_bot.bots.base_bot.src.cli.command_renderer import CursorCommandVisitor
+from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
+from agile_bot.bots.base_bot.src.cli.base_bot_cli import CliTerminalFormatter
 import json
 
 class CursorCommandGenerator:
@@ -9,6 +15,28 @@ class CursorCommandGenerator:
         self.workspace_root = workspace_root
         self.bot_location = bot_location
         self.bot_name = bot_name
+        self._bot: Optional[Bot] = None
+        self._data_collector: Optional[ActionDataCollector] = None
+    
+    def _get_bot(self) -> Bot:
+        if self._bot is None:
+            bot_directory = self.workspace_root / self.bot_location
+            config_path = bot_directory / 'bot_config.json'
+            self._bot = Bot(bot_name=self.bot_name, bot_directory=bot_directory, config_path=config_path)
+        return self._bot
+    
+    def _get_data_collector(self) -> ActionDataCollector:
+        if self._data_collector is None:
+            bot = self._get_bot()
+            formatter = CliTerminalFormatter()
+            description_extractor = DescriptionExtractor(self.bot_name, self.bot_location, formatter)
+            self._data_collector = ActionDataCollector(
+                bot=bot,
+                bot_name=self.bot_name,
+                bot_directory=self.bot_location,
+                description_extractor=description_extractor
+            )
+        return self._data_collector
 
     def generate_cursor_commands(self, cli_script_path: Path, behaviors: list) -> Dict[str, Path]:
         commands_dir = self._ensure_commands_directory()
@@ -88,13 +116,7 @@ class CursorCommandGenerator:
                 file_path.unlink(missing_ok=True)
 
     def _build_behavior_command_with_actions(self, python_command: str, behavior_name: str) -> str:
-        # Use raw strings and format separately to avoid escaping issues
-        scope_epic = "{'type': 'epic', 'value': ['Epic Name']}"
-        scope_story = "{'type': 'story', 'value': ['Story Name']}"
-        scope_increment = "{'type': 'increment', 'value': [1, 2]}"
-        scope_files = "{'type': 'files', 'value': ['path/to/file'], 'exclude': ['*.test.js']}"
-        
-        lines = [
+        lines: List[str] = [
             f"# {self.bot_name}-{behavior_name} - Available Actions",
             "",
             "## Quick Execute (with action prompt)",
@@ -102,88 +124,87 @@ class CursorCommandGenerator:
             "",
             "## Available Actions:",
             "",
-            "### clarify - Gather context",
-            f"{python_command} --behavior {behavior_name} --action clarify",
-            '  # Optional: "--key-questions-answered={\'q1\': \'answer\'}" "--evidence-provided={\'type\': \'content\'}"',
-            "",
-            "### strategy - Decide approach", 
-            f"{python_command} --behavior {behavior_name} --action strategy",
-            '  # Optional: "--decisions-made={\'decision\': \'value\'}" "--assumptions-made=assumption1" "assumption2"',
-            "",
-            "### build - Build knowledge graph",
-            f"{python_command} --behavior {behavior_name} --action build",
-            "  # Scope all: (default)",
-            f"  # Scope epic: --scope \"{scope_epic}\"",
-            f"  # Scope story: --scope \"{scope_story}\"",
-            f"  # Scope increment: --scope \"{scope_increment}\"",
-            "",
-            "### validate - Validate against rules",
-            f"{python_command} --behavior {behavior_name} --action validate",
-            "  # Scope all: (default)",
-            f"  # Scope epic: --scope \"{scope_epic}\"",
-            f"  # Scope story: --scope \"{scope_story}\"",
-            f"  # Scope files: --scope \"{scope_files}\"",
-            "  # Skip rules: --skiprule rule_name",
-            "",
-            "  **NOTE:** For code behavior, validation runs in background.",
-            "  **AI MUST:** Poll status file every 10 seconds and report progress until complete.",
-            "",
-            "### render - Generate output artifacts",
-            f"{python_command} --behavior {behavior_name} --action render",
-            "  # Scope all: (default)",
-            f"  # Scope epic: --scope \"{scope_epic}\"",
-            f"  # Scope story: --scope \"{scope_story}\"",
-            "",
-            "### rules - Inject rules into AI context",
-            f"{python_command} --behavior {behavior_name} --action rules",
-            '  # Optional: --message "your request here"',
-            "  # Non-workflow action: Can be invoked anytime",
-            "  # Loads behavior rules and user message into AI context",
-            "",
-            "## Common Patterns:",
-            "  # Work on specific epic:",
-            f"  {python_command} --behavior {behavior_name} --action build --scope \"{scope_epic}\"",
-            "",
-            "  # Validate with exclusions:",
-            f"  {python_command} --behavior {behavior_name} --action validate --skiprule rule_to_skip",
-            "",
-            "  # Work on multiple stories:",
-            f"  {python_command} --behavior {behavior_name} --action build --scope \"{{' type': 'story', 'value': ['Story 1', 'Story 2']}}\"",
         ]
+        
+        # Use visitor pattern to generate action help
+        bot = self._get_bot()
+        behavior = bot.behaviors.find_by_name(behavior_name)
+        if behavior:
+            data_collector = self._get_data_collector()
+            command_visitor = CursorCommandVisitor(python_command, self.bot_name, behavior_name, lines)
+            
+            # Visit all actions
+            action_names = data_collector.action_order + ['rules']
+            for action_name in action_names:
+                action = behavior.actions.find_by_name(action_name)
+                if action:
+                    from agile_bot.bots.base_bot.src.cli.help_context import ActionHelpContext
+                    action_description = data_collector.get_action_description(action_name)
+                    parameters = data_collector.get_action_parameters(action_name)
+                    parameter_descriptions = data_collector.get_parameter_descriptions(action_name, parameters)
+                    context = ActionHelpContext(
+                        bot_name=self.bot_name,
+                        action_name=action_name,
+                        action_description=action_description,
+                        parameters=parameters,
+                        parameter_descriptions=parameter_descriptions
+                    )
+                    command_visitor.visit_action(context)
+            
+            # Add footer with common patterns
+            command_visitor.visit_footer()
+        
         return "\n".join(lines)
+    
 
     def _build_rules_command(self, python_command: str, behavior_name: str) -> str:
+        examples = self._build_rules_examples(python_command, behavior_name)
+        description = self._get_rules_description(behavior_name)
+        header = self._build_rules_header(behavior_name, description, python_command)
+        return "\n".join([header, "", "## Usage Examples", "", *examples])
+    
+    def _build_rules_examples(self, python_command: str, behavior_name: str) -> list:
         if behavior_name == 'code':
-            examples = [
-                f"# Write new production code following rules",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Help me write a new ValidationContext class that encapsulates validation parameters\"",
-                "",
-                f"# Refactor existing code to follow rules",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Refactor the _execute_scanner method to reduce parameters from 10 to 3\"",
-                "",
-                f"# Design API following rules",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Design a clean API for loading and filtering rules\"",
-            ]
+            return self._build_code_rules_examples(python_command, behavior_name)
         elif behavior_name == 'tests':
-            examples = [
-                f"# Write new tests following rules",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Help me write tests for the new ValidationContext class\"",
-                "",
-                f"# Design test structure following rules",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"How should I structure tests for the rules validation workflow?\"",
-                "",
-                f"# Write parameterized tests",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Create parameterized tests for multiple rule validation scenarios\"",
-            ]
+            return self._build_tests_rules_examples(python_command, behavior_name)
         else:
-            examples = [
-                f"# Get guidance on writing {behavior_name} content",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Help me write a new story following our rules\"",
-                "",
-                f"# Review work against rules",
-                f"{python_command} --behavior {behavior_name} --action rules --message \"Does my scenario follow the rules?\"",
-            ]
-        
+            return self._build_generic_rules_examples(python_command, behavior_name)
+    
+    def _build_code_rules_examples(self, python_command: str, behavior_name: str) -> list:
+        return [
+            f"# Write new production code following rules",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Help me write a new ValidationContext class that encapsulates validation parameters\"",
+            "",
+            f"# Refactor existing code to follow rules",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Refactor the _execute_scanner method to reduce parameters from 10 to 3\"",
+            "",
+            f"# Design API following rules",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Design a clean API for loading and filtering rules\"",
+        ]
+    
+    def _build_tests_rules_examples(self, python_command: str, behavior_name: str) -> list:
+        return [
+            f"# Write new tests following rules",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Help me write tests for the new ValidationContext class\"",
+            "",
+            f"# Design test structure following rules",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"How should I structure tests for the rules validation workflow?\"",
+            "",
+            f"# Write parameterized tests",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Create parameterized tests for multiple rule validation scenarios\"",
+        ]
+    
+    def _build_generic_rules_examples(self, python_command: str, behavior_name: str) -> list:
+        return [
+            f"# Get guidance on writing {behavior_name} content",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Help me write a new story following our rules\"",
+            "",
+            f"# Review work against rules",
+            f"{python_command} --behavior {behavior_name} --action rules --message \"Does my scenario follow the rules?\"",
+        ]
+    
+    def _get_rules_description(self, behavior_name: str) -> str:
         descriptions = {
             'code': 'Load code behavior rules into AI context for guidance on writing clean, maintainable production code',
             'tests': 'Load tests behavior rules into AI context for guidance on writing effective, well-structured tests',
@@ -193,8 +214,9 @@ class CursorCommandGenerator:
             'shape': 'Load shape behavior rules into AI context for guidance on story mapping and domain modeling',
             'prioritization': 'Load prioritization behavior rules into AI context for guidance on organizing delivery increments'
         }
-        description = descriptions.get(behavior_name, f"Load {behavior_name} behavior rules into AI context for guidance on writing new content.")
-        
+        return descriptions.get(behavior_name, f"Load {behavior_name} behavior rules into AI context for guidance on writing new content.")
+    
+    def _build_rules_header(self, behavior_name: str, description: str, python_command: str) -> str:
         lines = [
             f"# {self.bot_name}-{behavior_name}-rules",
             "",
@@ -211,11 +233,7 @@ class CursorCommandGenerator:
             "- Provides your message to AI with full rules context",
             "- AI must read each rule file and apply them to your request",
             "- AI helps you write new content following the rules",
-            "",
-            "## Usage Examples",
-            "",
         ]
-        lines.extend(examples)
         return "\n".join(lines)
     
     def _write_command_file(self, file_path: Path, command: str) -> Path:

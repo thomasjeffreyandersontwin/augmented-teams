@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 import os
 import json
+from datetime import datetime
+import logging
 
 # Setup Python import path for package imports
 python_workspace_root = Path(__file__).parent.parent.parent.parent.parent
@@ -38,10 +40,15 @@ if 'WORKING_AREA' not in os.environ:
 
 from agile_bot.bots.base_bot.src.bot.workspace import (
     get_bot_directory,
-    get_workspace_directory
+    get_workspace_directory,
+    get_python_workspace_root
 )
-from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
+from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult
+from agile_bot.bots.base_bot.src.mcp.server_restart import restart_mcp_server
+from fastmcp import FastMCP
+import logging
 
+logger = logging.getLogger(__name__)
 
 def main():
     """Main entry point for story_bot MCP server.
@@ -51,19 +58,21 @@ def main():
     - WORKING_AREA: Read from bot_config.json (or overridden by mcp.json env)
     
     All subsequent code reads from these environment variables.
+    
+    Note: This file is generated with static tool registrations.
+    Tools are registered at generation time, not dynamically at runtime.
     """
-    # Get directories (these now just read from env vars we set above)
     bot_directory = get_bot_directory()
     workspace_directory = get_workspace_directory()
     
-    # Create MCP server
-    generator = MCPServerGenerator(
-        bot_directory=bot_directory
-    )
-
-    mcp_server = generator.create_server_instance()
-    generator.register_all_tools(mcp_server)
-
+    bot = Bot(bot_name='story_bot', bot_directory=bot_directory, config_path=bot_directory / 'bot_config.json')
+    
+    server_name = 'story_bot'
+    mcp_server = FastMCP(server_name)
+    
+    # Tools are statically registered in the generated code below
+    # This section is replaced during code generation with actual tool registrations
+    
     mcp_server.run()
 
 
