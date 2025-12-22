@@ -12,6 +12,7 @@ import re
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +53,10 @@ class TypeSafetyScanner(CodeScanner):
             return violations
         
         # Walk the AST looking for type-unsafe patterns
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                func_violations = self._check_function_type_safety(node, file_path, rule_obj, content)
-                violations.extend(func_violations)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            func_violations = self._check_function_type_safety(function.node, file_path, rule_obj, content)
+            violations.extend(func_violations)
         
         return violations
     
@@ -165,6 +166,7 @@ class TypeSafetyScanner(CodeScanner):
                                     message = self._get_violation_message(
                                         rule_obj, 'parameters_get_pattern', line_no
                                     )
+                                    # No code snippet for parameters.get() pattern violations
                                     violations.append(
                                         Violation(
                                             rule=rule_obj,

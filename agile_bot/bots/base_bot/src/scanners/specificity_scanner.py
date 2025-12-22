@@ -135,6 +135,12 @@ class SpecificityScanner(StoryScanner):
             ).to_dict()
         
         return None
+    
+    def scan_domain_concept(self, node: Any, rule_obj: Any) -> List[Dict[str, Any]]:
+        # Domain concepts should NOT be checked for specificity violations
+        # Domain concepts can legitimately be generic framework terms like "Base Bot", "Workflow State", etc.
+        # Specificity rules apply to story/epic/sub-epic names, not domain concept names
+        return []
 
 
 

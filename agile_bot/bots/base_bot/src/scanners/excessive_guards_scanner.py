@@ -7,6 +7,7 @@ import re
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Functions, IfStatements
 
 logger = logging.getLogger(__name__)
 
@@ -22,31 +23,28 @@ class ExcessiveGuardsScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                # Skip test functions (covered by NoGuardClausesScanner)
-                if node.name.startswith('test_'):
-                    continue
-                
-                # Skip private methods (they might need guards for internal validation)
-                if node.name.startswith('_') and node.name != '__init__':
-                    continue
-                
-                func_violations = self._check_function_guards(node, file_path, rule_obj, lines, content)
-                violations.extend(func_violations)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if function.is_test_function:
+                continue
+            
+            if function.name.startswith('_') and function.name != '__init__':
+                continue
+            
+            func_violations = self._check_function_guards(function.node, file_path, rule_obj, lines, content)
+            violations.extend(func_violations)
         
         return violations
     
     def _check_function_guards(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, source_lines: List[str], content: str) -> List[Dict[str, Any]]:
         violations = []
         
-        # Find all guard clause patterns in function
-        for node in ast.walk(func_node):
-            if isinstance(node, ast.If):
-                if self._is_guard_clause(node, source_lines):
-                    violation = self._check_guard_pattern(node, file_path, rule_obj, source_lines, content)
-                    if violation:
-                        violations.append(violation)
+        if_statements = IfStatements(func_node)
+        for if_stmt in if_statements.get_many_if_statements:
+            if self._is_guard_clause(if_stmt.node, source_lines):
+                violation = self._check_guard_pattern(if_stmt.node, file_path, rule_obj, source_lines, content)
+                if violation:
+                    violations.append(violation)
         
         return violations
     

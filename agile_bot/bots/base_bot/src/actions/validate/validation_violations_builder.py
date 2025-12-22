@@ -1,24 +1,27 @@
 from pathlib import Path
 from typing import Dict, Any, List
+from agile_bot.bots.base_bot.src.actions.display.markdown_formatter import MarkdownFormatter
+from agile_bot.bots.base_bot.src.actions.display.list_items import ListItem
 
 class ValidationViolationsBuilder:
 
     def __init__(self, format_violation_line_fn):
         self._format_violation_line = format_violation_line_fn
+        self._formatter = MarkdownFormatter()
 
     def build_violations(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
-        lines = ['## Violations Found', '']
+        lines = [self._formatter.format_heading('Violations Found', level=2), '']
         file_by_file_violations_by_rule, cross_file_violations_by_rule = self._organize_violations(validation_rules)
         total_file_by_file = sum((len(v) for v in file_by_file_violations_by_rule.values()))
         total_cross_file = sum((len(v) for v in cross_file_violations_by_rule.values()))
         total_violations = total_file_by_file + total_cross_file
         if total_violations == 0:
-            lines.append('🟢 **No violations found.** All rules passed validation.')
+            lines.append(f'🟢 {self._formatter.format_bold("No violations found.")} All rules passed validation.')
             lines.append('')
         else:
-            lines.append(f'**Total Violations:** {total_violations}')
-            lines.append(f'- **File-by-File Violations:** {total_file_by_file}')
-            lines.append(f'- **Cross-File Violations:** {total_cross_file}')
+            lines.append(f'{self._formatter.format_bold("Total Violations:")} {total_violations}')
+            lines.append(ListItem(f'{self._formatter.format_bold("File-by-File Violations:")} {total_file_by_file}').formatted)
+            lines.append(ListItem(f'{self._formatter.format_bold("Cross-File Violations:")} {total_cross_file}').formatted)
             lines.append('')
             if file_by_file_violations_by_rule:
                 lines.extend(self._build_violations_by_type(file_by_file_violations_by_rule, 'File-by-File Violations (Pass 1)', 'These violations were detected by scanning each file individually.'))
@@ -53,11 +56,11 @@ class ValidationViolationsBuilder:
             file_by_file_violations_by_rule[rule_name] = violations
 
     def _build_violations_by_type(self, violations_by_rule: Dict[str, List[Dict[str, Any]]], title: str, description: str) -> List[str]:
-        lines = [f'### {title}', '', description, '']
+        lines = [self._formatter.format_heading(title, level=3), '', description, '']
         for rule_name, violations in violations_by_rule.items():
             violations_anchor_id = f"{rule_name.replace('_', '-').lower()}-violations"
             rule_display_name = rule_name.replace('_', ' ').title()
-            lines.append(f'#### <span id="{violations_anchor_id}">{rule_display_name}: {len(violations)} violation(s)</span>')
+            lines.append(f'{self._formatter.format_heading(f"<span id=\\"{violations_anchor_id}\\">{rule_display_name}: {len(violations)} violation(s)</span>", level=4)}')
             lines.append('')
             for violation in violations:
                 lines.extend(self._format_violation_line(violation))

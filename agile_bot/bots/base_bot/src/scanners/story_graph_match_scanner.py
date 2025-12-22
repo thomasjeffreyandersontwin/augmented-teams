@@ -6,6 +6,7 @@ import ast
 import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -45,19 +46,19 @@ class StoryGraphMatchScanner(TestScanner):
     def _check_test_classes_match_stories(self, tree: ast.AST, story_names: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                if node.name.startswith('Test'):
-                    story_name_from_class = node.name[4:]  # Remove 'Test'
-                    
-                    # Convert to story name format for comparison
-                    # This is approximate - exact matching would require more sophisticated comparison
-                    matches = [s for s in story_names if story_name_from_class.lower().replace('_', ' ') in s.lower()]
-                    
-                    if not matches:
-                        line_number = node.lineno if hasattr(node, 'lineno') else None
-                        violation = Violation(
-                            rule=rule_obj,
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            if cls.node.name.startswith('Test'):
+                story_name_from_class = cls.node.name[4:]  # Remove 'Test'
+                
+                # Convert to story name format for comparison
+                # This is approximate - exact matching would require more sophisticated comparison
+                matches = [s for s in story_names if story_name_from_class.lower().replace('_', ' ') in s.lower()]
+                
+                if not matches:
+                    line_number = cls.node.lineno if hasattr(cls.node, 'lineno') else None
+                    violation = Violation(
+                        rule=rule_obj,
                             violation_message=f'Test class "{node.name}" does not match any story name - test classes must match story names exactly',
                             location=str(file_path),
                             line_number=line_number,

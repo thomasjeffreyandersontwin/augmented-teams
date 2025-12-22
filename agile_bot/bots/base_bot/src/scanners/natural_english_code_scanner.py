@@ -6,6 +6,7 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 
 class NaturalEnglishCodeScanner(CodeScanner):
@@ -27,12 +28,14 @@ class NaturalEnglishCodeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            violation = self._check_natural_english(function.node, file_path, rule_obj, content)
+            if violation:
+                violations.append(violation)
+        
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                violation = self._check_natural_english(node, file_path, rule_obj, content)
-                if violation:
-                    violations.append(violation)
-            elif isinstance(node, ast.Name):
+            if isinstance(node, ast.Name):
                 violation = self._check_variable_name(node, file_path, rule_obj, content)
                 if violation:
                     violations.append(violation)

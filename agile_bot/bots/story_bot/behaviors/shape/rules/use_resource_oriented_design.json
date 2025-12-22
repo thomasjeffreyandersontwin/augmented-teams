@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Domain concepts must use resource-oriented, object-oriented design. Use object-oriented classes (singular or collection) with responsibilities that encapsulate logic over manager/doer/loader patterns. Maximize encapsulation through collaborator relationships.",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.resource_oriented_design_scanner.ResourceOrientedDesignScanner",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.resource_oriented_design_scanner.ResourceOrientedDesignScanner",
   "examples": [
     {
       "do": {

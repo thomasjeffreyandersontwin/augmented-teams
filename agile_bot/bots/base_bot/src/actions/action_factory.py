@@ -13,6 +13,27 @@ class ActionFactory:
     def __init__(self, behavior: 'Behavior'):
         self.behavior = behavior
 
+    @staticmethod
+    def get_action_class(action_name: str):
+        action_module_mapping = {
+            'clarify': ('clarify', 'clarify_action', 'ClarifyContextAction'),
+            'strategy': ('strategy', 'strategy_action', 'StrategyAction'),
+            'build': ('build', 'build_action', 'BuildKnowledgeAction'),
+            'validate': ('validate', 'validate_action', 'ValidateRulesAction'),
+            'render': ('render', 'render_action', 'RenderOutputAction'),
+            'rules': ('rules', 'rules_action', 'RulesAction'),
+        }
+        mapping = action_module_mapping.get(action_name)
+        if not mapping:
+            return None
+        module_name, module_file, class_name = mapping
+        module_path = f'agile_bot.bots.base_bot.src.actions.{module_name}.{module_file}'
+        try:
+            module = importlib.import_module(module_path)
+            return getattr(module, class_name)
+        except (ModuleNotFoundError, AttributeError):
+            return None
+
     def create_action_instance(self, action_name: str, action_config: Dict[str, Any]) -> 'Action':
         action_class_path = self._resolve_action_class_path(action_name, action_config)
         action_class = self._load_action_class(action_name, action_class_path)

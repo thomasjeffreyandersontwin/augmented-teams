@@ -6,6 +6,7 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 
 class DomainGroupingCodeScanner(CodeScanner):
@@ -44,11 +45,11 @@ class DomainGroupingCodeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                violation = self._check_class_name(node, file_path, rule_obj)
-                if violation:
-                    violations.append(violation)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            violation = self._check_class_name(cls.node, file_path, rule_obj)
+            if violation:
+                violations.append(violation)
         
         return violations
     
@@ -57,13 +58,27 @@ class DomainGroupingCodeScanner(CodeScanner):
         
         for pattern in self.TECHNICAL_LAYER_PATTERNS:
             if re.search(pattern, class_name_lower):
-                return Violation(
-                    rule=rule_obj,
-                    violation_message=f'Class "{class_node.name}" uses technical layer terminology. Group by domain area instead.',
-                    location=str(file_path),
-                    line_number=class_node.lineno,
-                    severity='info'
-                ).to_dict()
+                # Read file content for snippet extraction
+                try:
+                    content = file_path.read_text(encoding='utf-8')
+                    return self._create_violation_with_snippet(
+                        rule_obj=rule_obj,
+                        violation_message=f'Class "{class_node.name}" uses technical layer terminology. Group by domain area instead.',
+                        file_path=file_path,
+                        line_number=class_node.lineno,
+                        severity='info',
+                        content=content,
+                        ast_node=class_node,
+                        max_lines=5
+                    )
+                except Exception:
+                    return Violation(
+                        rule=rule_obj,
+                        violation_message=f'Class "{class_node.name}" uses technical layer terminology. Group by domain area instead.',
+                        location=str(file_path),
+                        line_number=class_node.lineno,
+                        severity='info'
+                    ).to_dict()
         
         return None
 

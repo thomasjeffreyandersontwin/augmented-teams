@@ -1,0 +1,293 @@
+<?xml version="1.0" ?>
+<mxfile host="65bd71144e">
+    <diagram id="story-map" name="Story Map">
+        <mxGraphModel dx="2656" dy="1035" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="epic-group" value="" style="group" parent="1" vertex="1" connectable="0">
+                    <mxGeometry x="0" y="0" width="1" height="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="epic1" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Build Agile Bots&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;8 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="20.0" y="120" width="541.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Generate MCP Tools&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;6 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="30.0" y="195" width="361.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="27" y="355" width="360" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e1f1s1_MCP Server Generator" value="MCP Server Generator" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="32.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1s1" value="Generate Bot Tools" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="32" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1s2" value="Generate Behavior Tools" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="92" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1s3" value="Generate MCP Bot Server" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="152" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1s4" value="Generate Behavior Action Tools" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="212" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1s5" value="Deploy MCP BOT Server" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="272" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f1s6" value="Restart MCP Server To Load Code Changes" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="332" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f2" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Generate CLI&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;2 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="401.0" y="195" width="130.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="409" y="340" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e1f2s1_MCP Server Generator" value="MCP Server Generator" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="403.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f2s1" value="Generate BOT CLI code" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="414" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1f2s2" value="Generate Cursor Command Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="474" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="epic2" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Invoke Bot&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;27 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="571.0" y="120" width="1701.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Init Project&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;6 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="541.0" y="195" width="361.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="599.0" y="355" width="360.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f1s1_Bot Behavior" value="Bot Behavior" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="543.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1s1" value="Initialize Project Location" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="604.0" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1s2" value="Initialize Project Creates Context Folder" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="664.0" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1s3" value="Input File Copied To Context Folder" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="724.0" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1s4" value="Store Context Files" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="784.0" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1s5" value="Guards Prevent Writes Without Project" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="844.0" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f1s6" value="Stores Activity for Initialize Project Action" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="904.0" y="360" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f2" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Invoke MCP&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;4 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="912.0" y="195" width="250.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="981.0" y="340" width="240.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f2s1_AI Chat" value="AI Chat" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="914.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f2s1" value="Invoke Bot Tool" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="986.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f2s2_Bot Behavior" value="Bot Behavior" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="974.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f2s2" value="Load And Merge Behavior Action Instructions" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1046.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f2s3" value="Forward To Current Behavior and Current Action" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1106.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f2s4" value="Forward To Current Action" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1166.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f3" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Invoke CLI&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;4 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="1172.0" y="195" width="250.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="1243.0" y="340" width="240.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f3s1_Human" value="Human" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1174.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f3s1" value="Invoke Bot CLI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1248.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f3s2" value="Invoke Bot Behavior CLI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1308.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f3s3" value="Invoke Bot Behavior Action CLI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1368.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f3s4" value="Get Help for Command Line Functions" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1428.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Perform Behavior Action&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;8 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="1432.0" y="195" width="490.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="1505.0" y="340" width="480.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f4s1_Bot Behavior" value="Bot Behavior" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1434.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s1" value="Find Behavior Folder" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1510.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s2" value="Execute Behavior" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1570.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s3" value="Invoke Behavior in Workflow Order" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1630.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s4" value="Load And Merge Behavior Action Instructions" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1690.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s5" value="Invoke Behavior Actions in Workflow Order" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1750.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s6" value="Invoke Behavior Actions in Workflow Order" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1810.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s7" value="Close Current Action" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1870.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f4s8" value="Inject Next Behavior Reminder" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1930.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f5" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Orchestrate Workflow&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;5 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="1932.0" y="195" width="310.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="2007.0" y="340" width="300.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f5s1_Human" value="Human" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1994.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f5s1" value="Route to LangGraph Workflow" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2012.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f5s2_LangGraphRunner" value="LangGraphRunner" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2054.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f5s2" value="Execute Workflow Nodes" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#1a237e;strokeColor=#0d47a1;fontColor=#ffffff;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2072.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f5s3" value="Manage Checkpoints" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#1a237e;strokeColor=#0d47a1;fontColor=#ffffff;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2132.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e2f5s4_ActionNode" value="ActionNode" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1934.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f5s4" value="Handle Execution Modes" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#1a237e;strokeColor=#0d47a1;fontColor=#ffffff;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2192.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2f5s5" value="Resume Workflow from Checkpoint" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2252.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="epic3" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Execute Behavior Actions&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;4 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="2282.0" y="120" width="241.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3f1" value="&lt;div style=&quot;position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding-right: 70px; box-sizing: border-box;&quot;&gt;&lt;span style=&quot;flex: 1; text-align: center;&quot;&gt;Gather Context&lt;/span&gt;&lt;div style=&quot;position: absolute; top: 2px; right: 5px; font-size: 8px; color: rgb(128, 128, 128); white-space: nowrap; z-index: 10;&quot;&gt;4 stories&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="2252.0" y="195" width="241.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;strokeColor=#FFFFFF;fillColor=#F7F7F7;" parent="1" vertex="1">
+                    <mxGeometry x="2353.0" y="340" width="240.0" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_e3f1s1_Bot Behavior" value="Bot Behavior" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2254.0" y="265.0" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3f1s1" value="Inject Guardrails As Part Of Clarify Requirements" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2358.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3f1s2" value="Track Activity for Gather Context Action" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2418.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3f1s3" value="Store Clarification Data" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2478.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3f1s4" value="Proceed To Decide Planning" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="2538.0" y="345" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment1" value="User Manually Drops Config In to AI Chat" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="460.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment2" value="Simplest MCP" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="560.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment3" value="Workflow" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="660.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment4" value="Save Content" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="760.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment5" value="Later" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="860.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment6" value="Inject / Store Content" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="960.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment7" value="Code Scanner" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="1060.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment8" value="LangGraph Orchestration" style="whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-180" y="1160.0" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="increment_sep1" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="560.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="560.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep2" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="660.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="660.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep3" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="760.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="760.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep4" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="860.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="860.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep5" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="960.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="960.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep6" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="1060.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="1060.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep7" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="1160.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="1160.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="increment_sep8" value="" style="endArrow=none;dashed=1;html=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-180" y="1260.0" as="sourcePoint"/>
+                        <mxPoint x="4000" y="1260.0" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

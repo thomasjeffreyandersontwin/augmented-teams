@@ -2,6 +2,7 @@ from typing import Dict, Any, Type
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, RulesActionContext
 from agile_bot.bots.base_bot.src.actions.rules.rules import Rules
+from agile_bot.bots.base_bot.src.actions.rules.rules_digest_guidance import RulesDigestGuidance
 
 
 class RulesAction(Action):
@@ -42,18 +43,6 @@ class RulesAction(Action):
         instructions.add("")
         instructions.add(rules_digest)
         instructions.add("")
-        instructions.add("CRITICAL: The rules digest above contains everything you need to get started.")
-        instructions.add("")
-        instructions.add("WORKFLOW:")
-        instructions.add("1. Read the rules digest above (descriptions + key principles)")
-        instructions.add("2. Apply rules to the user's request")
-        instructions.add("3. IF you need clarity on a specific rule (examples, edge cases, detailed patterns):")
-        instructions.add("   - Use read_file tool to read that specific rule file")
-        instructions.add("   - The full rule has detailed examples and detection patterns")
-        instructions.add("4. Cite rule names when making decisions")
-        instructions.add("")
-        instructions.add("The digest gives you 80% of what you need. Only read full rule files when you need the remaining 20%.")
-        instructions.add("")
-        instructions.add("When analyzing code, focus on finding violations and cite the specific rule names.")
+        RulesDigestGuidance().add_to(instructions)
 
 

@@ -1,0 +1,74 @@
+{
+  "shape": {
+    "strategy_criteria": {
+      "criteria": {},
+      "decisions_made": {
+        "flow_scope": "Actor-component interactions (Human->CLI->Bot->LangGraph->Action)",
+        "granularity": "Same level as existing story map",
+        "increment": "Increment 8: LangGraph Orchestration",
+        "langgraph_mandatory": "Yes - mandatory in this increment",
+        "cli_change": "Minimal - one story for --workflow parameter",
+        "missing_areas": "Node/edge creation from behaviors; Python orchestration scripts; Base graph building functionality"
+      }
+    },
+    "assumptions": {
+      "typical_assumptions": [
+        "Focus on user flow over internal systems",
+        "Cover the end-to-end scenario",
+        "Prioritize customer-facing features",
+        "Assume stories should be independently testable",
+        "Assume each story delivers user value",
+        "Assume technical infrastructure stories are implicit",
+        "Drill down where architectural uncertainty is high \u2013 unknown integration patterns, new technology, or unclear system boundaries require deeper exploration",
+        "Drill down where business complexity is significant \u2013 complex business rules, regulatory requirements, or domain logic that needs clarification",
+        "Drill down where uniqueness creates risk \u2013 novel approaches, first-of-kind features, or untested patterns benefit from detailed shaping",
+        "Drill down where integration complexity exists \u2013 multiple systems, data dependencies, or coordination challenges need detailed mapping",
+        "Drill down where user behavior is highly variable \u2013 diverse user needs, multiple personas, or inconsistent workflows require deeper understanding",
+        "Skip deep drill-down where patterns are well-established \u2013 standard CRUD operations, familiar workflows, or proven integration patterns can stay high-level",
+        "Focus on core domain over supporting domains",
+        "Identify overall domain concepts and relationships before detailed modeling",
+        "Use ubiquitous language from domain sources",
+        "Model domain concepts, not technical implementation",
+        "Separate domain logic from infrastructure concerns, where they are mentioned"
+      ],
+      "assumptions_made": [
+        "['Focus on User->CLI->Bot->LangGraph interactions (the interaction chain, not internal implementation)', 'Cover the end-to-end scenario', 'Prioritize customer-facing features', 'Assume stories should be independently testable', 'LangGraph is purely additive - zero breaking changes to default workflow']"
+      ]
+    },
+    "recommended_activities": [
+      "Review the AI-generated story map to verify the overarching flow accurately describes the overall user journey and system behavior",
+      "Verify that epics, features, and stories follow action and goal-oriented language as intended",
+      "Review the AI's approach to drill-downs to confirm they bring clarity to areas of uncertainty, complexity, and opportunity rather than over-documenting simple areas",
+      "Review the AI-generated bounded contexts to verify they align with business capabilities",
+      "Validate that domain concepts use language from domain experts",
+      "Review the AI's approach to identifying bounded contexts to confirm they reflect business reality"
+    ]
+  },
+  "prioritization": {
+    "strategy_criteria": {
+      "criteria": {},
+      "decisions_made": {
+        "increment_structure": "Single increment containing all LangGraph stories as the last increment",
+        "increment_priority": "Last increment (highest priority number)",
+        "story_grouping": "All LangGraph stories from Generate LangGraph Framework and Orchestrate Workflow sub-epics"
+      }
+    },
+    "assumptions": {
+      "typical_assumptions": [
+        "Thin slices should provide either value, learning, or risk reduction",
+        "Slices do not need to include all functionality to be useful",
+        "Not every increment must be user-visible if it validates key assumptions",
+        "Some slices may be architectural if they unlock multiple features"
+      ],
+      "assumptions_made": [
+        "Thin slices should provide either value, learning, or risk reduction"
+      ]
+    },
+    "recommended_activities": [
+      "Review the AI-generated slice strategies to verify they are visually coherent and align with the intended approach",
+      "Validate that each AI-proposed slice serves a clear learning, value, or risk-reduction goal",
+      "Review the AI's sequencing logic to verify it optimizes both insight and momentum rather than following a simplistic order",
+      "Validate the scope of stories to verify they are appropriate for the slice"
+    ]
+  }
+}

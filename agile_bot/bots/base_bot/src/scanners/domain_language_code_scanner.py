@@ -7,6 +7,7 @@ import re
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -61,18 +62,18 @@ class DomainLanguageCodeScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_violations = self._check_domain_language(node, file_path, rule_obj, domain_terms, generic_names)
-                violations.extend(class_violations)
-                
-                for child in node.body:
-                    if isinstance(child, ast.FunctionDef):
-                        func_violations = self._check_function_domain_language(
-                            child, file_path, rule_obj, domain_terms, generic_names,
-                            enclosing_class=node.name
-                        )
-                        violations.extend(func_violations)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            class_violations = self._check_domain_language(cls.node, file_path, rule_obj, domain_terms, generic_names)
+            violations.extend(class_violations)
+            
+            for child in cls.node.body:
+                if isinstance(child, ast.FunctionDef):
+                    func_violations = self._check_function_domain_language(
+                        child, file_path, rule_obj, domain_terms, generic_names,
+                        enclosing_class=cls.node.name
+                    )
+                    violations.extend(func_violations)
         
         for node in ast.iter_child_nodes(tree):
             if isinstance(node, ast.FunctionDef):
@@ -95,6 +96,7 @@ class DomainLanguageCodeScanner(CodeScanner):
         
         if domain_terms and not self._matches_domain_term(class_name, domain_terms):
             sample_terms = sorted(list(domain_terms))[:10]
+            # No code snippet for class-level naming violations (class definition line)
             violations.append(
                 Violation(
                     rule=rule_obj,
@@ -123,6 +125,7 @@ class DomainLanguageCodeScanner(CodeScanner):
         if not skip_generate_check:
             for pattern in self.GENERATE_PATTERNS:
                 if re.search(pattern, func_name_lower):
+                    # No code snippet for method-level naming violations (method definition line)
                     violations.append(
                         Violation(
                             rule=rule_obj,
@@ -137,6 +140,7 @@ class DomainLanguageCodeScanner(CodeScanner):
             # Skip if function name is in generic names (acceptable)
             if func_node.name.lower() not in generic_names:
                 sample_terms = sorted(list(domain_terms))[:10]
+                # No code snippet for method-level naming violations (method definition line)
                 violations.append(
                     Violation(
                         rule=rule_obj,
@@ -158,6 +162,7 @@ class DomainLanguageCodeScanner(CodeScanner):
             
             if domain_terms and not self._matches_domain_term(arg.arg, domain_terms):
                 sample_terms = sorted(list(domain_terms))[:10]
+                # No code snippet for parameter naming violations (method definition line)
                 violations.append(
                     Violation(
                         rule=rule_obj,

@@ -49,6 +49,7 @@ class MinimizeMutableStateScanner(CodeScanner):
                     if 'test_' in line.lower() or 'def test' in line.lower():
                         continue
                     
+                    # No code snippet for mutation pattern violations
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Line {line_num} mutates state - prefer immutable data structures (create new objects instead of mutating)',

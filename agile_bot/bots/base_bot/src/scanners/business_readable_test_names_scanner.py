@@ -7,6 +7,7 @@ import re
 import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,9 @@ class BusinessReadableTestNamesScanner(TestScanner):
         content, lines, tree = parsed
         domain_language = self._extract_domain_language(knowledge_graph)
         
-        for node in ast.walk(tree):
-            self._check_test_function_node(node, file_path, rule_obj, domain_language, violations)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            self._check_test_function_node(function.node, file_path, rule_obj, domain_language, violations)
         
         return violations
     
@@ -123,6 +125,12 @@ class BusinessReadableTestNamesScanner(TestScanner):
                 # Test name uses domain language - consider it business-readable
                 return None
         
+        # Read file content for snippet extraction
+        try:
+            content = file_path.read_text(encoding='utf-8')
+        except Exception:
+            content = None
+        
         # Technical jargon indicators - only flag truly technical terms that are NOT domain language
         # These are implementation details, not domain concepts
         # Note: Terms like 'json', 'data', 'param', 'method', 'class', 'call' are now considered
@@ -144,13 +152,25 @@ class BusinessReadableTestNamesScanner(TestScanner):
                 # For example, "parse_json" is technical, but "agent_json" is domain
                 if self._is_clearly_technical_jargon(term, name_lower, domain_language):
                     line_number = node.lineno if hasattr(node, 'lineno') else None
-                    return Violation(
-                        rule=rule_obj,
-                        violation_message=f'Test name "{test_name}" contains technical jargon "{term}" - use business-readable domain language instead',
-                        location=str(file_path),
-                        line_number=line_number,
-                        severity='error'
-                    ).to_dict()
+                    if content:
+                        return self._create_violation_with_snippet(
+                            rule_obj=rule_obj,
+                            violation_message=f'Test name "{test_name}" contains technical jargon "{term}" - use business-readable domain language instead',
+                            file_path=file_path,
+                            line_number=line_number,
+                            severity='error',
+                            content=content,
+                            ast_node=node,
+                            max_lines=3
+                        )
+                    else:
+                        return Violation(
+                            rule=rule_obj,
+                            violation_message=f'Test name "{test_name}" contains technical jargon "{term}" - use business-readable domain language instead',
+                            location=str(file_path),
+                            line_number=line_number,
+                            severity='error'
+                        ).to_dict()
         
         # Only flag truly technical abbreviations, not domain terms
         technical_abbrevs = r'\b(init|cfg|obj|req|resp|api|http|xml)\b'
@@ -160,24 +180,48 @@ class BusinessReadableTestNamesScanner(TestScanner):
             
             if not is_domain_abbrev:
                 line_number = node.lineno if hasattr(node, 'lineno') else None
-                return Violation(
-                    rule=rule_obj,
-                    violation_message=f'Test name "{test_name}" contains abbreviations - use full business-readable words',
-                    location=str(file_path),
-                    line_number=line_number,
-                    severity='warning'
-                ).to_dict()
+                if content:
+                    return self._create_violation_with_snippet(
+                        rule_obj=rule_obj,
+                        violation_message=f'Test name "{test_name}" contains abbreviations - use full business-readable words',
+                        file_path=file_path,
+                        line_number=line_number,
+                        severity='warning',
+                        content=content,
+                        ast_node=node,
+                        max_lines=3
+                    )
+                else:
+                    return Violation(
+                        rule=rule_obj,
+                        violation_message=f'Test name "{test_name}" contains abbreviations - use full business-readable words',
+                        location=str(file_path),
+                        line_number=line_number,
+                        severity='warning'
+                    ).to_dict()
         
         words = name_without_prefix.split('_')
         if len(words) < 3:
             line_number = node.lineno if hasattr(node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'Test name "{test_name}" is too vague - add context about what happens and when',
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict()
+            if content:
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Test name "{test_name}" is too vague - add context about what happens and when',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='warning',
+                    content=content,
+                    ast_node=node,
+                    max_lines=3
+                )
+            else:
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=f'Test name "{test_name}" is too vague - add context about what happens and when',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='warning'
+                ).to_dict()
         
         return None
     

@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Domain concepts must be grouped by domain area and relationships, not by technical layers, object types, or architectural concerns.",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.domain_grouping_scanner.DomainGroupingScanner",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.domain_grouping_scanner.DomainGroupingScanner",
   "examples": [
     {
       "do": {

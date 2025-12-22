@@ -1,6 +1,6 @@
 {
   "description": "CRITICAL: Domain concepts must use domain-specific language, not generic terms. Objects should expose properties representing what they contain (e.g., recommended_trades), not methods that 'generate' or 'calculate' things. If field-level variables are needed for clarity, show them with dot notation (class.field).",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.domain_language_scanner.DomainLanguageScanner",
+  "scanner": "agile_bot.bots.base_bot.src.scanners.domain_language_scanner.DomainLanguageScanner",
   "examples": [
     {
       "do": {

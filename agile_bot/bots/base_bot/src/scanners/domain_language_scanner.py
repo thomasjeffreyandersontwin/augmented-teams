@@ -2,13 +2,12 @@
 
 from typing import List, Dict, Any, Optional
 import re
-from .story_scanner import StoryScanner
-from .story_map import StoryMap, StoryNode
+from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
 
 
-class DomainLanguageScanner(StoryScanner):
+class DomainLanguageScanner(DomainScanner):
     
     GENERIC_TERMS = [
         r'\bdata\b',
@@ -23,12 +22,8 @@ class DomainLanguageScanner(StoryScanner):
         r'^calculate\s+',
     ]
     
-    def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
+    def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
-        
-        # Only scan DomainConceptNodes, skip Story/Epic/SubEpic nodes
-        if not isinstance(node, DomainConceptNode):
-            return violations
         
         node_name_lower = node.name.lower()
         for term in ['data', 'config', 'parameter', 'result']:

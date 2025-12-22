@@ -1421,51 +1421,76 @@ total_violations = rules.total_violation_count
 - Add query methods to `Epic` class
 - Add convenience methods for common queries
 - Write unit tests for new methods
+- **After EACH method added:**
+  - Run validation on changed file: `/story_bot-code-validate --scope "{'type': 'files', 'value': ['src/story_graph/nodes.py']}"`
+  - Run tests: `pytest tests/test_story_graph/`
 - **Expected:** ~400 violations eliminated
 
 ### Phase 2: Refactor Scope Parsing (Week 1-2)
 - Replace all scope parsing with `StoryMap` usage
 - Update `action_scope.py` to use `StoryMap`
 - Update all scanners to use `StoryMap`
-- Run validation to confirm reduction
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
 - **Expected:** ~400 violations eliminated (cumulative)
 
 ### Phase 3: Display Formatting (Week 2)
 - Create `DisplaySection` and `MarkdownFormatter` classes
 - Refactor all display-related actions
-- Run validation to confirm reduction
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
 - **Expected:** ~700 violations eliminated (cumulative)
 
-### Phase 4: Workflow Instructions (Week 2)
-- Create `WorkflowInstructions` class
-- Refactor all action files with workflow instructions
-- Run validation to confirm reduction
+### Phase 4: Rules Digest Guidance (Week 2)
+- Create `RulesDigestGuidance` class
+- Refactor all action files with rules digest guidance
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
 - **Expected:** ~900 violations eliminated (cumulative)
 
 ### Phase 5: File Validation (Week 3)
 - Create `FileValidator` class
 - Refactor all file validation logic
-- Run validation to confirm reduction
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
 - **Expected:** ~1150 violations eliminated (cumulative)
 
 ### Phase 6: AST/Code Analysis (Week 3)
 - Create comprehensive AST classes: `Functions`, `Classes`, `IfStatements`, `TryBlocks`, `Imports`
 - Create domain objects: `Function`, `Class`, `IfStatement`, `TryBlock`, `Import`
 - Refactor all scanner files with AST parsing
-- Run validation to confirm reduction
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
 - **Expected:** ~1450 violations eliminated (cumulative, +100 from comprehensive AST coverage)
 
 ### Phase 7: Collection Iteration (Week 3-4)
 - Add convenience methods to `StoryMap`
 - Refactor all nested iteration patterns
-- Run validation to confirm reduction
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
 - **Expected:** ~1600 violations eliminated (cumulative)
 
 ### Phase 8: Exception Handling & Rules (Week 4)
 - Create exception classes
-- Create `Rules` collection class
+- Extend existing `Rules` class with properties
 - Refactor all exception handling and rules loading
-- Run final validation
+- **After EACH file refactored:**
+  - Run validation on changed file only
+  - Run tests for that specific file
+  - Commit if validation and tests pass
+- **Final validation:** Run full validation on entire codebase
 - **Expected:** ~1800 violations eliminated (all violations + buffer for comprehensive improvements)
 
 ---
@@ -1501,6 +1526,7 @@ Test File Structure:
 1. **Baseline Validation**
    - Run `/story_bot-code-validate` before changes
    - Record current violation count
+   - Document baseline metrics
 
 2. **Write Tests Following Story Graph**
    - **BEFORE writing new domain classes**, identify which story/scenario they belong to
@@ -1512,27 +1538,36 @@ Test File Structure:
    - Keep test methods under 20 lines
    - Test observable behavior, not implementation details
 
-3. **RED-GREEN-REFACTOR Cycle**
+3. **RED-GREEN-REFACTOR Cycle (Per File)**
    - **RED**: Write failing test that calls the real API (not placeholders)
    - **GREEN**: Implement minimum code to pass the test
    - **REFACTOR**: Clean up code while keeping tests green
-   - Run tests after each change
+   - **VALIDATE**: Run validation on changed files only (see step 4)
+   - **TEST**: Run tests after each change (see step 4)
 
-4. **Incremental Refactoring**
-   - Refactor one file at a time
-   - Run tests after each file
-   - Commit after each successful refactor
+4. **Incremental Refactoring with Continuous Validation**
+   - **For EACH file refactored:**
+     1. Refactor one file at a time
+     2. **Run validation on changed files ONLY**: `/story_bot-code-validate --scope "{'type': 'files', 'value': ['path/to/changed/file.py']}"`
+     3. **Run tests immediately**: `pytest path/to/test_file.py` (run specific test file)
+     4. If validation passes and tests pass → Commit
+     5. If validation fails or tests fail → Fix immediately before moving to next file
+   - **Never move to next file until current file passes validation AND tests**
+   - Keep a log of files refactored and their validation results
 
-5. **Re-validation**
-   - Run `/story_bot-code-validate` after phase
+5. **Phase Re-validation**
+   - After all files in phase are refactored:
+   - Run `/story_bot-code-validate` on entire codebase
    - Run `/story_bot-tests-validate` to verify test structure matches story graph
-   - Confirm expected violation reduction
+   - Confirm expected violation reduction for the phase
    - Document any unexpected results
+   - Compare against baseline metrics
 
 6. **Integration Tests**
-   - Run full test suite
-   - Verify no regressions
+   - Run full test suite: `pytest`
+   - Verify no regressions in other parts of codebase
    - Test all affected behaviors
+   - Ensure all tests pass before moving to next phase
 
 ### Key Test Rules to Follow
 
@@ -1602,13 +1637,51 @@ Test File Structure:
 
 ---
 
+## Validation and Testing Commands
+
+### Validate Changed Files Only (After Each Fix)
+```bash
+# Validate specific file
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate --scope "{'type': 'files', 'value': ['path/to/changed/file.py']}"
+
+# Example: Validate story_graph/nodes.py after adding methods
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate --scope "{'type': 'files', 'value': ['src/story_graph/nodes.py']}"
+```
+
+### Run Tests After Each Change
+```bash
+# Run specific test file
+pytest path/to/test_file.py -v
+
+# Run all tests (after phase completion)
+pytest
+
+# Run tests for specific module
+pytest tests/test_story_graph/ -v
+```
+
+### Full Validation (After Phase Completion)
+```bash
+# Validate entire codebase
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action validate
+
+# Validate test structure matches story graph
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate
+```
+
+---
+
 ## Next Steps
 
 1. ✅ Review and approve this plan
 2. ⏳ Start Phase 1: Extend Story Graph Domain Model
 3. ⏳ Add query/filter methods to `StoryMap` and `Epic` classes
 4. ⏳ Write unit tests for new methods
-5. ⏳ Begin Phase 2: Refactor scope parsing to use `StoryMap`
+5. ⏳ **After EACH method:** Run validation on changed file + run tests
+6. ⏳ Begin Phase 2: Refactor scope parsing to use `StoryMap`
+7. ⏳ **After EACH file:** Run validation on changed file + run tests + commit
+
+**CRITICAL:** Never move to the next file until current file passes both validation AND tests!
 
 ---
 

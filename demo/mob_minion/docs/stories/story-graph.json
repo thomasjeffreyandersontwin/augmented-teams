@@ -10,11 +10,16 @@
           "responsibilities": [
             {
               "name": "Group minions together",
-              "collaborators": ["MinionMember"]
+              "collaborators": [
+                "MinionMember"
+              ]
             },
             {
               "name": "Execute collective actions",
-              "collaborators": ["CombatAction", "TargetingStrategy"]
+              "collaborators": [
+                "CombatAction",
+                "TargetingStrategy"
+              ]
             }
           ]
         },
@@ -23,11 +28,16 @@
           "responsibilities": [
             {
               "name": "Participate in mob",
-              "collaborators": ["Mob"]
+              "collaborators": [
+                "Mob"
+              ]
             },
             {
               "name": "Perform individual action",
-              "collaborators": ["BoardToken", "CombatAction"]
+              "collaborators": [
+                "BoardToken",
+                "CombatAction"
+              ]
             }
           ]
         },
@@ -36,7 +46,10 @@
           "responsibilities": [
             {
               "name": "Represent minion visually",
-              "collaborators": ["MinionMember", "FoundryScene"]
+              "collaborators": [
+                "MinionMember",
+                "FoundryScene"
+              ]
             }
           ]
         }
@@ -58,21 +71,27 @@
                   "name": "Select minion tokens",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Group selected minions",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Show mob confirmation",
                   "sequential_order": 3,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -95,14 +114,18 @@
                   "name": "Select additional minions",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Add minions to mob",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -125,14 +148,18 @@
                   "name": "Select minions to remove",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Remove minions from mob",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -152,7 +179,10 @@
           "responsibilities": [
             {
               "name": "Identify targets by criteria",
-              "collaborators": ["CombatTarget", "Mob"]
+              "collaborators": [
+                "CombatTarget",
+                "Mob"
+              ]
             }
           ]
         },
@@ -161,7 +191,10 @@
           "responsibilities": [
             {
               "name": "Receive mob attack",
-              "collaborators": ["BoardToken", "CombatAction"]
+              "collaborators": [
+                "BoardToken",
+                "CombatAction"
+              ]
             }
           ]
         },
@@ -170,7 +203,10 @@
           "responsibilities": [
             {
               "name": "Apply to target",
-              "collaborators": ["CombatTarget", "MinionMember"]
+              "collaborators": [
+                "CombatTarget",
+                "MinionMember"
+              ]
             }
           ]
         }
@@ -192,14 +228,18 @@
                   "name": "Choose mob strategy",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Assign strategy to mob",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -213,28 +253,36 @@
                   "name": "Target strongest enemy",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Target weakest enemy",
                   "sequential_order": 2,
                   "connector": "or",
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Defend leader",
                   "sequential_order": 3,
                   "connector": "or",
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Target most wounded",
                   "sequential_order": 4,
                   "connector": "or",
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 }
               ]
@@ -257,21 +305,27 @@
                   "name": "Click mob member",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Identify targets by strategy",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Execute attacks for all members",
                   "sequential_order": 3,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -294,21 +348,27 @@
                   "name": "Execute melee attack",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Execute ranged attack",
                   "sequential_order": 2,
                   "connector": "or",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Execute area attack",
                   "sequential_order": 3,
                   "connector": "or",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -328,11 +388,17 @@
           "responsibilities": [
             {
               "name": "Define mob composition",
-              "collaborators": ["Mob", "ActorTemplate"]
+              "collaborators": [
+                "Mob",
+                "ActorTemplate"
+              ]
             },
             {
               "name": "Spawn mob instances",
-              "collaborators": ["Mob", "FoundryScene"]
+              "collaborators": [
+                "Mob",
+                "FoundryScene"
+              ]
             }
           ]
         },
@@ -341,7 +407,10 @@
           "responsibilities": [
             {
               "name": "Define minion type",
-              "collaborators": ["MinionMember", "FoundryActor"]
+              "collaborators": [
+                "MinionMember",
+                "FoundryActor"
+              ]
             }
           ]
         }
@@ -363,14 +432,18 @@
                   "name": "Specify mob composition",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Save template",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -394,21 +467,27 @@
                   "name": "Select template",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Instantiate mob",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Place tokens on board",
                   "sequential_order": 3,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -428,11 +507,17 @@
           "responsibilities": [
             {
               "name": "Get movement path",
-              "collaborators": ["Mob", "FoundryScene"]
+              "collaborators": [
+                "Mob",
+                "FoundryScene"
+              ]
             },
             {
               "name": "Identify obstacles",
-              "collaborators": ["FoundryScene", "BoardToken"]
+              "collaborators": [
+                "FoundryScene",
+                "BoardToken"
+              ]
             }
           ]
         },
@@ -441,11 +526,17 @@
           "responsibilities": [
             {
               "name": "Represent path waypoints",
-              "collaborators": ["PathfindingStrategy", "FoundryScene"]
+              "collaborators": [
+                "PathfindingStrategy",
+                "FoundryScene"
+              ]
             },
             {
               "name": "Validate path accessibility",
-              "collaborators": ["Mob", "BoardToken"]
+              "collaborators": [
+                "Mob",
+                "BoardToken"
+              ]
             }
           ]
         }
@@ -467,21 +558,27 @@
                   "name": "Select direct path algorithm",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Select obstacle avoidance algorithm",
                   "sequential_order": 2,
                   "connector": "or",
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Select A-star pathfinding algorithm",
                   "sequential_order": 3,
                   "connector": "or",
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 }
               ]
@@ -505,28 +602,36 @@
                   "name": "Select mob to move",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Select destination location",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Find path from current position to destination",
                   "sequential_order": 3,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Show movement path",
                   "sequential_order": 4,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -550,21 +655,27 @@
                   "name": "Confirm movement path",
                   "sequential_order": 1,
                   "connector": null,
-                  "users": ["GameMaster"],
+                  "users": [
+                    "GameMaster"
+                  ],
                   "story_type": "user"
                 },
                 {
                   "name": "Move mob tokens along path",
                   "sequential_order": 2,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 },
                 {
                   "name": "Confirm mob reached destination",
                   "sequential_order": 3,
                   "connector": "and",
-                  "users": ["System"],
+                  "users": [
+                    "System"
+                  ],
                   "story_type": "system"
                 }
               ]
@@ -580,652 +691,78 @@
     {
       "name": "Basic Mob Formation and Simple Attack",
       "priority": 1,
-      "epics": [
-        {
-          "name": "Organize Minions Into Mobs",
-          "sequential_order": 1,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "Mob",
-              "responsibilities": [
-                {
-                  "name": "Group minions together",
-                  "collaborators": ["MinionMember"]
-                },
-                {
-                  "name": "Execute collective actions",
-                  "collaborators": ["CombatAction", "TargetingStrategy"]
-                }
-              ]
-            },
-            {
-              "name": "MinionMember",
-              "responsibilities": [
-                {
-                  "name": "Participate in mob",
-                  "collaborators": ["Mob"]
-                },
-                {
-                  "name": "Perform individual action",
-                  "collaborators": ["BoardToken", "CombatAction"]
-                }
-              ]
-            },
-            {
-              "name": "BoardToken",
-              "responsibilities": [
-                {
-                  "name": "Represent minion visually",
-                  "collaborators": ["MinionMember", "FoundryScene"]
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "Form Mob",
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Select minion tokens",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Group selected minions",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    },
-                    {
-                      "name": "Show mob confirmation",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            }
-          ],
-          "stories": []
-        },
-        {
-          "name": "Execute Mob Actions",
-          "sequential_order": 2,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "TargetingStrategy",
-              "responsibilities": [
-                {
-                  "name": "Identify targets by criteria",
-                  "collaborators": ["CombatTarget", "Mob"]
-                }
-              ]
-            },
-            {
-              "name": "CombatTarget",
-              "responsibilities": [
-                {
-                  "name": "Receive mob attack",
-                  "collaborators": ["BoardToken", "CombatAction"]
-                }
-              ]
-            },
-            {
-              "name": "CombatAction",
-              "responsibilities": [
-                {
-                  "name": "Apply to target",
-                  "collaborators": ["CombatTarget", "MinionMember"]
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "Configure Strategy",
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Choose mob strategy",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Assign strategy to mob",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Coordinate Attack",
-              "sequential_order": 2,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Click mob member",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Identify targets by strategy",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    },
-                    {
-                      "name": "Execute attacks for all members",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Resolve Attack",
-              "sequential_order": 3,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "or",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Execute melee attack",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            }
-          ],
-          "stories": []
-        }
+      "stories": [
+        "Organize Minions Into Mobs",
+        "Form Mob",
+        "Select minion tokens",
+        "Group selected minions",
+        "Show mob confirmation",
+        "Execute Mob Actions",
+        "Configure Strategy",
+        "Choose mob strategy",
+        "Assign strategy to mob",
+        "Coordinate Attack",
+        "Click mob member",
+        "Identify targets by strategy",
+        "Execute attacks for all members",
+        "Resolve Attack",
+        "Execute melee attack"
       ]
     },
     {
       "name": "Enhanced Targeting and Mob Management",
       "priority": 2,
-      "epics": [
-        {
-          "name": "Organize Minions Into Mobs",
-          "sequential_order": 1,
-          "estimated_stories": null,
-          "domain_concepts": [],
-          "sub_epics": [
-            {
-              "name": "Expand Mob",
-              "sequential_order": 2,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Select additional minions",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Add minions to mob",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Reduce Mob",
-              "sequential_order": 3,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Select minions to remove",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Remove minions from mob",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            }
-          ],
-          "stories": []
-        },
-        {
-          "name": "Execute Mob Actions",
-          "sequential_order": 2,
-          "estimated_stories": null,
-          "domain_concepts": [],
-          "sub_epics": [
-            {
-              "name": "Configure Strategy",
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "or",
-                  "connector": "or",
-                  "sequential_order": 2,
-                  "stories": [
-                    {
-                      "name": "Target strongest enemy",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Target weakest enemy",
-                      "sequential_order": 2,
-                      "connector": "or",
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Defend leader",
-                      "sequential_order": 3,
-                      "connector": "or",
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Target most wounded",
-                      "sequential_order": 4,
-                      "connector": "or",
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Resolve Attack",
-              "sequential_order": 3,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "or",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Execute ranged attack",
-                      "sequential_order": 2,
-                      "connector": "or",
-                      "users": ["System"],
-                      "story_type": "system"
-                    },
-                    {
-                      "name": "Execute area attack",
-                      "sequential_order": 3,
-                      "connector": "or",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            }
-          ],
-          "stories": []
-        }
+      "stories": [
+        "Organize Minions Into Mobs",
+        "Expand Mob",
+        "Select additional minions",
+        "Add minions to mob",
+        "Reduce Mob",
+        "Select minions to remove",
+        "Remove minions from mob",
+        "Execute Mob Actions",
+        "Configure Strategy",
+        "Target strongest enemy",
+        "Target weakest enemy",
+        "Defend leader",
+        "Target most wounded",
+        "Resolve Attack",
+        "Execute ranged attack",
+        "Execute area attack"
       ]
     },
     {
       "name": "Template-Based Deployment",
       "priority": 3,
-      "epics": [
-        {
-          "name": "Deploy Mobs From Templates",
-          "sequential_order": 3,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "MobTemplate",
-              "responsibilities": [
-                {
-                  "name": "Define mob composition",
-                  "collaborators": ["Mob", "ActorTemplate"]
-                },
-                {
-                  "name": "Spawn mob instances",
-                  "collaborators": ["Mob", "FoundryScene"]
-                }
-              ]
-            },
-            {
-              "name": "ActorTemplate",
-              "responsibilities": [
-                {
-                  "name": "Define minion type",
-                  "collaborators": ["MinionMember", "FoundryActor"]
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "Define Mob Template",
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Specify mob composition",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Save template",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Spawn From Template",
-              "sequential_order": 2,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Select template",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Instantiate mob",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    },
-                    {
-                      "name": "Place tokens on board",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            }
-          ],
-          "stories": []
-        }
+      "stories": [
+        "Deploy Mobs From Templates",
+        "Define Mob Template",
+        "Specify mob composition",
+        "Save template",
+        "Spawn From Template",
+        "Select template",
+        "Instantiate mob",
+        "Place tokens on board"
       ]
     },
     {
       "name": "Pathfinding Enhancement",
       "priority": 4,
-      "epics": [
-        {
-          "name": "Move Mobs With Pathfinding",
-          "sequential_order": 4,
-          "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "PathfindingStrategy",
-              "responsibilities": [
-                {
-                  "name": "Get movement path",
-                  "collaborators": ["Mob", "FoundryScene"]
-                },
-                {
-                  "name": "Identify obstacles",
-                  "collaborators": ["FoundryScene", "BoardToken"]
-                }
-              ]
-            },
-            {
-              "name": "MovementPath",
-              "responsibilities": [
-                {
-                  "name": "Represent path waypoints",
-                  "collaborators": ["PathfindingStrategy", "FoundryScene"]
-                },
-                {
-                  "name": "Validate path accessibility",
-                  "collaborators": ["Mob", "BoardToken"]
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "Choose Pathfinding Algorithm",
-              "sequential_order": 1,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "or",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Select direct path algorithm",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Select obstacle avoidance algorithm",
-                      "sequential_order": 2,
-                      "connector": "or",
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Select A-star pathfinding algorithm",
-                      "sequential_order": 3,
-                      "connector": "or",
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Plan Mob Movement",
-              "sequential_order": 2,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Select mob to move",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Select destination location",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Find path from current position to destination",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    },
-                    {
-                      "name": "Show movement path",
-                      "sequential_order": 4,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            },
-            {
-              "name": "Execute Mob Movement",
-              "sequential_order": 3,
-              "estimated_stories": null,
-              "domain_concepts": [],
-              "sub_epics": [],
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "sequential_order": 1,
-                  "stories": [
-                    {
-                      "name": "Confirm movement path",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": ["GameMaster"],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Move mob tokens along path",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    },
-                    {
-                      "name": "Confirm mob reached destination",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": ["System"],
-                      "story_type": "system"
-                    }
-                  ]
-                }
-              ],
-              "stories": []
-            }
-          ],
-          "stories": []
-        }
+      "stories": [
+        "Move Mobs With Pathfinding",
+        "Choose Pathfinding Algorithm",
+        "Select direct path algorithm",
+        "Select obstacle avoidance algorithm",
+        "Select A-star pathfinding algorithm",
+        "Plan Mob Movement",
+        "Select mob to move",
+        "Select destination location",
+        "Find path from current position to destination",
+        "Show movement path",
+        "Execute Mob Movement",
+        "Confirm movement path",
+        "Move mob tokens along path",
+        "Confirm mob reached destination"
       ]
     }
   ]

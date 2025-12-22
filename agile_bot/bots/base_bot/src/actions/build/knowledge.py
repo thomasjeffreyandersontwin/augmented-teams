@@ -16,11 +16,11 @@ class Knowledge:
 
     @property
     def instructions(self) -> Dict[str, Any]:
-        result = {'knowledge_graph_config': self.knowledge_graph_spec.config_data, 'config_path': str(self.knowledge_graph_spec.config_path) if self.knowledge_graph_spec.config_path else None}
+        # Return only file path references, not full content
+        config_path = str(self.knowledge_graph_spec.config_path) if self.knowledge_graph_spec.config_path else None
+        result = {'config_path': config_path}
         if self.knowledge_graph_template:
-            result['knowledge_graph_template'] = self.knowledge_graph_template.template_content
             result['template_path'] = str(self.knowledge_graph_template.template_path)
         else:
-            result['knowledge_graph_template'] = None
             result['template_path'] = None
         return result

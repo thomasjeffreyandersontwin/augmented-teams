@@ -1,6 +1,9 @@
+import dataclasses
 from typing import List
 from agile_bot.bots.base_bot.src.cli.help_renderer import HelpRenderer
 from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
+from agile_bot.bots.base_bot.src.cli.type_hint_converter import TypeHintConverter
+from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
 from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
 from agile_bot.bots.base_bot.src.utils import read_json_file
 
@@ -85,14 +88,21 @@ class UnifiedHelpGenerator:
             self.renderer.render_action_help(context)
     
     def _get_action_parameters(self, action_name: str) -> List[str]:
-        parameter_map = {
-            'clarify': ['--key_questions_answered <dict>', '--evidence_provided <dict>'],
-            'strategy': ['--decisions_made <dict>', '--assumptions_made <list>'],
-            'build': ['--scope <dict>'],
-            'validate': ['--scope <dict>'],
-            'render': ['--scope <dict>']
-        }
-        return parameter_map.get(action_name, [])
+        action_class = ActionFactory.get_action_class(action_name)
+        if not action_class:
+            return []
+        
+        context_class = getattr(action_class, 'context_class', None)
+        if not context_class or not dataclasses.is_dataclass(context_class):
+            return []
+        
+        params = []
+        for field_info in dataclasses.fields(context_class):
+            cli_name = f'--{field_info.name.replace("_", "-")}'
+            type_hint = TypeHintConverter.to_cli_type(field_info.type)
+            params.append(f'{cli_name} <{type_hint}>')
+        
+        return params
     
     def _get_parameter_descriptions(self, action_name: str, parameters: List[str]) -> dict:
         descriptions = {}

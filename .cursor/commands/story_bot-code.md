@@ -7,11 +7,11 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action ${
 
 ### clarify - Gather context
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action clarify
-  # Optional: --key_questions_answered '{"q1": "answer"}' --evidence_provided '{"type": "content"}'
+  # Optional: "--key-questions-answered={'q1': 'answer'}" "--evidence-provided={'type': 'content'}"
 
 ### strategy - Decide approach
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action strategy
-  # Optional: --decisions_made '{"decision": "value"}' --assumptions_made '["assumption"]'
+  # Optional: "--decisions-made={'decision': 'value'}" "--assumptions-made=assumption1" "assumption2"
 
 ### build - Build knowledge graph
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior code --action build

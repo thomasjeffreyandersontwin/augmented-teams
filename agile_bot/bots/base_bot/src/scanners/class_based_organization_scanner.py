@@ -5,7 +5,7 @@ from pathlib import Path
 import ast
 import re
 from .test_scanner import TestScanner
-from .story_map import StoryNode
+from .story_map import StoryNode, StoryMap
 from .violation import Violation
 
 
@@ -53,21 +53,8 @@ class ClassBasedOrganizationScanner(TestScanner):
         return violations
     
     def _extract_story_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
-        story_names = []
-        
-        epics = knowledge_graph.get('epics', [])
-        for epic in epics:
-            sub_epics = epic.get('sub_epics', [])
-            for sub_epic in sub_epics:
-                story_groups = sub_epic.get('story_groups', [])
-                for story_group in story_groups:
-                    stories = story_group.get('stories', [])
-                    for story in stories:
-                        story_name = story.get('name', '')
-                        if story_name:
-                            story_names.append(story_name)
-        
-        return story_names
+        story_map = StoryMap(knowledge_graph)
+        return [story.name for story in story_map.all_stories]
     
     def _check_class_name_matches_story(self, class_name: str, story_names: List[str], file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         story_name_from_class = class_name[4:] if class_name.startswith('Test') else class_name
@@ -80,6 +67,7 @@ class ClassBasedOrganizationScanner(TestScanner):
         
         if not matches:
             if self._is_abbreviated(class_name, story_names):
+                # No code snippet for class-level naming violations (class definition line)
                 return Violation(
                     rule=rule_obj,
                     violation_message=f'Test class "{class_name}" appears abbreviated - should match story name exactly (Test<ExactStoryName>)',
@@ -88,6 +76,7 @@ class ClassBasedOrganizationScanner(TestScanner):
                 ).to_dict()
             
             if self._is_generic(class_name):
+                # No code snippet for class-level naming violations (class definition line)
                 return Violation(
                     rule=rule_obj,
                     violation_message=f'Test class "{class_name}" uses generic name - should match story name exactly',
@@ -106,6 +95,7 @@ class ClassBasedOrganizationScanner(TestScanner):
             expected_name = self._find_expected_scenario_name(scenario_name_from_method, knowledge_graph, class_name)
             
             if expected_name:
+                # No code snippet for method-level naming violations (method definition line)
                 return Violation(
                     rule=rule_obj,
                     violation_message=f'Test method "{method_name}" appears abbreviated - should match scenario name exactly. Expected name based on epic/story: "{expected_name}"',
@@ -113,6 +103,7 @@ class ClassBasedOrganizationScanner(TestScanner):
                     severity='error'
                 ).to_dict()
             else:
+                # No code snippet for method-level naming violations (method definition line)
                 return Violation(
                     rule=rule_obj,
                     violation_message=f'Test method "{method_name}" appears abbreviated - should match scenario name exactly',
@@ -364,6 +355,7 @@ class ClassBasedOrganizationScanner(TestScanner):
             suggestion_list = ", ".join([f"test_{s}.py" for s in suggestions[:5]])  # Limit to top 5
             suggestion_text = f" Suggested names: {suggestion_list}"
         
+        # No code snippet for file-level naming violations
         return Violation(
             rule=rule_obj,
             violation_message=f'Test file name "{file_name}" does not match any sub-epic name and test methods do not span multiple sub-epics - file should be named test_<sub_epic_name>.py.{suggestion_text}',
@@ -393,7 +385,7 @@ class ClassBasedOrganizationScanner(TestScanner):
                                         sub_epics.add(self._to_snake_case(sub_epic))
         except (SyntaxError, UnicodeDecodeError) as e:
             logger.debug(f"Skipping file {file_path} due to parse error: {e}")
-            return violations
+            return set()
         
         return sub_epics
     

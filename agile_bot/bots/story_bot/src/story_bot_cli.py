@@ -15,7 +15,7 @@ Examples:
     story_bot
     story_bot --behavior exploration
     story_bot --behavior exploration --action clarify
-    story_bot --behavior exploration --action clarify --increment_file=increment.txt
+    story_bot --behavior exploration --action clarify @increment.txt
 """
 from pathlib import Path
 import sys

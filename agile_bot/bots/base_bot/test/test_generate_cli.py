@@ -546,5 +546,159 @@ class TestGenerateCursorAwarenessFiles:
 
 
 
+# ============================================================================
+# Story: Generate Help Parameters From Action Context Classes
+# ============================================================================
+
+def given_action_factory_initialized():
+    """Given: ActionFactory is available for introspection."""
+    from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
+    return ActionFactory
+
+
+def when_get_action_class_called(action_factory, action_name: str):
+    """When: get_action_class is called with action name."""
+    return action_factory.get_action_class(action_name)
+
+
+def then_action_class_has_context_class(action_class, expected_context_class_name: str):
+    """Then: Action class has expected context_class."""
+    import dataclasses
+    context_class = getattr(action_class, 'context_class', None)
+    assert context_class is not None, f"Action class has no context_class"
+    assert context_class.__name__ == expected_context_class_name, \
+        f"Expected {expected_context_class_name}, got {context_class.__name__}"
+
+
+def then_action_class_is_none(action_class):
+    """Then: Action class is None for unknown action."""
+    assert action_class is None, f"Expected None, got {action_class}"
+
+
+def when_extract_parameters_from_context_class(context_class):
+    """When: Parameters are extracted from context class."""
+    import dataclasses
+    if not dataclasses.is_dataclass(context_class):
+        return []
+    params = []
+    for field_info in dataclasses.fields(context_class):
+        cli_name = f'--{field_info.name.replace("_", "-")}'
+        params.append(cli_name)
+    return params
+
+
+def then_parameters_use_dashes_not_underscores(parameters: list):
+    """Then: All parameters use dashes, not underscores."""
+    for param in parameters:
+        assert '_' not in param, f"Parameter {param} uses underscores instead of dashes"
+        assert param.startswith('--'), f"Parameter {param} does not start with --"
+
+
+class TestGenerateHelpParametersFromActionContextClasses:
+    """Story: Generate Help Parameters From Action Context Classes
+    
+    When help is generated, CLI parameter names are extracted dynamically
+    from the action's context_class dataclass fields, with underscores
+    converted to dashes for CLI convention.
+    """
+    
+    def test_action_factory_returns_clarify_action_class(self):
+        """
+        SCENARIO: ActionFactory returns ClarifyContextAction for clarify
+        GIVEN: ActionFactory is available
+        WHEN: get_action_class is called with 'clarify'
+        THEN: Returns ClarifyContextAction class
+        """
+        # Given
+        action_factory = given_action_factory_initialized()
+        
+        # When
+        action_class = when_get_action_class_called(action_factory, 'clarify')
+        
+        # Then
+        then_action_class_has_context_class(action_class, 'ClarifyActionContext')
+    
+    def test_action_factory_returns_strategy_action_class(self):
+        """
+        SCENARIO: ActionFactory returns StrategyAction for strategy
+        GIVEN: ActionFactory is available
+        WHEN: get_action_class is called with 'strategy'
+        THEN: Returns StrategyAction with StrategyActionContext
+        """
+        # Given
+        action_factory = given_action_factory_initialized()
+        
+        # When
+        action_class = when_get_action_class_called(action_factory, 'strategy')
+        
+        # Then
+        then_action_class_has_context_class(action_class, 'StrategyActionContext')
+    
+    def test_action_factory_returns_none_for_unknown_action(self):
+        """
+        SCENARIO: ActionFactory returns None for unknown action
+        GIVEN: ActionFactory is available
+        WHEN: get_action_class is called with 'nonexistent_action'
+        THEN: Returns None
+        """
+        # Given
+        action_factory = given_action_factory_initialized()
+        
+        # When
+        action_class = when_get_action_class_called(action_factory, 'nonexistent_action')
+        
+        # Then
+        then_action_class_is_none(action_class)
+    
+    def test_parameters_extracted_from_clarify_context_use_dashes(self):
+        """
+        SCENARIO: Parameters from ClarifyActionContext use dashes
+        GIVEN: ClarifyActionContext with key_questions_answered field
+        WHEN: Parameters are extracted from context class
+        THEN: Parameter is --key-questions-answered (dashes, not underscores)
+        """
+        from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
+        
+        # When
+        parameters = when_extract_parameters_from_context_class(ClarifyActionContext)
+        
+        # Then
+        then_parameters_use_dashes_not_underscores(parameters)
+        assert '--key-questions-answered' in parameters
+        assert '--evidence-provided' in parameters
+    
+    def test_parameters_extracted_from_strategy_context_use_dashes(self):
+        """
+        SCENARIO: Parameters from StrategyActionContext use dashes
+        GIVEN: StrategyActionContext with decisions_made field
+        WHEN: Parameters are extracted from context class
+        THEN: Parameter is --decisions-made (dashes, not underscores)
+        """
+        from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext
+        
+        # When
+        parameters = when_extract_parameters_from_context_class(StrategyActionContext)
+        
+        # Then
+        then_parameters_use_dashes_not_underscores(parameters)
+        assert '--decisions-made' in parameters
+        assert '--assumptions-made' in parameters
+    
+    def test_all_known_actions_have_context_classes(self):
+        """
+        SCENARIO: All known actions have context classes
+        GIVEN: List of known action names
+        WHEN: get_action_class is called for each
+        THEN: All return action classes with context_class attribute
+        """
+        action_factory = given_action_factory_initialized()
+        known_actions = ['clarify', 'strategy', 'build', 'validate', 'render', 'rules']
+        
+        for action_name in known_actions:
+            action_class = when_get_action_class_called(action_factory, action_name)
+            assert action_class is not None, f"No action class for {action_name}"
+            assert hasattr(action_class, 'context_class'), \
+                f"Action {action_name} has no context_class"
+
 
 

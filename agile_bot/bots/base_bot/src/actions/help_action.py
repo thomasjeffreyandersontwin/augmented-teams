@@ -1,11 +1,14 @@
 import sys
 import re
 import logging
+import dataclasses
 from pathlib import Path
 from typing import Dict, Any, Type
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.action_context import ActionContext
+from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
 from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
+from agile_bot.bots.base_bot.src.cli.type_hint_converter import TypeHintConverter
 
 logger = logging.getLogger(__name__)
 
@@ -153,31 +156,27 @@ class HelpAction(Action):
     def _add_action_help(self, instructions):
         base_actions_dir = get_base_actions_directory()
         action_order = ['clarify', 'strategy', 'build', 'validate', 'render']
-        action_parameters = {
-            'clarify': [
-                ('--key_questions_answered <dict>', 'Dict mapping question keys to answer strings'),
-                ('--evidence_provided <dict>', 'Dict mapping evidence types to evidence content')
-            ],
-            'strategy': [
-                ('--decisions_made <dict>', 'Dict mapping decision criteria keys to selected options/values'),
-                ('--assumptions_made <list>', 'List of assumption strings')
-            ],
-            'build': [
-                ('--scope <dict>', "Scope: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}")
-            ],
-            'validate': [
-                ('--scope <dict>', "Scope: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>, 'skiprule': <rule_names>}"),
-                ('--all-files', 'Scan all files instead of only changed files (flag: presence = scan all)'),
-                ('--skip-cross-file', 'Skip cross-file duplicate checking (flag: presence = skip cross-file scan)')
-            ],
-            'render': [
-                ('--scope <dict>', "Scope: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}")
-            ]
-        }
         for action_name in action_order:
-            self._add_single_action_help(instructions, base_actions_dir, action_name, action_parameters)
+            self._add_single_action_help(instructions, base_actions_dir, action_name)
     
-    def _add_single_action_help(self, instructions, base_actions_dir: Path, action_name: str, action_parameters: dict):
+    def _get_parameters_from_context_class(self, action_name: str) -> list:
+        action_class = ActionFactory.get_action_class(action_name)
+        if not action_class:
+            return []
+        
+        context_class = getattr(action_class, 'context_class', None)
+        if not context_class or not dataclasses.is_dataclass(context_class):
+            return []
+        
+        params = []
+        for field_info in dataclasses.fields(context_class):
+            cli_name = f'--{field_info.name.replace("_", "-")}'
+            type_hint = TypeHintConverter.to_cli_type(field_info.type)
+            params.append((f'{cli_name} <{type_hint}>', 'Optional parameter'))
+        
+        return params
+    
+    def _add_single_action_help(self, instructions, base_actions_dir: Path, action_name: str):
         action_dir = base_actions_dir / action_name
         if not action_dir.exists() or not action_dir.is_dir():
             return
@@ -197,7 +196,9 @@ class HelpAction(Action):
                 instructions.add_display('')
             instructions.add_display('```')
             instructions.add_display(f'/{self.behavior.bot_name}-<behavior> {action_name} [parameters]')
-            params = action_parameters.get(action_name, [])
+            
+            # Dynamically get parameters from context class
+            params = self._get_parameters_from_context_class(action_name)
             if params:
                 instructions.add_display('')
                 for param_name, param_desc in params:

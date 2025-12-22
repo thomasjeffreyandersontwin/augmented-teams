@@ -992,7 +992,6 @@ def create_cli_args_namespace(**kwargs):
         'action': 'validate',
         'scope': None,
         'skip_cross_file': False,
-        'force_full': False,
         'user_message': None
     }
     defaults.update(kwargs)
@@ -1286,22 +1285,9 @@ class TestScopeBasedParameterHandling:
 
 class TestValidationParameterVariations:
     
-    def test_force_full_flag_alone(self):
-        args = create_args_namespace(force_full=True)
-        params = CliParameterParser._build_params_from_args(args, [])
-        assert params.get('force_full') is True
-        assert params.get('skip_cross_file') is None or params.get('skip_cross_file') is False
-    
     def test_skip_cross_file_flag_alone(self):
         args = create_args_namespace(skip_cross_file=True)
         params = CliParameterParser._build_params_from_args(args, [])
-        assert params.get('skip_cross_file') is True
-        assert params.get('force_full') is None or params.get('force_full') is False
-    
-    def test_both_flags_together(self):
-        args = create_args_namespace(force_full=True, skip_cross_file=True)
-        params = CliParameterParser._build_params_from_args(args, [])
-        assert params.get('force_full') is True
         assert params.get('skip_cross_file') is True
     
     def test_scope_with_type_all(self):
@@ -1371,16 +1357,6 @@ class TestValidationParameterVariations:
         assert len(processed_params['scope']['exclude']) == 2
         assert len(processed_params['scope']['skiprule']) == 2
     
-    def test_force_full_with_scope(self):
-        args = create_args_namespace(
-            force_full=True,
-            scope="{'type': 'files', 'value': ['file1.py']}"
-        )
-        params = CliParameterParser._build_params_from_args(args, [])
-        processed_params = CliParameterParser._parse_json_parameters(params)
-        assert processed_params.get('force_full') is True
-        assert processed_params['scope']['type'] == 'files'
-    
     def test_skip_cross_file_with_scope(self):
         args = create_args_namespace(
             skip_cross_file=True,
@@ -1391,27 +1367,13 @@ class TestValidationParameterVariations:
         assert processed_params.get('skip_cross_file') is True
         assert processed_params['scope']['type'] == 'files'
     
-    def test_both_flags_with_scope(self):
+    def test_skip_cross_file_with_scope_containing_exclude_and_skiprule(self):
         args = create_args_namespace(
-            force_full=True,
-            skip_cross_file=True,
-            scope="{'type': 'files', 'value': ['file1.py']}"
-        )
-        params = CliParameterParser._build_params_from_args(args, [])
-        processed_params = CliParameterParser._parse_json_parameters(params)
-        assert processed_params.get('force_full') is True
-        assert processed_params.get('skip_cross_file') is True
-        assert processed_params['scope']['type'] == 'files'
-    
-    def test_flags_with_scope_containing_exclude_and_skiprule(self):
-        args = create_args_namespace(
-            force_full=True,
             skip_cross_file=True,
             scope="{'type': 'files', 'value': ['src/'], 'exclude': ['test_*.py'], 'skiprule': ['eliminate_duplication']}"
         )
         params = CliParameterParser._build_params_from_args(args, [])
         processed_params = CliParameterParser._parse_json_parameters(params)
-        assert processed_params.get('force_full') is True
         assert processed_params.get('skip_cross_file') is True
         assert processed_params['scope']['exclude'] == ['test_*.py']
         assert processed_params['scope']['skiprule'] == ['eliminate_duplication']
@@ -1434,7 +1396,6 @@ class TestValidationParameterVariations:
     def test_no_parameters_at_all(self):
         args = create_args_namespace()
         params = CliParameterParser._build_params_from_args(args, [])
-        assert params.get('force_full') is None or params.get('force_full') is False
         assert params.get('skip_cross_file') is None or params.get('skip_cross_file') is False
         assert params.get('scope') is None
 
@@ -1459,13 +1420,12 @@ def given_scope_config_for_files(file_paths: list, exclude_patterns: list = None
     )
 
 
-def given_validate_action_context(scope=None, skip_cross_file=False, force_full=False):
+def given_validate_action_context(scope=None, skip_cross_file=False):
     """Given: A typed ValidateActionContext with optional parameters."""
     from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
     return ValidateActionContext(
         scope=scope,
-        skip_cross_file=skip_cross_file,
-        force_full=force_full
+        skip_cross_file=skip_cross_file
     )
 
 
@@ -1640,7 +1600,7 @@ class TestCliContextBuilderParsesTypedContext:
     def test_context_builder_handles_all_validate_parameters(self):
         """
         SCENARIO: CliContextBuilder handles all ValidateActionContext parameters
-        GIVEN: CLI args with scope, skip-cross-file, and force-full
+        GIVEN: CLI args with scope, skip-cross-file, and all-files
         WHEN: Context is built from CLI args
         THEN: All parameters are correctly set in typed context
         """
@@ -1650,7 +1610,7 @@ class TestCliContextBuilderParsesTypedContext:
         cli_args = [
             '--scope', '{"type": "all"}',
             '--skip-cross-file',
-            '--force-full'
+            '--all-files'
         ]
         
         # When: Context is built from CLI args
@@ -1660,7 +1620,7 @@ class TestCliContextBuilderParsesTypedContext:
         then_context_is_typed_with_values(
             context, ValidateActionContext,
             skip_cross_file=True,
-            force_full=True
+            all_files=True
         )
 
 
@@ -1676,7 +1636,7 @@ class TestCliParserGeneratorCreatesActionParsers:
         SCENARIO: Parser generator creates parser for ValidateActionContext
         GIVEN: ValidateRulesAction with ValidateActionContext
         WHEN: Parser generator generates parser code
-        THEN: Generated code includes --scope, --skip-cross-file, --force-full args
+        THEN: Generated code includes --scope, --skip-cross-file, --all-files args
         """
         from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
         
@@ -1689,7 +1649,7 @@ class TestCliParserGeneratorCreatesActionParsers:
         # Then: Generated code includes expected args
         then_generated_parser_has_arguments(
             parser_code,
-            ['--scope', '--skip-cross-file', '--force-full']
+            ['--scope', '--skip-cross-file', '--all-files']
         )
     
     def test_parser_generator_creates_scope_parser_for_build_action(self):

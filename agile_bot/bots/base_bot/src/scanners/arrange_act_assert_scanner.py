@@ -6,6 +6,7 @@ import ast
 import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +22,12 @@ class ArrangeActAssertScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith('test_'):
-                    violation = self._check_aaa_structure(node, content, file_path, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if function.node.name.startswith('test_'):
+                violation = self._check_aaa_structure(function.node, content, file_path, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     
@@ -52,13 +53,26 @@ class ArrangeActAssertScanner(TestScanner):
         # 5. Check for actual code
         if not has_actual_code:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            violations.append(Violation(
-                rule=rule_obj,
-                violation_message=f'Test "{test_node.name}" has AAA structure but no actual code - tests must call production code, not just contain comments and pass statements',
-                location=str(file_path),
-                line_number=line_number,
-                severity='error'
-            ).to_dict())
+            try:
+                violations.append(self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Test "{test_node.name}" has AAA structure but no actual code - tests must call production code, not just contain comments and pass statements',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='error',
+                    content=content,
+                    ast_node=test_node,
+                    max_lines=10
+                ))
+            except Exception:
+                # No code snippet for exception case (fallback when snippet creation fails)
+                violations.append(Violation(
+                    rule=rule_obj,
+                    violation_message=f'Test "{test_node.name}" has AAA structure but no actual code - tests must call production code, not just contain comments and pass statements',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='error'
+                ).to_dict())
         
         return violations[0] if violations else None
     
@@ -173,13 +187,26 @@ class ArrangeActAssertScanner(TestScanner):
         
         if not (has_given and has_when and has_then):
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'Test "{test_node.name}" does not follow Arrange-Act-Assert structure - add # Given/When/Then comments or use given_*/when_*/then_* method names',
-                location=str(file_path),
-                line_number=line_number,
-                severity='error'
-            ).to_dict()
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Test "{test_node.name}" does not follow Arrange-Act-Assert structure - add # Given/When/Then comments or use given_*/when_*/then_* method names',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='error',
+                    content=content,
+                    ast_node=test_node,
+                    max_lines=10
+                )
+            except Exception:
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=f'Test "{test_node.name}" does not follow Arrange-Act-Assert structure - add # Given/When/Then comments or use given_*/when_*/then_* method names',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='error'
+                ).to_dict()
         
         return None
     
@@ -199,23 +226,49 @@ class ArrangeActAssertScanner(TestScanner):
         
         if max_arrange > min_act:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'Test "{test_node.name}" has Arrange section mixed with Act section - Arrange should come before Act',
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict()
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Test "{test_node.name}" has Arrange section mixed with Act section - Arrange should come before Act',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='warning',
+                    content=content,
+                    ast_node=test_node,
+                    max_lines=10
+                )
+            except Exception:
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=f'Test "{test_node.name}" has Arrange section mixed with Act section - Arrange should come before Act',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='warning'
+                ).to_dict()
         
         if max_act > min_assert:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'Test "{test_node.name}" has Act section mixed with Assert section - Act should come before Assert',
-                location=str(file_path),
-                line_number=line_number,
-                severity='warning'
-            ).to_dict()
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Test "{test_node.name}" has Act section mixed with Assert section - Act should come before Assert',
+                    file_path=file_path,
+                    line_number=line_number,
+                    severity='warning',
+                    content=content,
+                    ast_node=test_node,
+                    max_lines=10
+                )
+            except Exception:
+                return Violation(
+                    rule=rule_obj,
+                    violation_message=f'Test "{test_node.name}" has Act section mixed with Assert section - Act should come before Assert',
+                    location=str(file_path),
+                    line_number=line_number,
+                    severity='warning'
+                ).to_dict()
         
         return None
     

@@ -2,13 +2,12 @@
 
 from typing import List, Dict, Any, Optional
 import re
-from .story_scanner import StoryScanner
-from .story_map import StoryMap, StoryNode
+from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
 
 
-class CalculationTimingScanner(StoryScanner):
+class CalculationTimingScanner(DomainScanner):
     
     TIMING_EXPOSURE_PATTERNS = [
         r'^calculate\s+',
@@ -20,9 +19,6 @@ class CalculationTimingScanner(StoryScanner):
         r'\bprecomputed\s+',
         r'\bprecomputed\s+',
     ]
-    
-    def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
-        return []
     
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

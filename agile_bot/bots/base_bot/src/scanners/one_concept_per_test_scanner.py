@@ -7,6 +7,7 @@ import re
 import logging
 from .test_scanner import TestScanner
 from .violation import Violation
+from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +23,12 @@ class OneConceptPerTestScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith('test_'):
-                    violation = self._check_one_concept(node, file_path, content, rule_obj)
-                    if violation:
-                        violations.append(violation)
+        functions = Functions(tree)
+        for function in functions.get_many_functions:
+            if function.node.name.startswith('test_'):
+                violation = self._check_one_concept(function.node, file_path, content, rule_obj)
+                if violation:
+                    violations.append(violation)
         
         return violations
     
@@ -46,6 +47,7 @@ class OneConceptPerTestScanner(TestScanner):
                 words = test_name.split('_')
                 if len(words) > 8:
                     line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
+                    # No code snippet for test naming violations (method definition line)
                     violations.append(Violation(
                         rule=rule_obj,
                         violation_message=f'Test "{test_node.name}" appears to test multiple concepts - split into separate tests, one concept per test',
@@ -59,6 +61,7 @@ class OneConceptPerTestScanner(TestScanner):
         concepts = self._detect_multiple_concepts(test_node, content)
         if len(concepts) > 1:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
+            # No code snippet for multiple concept violations (method definition line)
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(
@@ -74,6 +77,7 @@ class OneConceptPerTestScanner(TestScanner):
         scenario = self._extract_scenario(test_node)
         if scenario and self._has_multiple_scenarios(scenario):
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
+            # No code snippet for docstring scenario violations (method definition line)
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(
@@ -89,6 +93,7 @@ class OneConceptPerTestScanner(TestScanner):
         assertion_groups = self._group_assertions(test_node)
         if len(assertion_groups) > 3:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
+            # No code snippet for assertion grouping violations (method definition line)
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(

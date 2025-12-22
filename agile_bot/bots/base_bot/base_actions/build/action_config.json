@@ -1,8 +1,9 @@
 {
   "name": "build",
-  "description": "build action",
+  "description": "Build/update the knowledge graph by reading story markdown files and generating story-graph.json",
   "order": 1,
   "instructions": [
+    "CRITICAL: This action GENERATES instructions in build-instructions.txt - AI must READ and EXECUTE those instructions to build/update the knowledge graph",
     "Build knowledge graph for build",
     "Base instructions for build",
     "Use verb-noun format for actions",

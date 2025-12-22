@@ -6,6 +6,7 @@ import ast
 import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
+from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +22,11 @@ class EncapsulationScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                violation = self._check_encapsulation(node, content, file_path, rule_obj)
-                if violation:
-                    violations.append(violation)
+        classes = Classes(tree)
+        for cls in classes.get_many_classes:
+            violation = self._check_encapsulation(cls.node, content, file_path, rule_obj)
+            if violation:
+                violations.append(violation)
         
         return violations
     
@@ -48,6 +49,7 @@ class EncapsulationScanner(CodeScanner):
                 chain_depth = self._get_method_chain_depth(node)
                 if chain_depth >= 3:  # 3+ levels is a violation
                     line_number = node.lineno if hasattr(node, 'lineno') else method_node.lineno
+                    # No code snippet for method chain violations
                     violations.append(Violation(
                         rule=rule_obj,
                         violation_message=(

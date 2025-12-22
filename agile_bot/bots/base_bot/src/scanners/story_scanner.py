@@ -22,30 +22,14 @@ class StoryScanner(Scanner):
         story_graph_data = knowledge_graph.get('story_graph', knowledge_graph)
         story_map = StoryMap(story_graph_data)
         
-        # Scan domain concepts from epics and sub_epics
+        # Story scanners should only scan story/epic/sub-epic nodes, NOT domain concepts
+        # Domain concepts are validated by domain-specific scanners that override scan_domain_concept()
+        # If a scanner needs to scan domain concepts, it should override scan() to call _scan_domain_concepts()
+        
         for epic in story_map.epics():
-            # Scan domain concepts at epic level
-            epic_violations = self._scan_domain_concepts(
-                epic.data.get('domain_concepts', []),
-                epic.epic_idx,
-                None,
-                rule_obj
-            )
-            violations.extend(epic_violations)
-            
             # Walk through all nodes (including sub_epics)
             for node in story_map.walk(epic):
-                # Scan domain concepts at sub_epic level
-                if hasattr(node, 'data') and 'domain_concepts' in node.data:
-                    sub_epic_violations = self._scan_domain_concepts(
-                        node.data.get('domain_concepts', []),
-                        epic.epic_idx,
-                        getattr(node, 'sub_epic_path', None),
-                        rule_obj
-                    )
-                    violations.extend(sub_epic_violations)
-                
-                # Also scan story nodes if needed (for other validations)
+                # Scan story nodes only
                 if not isinstance(node, StoryGroup):
                     node_violations = self.scan_story_node(node, rule_obj)
                     violations.extend(node_violations)
@@ -83,6 +67,8 @@ class StoryScanner(Scanner):
         pass
     
     def scan_domain_concept(self, node: 'DomainConceptNode', rule_obj: Any) -> List[Dict[str, Any]]:
-        # Default implementation calls scan_story_node for compatibility
-        return self.scan_story_node(node, rule_obj)
+        # Story scanners should NOT scan domain concepts by default
+        # Domain concepts are validated by domain-specific scanners, not story scanners
+        # Override this method if a scanner needs to validate domain concepts
+        return []
 
