@@ -8,7 +8,6 @@ import re
 
 
 class ScenariosCoverAllCasesScanner(StoryScanner):
-    """Validates scenarios cover happy path, edge cases, and error cases."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -18,7 +17,6 @@ class ScenariosCoverAllCasesScanner(StoryScanner):
             scenarios = story_data.get('scenarios', [])
             
             if len(scenarios) > 0:
-                # Check scenario coverage
                 has_happy_path = False
                 has_edge_case = False
                 has_error_case = False
@@ -33,7 +31,6 @@ class ScenariosCoverAllCasesScanner(StoryScanner):
                     if self._is_error_case(scenario_text):
                         has_error_case = True
                 
-                # Report missing coverage
                 if not has_happy_path:
                     violation = Violation(
                         rule=rule_obj,
@@ -64,27 +61,23 @@ class ScenariosCoverAllCasesScanner(StoryScanner):
         return violations
     
     def _get_scenario_text(self, scenario: Dict[str, Any]) -> str:
-        """Extract scenario text from scenario dict."""
         if isinstance(scenario, dict):
             return scenario.get('scenario', '') or scenario.get('name', '') or str(scenario)
         return str(scenario)
     
     def _is_happy_path(self, scenario_text: str) -> bool:
-        """Check if scenario is a happy path (success case)."""
         text_lower = scenario_text.lower()
         # Happy path indicators: valid, success, saves, completes, etc.
         happy_indicators = ['valid', 'success', 'saves', 'completes', 'accepts', 'processes']
         return any(indicator in text_lower for indicator in happy_indicators)
     
     def _is_edge_case(self, scenario_text: str) -> bool:
-        """Check if scenario is an edge case (boundary values)."""
         text_lower = scenario_text.lower()
         # Edge case indicators: boundary, edge, limit, maximum, minimum, empty, null, zero
         edge_indicators = ['boundary', 'edge', 'limit', 'maximum', 'minimum', 'max', 'min', 'empty', 'null', 'zero', 'first', 'last']
         return any(indicator in text_lower for indicator in edge_indicators)
     
     def _is_error_case(self, scenario_text: str) -> bool:
-        """Check if scenario is an error case (invalid inputs, failures)."""
         text_lower = scenario_text.lower()
         # Error case indicators: error, invalid, fails, rejects, exception, wrong
         error_indicators = ['error', 'invalid', 'fails', 'rejects', 'exception', 'wrong', 'missing', 'not found']

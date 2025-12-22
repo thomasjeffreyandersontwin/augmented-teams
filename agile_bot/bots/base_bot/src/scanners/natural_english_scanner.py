@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class NaturalEnglishScanner(StoryScanner):
-    """Validates that domain concepts use natural English for plural, singular, and cardinality."""
     
     TECHNICAL_NOTATION_PATTERNS = [
         r'\[0\.\.1\]',
@@ -30,7 +29,6 @@ class NaturalEnglishScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check responsibilities for technical notation
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             for pattern in self.TECHNICAL_NOTATION_PATTERNS:

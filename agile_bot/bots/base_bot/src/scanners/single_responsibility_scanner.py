@@ -13,14 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class SingleResponsibilityScanner(CodeScanner):
-    """Validates functions follow single responsibility principle.
-    
-    Note: Class single responsibility is now handled by ClassSizeScanner
-    (merged into "keep classes small with single responsibility" rule).
-    
-    For functions, checks name patterns like "validate_and_save" that indicate
-    multiple responsibilities in one function.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -41,10 +33,6 @@ class SingleResponsibilityScanner(CodeScanner):
         return violations
     
     def _check_function_sr(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function has single responsibility using AST analysis.
-        
-        Uses both name patterns and AST-based responsibility detection.
-        """
         func_name = func_node.name.lower()
         
         # Skip test helper functions (even if they somehow got through)
@@ -73,11 +61,9 @@ class SingleResponsibilityScanner(CodeScanner):
         # - Name pattern detection ("validate_and_save" = two responsibilities)
         # - Manual review
         
-        # Return first violation (most specific)
         return violations[0] if violations else None
     
     def _check_name_patterns(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check function name for multiple responsibility patterns."""
         func_name = func_node.name.lower()
         
         action_verbs = [
@@ -87,7 +73,6 @@ class SingleResponsibilityScanner(CodeScanner):
             'read', 'parse', 'build', 'generate', 'compile', 'extract', 'merge', 'split'
         ]
         
-        # Check for pattern: action_verb_and_action_verb
         verbs_pattern = '|'.join(action_verbs)
         for verb in action_verbs:
             pattern = rf'\b{verb}_and_({verbs_pattern})\b'
@@ -101,7 +86,6 @@ class SingleResponsibilityScanner(CodeScanner):
                     severity='warning'
                 ).to_dict()
         
-        # Check camelCase pattern
         camel_case_pattern = r'([a-z]+)And([A-Z][a-z]+)'
         match = re.search(camel_case_pattern, func_node.name)
         if match:
@@ -120,7 +104,6 @@ class SingleResponsibilityScanner(CodeScanner):
         return None
     
     def _check_class_sr(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if class has single responsibility using AST analysis."""
         violations = []
         
         # 1. Method count - DISABLED per user request
@@ -159,11 +142,9 @@ class SingleResponsibilityScanner(CodeScanner):
         # they're really just steps in ONE responsibility.
         # Keep LCOM (above) which actually measures method cohesion.
         
-        # Return first violation (most specific)
         return violations[0] if violations else None
     
     def _format_responsibility_examples(self, responsibilities: dict) -> str:
-        """Format responsibility examples as readable text with code samples."""
         lines = []
         for resp_type, examples in sorted(responsibilities.items()):
             if examples:
@@ -174,7 +155,6 @@ class SingleResponsibilityScanner(CodeScanner):
         return '\n\n'.join(lines)
     
     def _format_class_responsibility_examples(self, responsibilities: dict) -> str:
-        """Format class responsibility examples showing method and code sample."""
         lines = []
         for resp_type, examples in sorted(responsibilities.items()):
             if examples:

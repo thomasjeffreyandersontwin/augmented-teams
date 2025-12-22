@@ -14,10 +14,6 @@ from typing import List, Dict, Any, Optional, Iterator, Union
 
 
 class StoryNode:
-    """
-    Legacy compatibility wrapper for StoryNode.
-    Maintains old interface (data dict + indices) while using new model internally.
-    """
     
     def __init__(self, data: Dict[str, Any], epic_idx: int, sub_epic_path: Optional[List[int]] = None, 
                  story_group_idx: Optional[int] = None, story_idx: Optional[int] = None):
@@ -26,7 +22,6 @@ class StoryNode:
         self.sub_epic_path = sub_epic_path or []
         self.story_group_idx = story_group_idx
         self.story_idx = story_idx
-        # Create new node for internal use
         self._new_node: Optional[NewStoryNode] = None
     
     @property
@@ -60,7 +55,6 @@ class StoryNode:
 
 
 class Epic(StoryNode):
-    """Legacy compatibility wrapper for Epic."""
     
     @property
     def children(self) -> List[StoryNode]:
@@ -80,7 +74,6 @@ class Epic(StoryNode):
 
 
 class SubEpic(StoryNode):
-    """Legacy compatibility wrapper for SubEpic."""
     
     @property
     def children(self) -> List[StoryNode]:
@@ -101,7 +94,6 @@ class SubEpic(StoryNode):
 
 
 class StoryGroup(StoryNode):
-    """Legacy compatibility wrapper for StoryGroup."""
     
     @property
     def children(self) -> List[StoryNode]:
@@ -116,11 +108,9 @@ class StoryGroup(StoryNode):
 
 
 class ScenarioBase:
-    """Base class for Scenario and ScenarioOutline with shared methods."""
     
     @property
     def steps(self) -> List[str]:
-        """Extract steps from data, handling both string and list formats."""
         steps_value = self.data.get('steps', '')
         if isinstance(steps_value, str):
             return [s.strip() for s in steps_value.split('\n') if s.strip()]
@@ -128,7 +118,6 @@ class ScenarioBase:
     
     @property
     def default_test_method(self) -> str:
-        """Generate default test method name from scenario name."""
         scenario_name = self.name
         if not scenario_name:
             return ""
@@ -138,7 +127,6 @@ class ScenarioBase:
 
 
 class Scenario(ScenarioBase):
-    """Legacy compatibility wrapper for Scenario (not a node in old model)."""
     
     def __init__(self, data: Dict[str, Any], story: 'Story', scenario_idx: int):
         self.data = data
@@ -167,7 +155,6 @@ class Scenario(ScenarioBase):
 
 
 class ScenarioOutline(ScenarioBase):
-    """Legacy compatibility wrapper for ScenarioOutline (not a node in old model)."""
     
     def __init__(self, data: Dict[str, Any], story: 'Story', scenario_outline_idx: int):
         self.data = data
@@ -208,7 +195,6 @@ class ScenarioOutline(ScenarioBase):
 
 
 class Story(StoryNode):
-    """Legacy compatibility wrapper for Story."""
     
     @property
     def sizing(self) -> Any:
@@ -257,21 +243,15 @@ class Story(StoryNode):
 
 
 class StoryMap:
-    """
-    Legacy compatibility wrapper for StoryMap.
-    Maintains old interface while using new model internally.
-    """
     
     def __init__(self, knowledge_graph: Dict[str, Any]):
         self.knowledge_graph = knowledge_graph
     
     @classmethod
     def from_bot(cls, bot: Any) -> 'StoryMap':
-        """Create StoryMap from bot object (finds story-graph.json)."""
         from pathlib import Path
         import json
         
-        # Handle different bot object types
         if hasattr(bot, 'bot_paths') and hasattr(bot.bot_paths, 'bot_directory'):
             bot_directory = Path(bot.bot_paths.bot_directory)
         elif hasattr(bot, 'bot_directory'):
@@ -292,12 +272,10 @@ class StoryMap:
         return cls(knowledge_graph)
     
     def epics(self) -> List[Epic]:
-        """Return epics using old interface."""
         epics_data = self.knowledge_graph.get('epics', [])
         return [Epic(epic_data, epic_idx) for epic_idx, epic_data in enumerate(epics_data)]
     
     def walk(self, node: StoryNode) -> Iterator[StoryNode]:
-        """Walk the tree starting from a node."""
         yield node
         for child in node.children:
             yield from self.walk(child)

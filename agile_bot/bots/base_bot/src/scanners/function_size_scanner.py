@@ -11,10 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class FunctionSizeScanner(CodeScanner):
-    """Validates functions are small enough to understand at a glance.
-    
-    Keep functions under 20 lines when possible.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -38,17 +34,14 @@ class FunctionSizeScanner(CodeScanner):
         return violations
     
     def _check_function_size(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, source_lines: List[str], content: str) -> Optional[Dict[str, Any]]:
-        """Check if function exceeds size limit, excluding data structures, comments, docstrings, and multi-line expressions."""
         # Calculate function size (end_lineno - lineno + 1)
-        if hasattr(func_node, 'end_lineno') and func_node.end_lineno:
-            func_start_line = func_node.lineno - 1  # Convert to 0-indexed
-            func_end_line = func_node.end_lineno  # end_lineno is 1-indexed, exclusive
-        else:
-            # Fallback: estimate from body
-            func_start_line = func_node.lineno - 1
-            func_end_line = func_start_line + len(func_node.body) * 3
+        if not hasattr(func_node, 'end_lineno') or not func_node.end_lineno:
+            logger.debug(f'Function node missing end_lineno at {file_path}:{func_node.lineno}')
+            return None
         
-        # Get function source lines
+        func_start_line = func_node.lineno - 1  # Convert to 0-indexed
+        func_end_line = func_node.end_lineno  # end_lineno is 1-indexed, exclusive
+        
         if func_start_line < len(source_lines) and func_end_line <= len(source_lines):
             func_source_lines = source_lines[func_start_line:func_end_line]
         else:
@@ -70,7 +63,6 @@ class FunctionSizeScanner(CodeScanner):
             line_num = func_start_line + i + 1  # Convert back to 1-indexed
             line_stripped = line.strip()
             
-            # Skip empty lines
             if not line_stripped:
                 continue
             
@@ -89,7 +81,6 @@ class FunctionSizeScanner(CodeScanner):
             # This is executable code
             executable_lines += 1
         
-        # Calculate complexity metrics
         cyclomatic = ComplexityMetrics.cyclomatic_complexity(func_node)
         cognitive = ComplexityMetrics.cognitive_complexity(func_node)
         max_nesting = ComplexityMetrics.max_nesting_depth(func_node)
@@ -98,7 +89,6 @@ class FunctionSizeScanner(CodeScanner):
         
         line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
         
-        # Check line count
         if executable_lines > 20:
             violations.append(self._create_violation_with_snippet(
                 rule_obj=rule_obj,
@@ -110,7 +100,6 @@ class FunctionSizeScanner(CodeScanner):
                 ast_node=func_node
             ))
         
-        # Check cyclomatic complexity
         if cyclomatic > 10:
             violations.append(self._create_violation_with_snippet(
                 rule_obj=rule_obj,
@@ -125,7 +114,6 @@ class FunctionSizeScanner(CodeScanner):
                 ast_node=func_node
             ))
         
-        # Check cognitive complexity
         if cognitive > 15:
             violations.append(self._create_violation_with_snippet(
                 rule_obj=rule_obj,
@@ -140,7 +128,6 @@ class FunctionSizeScanner(CodeScanner):
                 ast_node=func_node
             ))
         
-        # Check nesting depth
         if max_nesting > 4:
             violations.append(self._create_violation_with_snippet(
                 rule_obj=rule_obj,
@@ -155,27 +142,15 @@ class FunctionSizeScanner(CodeScanner):
                 ast_node=func_node
             ))
         
-        # Return first violation (most critical)
         return violations[0] if violations else None
     
     def _get_multi_line_expression_line_numbers(self, func_node: ast.FunctionDef) -> set:
-        """Get line numbers that are continuations of multi-line expressions.
-        
-        This identifies lines that are part of a single logical statement spread
-        across multiple physical lines (e.g., function calls with parameters,
-        method chaining, etc.). Only continuation lines are returned (not the first line).
-        
-        A multi-line expression counts as 1 logical line, so we exclude continuation lines.
-        """
         multi_line_lines = set()
         
         def visit_statement(stmt_node):
-            """Visit a statement node and find multi-line expressions within it."""
-            # Check if this statement itself spans multiple lines
             if hasattr(stmt_node, 'end_lineno') and hasattr(stmt_node, 'lineno') and stmt_node.end_lineno and stmt_node.lineno:
                 if stmt_node.end_lineno > stmt_node.lineno:
                     # This statement spans multiple lines
-                    # Check what type of statement it is
                     if isinstance(stmt_node, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
                         # Assignment statement - check if the value/expression is multi-line
                         if hasattr(stmt_node, 'value') and stmt_node.value:
@@ -200,7 +175,6 @@ class FunctionSizeScanner(CodeScanner):
                                             multi_line_lines.add(line_num)
                     
                     elif isinstance(stmt_node, ast.Return):
-                        # Return statement - check if return value is multi-line
                         if stmt_node.value:
                             if hasattr(stmt_node.value, 'end_lineno') and hasattr(stmt_node.value, 'lineno') and stmt_node.value.end_lineno and stmt_node.value.lineno:
                                 if stmt_node.value.end_lineno > stmt_node.value.lineno:
@@ -215,11 +189,6 @@ class FunctionSizeScanner(CodeScanner):
         return multi_line_lines
     
     def _get_data_structure_line_numbers(self, func_node: ast.FunctionDef) -> set:
-        """Get line numbers that are part of data structures (lists, dicts, sets, tuples).
-        
-        This excludes data structure definitions from line count since they're
-        configuration/data, not executable logic.
-        """
         data_structure_lines = set()  # Use set to avoid double-counting overlapping ranges
         
         # Find all top-level data structures (not nested inside other data structures)
@@ -227,14 +196,12 @@ class FunctionSizeScanner(CodeScanner):
         top_level_data_structures = []
         
         def visit_node(node, parent_is_ds=False):
-            """Recursively visit nodes, identifying top-level data structures."""
             is_data_structure = isinstance(node, (ast.List, ast.Dict, ast.Set, ast.Tuple))
             
             if is_data_structure and not parent_is_ds:
                 # This is a top-level data structure
                 top_level_data_structures.append(node)
             
-            # Recursively visit children
             for child in ast.iter_child_nodes(node):
                 visit_node(child, parent_is_ds=is_data_structure)
         
@@ -248,28 +215,18 @@ class FunctionSizeScanner(CodeScanner):
                 ds_lines = ds_node.end_lineno - ds_node.lineno + 1
                 # Only count if it spans multiple lines (single-line data structures are fine)
                 if ds_lines > 1:
-                    # Add all line numbers in this range to the set
                     for line_num in range(ds_node.lineno, ds_node.end_lineno + 1):
                         data_structure_lines.add(line_num)
         
         return data_structure_lines
     
     def _get_comment_and_docstring_line_numbers(self, func_node: ast.FunctionDef, source_lines: List[str], func_start_line: int) -> set:
-        """Get line numbers that are comments or docstrings.
-        
-        Excludes:
-        - Docstrings (string literals that are the first statement)
-        - Full comment lines (lines that contain only comments, no code)
-        
-        Does NOT exclude lines with trailing comments (code + comment on same line).
-        """
         comment_and_docstring_lines = set()
         
         # Find docstring (first statement in function body if it's a string literal)
         if func_node.body:
             first_stmt = func_node.body[0]
             if isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, (ast.Str, ast.Constant)):
-                # Check if it's a string literal (docstring)
                 string_value = first_stmt.value
                 if isinstance(string_value, ast.Constant) and isinstance(string_value.value, str):
                     # This is a docstring
@@ -298,10 +255,8 @@ class FunctionSizeScanner(CodeScanner):
             if not line_stripped:
                 continue
             
-            # Check if line is ONLY a comment (starts with # and has no code before it)
             # This handles both # comment and ## comment patterns
             if line_stripped.startswith('#'):
-                # Check if there's any code before the comment
                 # If the stripped line starts with #, it's a full comment line
                 comment_and_docstring_lines.add(line_num)
         

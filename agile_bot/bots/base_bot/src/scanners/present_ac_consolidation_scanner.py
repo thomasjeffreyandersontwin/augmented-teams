@@ -7,7 +7,6 @@ from .violation import Violation
 
 
 class PresentACConsolidationScanner(StoryScanner):
-    """Validates consolidation opportunities are identified."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class SpecificationMatchScanner(TestScanner):
-    """Validates test methods, variables, and assertions match specification scenarios exactly."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -23,13 +22,10 @@ class SpecificationMatchScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Check test method names match specification
         violations.extend(self._check_test_method_names(tree, file_path, rule_obj))
         
-        # Check variable names match specification (exact names)
         violations.extend(self._check_variable_names(tree, content, file_path, rule_obj))
         
-        # Check assertions match specification exactly
         violations.extend(self._check_assertions(tree, content, file_path, rule_obj))
         
         # NEW: Knowledge graph integration - match tests to specification
@@ -39,12 +35,6 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def _check_test_method_names(self, tree: ast.AST, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check test method names describe behavior from specification.
-        
-        Test method names should clearly describe what behavior is being tested,
-        matching the specification scenario. Vague names like 'test_init' or 'test_agent'
-        are flagged.
-        """
         violations = []
         
         vague_patterns = [
@@ -54,7 +44,6 @@ class SpecificationMatchScanner(TestScanner):
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
-                # Check if method name is too vague
                 is_vague = False
                 for pattern in vague_patterns:
                     if re.match(pattern, node.name, re.IGNORECASE):
@@ -74,11 +63,9 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def _is_thin_wrapper(self, test_node: ast.FunctionDef) -> bool:
-        """Check if test method is a thin wrapper delegating to a helper function."""
         # If body is just a single statement (likely a function call), it's a thin wrapper
         if len(test_node.body) == 1:
             stmt = test_node.body[0]
-            # Check if it's a function call or expression statement with a call
             if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
                 return True
             if isinstance(stmt, ast.Return) and isinstance(stmt.value, ast.Call):
@@ -93,18 +80,6 @@ class SpecificationMatchScanner(TestScanner):
         message: str,
         severity: str = 'warning'
     ) -> Dict[str, Any]:
-        """Create a violation with line number from AST node.
-        
-        Args:
-            rule_obj: Rule object
-            file_path: Path to file
-            node: AST node (for line number)
-            message: Violation message
-            severity: Severity level ('error', 'warning', 'info')
-            
-        Returns:
-            Violation dictionary
-        """
         line_number = node.lineno if hasattr(node, 'lineno') else None
         return Violation(
             rule=rule_obj,
@@ -115,32 +90,23 @@ class SpecificationMatchScanner(TestScanner):
         ).to_dict()
     
     def _check_variable_names(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check variable names match specification exactly.
-        
-        Flags generic variable names that don't match specification terminology.
-        Test variables should use exact names from specification (e.g., 'agent_name' not 'name').
-        """
         violations = []
         
         # Generic names that suggest mismatch with specification
         generic_names = ['data', 'result', 'value', 'item', 'obj', 'thing', 'name', 'root', 'path', 'config']
         
-        # Extract test methods to check variable names within them
         test_methods = []
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                 test_methods.append(node)
         
         for test_method in test_methods:
-            # Check variable assignments in this test method
             for child in ast.walk(test_method):
                 if isinstance(child, ast.Assign):
                     for target in child.targets:
                         if isinstance(target, ast.Name):
                             var_name = target.id
-                            # Check if it's a generic name
                             if var_name.lower() in generic_names:
-                                # Check if it's part of a helper function call (these are OK)
                                 if not self._is_in_helper_call(child, test_method):
                                     violations.append(self._create_violation_with_line_number(
                                         rule_obj, file_path, child,
@@ -150,8 +116,6 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def _is_in_helper_call(self, assign_node: ast.Assign, test_method: ast.FunctionDef) -> bool:
-        """Check if assignment is part of a helper function call (like verify_* or given_*)."""
-        # Check if assignment value is a function call
         if isinstance(assign_node.value, ast.Call):
             func = assign_node.value.func
             if isinstance(func, ast.Name):
@@ -166,11 +130,6 @@ class SpecificationMatchScanner(TestScanner):
         return False
     
     def _check_assertions(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check assertions verify exactly what specification states.
-        
-        Flags assertions that check implementation details (private attributes, internal flags)
-        or things not mentioned in specification.
-        """
         violations = []
         
         # Patterns that suggest implementation detail assertions
@@ -181,20 +140,16 @@ class SpecificationMatchScanner(TestScanner):
             r'\._validate',  # Internal validation
         ]
         
-        # Extract test methods to check assertions within them
         test_methods = []
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                 test_methods.append(node)
         
         for test_method in test_methods:
-            # Check assertions in this test method
             for child in ast.walk(test_method):
                 if isinstance(child, ast.Assert):
-                    # Get the assertion as a string for pattern matching
                     assertion_line = self._get_assertion_line(child, content, child.lineno)
                     
-                    # Check for implementation detail patterns
                     for pattern in implementation_patterns:
                         if re.search(pattern, assertion_line, re.IGNORECASE):
                             violations.append(self._create_violation_with_line_number(
@@ -206,7 +161,6 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def _get_assertion_line(self, assert_node: ast.Assert, content: str, line_num: int) -> str:
-        """Get the line containing the assertion as a string."""
         lines = content.split('\n')
         if 1 <= line_num <= len(lines):
             return lines[line_num - 1]
@@ -214,31 +168,25 @@ class SpecificationMatchScanner(TestScanner):
     
     def _check_specification_matches(self, tree: ast.AST, content: str, file_path: Path, 
                                     rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Check if tests match specification scenarios from knowledge graph."""
         violations = []
         
-        # Extract test methods
         test_methods = []
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                 test_methods.append(node)
         
-        # Extract domain terms from knowledge graph
         domain_terms = self._extract_domain_terms(knowledge_graph)
         
         for test_method in test_methods:
-            # Extract scenario from docstring
             scenario = self._extract_scenario_from_docstring(test_method)
             
             # Find matching story/scenario in knowledge graph
             matching_story = self._find_matching_story(scenario, test_method.name, knowledge_graph)
             
             if matching_story:
-                # Check if test variables match story terms
                 variable_matches = self._check_variable_matches(test_method, matching_story, domain_terms, rule_obj, file_path)
                 violations.extend(variable_matches)
                 
-                # Check if assertions match acceptance criteria
                 assertion_matches = self._check_assertion_matches(test_method, matching_story, rule_obj, file_path)
                 violations.extend(assertion_matches)
             elif scenario:
@@ -252,13 +200,11 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> set:
-        """Extract domain terms from knowledge graph."""
         domain_terms = set()
         
         if not knowledge_graph:
             return domain_terms
         
-        # Extract from epics and stories
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
@@ -266,19 +212,15 @@ class SpecificationMatchScanner(TestScanner):
                 if epic_name:
                     domain_terms.update(self._extract_words_from_text(epic_name))
                 
-                # Extract from domain_concepts in epic - CRITICAL: Must extract all domain terms
                 domain_concepts = epic.get('domain_concepts', [])
                 for concept in domain_concepts:
                     if isinstance(concept, dict):
                         concept_name = concept.get('name', '')
                         if concept_name:
-                            # Add full concept name (lowercase) and snake_case version
                             domain_terms.add(concept_name.lower())
                             domain_terms.add(concept_name.lower().replace(' ', '_'))
-                            # Add individual words
                             domain_terms.update(self._extract_words_from_text(concept_name))
                             
-                            # Extract from responsibilities (contains domain terminology)
                             responsibilities = concept.get('responsibilities', [])
                             for resp in responsibilities:
                                 if isinstance(resp, dict):
@@ -286,7 +228,6 @@ class SpecificationMatchScanner(TestScanner):
                                     if resp_name:
                                         domain_terms.update(self._extract_words_from_text(resp_name))
                             
-                            # Extract from collaborators (other domain concepts)
                             collaborators = concept.get('collaborators', [])
                             for collab in collaborators:
                                 if isinstance(collab, str):
@@ -306,13 +247,10 @@ class SpecificationMatchScanner(TestScanner):
                             if isinstance(concept, dict):
                                 concept_name = concept.get('name', '')
                                 if concept_name:
-                                    # Add full concept name (lowercase) and snake_case version
                                     domain_terms.add(concept_name.lower())
                                     domain_terms.add(concept_name.lower().replace(' ', '_'))
-                                    # Add individual words
                                     domain_terms.update(self._extract_words_from_text(concept_name))
                                     
-                                    # Extract from responsibilities (contains domain terminology)
                                     responsibilities = concept.get('responsibilities', [])
                                     for resp in responsibilities:
                                         if isinstance(resp, dict):
@@ -320,7 +258,6 @@ class SpecificationMatchScanner(TestScanner):
                                             if resp_name:
                                                 domain_terms.update(self._extract_words_from_text(resp_name))
                                     
-                                    # Extract from collaborators (other domain concepts)
                                     collaborators = concept.get('collaborators', [])
                                     for collab in collaborators:
                                         if isinstance(collab, str):
@@ -346,7 +283,6 @@ class SpecificationMatchScanner(TestScanner):
                                             elif isinstance(ac, str):
                                                 domain_terms.update(self._extract_words_from_text(ac))
                                         
-                                        # Extract from scenario steps
                                         scenarios = story.get('scenarios', [])
                                         for scenario in scenarios:
                                             if isinstance(scenario, dict):
@@ -358,7 +294,6 @@ class SpecificationMatchScanner(TestScanner):
         return domain_terms
     
     def _extract_words_from_text(self, text: str) -> set:
-        """Extract individual words from text."""
         import re
         if not text:
             return set()
@@ -366,11 +301,9 @@ class SpecificationMatchScanner(TestScanner):
         return set(words)
     
     def _extract_scenario_from_docstring(self, test_method: ast.FunctionDef) -> Optional[str]:
-        """Extract scenario text from test method docstring."""
         if not test_method.body:
             return None
         
-        # Check first statement for docstring
         first_stmt = test_method.body[0]
         if isinstance(first_stmt, ast.Expr):
             if isinstance(first_stmt.value, ast.Constant) and isinstance(first_stmt.value.value, str):
@@ -381,11 +314,9 @@ class SpecificationMatchScanner(TestScanner):
         return None
     
     def _find_matching_story(self, scenario: Optional[str], test_name: str, knowledge_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Find matching story in knowledge graph based on scenario or test name."""
         if not knowledge_graph:
             return None
         
-        # Extract scenario name from docstring if available
         scenario_name = None
         if scenario:
             # Look for "SCENARIO: <name>" pattern in docstring
@@ -393,7 +324,6 @@ class SpecificationMatchScanner(TestScanner):
             if scenario_match:
                 scenario_name = scenario_match.group(1).strip()
         
-        # Extract keywords from test name
         test_keywords = set(self._extract_words_from_text(test_name))
         
         epics = knowledge_graph.get('epics', [])
@@ -408,7 +338,7 @@ class SpecificationMatchScanner(TestScanner):
                                 stories = story_group.get('stories', [])
                                 for story in stories:
                                     if isinstance(story, dict):
-                                        # First, try to match by scenario name if we have one
+                                        # Match by scenario name if we have one
                                         if scenario_name:
                                             story_scenarios = story.get('scenarios', [])
                                             for story_scenario in story_scenarios:
@@ -419,23 +349,13 @@ class SpecificationMatchScanner(TestScanner):
                                                     normalized_story_scenario = re.sub(r'\s+', ' ', story_scenario_name.lower().strip())
                                                     if normalized_test_scenario == normalized_story_scenario:
                                                         return story
-                                        
-                                        # Fallback: Check if test name matches story name
-                                        story_name = story.get('name', '')
-                                        story_keywords = set(self._extract_words_from_text(story_name))
-                                        
-                                        # Check if test name matches story name (significant overlap)
-                                        if len(test_keywords.intersection(story_keywords)) >= 2:
-                                            return story
         
         return None
     
     def _check_variable_matches(self, test_method: ast.FunctionDef, story: Dict[str, Any], 
                                 domain_terms: set, rule_obj: Any, file_path: Path) -> List[Dict[str, Any]]:
-        """Check if test variables match domain terms from story."""
         violations = []
         
-        # Extract variable names from test
         variable_names = []
         for node in ast.walk(test_method):
             if isinstance(node, ast.Assign):
@@ -443,7 +363,6 @@ class SpecificationMatchScanner(TestScanner):
                     if isinstance(target, ast.Name):
                         variable_names.append((target.id, node.lineno if hasattr(node, 'lineno') else None))
         
-        # Check if variables use domain terms
         for var_name, line_number in variable_names:
             var_name_lower = var_name.lower()
             
@@ -452,26 +371,21 @@ class SpecificationMatchScanner(TestScanner):
             if var_name_lower in generic_names:
                 continue
             
-            # Check if variable name contains domain terms
-            # Extract words from variable name (handles snake_case, camelCase, etc.)
             var_words = set(self._extract_words_from_text(var_name))
             
             # Also check if any domain term appears as substring in variable name
             # (e.g., "assigned_strategy" contains "strategy", "template_manager" contains "template" and "manager")
             matches_domain_term = False
             for domain_term in domain_terms:
-                # Check if domain term is a word in the variable name
                 if domain_term in var_words:
                     matches_domain_term = True
                     break
-                # Check if domain term appears as substring (for compound terms)
                 if domain_term in var_name_lower or var_name_lower in domain_term:
                     matches_domain_term = True
                     break
             
             # Only flag if variable doesn't match any domain terms
             if not matches_domain_term:
-                # Get sample domain terms for error message
                 sample_terms = sorted(list(domain_terms))[:10]
                 violations.append(self._create_violation_with_line_number(
                     rule_obj, file_path, test_method,
@@ -484,21 +398,17 @@ class SpecificationMatchScanner(TestScanner):
     
     def _check_assertion_matches(self, test_method: ast.FunctionDef, story: Dict[str, Any], 
                                  rule_obj: Any, file_path: Path) -> List[Dict[str, Any]]:
-        """Check if assertions match acceptance criteria from story."""
         violations = []
         
-        # Extract acceptance criteria from story
         acceptance_criteria = story.get('acceptance_criteria', [])
         if not acceptance_criteria:
             return violations
         
-        # Extract assertions from test - including various forms
         assertions = []
         has_pytest_raises = False
         has_helper_assertions = False
         
         for node in ast.walk(test_method):
-            # Direct assert statements
             if isinstance(node, ast.Assert):
                 assertions.append(node)
             
@@ -509,7 +419,6 @@ class SpecificationMatchScanner(TestScanner):
                         func = item.context_expr.func
                         if isinstance(func, ast.Attribute):
                             if func.attr == 'raises':
-                                # Check if it's pytest.raises
                                 if isinstance(func.value, ast.Name) and func.value.id == 'pytest':
                                     has_pytest_raises = True
                         elif isinstance(func, ast.Name):
@@ -548,6 +457,5 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def scan_story_node(self, node: Any, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Scan story node for violations (required by StoryScanner)."""
         return []
 

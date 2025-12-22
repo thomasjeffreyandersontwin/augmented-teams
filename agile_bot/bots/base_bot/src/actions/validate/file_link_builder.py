@@ -5,13 +5,11 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 class FileLinkBuilder:
-    """Builds file links for validation reports."""
 
     def __init__(self, workspace_directory: Path):
         self.workspace_directory = workspace_directory
 
     def create_file_link(self, location: str, line_number: Optional[int] = None) -> str:
-        """Create a file link for a location."""
         if location == 'unknown' or not location:
             return f'`{location}`'
         try:
@@ -21,7 +19,6 @@ class FileLinkBuilder:
             return self.create_file_link_fallback(location, line_number)
 
     def create_file_link_for_valid_location(self, location: str, line_number: Optional[int]) -> str:
-        """Create file link for a valid location."""
         file_path = Path(location)
         is_absolute = file_path.is_absolute() or (len(location) > 1 and location[1] == ':') or location.startswith('\\\\')
         if not is_absolute:
@@ -32,7 +29,6 @@ class FileLinkBuilder:
         return self.create_absolute_file_link(file_path, location, line_number)
 
     def create_absolute_file_link(self, file_path: Path, location: str, line_number: Optional[int]) -> str:
-        """Create file link for an absolute path."""
         try:
             rel_path = file_path.relative_to(self.workspace_directory)
             file_uri = self.get_file_uri(location, line_number)
@@ -43,7 +39,6 @@ class FileLinkBuilder:
             return f'[`{Path(location).name}`]({file_uri})'
 
     def create_file_link_fallback(self, location: str, line_number: Optional[int]) -> str:
-        """Fallback method for creating file links."""
         try:
             file_uri = self.get_file_uri(location, line_number)
             return f'[`{(Path(location).name if location else location)}`]({file_uri})'
@@ -54,7 +49,6 @@ class FileLinkBuilder:
             return f'`{location}`'
 
     def get_file_uri(self, location: str, line_number: Optional[int] = None) -> str:
-        """Get VS Code file URI for a location."""
         try:
             resolved_path = self._resolve_file_path(location)
             file_str = self._normalize_path_string(str(resolved_path))
@@ -65,7 +59,6 @@ class FileLinkBuilder:
             return self._build_vscode_uri(file_str, line_number)
 
     def _resolve_file_path(self, location: str) -> Path:
-        """Resolve file path from location string."""
         file_path = Path(location)
         if file_path.is_absolute():
             return file_path.resolve() if file_path.exists() else file_path
@@ -74,21 +67,18 @@ class FileLinkBuilder:
         return Path(location)
 
     def _normalize_path_string(self, path_str: str) -> str:
-        """Normalize path string for VS Code URI."""
         file_str = path_str.replace('\\', '/')
         if len(file_str) >= 2 and file_str[1] == ':':
             file_str = file_str[0].upper() + ':' + file_str[2:]
         return file_str
 
     def _build_vscode_uri(self, file_str: str, line_number: Optional[int]) -> str:
-        """Build VS Code URI from normalized file string."""
         vscode_uri = f'vscode://file/{file_str}'
         if line_number:
             vscode_uri = f'{vscode_uri}:{line_number}'
         return vscode_uri
 
     def get_relative_path(self, file_path: Path) -> str:
-        """Get relative path for a file."""
         try:
             if file_path.is_absolute() and self.workspace_directory:
                 return str(file_path.relative_to(self.workspace_directory))
@@ -100,7 +90,6 @@ class FileLinkBuilder:
             return file_path.name
 
     def get_relative_path_for_relative_file(self, file_path: Path) -> str:
-        """Get relative path for a relative file path."""
         try:
             resolved = (self.workspace_directory / file_path).resolve()
             return str(resolved.relative_to(self.workspace_directory))

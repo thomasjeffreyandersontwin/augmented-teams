@@ -83,11 +83,9 @@ class BuildKnowledgeAction(Action):
         new_instructions = []
         rules_section = []
         
-        # Process each instruction, removing {{rules}} placeholder if present
         # Keep ALL other instructions as-is (they are the custom instructions)
         for line in existing_instructions:
             if isinstance(line, str) and '{{rules}}' in line:
-                # Remove the placeholder line - we'll add rules at the very end
                 pass  # Don't add this line
             else:
                 # Keep all custom instructions

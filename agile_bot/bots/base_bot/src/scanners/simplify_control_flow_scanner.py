@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class SimplifyControlFlowScanner(CodeScanner):
-    """Validates control flow is simple (minimal nesting, guard clauses)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -21,30 +20,31 @@ class SimplifyControlFlowScanner(CodeScanner):
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                violation = self._check_nesting_depth(node, file_path, rule_obj)
+                violation = self._check_nesting_depth(node, file_path, rule_obj, content)
                 if violation:
                     violations.append(violation)
         
         return violations
     
-    def _check_nesting_depth(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function has excessive nesting."""
+    def _check_nesting_depth(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> Optional[Dict[str, Any]]:
         max_depth = self._get_max_nesting_depth(func_node)
         
         if max_depth > 3:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
-            return Violation(
-                rule=rule_obj,
+            return self._create_violation_with_snippet(
+                rule_obj=rule_obj,
                 violation_message=f'Function "{func_node.name}" has nesting depth of {max_depth} - use guard clauses and extract nested blocks to reduce nesting',
-                location=str(file_path),
+                file_path=file_path,
                 line_number=line_number,
-                severity='warning'
-            ).to_dict()
+                severity='warning',
+                content=content,
+                ast_node=func_node,
+                max_lines=15
+            )
         
         return None
     
     def _get_max_nesting_depth(self, node: ast.AST, current_depth: int = 0) -> int:
-        """Calculate maximum nesting depth in function."""
         max_depth = current_depth
         
         for child in ast.iter_child_nodes(node):

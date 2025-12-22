@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class OpenClosedPrincipleScanner(CodeScanner):
-    """Validates open-closed principle (open for extension, closed for modification)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -20,17 +19,14 @@ class OpenClosedPrincipleScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for violations of open-closed principle
         violations.extend(self._check_type_switches(tree, content, file_path, rule_obj))
         
         return violations
     
     def _check_type_switches(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for type-based if/switch statements (violates open-closed)."""
         violations = []
         lines = content.split('\n')
         
-        # Check for type-based conditionals (should use polymorphism)
         type_switch_patterns = [
             r'\.type\s*==',  # obj.type == 'credit'
             r'\.kind\s*==',  # obj.kind == 'user'

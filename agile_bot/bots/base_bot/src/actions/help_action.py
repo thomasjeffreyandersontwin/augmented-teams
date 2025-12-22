@@ -126,23 +126,29 @@ class HelpAction(Action):
         return f'{behavior_name} behavior'
     
     def _extract_description_from_command_file(self, cmd_name: str) -> str:
-        """Extract description from the cursor command markdown file."""
         try:
             repo_root = get_python_workspace_root()
             commands_dir = repo_root / '.cursor' / 'commands'
             cmd_file = commands_dir / f'{cmd_name}.md'
-            if cmd_file.exists():
-                content = cmd_file.read_text(encoding='utf-8')
-                lines = content.strip().split('\n')
-                if len(lines) >= 2:
-                    # Third line (index 2) should be the description (after title and blank line)
-                    desc_line = lines[2].strip()
-                    # Skip if it's empty or a markdown header
-                    if desc_line and not desc_line.startswith('#'):
-                        return desc_line
+            
+            if not cmd_file.exists():
+                return None
+            
+            content = cmd_file.read_text(encoding='utf-8')
+            lines = content.strip().split('\n')
+            
+            if len(lines) < 3:
+                return None
+            
+            desc_line = lines[2].strip()
+            
+            if not desc_line or desc_line.startswith('#'):
+                return None
+            
+            return desc_line
         except Exception:
             logger.debug(f'Failed to extract description from command file for {cmd_name}')
-        return None
+            return None
     
     def _add_action_help(self, instructions):
         base_actions_dir = get_base_actions_directory()

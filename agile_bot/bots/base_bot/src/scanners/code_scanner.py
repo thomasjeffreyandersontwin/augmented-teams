@@ -9,16 +9,6 @@ from .violation import Violation
 
 
 class CodeScanner(Scanner):
-    """Base class for code validation scanners.
-    
-    CodeScanners validate Python/JavaScript source code files against rules.
-    Each scanner implements scan_file() (or scan_code_file() for backward compatibility) to check a single file.
-    
-    Unified Architecture:
-    - Scanners should override scan_file() to scan individual files
-    - The base Scanner.scan() will combine test_files and code_files and call scan_file() for each
-    - scan_code_file() is kept for backward compatibility but delegates to scan_file()
-    """
     
     def scan(
         self, 
@@ -28,21 +18,6 @@ class CodeScanner(Scanner):
         code_files: Optional[List['Path']] = None,
         on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        """Scan files for rule violations.
-        
-        Validates rule_obj is provided, then delegates to base Scanner.scan() which
-        combines files and calls scan_file() for each.
-        
-        Args:
-            knowledge_graph: Story graph structure
-            rule_obj: Rule object reference (required)
-            test_files: List of file paths to scan
-            code_files: List of file paths to scan
-            on_file_scanned: Optional callback(file_path, violations, rule_obj) called after each file
-            
-        Returns:
-            List of violation dictionaries
-        """
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
@@ -56,18 +31,6 @@ class CodeScanner(Scanner):
         rule_obj: Any = None,
         knowledge_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-        """Scan a single file for violations.
-        
-        Subclasses must override this method to implement scanning logic.
-        
-        Args:
-            file_path: Path to file to scan (test or code file)
-            rule_obj: Rule object reference (required)
-            knowledge_graph: Optional knowledge graph (for context-aware scanning)
-            
-        Returns:
-            List of violation dictionaries
-        """
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
@@ -79,14 +42,8 @@ class CodeScanner(Scanner):
         return []
     
     def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> set:
-        """Extract domain language terms from story graph, epics, and stories.
-        
-        Enhanced version that extracts from domain_concepts, responsibilities, collaborators, and scenario steps.
-        This matches the enhanced extraction from SpecificationMatchScanner.
-        """
         domain_terms = set()
         
-        # Add common domain terms that are legitimate in this codebase context
         # These are domain concepts, not technical jargon
         common_domain_terms = {
             'json', 'data', 'param', 'params', 'parameter', 'parameters',
@@ -103,7 +60,6 @@ class CodeScanner(Scanner):
         if not knowledge_graph:
             return domain_terms
         
-        # Extract from epics and stories
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
@@ -111,19 +67,15 @@ class CodeScanner(Scanner):
                 if epic_name:
                     domain_terms.update(self._extract_words_from_text(epic_name))
                 
-                # Extract from domain_concepts in epic - CRITICAL: Must extract all domain terms
                 domain_concepts = epic.get('domain_concepts', [])
                 for concept in domain_concepts:
                     if isinstance(concept, dict):
                         concept_name = concept.get('name', '')
                         if concept_name:
-                            # Add full concept name (lowercase) and snake_case version
                             domain_terms.add(concept_name.lower())
                             domain_terms.add(concept_name.lower().replace(' ', '_'))
-                            # Add individual words
                             domain_terms.update(self._extract_words_from_text(concept_name))
                             
-                            # Extract from responsibilities (contains domain terminology)
                             responsibilities = concept.get('responsibilities', [])
                             for resp in responsibilities:
                                 if isinstance(resp, dict):
@@ -131,7 +83,6 @@ class CodeScanner(Scanner):
                                     if resp_name:
                                         domain_terms.update(self._extract_words_from_text(resp_name))
                             
-                            # Extract from collaborators (other domain concepts)
                             collaborators = concept.get('collaborators', [])
                             for collab in collaborators:
                                 if isinstance(collab, str):
@@ -151,13 +102,10 @@ class CodeScanner(Scanner):
                             if isinstance(concept, dict):
                                 concept_name = concept.get('name', '')
                                 if concept_name:
-                                    # Add full concept name (lowercase) and snake_case version
                                     domain_terms.add(concept_name.lower())
                                     domain_terms.add(concept_name.lower().replace(' ', '_'))
-                                    # Add individual words
                                     domain_terms.update(self._extract_words_from_text(concept_name))
                                     
-                                    # Extract from responsibilities (contains domain terminology)
                                     responsibilities = concept.get('responsibilities', [])
                                     for resp in responsibilities:
                                         if isinstance(resp, dict):
@@ -165,7 +113,6 @@ class CodeScanner(Scanner):
                                             if resp_name:
                                                 domain_terms.update(self._extract_words_from_text(resp_name))
                                     
-                                    # Extract from collaborators (other domain concepts)
                                     collaborators = concept.get('collaborators', [])
                                     for collab in collaborators:
                                         if isinstance(collab, str):
@@ -191,7 +138,6 @@ class CodeScanner(Scanner):
                                             elif isinstance(ac, str):
                                                 domain_terms.update(self._extract_words_from_text(ac))
                                         
-                                        # Extract from scenario steps
                                         scenarios = story.get('scenarios', [])
                                         for scenario in scenarios:
                                             if isinstance(scenario, dict):
@@ -203,10 +149,6 @@ class CodeScanner(Scanner):
         return domain_terms
     
     def _extract_words_from_text(self, text: str) -> set:
-        """Extract individual words from text, converting to lowercase.
-        
-        This method extracts words from text using regex to find word boundaries.
-        """
         if not text:
             return set()
         
@@ -216,34 +158,16 @@ class CodeScanner(Scanner):
         return set(words)
     
     def _matches_domain_term(self, name: str, domain_terms: set) -> bool:
-        """Check if a name matches any domain term using compound term matching.
-        
-        This method implements the same compound term matching logic from SpecificationMatchScanner.
-        It checks if:
-        1. Any word in the name matches a domain term
-        2. Any domain term appears as a substring in the name (for compound terms)
-        
-        Args:
-            name: Variable, function, or class name to check
-            domain_terms: Set of domain terms from knowledge graph
-            
-        Returns:
-            True if name matches any domain term, False otherwise
-        """
         if not name or not domain_terms:
             return False
         
         name_lower = name.lower()
         
-        # Extract words from name (handles snake_case, camelCase, etc.)
         name_words = self._extract_words_from_text(name)
         
-        # Check if any domain term is a word in the name
         for domain_term in domain_terms:
-            # Check if domain term is a word in the name
             if domain_term in name_words:
                 return True
-            # Check if domain term appears as substring (for compound terms)
             # e.g., "assigned_strategy" contains "strategy", "template_manager" contains "template"
             if domain_term in name_lower or name_lower in domain_term:
                 return True
@@ -259,37 +183,10 @@ class CodeScanner(Scanner):
         all_code_files: Optional[List[Path]] = None,
         status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        """Scan across all code files for cross-file violations.
-        
-        Override this method in subclasses to detect violations that require
-        analyzing multiple files together (e.g., duplication, inconsistent patterns,
-        architectural violations).
-        
-        Args:
-            rule_obj: Rule object reference
-            test_files: List of test file paths to analyze together
-            code_files: List of code file paths to analyze together
-            all_test_files: All test files in the codebase (for context)
-            all_code_files: All code files in the codebase (for context)
-            status_writer: Optional status writer for progress reporting
-            
-        Returns:
-            List of violation dictionaries for cross-file issues
-        """
         # Default implementation - subclasses override
         return []
     
     def _parse_code_file(self, file_path: Path) -> Optional[Tuple[str, ast.AST]]:
-        """Parse a code file and return its content and AST tree.
-        
-        Reusable helper method for cross-file scanning.
-        
-        Args:
-            file_path: Path to code file
-            
-        Returns:
-            Tuple of (content, tree) or None if file cannot be parsed
-        """
         if not file_path.exists():
             return None
         
@@ -301,17 +198,6 @@ class CodeScanner(Scanner):
             return None
     
     def _read_and_parse_file(self, file_path: Path) -> Optional[Tuple[str, List[str], ast.AST]]:
-        """Read and parse a code file, returning content, lines, and AST tree.
-        
-        Common helper method used by many scanners to avoid duplication.
-        Handles file existence check, reading, parsing, and exception handling with logging.
-        
-        Args:
-            file_path: Path to code file
-            
-        Returns:
-            Tuple of (content, lines, tree) or None if file cannot be read/parsed
-        """
         import logging
         logger = logging.getLogger(__name__)
         
@@ -332,18 +218,6 @@ class CodeScanner(Scanner):
         test_files: Optional[List[Path]] = None,
         code_files: Optional[List[Path]] = None
     ) -> List[Tuple[Path, str, ast.AST]]:
-        """Parse all code files and return list of (path, content, tree) tuples.
-        
-        Reusable helper method for cross-file scanning.
-        Combines test_files and code_files into a single list.
-        
-        Args:
-            test_files: List of test file paths
-            code_files: List of code file paths
-            
-        Returns:
-            List of tuples (file_path, content, tree) for successfully parsed files
-        """
         parsed_files = []
         all_files = []
         if code_files:
@@ -362,21 +236,6 @@ class CodeScanner(Scanner):
     def _extract_code_snippet(self, content: str, ast_node: Optional[ast.AST] = None, 
                              start_line: Optional[int] = None, end_line: Optional[int] = None,
                              context_before: int = 2, max_lines: int = 50) -> str:
-        """Extract code snippet from an AST node or line range for display in violation messages.
-        
-        Works for both single-file (AST-based) and cross-file (line-based) scanners.
-        
-        Args:
-            content: Full source code content as string
-            ast_node: AST node to extract code for (FunctionDef, ClassDef, If, etc.) - optional
-            start_line: Start line number (1-indexed) - used if ast_node not provided
-            end_line: End line number (1-indexed) - used if ast_node not provided
-            context_before: Number of lines before the node to include for context
-            max_lines: Maximum number of lines to include (truncates if longer)
-            
-        Returns:
-            Code snippet string formatted for markdown display
-        """
         lines = content.split('\n')
         
         # Determine start and end lines
@@ -384,7 +243,6 @@ class CodeScanner(Scanner):
             # Use AST node to determine lines
             start_line_0 = ast_node.lineno - 1 if hasattr(ast_node, 'lineno') and ast_node.lineno else 0
             
-            # Get end line - use end_lineno if available (Python 3.8+), otherwise estimate
             if hasattr(ast_node, 'end_lineno') and ast_node.end_lineno:
                 end_line_0 = ast_node.end_lineno  # end_lineno is 1-indexed, exclusive
             else:
@@ -404,7 +262,6 @@ class CodeScanner(Scanner):
             # No information provided, return empty
             return ""
         
-        # Extract code with context
         snippet_start = max(0, start_line_0 - context_before)
         snippet_end = min(len(lines), end_line_0 + 1)
         code_snippet = '\n'.join(lines[snippet_start:snippet_end])
@@ -430,30 +287,8 @@ class CodeScanner(Scanner):
         context_before: int = 2,
         max_lines: int = 50
     ) -> Dict[str, Any]:
-        """Create a violation with code snippet automatically included.
-        
-        This helper method extracts code snippets and includes them in violation messages
-        for both single-file (AST-based) and cross-file (line-based) scanners.
-        
-        Args:
-            rule_obj: Rule object reference
-            violation_message: Base violation message (snippet will be appended)
-            file_path: Path to file where violation occurs
-            line_number: Line number where violation occurs (1-indexed)
-            severity: Severity level ('error', 'warning', 'info')
-            content: Source code content (required if ast_node or start_line provided)
-            ast_node: AST node to extract snippet from (for single-file scanners)
-            start_line: Start line number (1-indexed) for snippet (for cross-file scanners)
-            end_line: End line number (1-indexed) for snippet (for cross-file scanners)
-            context_before: Number of lines before to include for context
-            max_lines: Maximum number of lines to include
-            
-        Returns:
-            Violation dictionary with code snippet included in message
-        """
         from .violation import Violation
         
-        # Extract code snippet if content and location info provided
         code_snippet = ""
         if content is not None:
             if ast_node is not None or start_line is not None:
@@ -466,7 +301,6 @@ class CodeScanner(Scanner):
                     max_lines=max_lines
                 )
         
-        # Build final message with snippet
         if code_snippet:
             final_message = f"{violation_message}\n\n```python\n{code_snippet}\n```"
         else:

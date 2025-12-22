@@ -251,17 +251,23 @@ class ScopingParameter:
 
     def _extract_story_names_from_increment(self, increment: Dict[str, Any]) -> Set[str]:
         story_names = set()
+        self._add_direct_stories(increment, story_names)
+        self._add_epic_stories(increment, story_names)
+        return story_names
+    
+    def _add_direct_stories(self, increment: Dict[str, Any], story_names: Set[str]) -> None:
         for story in increment.get('stories', []):
-            if isinstance(story, dict):
-                story_names.add(story.get('name'))
-            elif isinstance(story, str):
-                story_names.add(story)
+            self._add_story_name(story, story_names)
+    
+    def _add_epic_stories(self, increment: Dict[str, Any], story_names: Set[str]) -> None:
         for epic in increment.get('epics', []):
             for feature in epic.get('features', []):
                 for story in feature.get('stories', []):
-                    if isinstance(story, dict):
-                        story_names.add(story.get('name'))
-                    elif isinstance(story, str):
-                        story_names.add(story)
-        return story_names
+                    self._add_story_name(story, story_names)
+    
+    def _add_story_name(self, story: Any, story_names: Set[str]) -> None:
+        if isinstance(story, dict):
+            story_names.add(story.get('name'))
+        elif isinstance(story, str):
+            story_names.add(story)
 

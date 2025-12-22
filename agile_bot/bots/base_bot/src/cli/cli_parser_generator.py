@@ -28,13 +28,11 @@ from agile_bot.bots.base_bot.src.actions.action_context import (
 
 
 class CliParserGenerator:
-    """Generates CLI argument parser code from action context classes."""
     
     def __init__(self):
         self._generated_lines: List[str] = []
     
     def generate_parsers_for_bot(self, bot) -> str:
-        """Generate parser code for all actions in a bot."""
         self._generated_lines = []
         self._add_header()
         self._add_imports()
@@ -48,7 +46,6 @@ class CliParserGenerator:
                 context_class = action.context_class
                 action_name = action.action_name
                 
-                # Generate parser for this context class if not seen
                 if context_class not in context_classes_seen:
                     context_classes_seen.add(context_class)
                     self._generate_parser_function(context_class)
@@ -64,7 +61,6 @@ class CliParserGenerator:
         return '\n'.join(self._generated_lines)
     
     def generate_parser_for_context_class(self, context_class: Type[ActionContext]) -> str:
-        """Generate parser function for a single context class."""
         self._generated_lines = []
         self._add_header()
         self._add_imports()
@@ -103,7 +99,6 @@ class CliParserGenerator:
         self._generated_lines.append('')
     
     def _generate_parser_function(self, context_class: Type[ActionContext]):
-        """Generate a parser function for a context class."""
         class_name = context_class.__name__
         func_name = f'build_{self._to_snake_case(class_name)}_parser'
         
@@ -111,7 +106,6 @@ class CliParserGenerator:
         self._generated_lines.append(f'    """Build argument parser for {class_name}."""')
         self._generated_lines.append(f'    parser = argparse.ArgumentParser(add_help=False)')
         
-        # Get all fields including inherited ones
         all_fields = self._get_all_fields(context_class)
         
         for field_info in all_fields:
@@ -121,56 +115,76 @@ class CliParserGenerator:
         self._generated_lines.append('')
     
     def _get_all_fields(self, context_class: Type[ActionContext]) -> list:
-        """Get all dataclass fields including inherited ones."""
         if not dataclasses.is_dataclass(context_class):
             return []
         return list(fields(context_class))
     
     def _add_argument_for_field(self, field_info):
-        """Add argparse argument for a dataclass field."""
         name = field_info.name
         field_type = field_info.type
         default = field_info.default
-        
         cli_name = f'--{name.replace("_", "-")}'
         
-        # Determine argument configuration based on type
         if field_type == bool:
-            if default is dataclasses.MISSING:
-                default = False
-            self._generated_lines.append(
-                f"    parser.add_argument('{cli_name}', action='store_true', default={default})"
-            )
-        elif field_type == Optional[bool] or str(field_type) == 'typing.Optional[bool]':
-            self._generated_lines.append(
-                f"    parser.add_argument('{cli_name}', action='store_true', default=None)"
-            )
-        elif field_type == Optional[ScopeConfig] or 'ScopeConfig' in str(field_type):
-            self._generated_lines.append(
-                f"    parser.add_argument('{cli_name}', type=str, default=None, "
-                f"help='JSON scope config: {{type, value, exclude, skiprule}}')"
-            )
-        elif 'Dict' in str(field_type):
-            self._generated_lines.append(
-                f"    parser.add_argument('{cli_name}', type=str, default=None, "
-                f"help='JSON dict')"
-            )
-        elif 'List' in str(field_type):
-            self._generated_lines.append(
-                f"    parser.add_argument('{cli_name}', nargs='*', default=None)"
-            )
-        else:
-            # Default: string argument
-            default_str = 'None' if default is dataclasses.MISSING else repr(default)
-            self._generated_lines.append(
-                f"    parser.add_argument('{cli_name}', type=str, default={default_str})"
-            )
+            self._add_bool_argument(cli_name, default)
+            return
+        
+        if field_type == Optional[bool] or str(field_type) == 'typing.Optional[bool]':
+            self._add_optional_bool_argument(cli_name)
+            return
+        
+        if field_type == Optional[ScopeConfig] or 'ScopeConfig' in str(field_type):
+            self._add_scope_config_argument(cli_name)
+            return
+        
+        if 'Dict' in str(field_type):
+            self._add_dict_argument(cli_name)
+            return
+        
+        if 'List' in str(field_type):
+            self._add_list_argument(cli_name)
+            return
+        
+        self._add_string_argument(cli_name, default)
+    
+    def _add_bool_argument(self, cli_name: str, default: Any) -> None:
+        if default is dataclasses.MISSING:
+            default = False
+        self._generated_lines.append(
+            f"    parser.add_argument('{cli_name}', action='store_true', default={default})"
+        )
+    
+    def _add_optional_bool_argument(self, cli_name: str) -> None:
+        self._generated_lines.append(
+            f"    parser.add_argument('{cli_name}', action='store_true', default=None)"
+        )
+    
+    def _add_scope_config_argument(self, cli_name: str) -> None:
+        self._generated_lines.append(
+            f"    parser.add_argument('{cli_name}', type=str, default=None, "
+            f"help='JSON scope config: {{type, value, exclude, skiprule}}')"
+        )
+    
+    def _add_dict_argument(self, cli_name: str) -> None:
+        self._generated_lines.append(
+            f"    parser.add_argument('{cli_name}', type=str, default=None, "
+            f"help='JSON dict')"
+        )
+    
+    def _add_list_argument(self, cli_name: str) -> None:
+        self._generated_lines.append(
+            f"    parser.add_argument('{cli_name}', nargs='*', default=None)"
+        )
+    
+    def _add_string_argument(self, cli_name: str, default: Any) -> None:
+        default_str = 'None' if default is dataclasses.MISSING else repr(default)
+        self._generated_lines.append(
+            f"    parser.add_argument('{cli_name}', type=str, default={default_str})"
+        )
     
     def _generate_context_builder_functions(self):
-        """Generate functions to build context objects from parsed args."""
         self._generated_lines.extend([
             'def parse_scope_config(json_str: Optional[str]) -> Optional[ScopeConfig]:',
-            '    """Parse JSON string into ScopeConfig object."""',
             '    if not json_str:',
             '        return None',
             '    data = json.loads(json_str.replace("\'", \'"\'))',
@@ -178,7 +192,6 @@ class CliParserGenerator:
             '',
             '',
             'def parse_json_dict(json_str: Optional[str]) -> Optional[dict]:',
-            '    """Parse JSON string into dict."""',
             '    if not json_str:',
             '        return None',
             '    return json.loads(json_str.replace("\'", \'"\'))',
@@ -207,7 +220,6 @@ class CliParserGenerator:
         ])
     
     def _generate_action_parser_mapping(self, action_mappings: list):
-        """Generate the ACTION_PARSERS mapping dict."""
         self._generated_lines.append('# Mapping from (behavior, action) to parser function')
         self._generated_lines.append('ACTION_PARSERS = {')
         
@@ -232,14 +244,12 @@ class CliParserGenerator:
         self._generated_lines.append('}')
     
     def _to_snake_case(self, name: str) -> str:
-        """Convert CamelCase to snake_case."""
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 
 def generate_parsers_for_story_bot():
-    """Generate parsers for story_bot."""
     from agile_bot.bots.story_bot.src.story_bot_cli import create_story_bot
     
     bot = create_story_bot()

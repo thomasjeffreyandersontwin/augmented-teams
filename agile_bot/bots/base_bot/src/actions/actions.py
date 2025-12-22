@@ -112,7 +112,6 @@ class Actions:
         if action is None:
             raise ValueError(f"Action '{action_name}' not found")
         
-        # Check if this is a non-workflow action (no order)
         is_non_workflow = action in self._non_workflow_actions
         if is_non_workflow:
             # Non-workflow actions don't affect workflow state

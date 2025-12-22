@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class MeaningfulContextScanner(CodeScanner):
-    """Validates names provide meaningful context (no magic numbers, appropriate scope-based naming)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -23,17 +22,15 @@ class MeaningfulContextScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for magic numbers
         violations.extend(self._check_magic_numbers(lines, file_path, rule_obj))
         
-        # Check for numbered variables (data1, data2)
         violations.extend(self._check_numbered_variables(content, file_path, rule_obj))
         
         return violations
     
     def _check_magic_numbers(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for magic numbers (should be named constants)."""
         violations = []
+        content = '\n'.join(lines)
         
         # Common magic numbers that should be constants
         magic_number_patterns = [
@@ -45,24 +42,27 @@ class MeaningfulContextScanner(CodeScanner):
         for line_num, line in enumerate(lines, 1):
             for pattern in magic_number_patterns:
                 if re.search(pattern, line):
-                    # Check if it's already a constant definition
                     if '=' in line and ('const' in line or 'final' in line):
                         continue  # It's a constant definition, not magic number
                     
-                    violation = Violation(
-                        rule=rule_obj,
+                    violation = self._create_violation_with_snippet(
+                        rule_obj=rule_obj,
                         violation_message=f'Line {line_num} contains magic number - replace with named constant',
-                        location=str(file_path),
+                        file_path=file_path,
                         line_number=line_num,
-                        severity='warning'
-                    ).to_dict()
+                        severity='warning',
+                        content=content,
+                        start_line=line_num,
+                        end_line=line_num,
+                        context_before=1,
+                        max_lines=3
+                    )
                     violations.append(violation)
                     break
         
         return violations
     
     def _check_numbered_variables(self, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for numbered variables (data1, data2, etc.) - ONLY actual variable names/identifiers, not strings, comments, or values."""
         violations = []
         
         try:
@@ -72,44 +72,42 @@ class MeaningfulContextScanner(CodeScanner):
             numbered_var_pattern = re.compile(r'^\w+\d+$')  # word followed by number (entire match)
             
             def check_name(var_name: str, lineno: int):
-                """Helper to check if a variable name matches the numbered pattern."""
                 if numbered_var_pattern.match(var_name):
                     # Exclude common test patterns
                     if var_name.startswith('test') or var_name in ['test1', 'test2']:
                         return
-                    violations.append(Violation(
-                        rule=rule_obj,
+                    violations.append(self._create_violation_with_snippet(
+                        rule_obj=rule_obj,
                         violation_message=f'Line {lineno} uses numbered variable "{var_name}" - use meaningful descriptive name',
-                        location=str(file_path),
+                        file_path=file_path,
                         line_number=lineno,
-                        severity='warning'
-                    ).to_dict())
+                        severity='warning',
+                        content=content,
+                        start_line=lineno,
+                        end_line=lineno,
+                        context_before=1,
+                        max_lines=3
+                    ))
             
             for node in ast.walk(tree):
-                # Check variable names in assignments (left side only - the target)
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name):
                             check_name(target.id, target.lineno)
-                        # Handle tuple unpacking: a, b = ...
                         elif isinstance(target, ast.Tuple):
                             for elt in target.elts:
                                 if isinstance(elt, ast.Name):
                                     check_name(elt.id, elt.lineno)
-                        # Handle attribute assignments: obj.attr = ... (check attr name)
                         elif isinstance(target, ast.Attribute):
                             if isinstance(target.attr, str) and numbered_var_pattern.match(target.attr):
                                 check_name(target.attr, target.lineno)
                 
-                # Check function parameter names
                 elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     for arg in node.args.args:
                         check_name(arg.arg, arg.lineno)
-                    # Check keyword-only args
                     for arg in node.args.kwonlyargs:
                         check_name(arg.arg, arg.lineno)
                 
-                # Check for loop variables
                 elif isinstance(node, (ast.For, ast.AsyncFor)):
                     if isinstance(node.target, ast.Name):
                         check_name(node.target.id, node.target.lineno)
@@ -118,7 +116,6 @@ class MeaningfulContextScanner(CodeScanner):
                             if isinstance(elt, ast.Name):
                                 check_name(elt.id, elt.lineno)
                 
-                # Check comprehension variables
                 elif isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
                     for generator in node.generators:
                         if isinstance(generator.target, ast.Name):
@@ -128,7 +125,6 @@ class MeaningfulContextScanner(CodeScanner):
                                 if isinstance(elt, ast.Name):
                                     check_name(elt.id, elt.lineno)
                 
-                # Check class attributes (but not their values)
                 elif isinstance(node, ast.ClassDef):
                     for item in node.body:
                         if isinstance(item, ast.Assign):

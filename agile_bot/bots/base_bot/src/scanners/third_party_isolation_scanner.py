@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class ThirdPartyIsolationScanner(CodeScanner):
-    """Validates third-party code is isolated (wrapped behind interfaces)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -20,13 +19,11 @@ class ThirdPartyIsolationScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for third-party imports used directly in business logic
         violations.extend(self._check_third_party_usage(lines, file_path, rule_obj))
         
         return violations
     
     def _check_third_party_usage(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for direct third-party API usage (should be wrapped)."""
         violations = []
         
         # Common third-party libraries that should be wrapped
@@ -38,13 +35,11 @@ class ThirdPartyIsolationScanner(CodeScanner):
             r'import\s+boto3',  # AWS SDK
         ]
         
-        # Check imports
         has_third_party_import = False
         for line_num, line in enumerate(lines, 1):
             for pattern in third_party_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
                     has_third_party_import = True
-                    # Check if it's used directly (not wrapped)
                     # This is a simplified check - could be enhanced
                     violation = Violation(
                         rule=rule_obj,

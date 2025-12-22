@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class SeparateConcernsScanner(CodeScanner):
-    """Validates concerns are separated (pure logic from side effects, business logic from infrastructure)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -31,7 +30,6 @@ class SeparateConcernsScanner(CodeScanner):
         return violations
     
     def _check_mixed_concerns(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function mixes concerns using AST-based responsibility detection."""
         from .complexity_metrics import ComplexityMetrics
         
         # Use ComplexityMetrics to detect responsibilities
@@ -43,7 +41,6 @@ class SeparateConcernsScanner(CodeScanner):
         
         line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
         
-        # Check for incompatible responsibility combinations
         incompatible_pairs = [
             ('I/O', 'Computation'),
             ('I/O', 'Transformation'),
@@ -51,7 +48,6 @@ class SeparateConcernsScanner(CodeScanner):
             ('StateManagement', 'Computation'),
         ]
         
-        # Check if any incompatible pair exists
         responsibility_set = set(responsibilities)
         for resp1, resp2 in incompatible_pairs:
             if resp1 in responsibility_set and resp2 in responsibility_set:

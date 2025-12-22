@@ -8,7 +8,6 @@ import re
 
 
 class TechnicalLanguageScanner(StoryScanner):
-    """Detects technical implementation language in user-facing story elements."""
     
     # Technical implementation verbs and phrases
     TECHNICAL_VERBS = [
@@ -31,7 +30,6 @@ class TechnicalLanguageScanner(StoryScanner):
         
         name_lower = node.name.lower()
         
-        # Check for technical verbs
         for verb in self.TECHNICAL_VERBS:
             if verb in name_lower:
                 violation = Violation(
@@ -43,7 +41,6 @@ class TechnicalLanguageScanner(StoryScanner):
                 violations.append(violation)
                 break
         
-        # Check for technical phrases
         for phrase in self.TECHNICAL_PHRASES:
             if phrase in name_lower:
                 violation = Violation(

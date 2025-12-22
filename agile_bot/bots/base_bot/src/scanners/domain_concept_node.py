@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional
 
 
 class DomainConceptNode:
-    """Represents a domain concept node in the story graph."""
     
     def __init__(
         self,
@@ -27,7 +26,6 @@ class DomainConceptNode:
         return self.data.get('responsibilities', [])
     
     def map_location(self, field: str = 'name') -> str:
-        """Map location in story graph structure."""
         path_parts = [f"epics[{self.epic_idx}]"]
         
         if self.sub_epic_path:

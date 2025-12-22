@@ -12,13 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class PrimitiveVsObjectScanner(CodeScanner):
-    """Validates that methods prefer objects over primitives in signatures.
-    
-    This scanner detects when methods are passing primitives (especially IDs)
-    when they should be passing domain objects. It allows primitives at
-    presentation boundaries (UI/CLI rendering methods). Works for both test
-    and production code files.
-    """
     
     # Primitive type names that suggest objects should be used instead
     PRIMITIVE_TYPES = {'str', 'int', 'float', 'bool', 'dict', 'Dict', 'list', 'List', 'tuple', 'Tuple'}
@@ -59,15 +52,12 @@ class PrimitiveVsObjectScanner(CodeScanner):
         return violations
     
     def _is_presentation_boundary(self, func_name: str, content: str, func_node: ast.FunctionDef) -> bool:
-        """Check if function is at a presentation boundary where primitives are acceptable."""
         func_name_lower = func_name.lower()
         
-        # Check method name patterns
         for pattern in self.PRESENTATION_METHOD_PATTERNS:
             if re.search(pattern, func_name_lower):
                 return True
         
-        # Check if function body contains presentation-related operations
         func_source = ast.get_source_segment(content, func_node) or ''
         presentation_keywords = ['print(', 'display', 'render', 'format', 'to_string', 'to_dict', 'cli', 'ui']
         if any(keyword in func_source.lower() for keyword in presentation_keywords):
@@ -76,7 +66,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
         return False
     
     def _check_function_parameters(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check if function parameters should be objects instead of primitives."""
         violations = []
         
         # Skip presentation boundary methods
@@ -87,19 +76,15 @@ class PrimitiveVsObjectScanner(CodeScanner):
         if func_node.name == '__init__':
             return violations
         
-        # Check each parameter
         for arg in func_node.args.args:
             # Skip self and cls
             if arg.arg in ('self', 'cls'):
                 continue
             
-            # Check if parameter has type annotation
             if arg.annotation:
                 type_name = self._extract_type_name(arg.annotation, content)
                 
-                # Check if it's a primitive type
                 if type_name and type_name in self.PRIMITIVE_TYPES:
-                    # Check if parameter name suggests it should be an object
                     if self._suggests_object_should_be_passed(arg.arg):
                         violations.append(self._create_primitive_violation(
                             rule_obj, file_path, func_node, arg, type_name,
@@ -116,18 +101,14 @@ class PrimitiveVsObjectScanner(CodeScanner):
         return violations
     
     def _check_return_type(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function return type should be an object instead of primitives."""
         # Skip presentation boundary methods
         if self._is_presentation_boundary(func_node.name, content, func_node):
             return None
         
-        # Check return annotation
         if func_node.returns:
             return_type_name = self._extract_type_name(func_node.returns, content)
             
-            # Check if returning Dict/List when it could be an object
             if return_type_name in ('Dict', 'dict', 'List', 'list', 'tuple', 'Tuple'):
-                # Check if function name suggests it should return an object
                 func_name_lower = func_node.name.lower()
                 object_return_patterns = ['create', 'build', 'make', 'get', 'find', 'load', 'process', 'generate']
                 
@@ -140,24 +121,19 @@ class PrimitiveVsObjectScanner(CodeScanner):
         return None
     
     def _extract_type_name(self, annotation_node: ast.AST, content: str) -> Optional[str]:
-        """Extract type name from annotation node."""
         if isinstance(annotation_node, ast.Name):
             return annotation_node.id
         elif isinstance(annotation_node, ast.Subscript):
-            # Handle Dict[str, Any], List[str], etc.
             if isinstance(annotation_node.value, ast.Name):
                 return annotation_node.value.id
         elif isinstance(annotation_node, ast.Attribute):
-            # Handle typing.Dict, typing.List, etc.
             return annotation_node.attr
         
         return None
     
     def _suggests_object_should_be_passed(self, param_name: str) -> bool:
-        """Check if parameter name suggests an object should be passed instead."""
         param_name_lower = param_name.lower()
         
-        # Check for ID patterns
         for pattern in self.OBJECT_SUGGESTING_PATTERNS:
             if re.search(pattern, param_name_lower):
                 return True
@@ -173,7 +149,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
         type_name: Optional[str],
         message: str
     ) -> Dict[str, Any]:
-        """Create a violation dict for primitive usage."""
         line_number = func_node.lineno if func_node else None
         
         return Violation(

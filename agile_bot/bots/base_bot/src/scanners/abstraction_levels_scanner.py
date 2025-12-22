@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractionLevelsScanner(CodeScanner):
-    """Validates abstraction levels are maintained (no mixing high-level with low-level details)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -31,7 +30,6 @@ class AbstractionLevelsScanner(CodeScanner):
         return violations
     
     def _check_mixed_abstraction_levels(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function mixes abstraction levels."""
         func_source = ast.get_source_segment(content, func_node) or ''
         func_source_lower = func_source.lower()
         

@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class NaturalEnglishCodeScanner(CodeScanner):
-    """Validates that code uses natural English for method names, variable names, and relationships."""
     
     TECHNICAL_NOTATION_PATTERNS = [
         r'_0_1$',
@@ -30,45 +29,47 @@ class NaturalEnglishCodeScanner(CodeScanner):
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                violation = self._check_natural_english(node, file_path, rule_obj)
+                violation = self._check_natural_english(node, file_path, rule_obj, content)
                 if violation:
                     violations.append(violation)
             elif isinstance(node, ast.Name):
-                violation = self._check_variable_name(node, file_path, rule_obj)
+                violation = self._check_variable_name(node, file_path, rule_obj, content)
                 if violation:
                     violations.append(violation)
         
         return violations
     
-    def _check_natural_english(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if function name uses natural English."""
+    def _check_natural_english(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> Optional[Dict[str, Any]]:
         func_name = func_node.name
         
         for pattern in self.TECHNICAL_NOTATION_PATTERNS:
             if re.search(pattern, func_name):
-                return Violation(
-                    rule=rule_obj,
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
                     violation_message=f'Function "{func_name}" uses technical notation. Use natural English instead (e.g., "may_find" not "find_optional").',
-                    location=str(file_path),
+                    file_path=file_path,
                     line_number=func_node.lineno,
-                    severity='warning'
-                ).to_dict()
+                    severity='warning',
+                    content=content,
+                    ast_node=func_node
+                )
         
         return None
     
-    def _check_variable_name(self, name_node: ast.Name, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if variable name uses natural English."""
+    def _check_variable_name(self, name_node: ast.Name, file_path: Path, rule_obj: Any, content: str) -> Optional[Dict[str, Any]]:
         var_name = name_node.id
         
         for pattern in self.TECHNICAL_NOTATION_PATTERNS:
             if re.search(pattern, var_name):
-                return Violation(
-                    rule=rule_obj,
+                return self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
                     violation_message=f'Variable "{var_name}" uses technical notation. Use natural English instead.',
-                    location=str(file_path),
+                    file_path=file_path,
                     line_number=name_node.lineno if hasattr(name_node, 'lineno') else None,
-                    severity='info'
-                ).to_dict()
+                    severity='info',
+                    content=content,
+                    ast_node=name_node
+                )
         
         return None
 

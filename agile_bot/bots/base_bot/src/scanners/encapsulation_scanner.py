@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class EncapsulationScanner(CodeScanner):
-    """Validates encapsulation (private fields, minimal public interface, Law of Demeter)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -31,20 +30,16 @@ class EncapsulationScanner(CodeScanner):
         return violations
     
     def _check_encapsulation(self, class_node: ast.ClassDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if class follows encapsulation principles using AST-based analysis."""
         violations = []
         
-        # Check each method in the class for Law of Demeter violations
         for node in class_node.body:
             if isinstance(node, ast.FunctionDef):
                 method_violations = self._check_method_encapsulation(node, class_node.name, file_path, rule_obj)
                 violations.extend(method_violations)
         
-        # Return first violation found
         return violations[0] if violations else None
     
     def _check_method_encapsulation(self, method_node: ast.FunctionDef, class_name: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check method for Law of Demeter violations using AST."""
         violations = []
         
         # Find all method call chains in the method body
@@ -67,13 +62,6 @@ class EncapsulationScanner(CodeScanner):
         return violations
     
     def _get_method_chain_depth(self, call_node: ast.Call) -> int:
-        """Calculate the depth of a method call chain using AST.
-        
-        Returns the number of chained method calls (e.g., obj.method().method().method() = 3)
-        
-        In AST, a chain like obj.method1().method2().method3() is represented as:
-        Call(func=Attribute(value=Call(func=Attribute(value=Call(...), attr='method2'), attr='method3')))
-        """
         depth = 1  # The current call counts as 1
         
         # Traverse up the chain by following the func attribute

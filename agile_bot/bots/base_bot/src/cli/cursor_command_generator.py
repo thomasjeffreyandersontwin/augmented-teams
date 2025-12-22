@@ -50,7 +50,6 @@ class CursorCommandGenerator:
         return commands
 
     def _build_help_command_content(self, python_command: str) -> str:
-        """Build help command content with display instructions."""
         lines = [
             f"{python_command} --help-cursor",
             "",
@@ -69,7 +68,6 @@ class CursorCommandGenerator:
             behavior_command = self._build_behavior_command_with_actions(python_command, behavior_name)
             commands[f'{self.bot_name}-{behavior_name}'] = self._write_command_file(commands_dir / f'{self.bot_name}-{behavior_name}.md', behavior_command)
             
-            # Generate dedicated rules command for each behavior
             rules_command = self._build_rules_command(python_command, behavior_name)
             commands[f'{self.bot_name}-{behavior_name}-rules'] = self._write_command_file(commands_dir / f'{self.bot_name}-{behavior_name}-rules.md', rules_command)
 
@@ -90,7 +88,6 @@ class CursorCommandGenerator:
                 file_path.unlink(missing_ok=True)
 
     def _build_behavior_command_with_actions(self, python_command: str, behavior_name: str) -> str:
-        """Build comprehensive command documentation with all actions and their parameters."""
         # Use raw strings and format separately to avoid escaping issues
         scope_epic = "{'type': 'epic', 'value': ['Epic Name']}"
         scope_story = "{'type': 'story', 'value': ['Story Name']}"
@@ -156,7 +153,6 @@ class CursorCommandGenerator:
         return "\n".join(lines)
 
     def _build_rules_command(self, python_command: str, behavior_name: str) -> str:
-        """Build dedicated rules command for a behavior."""
         if behavior_name == 'code':
             examples = [
                 f"# Write new production code following rules",
@@ -188,7 +184,6 @@ class CursorCommandGenerator:
                 f"{python_command} --behavior {behavior_name} --action rules --message \"Does my scenario follow the rules?\"",
             ]
         
-        # Get behavior-specific description
         descriptions = {
             'code': 'Load code behavior rules into AI context for guidance on writing clean, maintainable production code',
             'tests': 'Load tests behavior rules into AI context for guidance on writing effective, well-structured tests',

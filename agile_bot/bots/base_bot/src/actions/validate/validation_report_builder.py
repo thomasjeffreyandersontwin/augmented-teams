@@ -23,7 +23,6 @@ class ValidationReportBuilder:
         return ['## Summary', '', f'Validated {summary_text} against **{total_rules} validation rules**.', '']
     
     def _build_summary_text(self, files: Dict[str, List[Path]] = None) -> str:
-        """Build context-aware summary text based on what was actually validated."""
         if not files:
             return 'content'
         test_files = files.get('test', [])

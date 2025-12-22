@@ -11,11 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class BadCommentsScanner(CodeScanner):
-    """Detects bad comments: commented-out code, outdated comments, misleading comments.
-    
-    CRITICAL: Some comments actively harm readability. Delete commented-out code (it's in git),
-    remove misleading or outdated comments, and eliminate redundant noise.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -26,30 +21,21 @@ class BadCommentsScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for commented-out code blocks
         violations.extend(self._check_commented_code(lines, file_path, rule_obj))
         
-        # Check for HTML markup in comments
         violations.extend(self._check_html_in_comments(lines, file_path, rule_obj))
         
-        # Check for misleading TODO comments
         violations.extend(self._check_misleading_todos(lines, file_path, rule_obj))
         
         return violations
     
     def _check_commented_code(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for commented-out code blocks.
-        
-        Only flags actual commented-out code, not comments that mention code keywords.
-        Looks for actual executable code syntax patterns.
-        """
         violations = []
         commented_block_start = None
         
         for line_num, line in enumerate(lines, 1):
             stripped = line.strip()
             
-            # Check for commented lines
             if stripped.startswith('//') or stripped.startswith('#'):
                 comment_content = stripped[2:].strip()
                 
@@ -78,14 +64,12 @@ class BadCommentsScanner(CodeScanner):
                     violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
                     commented_block_start = None
         
-        # Check for any remaining commented block at end of file
         if commented_block_start:
             violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
         
         return violations
     
     def _create_commented_code_violation(self, rule_obj: Any, file_path: Path, line_num: int) -> Dict[str, Any]:
-        """Create a violation for commented-out code."""
         return Violation(
             rule=rule_obj,
             violation_message=f"Line {line_num} has commented-out code - delete it (it's in git history if needed)",
@@ -95,11 +79,6 @@ class BadCommentsScanner(CodeScanner):
         ).to_dict()
     
     def _is_actual_commented_code(self, comment_content: str, lines: List[str], line_num: int) -> bool:
-        """Check if comment content is actual executable code, not just a comment about code.
-        
-        Returns True only if the comment contains actual code syntax patterns AND
-        there's no production code immediately following it (which would indicate it's explanatory).
-        """
         if not comment_content:
             return False
         
@@ -110,7 +89,6 @@ class BadCommentsScanner(CodeScanner):
                 next_line = lines[line_num + i - 1].strip()
                 # Skip empty lines and comment lines
                 if next_line and not next_line.startswith('//') and not next_line.startswith('#'):
-                    # Check for actual code patterns (not just whitespace or docstrings)
                     if re.search(r'\b(def|class|if|for|while|return|import|from|=\s*[^=]|\(|\[|\{)\b', next_line):
                         # There's production code right after - this comment is explanatory
                         return False
@@ -140,7 +118,6 @@ class BadCommentsScanner(CodeScanner):
             r'\bwhile\s+[^:]+:',     # while condition: (Python)
             r'\bwhile\s*\([^)]+\)',  # while (condition) (JS/C)
             
-            # Return statements with values
             r'\breturn\s+[^;]+;',    # return value; (with semicolon)
             r'\breturn\s+[^#\n]+$',  # return value (end of line, Python)
             
@@ -160,7 +137,6 @@ class BadCommentsScanner(CodeScanner):
             r'^\s*(import|from|require)\s+',
         ]
         
-        # Check if comment matches actual code patterns
         for pattern in code_patterns:
             if re.search(pattern, comment_content):
                 # Additional check: exclude comments that are clearly explanatory text
@@ -185,12 +161,6 @@ class BadCommentsScanner(CodeScanner):
         return False
     
     def _check_html_in_comments(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for HTML markup in comments.
-        
-        Only flags HTML that appears in actual comments, not in string literals.
-        This distinguishes between output formatting code (which uses HTML in strings)
-        and actual comments that contain HTML.
-        """
         violations = []
         
         html_patterns = [
@@ -199,11 +169,9 @@ class BadCommentsScanner(CodeScanner):
         ]
         
         for line_num, line in enumerate(lines, 1):
-            # Extract the comment portion of the line (if any)
             comment_text = self._extract_comment_text(line)
             
             if comment_text:
-                # Check if HTML appears in the comment portion
                 for pattern in html_patterns:
                     if re.search(pattern, comment_text, re.IGNORECASE):
                         violation = Violation(
@@ -219,12 +187,6 @@ class BadCommentsScanner(CodeScanner):
         return violations
     
     def _extract_comment_text(self, line: str) -> Optional[str]:
-        """Extract the comment portion of a line, excluding string literals.
-        
-        Returns the comment text if found, None otherwise.
-        Only returns text that is actually in a comment, not in a string literal.
-        """
-        # Track string state
         in_single_quote = False
         in_double_quote = False
         in_triple_single = False
@@ -245,7 +207,6 @@ class BadCommentsScanner(CodeScanner):
                 i += 1
                 continue
             
-            # Check for triple quotes (Python)
             if i + 2 < len(line):
                 triple = line[i:i+3]
                 if triple == '"""' and not in_single_quote and not in_triple_single:
@@ -257,7 +218,6 @@ class BadCommentsScanner(CodeScanner):
                     i += 3
                     continue
             
-            # Check for single/double quotes (only if not in triple quotes)
             if not in_triple_single and not in_triple_double:
                 if char == '"' and not in_single_quote:
                     in_double_quote = not in_double_quote
@@ -286,14 +246,11 @@ class BadCommentsScanner(CodeScanner):
         return None
     
     def _check_misleading_todos(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for misleading TODO comments."""
         violations = []
         
         for line_num, line in enumerate(lines, 1):
             if 'TODO' in line.upper() or 'FIXME' in line.upper():
-                # Check if TODO says "needs to be implemented" but code exists
                 if 'needs to be implemented' in line.lower() or 'not implemented' in line.lower():
-                    # Check next few lines for actual implementation
                     next_lines = lines[line_num:line_num+5]
                     has_implementation = any(
                         re.search(r'\b(function|def|class|return|if|for|while)\b', l)

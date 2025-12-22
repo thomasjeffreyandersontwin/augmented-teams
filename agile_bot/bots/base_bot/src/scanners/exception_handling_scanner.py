@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class ExceptionHandlingScanner(CodeScanner):
-    """Validates exceptions are used properly (not for normal control flow)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -19,24 +18,19 @@ class ExceptionHandlingScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for exception misuse
         violations.extend(self._check_exception_misuse(tree, content, file_path, rule_obj))
         
         return violations
     
     def _check_exception_misuse(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for exception misuse (exceptions for normal flow)."""
         violations = []
         lines = content.split('\n')
         
-        # Check for try-except blocks that catch and continue (normal flow)
         for node in ast.walk(tree):
             if isinstance(node, ast.Try):
-                # Check if except block is empty or just continues
                 for handler in node.handlers:
                     handler_body = handler.body
                     if len(handler_body) == 0:
-                        # Empty except block
                         line_number = handler.lineno if hasattr(handler, 'lineno') else None
                         violation = Violation(
                             rule=rule_obj,

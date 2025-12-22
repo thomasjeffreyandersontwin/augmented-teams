@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class DelegationScanner(StoryScanner):
-    """Validates that domain concepts delegate responsibilities to the lowest-level object."""
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         return []
@@ -16,7 +15,6 @@ class DelegationScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check for patterns where parent objects might be doing child's work
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             collaborators = responsibility_data.get('collaborators', [])
@@ -39,7 +37,6 @@ class DelegationScanner(StoryScanner):
         return violations
     
     def _is_collection_class(self, name: str) -> bool:
-        """Check if name indicates a collection class."""
         # Simple heuristic: plural forms or explicit "Collection" marker
         name_lower = name.lower()
         return (name_lower.endswith('s') and len(name_lower) > 3) or 'collection' in name_lower

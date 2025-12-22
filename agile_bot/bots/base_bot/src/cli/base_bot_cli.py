@@ -109,13 +109,6 @@ class BaseBotCli:
         return Bot(bot_name=self.bot_name, bot_directory=self.bot_directory, config_path=self.bot_config_path)
 
     def run(self, behavior_name: str=None, action_name: str=None, cli_args: list=None) -> Dict[str, Any]:
-        """Run an action with typed context parsing.
-        
-        Args:
-            behavior_name: Name of behavior to run
-            action_name: Name of action to run  
-            cli_args: Remaining CLI arguments for action-specific parameter parsing
-        """
         try:
             result = self.router.route_to_action(behavior_name, action_name, cli_args or [])
             return result
@@ -164,19 +157,15 @@ class BaseBotCli:
             self._handle_error(e)
 
     def help_cursor_commands(self):
-        """Route help to the help action."""
         try:
-            # Create help action directly (doesn't need a behavior workflow)
             from agile_bot.bots.base_bot.src.actions.help_action import HelpAction
             from agile_bot.bots.base_bot.src.utils import read_json_file
             from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
             
-            # Load help action config from base_actions
             base_actions_dir = get_base_actions_directory()
             help_config_path = base_actions_dir / 'help' / 'action_config.json'
             help_config = read_json_file(help_config_path)
             
-            # Create a minimal behavior wrapper for the help action
             # Help action needs access to bot_name and bot_paths
             class HelpBehaviorWrapper:
                 def __init__(self, bot, bot_name, bot_paths):
@@ -192,7 +181,6 @@ class BaseBotCli:
             # Execute the help action with empty context
             result = help_action.execute()
             
-            # Output the result
             self.executor._output_result(result)
             return result
         except Exception as e:

@@ -8,7 +8,6 @@ from collections import defaultdict
 
 
 class ConsistentVocabularyScanner(TestScanner):
-    """Validates vocabulary consistency across tests."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -19,20 +18,16 @@ class ConsistentVocabularyScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Extract domain terms from knowledge graph
         domain_terms = self._extract_domain_terms(knowledge_graph)
         
-        # Check for inconsistent vocabulary
         violations.extend(self._check_vocabulary_consistency(content, domain_terms, file_path, rule_obj))
         
         return violations
     
     def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> List[str]:
-        """Extract domain terms from knowledge graph."""
         terms = []
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
-            # Extract from epic name, sub-epic names, story names
             epic_name = epic.get('name', '')
             if epic_name:
                 terms.extend(epic_name.lower().split())
@@ -46,10 +41,8 @@ class ConsistentVocabularyScanner(TestScanner):
         return list(set(terms))  # Unique terms
     
     def _check_vocabulary_consistency(self, content: str, domain_terms: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for vocabulary consistency."""
         violations = []
         
-        # Check if content uses domain terms consistently
         content_lower = content.lower()
         
         # Look for common synonyms that should use domain terms instead

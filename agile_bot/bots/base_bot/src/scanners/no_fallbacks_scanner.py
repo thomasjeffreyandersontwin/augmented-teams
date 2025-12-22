@@ -9,10 +9,6 @@ from .violation import Violation
 
 
 class NoFallbacksScanner(TestScanner):
-    """Detects fallback/default values in tests.
-    
-    Tests should not use fallback/default values - use explicit test data.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -23,13 +19,11 @@ class NoFallbacksScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Check for fallback patterns
         violations.extend(self._check_fallback_patterns(lines, file_path, rule_obj))
         
         return violations
     
     def _check_fallback_patterns(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for fallback/default value patterns."""
         violations = []
         
         fallback_patterns = [

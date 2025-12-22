@@ -60,13 +60,6 @@ class BotPaths:
         return str(absolute_path)
 
     def update_workspace_directory(self, new_path: Path, persist: bool=True) -> Path:
-        """
-        Update the working directory (WORKING_AREA/WORKING_DIR) for the bot.
-
-        Args:
-            new_path: Target directory path.
-            persist: When True, write the value back to bot_config.json so it survives restarts.
-        """
         resolved_path = Path(new_path).expanduser().resolve()
         previous = getattr(self, '_workspace_directory', None)
         os.environ['WORKING_AREA'] = str(resolved_path)
@@ -91,7 +84,6 @@ class BotPaths:
         return resolved
 
     def _persist_workspace_directory(self, resolved_path: Path) -> None:
-        """Persist WORKING_AREA to bot_config.json (or create it if missing)."""
         candidate_paths = [
             self._bot_directory / 'bot_config.json',
             self._bot_directory / 'config' / 'bot_config.json'

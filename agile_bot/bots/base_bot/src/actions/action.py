@@ -121,15 +121,12 @@ class Action:
             raise
         context_instructions.extend(self._inject_context_files(injected_data))
         
-        # Add injected data (clarification, strategy) to instructions
         for key, value in injected_data.items():
             inst._data[key] = value
         
-        # Add context instructions to the beginning
         for line in reversed(context_instructions):
             inst._data['base_instructions'].insert(0, line)
         
-        # Add workflow status breadcrumbs to display_content (for deterministic display)
         breadcrumbs = self._inject_status_update_breadcrumbs({})
         for line in breadcrumbs:
             inst.add_display(line)
@@ -161,12 +158,6 @@ class Action:
         self.tracker.track_completion(state)
 
     def execute(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Execute the action with a typed context.
-        
-        Args:
-            context: Typed ActionContext subclass for this action's parameters.
-                     If None, creates default context from action's context_class.
-        """
         self.track_activity_on_start()
         if context is None:
             context = self.context_class()
@@ -201,7 +192,6 @@ class Action:
         
         display_file = inst.write_display_to_file('status.md')
         if display_file:
-            # Add instruction to read the file
             if 'base_instructions' not in instructions_dict:
                 instructions_dict['base_instructions'] = []
             instructions_dict['base_instructions'].append('')
@@ -250,15 +240,4 @@ class Action:
         return inject_reminder_to_instructions(result, reminder)
 
     def do_execute(self, context: ActionContext) -> Dict[str, Any]:
-        """Execute the action's core logic with typed context.
-        
-        Subclasses must implement this method. The context parameter is a typed
-        ActionContext subclass (or the base ActionContext for actions with no params).
-        
-        Args:
-            context: Typed action context with parameters as attributes
-            
-        Returns:
-            Result dictionary with instructions and other output data
-        """
         raise NotImplementedError('Subclasses must implement do_execute()')

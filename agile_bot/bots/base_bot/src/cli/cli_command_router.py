@@ -15,13 +15,6 @@ class CliCommandRouter:
         self._context_builder = CliContextBuilder()
 
     def route_to_action(self, behavior_name: str, action_name: str, cli_args: List[str]):
-        """Route to an action with CLI arguments.
-        
-        Args:
-            behavior_name: Name of behavior to run
-            action_name: Name of action to run
-            cli_args: Remaining CLI arguments to parse as action parameters
-        """
         if action_name:
             behavior_obj = self.bot.behaviors.find_by_name(behavior_name) if behavior_name else None
             action_obj = behavior_obj.actions.find_by_name(action_name)
@@ -30,10 +23,8 @@ class CliCommandRouter:
         # Note: _route_to_current_behavior_and_action not reached from here
 
     def _route_to_specific_action(self, behavior: 'Behavior', action: 'Action', cli_args: List[str]):
-        """Route to a specific action, parsing CLI args into typed context."""
         behavior.actions.navigate_to(action.action_name)
         
-        # Build typed context from CLI args
         context = self._context_builder.build_context(action, cli_args)
         
         result_data = action.execute(context)

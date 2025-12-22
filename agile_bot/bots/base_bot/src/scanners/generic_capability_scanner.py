@@ -78,8 +78,8 @@ class GenericCapabilityScanner(StoryScanner):
                         location=location,
                         severity='error'
                     ).to_dict()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error in scanner: {e}")
         
         return None
     
@@ -111,13 +111,12 @@ class GenericCapabilityScanner(StoryScanner):
                         location=location,
                         severity='error'
                     ).to_dict()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error in scanner: {e}")
         
         return None
     
     def _check_generic_technical_verbs(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check for generic technical verbs that don't describe outcomes (e.g., 'Invokes Payment API' -> should be 'Processes Payment')"""
         generic_technical_verbs = ['invokes', 'invoke', 'calls', 'call', 'executes', 'execute', 'triggers', 'trigger']
         technical_nouns = ['api', 'endpoint', 'service', 'method', 'function', 'handler', 'route', 'url']
         
@@ -127,7 +126,6 @@ class GenericCapabilityScanner(StoryScanner):
         if not words:
             return None
         
-        # Check if first word is a generic technical verb
         first_word = words[0]
         if first_word in generic_technical_verbs:
             # Check if it's followed by technical nouns (API, endpoint, etc.) without describing outcome
@@ -145,7 +143,6 @@ class GenericCapabilityScanner(StoryScanner):
                     severity='error'
                 ).to_dict()
         
-        # Check with spaCy for lemmatized forms
         if SPACY_AVAILABLE and nlp is not None:
             try:
                 doc = nlp(name)
@@ -163,8 +160,8 @@ class GenericCapabilityScanner(StoryScanner):
                             location=location,
                             severity='error'
                         ).to_dict()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error in scanner: {e}")
         
         return None
 

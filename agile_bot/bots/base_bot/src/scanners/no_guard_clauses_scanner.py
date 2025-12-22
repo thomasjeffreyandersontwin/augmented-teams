@@ -12,20 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class NoGuardClausesScanner(TestScanner):
-    """CRITICAL: Detects guard clauses in test code.
-    
-    Guard clauses are FORBIDDEN in tests. Tests must assume the code we write
-    works correctly. If setup is wrong, tests MUST fail - guard clauses hide
-    problems and reduce test reliability. We control test setup, so we assume
-    positive outcomes. If different behavior is needed, write a different test.
-    
-    Detects:
-    - File existence checks (if file.exists())
-    - Type checks (if isinstance())
-    - Attribute checks (if hasattr())
-    - Variable truthiness checks (if variable:)
-    - Any defensive conditionals in test functions
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -42,11 +28,9 @@ class NoGuardClausesScanner(TestScanner):
         return violations
     
     def _check_guard_clause_patterns(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for guard clause patterns using regex."""
         violations = []
         
         guard_patterns = [
-            # File existence checks
             (r'if\s+(not\s+)?\w+\.exists\(\):', 'File existence check - test should fail if file missing'),
             # Type checks (isinstance)
             (r'if\s+(not\s+)?isinstance\([^)]+\):', 'Type check guard clause - test should fail if wrong type'),
@@ -79,14 +63,12 @@ class NoGuardClausesScanner(TestScanner):
             if stripped.startswith('"""') or stripped.startswith("'''") or stripped.startswith('#'):
                 continue
             
-            # Check each pattern
             for pattern, message in guard_patterns:
                 if re.search(pattern, line):
                     # Exclude legitimate assertions (assert isinstance, assert hasattr)
                     if 'assert' in line.lower():
                         continue
                     
-                    # Exclude fixture definitions
                     if '@pytest.fixture' in '\n'.join(lines[max(0, line_num-3):line_num]):
                         continue
                     
@@ -103,7 +85,6 @@ class NoGuardClausesScanner(TestScanner):
         return violations
     
     def _check_ast_guard_clauses(self, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for guard clauses using AST parsing."""
         violations = []
         
         try:
@@ -120,12 +101,10 @@ class NoGuardClausesScanner(TestScanner):
         return violations
     
     def _check_function_guard_clauses(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check a test function for guard clause patterns."""
         violations = []
         
         for node in ast.walk(func_node):
             if isinstance(node, ast.If):
-                # Check if this is a guard clause pattern
                 guard_patterns = [
                     self._is_file_exists_check,
                     self._is_type_check,
@@ -148,7 +127,6 @@ class NoGuardClausesScanner(TestScanner):
         return violations
     
     def _is_file_exists_check(self, if_node: ast.If) -> bool:
-        """Check if if statement is checking file.exists()."""
         if isinstance(if_node.test, ast.Call):
             if isinstance(if_node.test.func, ast.Attribute):
                 if if_node.test.func.attr == 'exists':
@@ -156,7 +134,6 @@ class NoGuardClausesScanner(TestScanner):
         return False
     
     def _is_type_check(self, if_node: ast.If) -> bool:
-        """Check if if statement is checking isinstance()."""
         if isinstance(if_node.test, ast.Call):
             if isinstance(if_node.test.func, ast.Name):
                 if if_node.test.func.id == 'isinstance':
@@ -164,7 +141,6 @@ class NoGuardClausesScanner(TestScanner):
         return False
     
     def _is_hasattr_check(self, if_node: ast.If) -> bool:
-        """Check if if statement is checking hasattr()."""
         if isinstance(if_node.test, ast.Call):
             if isinstance(if_node.test.func, ast.Name):
                 if if_node.test.func.id == 'hasattr':
@@ -172,7 +148,6 @@ class NoGuardClausesScanner(TestScanner):
         return False
     
     def _is_variable_truthiness_check(self, if_node: ast.If) -> bool:
-        """Check if if statement is checking variable truthiness (simple variable check)."""
         # Simple variable checks like "if variable:" or "if not variable:"
         if isinstance(if_node.test, ast.Name):
             return True

@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class TechnicalAbstractionScanner(StoryScanner):
-    """Validates that domain concepts stay at domain level, avoiding unnecessary technical abstractions."""
     
     TECHNICAL_ABSTRACTION_PATTERNS = [
         r'\bsaver\b',
@@ -26,7 +25,6 @@ class TechnicalAbstractionScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check node name for technical abstraction patterns
         node_name_lower = node.name.lower()
         for pattern in [r'\bsaver\b', r'\bloader\b', r'\bstorage\b']:
             if re.search(pattern, node_name_lower):
@@ -41,7 +39,6 @@ class TechnicalAbstractionScanner(StoryScanner):
                 )
                 break
         
-        # Check responsibilities for technical abstraction patterns
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             resp_lower = responsibility_name.lower()

@@ -12,11 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class BusinessReadableTestNamesScanner(TestScanner):
-    """Validates test names read like plain English business language.
-    
-    Use domain language stakeholders understand, not technical jargon.
-    Test names should read naturally when spoken aloud.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -26,26 +21,27 @@ class BusinessReadableTestNamesScanner(TestScanner):
             return violations
         
         content, lines, tree = parsed
-        
-        # Extract domain language from story graph
         domain_language = self._extract_domain_language(knowledge_graph)
         
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith('test_'):
-                    # Check if test name is business-readable
-                    violation = self._check_business_readable(node.name, file_path, node, rule_obj, domain_language)
-                    if violation:
-                        violations.append(violation)
+            self._check_test_function_node(node, file_path, rule_obj, domain_language, violations)
         
         return violations
     
+    def _check_test_function_node(self, node: Any, file_path: Path, rule_obj: Any, domain_language: set, violations: list) -> None:
+        if not isinstance(node, ast.FunctionDef):
+            return
+        
+        if not node.name.startswith('test_'):
+            return
+        
+        violation = self._check_business_readable(node.name, file_path, node, rule_obj, domain_language)
+        if violation:
+            violations.append(violation)
+    
     def _extract_domain_language(self, knowledge_graph: Dict[str, Any]) -> set:
-        """Extract domain language terms from story graph, epics, and stories."""
         domain_terms = set()
         
-        # Add common domain terms that are legitimate in this codebase context
-        # These are domain concepts, not technical jargon
         common_domain_terms = {
             'json', 'data', 'param', 'params', 'parameter', 'parameters',
             'var', 'vars', 'variable', 'variables',
@@ -61,68 +57,65 @@ class BusinessReadableTestNamesScanner(TestScanner):
         if not knowledge_graph:
             return domain_terms
         
-        # Extract from epics
         epics = knowledge_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
-                # Epic name
-                epic_name = epic.get('name', '')
-                if epic_name:
-                    domain_terms.update(self._extract_words_from_text(epic_name))
-                
-                # Sub-epics
-                sub_epics = epic.get('sub_epics', [])
-                for sub_epic in sub_epics:
-                    if isinstance(sub_epic, dict):
-                        sub_epic_name = sub_epic.get('name', '')
-                        if sub_epic_name:
-                            domain_terms.update(self._extract_words_from_text(sub_epic_name))
-                        
-                        # Stories
-                        story_groups = sub_epic.get('story_groups', [])
-                        for story_group in story_groups:
-                            if isinstance(story_group, dict):
-                                stories = story_group.get('stories', [])
-                                for story in stories:
-                                    if isinstance(story, dict):
-                                        story_name = story.get('name', '')
-                                        if story_name:
-                                            domain_terms.update(self._extract_words_from_text(story_name))
-                                        
-                                        # Acceptance criteria
-                                        acceptance_criteria = story.get('acceptance_criteria', [])
-                                        for ac in acceptance_criteria:
-                                            if isinstance(ac, dict):
-                                                ac_text = ac.get('criterion', '')
-                                                if ac_text:
-                                                    domain_terms.update(self._extract_words_from_text(ac_text))
+                self._extract_domain_terms_from_epic(epic, domain_terms)
         
         return domain_terms
     
+    def _extract_domain_terms_from_epic(self, epic: dict, domain_terms: set) -> None:
+        epic_name = epic.get('name', '')
+        if epic_name:
+            domain_terms.update(self._extract_words_from_text(epic_name))
+        
+        sub_epics = epic.get('sub_epics', [])
+        for sub_epic in sub_epics:
+            if isinstance(sub_epic, dict):
+                self._extract_domain_terms_from_sub_epic(sub_epic, domain_terms)
+    
+    def _extract_domain_terms_from_sub_epic(self, sub_epic: dict, domain_terms: set) -> None:
+        sub_epic_name = sub_epic.get('name', '')
+        if sub_epic_name:
+            domain_terms.update(self._extract_words_from_text(sub_epic_name))
+        
+        story_groups = sub_epic.get('story_groups', [])
+        for story_group in story_groups:
+            if isinstance(story_group, dict):
+                self._extract_domain_terms_from_story_group(story_group, domain_terms)
+    
+    def _extract_domain_terms_from_story_group(self, story_group: dict, domain_terms: set) -> None:
+        stories = story_group.get('stories', [])
+        for story in stories:
+            if isinstance(story, dict):
+                self._extract_domain_terms_from_story(story, domain_terms)
+    
+    def _extract_domain_terms_from_story(self, story: dict, domain_terms: set) -> None:
+        story_name = story.get('name', '')
+        if story_name:
+            domain_terms.update(self._extract_words_from_text(story_name))
+        
+        acceptance_criteria = story.get('acceptance_criteria', [])
+        for ac in acceptance_criteria:
+            if isinstance(ac, dict):
+                ac_text = ac.get('criterion', '')
+                if ac_text:
+                    domain_terms.update(self._extract_words_from_text(ac_text))
+    
     def _extract_words_from_text(self, text: str) -> set:
-        """Extract individual words from text, converting to lowercase."""
         if not text:
             return set()
         
-        # Split on spaces, underscores, hyphens, and other separators
         words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
         return set(words)
     
     def _check_business_readable(self, test_name: str, file_path: Path, node: ast.FunctionDef, rule_obj: Any, domain_language: set) -> Optional[Dict[str, Any]]:
-        """Check if test name is business-readable (not technical jargon).
-        
-        If test name uses domain language from story graph/epics/stories, it's considered business-readable.
-        """
-        # Remove 'test_' prefix
         name_without_prefix = test_name[5:] if test_name.startswith('test_') else test_name
         
-        # Extract words from test name
         test_words = self._extract_words_from_text(name_without_prefix)
         
-        # Check if test name uses domain language
         # If ANY domain term matches, consider it business-readable and skip all technical jargon checks
         if domain_language and test_words:
-            # Check if test name contains domain language terms
             matching_domain_terms = test_words.intersection(domain_language)
             # If ANY domain term matches, skip all technical jargon checks
             # This prevents false positives for legitimate domain terms like 'param', 'method', 'data'
@@ -141,11 +134,9 @@ class BusinessReadableTestNamesScanner(TestScanner):
             'execute', 'invoke', 'function', 'obj', 'cfg'
         ]
         
-        # Check for technical jargon (excluding terms that are domain language)
         name_lower = name_without_prefix.lower()
         for term in technical_terms:
             if term in name_lower:
-                # Check if this term is actually domain language
                 if term in domain_language:
                     continue  # Skip - it's domain language
                 
@@ -161,11 +152,9 @@ class BusinessReadableTestNamesScanner(TestScanner):
                         severity='error'
                     ).to_dict()
         
-        # Check for abbreviations (often technical) - but skip if domain language
         # Only flag truly technical abbreviations, not domain terms
         technical_abbrevs = r'\b(init|cfg|obj|req|resp|api|http|xml)\b'
         if re.search(technical_abbrevs, name_lower):
-            # Check if any abbreviations are domain language
             abbrev_matches = re.findall(technical_abbrevs, name_lower)
             is_domain_abbrev = any(abbrev in domain_language for abbrev in abbrev_matches)
             
@@ -179,7 +168,6 @@ class BusinessReadableTestNamesScanner(TestScanner):
                     severity='warning'
                 ).to_dict()
         
-        # Check if name is too short/vague
         words = name_without_prefix.split('_')
         if len(words) < 3:
             line_number = node.lineno if hasattr(node, 'lineno') else None
@@ -194,20 +182,10 @@ class BusinessReadableTestNamesScanner(TestScanner):
         return None
     
     def _is_clearly_technical_jargon(self, term: str, test_name_lower: str, domain_language: set) -> bool:
-        """Check if a term is clearly technical jargon (not domain language).
-        
-        Returns True only if the term appears in a clearly technical context.
-        For example:
-        - "parse_json" -> True (technical)
-        - "agent_json" -> False (domain term)
-        - "serialize_data" -> True (technical)
-        - "planning_data" -> False (domain term)
-        """
         # If term is in domain language, it's not technical jargon
         if term in domain_language:
             return False
         
-        # Check if term appears as part of a compound word that's domain-specific
         # Look for patterns like: <domain_term>_<term> or <term>_<domain_term>
         # Examples: "agent_json", "workflow_json", "planning_data", "story_graph_json"
         domain_prefixes = ['agent', 'bot', 'workflow', 'story', 'epic', 'scenario', 
@@ -215,14 +193,12 @@ class BusinessReadableTestNamesScanner(TestScanner):
                           'config', 'state', 'tool', 'server', 'catalog']
         
         for prefix in domain_prefixes:
-            # Check if term follows a domain prefix (e.g., "agent_json")
             if f'{prefix}_{term}' in test_name_lower:
                 return False
             # Check if term precedes a domain term (e.g., "json_file" - but this is less common)
             if f'{term}_{prefix}' in test_name_lower and prefix in domain_language:
                 return False
         
-        # Check for common domain compound patterns
         domain_compound_patterns = [
             r'agent[_\s]json', r'workflow[_\s]json', r'story[_\s]graph[_\s]json',
             r'planning[_\s]data', r'config[_\s]data', r'validation[_\s]data',

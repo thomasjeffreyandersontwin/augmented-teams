@@ -9,10 +9,6 @@ import re
 
 
 class StoryFilenameScanner(StoryScanner):
-    """Validates story filenames match story names exactly (no actor prefix).
-    
-    Actor information belongs in story description or acceptance criteria, NOT in filename.
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -26,7 +22,6 @@ class StoryFilenameScanner(StoryScanner):
             # For now, we can validate story names don't contain actor prefixes
             # that shouldn't be in filenames
             
-            # Check for common actor prefixes that shouldn't be in story names
             violation = self._check_actor_in_story_name(story_name, node, rule_obj)
             if violation:
                 violations.append(violation)
@@ -34,7 +29,6 @@ class StoryFilenameScanner(StoryScanner):
         return violations
     
     def _check_actor_in_story_name(self, story_name: str, node: StoryNode, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if story name contains actor prefix that shouldn't be in filename."""
         # Common actor prefixes that shouldn't be in story names/filenames
         actor_prefixes = [
             'AI Chat', 'Router', 'Bot Behavior', 'GatherContextAction',

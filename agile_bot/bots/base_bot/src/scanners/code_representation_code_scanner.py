@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class CodeRepresentationCodeScanner(CodeScanner):
-    """Validates that code represents domain concepts directly."""
     
     # This scanner is more of a placeholder - actual validation would require
     # comparing code against domain model, which is complex

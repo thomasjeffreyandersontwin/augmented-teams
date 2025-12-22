@@ -29,7 +29,6 @@ class ActiveLanguageScanner(StoryScanner):
         r'^(User|GM|Admin|Administrator|Customer|Developer|Manager|Operator|Owner)\s+',
         # System actors
         r'^(System|Server|Service|API|Database|Module|Component|Handler|Controller|Processor|Validator|Manager)\s+',
-        # Generic role patterns
         r'^(The\s+)?(user|admin|system|gm)\s+',
     ]
     
@@ -42,7 +41,6 @@ class ActiveLanguageScanner(StoryScanner):
         
         node_type = self._get_node_type(node)
         
-        # Check for actor in name (most important check per rule documentation)
         violation = self._check_actor_in_name(name, node, node_type, rule_obj)
         if violation:
             violations.append(violation)
@@ -58,7 +56,6 @@ class ActiveLanguageScanner(StoryScanner):
         return violations
     
     def _check_actor_in_name(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if story name starts with an actor - actors should be in 'users' field, not in name."""
         for pattern in self.ACTOR_PATTERNS:
             match = re.match(pattern, name, re.IGNORECASE)
             if match:
@@ -86,17 +83,9 @@ class ActiveLanguageScanner(StoryScanner):
         return 'unknown'
     
     def _check_passive_voice(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if story name uses passive voice."""
-        # Try spacy-based detection first
-        violation = self._check_passive_voice_spacy(name, node, node_type, rule_obj)
-        if violation:
-            return violation
-        
-        # Fallback to regex patterns
-        return self._check_passive_voice_regex(name, node, node_type, rule_obj)
+        return self._check_passive_voice_spacy(name, node, node_type, rule_obj)
     
     def _check_passive_voice_spacy(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check passive voice using spacy NLP."""
         if not SPACY_AVAILABLE or nlp is None:
             return None
         
@@ -120,7 +109,6 @@ class ActiveLanguageScanner(StoryScanner):
         return None
     
     def _check_passive_voice_regex(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check passive voice using regex patterns."""
         passive_voice_patterns = [
             r'\b(is|are|was|were|be|been|being)\s+\w+ed\b',
             r'\b(is|are|was|were|be|been|being)\s+\w+en\b',
@@ -133,7 +121,6 @@ class ActiveLanguageScanner(StoryScanner):
         return None
     
     def _create_passive_voice_violation(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Dict[str, Any]:
-        """Create a violation for passive voice usage."""
         location = node.map_location()
         return Violation(
             rule=rule_obj,
@@ -143,17 +130,9 @@ class ActiveLanguageScanner(StoryScanner):
         ).to_dict()
     
     def _check_capability_nouns(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if story name uses capability nouns."""
-        # Try spacy-based detection first
-        violation = self._check_capability_nouns_spacy(name, node, node_type, rule_obj)
-        if violation:
-            return violation
-        
-        # Fallback to regex patterns
-        return self._check_capability_nouns_regex(name, node, node_type, rule_obj)
+        return self._check_capability_nouns_spacy(name, node, node_type, rule_obj)
     
     def _check_capability_nouns_spacy(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check capability nouns using spacy NLP."""
         if not SPACY_AVAILABLE or nlp is None:
             return None
         
@@ -166,12 +145,10 @@ class ActiveLanguageScanner(StoryScanner):
             for idx, token in enumerate(tokens):
                 is_last = (idx == token_count - 1)
                 
-                # Check for gerund as last word
                 violation = self._check_gerund_capability_noun(token, is_last, has_three_or_more_words, name, node, node_type, rule_obj)
                 if violation:
                     return violation
                 
-                # Check for abstract noun suffix
                 violation = self._check_abstract_noun_suffix(token, is_last, has_three_or_more_words, name, node, node_type, rule_obj)
                 if violation:
                     return violation
@@ -182,7 +159,6 @@ class ActiveLanguageScanner(StoryScanner):
     
     def _check_gerund_capability_noun(self, token: Any, is_last: bool, has_three_or_more_words: bool, 
                                       name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if token is a gerund capability noun."""
         if token.tag_ != 'VBG' or token.pos_ != 'NOUN' or not is_last:
             return None
         
@@ -198,7 +174,6 @@ class ActiveLanguageScanner(StoryScanner):
     
     def _check_abstract_noun_suffix(self, token: Any, is_last: bool, has_three_or_more_words: bool,
                                     name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if token has abstract noun suffix."""
         if token.tag_ not in ['NN', 'NNS'] or not is_last:
             return None
         
@@ -216,7 +191,6 @@ class ActiveLanguageScanner(StoryScanner):
         return self._create_capability_noun_violation(name, node, node_type, rule_obj, "abstract noun")
     
     def _check_capability_nouns_regex(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check capability nouns using regex patterns."""
         capability_noun_patterns = [
             r'\b[A-Z]\w+(ing|ment|ance|ence)\b$',
             r'.*\s+[A-Z]\w+(ing|ment|ance|ence)\b$',
@@ -239,7 +213,6 @@ class ActiveLanguageScanner(StoryScanner):
         return None
     
     def _create_capability_noun_violation(self, name: str, node: StoryNode, node_type: str, rule_obj: Any, noun_type: str) -> Dict[str, Any]:
-        """Create a violation for capability noun usage."""
         location = node.map_location()
         message = f'{node_type.capitalize()} name "{name}" uses capability noun'
         if noun_type == "gerund":

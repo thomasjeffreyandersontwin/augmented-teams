@@ -8,10 +8,6 @@ import re
 
 
 class GivenStateNotActionsScanner(StoryScanner):
-    """Validates Given statements describe STATE/CONFIGURATION, never actions.
-    
-    The first action in a scenario is ALWAYS a When, never a Given.
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -23,7 +19,6 @@ class GivenStateNotActionsScanner(StoryScanner):
             for scenario_idx, scenario in enumerate(scenarios):
                 scenario_steps = self._get_scenario_steps(scenario)
                 
-                # Check each Given step for action verbs
                 for step_idx, step in enumerate(scenario_steps):
                     if step.startswith('Given') or step.startswith('And'):
                         violation = self._check_given_is_action(step, node, scenario_idx, step_idx, rule_obj)
@@ -33,7 +28,6 @@ class GivenStateNotActionsScanner(StoryScanner):
         return violations
     
     def _get_scenario_steps(self, scenario: Dict[str, Any]) -> List[str]:
-        """Extract scenario steps from scenario dict."""
         steps = []
         
         if isinstance(scenario, dict):
@@ -67,7 +61,6 @@ class GivenStateNotActionsScanner(StoryScanner):
         return steps
     
     def _check_given_is_action(self, step: str, node: StoryNode, scenario_idx: int, step_idx: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if Given step contains action verbs."""
         # Common action verbs that should be in When, not Given
         action_verbs = [
             'invokes', 'invoked', 'calls', 'called', 'executes', 'executed',
@@ -82,9 +75,7 @@ class GivenStateNotActionsScanner(StoryScanner):
         step_lower = step.lower()
         
         for verb in action_verbs:
-            # Check if verb appears in Given step
             if verb in step_lower:
-                # Check if it's part of a phrase that indicates an action
                 # e.g., "Given Tool invokes" is wrong, "Given tool has invoked" might be wrong too
                 if re.search(rf'\b{verb}\b', step_lower):
                     location = f"{node.map_location()}.scenarios[{scenario_idx}].steps[{step_idx}]"

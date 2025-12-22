@@ -47,14 +47,6 @@ from agile_bot.bots.base_bot.src.cli.base_bot_cli import BaseBotCli
 
 
 def main():
-    """Main CLI entry point.
-
-    Environment variables are bootstrapped before import:
-    - BOT_DIRECTORY: Self-detected from script location
-    - WORKING_AREA: Read from bot_config.json (or pre-set by user)
-    
-    All subsequent code reads from these environment variables.
-    """
     bot_directory = get_bot_directory()
     workspace_directory = get_workspace_directory()
 

@@ -4,7 +4,6 @@ from typing import Dict, Any, List
 from agile_bot.bots.base_bot.src.actions.validate.validation_stats import ValidationStats
 logger = logging.getLogger(__name__)
 
-# Status threshold constants
 MAX_VIOLATION_DENSITY_FOR_GOOD_STATUS = 200
 MAX_RULES_WITH_ERRORS_FOR_GOOD_STATUS = 5
 
@@ -49,7 +48,6 @@ class ValidationScannerStatusBuilder:
             result['no_scanner'].append(rule_file)
 
     def _build_failed_rule_info(self, rule_file: str, scanner_status: Dict) -> Dict:
-        """Build information dictionary for a failed rule."""
         return {'rule': rule_file, 'scanner_path': scanner_status.get('scanner_path', 'unknown'), 'error': scanner_status.get('error', 'Unknown error')}
 
     def _build_executed_rule_info(self, rule_dict: Dict, rule_file: str, scanner_status: Dict) -> Dict:

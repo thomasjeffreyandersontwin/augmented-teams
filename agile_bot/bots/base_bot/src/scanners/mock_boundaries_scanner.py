@@ -9,11 +9,6 @@ from .violation import Violation
 
 
 class MockBoundariesScanner(TestScanner):
-    """Validates mocks are only for external boundaries.
-    
-    Detect mocking of internal code.
-    Check mocks are only for external boundaries.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -24,17 +19,14 @@ class MockBoundariesScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Check for mock usage
         violations.extend(self._check_mock_usage(content, file_path, rule_obj))
         
         return violations
     
     def _check_mock_usage(self, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for inappropriate mock usage."""
         violations = []
         lines = content.split('\n')
         
-        # Common mock patterns
         mock_patterns = [
             r'@patch\s*\(',  # Python unittest.mock.patch
             r'@mock\.',  # Python mock decorator
@@ -50,11 +42,9 @@ class MockBoundariesScanner(TestScanner):
         ]
         
         for line_num, line in enumerate(lines, 1):
-            # Check if line has mock
             has_mock = any(re.search(pattern, line, re.IGNORECASE) for pattern in mock_patterns)
             
             if has_mock:
-                # Check if mocking internal code
                 is_internal = any(re.search(pattern, line, re.IGNORECASE) for pattern in internal_patterns)
                 
                 if is_internal:

@@ -7,7 +7,6 @@ from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 
 
 def make_json_serializable(obj: Any) -> Any:
-    """Convert objects to JSON-serializable format."""
     from agile_bot.bots.base_bot.src.actions.instructions import Instructions
     
     if isinstance(obj, Instructions):

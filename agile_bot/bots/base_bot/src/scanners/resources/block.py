@@ -7,17 +7,8 @@ if TYPE_CHECKING:
     from .violation import Violation
 
 class Block:
-    """Represents a code block that can be analyzed."""
     
     def __init__(self, file: 'File', content: str, start_line: int, end_line: int):
-        """Initialize block.
-        
-        Args:
-            file: File this block belongs to
-            content: Block content
-            start_line: Starting line number
-            end_line: Ending line number
-        """
         self._file = file
         self._content = content
         self._start_line = start_line
@@ -33,124 +24,69 @@ class Block:
     
     @property
     def file(self) -> 'File':
-        """Get file this block belongs to."""
         return self._file
     
     @property
     def content(self) -> str:
-        """Get block content."""
         return self._content
     
     @property
     def subblocks(self) -> List['Block']:
-        """Get subblocks."""
         return self._subblocks
     
     @property
     def violations(self) -> List['Violation']:
-        """Get violations in this block."""
         return self._violations
     
     @property
     def start_line(self) -> int:
-        """Get starting line number."""
         return self._start_line
     
     @property
     def end_line(self) -> int:
-        """Get ending line number."""
         return self._end_line
     
     def add_subblock(self, block: 'Block'):
-        """Add a subblock."""
         self._subblocks.append(block)
     
     def add_violation(self, violation: 'Violation'):
-        """Add a violation to this block."""
         self._violations.append(violation)
     
     def normalize_content(self) -> str:
-        """Normalize block content for comparison.
-        
-        Returns:
-            Normalized content
-        """
-        # Remove whitespace, normalize line endings, etc.
         normalized = self._content.strip()
         normalized = normalized.replace('\r\n', '\n')
         normalized = normalized.replace('\r', '\n')
-        # Remove extra whitespace
         lines = [line.rstrip() for line in normalized.split('\n')]
         return '\n'.join(lines)
     
     def has_similarity(self, other: 'Block', similarity_calculator) -> bool:
-        """Check if this block is similar to another.
-        
-        Args:
-            other: Other block to compare
-            similarity_calculator: SimilarityCalculator instance
-            
-        Returns:
-            True if similar, False otherwise
-        """
         if self._similarity_calculator is None:
             self._similarity_calculator = similarity_calculator
         return self._similarity_calculator.calculates_block_similarity(self, other)
     
     def analyze_structure(self, code_structure_analyzer) -> List['Violation']:
-        """Analyze code structure using CodeStructureAnalyzer.
-        
-        Args:
-            code_structure_analyzer: CodeStructureAnalyzer instance
-            
-        Returns:
-            List of violations
-        """
         if self._code_structure_analyzer is None:
             self._code_structure_analyzer = code_structure_analyzer
         return self._code_structure_analyzer.analyzes_code_structure(self)
     
     def calculate_complexity(self, complexity_metrics) -> dict:
-        """Calculate complexity using ComplexityMetrics.
-        
-        Args:
-            complexity_metrics: ComplexityMetrics instance
-            
-        Returns:
-            Dictionary with complexity metrics
-        """
         if self._complexity_metrics is None:
             self._complexity_metrics = complexity_metrics
         # This would use ComplexityMetrics to calculate various metrics
         return {}
     
     def check_class_naming(self, class_naming_checker) -> List['Violation']:
-        """Check class naming using ClassNamingChecker.
-        
-        Args:
-            class_naming_checker: ClassNamingChecker instance
-            
-        Returns:
-            List of violations
-        """
         if self._class_naming_checker is None:
             self._class_naming_checker = class_naming_checker
         return self._class_naming_checker.checks_class_name_matches_story(self) + \
                self._class_naming_checker.validates_class_naming_conventions(self)
     
     def check_method_naming(self, method_naming_checker) -> List['Violation']:
-        """Check method naming using MethodNamingChecker.
-        
-        Args:
-            method_naming_checker: MethodNamingChecker instance
-            
-        Returns:
-            List of violations
-        """
         if self._method_naming_checker is None:
             self._method_naming_checker = method_naming_checker
         return self._method_naming_checker.checks_method_name_matches_scenario(self) + \
                self._method_naming_checker.validates_method_naming_conventions(self)
+
 
 
 

@@ -7,10 +7,6 @@ from .violation import Violation
 
 
 class ScenarioSpecificGivenScanner(StoryScanner):
-    """Validates scenario steps start with scenario-specific Given.
-    
-    Scenario-specific setup goes in scenario Steps as Given steps, not in Background.
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -23,7 +19,6 @@ class ScenarioSpecificGivenScanner(StoryScanner):
             for scenario_idx, scenario in enumerate(scenarios):
                 scenario_steps = self._get_scenario_steps(scenario)
                 
-                # Check if scenario starts with Given (should have scenario-specific Given)
                 if scenario_steps:
                     first_step = scenario_steps[0]
                     if not first_step.startswith('Given'):
@@ -39,7 +34,6 @@ class ScenarioSpecificGivenScanner(StoryScanner):
         return violations
     
     def _get_scenario_steps(self, scenario: Dict[str, Any]) -> List[str]:
-        """Extract scenario steps from scenario dict."""
         steps = []
         if isinstance(scenario, dict):
             if 'steps' in scenario:

@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class DomainGroupingCodeScanner(CodeScanner):
-    """Validates that code is organized by domain area, not technical layers."""
     
     TECHNICAL_LAYER_PATTERNS = [
         r'\blayer\b',
@@ -25,7 +24,6 @@ class DomainGroupingCodeScanner(CodeScanner):
         if not file_path.exists():
             return violations
         
-        # Check file path for technical layer patterns
         file_path_str = str(file_path)
         for pattern in self.TECHNICAL_LAYER_PATTERNS:
             if re.search(pattern, file_path_str, re.IGNORECASE):
@@ -55,7 +53,6 @@ class DomainGroupingCodeScanner(CodeScanner):
         return violations
     
     def _check_class_name(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if class name uses technical layer terminology."""
         class_name_lower = class_node.name.lower()
         
         for pattern in self.TECHNICAL_LAYER_PATTERNS:

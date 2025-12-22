@@ -8,11 +8,6 @@ import re
 
 
 class AsciiOnlyScanner(TestScanner):
-    """Validates all test code uses ASCII-only characters.
-    
-    No Unicode symbols, emojis, or special characters in test code,
-    assertions, print statements, or output messages.
-    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -24,7 +19,6 @@ class AsciiOnlyScanner(TestScanner):
         content, lines, tree = parsed
         
         for line_num, line in enumerate(lines, 1):
-            # Check for Unicode characters (non-ASCII)
             violation = self._check_unicode_characters(line, file_path, line_num, rule_obj)
             if violation:
                 violations.append(violation)
@@ -32,8 +26,6 @@ class AsciiOnlyScanner(TestScanner):
         return violations
     
     def _check_unicode_characters(self, line: str, file_path: Path, line_num: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check for Unicode characters in line."""
-        # Check for non-ASCII characters
         try:
             line.encode('ascii')
         except UnicodeEncodeError:

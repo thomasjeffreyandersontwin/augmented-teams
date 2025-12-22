@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class OneConceptPerTestScanner(TestScanner):
-    """Validates tests focus on one concept per test."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -33,7 +32,6 @@ class OneConceptPerTestScanner(TestScanner):
         return violations
     
     def _check_one_concept(self, test_node: ast.FunctionDef, file_path: Path, content: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if test focuses on one concept using AST analysis."""
         violations = []
         
         # 1. Name pattern check (existing logic)
@@ -102,11 +100,9 @@ class OneConceptPerTestScanner(TestScanner):
                 severity='info'
             ).to_dict())
         
-        # Return first violation
         return violations[0] if violations else None
     
     def _detect_multiple_concepts(self, test_node: ast.FunctionDef, content: str) -> List[str]:
-        """Detect multiple concepts in test implementation."""
         concepts = []
         
         # Detect different types of operations
@@ -128,7 +124,6 @@ class OneConceptPerTestScanner(TestScanner):
             elif isinstance(stmt, ast.Assert):
                 has_validation = True
         
-        # Count distinct concerns
         if has_setup:
             concepts.append('Setup')
         if has_action:
@@ -144,7 +139,6 @@ class OneConceptPerTestScanner(TestScanner):
         return concepts
     
     def _get_call_name(self, call_node: ast.Call) -> Optional[str]:
-        """Extract function name from call node."""
         if isinstance(call_node.func, ast.Name):
             return call_node.func.id
         elif isinstance(call_node.func, ast.Attribute):
@@ -152,7 +146,6 @@ class OneConceptPerTestScanner(TestScanner):
         return None
     
     def _extract_scenario(self, test_node: ast.FunctionDef) -> Optional[str]:
-        """Extract scenario from docstring."""
         if not test_node.body:
             return None
         
@@ -166,7 +159,6 @@ class OneConceptPerTestScanner(TestScanner):
         return None
     
     def _has_multiple_scenarios(self, scenario: str) -> bool:
-        """Check if scenario text contains multiple scenarios."""
         # Look for multiple "SCENARIO:" markers or multiple "GIVEN:" sections
         scenario_count = scenario.lower().count('scenario:')
         given_count = scenario.lower().count('given:')
@@ -174,7 +166,6 @@ class OneConceptPerTestScanner(TestScanner):
         return scenario_count > 1 or given_count > 3
     
     def _group_assertions(self, test_node: ast.FunctionDef) -> List[List[ast.Assert]]:
-        """Group assertions by proximity and similarity."""
         assertions = []
         for node in ast.walk(test_node):
             if isinstance(node, ast.Assert):

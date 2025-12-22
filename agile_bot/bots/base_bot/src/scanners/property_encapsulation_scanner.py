@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class PropertyEncapsulationScanner(StoryScanner):
-    """Validates that domain concepts encapsulate state and behavior through properties."""
     
     EXPOSED_STATE_PATTERNS = [
         r'\blist\b',
@@ -35,12 +34,10 @@ class PropertyEncapsulationScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check responsibilities for exposed state patterns
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             resp_lower = responsibility_name.lower()
             
-            # Check for exposed internal structure
             for pattern in self.EXPOSED_STATE_PATTERNS:
                 if re.search(pattern, resp_lower):
                     violations.append(
@@ -54,7 +51,6 @@ class PropertyEncapsulationScanner(StoryScanner):
                     )
                     break
             
-            # Check for calculate/compute methods instead of properties
             for pattern in self.CALCULATE_PATTERNS:
                 if re.search(pattern, resp_lower):
                     violations.append(

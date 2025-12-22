@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class CompleteRefactoringScanner(CodeScanner):
-    """Detects fallback/legacy support code that should be removed."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -22,13 +21,11 @@ class CompleteRefactoringScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Check for fallback/legacy support code with explicit comments
         violations.extend(self._check_fallback_legacy_support(lines, file_path, rule_obj))
         
         return violations
     
     def _check_fallback_legacy_support(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for fallback/legacy support code with explicit comments above it."""
         violations = []
         
         # Pattern to match comments that explicitly mention fallback or legacy
@@ -40,7 +37,6 @@ class CompleteRefactoringScanner(CodeScanner):
         for line_num, line in enumerate(lines, 1):
             stripped = line.strip()
             
-            # Check if this line is a comment mentioning fallback/legacy
             if fallback_comment_pattern.match(stripped):
                 # Look ahead to find the actual code (not just more comments)
                 code_line_num = None

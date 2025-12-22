@@ -8,11 +8,6 @@ import re
 
 
 class BehavioralACScanner(StoryScanner):
-    """Validates acceptance criteria are behavioral (not technical).
-    
-    Check AC are behavioral (not technical).
-    Verify AC at story level.
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -20,13 +15,11 @@ class BehavioralACScanner(StoryScanner):
         if isinstance(node, Story):
             story_data = node.data
             
-            # Check acceptance criteria
             acceptance_criteria = story_data.get('acceptance_criteria', [])
             
             for ac_idx, ac in enumerate(acceptance_criteria):
                 ac_text = self._get_ac_text(ac)
                 
-                # Check if AC is technical (not behavioral)
                 violation = self._check_technical_ac(ac_text, node, ac_idx, rule_obj)
                 if violation:
                     violations.append(violation)
@@ -34,13 +27,11 @@ class BehavioralACScanner(StoryScanner):
         return violations
     
     def _get_ac_text(self, ac: Any) -> str:
-        """Extract AC text from AC dict or string."""
         if isinstance(ac, dict):
             return ac.get('criterion', '') or ac.get('description', '') or str(ac)
         return str(ac)
     
     def _check_technical_ac(self, ac_text: str, node: StoryNode, ac_idx: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if AC is technical (not behavioral)."""
         text_lower = ac_text.lower()
         
         # Technical indicators

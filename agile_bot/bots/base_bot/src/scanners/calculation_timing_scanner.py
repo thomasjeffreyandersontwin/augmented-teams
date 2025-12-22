@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class CalculationTimingScanner(StoryScanner):
-    """Validates that domain concepts hide calculation timing."""
     
     TIMING_EXPOSURE_PATTERNS = [
         r'^calculate\s+',
@@ -28,7 +27,6 @@ class CalculationTimingScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check responsibilities for timing exposure
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             resp_lower = responsibility_name.lower()

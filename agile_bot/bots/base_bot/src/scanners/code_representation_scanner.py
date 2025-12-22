@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class CodeRepresentationScanner(StoryScanner):
-    """Validates that domain models represent code as closely as possible."""
     
     ABSTRACT_PATTERNS = [
         'concept',
@@ -24,7 +23,6 @@ class CodeRepresentationScanner(StoryScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check node name for abstract patterns
         node_name_lower = node.name.lower()
         for pattern in self.ABSTRACT_PATTERNS:
             if pattern in node_name_lower:
@@ -39,7 +37,6 @@ class CodeRepresentationScanner(StoryScanner):
                 )
                 break
         
-        # Check responsibilities for abstract collaborators
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             collaborators = responsibility_data.get('collaborators', [])

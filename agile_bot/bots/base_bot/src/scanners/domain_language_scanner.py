@@ -9,7 +9,6 @@ from .violation import Violation
 
 
 class DomainLanguageScanner(StoryScanner):
-    """Validates that domain concepts use domain-specific language, not generic terms."""
     
     GENERIC_TERMS = [
         r'\bdata\b',
@@ -31,7 +30,6 @@ class DomainLanguageScanner(StoryScanner):
         if not isinstance(node, DomainConceptNode):
             return violations
         
-        # Check node name for generic terms
         node_name_lower = node.name.lower()
         for term in ['data', 'config', 'parameter', 'result']:
             if term in node_name_lower and not self._is_domain_specific(node.name):
@@ -45,13 +43,11 @@ class DomainLanguageScanner(StoryScanner):
                     ).to_dict()
                 )
         
-        # Check responsibilities for generic terms and generate/calculate patterns
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             collaborators = responsibility_data.get('collaborators', [])
             resp_lower = responsibility_name.lower()
             
-            # Check for generic terms in collaborators
             for collab in collaborators:
                 collab_lower = collab.lower()
                 for term in self.GENERIC_TERMS:
@@ -67,7 +63,6 @@ class DomainLanguageScanner(StoryScanner):
                         )
                         break
             
-            # Check for generate/calculate patterns
             for pattern in self.GENERATE_PATTERNS:
                 if re.search(pattern, resp_lower):
                     violations.append(
@@ -84,17 +79,14 @@ class DomainLanguageScanner(StoryScanner):
         return violations
     
     def _is_domain_specific(self, name: str) -> bool:
-        """Check if name contains domain-specific context."""
         # Simple heuristic: if it's just "Data" or "Config" it's generic
         # If it's "PortfolioData" it might be okay in some contexts, but ideally should be "Portfolio"
         return len(name.split()) > 1 or name.lower() not in ['data', 'config', 'parameter', 'result']
     
     def _is_generic_usage(self, responsibility: str, pattern: str) -> bool:
-        """Check if generic term is used generically (not as part of domain term)."""
         # Simple heuristic: if it's standalone or with generic context, it's generic
         matches = re.findall(pattern, responsibility.lower())
         for match in matches:
-            # Check if it's part of a domain term (e.g., "PortfolioData" vs "data")
             if match.strip() == 'data' or match.strip() == 'config':
                 return True
         return False

@@ -8,7 +8,6 @@ from .violation import Violation
 
 
 class FixturePlacementScanner(TestScanner):
-    """Validates fixtures are defined in test file (not imported from elsewhere)."""
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -19,16 +18,13 @@ class FixturePlacementScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        # Check for fixture imports (should be defined in file)
         violations.extend(self._check_fixture_imports(tree, file_path, rule_obj))
         
         return violations
     
     def _check_fixture_imports(self, tree: ast.AST, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
-        """Check for fixture imports (fixtures should be defined in file)."""
         violations = []
         
-        # Check for pytest fixture imports
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
                 if node.module and 'fixture' in node.module.lower():

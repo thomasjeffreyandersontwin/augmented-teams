@@ -13,7 +13,6 @@ from enum import Enum
 
 
 class ScopeType(Enum):
-    """Valid scope types for filtering actions."""
     ALL = 'all'
     STORY = 'story'
     EPIC = 'epic'
@@ -23,10 +22,6 @@ class ScopeType(Enum):
 
 @dataclass
 class ScopeConfig:
-    """Typed scope configuration for filtering what an action operates on.
-    
-    Replaces the untyped scope dict: {"type": "files", "value": [...], "exclude": [...]}
-    """
     type: ScopeType = ScopeType.ALL
     value: List[str] = field(default_factory=list)
     exclude: List[str] = field(default_factory=list)
@@ -34,7 +29,6 @@ class ScopeConfig:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ScopeConfig':
-        """Create ScopeConfig from dictionary (for JSON parsing)."""
         if not data:
             return cls()
         
@@ -52,7 +46,6 @@ class ScopeConfig:
         )
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization."""
         return {
             'type': self.type.value,
             'value': self.value,
@@ -63,49 +56,28 @@ class ScopeConfig:
 
 @dataclass
 class ActionContext:
-    """Base action context - empty by default.
-    
-    Actions that need no parameters use this directly.
-    Other actions inherit from this and add their specific fields.
-    """
     pass
 
 
 @dataclass
 class ScopeActionContext(ActionContext):
-    """Context for actions that filter by scope (build, render).
-    
-    Provides the scope field for filtering stories, epics, increments, or files.
-    """
     scope: Optional[ScopeConfig] = None
 
 
 @dataclass
 class ClarifyActionContext(ActionContext):
-    """Context for clarify action.
-    
-    Contains answers to key questions and evidence provided during clarification.
-    """
     key_questions_answered: Optional[Dict[str, Any]] = None
     evidence_provided: Optional[Dict[str, Any]] = None
 
 
 @dataclass
 class StrategyActionContext(ActionContext):
-    """Context for strategy action.
-    
-    Contains decisions made and assumptions recorded during strategy planning.
-    """
     decisions_made: Optional[Dict[str, Any]] = None
     assumptions_made: Optional[List[str]] = None
 
 
 @dataclass
 class ValidateActionContext(ScopeActionContext):
-    """Context for validate action.
-    
-    Inherits scope from ScopeActionContext and adds validation-specific parameters.
-    """
     background: Optional[bool] = None
     skip_cross_file: bool = False
     all_files: bool = False
@@ -113,11 +85,6 @@ class ValidateActionContext(ScopeActionContext):
 
 @dataclass
 class RulesActionContext(ActionContext):
-    """Context for rules action - getting rules digest with optional message.
-    
-    The behavior is already available via self.behavior in the action.
-    The message is the user's actual request that should be processed with rules context.
-    """
     message: Optional[str] = None
 
 
