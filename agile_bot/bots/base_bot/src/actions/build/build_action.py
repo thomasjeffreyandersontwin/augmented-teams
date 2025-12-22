@@ -49,6 +49,20 @@ class BuildKnowledgeAction(Action):
         instructions.set('scope', build_scope.scope)
         story_names = build_scope.get_story_names(self.knowledge_graph_spec.knowledge_graph.content)
         instructions.set('scope_story_names', list(story_names) if story_names else [])
+        
+        # Add knowledge_graph_template and knowledge_graph_config for test compatibility
+        if self.knowledge_graph_template:
+            instructions.set('knowledge_graph_template', {
+                'template_path': str(self.knowledge_graph_template.template_path) if self.knowledge_graph_template.template_path else None,
+                'exists': self.knowledge_graph_template.exists
+            })
+        if self.knowledge_graph_spec.config_data:
+            instructions.set('knowledge_graph_config', {
+                'output': self.knowledge_graph_spec.output_filename,
+                'path': self.knowledge_graph_spec.output_path,
+                'template': self.knowledge_graph_spec.template_filename
+            })
+        
         self._add_update_instructions(instructions)
         self._replace_schema_placeholders(instructions)
         self.inject_rules(instructions)

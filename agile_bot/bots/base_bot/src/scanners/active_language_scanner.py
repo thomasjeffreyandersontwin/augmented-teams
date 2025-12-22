@@ -1,24 +1,11 @@
 from typing import List, Dict, Any, Optional
 import logging
+import re
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from agile_bot.bots.base_bot.src.scanners.violation import Violation
 
 logger = logging.getLogger(__name__)
-
-try:
-    import spacy
-    SPACY_AVAILABLE = True
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        nlp = None
-        SPACY_AVAILABLE = False
-except ImportError:
-    SPACY_AVAILABLE = False
-    nlp = None
-
-import re
 
 
 class ActiveLanguageScanner(StoryScanner):
@@ -83,32 +70,6 @@ class ActiveLanguageScanner(StoryScanner):
         return 'unknown'
     
     def _check_passive_voice(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        return self._check_passive_voice_spacy(name, node, node_type, rule_obj)
-    
-    def _check_passive_voice_spacy(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        if not SPACY_AVAILABLE or nlp is None:
-            return None
-        
-        try:
-            doc = nlp(name)
-            tokens = [token for token in doc if not token.is_punct]
-            
-            for i, token in enumerate(tokens):
-                if token.lemma_.lower() not in ['be', 'is', 'are', 'was', 'were', 'been', 'being']:
-                    continue
-                
-                if i + 1 >= len(tokens):
-                    continue
-                
-                next_token = tokens[i + 1]
-                if next_token.tag_ in ['VBN', 'VBD']:
-                    return self._create_passive_voice_violation(name, node, node_type, rule_obj)
-        except Exception as e:
-            logger.debug(f'Spacy NLP failed for passive voice check on "{name}": {e}, falling back to regex')
-        
-        return None
-    
-    def _check_passive_voice_regex(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
         passive_voice_patterns = [
             r'\b(is|are|was|were|be|been|being)\s+\w+ed\b',
             r'\b(is|are|was|were|be|been|being)\s+\w+en\b',
@@ -130,67 +91,6 @@ class ActiveLanguageScanner(StoryScanner):
         ).to_dict()
     
     def _check_capability_nouns(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        return self._check_capability_nouns_spacy(name, node, node_type, rule_obj)
-    
-    def _check_capability_nouns_spacy(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        if not SPACY_AVAILABLE or nlp is None:
-            return None
-        
-        try:
-            doc = nlp(name)
-            tokens = [token for token in doc if not token.is_punct]
-            token_count = len(tokens)
-            has_three_or_more_words = token_count >= 3
-            
-            for idx, token in enumerate(tokens):
-                is_last = (idx == token_count - 1)
-                
-                violation = self._check_gerund_capability_noun(token, is_last, has_three_or_more_words, name, node, node_type, rule_obj)
-                if violation:
-                    return violation
-                
-                violation = self._check_abstract_noun_suffix(token, is_last, has_three_or_more_words, name, node, node_type, rule_obj)
-                if violation:
-                    return violation
-        except Exception as e:
-            logger.debug(f'Spacy NLP failed for capability noun check on "{name}": {e}, falling back to regex')
-        
-        return None
-    
-    def _check_gerund_capability_noun(self, token: Any, is_last: bool, has_three_or_more_words: bool, 
-                                      name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        if token.tag_ != 'VBG' or token.pos_ != 'NOUN' or not is_last:
-            return None
-        
-        # Allow gerund as last word when name has 3 or more words
-        if has_three_or_more_words:
-            return None
-        
-        # Skip if name contains excluded terms
-        if any(exclude.lower() in name.lower() for exclude in ["User Story", "Epic", "Feature"]):
-            return None
-        
-        return self._create_capability_noun_violation(name, node, node_type, rule_obj, "gerund")
-    
-    def _check_abstract_noun_suffix(self, token: Any, is_last: bool, has_three_or_more_words: bool,
-                                    name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        if token.tag_ not in ['NN', 'NNS'] or not is_last:
-            return None
-        
-        if not any(token.text.endswith(suffix) for suffix in ['ment', 'ance', 'ence']):
-            return None
-        
-        # Allow abstract-noun suffix as last word when name has 3 or more words
-        if has_three_or_more_words:
-            return None
-        
-        # Skip if name contains excluded terms
-        if any(exclude.lower() in name.lower() for exclude in ["User Story", "Epic", "Feature"]):
-            return None
-        
-        return self._create_capability_noun_violation(name, node, node_type, rule_obj, "abstract noun")
-    
-    def _check_capability_nouns_regex(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
         capability_noun_patterns = [
             r'\b[A-Z]\w+(ing|ment|ance|ence)\b$',
             r'.*\s+[A-Z]\w+(ing|ment|ance|ence)\b$',

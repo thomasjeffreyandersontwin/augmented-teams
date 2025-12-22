@@ -346,9 +346,9 @@ agile_bot/bots/story_bot/
 
 **Key Principle:** BaseBot provides framework, StoryBot provides concrete implementations.
 
-### Step 1: BaseBotStateAdapter (Base Framework - Written Once)
+### Step 1: ~~BaseBotStateAdapter~~ REMOVED - Build State Directly
 
-Minimal base adapter that provides generic state loading. Written once in `base_bot/src/orchestration/state_adapter.py`.
+**NOTE: StateAdapter was removed as unnecessary abstraction. Initial BotLangState is built directly in BotLangGraphRunner.**
 
 ```python
 # base_bot/src/orchestration/state_adapter.py
@@ -406,9 +406,9 @@ class BaseBotStateAdapter:
         }
 ```
 
-### Step 1b: StoryBotStateAdapter (Bot-Specific - Generated)
+### ~~Step 1b: StoryBotStateAdapter~~ REMOVED
 
-Bot-specific adapter that extends BaseBotStateAdapter with bot-specific state needs. Generated per bot.
+**NOTE: Bot-specific state adapters removed. BotLangGraphRunner builds initial BotLangState directly.**
 
 ```python
 # story_bot/orchestration/state/story_bot_state_adapter.py
@@ -701,24 +701,29 @@ Route CLI to LangGraphRunner.
 ```python
 # Modification to cli_executor.py or base_bot_cli.py
 
-def run_with_langgraph(workflow_name: str, params: dict):
+def run_with_langgraph(botlangflow_name: str, params: dict):
     """Execute via LangGraph orchestration."""
-    from agile_bot.bots.story_bot.orchestration.state.story_bot_state_adapter import StoryBotStateAdapter
-    from agile_bot.bots.base_bot.src.orchestration.runner import LangGraphRunner
+    from agile_bot.bots.base_bot.src.orchestration.runner import BotLangGraphRunner
     
-    # Load workflow definition from Python file
-    # e.g., workflow_name="tdd_workflow" → loads story_bot/orchestration/graphs/tdd_workflow.py
-    workflow_module = importlib.import_module(f"agile_bot.bots.story_bot.orchestration.graphs.{workflow_name}")
-    graph = workflow_module.build_workflow(bot)  # Each workflow file exports build_workflow()
+    # Load BotLangGraphFlow definition from Python file
+    # e.g., botlangflow_name="tdd_flow" → loads story_bot/orchestration/graphs/tdd_flow.py
+    workflow_module = importlib.import_module(f"agile_bot.bots.story_bot.orchestration.graphs.{botlangflow_name}")
+    graph = workflow_module.build_flow(bot)  # Each flow file exports build_flow()
     
-    # Build initial state using bot-specific adapter
-    adapter = StoryBotStateAdapter(bot.bot_paths)
-    initial_state = adapter.load_initial_state()
-    initial_state["parameters"] = params
+    # Build initial BotLangState directly (no adapter needed)
+    initial_state = {
+        "story_graph": load_story_graph(bot.bot_paths),
+        "context": collect_context(bot.bot_paths),
+        "mode": params.get("mode", "interactive"),
+        "parameters": params,
+        "current_action": None,
+        "completed_actions": [],
+        "instructions": {}
+    }
     
     # Run
-    runner = LangGraphRunner(bot.bot_paths)
-    thread_id = f"{workflow_name}_thread"
+    runner = BotLangGraphRunner(bot.bot_paths)
+    thread_id = f"{botlangflow_name}_thread"
     
     result = runner.run(
         graph=graph,

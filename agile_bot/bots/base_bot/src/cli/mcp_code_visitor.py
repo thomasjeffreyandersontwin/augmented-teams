@@ -45,20 +45,16 @@ class MCPCodeVisitor(Visitor):
         return self.server_file_path
     
     def _load_trigger_words(self, behavior: str) -> List[str]:
-        behavior_file = self.bot_location / 'behaviors' / behavior / 'behavior.json'
-        if not behavior_file.exists():
+        bot = self.data_collector.bot
+        behavior_obj = bot.behaviors.find_by_name(behavior)
+        if behavior_obj is None:
             return []
-        try:
-            from agile_bot.bots.base_bot.src.utils import read_json_file
-            behavior_data = read_json_file(behavior_file)
-            trigger_words = behavior_data.get('trigger_words', {})
-            if isinstance(trigger_words, dict):
-                return trigger_words.get('patterns', [])
-            if isinstance(trigger_words, list):
-                return trigger_words
-            return []
-        except Exception:
-            return []
+        trigger_words = behavior_obj.trigger_words
+        if isinstance(trigger_words, dict):
+            return trigger_words.get('patterns', [])
+        if isinstance(trigger_words, list):
+            return trigger_words
+        return []
     
     def _build_behavior_tool_description(self, behavior: str, trigger_patterns: List[str]) -> str:
         description = f'{behavior} behavior for {self.bot_name}. Accepts optional action parameter and parameters dict.'

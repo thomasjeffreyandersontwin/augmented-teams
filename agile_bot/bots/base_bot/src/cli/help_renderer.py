@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any
 from pathlib import Path
 from agile_bot.bots.base_bot.src.generator.visitor import Visitor
-from agile_bot.bots.base_bot.src.cli.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
 
 class HelpRenderer(Visitor):
     

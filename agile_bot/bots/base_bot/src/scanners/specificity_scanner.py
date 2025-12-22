@@ -4,18 +4,6 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
 
-try:
-    import spacy
-    SPACY_AVAILABLE = True
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        nlp = None
-        SPACY_AVAILABLE = False
-except ImportError:
-    SPACY_AVAILABLE = False
-    nlp = None
-
 
 class SpecificityScanner(StoryScanner):
     
@@ -52,24 +40,6 @@ class SpecificityScanner(StoryScanner):
         words = name_lower.split()
         
         if len(words) < 3:
-            if SPACY_AVAILABLE and nlp is not None:
-                try:
-                    doc = nlp(name)
-                    tokens = [token for token in doc if not token.is_punct]
-                    
-                    if len(tokens) < 3:
-                        pos_tags = [token.pos_ for token in tokens]
-                        if len(pos_tags) == 2 and pos_tags[0] == 'VERB' and pos_tags[1] in ['NOUN', 'PROPN']:
-                            location = node.map_location()
-                            return Violation(
-                                rule=rule_obj,
-                                violation_message=f'{node_type.capitalize()} name "{name}" is too generic - add context (e.g., "Process Order Payment" not "Process Payment")',
-                                location=location,
-                                severity='error'
-                            ).to_dict()
-                except Exception as e:
-                    logger.debug(f"Error in scanner: {e}")
-            
             if len(words) == 2:
                 location = node.map_location()
                 return Violation(

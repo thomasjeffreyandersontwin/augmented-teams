@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 import json
-from agile_bot.bots.base_bot.src.cli.trigger_domain import BehaviorTriggers, ActionTriggers
+from agile_bot.bots.base_bot.src.ext.trigger_domain import BehaviorTriggers, ActionTriggers
 
 class BehaviorMatcher:
 

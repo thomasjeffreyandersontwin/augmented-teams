@@ -5,7 +5,7 @@ from pathlib import Path
 import ast
 import re
 from .test_scanner import TestScanner
-from .story_map import StoryNode, StoryMap
+from .story_map import StoryNode
 from .violation import Violation
 
 
@@ -53,8 +53,24 @@ class ClassBasedOrganizationScanner(TestScanner):
         return violations
     
     def _extract_story_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
-        story_map = StoryMap(knowledge_graph)
-        return [story.name for story in story_map.all_stories]
+        story_names = []
+        epics = knowledge_graph.get('epics', [])
+        for epic in epics:
+            self._extract_story_names_recursive(epic, story_names)
+        return story_names
+    
+    def _extract_story_names_recursive(self, node: Dict[str, Any], result: List[str]) -> None:
+        sub_epics = node.get('sub_epics', [])
+        for sub_epic in sub_epics:
+            self._extract_story_names_recursive(sub_epic, result)
+        
+        story_groups = node.get('story_groups', [])
+        for story_group in story_groups:
+            stories = story_group.get('stories', [])
+            for story in stories:
+                story_name = story.get('name', '')
+                if story_name:
+                    result.append(story_name)
     
     def _check_class_name_matches_story(self, class_name: str, story_names: List[str], file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         story_name_from_class = class_name[4:] if class_name.startswith('Test') else class_name

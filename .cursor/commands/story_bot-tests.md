@@ -5,43 +5,54 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action $
 
 ## Available Actions:
 
-### clarify - Gather context
-python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action clarify
-  # Optional: "--key-questions-answered={'q1': 'answer'}" "--evidence-provided={'type': 'content'}"
-
-### strategy - Decide approach
-python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action strategy
-  # Optional: "--decisions-made={'decision': 'value'}" "--assumptions-made=assumption1" "assumption2"
-
-### build - Build knowledge graph
-python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build
-  # Scope all: (default)
-  # Scope epic: --scope "{'type': 'epic', 'value': ['Epic Name']}"
-  # Scope story: --scope "{'type': 'story', 'value': ['Story Name']}"
-  # Scope increment: --scope "{'type': 'increment', 'value': [1, 2]}"
-
-### validate - Validate against rules
-python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate
-  # Scope all: (default)
-  # Scope epic: --scope "{'type': 'epic', 'value': ['Epic Name']}"
-  # Scope story: --scope "{'type': 'story', 'value': ['Story Name']}"
-  # Scope files: --scope "{'type': 'files', 'value': ['path/to/file'], 'exclude': ['*.test.js']}"
-  # Skip rules: --skiprule rule_name
-
-  **NOTE:** For code behavior, validation runs in background.
-  **AI MUST:** Poll status file every 10 seconds and report progress until complete.
-
-### render - Generate output artifacts
-python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action render
-  # Scope all: (default)
-  # Scope epic: --scope "{'type': 'epic', 'value': ['Epic Name']}"
-  # Scope story: --scope "{'type': 'story', 'value': ['Story Name']}"
-
-### rules - Inject rules into AI context
+### rules - Load behavior-specific rules into AI context for guidance on writing compliant content
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules
-  # Optional: --message "your request here"
-  # Non-workflow action: Can be invoked anytime
-  # Loads behavior rules and user message into AI context
+  # Optional: --message <str>
+  #   Optional parameter
+  #
+  # Full example:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules --message "value"
+
+### build - Build/update the knowledge graph by reading story markdown files and generating story-graph
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build
+  # Optional: --scope <dict>
+  #   Scope structure:
+  #   {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}
+  #
+  # Full example:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build --scope '{"key": "value"}'
+
+### render - Render output documents and artifacts from knowledge graph using templates and synchronizers
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action render
+  # Optional: --scope <dict>
+  #   Scope structure:
+  #   {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}
+  #
+  # Full example:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action render --scope '{"key": "value"}'
+
+### validate - Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate
+  # Optional: --scope <dict>
+  #   Scope structure:
+  #   {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>}
+  # Optional: --background <flag>
+  #   Optional parameter
+  # Optional: --skip-cross-file <flag>
+  #   Optional parameter
+  # Optional: --all-files <flag>
+  #   Optional parameter
+  #
+  # Full example:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate --scope '{"key": "value"}' --background
+
+### rules - Load behavior-specific rules into AI context for guidance on writing compliant content
+python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules
+  # Optional: --message <str>
+  #   Optional parameter
+  #
+  # Full example:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules --message "value"
 
 ## Common Patterns:
   # Work on specific epic:
@@ -51,4 +62,4 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action r
   python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate --skiprule rule_to_skip
 
   # Work on multiple stories:
-  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build --scope "{' type': 'story', 'value': ['Story 1', 'Story 2']}"
+  python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build --scope "{'type': 'story', 'value': ['Story 1', 'Story 2']}"

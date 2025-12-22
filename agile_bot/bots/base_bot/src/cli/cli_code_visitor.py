@@ -2,14 +2,15 @@ import stat
 from pathlib import Path
 from typing import Dict, Any
 from agile_bot.bots.base_bot.src.generator.visitor import Visitor
-from agile_bot.bots.base_bot.src.cli.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.bot.bot import Bot
 
 class CliCodeVisitor(Visitor):
     
-    def __init__(self, workspace_root: Path, bot_location: Path, bot_name: str):
+    def __init__(self, workspace_root: Path, bot_location: Path, bot):
+        super().__init__(bot=bot)
         self.workspace_root = workspace_root
         self.bot_location = bot_location
-        self.bot_name = bot_name
     
     def visit_header(self, bot_name: str) -> None:
         pass
@@ -32,11 +33,9 @@ class CliCodeVisitor(Visitor):
         bot_dir = self.workspace_root / self.bot_location
         src_dir = bot_dir / 'src'
         src_dir.mkdir(parents=True, exist_ok=True)
-        cli_file = src_dir / f'{self.bot_name}_cli.py'
+        cli_file = src_dir / f'{self.bot.bot_name}_cli.py'
         cli_code = self._build_python_cli_code()
-        cli_file.write_text(cli_code, encoding='utf-8')
-        cli_file.chmod(cli_file.stat().st_mode | stat.S_IEXEC)
-        return cli_file
+        return self._write_executable_file(cli_file, cli_code, executable=True)
     
     def _build_python_cli_code(self) -> str:
         docstring = self._build_cli_docstring()
@@ -53,24 +52,24 @@ class CliCodeVisitor(Visitor):
 '''
     
     def _build_cli_docstring(self) -> str:
-        bot_title = self.bot_name.title().replace('_', ' ')
+        bot_title = self.bot.bot_name.title().replace('_', ' ')
         return f'''"""
 {bot_title} CLI Entry Point
 
-Command-line interface for {self.bot_name} using BaseBotCli.
+Command-line interface for {self.bot.bot_name} using BaseBotCli.
 
 Usage:
-    {self.bot_name} [--behavior <name>] [--action <name>] [--options]
-    {self.bot_name} --help
-    {self.bot_name} --list
-    {self.bot_name} --behavior <name> --list
-    {self.bot_name} --close
+    {self.bot.bot_name} [--behavior <name>] [--action <name>] [--options]
+    {self.bot.bot_name} --help
+    {self.bot.bot_name} --list
+    {self.bot.bot_name} --behavior <name> --list
+    {self.bot.bot_name} --close
 
 Examples:
-    {self.bot_name}
-    {self.bot_name} --behavior exploration
-    {self.bot_name} --behavior exploration --action clarify
-    {self.bot_name} --behavior exploration --action clarify @increment.txt
+    {self.bot.bot_name}
+    {self.bot.bot_name} --behavior exploration
+    {self.bot.bot_name} --behavior exploration --action clarify
+    {self.bot.bot_name} --behavior exploration --action clarify @increment.txt
 """'''
     
     def _build_cli_imports(self) -> str:
@@ -118,7 +117,7 @@ from agile_bot.bots.base_bot.src.cli.base_bot_cli import BaseBotCli'''
     bot_directory = get_bot_directory()
     workspace_directory = get_workspace_directory()
 
-    bot_name = '{self.bot_name}'
+    bot_name = '{self.bot.bot_name}'
     bot_config_path = bot_directory / 'bot_config.json'
     
     cli = BaseBotCli(
@@ -134,16 +133,23 @@ if __name__ == '__main__':
 
     def _create_shell_script(self) -> Path:
         bot_dir = self.workspace_root / self.bot_location
-        script_file = bot_dir / f'{self.bot_name}_cli'
-        script_content = f'#!/bin/bash\n\n    SCRIPT_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"\n\n    export WORKING_DIR="${{WORKING_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)}}"\n\n    python3 "$SCRIPT_DIR/src/{self.bot_name}_cli.py" "$@"\n    '
-        script_file.write_text(script_content, encoding='utf-8')
-        script_file.chmod(script_file.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-        return script_file
+        script_file = bot_dir / f'{self.bot.bot_name}_cli'
+        script_content = f'#!/bin/bash\n\n    SCRIPT_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"\n\n    export WORKING_DIR="${{WORKING_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)}}"\n\n    python3 "$SCRIPT_DIR/src/{self.bot.bot_name}_cli.py" "$@"\n    '
+        return self._write_executable_file(script_file, script_content, executable=True, group_and_other=True)
+    
+    def _write_executable_file(self, file_path: Path, content: str, executable: bool = False, group_and_other: bool = False) -> Path:
+        file_path.write_text(content, encoding='utf-8')
+        if executable:
+            mode = stat.S_IEXEC
+            if group_and_other:
+                mode |= stat.S_IXGRP | stat.S_IXOTH
+            file_path.chmod(file_path.stat().st_mode | mode)
+        return file_path
 
     def _create_powershell_script(self) -> Path:
         bot_dir = self.workspace_root / self.bot_location
-        script_file = bot_dir / f'{self.bot_name}_cli.ps1'
-        script_content = f"""# {self.bot_name.title().replace('_', ' ')} CLI Wrapper (PowerShell)
+        script_file = bot_dir / f'{self.bot.bot_name}_cli.ps1'
+        script_content = f"""# {self.bot.bot_name.title().replace('_', ' ')} CLI Wrapper (PowerShell)
 
     $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 
@@ -151,7 +157,7 @@ if __name__ == '__main__':
         $env:WORKING_DIR = (Resolve-Path "$SCRIPT_DIR\\..\\..\\..").Path
     }}
 
-    python "$SCRIPT_DIR\\src\\{self.bot_name}_cli.py" $args
+    python "$SCRIPT_DIR\\src\\{self.bot.bot_name}_cli.py" $args
     """
         script_file.write_text(script_content, encoding='utf-8')
         return script_file

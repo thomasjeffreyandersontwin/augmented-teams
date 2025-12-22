@@ -1,7 +1,28 @@
 from abc import ABC, abstractmethod
-from agile_bot.bots.base_bot.src.cli.help_context import BehaviorHelpContext, ActionHelpContext
+from typing import Optional
+from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
 
 class Visitor(ABC):
+    
+    def __init__(self, bot=None):
+        self._bot = bot
+    
+    @property
+    def bot(self):
+        return self._bot
+    
+    @property
+    def bot_name(self) -> Optional[str]:
+        return self._bot.bot_name if self._bot else None
+    
+    @property
+    def bot_directory(self):
+        return self._bot.bot_paths.bot_directory if self._bot else None
+    
+    @property
+    def data_collector(self):
+        """Override in subclasses that need data collection."""
+        return None
     
     @abstractmethod
     def visit_header(self, bot_name: str) -> None:

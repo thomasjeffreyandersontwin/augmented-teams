@@ -1,9 +1,9 @@
-ActionNode
+BotLangActionNode
     Wrap action execution: Action,Behavior
     Get instructions from action: Action
     Confirm with response: Action,AI Chat
-    Run in autonomous mode: AI Client,ExecutionMode
-    Run in interactive mode: Human,ExecutionMode
+    Run in autonomous mode: AI Client,BotLangMode
+    Run in interactive mode: Human,BotLangMode
 
 
 
@@ -33,14 +33,14 @@ Behavior Workflow
     Track state: Behavior,Action,State
 
 Checkpoint
-    Save workflow state: State,LangGraphRunner
-    Restore workflow state: State,LangGraphRunner
-    Track execution history: State
-    Enable resume capability: Workflow,LangGraphRunner
+    Save workflow state: BotLangState,BotLangFlowRunner
+    Restore workflow state: BotLangState,BotLangFlowRunner
+    Track execution history: BotLangState
+    Enable resume capability: BotLangFlow,BotLangFlowRunner
 
-ExecutionMode
-    Determine AI interaction: ActionNode,AI Client
-    Control pause points: ActionNode,Human
+BotLangMode
+    Determine AI interaction: BotLangActionNode,AI Client
+    Control pause points: BotLangActionNode,Human
 
 GatherContextAction
     Inject gather context instructions: Behavior,Guardrails,Required Clarifications
@@ -51,18 +51,18 @@ Guardrails
     Guide planning decisions: Decision Criteria,Assumptions
     Define recommended human activity: Human,Instructions
 
-LangGraph workflow
-    Execute nodes in sequence: ActionNode,LangGraphRunner
-    Handle conditional branching: Decision Node,State
-    Support loops and iterations: ActionNode,State
-    Pause at interactive points: Human,ExecutionMode
-    Resume from checkpoint: Checkpoint,LangGraphRunner
+BotLangFlow
+    Execute nodes in sequence: BotLangActionNode,BotLangFlowRunner
+    Handle conditional branching: Decision Node,BotLangState
+    Support loops and iterations: BotLangActionNode,BotLangState
+    Pause at interactive points: Human,BotLangMode
+    Resume from checkpoint: Checkpoint,BotLangFlowRunner
 
-LangGraphRunner
-    Compile graph with checkpointer: LangGraph workflow,Checkpoint
-    Execute workflow graph: LangGraph workflow,ActionNode
+BotLangFlowRunner
+    Compile graph with checkpointer: BotLangFlow,Checkpoint
+    Execute workflow graph: BotLangFlow,BotLangActionNode
     Manage checkpoint storage: Checkpoint
-    Resume from checkpoint: Checkpoint,LangGraph workflow
+    Resume from checkpoint: Checkpoint,BotLangFlow
 
 Project
     Move project to working area: Working Directory
@@ -86,7 +86,7 @@ Specific Bot
     Provide Synchronizer: 
     Provide Trigger Words: 
 
-LangGraph State Container
+BotLangState
     Contain story graph: Story Graph
     Contain clarification data: Key Questions,Evidence
     Contain strategy data: Decision Criteria,Assumptions
@@ -95,7 +95,7 @@ LangGraph State Container
     Contain workspace directory: Workspace
     Contain workflow execution state: Action,Instructions
 
-Workflow State
+Behavior Action State
     Track current action: Action
     Track completed actions: Action,Activity Log
     Determine next action: Action,Behavior
