@@ -309,10 +309,8 @@ story_bot_cli --workflow tdd_workflow --status
 agile_bot/bots/base_bot/src/
 ├── orchestration/                  # NEW: LangGraph framework support
 │   ├── __init__.py
-│   ├── langgraph_runner.py         # Loads graphs, compiles, executes
-│   └── base_nodes/                 # ABSTRACT/BASE nodes (never instantiated directly)
-│       ├── __init__.py
-│       └── base_action_node.py     # Base class for action nodes
+│   ├── langgraph_runner.py         # Loads workflow Python files, compiles, executes
+│   └── state_adapter.py            # Adapts BaseBot state to LangGraph state
 │
 ├── bot/                            # UNTOUCHED (default workflow uses this)
 ├── actions/                        # UNTOUCHED (including tracker/state_manager for legacy)
@@ -337,9 +335,10 @@ agile_bot/bots/story_bot/
 │   │   ├── decision_nodes.py       # Routing functions
 │   │   └── approval_nodes.py       # Human approval nodes
 │   │
-│   └── state/                      # StoryBot state schemas
+│   └── state/                      # StoryBot state schemas and adapters
 │       ├── __init__.py
-│       └── story_workflow_state.py # TypedDict for story workflows
+│       ├── story_workflow_state.py # TypedDict for story workflows
+│       └── story_bot_state_adapter.py # StoryBot-specific state adapter (GENERATED)
 │
 ├── behaviors/                      # UNTOUCHED
 └── src/                            # UNTOUCHED
@@ -347,9 +346,9 @@ agile_bot/bots/story_bot/
 
 **Key Principle:** BaseBot provides framework, StoryBot provides concrete implementations.
 
-### Step 1: BaseBotStateAdapter
+### Step 1: BaseBotStateAdapter (Base Framework - Written Once)
 
-Wraps the essential state files (story-graph, context) for LangGraph.
+Minimal base adapter that provides generic state loading. Written once in `base_bot/src/orchestration/state_adapter.py`.
 
 ```python
 # base_bot/src/orchestration/state_adapter.py
@@ -359,14 +358,13 @@ from typing import Dict, Any, Optional
 import json
 
 class BaseBotStateAdapter:
-    """Wraps BaseBot's state files for LangGraph orchestration.
+    """Base adapter for wrapping BaseBot's state files for LangGraph.
     
-    Only wraps the ESSENTIAL state:
-    - story-graph.json (knowledge graph)
-    - context files
+    Provides minimal generic functionality:
+    - Load story-graph.json
+    - Collect context files
     
-    Workflow state (current action, completed actions) is handled
-    entirely by LangGraph checkpoints - no separate files needed.
+    Bot-specific adapters extend this for bot-specific state needs.
     """
     
     def __init__(self, bot_paths):
@@ -408,80 +406,102 @@ class BaseBotStateAdapter:
         }
 ```
 
-### Step 2: BehaviorGraphBuilder
+### Step 1b: StoryBotStateAdapter (Bot-Specific - Generated)
 
-Reads `behavior.json` and builds a LangGraph from `actions_workflow`.
+Bot-specific adapter that extends BaseBotStateAdapter with bot-specific state needs. Generated per bot.
 
 ```python
-# base_bot/src/orchestration/graph_builder.py
+# story_bot/orchestration/state/story_bot_state_adapter.py
 
-from typing import Dict, Any, List, Callable
-from langgraph.graph import StateGraph, START, END
+from agile_bot.bots.base_bot.src.orchestration.state_adapter import BaseBotStateAdapter
+from typing import Dict, Any
 
-class BehaviorGraphBuilder:
-    """Builds LangGraph from behavior.json actions_workflow."""
+class StoryBotStateAdapter(BaseBotStateAdapter):
+    """StoryBot-specific state adapter.
     
-    def __init__(self, behavior):
-        self.behavior = behavior
-        self.behavior_config = behavior._config
-        self.actions_workflow = self.behavior_config.get("actions_workflow", {})
+    Extends BaseBotStateAdapter with StoryBot-specific state loading.
+    May add bot-specific state fields, validation, or transformations.
+    """
     
-    def build_graph(self, node_executors: Dict[str, Callable]) -> StateGraph:
-        """Build StateGraph from actions_workflow.
+    def load_initial_state(self) -> Dict[str, Any]:
+        """Load initial state with StoryBot-specific additions."""
+        state = super().load_initial_state()
         
-        Args:
-            node_executors: Map action names to executor functions
-                           {"clarify": run_clarify, "build": run_build, ...}
+        # Add StoryBot-specific state fields if needed
+        # state["story_bot_specific_field"] = ...
         
-        Returns:
-            Configured StateGraph ready to compile
-        """
-        from typing import TypedDict, Annotated
-        from operator import add
-        
-        class WorkflowState(TypedDict):
-            story_graph: dict
-            context: dict
-            mode: str
-            parameters: dict
-            current_action: str
-            completed_actions: Annotated[list, add]
-            instructions: dict
-        
-        graph = StateGraph(WorkflowState)
-        
-        # Get sorted actions from workflow
-        actions = self.actions_workflow.get("actions", [])
-        sorted_actions = sorted(actions, key=lambda a: a.get("order", 0))
-        
-        # Add nodes
-        for action_config in sorted_actions:
-            action_name = action_config["name"]
-            if action_name in node_executors:
-                graph.add_node(action_name, node_executors[action_name])
-        
-        # Add edges based on next_action
-        for i, action_config in enumerate(sorted_actions):
-            action_name = action_config["name"]
-            next_action = action_config.get("next_action")
-            
-            if next_action and next_action in node_executors:
-                graph.add_edge(action_name, next_action)
-            elif i == len(sorted_actions) - 1:
-                graph.add_edge(action_name, END)
-        
-        # Set entry point
-        if sorted_actions:
-            graph.add_edge(START, sorted_actions[0]["name"])
-        
-        return graph
-    
-    def get_action_order(self) -> List[str]:
-        """Return action names in workflow order."""
-        actions = self.actions_workflow.get("actions", [])
-        sorted_actions = sorted(actions, key=lambda a: a.get("order", 0))
-        return [a["name"] for a in sorted_actions]
+        return state
 ```
+
+### Step 2: Workflow Definition (Python Files)
+
+**LangGraph workflows are hand-written Python files, NOT generated from `behavior.json`.**
+
+Workflows are defined in `story_bot/orchestration/graphs/` as Python files. Each workflow file defines its own graph structure.
+
+**Example: `tdd_workflow.py`**
+
+```python
+# story_bot/orchestration/graphs/tdd_workflow.py
+
+from langgraph.graph import StateGraph, START, END
+from typing import TypedDict, Annotated
+from operator import add
+from agile_bot.bots.story_bot.orchestration.nodes.action_node import ActionNode
+
+class WorkflowState(TypedDict):
+    story_graph: dict
+    clarification: dict  # Key questions and evidence
+    strategy: dict  # Decisions and assumptions
+    context_files: list  # List of context file names
+    files: dict  # Flexible dictionary: {"source": [...], "test": [...], etc.}
+    workspace_directory: str
+    mode: str
+    parameters: dict
+    current_action: str
+    completed_actions: Annotated[list, add]
+    instructions: dict
+
+def build_tdd_workflow(bot) -> StateGraph:
+    """Build TDD workflow graph: tests → code → approve."""
+    
+    graph = StateGraph(WorkflowState)
+    
+    # Create action nodes
+    test_rules = ActionNode(bot, "tests", "rules")
+    test_build = ActionNode(bot, "tests", "build")
+    test_validate = ActionNode(bot, "tests", "validate")
+    code_rules = ActionNode(bot, "code", "rules")
+    code_build = ActionNode(bot, "code", "build")
+    code_validate = ActionNode(bot, "code", "validate")
+    
+    # Add nodes
+    graph.add_node("test_rules", test_rules)
+    graph.add_node("test_build", test_build)
+    graph.add_node("test_validate", test_validate)
+    graph.add_node("code_rules", code_rules)
+    graph.add_node("code_build", code_build)
+    graph.add_node("code_validate", code_validate)
+    
+    # Add edges (test loop)
+    graph.add_edge(START, "test_rules")
+    graph.add_edge("test_rules", "test_build")
+    graph.add_edge("test_build", "test_validate")
+    graph.add_edge("test_validate", "code_rules")  # After tests pass
+    
+    # Add edges (code loop)
+    graph.add_edge("code_rules", "code_build")
+    graph.add_edge("code_build", "code_validate")
+    graph.add_edge("code_validate", END)  # Terminal
+    
+    return graph
+```
+
+**Key Points:**
+- Workflows are **hand-written Python code** - full control over graph structure
+- Can include conditional branching, loops, parallel execution
+- Each workflow defines its own state schema and node structure
+- **NOT** generated from `behavior.json` - completely separate system
 
 ### Step 3: ActionNode (Universal Node Class)
 
@@ -590,8 +610,8 @@ class LangGraphRunner:
         """Execute workflow graph.
         
         Args:
-            graph: StateGraph from BehaviorGraphBuilder
-            initial_state: Initial state from BaseBotStateAdapter
+            graph: StateGraph from workflow Python file
+            initial_state: Initial state from bot-specific StateAdapter (e.g., StoryBotStateAdapter)
             start_action: Optional action to start/resume from
             thread_id: Unique ID for this workflow run
         
@@ -681,34 +701,28 @@ Route CLI to LangGraphRunner.
 ```python
 # Modification to cli_executor.py or base_bot_cli.py
 
-def run_with_langgraph(behavior_name: str, action_name: str, params: dict):
+def run_with_langgraph(workflow_name: str, params: dict):
     """Execute via LangGraph orchestration."""
-    from agile_bot.bots.base_bot.src.orchestration.state_adapter import BaseBotStateAdapter
-    from agile_bot.bots.base_bot.src.orchestration.graph_builder import BehaviorGraphBuilder
-    from agile_bot.bots.base_bot.src.orchestration.action_nodes import create_node_executors
+    from agile_bot.bots.story_bot.orchestration.state.story_bot_state_adapter import StoryBotStateAdapter
     from agile_bot.bots.base_bot.src.orchestration.runner import LangGraphRunner
     
-    # Get behavior
-    behavior = bot.behaviors.find_by_name(behavior_name)
+    # Load workflow definition from Python file
+    # e.g., workflow_name="tdd_workflow" → loads story_bot/orchestration/graphs/tdd_workflow.py
+    workflow_module = importlib.import_module(f"agile_bot.bots.story_bot.orchestration.graphs.{workflow_name}")
+    graph = workflow_module.build_workflow(bot)  # Each workflow file exports build_workflow()
     
-    # Build initial state
-    adapter = BaseBotStateAdapter(behavior.bot_paths)
+    # Build initial state using bot-specific adapter
+    adapter = StoryBotStateAdapter(bot.bot_paths)
     initial_state = adapter.load_initial_state()
     initial_state["parameters"] = params
     
-    # Build graph
-    builder = BehaviorGraphBuilder(behavior)
-    executors = create_node_executors(behavior)
-    graph = builder.build_graph(executors)
-    
     # Run
-    runner = LangGraphRunner(behavior.bot_paths)
-    thread_id = f"{behavior.bot_name}.{behavior.name}"
+    runner = LangGraphRunner(bot.bot_paths)
+    thread_id = f"{workflow_name}_thread"
     
     result = runner.run(
         graph=graph,
         initial_state=initial_state,
-        start_action=action_name,
         thread_id=thread_id
     )
     
@@ -789,8 +803,7 @@ runner.resume_from(graph, "tdd_workflow_thread", checkpoint_id)
 | File | Location | Purpose |
 |------|----------|---------|
 | `langgraph_runner.py` | `base_bot/src/orchestration/` | Load, compile, run graphs |
-| `base_action_node.py` | `base_bot/src/orchestration/base_nodes/` | Abstract base for action nodes |
-| `action_node.py` | `story_bot/orchestration/nodes/` | Concrete ActionNode class |
+| `action_node.py` | `story_bot/orchestration/nodes/` | Single ActionNode class (takes behavior/action as constructor params) |
 | `decision_nodes.py` | `story_bot/orchestration/nodes/` | Routing functions |
 | `approval_nodes.py` | `story_bot/orchestration/nodes/` | Human approval nodes |
 | `tdd_workflow.py` | `story_bot/orchestration/graphs/` | TDD workflow definition |
@@ -831,7 +844,8 @@ runner.resume_from(graph, "tdd_workflow_thread", checkpoint_id)
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `state_adapter.py` | `src/orchestration/` | Wraps story-graph and context |
+| `state_adapter.py` | `base_bot/src/orchestration/` | Base adapter (written once, not generated) |
+| `story_bot_state_adapter.py` | `story_bot/orchestration/state/` | Bot-specific adapter (GENERATED per bot) |
 | `graph_builder.py` | `src/orchestration/` | Builds graph from behavior.json |
 | `action_nodes.py` | `src/orchestration/` | Wraps Action.do_execute() as nodes |
 | `runner.py` | `src/orchestration/` | LangGraph execution + checkpoints |

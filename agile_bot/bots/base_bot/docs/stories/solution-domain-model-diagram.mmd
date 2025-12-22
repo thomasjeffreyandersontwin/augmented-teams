@@ -1,0 +1,161 @@
+classDiagram
+    namespace Build Agile Bots {
+        class Base Bot {
+            +executes_actions()
+            +track_activity()
+            +route_to_behaviors_and_actions()
+            +persist_content()
+            +manage_project_state()
+            +render()
+        }
+        class Specific Bot {
+            +provide_behavior_config()
+            +provide_mcp_config()
+            +provide_renderers()
+            +provide_extractors()
+            +provide_synchronizer()
+            +provide_trigger_words()
+        }
+    }
+
+    namespace Execute Behavior Actions {
+        class Behavior Workflow {
+            +determine_next_action()
+            +track_state()
+        }
+    }
+
+    namespace Gather Context {
+        class GatherContextAction {
+            +inject_gather_context_instructions()
+            +inject_questions_and_evidence()
+        }
+        class Guardrails {
+            +provide_required_context()
+            +guide_planning_decisions()
+            +define_recommended_human_activity()
+        }
+    }
+
+    namespace Init Project {
+        class Project {
+            +move_project_to_working_area()
+            +save_project_in_context()
+            +update_project_area()
+        }
+    }
+
+    namespace Invoke Bot {
+        class Router {
+            +match_trigger_patterns()
+            +route_to_mcp_bot_tool()
+            +route_to_behavior_tool()
+            +route_to_action_tool()
+            +forward_to_behavior()
+            +forward_to_action()
+            +forward_to_current_behavior_and_action()
+        }
+        class Workflow State {
+            +track_current_action()
+            +track_completed_actions()
+            +determine_next_action()
+            +pause_workflow()
+            +resume_workflow()
+        }
+    }
+
+    namespace Orchestrate Workflow {
+        class ActionNode {
+            +wrap_action_execution()
+            +get_instructions_from_action()
+            +confirm_with_response()
+            +run_in_autonomous_mode()
+            +run_in_interactive_mode()
+        }
+        class Checkpoint {
+            +save_workflow_state()
+            +restore_workflow_state()
+            +track_execution_history()
+            +enable_resume_capability()
+        }
+        class ExecutionMode {
+            +determine_ai_interaction()
+            +control_pause_points()
+        }
+        class LangGraph workflow {
+            +execute_nodes_in_sequence()
+            +handle_conditional_branching()
+            +support_loops_and_iterations()
+            +pause_at_interactive_points()
+            +resume_from_checkpoint()
+        }
+        class LangGraphRunner {
+            +compile_graph_with_checkpointer()
+            +execute_workflow_graph()
+            +manage_checkpoint_storage()
+            +resume_from_checkpoint()
+        }
+        class LangGraph State Container {
+            +contain_story_graph()
+            +contain_clarification_data()
+            +contain_strategy_data()
+            +contain_context_files()
+            +contain_files_dictionary()
+            +contain_workspace_directory()
+            +contain_workflow_execution_state()
+        }
+    }
+
+    namespace Perform Behavior Action {
+        class Base Action {
+            +inject_instructions()
+            +load_relevant_content_+_inject_into_instructions()
+            +save_content_changes()
+        }
+        class Behavior {
+            +perform_configured_actions()
+            +invoke_on_trigger_words()
+            +inject_instructions()
+            +provide_guardrails()
+            +provide_rules()
+            +provide_content_specs()
+        }
+    }
+
+    
+    %% Associations
+    Base Bot --> Behavior : uses
+    Base Bot --> Router : uses
+    Base Bot --> Project : uses
+    Specific Bot --> Behavior : uses
+    Router --> Base Bot : uses
+    Router --> Behavior : uses
+    Workflow State --> Behavior : uses
+    Project --> Workflow State : uses
+    Base Action --> Behavior : uses
+    LangGraph workflow --> ActionNode : uses
+    LangGraph workflow --> LangGraphRunner : uses
+    LangGraph workflow --> ExecutionMode : uses
+    LangGraph workflow --> Checkpoint : uses
+    ActionNode --> Behavior : uses
+    ActionNode --> ExecutionMode : uses
+    Checkpoint --> LangGraphRunner : uses
+    ExecutionMode --> ActionNode : uses
+    LangGraphRunner --> LangGraph workflow : uses
+    LangGraphRunner --> Checkpoint : uses
+    LangGraphRunner --> ActionNode : uses
+    LangGraph State Container --> Story Graph : contains
+    LangGraph State Container --> Key Questions : contains
+    LangGraph State Container --> Evidence : contains
+    LangGraph State Container --> Decision Criteria : contains
+    LangGraph State Container --> Assumptions : contains
+    LangGraph State Container --> Context : contains
+    LangGraph State Container --> Source Files : contains
+    LangGraph State Container --> Test Files : contains
+    LangGraph State Container --> Workspace : contains
+    LangGraph State Container --> Action : contains
+    LangGraph State Container --> Instructions : contains
+    LangGraph workflow --> LangGraph State Container : uses
+    Behavior Workflow --> Behavior : uses
+    GatherContextAction --> Behavior : uses
+    GatherContextAction --> Guardrails : uses
