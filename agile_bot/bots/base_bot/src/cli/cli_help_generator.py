@@ -6,9 +6,9 @@ from typing import Optional
 from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
 from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
 from agile_bot.bots.base_bot.src.cli.parameter_info_builder import ParameterInfoBuilder
-from agile_bot.bots.base_bot.src.cli.unified_help_generator import UnifiedHelpGenerator
-from agile_bot.bots.base_bot.src.cli.cli_help_renderer import CliHelpRenderer
-from agile_bot.bots.base_bot.src.cli.cursor_help_renderer import CursorHelpRenderer
+from agile_bot.bots.base_bot.src.generator.orchestrator import Orchestrator, GeneratorConfig
+from agile_bot.bots.base_bot.src.cli.cli_help_renderer import CliHelpVisitor
+from agile_bot.bots.base_bot.src.cli.cursor_help_renderer import CursorHelpVisitor
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.actions.instructions import Instructions
 
@@ -34,9 +34,17 @@ class CliHelpGenerator:
 
     def help_behaviors_and_actions(self):
         try:
-            renderer = CliHelpRenderer(self.cli_script_path, self.formatter)
-            generator = UnifiedHelpGenerator(self.bot, self.bot_name, self.bot_directory, renderer, self.description_extractor)
-            generator.generate_help()
+            from agile_bot.bots.base_bot.src.cli.action_data_collector import ActionDataCollector
+            renderer = CliHelpVisitor(self.cli_script_path, self.formatter)
+            data_collector = ActionDataCollector(self.bot, self.bot_name, self.bot_directory, self.description_extractor)
+            config = GeneratorConfig(
+                bot=self.bot,
+                bot_name=self.bot_name,
+                visitor=renderer,
+                data_collector=data_collector
+            )
+            generator = Orchestrator(config)
+            generator.generate()
             self._print_usage_section(self.formatter)
         except Exception as e:
             raise e
@@ -148,13 +156,21 @@ class CliHelpGenerator:
             inst.add_display('')
     
     def _add_action_help_to_display(self, inst: Instructions):
-        renderer = CursorHelpRenderer(self.bot_name, self.formatter)
-        generator = UnifiedHelpGenerator(self.bot, self.bot_name, self.bot_directory, renderer, self.description_extractor)
+        from agile_bot.bots.base_bot.src.cli.action_data_collector import ActionDataCollector
+        renderer = CursorHelpVisitor(self.bot_name, self.formatter)
+        data_collector = ActionDataCollector(self.bot, self.bot_name, self.bot_directory, self.description_extractor)
+        config = GeneratorConfig(
+            bot=self.bot,
+            bot_name=self.bot_name,
+            visitor=renderer,
+            data_collector=data_collector
+        )
+        generator = Orchestrator(config)
         import io
         old_stdout = sys.stdout
         sys.stdout = captured_output = io.StringIO()
         try:
-            generator._render_action_help_section()
+            generator._visit_action_help_section()
             action_help_text = captured_output.getvalue()
             for line in action_help_text.splitlines():
                 inst.add_display(line)

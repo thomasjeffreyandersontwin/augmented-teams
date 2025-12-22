@@ -70,5 +70,52 @@
       "Review the AI's sequencing logic to verify it optimizes both insight and momentum rather than following a simplistic order",
       "Validate the scope of stories to verify they are appropriate for the slice"
     ]
+  },
+  "exploration": {
+    "strategy_criteria": {
+      "criteria": {},
+      "decisions_made": {
+        "acceptance_criteria_consolidation": "Same logic, different data → Consolidate",
+        "acceptance_criteria_count": "Stop when criteria capture a full back-and-forth (user-system-user). Ensures atomic and testable slices.",
+        "acceptance_criteria_granularity": "Inner System – Focus on technical interaction points, system-to-system communication, and internal system behavior",
+        "acceptance_criteria_types": "Both behavioral and domain – Capture user-system interactions AND domain concepts/relationships",
+        "increment_size": "Keep increment as-is – Current scope is appropriate"
+      }
+    },
+    "assumptions": {
+      "typical_assumptions": [
+        "Each story should include both behavioral and domain acceptance criteria",
+        "Acceptance criteria define the end-to-end flow, not just isolated rules",
+        "Behavioral criteria follow a 'When trigger, Then response' format",
+        "Domain criteria describe structured responsibilities or rules around business concepts",
+        "Exploration will result in story reshaping: merging, splitting, or re-scoping is expected",
+        "ACs with same logic but different data should be consolidated",
+        "ACs with different formulas should remain separate",
+        "Domain AC belongs at increment level (aggregated from features), Behavioral AC at story level",
+        "Story documentation (scenarios) belongs in specification_scenarios phase, NOT exploration phase"
+      ],
+      "assumptions_made": [
+        "Each story should include both behavioral and domain acceptance criteria",
+        "Acceptance criteria define the end-to-end flow, not just isolated rules",
+        "Behavioral criteria follow a When trigger, Then response format",
+        "Domain criteria describe structured responsibilities or rules around business concepts",
+        "Exploration will result in story reshaping: merging, splitting, or re-scoping is expected",
+        "ACs with same logic but different data should be consolidated",
+        "ACs with different formulas should remain separate",
+        "Domain AC belongs at increment level (aggregated from features), Behavioral AC at story level",
+        "Story documentation (scenarios) belongs in specification_scenarios phase, NOT exploration phase",
+        "Follow the existing granularity level in acceptance criteria when refining stories"
+      ]
+    },
+    "recommended_activities": [
+      "Review the AI-generated behavioral flow to verify it reflects realistic user-system interactions",
+      "Cross-check the AI's acceptance criteria against domain rules to verify accuracy and completeness",
+      "Validate that the AI has captured complete 'user–system–user' loops and review its approach to identifying interaction boundaries",
+      "Review the AI's first acceptance criteria as a model to verify its approach to story scoping is appropriate",
+      "Review the AI's story structure to identify opportunities for merging or splitting that the AI may have missed",
+      "Verify the AI has addressed vagueness and missing steps in its generated acceptance criteria",
+      "Confirm the AI-generated content aligns with user intent and goals, and review its approach to capturing user needs",
+      "Review the AI's handling of edge cases and exception flows to verify completeness"
+    ]
   }
 }

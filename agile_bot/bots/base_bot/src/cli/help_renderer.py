@@ -1,13 +1,26 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
 from pathlib import Path
+from agile_bot.bots.base_bot.src.generator.visitor import Visitor
 from agile_bot.bots.base_bot.src.cli.help_context import BehaviorHelpContext, ActionHelpContext
 
-class HelpRenderer(ABC):
+class HelpRenderer(Visitor):
+    
+    def visit_header(self, bot_name: str) -> None:
+        self.render_header(bot_name)
     
     @abstractmethod
     def render_header(self, bot_name: str) -> None:
         pass
+    
+    def visit_behavior(self, context: BehaviorHelpContext) -> None:
+        self.render_behavior_section(context)
+    
+    def visit_action(self, context: ActionHelpContext) -> None:
+        self.render_action_help(context)
+    
+    def visit_action_help_section_header(self) -> None:
+        self.render_action_help_section_header()
     
     @abstractmethod
     def _format_behavior_command(self, context: BehaviorHelpContext, action_list: str) -> str:
@@ -69,4 +82,3 @@ class HelpRenderer(ABC):
             print('           Additional options:')
             for option, description in additional_options.items():
                 print(f"           {option}  {description}")
-
