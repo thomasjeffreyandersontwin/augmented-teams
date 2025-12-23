@@ -115,19 +115,29 @@ def main():
     
     # Check TTY
     tty_result = repl_session.detect_tty()
-    if not tty_result.tty_detected:
-        print("WARNING: Non-interactive terminal detected")
-        print("REPL works best in interactive mode")
-        print()
+    is_pipe_mode = not tty_result.tty_detected
+    
+    if is_pipe_mode:
+        # Pipe/automation mode: no prompts, read until EOF
+        pass
+    else:
+        # Interactive mode
+        pass
     
     # Main REPL loop
     try:
         while True:
             # Prompt for command
             try:
-                command = input(f"[{bot_name}] > ").strip()
+                if is_pipe_mode:
+                    # Pipe mode: read from stdin without prompt
+                    command = input().strip()
+                else:
+                    # Interactive mode: show prompt
+                    command = input(f"[{bot_name}] > ").strip()
             except EOFError:
-                print("\nExiting REPL...")
+                if not is_pipe_mode:
+                    print("\nExiting REPL...")
                 break
             
             if not command:
@@ -138,7 +148,8 @@ def main():
             
             # Display response
             print(response.output)
-            print()
+            if not is_pipe_mode:
+                print()
             
             # Check if should exit
             if response.repl_terminated:
