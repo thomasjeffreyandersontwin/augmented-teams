@@ -279,6 +279,68 @@ class REPLSession:
                 status="empty"
             )
         
+        # Handle dot notation: behavior.action or behavior.action.operation
+        if '.' in command:
+            dot_parts = command.split('.')
+            if len(dot_parts) == 2:
+                # behavior.action
+                behavior_name, action_name = dot_parts
+                behavior = self._get_behavior(behavior_name)
+                if behavior:
+                    action = self._find_action(behavior, action_name)
+                    if action:
+                        # Navigate to behavior.action and execute instructions
+                        full_action = f"{self.bot.bot_name}.{behavior_name}.{action_name}"
+                        return self._update_state_and_generate_response(behavior_name, action_name, full_action)
+                    else:
+                        return REPLCommandResponse(
+                            output=f"ERROR: Action '{action_name}' not found in behavior '{behavior_name}'",
+                            response=f"ERROR: Action '{action_name}' not found",
+                            status="error"
+                        )
+                else:
+                    return REPLCommandResponse(
+                        output=f"ERROR: Behavior '{behavior_name}' not found",
+                        response=f"ERROR: Behavior '{behavior_name}' not found",
+                        status="error"
+                    )
+            elif len(dot_parts) == 3:
+                # behavior.action.operation
+                behavior_name, action_name, operation = dot_parts
+                behavior = self._get_behavior(behavior_name)
+                if behavior:
+                    action = self._find_action(behavior, action_name)
+                    if action:
+                        # Navigate to behavior.action first
+                        full_action = f"{self.bot.bot_name}.{behavior_name}.{action_name}"
+                        self._navigate_to_action(behavior_name, action_name, full_action)
+                        
+                        # Then execute the specific operation
+                        if operation == "instructions":
+                            return self._execute_action_instructions(action_name)
+                        elif operation == "submit":
+                            return self._handle_submit_command()
+                        elif operation == "confirm":
+                            return self._handle_confirm_command()
+                        else:
+                            return REPLCommandResponse(
+                                output=f"ERROR: Unknown operation '{operation}'. Use: instructions, submit, or confirm",
+                                response=f"ERROR: Unknown operation '{operation}'",
+                                status="error"
+                            )
+                    else:
+                        return REPLCommandResponse(
+                            output=f"ERROR: Action '{action_name}' not found in behavior '{behavior_name}'",
+                            response=f"ERROR: Action '{action_name}' not found",
+                            status="error"
+                        )
+                else:
+                    return REPLCommandResponse(
+                        output=f"ERROR: Behavior '{behavior_name}' not found",
+                        response=f"ERROR: Behavior '{behavior_name}' not found",
+                        status="error"
+                    )
+        
         parts = command.split(maxsplit=1)
         command_verb = parts[0].lower()
         command_args = parts[1] if len(parts) > 1 else ""

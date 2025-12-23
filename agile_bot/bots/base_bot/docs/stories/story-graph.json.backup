@@ -3895,7 +3895,7 @@
                             "Then CLI initializes BehaviorActionState with story_bot.shape.clarify",
                             "And CLI saves state to behavior_action_state.json",
                             "And CLI displays \"Progress: shape.clarify.instructions\"",
-                            "And CLI displays compact menu: \"status\", \"back\", \"current\", \"next\", \"help\", \"exit\""
+                            "And CLI displays compact menu: \"status\", \"back\", \"next\", \"help\", \"exit\""
                           ],
                           "examples": {
                             "columns": [
@@ -3982,7 +3982,7 @@
                             "And CLI displays \"Bot Path: <bot_path>\"",
                             "And CLI displays \"Work Path: C:\\dev\\project\"",
                             "And CLI displays \"Progress: <behavior>.<action>.<operation>\"",
-                            "And CLI displays compact menu with status, back, current, next, help, exit commands"
+                            "And CLI displays compact menu with status, back, next, help, exit commands"
                           ],
                           "examples": {
                             "columns": [
@@ -4068,16 +4068,16 @@
                       "test_method": "test_show_available_behaviors_and_actions",
                       "acceptance_criteria": [
                         "WHEN CLI starts, THEN CLI displays list of all available behaviors",
-                        "WHEN CLI starts, THEN CLI displays list of all available actions in compact format"
+                        "WHEN CLI starts, THEN CLI displays list of all available actions"
                       ],
                       "scenario_outlines": [
                         {
                           "name": "Show available behaviors and actions",
                           "steps": [
-                            "Given bot has multiple behaviors loaded from bot_config.json",
-                            "When CLI displays startup menu",
-                            "Then CLI displays \"Behaviors: shape | prioritization | discovery | exploration | scenarios | tests | code\"",
-                            "And CLI displays \"Actions: clarify | strategy | build | validate | render\""
+                            "Given bot has multiple behaviors",
+                            "When CLI displays menu",
+                            "Then CLI shows list of available behaviors",
+                            "And CLI shows list of available actions"
                           ]
                         }
                       ]
@@ -4106,9 +4106,9 @@
                       "test_class": "TestNavigateToBehavior",
                       "test_method": "test_user_navigates_to_different_behavior",
                       "acceptance_criteria": [
-                        "WHEN user navigates to behavior, THEN CLI jumps to that behavior's first action",
-                        "WHEN CLI jumps to behavior, THEN CLI executes first action's instructions operation",
-                        "WHEN execution completes, THEN CLI displays instructions to user"
+                        "WHEN user enters behavior {name}, THEN CLI updates BehaviorActionState.current_behavior",
+                        "WHEN navigating to behavior, THEN CLI resets to first action (clarify)",
+                        "WHEN invalid behavior is entered, THEN CLI displays error with available behaviors list"
                       ],
                       "scenario_outlines": [
                         {
@@ -4197,9 +4197,9 @@
                       "test_class": "TestNavigateToAction",
                       "test_method": "test_user_navigates_to_action_within_current_behavior",
                       "acceptance_criteria": [
-                        "WHEN user navigates to action, THEN CLI jumps to that action",
-                        "WHEN CLI jumps to action, THEN CLI executes action's instructions operation",
-                        "WHEN execution completes, THEN CLI displays instructions to user"
+                        "WHEN user enters action {name}, THEN CLI updates BehaviorActionState.current_action",
+                        "WHEN navigating to action, THEN CLI displays updated breadcrumbs",
+                        "WHEN invalid action is entered, THEN CLI displays error with available actions list"
                       ],
                       "scenario_outlines": [
                         {
@@ -4287,7 +4287,7 @@
                       ]
                     },
                     {
-                      "name": "Navigate with Back/Next/Current",
+                      "name": "Navigate Within Behavior",
                       "sequential_order": 5,
                       "connector": "and",
                       "users": [
@@ -4298,82 +4298,87 @@
                       "test_class": "TestNavigateWithinBehavior",
                       "test_method": "test_user_executes_workflow_navigation_commands",
                       "acceptance_criteria": [
-                        "WHEN user types next, THEN CLI advances to next action and executes instructions",
-                        "WHEN user types back, THEN CLI moves to previous action and executes instructions",
-                        "WHEN user types current, THEN CLI re-executes current operation",
-                        "WHEN next reaches last action of behavior, THEN CLI crosses to next behavior's first action",
-                        "WHEN back reaches first action of behavior, THEN CLI crosses to previous behavior's last action"
+                        "WHEN user enters current, THEN CLI displays BehaviorActionState.current_action with breadcrumbs",
+                        "WHEN user enters close, THEN CLI marks current action complete and advances to next",
+                        "WHEN user enters back, THEN CLI moves to previous action in workflow"
                       ],
                       "scenario_outlines": [
                         {
-                          "name": "User advances with next command",
+                          "name": "User executes workflow navigation commands",
                           "steps": [
-                            "Given user is at <current_position>",
-                            "When user types \"next\"",
-                            "Then CLI moves to <next_position>",
-                            "And CLI executes <next_position>",
-                            "And CLI displays instructions/results to user"
+                            "Given BehaviorActionState.current_behavior is \"<behavior>\"",
+                            "And BehaviorActionState.current_action is \"<current_action>\"",
+                            "And BehaviorActionState.completed_actions are: <completed_actions>",
+                            "When user enters command: \"<command>\"",
+                            "Then CLI responds \"<response_message>\"",
+                            "And BehaviorActionState.current_action becomes \"<new_action>\"",
+                            "And BehaviorActionState.completed_actions become <new_completed_actions>",
+                            "And CLI displays breadcrumbs: \"<breadcrumbs>\""
                           ],
                           "examples": {
                             "columns": [
-                              "current_position",
-                              "next_position"
+                              "behavior",
+                              "current_action",
+                              "completed_actions",
+                              "command",
+                              "response_message",
+                              "new_action",
+                              "new_completed_actions",
+                              "breadcrumbs"
                             ],
                             "rows": [
                               [
-                                "shape.clarify.instructions",
-                                "shape.strategy.instructions"
+                                "shape",
+                                "build",
+                                "[clarify,strategy]",
+                                "current",
+                                "CURRENT: story_bot.shape.build\\nReady to run",
+                                "build",
+                                "[clarify,strategy]",
+                                "[shape] clarify [OK] -> strategy [OK] -> build* -> validate -> render"
                               ],
                               [
-                                "shape.render.confirm",
-                                "prioritization.clarify.instructions"
+                                "shape",
+                                "build",
+                                "[clarify,strategy]",
+                                "close",
+                                "Closing current action: build\\nAdvancing",
+                                "validate",
+                                "[clarify,strategy,build]",
+                                "[shape] clarify [OK] -> strategy [OK] -> build [OK] -> validate* -> render"
                               ],
                               [
-                                "discovery.validate.submit",
-                                "discovery.validate.confirm"
+                                "shape",
+                                "validate",
+                                "[clarify,strategy,build]",
+                                "back",
+                                "Moving back to previous action",
+                                "build",
+                                "[clarify,strategy]",
+                                "[shape] clarify [OK] -> strategy [OK] -> build* -> validate -> render"
+                              ],
+                              [
+                                "shape",
+                                "clarify",
+                                "[]",
+                                "back",
+                                "ERROR: Already at first action",
+                                "clarify",
+                                "[]",
+                                "[shape] clarify* -> strategy -> build -> validate -> render"
+                              ],
+                              [
+                                "shape",
+                                "render",
+                                "[clarify,strategy,build,validate]",
+                                "close",
+                                "Closing current action: render\\nCOMPLETE: shape behavior finished",
+                                "render",
+                                "[clarify,strategy,build,validate,render]",
+                                "[shape] clarify [OK] -> strategy [OK] -> build [OK] -> validate [OK] -> render [OK]"
                               ]
                             ]
                           }
-                        },
-                        {
-                          "name": "User moves back with back command",
-                          "steps": [
-                            "Given user is at <current_position>",
-                            "When user types \"back\"",
-                            "Then CLI moves to <previous_position>",
-                            "And CLI executes <previous_position>",
-                            "And CLI displays instructions/results to user"
-                          ],
-                          "examples": {
-                            "columns": [
-                              "current_position",
-                              "previous_position"
-                            ],
-                            "rows": [
-                              [
-                                "shape.strategy.instructions",
-                                "shape.clarify.instructions"
-                              ],
-                              [
-                                "prioritization.clarify.instructions",
-                                "shape.render.confirm"
-                              ],
-                              [
-                                "discovery.validate.confirm",
-                                "discovery.validate.submit"
-                              ]
-                            ]
-                          }
-                        },
-                        {
-                          "name": "User re-executes with current command",
-                          "steps": [
-                            "Given user is at shape.build.instructions",
-                            "And user has already seen instructions",
-                            "When user types \"current\"",
-                            "Then CLI re-executes shape.build.instructions",
-                            "And CLI displays instructions again"
-                          ]
                         }
                       ]
                     },
@@ -4602,31 +4607,18 @@
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN user confirms last action of behavior, THEN CLI marks behavior complete",
-                        "WHEN behavior is complete, THEN CLI moves to next behavior's first action",
-                        "WHEN CLI moves to next behavior, THEN CLI executes next behavior's first action's instructions"
+                        "AND CLI moves to next behavior's first action",
+                        "AND CLI executes next behavior's first action's instructions"
                       ],
                       "scenarios": [
                         {
                           "name": "Confirm at last action moves to next behavior",
                           "steps": [
                             "Given current position is shape.render.submit",
-                            "And shape.render is the last action of shape behavior",
-                            "When user types \"confirm\"",
+                            "When user types confirm",
                             "Then CLI marks shape.render as complete",
-                            "And CLI marks shape behavior as complete",
                             "And CLI moves to prioritization.clarify.instructions",
-                            "And CLI executes prioritization.clarify.instructions",
-                            "And CLI displays instructions for prioritization.clarify"
-                          ]
-                        },
-                        {
-                          "name": "Confirm within behavior advances to next action",
-                          "steps": [
-                            "Given current position is shape.clarify.submit",
-                            "When user types \"confirm\"",
-                            "Then CLI marks shape.clarify as complete",
-                            "And CLI moves to shape.strategy.instructions",
-                            "And CLI executes shape.strategy.instructions"
+                            "And CLI executes prioritization.clarify.instructions"
                           ]
                         }
                       ]
