@@ -5,7 +5,7 @@
 **Epic:** Execute Behavior Actions
 **Feature:** Build Knowledge
 **User:** Bot Behavior
-**Sequential Order:** 3
+**Sequential Order:** 5
 **Story Type:** user
 
 ## Story Description

@@ -117,5 +117,65 @@
         "system_documentation": "bots-overview.md"
       }
     }
+  },
+  "scenarios": {
+    "key_questions": {
+      "questions": [
+        "What system and user actions initiate this story's flow?",
+        "What is the intended system response after each user action?",
+        "What preconditions or data states are required before this story can begin?",
+        "What are the success criteria for the story (from a domain and user perspective)?",
+        "What are the expected alternate flows, error paths, and edge cases?",
+        "Are there any mandatory sequencing constraints within or across stories?",
+        "What domain rules, calculations, or business policies does this story validate?",
+        "Is the story testable independently (including setup and teardown conditions)?",
+        "What external systems or services does this story need to interact with?",
+        "What requests, responses, or contracts are involved in those system interactions?",
+        "Are there system integration points that require validation or simulation?",
+        "How do we handle failures, timeouts, or retries for those system calls?",
+        "What data variations (e.g., boundary conditions, common examples) are required for test coverage?",
+        "What are the input values needed to test each scenario?",
+        "What are the expected output values for each input?",
+        "Are there formulas or calculations that need multiple data points to validate?",
+        "Are there domain entities with named values that should be tested?",
+        "What are the boundary conditions (min, max, edge cases) for each data point?"
+      ],
+      "answers": {
+        "initiating_actions": "User runs CLI with --botlangflow parameter, CLI detects parameter, Bot routes to BotLangFlowRunner, BotLangFlowRunner loads BotLangFlow Python file, Compiles graph, Executes nodes",
+        "system_responses": "Bot builds initial BotLangState, BotLangFlowRunner invokes compiled graph, BotLangActionNode wraps action.execute, Updates BotLangState, SqliteSaver checkpoints state, Returns results to CLI, Pauses at interactive nodes, Resumes with --continue flag",
+        "preconditions": "BotLangFlow Python file exists in orchestration/flows/ directory, Bot has behavior/action configuration, CLI context available, SqliteSaver database initialized",
+        "success_criteria": "BotLangFlow executes nodes in sequence, State persists via checkpoints, Autonomous mode runs without pausing, Interactive mode pauses for human input, Resume continues from exact checkpoint, All nodes complete successfully",
+        "alternate_flows": "BotLangFlow file not found, Invalid graph structure, Checkpoint load failure, Node execution error, Human cancels at interactive pause, Resume with invalid thread_id, State corruption, Conditional routing to different paths, Loop iterations",
+        "sequencing_constraints": "Foundation components first: BotLangActionNode, BotLangFlowRunner, BotLangFlow definitions, Checkpoint/Resume capability. CLI routing depends on BotLangFlowRunner. Execution depends on BotLangActionNode.",
+        "domain_rules": "BotMode determines execution behavior, BotLangActionNode enforces two-pass pattern, SqliteSaver ensures state persistence, thread_id uniquely identifies workflow instance, Checkpoints enable exact resume, BotLangState schema is flow-specific",
+        "testability": "Yes - Each story can be tested with: Mock BotLangFlow files, Test BotLangState instances, In-memory SqliteSaver, Stub actions, Isolated thread_ids",
+        "external_systems": "LangGraph framework, File system, SQLite database, Existing Action classes, CLI",
+        "contracts": "BotLangFlowRunner.load_flow returns BotLangFlow Python module, BotLangFlow.build returns StateGraph, StateGraph.compile returns CompiledGraph, BotLangActionNode.__call__ returns updated_state, SqliteSaver.save returns checkpoint_id",
+        "integration_points": "LangGraph StateGraph creation, SqliteSaver checkpoint persistence, BotLangFlow Python import, Action.execute invocation, CLI flag detection, State schema validation",
+        "failure_handling": "BotLangFlow file load error returns CLI error message, Node execution error preserves checkpoint and returns error, Checkpoint save failure fails workflow, Resume with bad thread_id returns error message, Invalid state schema returns validation error",
+        "data_variations": "Empty BotLangState, Full BotLangState with all fields, Single-node flow, Multi-node flow with branches, Loop flow, Interactive nodes, Autonomous nodes, Mixed mode flows, Multiple checkpoints, Resume from different checkpoints",
+        "input_values": "botlangflow_name, behavior, action, parameters, thread_id, checkpoint_id, mode, BotLangState, continue_flag",
+        "output_values": "Successful execution returns final BotLangState with results, Interactive pause returns prompt dict with needs_confirmation flag, Resume continues from checkpoint, Error returns error message with context, Checkpoint returns checkpoint_id, Complete returns workflow results",
+        "formulas": "No complex formulas - mainly state transitions and routing logic. Validation: State schema compliance, Checkpoint integrity, thread_id uniqueness, Node sequence correctness",
+        "domain_entities": "BotMode: autonomous/interactive, BotLangState fields, Node types: BotLangActionNode and Decision Node, Checkpoint metadata: thread_id, checkpoint_id, timestamp",
+        "boundary_conditions": "Empty flow, Single node, 100+ nodes, Empty BotLangState, Max BotLangState, thread_id collision, Invalid checkpoint_id, Resume after long delay, Concurrent executions, State size limits"
+      }
+    },
+    "evidence": {
+      "required": [
+        "Acceptance criteria from Exploration stage (Domain AC at feature level, Behavioral AC at story level)",
+        "High fidelity UX flows",
+        "Domain models or ubiquitous language",
+        "Cross-functional walkthrough outputs",
+        "Integration contracts or API mocks",
+        "Behavior diagrams (state, sequence)"
+      ],
+      "provided": {
+        "acceptance_criteria": "story-graph.json contains acceptance criteria for all 10 LangGraph stories in increment 3",
+        "ux_flows": "botlang-exploration.md documents complete user journey and interaction flows",
+        "domain_models": "domain_outline.md contains all domain concepts: BotLangActionNode, BotLangFlow, BotLangFlowRunner, BotLangState, BotMode, Checkpoint",
+        "integration_contracts": "LangGraph API documented in langgraph-orchestration-exploration.md, Action.execute contract exists, SqliteSaver interface documented"
+      }
+    }
   }
 }

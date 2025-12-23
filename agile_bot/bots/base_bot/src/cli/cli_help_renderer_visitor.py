@@ -65,6 +65,9 @@ class CliHelpRendererVisitor(Visitor):
         if context.parameters:
             print()
             self._print_parameters(context)
+            if self._has_dict_or_value_params(context.parameters):
+                print()
+                print('Note: PowerShell users must use = syntax: --parameter="value"')
         print('```\n')
     
     def _print_parameters(self, context: ActionHelpContext) -> None:
@@ -80,6 +83,13 @@ class CliHelpRendererVisitor(Visitor):
         print(f'{param}:   {lines[0]}')
         for line in lines[1:]:
             print(f'    {line}')
+    
+    def _has_dict_or_value_params(self, parameters: List[str]) -> bool:
+        """Check if any parameters take values (not just flags)."""
+        for param in parameters:
+            if '<flag>' not in param:
+                return True
+        return False
     
     def visit_action_help_section_header(self) -> None:
         print('\n---\n')

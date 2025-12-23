@@ -1735,7 +1735,20 @@
                     "AND Action merges base instructions with behavior-specific instructions",
                     "AND Compiled instructions returned for injection into AI Chat"
                   ]
-                },
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Orchestrate BotLangFlow",
+          "sequential_order": 5.0,
+          "domain_concepts": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "stories": [
                 {
                   "name": "Route to Default Behavior Action",
                   "sequential_order": 7,
@@ -1750,6 +1763,27 @@
                     "AND Bot preserves legacy behavior_action_state and activity log behavior",
                     "AND LangGraph state/runner is not invoked",
                     "AND Action receives the original context parameter unchanged"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Route to Default Behavior Action - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Route to Default Behavior Action, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1771,6 +1805,27 @@
                     "AND BotLangFlowRunner calls the flow's build function to create the StateGraph",
                     "AND BotLangFlowRunner compiles the StateGraph with SqliteSaver checkpointer",
                     "AND BotLangFlowRunner invokes the compiled graph with initial BotLangState and thread_id"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Route to BotLangFlow - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Route to BotLangFlow, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1788,6 +1843,496 @@
                     "AND BotLangActionNode extracts behavior/action/context from BotLangState",
                     "AND BotLangActionNode invokes action.execute(context) with extracted context",
                     "AND BotLangActionNode returns updated BotLangState to LangGraph"
+                  ],
+                  "scenario_outlines": [
+                    {
+                      "name": "Test node operations in autonomous mode for each behavior-action",
+                      "type": "happy_path",
+                      "steps": [
+                        "Given BotLangFlow with one BotLangActionNode for \"<behavior>\" and \"<action>\"",
+                        "And BotLangState initialized with behavior=\"<behavior>\" and action=\"<action>\"",
+                        "And BotMode is set to autonomous",
+                        "When BotLangFlow executes the single node",
+                        "Then Node is created successfully",
+                        "And get_instructions() returns instructions containing \"<expected_instruction>\"",
+                        "And Node calls AI and gets response",
+                        "And Node confirms response automatically",
+                        "And Node completes without pausing"
+                      ],
+                      "examples": {
+                        "columns": [
+                          "behavior",
+                          "action",
+                          "expected_instruction"
+                        ],
+                        "rows": [
+                          [
+                            "shape",
+                            "clarify",
+                            "Gather context for both story mapping and domain modeling"
+                          ],
+                          [
+                            "shape",
+                            "strategy",
+                            "Include domain modeling planning criteria alongside story mapping criteria"
+                          ],
+                          [
+                            "shape",
+                            "build",
+                            "shape: build story map structure AND domain model"
+                          ],
+                          [
+                            "shape",
+                            "validate",
+                            "shape: validate hierarchy, story structure, AND domain model"
+                          ],
+                          [
+                            "shape",
+                            "render",
+                            "shape: render story map documents AND domain model documents"
+                          ],
+                          [
+                            "shape",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "prioritization",
+                            "clarify",
+                            "Gather context for prioritization"
+                          ],
+                          [
+                            "prioritization",
+                            "strategy",
+                            "Determine prioritization approach"
+                          ],
+                          [
+                            "prioritization",
+                            "build",
+                            "Build increment prioritization"
+                          ],
+                          [
+                            "prioritization",
+                            "validate",
+                            "Validate prioritization structure"
+                          ],
+                          [
+                            "prioritization",
+                            "render",
+                            "Render prioritization documents"
+                          ],
+                          [
+                            "prioritization",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "discovery",
+                            "clarify",
+                            "Gather context for story discovery"
+                          ],
+                          [
+                            "discovery",
+                            "strategy",
+                            "Determine discovery approach"
+                          ],
+                          [
+                            "discovery",
+                            "build",
+                            "Build detailed story flows"
+                          ],
+                          [
+                            "discovery",
+                            "validate",
+                            "Validate story flows and domain rules"
+                          ],
+                          [
+                            "discovery",
+                            "render",
+                            "Render discovery documents"
+                          ],
+                          [
+                            "discovery",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "exploration",
+                            "clarify",
+                            "Gather context for acceptance criteria"
+                          ],
+                          [
+                            "exploration",
+                            "strategy",
+                            "Determine exploration approach"
+                          ],
+                          [
+                            "exploration",
+                            "build",
+                            "Build acceptance criteria"
+                          ],
+                          [
+                            "exploration",
+                            "validate",
+                            "Validate acceptance criteria"
+                          ],
+                          [
+                            "exploration",
+                            "render",
+                            "Render exploration documents"
+                          ],
+                          [
+                            "exploration",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "scenarios",
+                            "clarify",
+                            "Gather context for scenario specification"
+                          ],
+                          [
+                            "scenarios",
+                            "strategy",
+                            "Determine scenario approach"
+                          ],
+                          [
+                            "scenarios",
+                            "build",
+                            "specification_scenarios: build scenarios AND refine domain model based on scenario details"
+                          ],
+                          [
+                            "scenarios",
+                            "validate",
+                            "specification_scenarios: validate scenario structure AND domain model refinements"
+                          ],
+                          [
+                            "scenarios",
+                            "render",
+                            "specification_scenarios: render story documents with scenarios"
+                          ],
+                          [
+                            "scenarios",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "tests",
+                            "clarify",
+                            "Gather context for test generation"
+                          ],
+                          [
+                            "tests",
+                            "strategy",
+                            "Determine test approach"
+                          ],
+                          [
+                            "tests",
+                            "build",
+                            "Build test code from scenarios"
+                          ],
+                          [
+                            "tests",
+                            "validate",
+                            "Validate test code"
+                          ],
+                          [
+                            "tests",
+                            "render",
+                            "Render test files"
+                          ],
+                          [
+                            "tests",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "code",
+                            "clarify",
+                            "Gather context for code review"
+                          ],
+                          [
+                            "code",
+                            "strategy",
+                            "Determine code review approach"
+                          ],
+                          [
+                            "code",
+                            "build",
+                            "Analyze code against stories"
+                          ],
+                          [
+                            "code",
+                            "validate",
+                            "Validate code quality"
+                          ],
+                          [
+                            "code",
+                            "render",
+                            "Render code review reports"
+                          ],
+                          [
+                            "code",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "name": "Test node operations in interactive mode for each behavior-action",
+                      "type": "happy_path",
+                      "steps": [
+                        "Given BotLangFlow with one BotLangActionNode for \"<behavior>\" and \"<action>\"",
+                        "And BotLangState initialized with behavior=\"<behavior>\" and action=\"<action>\"",
+                        "And BotMode is set to interactive",
+                        "When BotLangFlow executes the single node",
+                        "Then Node is created successfully",
+                        "And get_instructions() returns instructions containing \"<expected_instruction>\"",
+                        "And Node returns to chat with prompt for human",
+                        "And Node pauses for human confirmation"
+                      ],
+                      "examples": {
+                        "columns": [
+                          "behavior",
+                          "action",
+                          "expected_instruction"
+                        ],
+                        "rows": [
+                          [
+                            "shape",
+                            "clarify",
+                            "Gather context for both story mapping and domain modeling"
+                          ],
+                          [
+                            "shape",
+                            "strategy",
+                            "Include domain modeling planning criteria alongside story mapping criteria"
+                          ],
+                          [
+                            "shape",
+                            "build",
+                            "shape: build story map structure AND domain model"
+                          ],
+                          [
+                            "shape",
+                            "validate",
+                            "shape: validate hierarchy, story structure, AND domain model"
+                          ],
+                          [
+                            "shape",
+                            "render",
+                            "shape: render story map documents AND domain model documents"
+                          ],
+                          [
+                            "shape",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "prioritization",
+                            "clarify",
+                            "Gather context for prioritization"
+                          ],
+                          [
+                            "prioritization",
+                            "strategy",
+                            "Determine prioritization approach"
+                          ],
+                          [
+                            "prioritization",
+                            "build",
+                            "Build increment prioritization"
+                          ],
+                          [
+                            "prioritization",
+                            "validate",
+                            "Validate prioritization structure"
+                          ],
+                          [
+                            "prioritization",
+                            "render",
+                            "Render prioritization documents"
+                          ],
+                          [
+                            "prioritization",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "discovery",
+                            "clarify",
+                            "Gather context for story discovery"
+                          ],
+                          [
+                            "discovery",
+                            "strategy",
+                            "Determine discovery approach"
+                          ],
+                          [
+                            "discovery",
+                            "build",
+                            "Build detailed story flows"
+                          ],
+                          [
+                            "discovery",
+                            "validate",
+                            "Validate story flows and domain rules"
+                          ],
+                          [
+                            "discovery",
+                            "render",
+                            "Render discovery documents"
+                          ],
+                          [
+                            "discovery",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "exploration",
+                            "clarify",
+                            "Gather context for acceptance criteria"
+                          ],
+                          [
+                            "exploration",
+                            "strategy",
+                            "Determine exploration approach"
+                          ],
+                          [
+                            "exploration",
+                            "build",
+                            "Build acceptance criteria"
+                          ],
+                          [
+                            "exploration",
+                            "validate",
+                            "Validate acceptance criteria"
+                          ],
+                          [
+                            "exploration",
+                            "render",
+                            "Render exploration documents"
+                          ],
+                          [
+                            "exploration",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "scenarios",
+                            "clarify",
+                            "Gather context for scenario specification"
+                          ],
+                          [
+                            "scenarios",
+                            "strategy",
+                            "Determine scenario approach"
+                          ],
+                          [
+                            "scenarios",
+                            "build",
+                            "specification_scenarios: build scenarios AND refine domain model based on scenario details"
+                          ],
+                          [
+                            "scenarios",
+                            "validate",
+                            "specification_scenarios: validate scenario structure AND domain model refinements"
+                          ],
+                          [
+                            "scenarios",
+                            "render",
+                            "specification_scenarios: render story documents with scenarios"
+                          ],
+                          [
+                            "scenarios",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "tests",
+                            "clarify",
+                            "Gather context for test generation"
+                          ],
+                          [
+                            "tests",
+                            "strategy",
+                            "Determine test approach"
+                          ],
+                          [
+                            "tests",
+                            "build",
+                            "Build test code from scenarios"
+                          ],
+                          [
+                            "tests",
+                            "validate",
+                            "Validate test code"
+                          ],
+                          [
+                            "tests",
+                            "render",
+                            "Render test files"
+                          ],
+                          [
+                            "tests",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ],
+                          [
+                            "code",
+                            "clarify",
+                            "Gather context for code review"
+                          ],
+                          [
+                            "code",
+                            "strategy",
+                            "Determine code review approach"
+                          ],
+                          [
+                            "code",
+                            "build",
+                            "Analyze code against stories"
+                          ],
+                          [
+                            "code",
+                            "validate",
+                            "Validate code quality"
+                          ],
+                          [
+                            "code",
+                            "render",
+                            "Render code review reports"
+                          ],
+                          [
+                            "code",
+                            "rules",
+                            "Display digested rules for this behavior as AI context"
+                          ]
+                        ]
+                      }
+                    }
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Invoke BotLangActionNode - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Invoke BotLangActionNode, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1804,6 +2349,27 @@
                     "AND get_instructions() invokes action.execute(context) to collect instructions",
                     "AND Instructions are returned as string ready for AI submission",
                     "AND Action context is included in the instructions"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Prepare Action Instructions - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Prepare Action Instructions, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1819,6 +2385,27 @@
                     "THEN BotLangActionNode calls run_autonomous() method",
                     "AND run_autonomous() submits instructions to AI via API client",
                     "AND BotLangActionNode waits for AI response"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Process Bot Behavor Action Instructions Automatically - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Process Bot Behavor Action Instructions Automatically, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1838,6 +2425,27 @@
                     "AND Human can review AI response and provide confirmation or feedback before flow resumes",
                     "WHEN Human reviews the prompt and confirms or provides feedback",
                     "THEN Confirmation/feedback is submitted back to the bot, which is processed by LangGraph and the same BotLangActionNode"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Process Behavor Action Instructions Through AI Chat - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Process Behavor Action Instructions Through AI Chat, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1855,6 +2463,27 @@
                     "AND action.execute() completes and BotLangActionNode updates BotLangState with action results",
                     "AND Node execution completes and LangGraph automatically saves checkpoint after node execution completes",
                     "AND LangGraph continues execution to the next node in the flow"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Confirm Behavor Action Instruction Response - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Confirm Behavor Action Instruction Response, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1872,6 +2501,27 @@
                     "AND BotLangFlow execution pauses at that node",
                     "AND SqliteSaver saves checkpoint with BotLangState at pause point with thread_id",
                     "AND Human can review prompt and provide response before BotLangFlow resumes"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Return to chat and pause for human-in-the-loop Node - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Return to chat and pause for human-in-the-loop Node, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1890,6 +2540,27 @@
                     "AND run_interactive() returns dict with 'prompt' and 'needs_confirmation' flag",
                     "AND BotLangFlow execution pauses until human provides response via --continue",
                     "AND SqliteSaver preserves BotLangState in checkpoint with thread_id"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Handle Execution Modes - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Handle Execution Modes, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 },
                 {
@@ -1910,6 +2581,27 @@
                     "WHEN Human provides response with --continue",
                     "THEN Response is added to BotLangState and passed to next node",
                     "AND BotLangFlow proceeds with updated BotLangState"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Resume BotLangFlow from Checkpoint - See Common Examples",
+                      "type": "happy_path",
+                      "steps": [
+                        "See [Common Examples Table](./common_examples_table.md) for detailed test data including input_data, expected_instruction_snippet, and expected_output for all behavior-action combinations.",
+                        "",
+                        "This story tests the orchestration framework with real behavior-action combinations.",
+                        "The common examples table contains:",
+                        "- Real input data (story graphs, requests, questions)",
+                        "- Expected instruction snippets that must appear in get_instructions() output",
+                        "- Expected output after action.execute() completes",
+                        "",
+                        "For Resume BotLangFlow from Checkpoint, verify that:",
+                        "- Node is created successfully",
+                        "- Instructions are generated correctly",
+                        "- Action executes and produces expected output",
+                        "- State is updated properly"
+                      ]
+                    }
                   ]
                 }
               ]

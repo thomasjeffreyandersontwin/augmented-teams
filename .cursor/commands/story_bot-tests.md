@@ -10,17 +10,23 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action r
   # Optional: --message <str>
   #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules --message "value"
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules --message="value"
 
-### build - Build/update the knowledge graph by reading story markdown files and generating story-graph
+### build - Build knowledge graph for build
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build
   # Optional: --scope <dict>
   #   Scope structure:
   #   {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build --scope '{"key": "value"}'
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action build --scope="{`"key`": `"value`"}"
 
 ### render - Render output documents and artifacts from knowledge graph using templates and synchronizers
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action render
@@ -28,8 +34,11 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action r
   #   Scope structure:
   #   {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action render --scope '{"key": "value"}'
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action render --scope="{`"key`": `"value`"}"
 
 ### validate - Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate
@@ -42,17 +51,25 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action v
   #   Optional parameter
   # Optional: --all-files <flag>
   #   Optional parameter
+  # Optional: --force-full <flag>
+  #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate --scope '{"key": "value"}' --background
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action validate --scope="{`"key`": `"value`"}" --background
 
 ### rules - Load behavior-specific rules into AI context for guidance on writing compliant content
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules
   # Optional: --message <str>
   #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules --message "value"
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior tests --action rules --message="value"
 
 ## Common Patterns:
   # Work on specific epic:

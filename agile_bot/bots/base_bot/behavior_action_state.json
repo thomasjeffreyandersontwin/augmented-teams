@@ -1,11 +1,11 @@
 {
-  "current_behavior": "story_bot.exploration",
-  "current_action": "story_bot.exploration.render",
+  "current_behavior": "story_bot.scenarios",
+  "current_action": "story_bot.scenarios.render",
   "completed_actions": [
     {
       "action_state": "story_bot.discovery.render",
       "timestamp": "2025-12-17T18:01:06.900769"
     }
   ],
-  "timestamp": "2025-12-22T15:05:45.927647"
+  "timestamp": "2025-12-22T17:33:44.744555"
 }
