@@ -69,3 +69,5 @@ class CliTerminalFormatter:
     def format_separator(self, char: str='=', length: int=70) -> str:
         return '---'
 
+
+

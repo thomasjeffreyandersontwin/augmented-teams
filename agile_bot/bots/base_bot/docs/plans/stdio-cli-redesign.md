@@ -837,9 +837,10 @@ All actions (except validate) have two operations:
 Given CLI executable is available in PATH or via python command
 And Bot has behaviors from Background: Bot Behaviors
 And Each Behavior has actions from Background: Behavior Actions
-And Each Action has two operations: provide_instructions and confirm_submit
-And provide_instructions takes minimal params (scope) and returns AI instructions
-And confirm_submit takes completed work and returns saved confirmation
+And Each Action has three operations: instructions, submit, and confirm
+And instructions takes minimal params (scope) and returns AI instructions
+And submit takes completed work and returns saved confirmation
+And confirm marks action complete and advances to next action
 ```
 
 ## Scenarios
