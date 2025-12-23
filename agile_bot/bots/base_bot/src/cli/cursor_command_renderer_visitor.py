@@ -114,3 +114,5 @@ class CursorCommandRendererVisitor(Visitor):
             f"  {self.python_command} --behavior {self.behavior_name} --action build --scope \"{{'type': 'story', 'value': ['Story 1', 'Story 2']}}\"",
         ])
 
+
+

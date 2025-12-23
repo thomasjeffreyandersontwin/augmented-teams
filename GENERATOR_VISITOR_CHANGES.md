@@ -348,3 +348,5 @@ generator.generate_server()  # ✅ Tests static generation
 3. Verify generated files are correct
 4. Update any remaining references to removed methods
 
+
+

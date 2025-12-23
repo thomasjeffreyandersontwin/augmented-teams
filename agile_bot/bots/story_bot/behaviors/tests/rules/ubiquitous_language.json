@@ -1,5 +1,5 @@
 {
-  "description": "Use Ubiquitous Language (DDD): The SAME language EVERYWHERE - domain model, stories, acceptance criteria, scenarios, AND code. Class names = domain entities/nouns (GatherContextAction, BotConfig, Guardrails). Method names = domain responsibilities/verbs (inject_questions_and_evidence, load_and_merge_instructions). Do NOT reinvent with generic technical terms (execute, process, handle, manager, service). You may refine for finer detail, but ALWAYS preserve domain terminology.",
+  "description": "Base the API for code under test on concepts that are in the domain model. When suggesting new concepts, you must update the domain model. Use Ubiquitous Language (DDD): The SAME language EVERYWHERE - domain model, stories, acceptance criteria, scenarios, AND code. Class names = domain entities/nouns (GatherContextAction, BotConfig, Guardrails, REPLSession). Method names = domain responsibilities/verbs (inject_questions_and_evidence, load_and_merge_instructions, display_current_state). Do NOT reinvent with generic technical terms (execute, process, handle, manager, service, StdioHandler). You may refine for finer detail, but ALWAYS preserve domain terminology.",
   "examples": [
     {
       "do": {
@@ -37,8 +37,17 @@
         ]
       },
       "dont": {
-        "description": "Generic technical class names",
+        "description": "Generic technical class names or implementation-specific names",
         "content": [
+          "# DON'T: Implementation-specific names NOT in domain model",
+          "# Domain Model says: 'REPL Session'",
+          "class StdioHandler:  # WRONG! Implementation detail, not domain concept!",
+          "    def process_command(self): pass",
+          "",
+          "# Domain Model says: 'REPLSession'",
+          "class REPLSession:  # CORRECT! Uses exact domain concept",
+          "    def read_and_execute_command(self): pass",
+          "",
           "# DON'T: Generic technical names",
           "class Action:  # Which action? Use specific domain name!",
           "    pass",
@@ -58,7 +67,7 @@
           "class Processor:  # What does it process? Use domain entity!",
           "    pass",
           "",
-          "# WRONG: Generic technical terms instead of domain language"
+          "# WRONG: Generic technical terms or implementation details instead of domain language"
         ]
       }
     },
@@ -215,18 +224,23 @@
     "Consistency across domain model, stories, tests, and production code"
   ],
   "key_principles": [
+    "Base ALL APIs on concepts from the domain model - never invent implementation-specific classes",
+    "When suggesting new concepts not in domain model, you MUST update the domain model first",
     "USE UBIQUITOUS LANGUAGE: Same terms in domain model, stories, AC, scenarios, AND code",
-    "Class names = domain entities/nouns (GatherContextAction, BotConfig, Guardrails)",
-    "Method names = domain responsibilities/verbs (inject, load, merge, route)",
+    "Class names = domain entities/nouns (GatherContextAction, BotConfig, Guardrails, REPLSession)",
+    "Method names = domain responsibilities/verbs (inject, load, merge, route, display_current_state)",
     "Consult domain model FIRST when naming classes and methods",
     "Consult stories/AC/scenarios SECOND for behavioral language",
     "Preserve domain terms when refining to finer detail",
-    "Do NOT use generic technical terms (execute, process, handle, manager, service)",
+    "Do NOT use generic technical terms (execute, process, handle, manager, service, handler)",
     "Do NOT replace domain terms with synonyms",
+    "Do NOT invent implementation-specific classes (StdioHandler, RequestHandler, DataProcessor)",
     "Code should read like the domain model and stories",
     "When in doubt, use exact phrase from domain model or story"
   ],
   "antipatterns": [
+    "Using implementation-specific classes not in domain model (StdioHandler instead of REPLSession)",
+    "Inventing new concepts without updating domain model documentation",
     "Generic class names: Action, Loader, Handler, Manager, Service, Processor",
     "Generic method names: execute, process, handle, perform, run",
     "execute_with_X pattern instead of domain verbs",

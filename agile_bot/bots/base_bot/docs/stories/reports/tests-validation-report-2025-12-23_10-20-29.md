@@ -1,50 +1,39 @@
 # Validation Report - Tests
 
-**Generated:** 2025-12-22 13:23:52
+**Generated:** 2025-12-23 10:20:29
 **Project:** base_bot
 **Behavior:** tests
 **Action:** validate
 
 ## Summary
 
-Validated story map and domain model and 1 test file(s) against **28 validation rules**.
+Validated content against **27 validation rules**.
 
 ## Content Validated
 
 - **Clarification:** `clarification.json`
 - **Rendered Outputs:**
-  - `solution-domain-model-description.md`
   - `story-graph.json`
-  - `story-map-increments.md`
-- **Test Files Scanned:**
-  - `src\scanners\class_based_organization_scanner.py`
-  - **Total:** 1 test file(s)
 
 ## Scanner Execution Status
 
-### 🟨 Overall Status: GOOD - Minor Issues
+### 🟩 Overall Status: HEALTHY
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| 🟩 Executed Successfully | 25 | Scanners ran without errors |
-| 🟩 Clean Rules | 22 | No violations found |
-| 🟨 Rules with Warnings | 1 | Found 1 warning violation(s) |
-| 🟥 Rules with Errors | 2 | Found 6 error violation(s) |
+| 🟩 Executed Successfully | 24 | Scanners ran without errors |
+| 🟩 Clean Rules | 23 | No violations found |
 | [i] No Scanner | 3 | Rule has no scanner configured |
 
-**Total Rules:** 28
-- **Rules with Scanners:** 25
-  - 🟩 **Executed Successfully:** 25
+**Total Rules:** 27
+- **Rules with Scanners:** 24
+  - 🟩 **Executed Successfully:** 24
 - [i] **Rules without Scanners:** 3
 
 ### 🟩 Successfully Executed Scanners
 
-- 🟥 **[No Fallbacks In Tests](#no-fallbacks-in-tests)** - 5 violation(s) (EXECUTION_SUCCESS) - [View Details](#no-fallbacks-in-tests-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.no_fallbacks_scanner.NoFallbacksScanner`
-- 🟨 **[Production Code Small Functions](#production-code-small-functions)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#production-code-small-functions-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
-- 🟥 **[Use Class Based Organization](#use-class-based-organization)** - 1 violation(s) (EXECUTION_SUCCESS) - [View Details](#use-class-based-organization-violations)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner`
+- 🟨 **[Create Parameterized Tests For Scenarios](#create-parameterized-tests-for-scenarios)** - 19 violation(s) (EXECUTION_SUCCESS) - [View Details](#create-parameterized-tests-for-scenarios-violations)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.parameterized_tests_scanner.ParameterizedTestsScanner`
 - 🟩 **[Business Readable Test Names](#business-readable-test-names)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.business_readable_test_names_scanner.BusinessReadableTestNamesScanner`
 - 🟩 **[Call Production Code Directly](#call-production-code-directly)** - 0 violations (EXECUTION_SUCCESS)
@@ -53,8 +42,6 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.consistent_vocabulary_scanner.ConsistentVocabularyScanner`
 - 🟩 **[Cover All Behavior Paths](#cover-all-behavior-paths)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.cover_all_paths_scanner.CoverAllPathsScanner`
-- 🟩 **[Create Parameterized Tests For Scenarios](#create-parameterized-tests-for-scenarios)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.parameterized_tests_scanner.ParameterizedTestsScanner`
 - 🟩 **[Define Fixtures In Test File](#define-fixtures-in-test-file)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.fixture_placement_scanner.FixturePlacementScanner`
 - 🟩 **[Helper Extraction And Reuse](#helper-extraction-and-reuse)** - 0 violations (EXECUTION_SUCCESS)
@@ -65,6 +52,8 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.specification_match_scanner.SpecificationMatchScanner`
 - 🟩 **[Mock Only Boundaries](#mock-only-boundaries)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.mock_boundaries_scanner.MockBoundariesScanner`
+- 🟩 **[No Fallbacks In Tests](#no-fallbacks-in-tests)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.no_fallbacks_scanner.NoFallbacksScanner`
 - 🟩 **[No Guard Clauses In Tests](#no-guard-clauses-in-tests)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.no_guard_clauses_scanner.NoGuardClausesScanner`
 - 🟩 **[Place Imports At Top](#place-imports-at-top)** - 0 violations (EXECUTION_SUCCESS)
@@ -73,16 +62,18 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.explicit_dependencies_scanner.ExplicitDependenciesScanner`
 - 🟩 **[Production Code Single Responsibility](#production-code-single-responsibility)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.single_responsibility_scanner.SingleResponsibilityScanner`
+- 🟩 **[Production Code Small Functions](#production-code-small-functions)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
 - 🟩 **[Self Documenting Tests](#self-documenting-tests)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.useless_comments_scanner.UselessCommentsScanner`
 - 🟩 **[Test Observable Behavior](#test-observable-behavior)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.observable_behavior_scanner.ObservableBehaviorScanner`
-- 🟩 **[Test One Concept Per Test](#test-one-concept-per-test)** - 0 violations (EXECUTION_SUCCESS)
-  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.one_concept_per_test_scanner.OneConceptPerTestScanner`
 - 🟩 **[Ubiquitous Language](#ubiquitous-language)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.ubiquitous_language_scanner.UbiquitousLanguageScanner`
 - 🟩 **[Use Ascii Only](#use-ascii-only)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.ascii_only_scanner.AsciiOnlyScanner`
+- 🟩 **[Use Class Based Organization](#use-class-based-organization)** - 0 violations (EXECUTION_SUCCESS)
+  - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner`
 - 🟩 **[Use Descriptive Function Names](#use-descriptive-function-names)** - 0 violations (EXECUTION_SUCCESS)
   - Scanner: `agile_bot.bots.base_bot.src.actions.validate.scanners.descriptive_function_names_scanner.DescriptiveFunctionNamesScanner`
 - 🟩 **[Use Exact Variable Names](#use-exact-variable-names)** - 0 violations (EXECUTION_SUCCESS)
@@ -97,21 +88,6 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
 - <span style="color: gray;">[i]</span> **[Pytest Bdd Orchestrator Pattern](#pytest-bdd-orchestrator-pattern)** - No scanner configured
 
 ## Validation Rules Checked
-
-### 🟥 Rule: <span id="no-fallbacks-in-tests">No Fallbacks In Tests</span> - 5 ERROR(S) - [View Details](#no-fallbacks-in-tests-violations)
-**Description:** Tests must fail if a fallback or default branch is executed. Every assertion should cover the explicitly intended path so that regressions do not hide behind fallback/default handling.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.no_fallbacks_scanner.NoFallbacksScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
-### 🟥 Rule: <span id="use-class-based-organization">Use Class Based Organization</span> - 1 ERROR(S) - [View Details](#use-class-based-organization-violations)
-**Description:** Test structure must match story graph exactly: file names match sub-epics (test_<sub_epic_name>.py), class names match stories exactly (Test<ExactStoryName>), method names match scenarios exactly (test_<scenario_name_snake_case>). Test classes appear in same order as stories in story map. Use pytest orchestrator pattern with helper functions/fixtures. Keep tests under 20 lines, helpers under 20 lines, classes under 300 lines.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
-### 🟨 Rule: <span id="production-code-small-functions">Production Code Small Functions</span> - 1 WARNING(S) - [View Details](#production-code-small-functions-violations)
-**Description:** PRODUCTION CODE RULE: Keep functions under 20 lines. Each function should be one level of abstraction. Extract complex logic into named helper functions. Use guard clauses to reduce nesting. Keep nesting under 2-3 levels. Tests for small functions are easier to write and understand.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
-**Execution Status:** EXECUTION_SUCCESS
 
 ### 🟩 Rule: <span id="business-readable-test-names">Business Readable Test Names</span> - CLEAN (0 violations)
 **Description:** Test names must read like plain English stories. Use domain language stakeholders understand, not technical jargon. Test names should read naturally when spoken aloud. Describe WHAT happens (behavior), not HOW it works (implementation). Principle adapted from BDD Rule 1 (Business Readable Language) for Given When Then story-based testing.
@@ -131,11 +107,6 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
 ### 🟩 Rule: <span id="cover-all-behavior-paths">Cover All Behavior Paths</span> - CLEAN (0 violations)
 **Description:** Cover all behavior paths: normal (happy path), edge cases, and failure scenarios. Each distinct behavior needs its own focused test. Tests must be independent and can run in any order. From BDD Rule 3 (Comprehensive and Brief Coverage).
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.cover_all_paths_scanner.CoverAllPathsScanner`
-**Execution Status:** EXECUTION_SUCCESS
-
-### 🟩 Rule: <span id="create-parameterized-tests-for-scenarios">Create Parameterized Tests For Scenarios</span> - CLEAN (0 violations)
-**Description:** If scenarios have tests in stories (Examples tables with multiple test cases), then create parameterized tests using @pytest.mark.parametrize. Each row in the Examples table becomes a test case. Don't write single test methods that only test one example - iterate over all examples from the scenario file.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.parameterized_tests_scanner.ParameterizedTestsScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
 ### 🟩 Rule: <span id="define-fixtures-in-test-file">Define Fixtures In Test File</span> - CLEAN (0 violations)
@@ -163,6 +134,11 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.mock_boundaries_scanner.MockBoundariesScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
+### 🟩 Rule: <span id="no-fallbacks-in-tests">No Fallbacks In Tests</span> - CLEAN (0 violations)
+**Description:** Tests must fail if a fallback or default branch is executed. Every assertion should cover the explicitly intended path so that regressions do not hide behind fallback/default handling.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.no_fallbacks_scanner.NoFallbacksScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
 ### 🟩 Rule: <span id="no-guard-clauses-in-tests">No Guard Clauses In Tests</span> - CLEAN (0 violations)
 **Description:** CRITICAL: Tests must NEVER contain guard clauses that check variable values, file existence, type checks, or any defensive conditionals. We control the test setup and MUST assume the code we write in tests works correctly. If test setup is wrong, we WANT the test to fail immediately - guard clauses hide problems and reduce our ability to know if tests are actually working. Guard clauses assume the code we wrote won't work, which defeats the purpose of testing. Write tests that assume positive outcomes - if you need different behavior, write a different test.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.no_guard_clauses_scanner.NoGuardClausesScanner`
@@ -183,6 +159,11 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.single_responsibility_scanner.SingleResponsibilityScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
+### 🟩 Rule: <span id="production-code-small-functions">Production Code Small Functions</span> - CLEAN (0 violations)
+**Description:** PRODUCTION CODE RULE: Keep functions under 20 lines. Each function should be one level of abstraction. Extract complex logic into named helper functions. Use guard clauses to reduce nesting. Keep nesting under 2-3 levels. Tests for small functions are easier to write and understand.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
 ### 🟩 Rule: <span id="self-documenting-tests">Self Documenting Tests</span> - CLEAN (0 violations)
 **Description:** Tests are self-documenting through code structure. Do NOT add verbose comments explaining that tests will fail or what API is needed. The imports, constructor calls, method calls, and assertions clearly show the expected API design. Let the code speak for itself.
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.useless_comments_scanner.UselessCommentsScanner`
@@ -193,81 +174,54 @@ Validated story map and domain model and 1 test file(s) against **28 validation 
 **Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.observable_behavior_scanner.ObservableBehaviorScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-### 🟩 Rule: <span id="test-one-concept-per-test">Test One Concept Per Test</span> - CLEAN (0 violations)
-**Description:** Each test should verify a single concept. Test one behavior per test, use minimal assertions per test, and build domain-specific test utilities.
-**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.one_concept_per_test_scanner.OneConceptPerTestScanner`
+### 🟩 Rule: <span id="ubiquitous-language">Ubiquitous Language</span> - CLEAN (0 violations)
+**Description:** Base the API for code under test on concepts that are in the domain model. When suggesting new concepts, you must update the domain model. Use Ubiquitous Language (DDD): The SAME language EVERYWHERE - domain model, stories, acceptance criteria, scenarios, AND code. Class names = domain entities/nouns (GatherContextAction, BotConfig, Guardrails, REPLSession). Method names = domain responsibilities/verbs (inject_questions_and_evidence, load_and_merge_instructions, display_current_state). Do NOT reinvent with generic technical terms (execute, process, handle, manager, service, StdioHandler). You may refine for finer detail, but ALWAYS preserve domain terminology.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.ubiquitous_language_scanner.UbiquitousLanguageScanner`
 **Execution Status:** EXECUTION_SUCCESS
 
-*... and 8 more rules*
+### 🟩 Rule: <span id="use-ascii-only">Use Ascii Only</span> - CLEAN (0 violations)
+**Description:** All test code must use ASCII-only characters. No Unicode symbols, emojis, or special characters in test code, assertions, print statements, or output messages. Use plain ASCII alternatives like [PASS], [ERROR], [FAIL].
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.ascii_only_scanner.AsciiOnlyScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
+### 🟩 Rule: <span id="use-class-based-organization">Use Class Based Organization</span> - CLEAN (0 violations)
+**Description:** Test structure must match story graph exactly: file names match sub-epics (test_<sub_epic_name>.py), class names match stories exactly (Test<ExactStoryName>), method names match scenarios exactly (test_<scenario_name_snake_case>). Test classes appear in same order as stories in story map. Use pytest orchestrator pattern with helper functions/fixtures. Keep tests under 20 lines, helpers under 20 lines, classes under 300 lines.
+**Scanner:** `agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner`
+**Execution Status:** EXECUTION_SUCCESS
+
+*... and 7 more rules*
 
 ## Violations Found
 
-**Total Violations:** 7
-- **File-by-File Violations:** 7
+**Total Violations:** 19
+- **File-by-File Violations:** 19
 - **Cross-File Violations:** 0
 
 ### File-by-File Violations (Pass 1)
 
 These violations were detected by scanning each file individually.
 
-#### <span id="no-fallbacks-in-tests-violations">No Fallbacks In Tests: 5 violation(s)</span>
+#### <span id="create-parameterized-tests-for-scenarios-violations">Create Parameterized Tests For Scenarios: 19 violation(s)</span>
 
-- <span style="color: red;">[X]</span> **ERROR** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py:147): Line 147 uses fallback/default value - tests should use explicit test data, not fallbacks
-- <span style="color: red;">[X]</span> **ERROR** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py:152): Line 152 uses fallback/default value - tests should use explicit test data, not fallbacks
-- <span style="color: red;">[X]</span> **ERROR** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py:159): Line 159 uses fallback/default value - tests should use explicit test data, not fallbacks
-- <span style="color: red;">[X]</span> **ERROR** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py:419): Line 419 uses fallback/default value - tests should use explicit test data, not fallbacks
-- <span style="color: red;">[X]</span> **ERROR** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py:426): Line 426 uses fallback/default value - tests should use explicit test data, not fallbacks
-
-#### <span id="production-code-small-functions-violations">Production Code Small Functions: 1 violation(s)</span>
-
-- <span style="color: orange;">[!]</span> **WARNING** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py:17): Function "scan_file" is 29 lines - should be under 20 lines (extract complex logic to helper functions)
-
-    ```python
-            return []  # Test scanning happens in scan_test_file, not scan_story_node
-        
-        def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-            violations = []
-            
-            if not file_path.exists():
-                return violations
-            
-            sub_epic_names = self._extract_sub_epic_names(knowledge_graph)
-            file_name = file_path.stem  # Without .py extension
-            violation = self._check_file_name_matches_sub_epic(file_name, sub_epic_names, file_path, rule_obj, knowledge_graph)
-            if violation:
-                violations.append(violation)
-            
-            parsed = self._read_and_parse_file(file_path)
-            if not parsed:
-                return violations
-            
-            content, lines, tree = parsed
-            
-            story_names = self._extract_story_names(knowledge_graph)
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    if node.name.startswith('Test'):
-                        violation = self._check_class_name_matches_story(node.name, story_names, file_path, rule_obj)
-                        if violation:
-                            violations.append(violation)
-                        
-                        for item in node.body:
-                            if isinstance(item, ast.FunctionDef):
-                                if item.name.startswith('test_'):
-                                    violation = self._check_method_name_matches_scenario(
-                                        item.name, node.name, story_names, knowledge_graph, file_path, rule_obj
-                                    )
-                                    if violation:
-                                        violations.append(violation)
-            
-            return violations
-        
-    ```
-
-#### <span id="use-class-based-organization-violations">Use Class Based Organization: 1 violation(s)</span>
-
-- <span style="color: red;">[X]</span> **ERROR** - [`src\scanners\class_based_organization_scanner.py`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/src/scanners/class_based_organization_scanner.py): Test file name "class_based_organization_scanner" does not match any sub-epic name and test methods do not span multiple sub-epics - file should be named test_<sub_epic_name>.py.
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[0].story_groups[0].stories[0].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[0].story_groups[0].stories[0].scenario_outlines[0].name): Scenario outline 'Launch REPL with existing state' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[0].story_groups[0].stories[2].scenario_outlines[1].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[0].story_groups[0].stories[2].scenario_outlines[1].name): Scenario outline 'User selects initial behavior' has 4 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[0].story_groups[0].stories[3].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[0].story_groups[0].stories[3].scenario_outlines[0].name): Scenario outline 'CLI displays existing state with progress' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[0].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[0].scenario_outlines[0].name): Scenario outline 'User requests help for current behavior' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[0].scenario_outlines[1].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[0].scenario_outlines[1].name): Scenario outline 'User requests detailed help for specific action' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[1].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[1].scenario_outlines[0].name): Scenario outline 'User requests status display' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[2].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[2].scenario_outlines[0].name): Scenario outline 'User navigates to different behavior' has 4 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[2].scenario_outlines[1].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[2].scenario_outlines[1].name): Scenario outline 'User navigates to invalid behavior' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[3].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[3].scenario_outlines[0].name): Scenario outline 'User navigates to action within current behavior' has 4 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[3].scenario_outlines[1].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[3].scenario_outlines[1].name): Scenario outline 'User navigates to invalid action' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[4].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[2].story_groups[0].stories[4].scenario_outlines[0].name): Scenario outline 'User executes workflow navigation commands' has 5 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[0].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[0].scenario_outlines[0].name): Scenario outline 'User executes current action (mock)' has 5 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[1].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[1].scenario_outlines[0].name): Scenario outline 'CLI prompts for missing action parameters' has 2 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[2].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[2].scenario_outlines[0].name): Scenario outline 'CLI handles invalid story scope and provides helpful prompt' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[3].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[3].story_groups[0].stories[3].scenario_outlines[0].name): Scenario outline 'CLI handles invalid file/story scope in dual-scope behaviors and provides helpful prompt' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[4].story_groups[0].stories[0].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[4].story_groups[0].stories[0].scenario_outlines[0].name): Scenario outline 'CLI displays action completion and prompts for continuation' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[0].sub_epics[3].sub_epics[4].story_groups[0].stories[1].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[0].sub_epics[3].sub_epics[4].story_groups[0].stories[1].scenario_outlines[0].name): Scenario outline 'User confirms action completion and advances workflow' has 3 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[1].sub_epics[4].story_groups[0].stories[2].scenario_outlines[0].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[1].sub_epics[4].story_groups[0].stories[2].scenario_outlines[0].name): Scenario outline 'Test node operations in autonomous mode for each behavior-action' has 42 examples but may not use @pytest.mark.parametrize
+- <span style="color: orange;">[!]</span> **WARNING** - [`epics[1].sub_epics[4].story_groups[0].stories[2].scenario_outlines[1].name`](vscode://file/C:/dev/augmented-teams/agile_bot/bots/base_bot/epics[1].sub_epics[4].story_groups[0].stories[2].scenario_outlines[1].name): Scenario outline 'Test node operations in interactive mode for each behavior-action' has 42 examples but may not use @pytest.mark.parametrize
 
 ## Validation Instructions
 
@@ -283,10 +237,10 @@ The following validation steps were performed:
 8. - **Original input:** `{project_area}/docs/context/input.txt` and other original context files
 9. 
 10. These files contain critical requirements, decisions, and context that MUST be checked against during validation.
-*... and 249 more instructions*
+*... and 247 more instructions*
 
 ## Report Location
 
 This report was automatically generated and saved to:
-`C:\dev\augmented-teams\agile_bot\bots\base_bot\docs\stories\reports\tests-validation-report-2025-12-22_13-23-51.md`
+`C:\dev\augmented-teams\agile_bot\bots\base_bot\docs\stories\reports\tests-validation-report-2025-12-23_10-20-29.md`
 
