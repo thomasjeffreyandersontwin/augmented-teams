@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="4926" dy="714" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4975" dy="540" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -135,9 +135,6 @@
                 </mxCell>
                 <mxCell id="138" value="Workflow Per Behavior" style="whiteSpace=wrap;html=1;aspect=fixed;strokeColor=#000000;fillColor=#fff2cc;strokeWidth=1;perimeterSpacing=1;" parent="1" vertex="1">
                     <mxGeometry x="-1350" y="1069.76" width="48" height="48" as="geometry"/>
-                </mxCell>
-                <mxCell id="140" value="Alternate Workflows" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2127.5" y="853.5" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="141" value="Create Test Entire Run" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2869.9999999999995" y="1205.28" width="50" height="50" as="geometry"/>
@@ -466,6 +463,15 @@
                 </mxCell>
                 <mxCell id="307" value="Test" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;fontColor=#080808;fillColor=#FFFCF5;" parent="1" vertex="1">
                     <mxGeometry x="-1900" y="690" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="309" value="LangGraph Based Bot Flow" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2142.5" y="946.19" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="310" value="CLI Broken" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2119.9999999999995" y="969.22" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="311" value="STDIO Interactive CLI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2127.5" y="838" width="50" height="50" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
