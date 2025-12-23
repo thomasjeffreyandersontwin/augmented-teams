@@ -1,121 +1,39 @@
 {
-  "shape": {
-    "strategy_criteria": {
-      "criteria": {},
-      "decisions_made": {
-        "flow_scope": "Actor-component interactions (Human->CLI->Bot->LangGraph->Action)",
-        "granularity": "Same level as existing story map",
-        "increment": "Increment 8: LangGraph Orchestration",
-        "langgraph_mandatory": "Yes - mandatory in this increment",
-        "cli_change": "Minimal - one story for --workflow parameter",
-        "missing_areas": "Node/edge creation from behaviors; Python orchestration scripts; Base graph building functionality"
-      }
+  "scenarios": {
+    "decisions_made": {
+      "test_strategy": "Parameterized test for all behavior-action combinations",
+      "test_scope": "Create simple one-node graph for each behavior-action pair in StoryBot",
+      "test_coverage": "Test node creation, instruction extraction, AI call and response, confirmation in both autonomous and interactive modes",
+      "parameterization": "One test case per behavior-action combination",
+      "test_structure": "Single parameterized test that iterates through all StoryBot behaviors and actions",
+      "graph_complexity": "Very simple graph with one BotLangActionNode per test case",
+      "mode_coverage": "Test both autonomous mode (no pause) and interactive mode (pause for confirmation)",
+      "test_organization": "All tests use the same parameterized list of behavior-action combinations",
+      "test_execution": "Each test runs the parameterized list through its own specific verification",
+      "integration_test": "One final test at the end that goes through the whole sequence of steps",
+      "common_helper": "All tests use the same common helper for creating bots with behaviors and actions"
     },
-    "assumptions": {
-      "typical_assumptions": [
-        "Focus on user flow over internal systems",
-        "Cover the end-to-end scenario",
-        "Prioritize customer-facing features",
-        "Assume stories should be independently testable",
-        "Assume each story delivers user value",
-        "Assume technical infrastructure stories are implicit",
-        "Drill down where architectural uncertainty is high \u2013 unknown integration patterns, new technology, or unclear system boundaries require deeper exploration",
-        "Drill down where business complexity is significant \u2013 complex business rules, regulatory requirements, or domain logic that needs clarification",
-        "Drill down where uniqueness creates risk \u2013 novel approaches, first-of-kind features, or untested patterns benefit from detailed shaping",
-        "Drill down where integration complexity exists \u2013 multiple systems, data dependencies, or coordination challenges need detailed mapping",
-        "Drill down where user behavior is highly variable \u2013 diverse user needs, multiple personas, or inconsistent workflows require deeper understanding",
-        "Skip deep drill-down where patterns are well-established \u2013 standard CRUD operations, familiar workflows, or proven integration patterns can stay high-level",
-        "Focus on core domain over supporting domains",
-        "Identify overall domain concepts and relationships before detailed modeling",
-        "Use ubiquitous language from domain sources",
-        "Model domain concepts, not technical implementation",
-        "Separate domain logic from infrastructure concerns, where they are mentioned"
-      ],
-      "assumptions_made": [
-        "['Focus on User->CLI->Bot->LangGraph interactions (the interaction chain, not internal implementation)', 'Cover the end-to-end scenario', 'Prioritize customer-facing features', 'Assume stories should be independently testable', 'LangGraph is purely additive - zero breaking changes to default workflow']"
-      ]
-    },
-    "recommended_activities": [
-      "Review the AI-generated story map to verify the overarching flow accurately describes the overall user journey and system behavior",
-      "Verify that epics, features, and stories follow action and goal-oriented language as intended",
-      "Review the AI's approach to drill-downs to confirm they bring clarity to areas of uncertainty, complexity, and opportunity rather than over-documenting simple areas",
-      "Review the AI-generated bounded contexts to verify they align with business capabilities",
-      "Validate that domain concepts use language from domain experts",
-      "Review the AI's approach to identifying bounded contexts to confirm they reflect business reality"
-    ]
-  },
-  "prioritization": {
-    "strategy_criteria": {
-      "criteria": {},
-      "decisions_made": {
-        "increment_structure": "Single increment containing all LangGraph stories as the last increment",
-        "increment_priority": "Last increment (highest priority number)",
-        "story_grouping": "All LangGraph stories from Generate LangGraph Framework and Orchestrate Workflow sub-epics"
-      }
-    },
-    "assumptions": {
-      "typical_assumptions": [
-        "Thin slices should provide either value, learning, or risk reduction",
-        "Slices do not need to include all functionality to be useful",
-        "Not every increment must be user-visible if it validates key assumptions",
-        "Some slices may be architectural if they unlock multiple features"
-      ],
-      "assumptions_made": [
-        "Thin slices should provide either value, learning, or risk reduction"
-      ]
-    },
-    "recommended_activities": [
-      "Review the AI-generated slice strategies to verify they are visually coherent and align with the intended approach",
-      "Validate that each AI-proposed slice serves a clear learning, value, or risk-reduction goal",
-      "Review the AI's sequencing logic to verify it optimizes both insight and momentum rather than following a simplistic order",
-      "Validate the scope of stories to verify they are appropriate for the slice"
-    ]
-  },
-  "exploration": {
-    "strategy_criteria": {
-      "criteria": {},
-      "decisions_made": {
-        "acceptance_criteria_consolidation": "Same logic, different data → Consolidate",
-        "acceptance_criteria_count": "Stop when criteria capture a full back-and-forth (user-system-user). Ensures atomic and testable slices.",
-        "acceptance_criteria_granularity": "Inner System – Focus on technical interaction points, system-to-system communication, and internal system behavior",
-        "acceptance_criteria_types": "Both behavioral and domain – Capture user-system interactions AND domain concepts/relationships",
-        "increment_size": "Keep increment as-is – Current scope is appropriate"
-      }
-    },
-    "assumptions": {
-      "typical_assumptions": [
-        "Each story should include both behavioral and domain acceptance criteria",
-        "Acceptance criteria define the end-to-end flow, not just isolated rules",
-        "Behavioral criteria follow a 'When trigger, Then response' format",
-        "Domain criteria describe structured responsibilities or rules around business concepts",
-        "Exploration will result in story reshaping: merging, splitting, or re-scoping is expected",
-        "ACs with same logic but different data should be consolidated",
-        "ACs with different formulas should remain separate",
-        "Domain AC belongs at increment level (aggregated from features), Behavioral AC at story level",
-        "Story documentation (scenarios) belongs in specification_scenarios phase, NOT exploration phase"
-      ],
-      "assumptions_made": [
-        "Each story should include both behavioral and domain acceptance criteria",
-        "Acceptance criteria define the end-to-end flow, not just isolated rules",
-        "Behavioral criteria follow a When trigger, Then response format",
-        "Domain criteria describe structured responsibilities or rules around business concepts",
-        "Exploration will result in story reshaping: merging, splitting, or re-scoping is expected",
-        "ACs with same logic but different data should be consolidated",
-        "ACs with different formulas should remain separate",
-        "Domain AC belongs at increment level (aggregated from features), Behavioral AC at story level",
-        "Story documentation (scenarios) belongs in specification_scenarios phase, NOT exploration phase",
-        "Follow the existing granularity level in acceptance criteria when refining stories"
-      ]
-    },
-    "recommended_activities": [
-      "Review the AI-generated behavioral flow to verify it reflects realistic user-system interactions",
-      "Cross-check the AI's acceptance criteria against domain rules to verify accuracy and completeness",
-      "Validate that the AI has captured complete 'user–system–user' loops and review its approach to identifying interaction boundaries",
-      "Review the AI's first acceptance criteria as a model to verify its approach to story scoping is appropriate",
-      "Review the AI's story structure to identify opportunities for merging or splitting that the AI may have missed",
-      "Verify the AI has addressed vagueness and missing steps in its generated acceptance criteria",
-      "Confirm the AI-generated content aligns with user intent and goals, and review its approach to capturing user needs",
-      "Review the AI's handling of edge cases and exception flows to verify completeness"
+    "assumptions_made": [
+      "One story is specified at a time",
+      "Acceptance criteria must be testable, unambiguous, and executable",
+      "Gherkin syntax or structured language (Given/When/Then) is preferred",
+      "Scenarios are written in plain English without variables or test data",
+      "Specification drives both design and test",
+      "Scenarios must cover both behavior and domain policy",
+      "Examples tables must include ALL variables used in scenario steps",
+      "Examples tables must have exact values for both input AND output variables",
+      "Every variable must have a corresponding column in Examples table",
+      "Examples tables must have actual test data, not placeholders",
+      "Output/expected result variables must be included in Examples tables",
+      "Examples drive both design and test",
+      "Parameterized tests iterate through all behavior-action combinations",
+      "Each test creates a simple one-node BotLangFlow graph",
+      "Tests verify node creation, instruction extraction, AI interaction, and confirmation",
+      "Tests cover both autonomous and interactive BotMode execution",
+      "All tests share a common parameterized list of behavior-action pairs",
+      "Each test focuses on one aspect (node creation, instructions, AI call, confirmation)",
+      "A final integration test validates the complete end-to-end flow",
+      "A common helper function creates test bots with specified behaviors and actions"
     ]
   }
 }

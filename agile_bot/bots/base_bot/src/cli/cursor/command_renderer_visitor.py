@@ -79,9 +79,15 @@ class CursorCommandRendererVisitor(Visitor):
             return
         
         self.output_lines.append("  #")
-        self.output_lines.append("  # Full example:")
+        self.output_lines.append("  # Full example (bash/sh):")
         example_cmd = f"{self.python_command} --behavior {self.behavior_name} --action {context.action_name} {' '.join(example_params)}"
         self.output_lines.append(f"  # {example_cmd}")
+        self.output_lines.append("  #")
+        self.output_lines.append("  # PowerShell: Use = syntax for parameters with values:")
+        example_params_ps = self._build_example_params_powershell(context.parameters[:2])
+        if example_params_ps:
+            example_cmd_ps = f"{self.python_command} --behavior {self.behavior_name} --action {context.action_name} {' '.join(example_params_ps)}"
+            self.output_lines.append(f"  # {example_cmd_ps}")
     
     def _build_example_params(self, params: List[str]) -> List[str]:
         example_params = []
@@ -95,6 +101,20 @@ class CursorCommandRendererVisitor(Visitor):
                 example_params.append(param_name)
             else:
                 example_params.append(f'{param_name} "value"')
+        return example_params
+    
+    def _build_example_params_powershell(self, params: List[str]) -> List[str]:
+        example_params = []
+        for param in params:
+            param_name = param.split()[0]
+            if '<dict>' in param:
+                example_params.append(f'{param_name}="{{`"key`": `"value`"}}"')
+            elif '<list>' in param:
+                example_params.append(f'{param_name}="value1" "value2"')
+            elif '<flag>' in param:
+                example_params.append(param_name)
+            else:
+                example_params.append(f'{param_name}="value"')
         return example_params
     
     def visit_action_help_section_header(self) -> None:

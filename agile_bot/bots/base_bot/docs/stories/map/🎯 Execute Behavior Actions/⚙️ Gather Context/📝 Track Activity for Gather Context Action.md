@@ -5,7 +5,7 @@
 **Epic:** Execute Behavior Actions
 **Feature:** Gather Context
 **User:** Bot Behavior
-**Sequential Order:** 3
+**Sequential Order:** 2
 **Story Type:** user
 
 ## Story Description

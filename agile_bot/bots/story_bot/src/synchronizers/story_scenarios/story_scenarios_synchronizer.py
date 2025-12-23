@@ -132,7 +132,20 @@ def format_scenarios(scenarios_list, common_background=None):
 
         examples_block = ""
         examples_data = scenario.get('examples')
-        if isinstance(examples_data, list) and examples_data:
+        
+        # Handle two formats: list of dicts OR dict with columns+rows (template format)
+        if isinstance(examples_data, dict) and 'columns' in examples_data and 'rows' in examples_data:
+            # Template format: {"columns": [...], "rows": [[...]]}
+            columns = examples_data['columns']
+            rows = examples_data['rows']
+            header = "| " + " | ".join(columns) + " |"
+            separator = "| " + " | ".join(["---"] * len(columns)) + " |"
+            table_rows = []
+            for row in rows:
+                table_rows.append("| " + " | ".join(str(cell).strip() for cell in row) + " |")
+            table = "\n".join([header, separator] + table_rows)
+            examples_block = f"\n**Examples:**\n{table}\n"
+        elif isinstance(examples_data, list) and examples_data:
             if all(isinstance(row, dict) for row in examples_data):
                 # Build a single table using all keys across rows (preserve first-seen order)
                 columns = []
@@ -215,12 +228,16 @@ def create_story_content(story, epic_name, sub_epic_name):
     ac_formatted = format_acceptance_criteria(ac_list)
     
     scenarios_list = story.get('scenarios', [])
+    scenario_outlines_list = story.get('scenario_outlines', [])
     
-    # Get common background from scenarios
-    common_background = get_common_background(scenarios_list)
+    # Combine scenarios and scenario_outlines for processing
+    all_scenarios = scenarios_list + scenario_outlines_list
+    
+    # Get common background from all scenarios
+    common_background = get_common_background(all_scenarios)
     
     # Format scenarios (pass common_background so scenarios include it in their steps)
-    scenarios_formatted = format_scenarios(scenarios_list, common_background)
+    scenarios_formatted = format_scenarios(all_scenarios, common_background)
     
     # Default description if not provided
     description = story.get('description', f'{story_name} functionality for the mob minion system.')
@@ -332,35 +349,42 @@ class StoryScenariosSynchronizer:
         """
         input_path = Path(input_path)
         output_dir = Path(output_path)
-        base_dir = output_dir / 'map'  # Use 'map' subdirectory
+        base_dir = output_dir  # Output path already includes the target directory
         base_dir.mkdir(parents=True, exist_ok=True)
         
         # Load story graph
         with open(input_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        # Get existing story files to avoid duplicates
-        existing_stories = set()
+        # Track existing story files and their paths
+        existing_story_files = {}
         if base_dir.exists():
             for root, dirs, files in os.walk(base_dir):
                 for file in files:
-                    if file.endswith('.md'):
-                        # Handle various formats: [Story] prefix, 📝 emoji, or plain name
+                    if file.endswith('.md') and file != 'README.md':
+                        file_path = Path(root) / file
+                        # Extract story name from filename
                         name = file.replace('.md', '')
                         if name.startswith('[Story] '):
                             name = name[8:]  # Remove '[Story] '
                         elif name.startswith('📝 '):
                             name = name[2:]  # Remove '📝 '
-                        existing_stories.add(name)
+                        existing_story_files[name] = file_path
         
-        # Extract all stories
+        # Extract all stories from graph
         all_stories = []
         for epic in data['epics']:
             all_stories.extend(extract_stories_from_graph(epic))
         
-        # Create story files
+        # Build set of ALL story names that should exist (regardless of scope)
+        # This is used for cleanup - we need to know ALL valid stories to identify obsolete files
+        all_story_names_in_graph = {story['name'] for story in all_stories}
+        
+        # Create story files and track which files were rendered in correct locations
         created_files = []
         updated_files = []
+        deleted_files = []
+        rendered_file_paths = set()  # Track all files we rendered in their correct locations
         
         for story in all_stories:
             story_name = story['name']
@@ -377,6 +401,7 @@ class StoryScenariosSynchronizer:
             
             # Create file (use 📝 emoji prefix)
             story_file = story_dir / f"📝 {story_name}.md"
+            rendered_file_paths.add(story_file)  # Track this as a valid file location
             
             # Generate content
             content = create_story_content(story, story['epic_name'], story['feature_name'])
@@ -391,14 +416,27 @@ class StoryScenariosSynchronizer:
             with open(story_file, 'w', encoding='utf-8') as f:
                 f.write(content)
         
+        # Delete files that exist but weren't rendered (wrong location or obsolete)
+        # This runs regardless of scope - we always clean up files that don't belong
+        for story_name, file_path in existing_story_files.items():
+            if file_path not in rendered_file_paths:
+                try:
+                    file_path.unlink()
+                    deleted_files.append(str(file_path.relative_to(output_dir)))
+                except Exception as e:
+                    # Log error but continue
+                    print(f"Warning: Could not delete obsolete story file {file_path}: {e}")
+        
         return {
             'output_path': str(output_dir),
             'summary': {
                 'total_stories': len(all_stories),
                 'created_files': len(created_files),
-                'updated_files': len(updated_files)
+                'updated_files': len(updated_files),
+                'deleted_files': len(deleted_files)
             },
             'created_files': created_files,
-            'updated_files': updated_files
+            'updated_files': updated_files,
+            'deleted_files': deleted_files
         }
 

@@ -5,7 +5,7 @@
 **Epic:** Invoke Bot
 **Feature:** Perform Behavior Action
 **User:** Bot Behavior
-**Sequential Order:** 7
+**Sequential Order:** 1
 **Story Type:** user
 
 ## Story Description

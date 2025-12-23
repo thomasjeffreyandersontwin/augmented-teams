@@ -10,8 +10,11 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action r
   # Optional: --message <str>
   #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action rules --message "value"
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action rules --message="value"
 
 ### clarify - Gather context by asking required questions and collecting evidence in order to increase understanding
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action clarify
@@ -20,8 +23,11 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action c
   # Optional: --evidence-provided <dict>
   #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action clarify --key-questions-answered '{"key": "value"}' --evidence-provided '{"key": "value"}'
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action clarify --key-questions-answered="{`"key`": `"value`"}" --evidence-provided="{`"key`": `"value`"}"
 
 ### strategy - Decide approach by presenting assumptions and decision criteria, then capturing decisions and assumptions
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action strategy
@@ -30,17 +36,23 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action s
   # Optional: --assumptions-made <list>
   #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action strategy --decisions-made '{"key": "value"}' --assumptions-made "value1" "value2"
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action strategy --decisions-made="{`"key`": `"value`"}" --assumptions-made="value1" "value2"
 
-### build - Build/update the knowledge graph by reading story markdown files and generating story-graph
+### build - Build knowledge graph for build
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action build
   # Optional: --scope <dict>
   #   Scope structure:
   #   {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action build --scope '{"key": "value"}'
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action build --scope="{`"key`": `"value`"}"
 
 ### validate - Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action validate
@@ -53,9 +65,14 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action v
   #   Optional parameter
   # Optional: --all-files <flag>
   #   Optional parameter
+  # Optional: --force-full <flag>
+  #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action validate --scope '{"key": "value"}' --background
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action validate --scope="{`"key`": `"value`"}" --background
 
 ### render - Render output documents and artifacts from knowledge graph using templates and synchronizers
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action render
@@ -63,16 +80,22 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action r
   #   Scope structure:
   #   {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action render --scope '{"key": "value"}'
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action render --scope="{`"key`": `"value`"}"
 
 ### rules - Load behavior-specific rules into AI context for guidance on writing compliant content
 python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action rules
   # Optional: --message <str>
   #   Optional parameter
   #
-  # Full example:
+  # Full example (bash/sh):
   # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action rules --message "value"
+  #
+  # PowerShell: Use = syntax for parameters with values:
+  # python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior shape --action rules --message="value"
 
 ## Common Patterns:
   # Work on specific epic:

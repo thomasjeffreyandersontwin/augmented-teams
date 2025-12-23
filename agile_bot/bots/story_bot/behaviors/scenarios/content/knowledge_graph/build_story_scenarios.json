@@ -1,8 +1,8 @@
 {
   "name": "build_story_scenarios",
   "description": "Build story graph with scenarios added to each story (and scenario outlines with examples if decision criteria chosen)",
-  "input": "docs/stories/story-graph.json",
-  "output": "docs/stories/story-graph.json",
+  "input": "story-graph.json",
+  "output": "story-graph.json",
   "template": "story-graph-scenarios.json",
   "process": [
     "Check decision criteria: agile_bot/bots/story_bot/behaviors/scenarios/guardrails/planning/decision_criteria/scenario_outline.json",

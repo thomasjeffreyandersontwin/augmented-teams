@@ -1,35 +1,34 @@
 # 📝 Generate Help Parameters From Action Context Classes
 
-## Story
+**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
 
-**As a** CLI Generator  
-**I want to** generate help parameter documentation from action context classes  
-**So that** parameter names are always correct and in sync with the typed context
+**Epic:** Build Agile Bots
+**Feature:** Generate CLI
+**User:** MCP Server Generator
+**Sequential Order:** 5
+**Story Type:** user
+
+## Story Description
+
+Generate Help Parameters From Action Context Classes functionality for the mob minion system.
 
 ## Acceptance Criteria
 
+### Behavioral Acceptance Criteria
+
+- **When** Help generator processes action context classes
+
+  **then** Generator extracts parameters from context classes
+
+  **and** Help includes action-specific parameters
+
+## Scenarios
+
+### Scenario: Generate Help Parameters From Action Context Classes (happy_path)
+
+**Steps:**
 ```gherkin
-(AC) CLI Generator --> WHEN ActionFactory.get_action_class is called with action name
-(AC) CLI Generator --> THEN Returns the action class for introspection
-(AC) CLI Generator --> AND Action class has context_class attribute pointing to typed context
-
-(AC) CLI Generator --> WHEN Parameters are extracted from context class
-(AC) CLI Generator --> THEN Field names are converted from underscores to dashes
-(AC) CLI Generator --> AND Parameter format is --field-name (not --field_name)
-
-(AC) CLI Generator --> WHEN Help is generated for actions
-(AC) CLI Generator --> THEN Parameters are dynamically extracted from context_class
-(AC) CLI Generator --> AND No hardcoded parameter lists are used
-(AC) CLI Generator --> AND Parameter documentation stays in sync with code
-
-(AC) CLI Generator --> WHEN Unknown action name is provided
-(AC) CLI Generator --> THEN ActionFactory.get_action_class returns None
+Given system is ready
+When action executes
+Then action completes successfully
 ```
-
-## Implementation Notes
-
-- `ActionFactory.get_action_class(action_name)` is a static method for introspection
-- Dynamically inspects `context_class` dataclass fields using `dataclasses.fields()`
-- Converts `field_name` to `--field-name` for CLI convention
-- Used by `help_action.py`, `unified_help_generator.py`, `cursor_command_generator.py`
-

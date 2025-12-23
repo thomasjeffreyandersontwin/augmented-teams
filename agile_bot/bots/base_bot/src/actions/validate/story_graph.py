@@ -24,10 +24,12 @@ class StoryGraph:
             config_path_value = config_data.get('path', 'docs/stories')
             docs_path = Path(config_path_value.rstrip('/'))
             output_filename = config_data.get('output', 'story-graph.json')
+            docs_dir = self._workspace_directory / docs_path
         else:
+            # documentation_path is already relative to workspace, so use it directly
             docs_path = self._bot_paths.documentation_path
             output_filename = 'story-graph.json'
-        docs_dir = self._workspace_directory / docs_path
+            docs_dir = self._workspace_directory / docs_path
         return docs_dir / output_filename
 
     def _load_story_graph_content(self):
