@@ -5,48 +5,49 @@
 |---------|-------|
 | **Working Directory** | C:\dev\augmented-teams\agile_bot\bots\base_bot |
 | **Bot Path** | C:\dev\augmented-teams\agile_bot\bots\story_bot |
-| **Current State** | code.validate |
+| **Current State** | exploration.validate |
+| **Next step** | `/story_bot-exploration render` |
 
 ## Behavior/Action Progress
 
 ### ☐ **shape**
 ### ☐ **prioritization**
 ### ☐ **discovery**
-### ☐ **exploration**
+### ➤ **exploration**
+  - ☐ clarify
+  - ☐ strategy
+  - ☐ build
+  - ➤ **validate**
+  - ☐ render
 ### ☐ **scenarios**
 ### ☐ **tests**
-### ➤ **code**
-  - ☐ strategy
-  - ☐ render
-  - ➤ **validate**
+### ☐ **code**
 
 
-## Rules Available (27 total)
+## Rules Available (25 total)
 
-1. bug_fix_test_first
-2. business_readable_test_names
-3. call_production_code_directly
-4. consistent_vocabulary
-5. cover_all_behavior_paths
-6. create_parameterized_tests_for_scenarios
-7. define_fixtures_in_test_file
-8. design_api_through_failing_tests
-9. helper_extraction_and_reuse
-10. maintain_test_quality
-11. match_specification_scenarios
-12. mock_only_boundaries
-13. no_fallbacks_in_tests
-14. no_guard_clauses_in_tests
-15. place_imports_at_top
-16. production_code_explicit_dependencies
-17. production_code_single_responsibility
-18. production_code_small_functions
-19. pytest_bdd_orchestrator_pattern
-20. self_documenting_tests
-21. test_observable_behavior
-22. ubiquitous_language
-23. use_ascii_only
-24. use_class_based_organization
-25. use_descriptive_function_names
-26. use_exact_variable_names
-27. use_given_when_then_helpers
+1. given_describes_preconditions_not_functionality
+2. given_describes_state_not_actions
+3. given_uses_state_language
+4. maintain_verb_noun_consistency copy
+5. maintain_verb_noun_consistency
+6. map_sequential_spine_vs_optional_paths copy
+7. map_sequential_spine_vs_optional_paths
+8. map_table_columns_to_scenario_parameters
+9. scenarios_cover_all_cases
+10. scenarios_on_story_docs
+11. scenario_steps_start_with_scenario_specific_given
+12. specify_constants_and_stub_values
+13. stories_developed_and_tested_in_days copy
+14. stories_developed_and_tested_in_days
+15. stories_follow_invest_principles
+16. story_filename_matches_story_name
+17. story_names_must_follow_verb_noun_format copy
+18. story_names_must_follow_verb_noun_format
+19. use_active_behavioral_language copy
+20. use_active_behavioral_language
+21. use_background_for_common_setup
+22. use_domain_rich_language_in_testing_tables
+23. use_verb_noun_format_for_story_elements copy
+24. use_verb_noun_format_for_story_elements
+25. write_plain_english_scenarios
