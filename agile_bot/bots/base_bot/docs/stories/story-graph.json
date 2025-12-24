@@ -3868,6 +3868,193 @@
                       ]
                     },
                     {
+                      "name": "Support Pipe Automation Mode",
+                      "sequential_order": 2.5,
+                      "connector": "and",
+                      "users": [
+                        "AI Agent",
+                        "Automation Script"
+                      ],
+                      "story_type": "system",
+                      "test_file": "test_run_interactive_repl.py",
+                      "test_class": "TestPipeAutomationMode",
+                      "test_method": "test_pipe_mode_processes_commands_without_prompts",
+                      "acceptance_criteria": [
+                        "WHEN stdin is piped (not a TTY), THEN REPL reads commands without displaying prompts",
+                        "WHEN commands are piped, THEN REPL processes commands sequentially until EOF",
+                        "WHEN REPL reaches EOF in pipe mode, THEN REPL exits silently without 'Exiting REPL...' message",
+                        "WHEN multiple commands are piped, THEN REPL maintains state between commands within single session"
+                      ],
+                      "scenario_outlines": [
+                        {
+                          "name": "REPL processes piped commands without prompts",
+                          "steps": [
+                            "Given stdin is piped (not a TTY)",
+                            "And BehaviorActionState exists with current_action=story_bot.shape.clarify",
+                            "When command 'shape' is piped to REPL",
+                            "Then REPL reads command without displaying '[story_bot] >' prompt",
+                            "And REPL displays 'EXECUTING' in output",
+                            "And REPL executes shape.clarify.instructions",
+                            "And REPL returns shape.clarify.instructions to caller"
+                          ],
+                          "test_method": "test_pipe_mode_processes_commands_without_prompts"
+                        },
+                        {
+                          "name": "REPL maintains state between piped commands",
+                          "steps": [
+                            "Given stdin is piped",
+                            "And BehaviorActionState exists with current_action=story_bot.shape.clarify",
+                            "When commands 'shape', 'build', 'submit', 'status' are piped sequentially",
+                            "Then REPL executes all commands in single session",
+                            "And state persists between commands",
+                            "And final status shows current position as shape.build",
+                            "And BehaviorActionState.current_action is 'story_bot.shape.build'"
+                          ],
+                          "test_method": "test_pipe_mode_maintains_state_between_commands"
+                        },
+                        {
+                          "name": "REPL returns all instructions for multiple actions in single behavior",
+                          "steps": [
+                            "Given stdin is piped",
+                            "And BehaviorActionState exists with current_behavior=story_bot.shape",
+                            "When commands 'shape.clarify', 'shape.strategy', 'shape.build', 'shape.validate', 'shape.render' are piped sequentially",
+                            "Then REPL executes instructions for each action",
+                            "And REPL returns clarify instructions",
+                            "And REPL returns strategy instructions",
+                            "And REPL returns build instructions",
+                            "And REPL returns validate instructions",
+                            "And REPL returns render instructions",
+                            "And all instructions are returned in single response batch"
+                          ],
+                          "test_method": "test_pipe_mode_returns_all_action_instructions_for_behavior"
+                        },
+                        {
+                          "name": "REPL handles EOF gracefully in pipe mode",
+                          "steps": [
+                            "Given stdin is piped",
+                            "And single command 'shape' is piped",
+                            "When REPL processes command and reaches EOF",
+                            "Then REPL executes command successfully with status='success'",
+                            "And REPL displays 'EXECUTING' in output",
+                            "And REPL exits silently without 'Exiting REPL...' message"
+                          ],
+                          "test_method": "test_pipe_mode_handles_eof_gracefully"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Support Dot Notation Commands",
+                      "sequential_order": 2.6,
+                      "connector": "and",
+                      "users": [
+                        "User",
+                        "AI Agent"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_run_interactive_repl.py",
+                      "test_class": "TestDotNotationCommands",
+                      "test_method": "test_navigate_using_behavior_dot_action",
+                      "acceptance_criteria": [
+                        "WHEN user enters command in format 'behavior.action', THEN REPL navigates to specified behavior and action",
+                        "WHEN user enters command in format 'behavior.action.operation', THEN REPL executes specified operation",
+                        "WHEN user enters invalid behavior in dot notation, THEN REPL returns error and state remains unchanged",
+                        "WHEN user enters invalid action in dot notation, THEN REPL returns error and state remains unchanged",
+                        "WHEN user enters invalid operation in dot notation, THEN REPL returns error listing valid operations"
+                      ],
+                      "scenario_outlines": [
+                        {
+                          "name": "Navigate to behavior and action using dot notation",
+                          "steps": [
+                            "Given REPL is at story_bot.shape.clarify",
+                            "And all standard behaviors exist",
+                            "When user enters 'discovery.build'",
+                            "Then REPL displays 'EXECUTING'",
+                            "And REPL displays 'discovery.build'",
+                            "And BehaviorActionState.current_action is updated to 'story_bot.discovery.build'"
+                          ],
+                          "test_method": "test_navigate_using_behavior_dot_action"
+                        },
+                        {
+                          "name": "Navigate and execute operation using dot notation",
+                          "steps": [
+                            "Given REPL is at story_bot.shape.clarify",
+                            "And shape behavior exists with actions",
+                            "When user enters 'shape.build.instructions' then 'shape.build.submit'",
+                            "Then REPL displays 'EXECUTING'",
+                            "And REPL displays 'shape.build.submit'",
+                            "And BehaviorActionState.current_action is 'story_bot.shape.build'"
+                          ],
+                          "test_method": "test_navigate_and_execute_operation_using_dot_notation"
+                        },
+                        {
+                          "name": "Dot notation with all operations",
+                          "steps": [
+                            "Given REPL is at story_bot.shape.clarify",
+                            "And behavior '<behavior>' exists with actions",
+                            "When user enters '<behavior>.<action>.<operation>'",
+                            "Then response status is 'success'",
+                            "And REPL displays '<behavior>.<action>.<operation>'"
+                          ],
+                          "examples": {
+                            "columns": [
+                              "behavior",
+                              "action",
+                              "operation"
+                            ],
+                            "rows": [
+                              ["shape", "build", "instructions"],
+                              ["discovery", "validate", "instructions"]
+                            ]
+                          },
+                          "test_method": "test_dot_notation_with_all_operations"
+                        },
+                        {
+                          "name": "Handle invalid behavior in dot notation",
+                          "steps": [
+                            "Given REPL is at story_bot.shape.clarify",
+                            "And behavior 'invalid' does not exist",
+                            "When user enters 'invalid.build'",
+                            "Then REPL displays 'ERROR: Behavior 'invalid' not found'",
+                            "And BehaviorActionState remains unchanged"
+                          ],
+                          "test_method": "test_dot_notation_with_invalid_behavior"
+                        },
+                        {
+                          "name": "Handle invalid action in dot notation",
+                          "steps": [
+                            "Given REPL is at story_bot.shape.clarify",
+                            "And shape behavior exists with actions [clarify, strategy, build, validate, render]",
+                            "When user enters 'shape.nonexistent'",
+                            "Then REPL displays 'ERROR: Action 'nonexistent' not found in behavior 'shape''",
+                            "And BehaviorActionState remains unchanged"
+                          ],
+                          "test_method": "test_dot_notation_with_invalid_action"
+                        },
+                        {
+                          "name": "Handle invalid operation in dot notation",
+                          "steps": [
+                            "Given REPL is at story_bot.shape.clarify",
+                            "When user enters 'shape.build.invalid'",
+                            "Then REPL displays 'ERROR: Unknown operation 'invalid''",
+                            "And REPL displays 'Use: instructions, submit, or confirm'",
+                            "And BehaviorActionState remains unchanged"
+                          ],
+                          "test_method": "test_dot_notation_with_invalid_operation"
+                        },
+                        {
+                          "name": "Batch process all behaviors with dot notation",
+                          "steps": [
+                            "Given all 7 behaviors exist (shape, prioritization, discovery, exploration, scenarios, tests, code)",
+                            "And REPL is at story_bot.shape.clarify",
+                            "When user enters '<behavior>.render.instructions' for each behavior",
+                            "Then all 7 commands execute successfully",
+                            "And BehaviorActionState.current_action ends at 'story_bot.code.render'"
+                          ],
+                          "test_method": "test_batch_process_all_behaviors_with_dot_notation"
+                        }
+                      ]
+                    },
+                    {
                       "name": "Display Fresh Start",
                       "sequential_order": 3,
                       "connector": "or",
@@ -4120,9 +4307,8 @@
                             "And Behavior \"<target_behavior>\" has actions from Background: Behavior Actions",
                             "And user enters command: behavior <target_behavior>",
                             "When CLI processes navigation command",
-                            "Then CLI responds \"OK behavior=<target_behavior>\"",
-                            "And CLI displays \"CURRENT: story_bot.<target_behavior>.clarify\"",
-                            "And CLI displays breadcrumbs: \"[<target_behavior>] clarify* -> strategy -> build -> validate -> render\"",
+                            "Then CLI displays \"EXECUTING <target_behavior>.clarify.instructions\"",
+                            "And CLI displays \"[INSTRUCTIONS]\"",
                             "And BehaviorActionState.current_behavior is updated to <target_behavior>",
                             "And BehaviorActionState.current_action is set to clarify"
                           ],
@@ -4209,13 +4395,9 @@
                             "And BehaviorActionState.current_action is <current_action>",
                             "And Behavior \"<current_behavior>\" has actions from Background: Behavior Actions",
                             "And BehaviorActionState.completed_actions contains: <completed_actions>",
-                            "And user enters command: action <target_action>",
-                            "When CLI processes navigation command",
-                            "Then CLI responds \"OK action=<target_action>\"",
-                            "And CLI displays \"CURRENT: story_bot.<current_behavior>.<target_action>\"",
-                            "And CLI displays breadcrumbs showing <target_action> as current with * marker",
-                            "And breadcrumbs show <completed_actions> with [OK] markers",
-                            "And BehaviorActionState.current_action is updated to <target_action>"
+                            "When user enters command: \"<target_action>\"",
+                            "Then CLI displays \"EXECUTING <current_behavior>.<target_action>.instructions\"",
+                            "And BehaviorActionState.current_action is updated to \"story_bot.<current_behavior>.<target_action>\""
                           ],
                           "examples": {
                             "columns": [
@@ -4521,9 +4703,7 @@
                       "test_class": "TestEnterConfirmResults",
                       "test_method": "test_user_confirms_action_completion_and_advances_workflow",
                       "acceptance_criteria": [
-                        "WHEN user confirms with y, THEN CLI advances to next action and updates breadcrumbs",
-                        "WHEN user enters n, THEN CLI remains at current action",
-                        "WHEN user enters review, THEN CLI displays detailed results"
+                        "WHEN user enters confirm, THEN CLI advances to next action and executes instructions"
                       ],
                       "scenario_outlines": [
                         {
@@ -4532,48 +4712,22 @@
                             "Given BehaviorActionState.current_behavior is \"<behavior>\"",
                             "And BehaviorActionState.current_action is \"<current_action>\"",
                             "And BehaviorActionState.completed_actions are: <completed_actions>",
-                            "And CLI is prompting to continue to: \"<next_action>\"",
-                            "When user runs confirm operation with confirmation: \"y\"",
-                            "Then CLI displays \"OK advancing to <next_action>\"",
+                            "When user enters confirm command",
+                            "Then CLI displays \"EXECUTING <behavior>.<next_action>.instructions\"",
                             "And BehaviorActionState.current_action becomes \"<next_action>\"",
-                            "And BehaviorActionState.completed_actions become <new_completed_actions>",
-                            "And CLI displays \"CURRENT: story_bot.<behavior>.<next_action>\"",
-                            "And CLI displays breadcrumbs: \"<breadcrumbs>\""
+                            "And BehaviorActionState.completed_actions includes \"<current_action>\""
                           ],
                           "examples": {
                             "columns": [
                               "behavior",
                               "current_action",
                               "next_action",
-                              "completed_actions",
-                              "new_completed_actions",
-                              "breadcrumbs"
+                              "completed_actions"
                             ],
                             "rows": [
-                              [
-                                "shape",
-                                "clarify",
-                                "strategy",
-                                "[]",
-                                "[clarify]",
-                                "[shape] clarify [OK] -> strategy* -> build -> validate -> render"
-                              ],
-                              [
-                                "shape",
-                                "strategy",
-                                "build",
-                                "[clarify]",
-                                "[clarify,strategy]",
-                                "[shape] clarify [OK] -> strategy [OK] -> build* -> validate -> render"
-                              ],
-                              [
-                                "shape",
-                                "build",
-                                "validate",
-                                "[clarify,strategy]",
-                                "[clarify,strategy,build]",
-                                "[shape] clarify [OK] -> strategy [OK] -> build [OK] -> validate* -> render"
-                              ]
+                              ["shape", "clarify", "strategy", "[]"],
+                              ["shape", "strategy", "build", "[clarify]"],
+                              ["shape", "build", "validate", "[clarify,strategy]"]
                             ]
                           }
                         }
@@ -4600,34 +4754,66 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_file": "test_run_interactive_repl.py",
+                      "test_class": "TestConfirmAdvancesAcrossBehaviors",
+                      "test_method": "test_confirm_at_last_action_moves_to_next_behavior",
                       "acceptance_criteria": [
                         "WHEN user confirms last action of behavior, THEN CLI marks behavior complete",
                         "WHEN behavior is complete, THEN CLI moves to next behavior's first action",
-                        "WHEN CLI moves to next behavior, THEN CLI executes next behavior's first action's instructions"
+                        "WHEN CLI moves to next behavior, THEN CLI executes next behavior's first action's instructions",
+                        "WHEN user confirms last action of last behavior, THEN CLI shows workflow complete"
                       ],
-                      "scenarios": [
+                      "scenario_outlines": [
                         {
                           "name": "Confirm at last action moves to next behavior",
                           "steps": [
-                            "Given current position is shape.render.submit",
-                            "And shape.render is the last action of shape behavior",
-                            "When user types \"confirm\"",
-                            "Then CLI marks shape.render as complete",
-                            "And CLI marks shape behavior as complete",
-                            "And CLI moves to prioritization.clarify.instructions",
-                            "And CLI executes prioritization.clarify.instructions",
-                            "And CLI displays instructions for prioritization.clarify"
-                          ]
+                            "Given current position is <current_behavior>.render",
+                            "And <current_behavior>.render is the last action of <current_behavior> behavior",
+                            "And completed_actions contains [clarify, strategy, build, validate]",
+                            "And <next_behavior> behavior exists",
+                            "When user executes 'render' then 'confirm'",
+                            "Then CLI displays 'EXECUTING <next_behavior>.clarify.instructions'",
+                            "And BehaviorActionState.current_behavior is updated to 'story_bot.<next_behavior>'",
+                            "And BehaviorActionState.current_action is updated to 'story_bot.<next_behavior>.clarify'"
+                          ],
+                          "examples": {
+                            "columns": [
+                              "current_behavior",
+                              "next_behavior"
+                            ],
+                            "rows": [
+                              ["shape", "prioritization"],
+                              ["prioritization", "discovery"],
+                              ["discovery", "exploration"],
+                              ["exploration", "scenarios"],
+                              ["scenarios", "tests"],
+                              ["tests", "code"]
+                            ]
+                          },
+                          "test_method": "test_confirm_at_last_action_moves_to_next_behavior"
                         },
                         {
-                          "name": "Confirm within behavior advances to next action",
+                          "name": "Confirm at last action marks behavior complete",
                           "steps": [
-                            "Given current position is shape.clarify.submit",
-                            "When user types \"confirm\"",
-                            "Then CLI marks shape.clarify as complete",
-                            "And CLI moves to shape.strategy.instructions",
-                            "And CLI executes shape.strategy.instructions"
-                          ]
+                            "Given current position is shape.render",
+                            "And completed_actions contains [clarify, strategy, build, validate]",
+                            "And prioritization behavior exists",
+                            "When user executes 'render' then 'confirm'",
+                            "Then completed_actions includes 'story_bot.shape.render'"
+                          ],
+                          "test_method": "test_confirm_at_last_action_marks_behavior_complete"
+                        },
+                        {
+                          "name": "Confirm at last behavior shows workflow complete",
+                          "steps": [
+                            "Given current position is code.render",
+                            "And code is the last behavior",
+                            "And completed_actions contains [clarify, strategy, build, validate]",
+                            "When user executes 'render' then 'confirm'",
+                            "Then CLI displays 'COMPLETE'",
+                            "And CLI displays 'code'"
+                          ],
+                          "test_method": "test_confirm_at_last_behavior_shows_workflow_complete"
                         }
                       ]
                     }
@@ -4664,11 +4850,12 @@
                           "steps": [
                             "Given current behavior is <behavior>",
                             "And Behavior has actions: <actions>",
-                            "And Action \"<action>\" has parameters: <parameters>",
                             "And user enters command: help",
                             "When CLI processes help request",
-                            "Then CLI displays \"Available Actions for behavior: <behavior>\"",
-                            "And CLI displays action list with descriptions",
+                            "Then CLI displays \"Core Commands:\"",
+                            "And CLI displays available behaviors",
+                            "And CLI displays available actions with descriptions",
+                            "And CLI displays available operations",
                             "And CLI displays navigation commands"
                           ],
                           "examples": {
@@ -4705,15 +4892,12 @@
                           "steps": [
                             "Given current behavior is <behavior>",
                             "And Action \"<action>\" exists in behavior",
-                            "And Action has description: <description>",
-                            "And Action has parameters: <parameters>",
                             "And user enters command: help <action>",
                             "When CLI processes detailed help request",
-                            "Then CLI displays \"## <action> - <description>\"",
-                            "And CLI displays \"Full command:\"",
-                            "And CLI displays \"  action <action> <parameter_syntax>\"",
-                            "And CLI displays \"Parameters:\" with type annotations",
-                            "And CLI displays \"Examples:\" with concrete values"
+                            "Then CLI displays \"## <action>\"",
+                            "And CLI displays \"Usage:\"",
+                            "And CLI displays action stages: instructions, submit, confirm",
+                            "And CLI displays \"Context Parameters\" if action has parameters"
                           ],
                           "examples": {
                             "columns": [
@@ -4773,9 +4957,10 @@
                             "And BehaviorActionState.working_directory is \"<working_dir>\"",
                             "And BehaviorActionState.completed_actions are: <completed_actions>",
                             "When user enters command: \"status\"",
-                            "Then CLI displays \"CURRENT: story_bot.<behavior>.<action>\"",
-                            "And CLI displays \"Working Directory: <working_dir>\"",
-                            "And CLI displays breadcrumbs: \"<breadcrumbs>\""
+                            "Then CLI displays \"Progress: <behavior>.<action>.<stage>\"",
+                            "And CLI displays \"Behaviors:\" with current behavior marked [*]",
+                            "And CLI displays \"Actions:\" with completed actions marked [OK] and current marked [*]",
+                            "And CLI displays \"Operations:\" showing current stage"
                           ],
                           "examples": {
                             "columns": [
@@ -4806,6 +4991,55 @@
                                 "C:\\dev\\another-proj",
                                 "[clarify,strategy,build]",
                                 "[discovery] clarify [OK] -> strategy [OK] -> build [OK] -> validate* -> render"
+                              ]
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Show Action Parameter Help",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN user enters help <action>, THEN CLI displays parameter syntax for that action",
+                        "WHEN action has parameters, THEN CLI displays parameter names with type annotations"
+                      ],
+                      "scenario_outlines": [
+                        {
+                          "name": "User requests parameter help for action with parameters",
+                          "steps": [
+                            "Given current behavior is <behavior>",
+                            "And Action \"<action>\" exists in behavior",
+                            "And Action has parameters: <parameters>",
+                            "And user enters command: help <action>",
+                            "When CLI processes detailed help request",
+                            "Then CLI displays \"action <action> <parameter_syntax>\"",
+                            "And CLI displays \"Parameters:\" with type annotations for each parameter"
+                          ],
+                          "examples": {
+                            "columns": [
+                              "behavior",
+                              "action",
+                              "parameters",
+                              "parameter_syntax"
+                            ],
+                            "rows": [
+                              [
+                                "shape",
+                                "build",
+                                "[\"--scope <dict>\"]",
+                                "--scope '{\"type\": \"epic\", \"value\": [\"Epic Name\"]}'"
+                              ],
+                              [
+                                "discovery",
+                                "validate",
+                                "[\"--scope <dict>\", \"--background <flag>\"]",
+                                "--scope '{\"type\": \"all\"}' --background"
                               ]
                             ]
                           }
@@ -4863,7 +5097,7 @@
                       "test_class": "TestEnterAction",
                       "test_method": "test_user_executes_current_action_mock",
                       "acceptance_criteria": [
-                        "WHEN user enters run, THEN CLI executes current action and displays response"
+                        "WHEN user enters action name, THEN CLI executes instructions and displays response"
                       ],
                       "scenario_outlines": [
                         {
@@ -4871,10 +5105,10 @@
                           "steps": [
                             "Given BehaviorActionState.current_behavior is \"<behavior>\"",
                             "And BehaviorActionState.current_action is \"<action>\"",
-                            "When user runs instructions operation with command: \"run\"",
+                            "When user enters command: \"<action>\"",
                             "Then CLI displays \"EXECUTING <behavior>.<action>.instructions\"",
-                            "And CLI displays \"[mock response - not executing real action]\"",
-                            "And CLI displays mock response: {\"status\": \"success\", \"action\": \"<action>\", \"data\": {...}}"
+                            "And CLI displays \"[INSTRUCTIONS]\"",
+                            "And CLI returns response with status='success'"
                           ],
                           "examples": {
                             "columns": [
@@ -6576,6 +6810,8 @@
       "stories": [
         "Launch REPL Loop",
         "Detect TTY Input",
+        "Support Pipe Automation Mode",
+        "Support Dot Notation Commands",
         "Display Fresh Start",
         "Display Existing State",
         "Show Current Position In Workflow Breadcrumbs",
@@ -6583,6 +6819,71 @@
         "Navigate To Behavior",
         "Navigate To Action",
         "Navigate Within Behavior",
+        "Confirm Advances Across Behaviors",
+        "Request Help",
+        "Request Status",
+        "Enter Action",
+        "Display Confirm and Continue Prompt",
+        "Enter Confirm Results",
+        "Advance To Next Action",
+        "Loop Back To Display State",
+        "Exit REPL",
+        "Support Dot Notation Commands"
+      ]
+    },
+    {
+      "name": "REPL All Scope Parameters (Mock Backend)",
+      "priority": 11,
+      "description": "Combined mock backend increment for Base, Story, and File scope parameters",
+      "stories": [
+        "Show Available Behaviors and Actions",
+        "Navigate To Behavior",
+        "Navigate To Action",
+        "Request Help",
+        "Request Status",
+        "Provide Context For Instructions ",
+        "Provide Story Scope Context For Instructions",
+        "Provide File Scope Context For Instructions",
+        "Store Scope Context",
+        "Get Instructions and Display ",
+        "Submit Action and Display Results",
+        "Confirm Action and Display Results",
+        "Enter Confirm Results",
+        "Advance To Next Action",
+        "Loop Back To Display State",
+        "Show Action Parameter Help"
+      ]
+    },
+    {
+      "name": "REPL All Scope Parameters (Real Backend)",
+      "priority": 12,
+      "description": "Combined real backend increment for generation and real action execution",
+      "stories": [
+
+        "Generate REPL Command Definitions",
+        "Generate CLI Entry Point",
+        "Generate Cursor Commands",
+        "Generate Help Documentation",
+        "Execute Current Action",
+        "Parse Command Input",
+        "Retrieve and Display Bot Behavior Action Instructions",
+        "Display Action Output",
+
+      
+        "Launch REPL Loop",
+        "Detect TTY Input",
+        "Support Pipe Automation Mode",
+        "Display Fresh Start",
+        "Display Existing State",
+        "Support Dot Notation Commands",
+        "Display Fresh Start",
+        "Display Existing State",
+        "Show Current Position In Workflow Breadcrumbs",
+        "Show Available Behaviors and Actions",
+        "Navigate To Behavior",
+        "Navigate To Action",
+        "Navigate Within Behavior",
+        "Confirm Advances Across Behaviors",
         "Request Help",
         "Request Status",
         "Enter Action",
@@ -6594,104 +6895,6 @@
         "Advance To Next Action",
         "Loop Back To Display State",
         "Exit REPL"
-      ]
-    },
-    {
-      "name": "REPL Generation",
-      "priority": 11,
-      "stories": [
-        "Generate REPL Command Definitions",
-        "Generate CLI Entry Point",
-        "Generate Cursor Commands",
-        "Generate Help Documentation"
-      ]
-    },
-    {
-      "name": "REPL Base Parameters (No Scope)",
-      "priority": 12,
-      "stories": [
-        "Display Fresh Start",
-        "Display Existing State",
-        "Show Current Position In Workflow Breadcrumbs",
-        "Show Available Behaviors and Actions",
-        "Navigate To Behavior",
-        "Navigate To Action",
-        "Request Help",
-        "Request Status",
-        "Enter Action",
-        "Parse Command Input",
-        "Validate Instruction Syntax and Regular Parameters",
-        "Display Confirm and Continue Prompt",
-        "Enter Confirm Results",
-        "Execute Current Action",
-        "Display Action Output",
-        "Advance To Next Action",
-        "Loop Back To Display State"
-      ]
-    },
-    {
-      "name": "REPL Story Parameters (Mock Backend)",
-      "priority": 13,
-      "stories": [
-        "Set Scope Parameter",
-        "Enter Action",
-        "Parse Command Input",
-        "Validate Instruction Syntax and Regular Parameters",
-        "Prompt For Story Scope Parameters",
-        "Display Confirm and Continue Prompt",
-        "Enter Confirm Results",
-        "Execute Current Action",
-        "Display Action Output",
-        "Advance To Next Action"
-      ]
-    },
-    {
-      "name": "REPL Story Parameters (Real Backend)",
-      "priority": 14,
-      "stories": [
-        "Set Scope Parameter",
-        "Enter Action",
-        "Parse Command Input",
-        "Validate Instruction Syntax and Regular Parameters",
-        "Prompt For Story Scope Parameters",
-        "Display Confirm and Continue Prompt",
-        "Enter Confirm Results",
-        "Execute Current Action",
-        "Display Action Output",
-        "Advance To Next Action",
-        "Retrieve and Display Bot Behavior Action Instructions"
-      ]
-    },
-    {
-      "name": "REPL File Parameters (Mock Backend)",
-      "priority": 15,
-      "stories": [
-        "Set Scope Parameter",
-        "Enter Action",
-        "Parse Command Input",
-        "Validate Instruction Syntax and Regular Parameters",
-        "Prompt For File Scope Parameters",
-        "Display Confirm and Continue Prompt",
-        "Enter Confirm Results",
-        "Execute Current Action",
-        "Display Action Output",
-        "Advance To Next Action"
-      ]
-    },
-    {
-      "name": "REPL File Parameters (Real Backend)",
-      "priority": 16,
-      "stories": [
-        "Set Scope Parameter",
-        "Enter Action",
-        "Parse Command Input",
-        "Validate Instruction Syntax and Regular Parameters",
-        "Prompt For File Scope Parameters",
-        "Display Confirm and Continue Prompt",
-        "Enter Confirm Results",
-        "Execute Current Action",
-        "Display Action Output",
-        "Advance To Next Action"
       ]
     }
   ]

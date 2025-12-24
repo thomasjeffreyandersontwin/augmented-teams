@@ -5,8 +5,7 @@
 |---------|-------|
 | **Working Directory** | C:\dev\augmented-teams\agile_bot\bots\base_bot |
 | **Bot Path** | C:\dev\augmented-teams\agile_bot\bots\story_bot |
-| **Current State** | tests.validate |
-| **Next step** | `/story_bot-code strategy` |
+| **Current State** | code.validate |
 
 ## Behavior/Action Progress
 
@@ -15,44 +14,39 @@
 ### ☐ **discovery**
 ### ☐ **exploration**
 ### ☐ **scenarios**
-### ➤ **tests**
-  - ☐ build
+### ☐ **tests**
+### ➤ **code**
+  - ☐ strategy
   - ☐ render
   - ➤ **validate**
-### ☐ **code**
 
 
-## Rules Available (32 total)
+## Rules Available (27 total)
 
-1. avoid_excessive_guards
-2. avoid_unnecessary_parameter_passing
-3. chain_dependencies_properly
-4. classify_exceptions_by_caller_needs
-5. delegate_to_lowest_level
-6. detect_legacy_unused_code
-7. eliminate_duplication
-8. enforce_encapsulation
-9. favor_code_representation
-10. group_by_domain
-11. hide_business_logic_behind_properties
-12. hide_calculation_timing
-13. keep_classes_small_with_single_responsibility
-14. keep_functions_single_responsibility
-15. keep_functions_small_focused
-16. maintain_vertical_density
-17. never_swallow_exceptions
-18. place_imports_at_top
-19. prefer_object_model_over_config
-20. provide_meaningful_context
-21. refactor_completely_not_partially
-22. refactor_tests_with_production_code
-23. simplify_control_flow
-24. stop_writing_useless_comments
-25. use_clear_function_parameters
-26. use_consistent_indentation
-27. use_consistent_naming
-28. use_domain_language
-29. use_exceptions_properly
-30. use_explicit_dependencies
-31. use_natural_english
-32. use_resource_oriented_design
+1. bug_fix_test_first
+2. business_readable_test_names
+3. call_production_code_directly
+4. consistent_vocabulary
+5. cover_all_behavior_paths
+6. create_parameterized_tests_for_scenarios
+7. define_fixtures_in_test_file
+8. design_api_through_failing_tests
+9. helper_extraction_and_reuse
+10. maintain_test_quality
+11. match_specification_scenarios
+12. mock_only_boundaries
+13. no_fallbacks_in_tests
+14. no_guard_clauses_in_tests
+15. place_imports_at_top
+16. production_code_explicit_dependencies
+17. production_code_single_responsibility
+18. production_code_small_functions
+19. pytest_bdd_orchestrator_pattern
+20. self_documenting_tests
+21. test_observable_behavior
+22. ubiquitous_language
+23. use_ascii_only
+24. use_class_based_organization
+25. use_descriptive_function_names
+26. use_exact_variable_names
+27. use_given_when_then_helpers
