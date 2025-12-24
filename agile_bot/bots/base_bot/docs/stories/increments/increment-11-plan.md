@@ -11,12 +11,15 @@
 
 Increment 11 focuses on creating a complete REPL user experience where:
 - Navigation and parameters work with a **real bot** (`test_story_bot`)
-- Action execution uses **stubbed operations** (no file saves, no scanner runs, no renders)
+- Action execution uses **stubbed operations** (no file saves, no scanner runs)
 - Actions are refactored to have **three operations**: `instructions`, `submit`, `confirm`
+- **Output uses real rendering** - formatters and output builders from legacy CLI for proper display
+
+**Goal**: Make this look as close to the **real production experience** as possible. The only things stubbed are the actual save/scan operations - everything else (navigation, parameters, rendering, formatting) should be production-quality.
 
 ---
 
-## Increment 11 Stories (16 Total)
+## Increment 11 Stories (17 Total)
 
 From `story-graph.json` priority 11:
 
@@ -36,6 +39,7 @@ From `story-graph.json` priority 11:
 14. Advance To Next Action
 15. Loop Back To Display State
 16. Show Action Parameter Help
+17. Format CLI Output For Chat *(NEW)*
 
 ---
 
@@ -50,7 +54,7 @@ Before implementation, review and reuse existing CLI helper classes. These have 
 | **CliContextBuilder** | Builds typed ActionContext from CLI args, parses ScopeConfig | Scope parameter handling in REPL |
 | **CliParameterParser** | Parses CLI arguments, handles JSON scope, key=value pairs | REPL command parsing |
 | **CliCommandRouter** | Routes to behaviors/actions, executes with context | REPL action execution |
-| **CliTerminalFormatter** | Formats output (headers, errors, status markers) | REPL display formatting |
+| **CliTerminalFormatter** | Formats output (headers, errors, status markers) | REPL display formatting, pipe mode output |
 | **ActionDataCollector** | Collects action metadata, parameters, descriptions | REPL help/parameter display |
 | **DescriptionExtractor** | Extracts descriptions from behavior/action configs | REPL help text |
 | **ParameterInfoBuilder** | Builds parameter info with placeholders | REPL parameter prompts |
@@ -126,6 +130,12 @@ def _parse_scope_config(self, json_str: str) -> Optional[ScopeConfig]:
    - Use `CliCommandRouter` pattern for action execution
    - Extend with operation-specific routing (`instructions`, `submit`, `confirm`)
 
+5. **Pipe Mode Output (Format CLI Output For Chat)**:
+   - When stdin is NOT a TTY (pipe mode), format output for AI chat consumption
+   - Use `CliTerminalFormatter` for structured markdown output
+   - Use `CliHelpRendererVisitor` patterns for help/status rendering
+   - Output must be properly formatted for AI to display to user
+
 ---
 
 ## Step 1: Rationalize Stories
@@ -196,6 +206,12 @@ New stories for Increment 11 (need full definitions):
    - Type: system
    - Purpose: Return to state display after command execution
 
+10. **Format CLI Output For Chat**
+    - User: CLI
+    - Type: system
+    - Purpose: Format REPL output for AI chat consumption (pipe mode)
+    - Notes: When not in TTY mode but in pipe mode, use formatters and output builders from legacy CLI for proper rendered output that AI can display to user
+
 ---
 
 ## Step 2: Exploration (Acceptance Criteria)
@@ -261,6 +277,7 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior exploration --ac
 | 14 | Advance To Next Action | EXISTING | Real workflow advancement |
 | 15 | Loop Back To Display State | NEW | Real state display loop |
 | 16 | Show Action Parameter Help | EXISTING | Real parameters from ActionDataCollector |
+| 17 | Format CLI Output For Chat | NEW | Use legacy CLI formatters/output builders for pipe mode |
 
 #### Delta Focus for Existing Stories
 
@@ -309,7 +326,7 @@ After updating story-graph.json, render ONE increment-level exploration document
 **Location**: `agile_bot/bots/base_bot/docs/stories/increment-11-exploration.md`
 
 **Priority:** 11
-**Relative Size:** Medium (16 stories)
+**Relative Size:** Medium (17 stories)
 
 ## Increment Purpose
 
@@ -342,7 +359,7 @@ Delivers complete REPL user experience with real bot integration (test_story_bot
 
 ---
 
-## Stories (16 total)
+## Stories (17 total)
 
 {stories_with_ac from story-graph.json}
 
@@ -374,6 +391,20 @@ Delivers complete REPL user experience with real bot integration (test_story_bot
 - **Templates:** story-graph-explored.json, story-exploration.md
 - **Rules:** /story_bot-exploration-rules
 ```
+
+---
+
+## ⏸️ CHECKPOINT: Human Review After Exploration
+
+**STOP HERE** after Step 2 is complete.
+
+Before proceeding to Step 3 (Scenarios):
+1. Human reviews all acceptance criteria added to story-graph.json
+2. Human reviews increment-11-exploration.md document
+3. Human confirms delta focus is correct (mock vs real)
+4. Human approves acceptance criteria before creating scenarios
+
+**Do not proceed to Step 3 until human approval is given.**
 
 ---
 
@@ -413,7 +444,26 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior scenarios --acti
 
 ---
 
-## Step 4: TDD Implementation
+## ⏸️ CHECKPOINT: Human Review After Scenarios
+
+**STOP HERE** after Step 3 is complete.
+
+Before proceeding to Step 4 (TDD Implementation):
+1. Human reviews all acceptance criteria in story-graph.json
+2. Human reviews increment-11-exploration.md
+3. Human reviews all generated scenarios
+4. Human approves scenarios before writing tests
+
+**Do not proceed to Step 4 until human approval is given.**
+
+---
+
+## Step 4: TDD Implementation (After Human Approval)
+
+Once scenarios are approved, proceed with TDD:
+1. **Write tests** based on approved scenarios
+2. **Implement code** to make tests pass
+3. **Manual testing** to verify end-to-end experience
 
 ### 4.1 Refactor Action Classes
 
@@ -537,6 +587,7 @@ agile_bot/bots/test_story_bot/
 - [ ] Update AC: Advance To Next Action (delta: real workflow advancement)
 - [ ] Add AC: Loop Back To Display State (NEW)
 - [ ] Update AC: Show Action Parameter Help (delta: real ActionDataCollector)
+- [ ] Add AC: Format CLI Output For Chat (NEW - legacy formatters in pipe mode)
 
 ### Step 2B: Render Increment Exploration Document
 - [ ] Create `increment-11-exploration.md` using story-exploration.md template
@@ -545,6 +596,11 @@ agile_bot/bots/test_story_bot/
 - [ ] Document consolidation decisions
 - [ ] Reference source material and rules followed
 
+### ⏸️ CHECKPOINT: Human Review After Exploration
+- [ ] **STOP** - Wait for human review of story-graph.json acceptance criteria
+- [ ] **STOP** - Wait for human review of increment-11-exploration.md
+- [ ] **APPROVAL** - Human approves before proceeding to Step 3
+
 ### Step 3: Scenarios
 - [ ] Execute `/story_bot-scenarios-rules` to load all scenario rules
 - [ ] Run `--behavior scenarios --action build` for Increment 11
@@ -552,17 +608,30 @@ agile_bot/bots/test_story_bot/
 - [ ] Fix any validation errors
 - [ ] Ensure scenarios derive from acceptance criteria in story-graph.json
 
-### Step 4: TDD
+### ⏸️ CHECKPOINT: Human Review After Scenarios
+- [ ] **STOP** - Wait for human review of all generated scenarios
+- [ ] **APPROVAL** - Human approves before proceeding to Step 4
+
+### Step 4: TDD (After Human Approval)
+- Update scenarios and test data based on the new signatures as well as for the new stories.
 - [ ] Refactor Action base class with three-method pattern
-- [ ] Refactor ClarifyAction with stubbed operations
-- [ ] Refactor StrategyAction with stubbed operations
-- [ ] Refactor BuildAction with stubbed operations
-- [ ] Refactor ValidateAction with stubbed operations
-- [ ] Refactor RenderAction with stubbed operations
+- [ ] Refactor ClarifyAction 
+- [ ] Refactor StrategyAction 
+- [ ] Refactor BuildAction with stubbed Knowledge. Graph createing update
+- [ ] Refactor ValidateAction with stubbed scanning
+- [ ] Refactor RenderAction with stubbed rendering
 - [ ] Configure test_story_bot
 - [ ] Write tests for each story (RED)
 - [ ] Implement each story (GREEN)
 - [ ] Refactor and clean up
+
+### Step 5: Manual Testing
+- [ ] Test complete user experience end-to-end
+- [ ] Verify navigation works with real test_story_bot
+- [ ] Verify scope parameters work correctly
+- [ ] Verify instructions/submit/confirm operations work
+- [ ] Verify state persistence across commands
+- [ ] Document any issues found
 
 ---
 
@@ -576,9 +645,11 @@ agile_bot/bots/test_story_bot/
 
 ## Success Criteria
 
-1. All 16 stories have exploration documents with acceptance criteria
-2. All 16 stories have Gherkin scenarios
-3. All tests pass using real `test_story_bot` with stubbed execution
-4. Actions support `get_instructions()`, `submit()`, `confirm()` operations
-5. No actual file saves, scanner runs, or renders during testing
+1. All 16 stories have acceptance criteria in story-graph.json (human approved)
+2. Increment exploration document created and reviewed
+3. All 16 stories have Gherkin scenarios (human approved)
+4. All tests pass using real `test_story_bot` with stubbed execution
+5. Actions support `get_instructions()`, `submit()`, `confirm()` operations
+6. No actual file saves, scanner runs, or renders during testing
+7. Manual testing confirms complete user experience works end-to-end
 

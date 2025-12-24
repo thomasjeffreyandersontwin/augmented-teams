@@ -1,9 +1,9 @@
 {
-  "current_behavior": "story_bot.code",
-  "current_action": "story_bot.code.validate",
+  "current_behavior": "story_bot.scenarios",
+  "current_action": "story_bot.scenarios.validate",
   "action_phase": "instructions_given",
   "action_state": "started",
   "working_directory": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot",
-  "timestamp": "2025-12-23T19:19:50.857564",
+  "timestamp": "2025-12-23T22:41:39.398897",
   "completed_actions": []
 }
