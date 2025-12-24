@@ -237,12 +237,13 @@ class ImportPlacementScanner(CodeScanner):
                 
                 # Found import after import section - violation!
                 violation = self._create_violation_with_snippet(
-                    content=content,
+                    rule_obj=rule_obj,
+                    violation_message='Import statement found after non-import code. Move all imports to the top of the file.',
                     file_path=file_path,
                     line_number=line_number_1_indexed,
-                    message=f'Import statement found after non-import code. Move all imports to the top of the file.',
-                    rule_obj=rule_obj,
-                    severity='error'
+                    severity='error',
+                    content=content,
+                    start_line=line_number_1_indexed
                 )
                 violations.append(violation)
             
