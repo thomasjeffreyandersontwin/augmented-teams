@@ -21,14 +21,14 @@ class ScopeType(Enum):
 
 
 @dataclass
-class ScopeConfig:
+class Scope:
     type: ScopeType = ScopeType.ALL
     value: List[str] = field(default_factory=list)
     exclude: List[str] = field(default_factory=list)
     skiprule: List[str] = field(default_factory=list)
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ScopeConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> 'Scope':
         if not data:
             return cls()
         
@@ -61,7 +61,7 @@ class ActionContext:
 
 @dataclass
 class ScopeActionContext(ActionContext):
-    scope: Optional[ScopeConfig] = None
+    scope: Optional[Scope] = None
 
 
 @dataclass

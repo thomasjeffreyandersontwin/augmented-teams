@@ -94,6 +94,12 @@ class Actions:
             return self._actions[next_index]
         return None
 
+    def previous(self) -> Optional[Action]:
+        prev_index = self._current_index - 1
+        if prev_index >= 0:
+            return self._actions[prev_index]
+        return None
+
     def __iter__(self) -> Iterator[Action]:
         for action in self._actions:
             yield action

@@ -1411,9 +1411,9 @@ def given_action_with_context_class(action_class):
 
 
 def given_scope_config_for_files(file_paths: list, exclude_patterns: list = None):
-    """Given: A typed ScopeConfig targeting specific files."""
-    from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig, ScopeType
-    return ScopeConfig(
+    """Given: A typed Scope targeting specific files."""
+    from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
+    return Scope(
         type=ScopeType.FILES,
         value=file_paths,
         exclude=exclude_patterns or []
@@ -1468,9 +1468,9 @@ def then_generated_parser_has_arguments(parser_code: str, expected_args: list):
 
 
 def then_scope_is_typed_config(scope, expected_type, expected_value: list):
-    """Then: Scope is a typed ScopeConfig with expected type and value."""
-    from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig, ScopeType
-    assert isinstance(scope, ScopeConfig), f"Expected ScopeConfig, got {type(scope)}"
+    """Then: Scope is a typed Scope with expected type and value."""
+    from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
+    assert isinstance(scope, Scope), f"Expected Scope, got {type(scope)}"
     assert scope.type == expected_type, f"Expected type {expected_type}, got {scope.type}"
     assert scope.value == expected_value, f"Expected value {expected_value}, got {scope.value}"
 
@@ -1578,13 +1578,13 @@ class TestCliContextBuilderParsesTypedContext:
     
     def test_context_builder_creates_typed_scope_config(self):
         """
-        SCENARIO: CliContextBuilder creates typed ScopeConfig from JSON scope arg
+        SCENARIO: CliContextBuilder creates typed Scope from JSON scope arg
         GIVEN: CLI args with --scope as JSON for files
         WHEN: Context is built from CLI args
-        THEN: Context.scope is ScopeConfig with type=FILES and value list
+        THEN: Context.scope is Scope with type=FILES and value list
         """
         from agile_bot.bots.base_bot.src.actions.action_context import (
-            ValidateActionContext, ScopeConfig, ScopeType
+            ValidateActionContext, Scope, ScopeType
         )
         
         # Given: CLI args with --scope as JSON for files
@@ -1593,7 +1593,7 @@ class TestCliContextBuilderParsesTypedContext:
         # When: Context is built from CLI args
         context = when_context_built_from_cli_args(cli_args)
         
-        # Then: Context.scope is ScopeConfig with type=FILES
+        # Then: Context.scope is Scope with type=FILES
         assert isinstance(context, ValidateActionContext)
         then_scope_is_typed_config(context.scope, ScopeType.FILES, ['file1.py', 'file2.py'])
     

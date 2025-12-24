@@ -9,7 +9,7 @@
           "",
           "@dataclass",
           "class ValidateActionContext:",
-          "    scope: Optional[ScopeConfig] = None",
+          "    scope: Optional[Scope] = None",
           "    background: bool = False",
           "    skip_cross_file: bool = False",
           "",

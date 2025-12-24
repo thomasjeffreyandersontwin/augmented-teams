@@ -38,7 +38,7 @@ def when_action_executes_with_parameters(action, parameters: dict):
     
     Determines the appropriate context type based on the action class.
     """
-    from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext, ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.action_context import StrategyActionContext, ValidateActionContext, Scope, ScopeType
     from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction
     from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
     
@@ -57,11 +57,11 @@ def when_action_executes_with_parameters(action, parameters: dict):
                 file_paths = [str(test_files)] if test_files else []
             else:
                 file_paths = [str(f) for f in test_files] if test_files else []
-            scope = ScopeConfig(type=ScopeType.FILES, value=file_paths)
+            scope = Scope(type=ScopeType.FILES, value=file_paths)
         elif 'scope' in parameters:
             scope_dict = parameters.get('scope', {})
             if isinstance(scope_dict, dict):
-                scope = ScopeConfig(
+                scope = Scope(
                     type=ScopeType(scope_dict.get('type', 'all')),
                     value=scope_dict.get('value', []),
                     exclude=scope_dict.get('exclude', []),

@@ -14,10 +14,10 @@ class BuildScope(ActionScope):
     
     @classmethod
     def from_context(cls, context: 'ScopeActionContext', bot_paths: Optional[BotPaths] = None) -> 'BuildScope':
-        from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig
+        from agile_bot.bots.base_bot.src.actions.action_context import Scope
         
         # Convert typed context to parameters dict for now
-        # TODO: Refactor ActionScope to work directly with ScopeConfig
+        # TODO: Refactor ActionScope to work directly with Scope
         params = {}
         if context.scope:
             params['scope'] = context.scope.to_dict()

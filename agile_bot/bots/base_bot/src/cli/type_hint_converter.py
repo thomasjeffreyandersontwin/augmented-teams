@@ -9,7 +9,7 @@ class TypeHintConverter:
             return 'list'
         elif 'bool' in type_str:
             return 'flag'
-        elif 'ScopeConfig' in type_str:
+        elif 'Scope' in type_str:
             return 'dict'
         return 'str'
 

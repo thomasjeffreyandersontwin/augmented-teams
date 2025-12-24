@@ -27,6 +27,28 @@ class Instructions:
     def display_content(self) -> List[str]:
         return list(self._display_content)
     
+    @property
+    def context_sources_text(self) -> List[str]:
+        """Generate standard 'Where to find context' section with actual paths."""
+        if not self._bot_paths:
+            # Return placeholder version if bot_paths not available
+            return [
+                "**Where to find context:**",
+                "- Context will be passed in this message (including context sources attached/dropped into the message)",
+                "- Additional context in `{project_area}/docs/context/` (original input files, prompts, source material)",
+                "- Generated files in `{project_area}/docs/stories/` (clarification.json, planning.json)",
+                "- Conversation history and existing project files"
+            ]
+        
+        workspace = str(self._bot_paths.workspace_directory)
+        return [
+            "**Where to find context:**",
+            "- Context will be passed in this message (including context sources attached/dropped into the message)",
+            f"- Additional context in `{workspace}/docs/context/` (original input files, prompts, source material)",
+            f"- Generated files in `{workspace}/docs/stories/` (clarification.json, planning.json)",
+            "- Conversation history and existing project files"
+        ]
+    
     def write_display_to_file(self, filename: str = 'status.md') -> Path:
         if not self._display_content:
             return None

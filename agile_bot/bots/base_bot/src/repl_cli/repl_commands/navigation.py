@@ -1,8 +1,8 @@
 from agile_bot.bots.base_bot.src.repl_cli.repl_results import REPLCommandResponse
-from agile_bot.bots.base_bot.src.repl_cli.repl_commands.base import REPLCommand
+from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import InstructionDisplayCommand
 
 
-class NavigationCommand(REPLCommand):
+class NavigationCommand(InstructionDisplayCommand):
     """Base for navigation commands - provides navigation-specific state."""
     
     @property
@@ -11,16 +11,33 @@ class NavigationCommand(REPLCommand):
         return behavior.actions.next() if behavior else None
     
     @property
+    def previous_action(self):
+        behavior = self.current_behavior
+        return behavior.actions.previous() if behavior else None
+    
+    @property
     def next_behavior(self):
         return self.bot.behaviors.next()
+    
+    @property
+    def previous_behavior(self):
+        return self.bot.behaviors.previous()
     
     @property
     def has_more_actions(self) -> bool:
         return self.next_action is not None
     
     @property
+    def has_previous_actions(self) -> bool:
+        return self.previous_action is not None
+    
+    @property
     def has_more_behaviors(self) -> bool:
         return self.next_behavior is not None
+    
+    @property
+    def has_previous_behaviors(self) -> bool:
+        return self.previous_behavior is not None
 
 
 class NextCommand(NavigationCommand):
@@ -36,35 +53,24 @@ class NextCommand(NavigationCommand):
         if not behavior:
             return self.error_no_current_behavior()
         
-        if self.has_more_actions:
-            behavior.actions.navigate_to(self.next_action.action_name)
-            return self._execute_instructions()
+        # Cache next_action to avoid calling it multiple times (side effects)
+        next_act = self.next_action
+        if next_act:
+            behavior.actions.navigate_to(next_act.action_name)
+            return self.display_navigation()
         
-        if self.has_more_behaviors:
-            next_beh = self.next_behavior
-            self.bot.behaviors.navigate_to(next_beh.name)
+        # At last action - try next behavior
+        next_beh = self.next_behavior
+        if next_beh:
             if next_beh.actions.names:
-                next_beh.actions.navigate_to(next_beh.actions.names[0])
-            return self._execute_instructions()
+                self.navigate_to_behavior_action(next_beh.name, next_beh.actions.names[0])
+            return self.display_navigation()
         
         return REPLCommandResponse(
             output="ERROR: Already at last action of last behavior",
             response="ERROR: Already at last action",
             status="error"
         )
-    
-    def _execute_instructions(self) -> REPLCommandResponse:
-        output = "\n".join([
-            f"EXECUTING {self.current_behavior_name}.{self.current_action_name}.instructions",
-            "",
-            "[INSTRUCTIONS]",
-            "- Review context and requirements",
-            "- Answer key questions",
-            "- Provide necessary evidence",
-            "",
-            "Next: Provide your work using 'submit'."
-        ])
-        return REPLCommandResponse(output=output, response=output, status="success", action=self.current_action_name)
 
 
 class BackCommand(NavigationCommand):
@@ -76,9 +82,28 @@ class BackCommand(NavigationCommand):
         if not self.has_current_action:
             return self.error_no_current_action()
         
+        behavior = self.current_behavior
+        if not behavior:
+            return self.error_no_current_behavior()
+        
+        # Cache previous_action to avoid calling it multiple times (side effects)
+        prev_act = self.previous_action
+        if prev_act:
+            behavior.actions.navigate_to(prev_act.action_name)
+            return self.display_navigation()
+        
+        # At first action - try to go to previous behavior's last action
+        prev_beh = self.previous_behavior
+        if prev_beh:
+            # Navigate to last action of previous behavior
+            if prev_beh.actions.names:
+                last_action_name = prev_beh.actions.names[-1]
+                self.navigate_to_behavior_action(prev_beh.name, last_action_name)
+            return self.display_navigation()
+        
         return REPLCommandResponse(
-            output="Back navigation not yet implemented via domain",
-            response="Back navigation pending",
+            output="ERROR: Already at first action of first behavior",
+            response="ERROR: Already at first action",
             status="error"
         )
 

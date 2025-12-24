@@ -25,7 +25,7 @@ class ContextDataInjector:
             instructions,
             RequirementsClarifications.load_all,
             'clarification',
-            ['', '**CLARIFICATION DATA AVAILABLE:**', "The 'clarification' data in your instructions contains answers to key questions and evidence gathered from previous clarification sessions across all behaviors.", 'This data represents the context and requirements that have been established. Use this information to inform your decisions and ensure consistency with previously gathered requirements.', "The clarification data is organized by behavior name, with each behavior containing 'key_questions' (questions and answers) and 'evidence' (required and provided evidence)."]
+            []
         )
 
     def inject_strategy_data(self, instructions: Dict[str, Any]) -> list:
@@ -33,7 +33,7 @@ class ContextDataInjector:
             instructions,
             StrategyDecision.load_all,
             'strategy',
-            ['', '**STRATEGY DATA AVAILABLE:**', "The 'strategy' data in your instructions contains planning decisions and assumptions made during previous strategy sessions across all behaviors.", 'This data represents the strategic choices and assumptions that guide how work should be approached. Reference this data to ensure your actions align with established strategic decisions.', "The strategy data is organized by behavior name, with each behavior containing 'strategy_criteria' (decision criteria and decisions made), 'assumptions' (typical assumptions and assumptions made), and 'recommended_activities'."]
+            []
         )
 
     def inject_context_files(self, instructions: Dict[str, Any]) -> list:
@@ -54,5 +54,4 @@ class ContextDataInjector:
         # Only add context_files key if there are files
         if context_files:
             instructions['context_files'] = context_files
-            return ['', '**ORIGINAL CONTEXT FILES AVAILABLE:**', f"The following original context files are available in the docs/context/ folder: {', '.join(context_files)}", 'These files contain the original input files, prompts, and source material provided at the start of the project.', 'You can read these files directly from the docs/context/ folder when you need additional context or to reference the original requirements.', "Common files include 'input.txt' (original input), 'initial-context.md' (initial context), and other source materials."]
         return []

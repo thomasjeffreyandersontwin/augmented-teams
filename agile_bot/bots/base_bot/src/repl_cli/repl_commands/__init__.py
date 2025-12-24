@@ -1,4 +1,4 @@
-from .base import REPLCommand
+from .repl_command import REPLCommand
 from .navigation import NextCommand, BackCommand, GoCommand
 from .workflow import InstructionsCommand, SubmitCommand, ConfirmCommand
 from .meta import HelpCommand, StatusCommand, ExitCommand, CurrentCommand, LoopBackCommand

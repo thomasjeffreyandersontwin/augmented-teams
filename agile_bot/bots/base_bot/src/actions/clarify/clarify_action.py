@@ -32,12 +32,24 @@ class ClarifyContextAction(Action):
     def evidence(self):
         return self.required_context.evidence
 
-    def do_execute(self, context: ClarifyActionContext) -> Dict[str, Any]:
-        instructions = self.instructions.copy()
+    def _prepare_instructions(self, instructions, context: ClarifyActionContext):
+        """Load required questions and evidence into instructions."""
         instructions.set('guardrails', {'required_context': self.required_context.instructions})
+    
+    def _do_submit(self, context: ClarifyActionContext) -> Dict[str, Any]:
+        """Save clarification answers to clarification.json."""
         if context.key_questions_answered or context.evidence_provided:
             self.save_clarification(context)
-        return {'instructions': instructions.to_dict()}
+            return {'status': 'submitted', 'message': 'Clarification saved'}
+        
+        return {'status': 'submitted', 'message': 'No clarification data to save'}
+
+    def do_execute(self, context: ClarifyActionContext) -> Dict[str, Any]:
+        """Legacy execute - calls get_instructions then submit."""
+        result = self.get_instructions(context)
+        if context.key_questions_answered or context.evidence_provided:
+            self.save_clarification(context)
+        return result
 
     def save_clarification(self, context: ClarifyActionContext):
         clarifications = RequirementsClarifications(

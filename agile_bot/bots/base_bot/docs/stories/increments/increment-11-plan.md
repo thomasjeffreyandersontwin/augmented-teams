@@ -51,7 +51,7 @@ Before implementation, review and reuse existing CLI helper classes. These have 
 
 | Class | Purpose | Reuse In REPL |
 |-------|---------|---------------|
-| **CliContextBuilder** | Builds typed ActionContext from CLI args, parses ScopeConfig | Scope parameter handling in REPL |
+| **CliContextBuilder** | Builds typed ActionContext from CLI args, parses Scope | Scope parameter handling in REPL |
 | **CliParameterParser** | Parses CLI arguments, handles JSON scope, key=value pairs | REPL command parsing |
 | **CliCommandRouter** | Routes to behaviors/actions, executes with context | REPL action execution |
 | **CliTerminalFormatter** | Formats output (headers, errors, status markers) | REPL display formatting, pipe mode output |
@@ -77,18 +77,18 @@ from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilde
 from agile_bot.bots.base_bot.src.cli.cli_parameter_parser import CliParameterParser
 from agile_bot.bots.base_bot.src.cli.formatter import CliTerminalFormatter
 from agile_bot.bots.base_bot.src.cli.action_data_collector import ActionDataCollector
-from agile_bot.bots.base_bot.src.actions.action_context import ScopeConfig, ScopeType
+from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
 ```
 
 ### Scope Handling Pattern (from CliContextBuilder)
 
 ```python
 # Existing scope parsing logic to reuse:
-def _parse_scope_config(self, json_str: str) -> Optional[ScopeConfig]:
+def _parse_scope_config(self, json_str: str) -> Optional[Scope]:
     if not json_str:
         return None
     data = json.loads(json_str.replace("'", '"'))
-    return ScopeConfig.from_dict(data)
+    return Scope.from_dict(data)
 ```
 
 ### Parameter Parsing Pattern (from CliParameterParser)
@@ -115,7 +115,7 @@ def _parse_scope_config(self, json_str: str) -> Optional[ScopeConfig]:
 
 1. **Scope Parameters**: 
    - Use `CliContextBuilder._parse_scope_config()` for parsing
-   - Use `ScopeConfig` dataclass for storage
+   - Use `Scope` dataclass for storage
    - Store in `BehaviorActionState` for persistence
 
 2. **Parameter Display**:
@@ -267,7 +267,7 @@ python agile_bot/bots/story_bot/src/story_bot_cli.py --behavior exploration --ac
 | 4 | Request Help | EXISTING | Real action parameters from context_class |
 | 5 | Request Status | EXISTING | Real workflow state from bot |
 | 6 | Provide Context For Instructions | NEW | Load real BehaviorActionState |
-| 7 | Provide Story Scope Context For Instructions | NEW | Parse real ScopeConfig |
+| 7 | Provide Story Scope Context For Instructions | NEW | Parse real Scope |
 | 8 | Provide File Scope Context For Instructions | NEW | Parse real file scope |
 | 9 | Store Scope Context | NEW | Persist to real state file |
 | 10 | Get Instructions and Display | NEW | Call real action.get_instructions() (stubbed internals) |
@@ -291,7 +291,7 @@ For stories that already exist with mock implementations, acceptance criteria mu
 | Behaviors | Mock list ["shape", "discovery", ...] | Loaded from `bot_config.json` |
 | Actions | Mock list ["clarify", "strategy", ...] | Loaded from behavior configs |
 | Parameters | Hardcoded display | From `action.context_class` via `ActionDataCollector` |
-| Scope | Simple string storage | Parsed `ScopeConfig` object |
+| Scope | Simple string storage | Parsed `Scope` object |
 | State | Simple dict | Real `BehaviorActionState` with persistence |
 | Execution | Mock "EXECUTING" message | Real action methods (stubbed internals) |
 
@@ -339,14 +339,14 @@ Delivers complete REPL user experience with real bot integration (test_story_bot
 ### Core Domain Concepts
 
 - REPLSession: Manages interactive session state and command processing
-- ScopeConfig: Typed scope parameters (type, value, exclude)
+- Scope: Typed scope parameters (type, value, exclude)
 - ActionOperations: Three-phase execution (instructions, submit, confirm)
 - BehaviorActionState: Persisted workflow position and scope
 
 ### Domain Behaviors
 
 - REPLSession routes commands to action operations
-- CliContextBuilder parses scope parameters into ScopeConfig
+- CliContextBuilder parses scope parameters into Scope
 - ActionDataCollector provides real parameter metadata
 - BehaviorActionState persists scope across commands
 
@@ -378,7 +378,7 @@ Delivers complete REPL user experience with real bot integration (test_story_bot
 | Area | Increment 10 (Mock) | Increment 11 (Real Bot) |
 |------|---------------------|-------------------------|
 | Bot | Fake structure | Real test_story_bot |
-| Scope | String storage | Parsed ScopeConfig |
+| Scope | String storage | Parsed Scope |
 | Execution | Mock messages | Real action methods (stubbed) |
 | Parameters | Hardcoded | From ActionDataCollector |
 
@@ -474,8 +474,10 @@ class Action:
     # Keep execute() for backward compatibility
     
     def get_instructions(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Returns AI instructions without running scanners or saving.
-        """loading is fine """"
+        """Returns AI instructions without running scanners or saving files.
+        
+        This is the first phase of the three-phase action pattern.
+        Loading/reading files is allowed. Writing files is NOT allowed.
         
         Stubs:
         - CodeScanner calls → empty violations
@@ -484,15 +486,15 @@ class Action:
         """
         
     def submit(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Process submitted work - stubs file saves.
+        """Process submitted work - saves files and performs side effects.
         
         Returns success message and list of files that would be saved.
         """
         
     def confirm(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Mark action complete and advance to next.
+        """Mark action complete and advance to next action.
         
-        Updates state, returns next action info.
+        Updates workflow state and returns next action info.
         """
 ```
 
