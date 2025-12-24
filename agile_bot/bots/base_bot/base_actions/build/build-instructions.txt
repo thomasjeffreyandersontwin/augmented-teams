@@ -40,15 +40,10 @@ The strategy data is organized by behavior name, with each behavior containing '
 10. Do NOT proceed until the user has reviewed and confirmed/corrected all answers
 
 **MANDATORY: CONTEXT SOURCE LOCATION:**
-11. When reviewing context to answer questions, you MUST check these locations IN ORDER:
-    1. `{project_area}/docs/context/` folder - Original input files, prompts, source material
-    2. `{project_area}/docs/stories/` folder - Generated files (clarification.json, planning.json) if they exist
-    3. Conversation history (if available)
-    4. Existing project files in `{project_area}/`
-    - **PRIMARY SOURCE:** Always start with `{project_area}/docs/context/` folder for original input
-    - **Input files:** Read from `{project_area}/docs/context/input.txt` or similar
-    - **Prompts:** Read from `{project_area}/docs/context/` folder
-    - **Source material:** All original context providers are in `{project_area}/docs/context/`
+11. When reviewing context to answer questions, check the context sources listed at the top of these instructions.
+    - PRIMARY SOURCE: Always start with docs/context/ folder for original input
+    - Generated files (clarification.json, planning.json) are in docs/stories/
+    - Review conversation history and existing project files as needed
 
 **MANDATORY STORAGE STEP - IMMEDIATE CHECKPOINT:**
 12. IMMEDIATELY after user confirms all answers are complete and correct, you MUST store clarification data:
