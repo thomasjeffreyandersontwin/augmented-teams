@@ -21,7 +21,7 @@ Delivers complete REPL user experience with real bot integration (test_story_bot
 ### Core Domain Concepts
 
 - **REPLSession**: Manages interactive session state and command processing
-- **ScopeConfig**: Typed scope parameters (type, value, exclude) from `ActionContext`
+- **Scope**: Typed scope parameters (type, value, exclude) from `ActionContext`
 - **ActionOperations**: Three-phase execution (instructions, submit, confirm)
 - **BehaviorActionState**: Persisted workflow position and scope
 
@@ -295,7 +295,7 @@ Delivers complete REPL user experience with real bot integration (test_story_bot
 | Behaviors | Mock list | Bot's actual Behaviors |
 | Actions | Mock list | Behavior's actual Actions |
 | Parameters | Hardcoded display | Action's parameter metadata |
-| Scope | Simple string | ScopeConfig domain object |
+| Scope | Simple string | Scope domain object |
 | State | Simple dict | BehaviorActionState with persistence |
 | Execution | Mock message | Action execution (stubbed internals) |
 

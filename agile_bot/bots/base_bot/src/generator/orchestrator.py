@@ -44,6 +44,7 @@ class Orchestrator:
             behavior_name=behavior_name,
             behavior_description=behavior_description,
             actions=actions,
+            behavior=behavior,
             additional_options=additional_options
         )
         self.visitor.visit_behavior(context)
@@ -87,3 +88,24 @@ class Orchestrator:
         action_names = self.data_collector.get_behavior_actions(behavior)
         for action_name in action_names:
             self._visit_action(action_name)
+    
+    def generate_for_all_actions(self) -> None:
+        """Traverse all (behavior, action) pairs - used for code generation."""
+        self.visitor.visit_header(self.bot_name)
+        for behavior in self.bot.behaviors:
+            for action in behavior.actions:
+                self._visit_behavior_action(behavior, action)
+        self.visitor.visit_footer()
+    
+    def _visit_behavior_action(self, behavior, action) -> None:
+        """Visit a specific behavior-action pair with full object access."""
+        context = ActionHelpContext(
+            bot_name=self.bot_name,
+            action_name=action.action_name,
+            action_description="",
+            parameters=[],
+            parameter_descriptions={},
+            behavior_name=behavior.name,
+            action=action
+        )
+        self.visitor.visit_action(context)

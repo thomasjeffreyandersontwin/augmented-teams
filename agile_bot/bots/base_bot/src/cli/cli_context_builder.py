@@ -14,7 +14,7 @@ from pathlib import Path
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.action_context import (
     ActionContext,
-    ScopeConfig,
+    Scope,
     ScopeType,
 )
 
@@ -69,7 +69,7 @@ class CliContextBuilder:
             parser.add_argument(cli_name, dest=dest_name, action='store_true', default=None)
             return
         
-        if 'ScopeConfig' in str(field_type):
+        if 'Scope' in str(field_type):
             parser.add_argument(cli_name, dest=dest_name, type=str, default=None)
             return
         
@@ -92,7 +92,7 @@ class CliContextBuilder:
             field_name = field_info.name
             value = getattr(parsed, field_name, None)
             
-            if 'ScopeConfig' in str(field_info.type) and isinstance(value, str):
+            if 'Scope' in str(field_info.type) and isinstance(value, str):
                 value = self._parse_scope_config(value)
             elif 'Dict' in str(field_info.type) and isinstance(value, str):
                 value = self._parse_json_dict(value)
@@ -102,11 +102,11 @@ class CliContextBuilder:
         
         return context_class(**kwargs)
     
-    def _parse_scope_config(self, json_str: str) -> Optional[ScopeConfig]:
+    def _parse_scope_config(self, json_str: str) -> Optional[Scope]:
         if not json_str:
             return None
         data = json.loads(json_str.replace("'", '"'))
-        return ScopeConfig.from_dict(data)
+        return Scope.from_dict(data)
     
     def _parse_json_dict(self, json_str: str) -> Optional[dict]:
         if not json_str:

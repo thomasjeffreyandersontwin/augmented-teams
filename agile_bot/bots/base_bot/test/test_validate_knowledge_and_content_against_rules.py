@@ -1095,7 +1095,7 @@ def given_test_file_for_scanner_type(workspace_directory: Path, scanner_class_pa
 
 def when_action_executes_and_returns_result(action: ValidateRulesAction, parameters: dict = None, context: 'ValidateActionContext' = None):
     """When: Action executes and returns result with typed context."""
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
     
     # Convert legacy dict parameters to typed context if needed
     if context is not None:
@@ -1110,7 +1110,7 @@ def when_action_executes_and_returns_result(action: ValidateRulesAction, paramet
         scope_dict = parameters['scope']
         if isinstance(scope_dict, dict):
             scope_type = ScopeType(scope_dict.get('type', 'all'))
-            scope = ScopeConfig(
+            scope = Scope(
                 type=scope_type,
                 value=scope_dict.get('value', []),
                 exclude=scope_dict.get('exclude', []),
@@ -1906,7 +1906,7 @@ def given_behavior_rule_created(bot_directory: Path, behavior: str, rule_name: s
 
 def when_action_executes_with_scope_parameters(action: ValidateRulesAction, parameters: dict):
     """When: Action executes with scope parameters."""
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
     
     # Convert dict to typed context
     scope = None
@@ -1914,7 +1914,7 @@ def when_action_executes_with_scope_parameters(action: ValidateRulesAction, para
         scope_dict = parameters['scope']
         if isinstance(scope_dict, dict):
             scope_type = ScopeType(scope_dict.get('type', 'all'))
-            scope = ScopeConfig(
+            scope = Scope(
                 type=scope_type,
                 value=scope_dict.get('value', []),
                 exclude=scope_dict.get('exclude', []),
@@ -1925,13 +1925,13 @@ def when_action_executes_with_scope_parameters(action: ValidateRulesAction, para
         test_files = parameters['test']
         if isinstance(test_files, str):
             test_files = [test_files]
-        scope = ScopeConfig(type=ScopeType.FILES, value=test_files)
+        scope = Scope(type=ScopeType.FILES, value=test_files)
     # Handle 'src' key from when_parameters_created (for source files)
     elif 'src' in parameters:
         src_files = parameters['src']
         if isinstance(src_files, str):
             src_files = [src_files]
-        scope = ScopeConfig(type=ScopeType.FILES, value=src_files)
+        scope = Scope(type=ScopeType.FILES, value=src_files)
     
     typed_context = ValidateActionContext(
         scope=scope,
@@ -2021,7 +2021,7 @@ def when_validate_code_files_action_created(bot_name: str, behavior: str, bot_di
 
 def when_validate_code_files_action_executes(action, parameters: dict):
     """When: ValidateRulesAction executes with parameters (ValidateCodeFilesAction was removed)."""
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
     
     # Convert dict to typed context
     scope = None
@@ -2029,7 +2029,7 @@ def when_validate_code_files_action_executes(action, parameters: dict):
         scope_dict = parameters['scope']
         if isinstance(scope_dict, dict):
             scope_type = ScopeType(scope_dict.get('type', 'all'))
-            scope = ScopeConfig(
+            scope = Scope(
                 type=scope_type,
                 value=scope_dict.get('value', []),
                 exclude=scope_dict.get('exclude', []),
@@ -2040,13 +2040,13 @@ def when_validate_code_files_action_executes(action, parameters: dict):
         src_files = parameters['src']
         if isinstance(src_files, str):
             src_files = [src_files]
-        scope = ScopeConfig(type=ScopeType.FILES, value=src_files)
+        scope = Scope(type=ScopeType.FILES, value=src_files)
     # Handle 'test' key from when_parameters_created (for test files)
     elif 'test' in parameters:
         test_files = parameters['test']
         if isinstance(test_files, str):
             test_files = [test_files]
-        scope = ScopeConfig(type=ScopeType.FILES, value=test_files)
+        scope = Scope(type=ScopeType.FILES, value=test_files)
     
     # For tests, default to synchronous (background=False) so reports are written before assertions
     typed_context = ValidateActionContext(
@@ -4996,7 +4996,7 @@ def given_validation_rules_exist(bot_directory, behavior):
 def when_execute_validate_code_files_action_with_files(bot_name, behavior, bot_directory, files):
     """Execute validation with files using ValidateRulesAction (ValidateCodeFilesAction was removed)."""
     from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
     from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
@@ -5013,7 +5013,7 @@ def when_execute_validate_code_files_action_with_files(bot_name, behavior, bot_d
     
     # Create typed context with files scope
     file_paths = [str(f) for f in files]
-    scope = ScopeConfig(type=ScopeType.FILES, value=file_paths)
+    scope = Scope(type=ScopeType.FILES, value=file_paths)
     context = ValidateActionContext(scope=scope, background=False)
     
     return action.do_execute(context)

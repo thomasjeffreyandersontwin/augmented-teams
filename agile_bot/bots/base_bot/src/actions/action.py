@@ -104,9 +104,33 @@ class Action:
         breadcrumbs = self.get_workflow_status_breadcrumbs()
         return breadcrumbs
 
+    def _replace_context_placeholders(self, instructions_list: List[str]) -> List[str]:
+        """Replace standard context placeholders with actual values.
+        
+        For action-specific placeholders, override this method in the subclass.
+        """
+        replacements = {
+            '{project_area}': str(self.behavior.bot_paths.workspace_directory),
+            '{bot}': str(self.behavior.bot_paths.bot_directory),
+            '{behavior}': self.behavior.name
+        }
+        
+        result = []
+        for instruction in instructions_list:
+            replaced = instruction
+            for placeholder, value in replacements.items():
+                replaced = replaced.replace(placeholder, value)
+            result.append(replaced)
+        return result
+    
     @property
     def instructions(self) -> Instructions:
         base_instructions = self._base_config.get('instructions', [])
+        
+        # Replace context placeholders in base instructions
+        if isinstance(base_instructions, list):
+            base_instructions = self._replace_context_placeholders(base_instructions)
+        
         inst = Instructions(base_instructions if isinstance(base_instructions, list) else [], bot_paths=self.behavior.bot_paths)
         
         # Add context instructions (clarification, strategy, context files) at the beginning
@@ -124,12 +148,19 @@ class Action:
         for key, value in injected_data.items():
             inst._data[key] = value
         
-        for line in reversed(context_instructions):
+        # Add standard context sources at the very top
+        for line in reversed(inst.context_sources_text):
             inst._data['base_instructions'].insert(0, line)
+        inst._data['base_instructions'].insert(len(inst.context_sources_text), "")  # Add blank line after context sources
         
-        breadcrumbs = self._inject_status_update_breadcrumbs({})
-        for line in breadcrumbs:
-            inst.add_display(line)
+        # Add other context instructions after the context sources
+        for line in reversed(context_instructions):
+            inst._data['base_instructions'].insert(len(inst.context_sources_text) + 1, line)
+        
+        # TODO: Commenting out status breadcrumbs - now handled by REPL context header
+        # breadcrumbs = self._inject_status_update_breadcrumbs({})
+        # for line in breadcrumbs:
+        #     inst.add_display(line)
         
         return inst
 
@@ -238,6 +269,135 @@ class Action:
                 instructions['base_instructions'] = list(self.instructions['base_instructions'])
                 result['instructions'] = instructions
         return inject_reminder_to_instructions(result, reminder)
+
+    def get_instructions(self, context: ActionContext = None) -> Dict[str, Any]:
+        """Returns AI instructions without running scanners or saving files.
+        
+        This is the first phase of the three-phase action pattern:
+        1. get_instructions() - Build instructions (no side effects)
+        2. submit() - Process work (may save files)
+        3. confirm() - Mark complete and advance
+        
+        This is a template method. Subclasses override _prepare_instructions() to customize.
+        Loading/reading files is allowed. Writing files is NOT allowed.
+        """
+        if context is None:
+            context = self.context_class()
+        
+        # Get base instructions
+        instructions = self.instructions.copy()
+        
+        # Call template method for subclass customization
+        self._prepare_instructions(instructions, context)
+        
+        # Format for display
+        formatted_output = self._format_instructions_for_display(instructions)
+        
+        return {
+            'instructions': instructions.to_dict(),
+            'formatted_output': formatted_output
+        }
+    
+    def _prepare_instructions(self, instructions, context: ActionContext):
+        """Template method: Prepare action-specific instructions data.
+        
+        Override in subclasses to add guardrails, questions, evidence, etc.
+        Subclasses should modify the instructions object in place.
+        """
+        pass
+    
+    def _format_instructions_for_display(self, instructions) -> str:
+        """Template method: Format instructions for REPL display.
+        
+        Override in subclasses to customize display formatting.
+        """
+        # Use the proper interface to get instruction data
+        instructions_dict = instructions.to_dict()
+        output_lines = []
+        
+        # Add base instructions
+        base_instructions = instructions_dict.get('base_instructions', [])
+        output_lines.extend(base_instructions)
+        
+        # Add guardrails (questions and evidence) if present
+        guardrails_dict = instructions_dict.get('guardrails', {})
+        if guardrails_dict:
+            output_lines.append("")
+            output_lines.append("**GUARDRAILS:**")
+            
+            required_context = guardrails_dict.get('required_context', {})
+            if required_context:
+                # Display key questions (can be list or dict)
+                key_questions = required_context.get('key_questions', [])
+                if key_questions:
+                    output_lines.append("")
+                    output_lines.append("**Required Key Questions:**")
+                    if isinstance(key_questions, list):
+                        for question in key_questions:
+                            output_lines.append(f"- {question}")
+                    elif isinstance(key_questions, dict):
+                        for question_key, question_text in key_questions.items():
+                            output_lines.append(f"- **{question_key}**: {question_text}")
+                
+                # Display evidence requirements (can be list or dict)
+                evidence = required_context.get('evidence', [])
+                if evidence:
+                    output_lines.append("")
+                    output_lines.append("**Required Evidence:**")
+                    if isinstance(evidence, list):
+                        # Show as comma-delimited list instead of one per line
+                        output_lines.append(', '.join(evidence))
+                    elif isinstance(evidence, dict):
+                        for evidence_key, evidence_desc in evidence.items():
+                            output_lines.append(f"- **{evidence_key}**: {evidence_desc}")
+        
+        # Add display content
+        display_content = instructions_dict.get('display_content', [])
+        if display_content:
+            output_lines.append("")
+            output_lines.extend(display_content)
+        
+        return "\n".join(output_lines)
+    
+    def submit(self, context: ActionContext = None) -> Dict[str, Any]:
+        """Process submitted work - saves files and performs side effects.
+        
+        This is the second phase of the three-phase action pattern.
+        This is a template method. Subclasses override _do_submit() to customize.
+        """
+        if context is None:
+            context = self.context_class()
+        
+        # Call template method for subclass customization
+        result = self._do_submit(context)
+        
+        return result
+    
+    def _do_submit(self, context: ActionContext) -> Dict[str, Any]:
+        """Template method: Perform action-specific submit logic.
+        
+        Override in subclasses to save files, update state, etc.
+        Should return a dict with 'status' and 'message' keys.
+        """
+        return {'status': 'submitted', 'message': 'Work submitted successfully'}
+    
+    def confirm(self, context: ActionContext = None) -> Dict[str, Any]:
+        """Mark action complete and advance to next action.
+        
+        This is the third phase of the three-phase action pattern.
+        Updates workflow state and returns next action info.
+        """
+        if context is None:
+            context = self.context_class()
+        
+        self.track_activity_on_completion()
+        
+        next_action_name = self.next_action
+        return {
+            'status': 'confirmed',
+            'action_completed': self.action_name,
+            'next_action': next_action_name
+        }
 
     def do_execute(self, context: ActionContext) -> Dict[str, Any]:
         raise NotImplementedError('Subclasses must implement do_execute()')

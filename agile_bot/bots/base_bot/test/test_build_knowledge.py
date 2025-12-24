@@ -794,7 +794,7 @@ def then_build_scope_contains_all_expected(build_scope, expected_scope_contains:
 
 def then_action_uses_build_scope_class(action: BuildKnowledgeAction, parameters: dict):
     """Then: Action uses BuildScope class (converts dict to typed context)."""
-    from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext, ScopeConfig, ScopeType
+    from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext, Scope, ScopeType
     
     # Convert dict parameters to typed context
     scope = None
@@ -802,7 +802,7 @@ def then_action_uses_build_scope_class(action: BuildKnowledgeAction, parameters:
         scope_dict = parameters['scope']
         if isinstance(scope_dict, dict):
             scope_type = ScopeType(scope_dict.get('type', 'all'))
-            scope = ScopeConfig(
+            scope = Scope(
                 type=scope_type,
                 value=scope_dict.get('value', []),
                 exclude=scope_dict.get('exclude', [])

@@ -104,6 +104,14 @@ class Behaviors:
         if next_index < len(self._behaviors):
             return self._behaviors[next_index]
         return None
+    
+    def previous(self) -> Optional['Behavior']:
+        if self._current_index is None or self._current_index <= 0:
+            return None
+        prev_index = self._current_index - 1
+        if prev_index >= 0:
+            return self._behaviors[prev_index]
+        return None
 
     def __iter__(self) -> Iterator['Behavior']:
         for behavior in self._behaviors:

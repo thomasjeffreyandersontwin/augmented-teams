@@ -31,7 +31,8 @@ from pathlib import Path
 
 # Calculate paths from this file's location
 # This file is at: agile_bot/bots/base_bot/src/repl_cli/repl_main.py
-script_path = Path(__file__)
+# Must resolve() first to handle relative paths with ".." components
+script_path = Path(__file__).resolve()
 # Go up to workspace root: repl_main.py -> repl_cli -> src -> base_bot -> bots -> agile_bot -> workspace_root
 workspace_root = script_path.parent.parent.parent.parent.parent.parent
 
@@ -146,8 +147,9 @@ def main():
             # Execute command
             response = repl_session.read_and_execute_command(command)
             
-            # Display response
-            print(response.output)
+            # Display response (sanitize Unicode for Windows console)
+            safe_output = response.output.encode('ascii', errors='replace').decode('ascii')
+            print(safe_output)
             if not is_pipe_mode:
                 print()
             

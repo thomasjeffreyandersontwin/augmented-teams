@@ -64,7 +64,7 @@ class ValidationContext:
     
     @classmethod
     def from_parameters(cls, parameters: Dict[str, Any], behavior, bot_paths, callbacks: Optional[ValidationCallbacks] = None) -> 'ValidationContext':
-        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, ScopeConfig, ScopeType
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
         
         if isinstance(behavior, str):
@@ -76,14 +76,13 @@ class ValidationContext:
             if isinstance(scope_dict, dict):
                 scope_type_str = scope_dict.get('type', 'all')
                 scope_type = ScopeType(scope_type_str)
-                scope = ScopeConfig(
+                scope = Scope(
                     type=scope_type,
                     value=scope_dict.get('value', []),
                     exclude=scope_dict.get('exclude', []),
                     skiprule=scope_dict.get('skiprule', [])
                 )
         
-        # Handle both all_files and force_full (backward compatibility)
         all_files = parameters.get('all_files', False) or parameters.get('force_full', False)
         
         context = ValidateActionContext(

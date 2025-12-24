@@ -1,44 +1,59 @@
-"""CLI Parser Generator - generates argument parsers from action context classes.
+"""CLI Parser Generator Visitor - generates argument parsers using visitor pattern.
 
-This module generates Python code for CLI argument parsers by introspecting
-action context classes. The generated code is static and debuggable.
-
-Usage:
-    python -m agile_bot.bots.base_bot.src.cli.cli_parser_generator
-
-This will generate cli_action_parsers.py in the same directory.
+This visitor generates Python code for CLI argument parsers by visiting
+action context classes through the standard bot traversal pattern.
 """
 
 import dataclasses
 from dataclasses import fields
-from pathlib import Path
-from typing import Type, List, Optional, Any
+from typing import Type, List, Any
 
-from agile_bot.bots.base_bot.src.actions.action_context import (
-    ActionContext,
-    Scope,
-)
+from agile_bot.bots.base_bot.src.generator.visitor import Visitor
+from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
+from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, Scope
 
 
-class CliParserGenerator:
+class CliParserGeneratorVisitor(Visitor):
     
-    def __init__(self):
+    def __init__(self, bot):
+        super().__init__(bot=bot)
         self._generated_lines: List[str] = []
+        self._context_classes_seen = set()
+        self._action_mappings = []
     
-    def generate_parsers_for_bot(self, bot) -> str:
-        from agile_bot.bots.base_bot.src.cli.cli_parser_generator_visitor import CliParserGeneratorVisitor
-        from agile_bot.bots.base_bot.src.generator.orchestrator import Orchestrator
-        
-        visitor = CliParserGeneratorVisitor(bot)
-        orchestrator = Orchestrator(visitor)
-        orchestrator.generate_for_all_actions()
-        return visitor.get_generated_code()
-    
-    def generate_parser_for_context_class(self, context_class: Type[ActionContext]) -> str:
-        self._generated_lines = []
+    def visit_header(self, bot_name: str) -> None:
         self._add_header()
         self._add_imports()
-        self._generate_parser_function(context_class)
+    
+    def visit_behavior(self, context: BehaviorHelpContext) -> None:
+        pass
+    
+    def visit_action(self, context: ActionHelpContext) -> None:
+        action = context.action
+        if action is None:
+            return
+        
+        context_class = action.context_class
+        if context_class not in self._context_classes_seen:
+            self._context_classes_seen.add(context_class)
+            self._generate_parser_function(context_class)
+        
+        self._action_mappings.append((
+            context.behavior_name,
+            context.action_name,
+            context_class.__name__
+        ))
+    
+    def visit_action_help_section_header(self) -> None:
+        pass
+    
+    def visit_footer(self) -> None:
+        self._add_blank_line()
+        self._generate_context_builder_functions()
+        self._add_blank_line()
+        self._generate_action_parser_mapping(self._action_mappings)
+    
+    def get_generated_code(self) -> str:
         return '\n'.join(self._generated_lines)
     
     def _add_header(self):
@@ -77,7 +92,6 @@ class CliParserGenerator:
         func_name = f'build_{self._to_snake_case(class_name)}_parser'
         
         self._generated_lines.append(f'def {func_name}() -> argparse.ArgumentParser:')
-        self._generated_lines.append(f'    """Build argument parser for {class_name}."""')
         self._generated_lines.append(f'    parser = argparse.ArgumentParser(add_help=False)')
         
         all_fields = self._get_all_fields(context_class)
@@ -103,11 +117,11 @@ class CliParserGenerator:
             self._add_bool_argument(cli_name, default)
             return
         
-        if field_type == Optional[bool] or str(field_type) == 'typing.Optional[bool]':
+        if str(field_type) == 'typing.Optional[bool]':
             self._add_optional_bool_argument(cli_name)
             return
         
-        if field_type == Optional[Scope] or 'Scope' in str(field_type):
+        if 'Scope' in str(field_type):
             self._add_scope_config_argument(cli_name)
             return
         
@@ -172,7 +186,6 @@ class CliParserGenerator:
             '',
             '',
             'def build_context_from_parsed(context_class, parsed_args) -> ActionContext:',
-            '    """Build typed context object from parsed argparse namespace."""',
             '    kwargs = {}',
             '    ',
             '    for field_info in __import__("dataclasses").fields(context_class):',
@@ -180,7 +193,6 @@ class CliParserGenerator:
             '        cli_name = field_name.replace("_", "-")',
             '        value = getattr(parsed_args, field_name.replace("-", "_"), None)',
             '        ',
-            '        # Handle special types',
             '        if "Scope" in str(field_info.type) and isinstance(value, str):',
             '            value = parse_scope_config(value)',
             '        elif "Dict" in str(field_info.type) and isinstance(value, str):',
@@ -194,7 +206,6 @@ class CliParserGenerator:
         ])
     
     def _generate_action_parser_mapping(self, action_mappings: list):
-        self._generated_lines.append('# Mapping from (behavior, action) to parser function')
         self._generated_lines.append('ACTION_PARSERS = {')
         
         for behavior_name, action_name, context_class_name in action_mappings:
@@ -206,8 +217,6 @@ class CliParserGenerator:
         self._generated_lines.append('}')
         self._generated_lines.append('')
         
-        # Also map to context classes
-        self._generated_lines.append('# Mapping from (behavior, action) to context class')
         self._generated_lines.append('ACTION_CONTEXT_CLASSES = {')
         
         for behavior_name, action_name, context_class_name in action_mappings:
@@ -221,33 +230,4 @@ class CliParserGenerator:
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-
-def generate_parsers_for_story_bot():
-    import os
-    from agile_bot.bots.base_bot.src.bot.bot import Bot
-    
-    story_bot_dir = Path(__file__).parent.parent.parent.parent / 'story_bot'
-    config_path = story_bot_dir / 'bot_config.json'
-    workspace_root = Path(__file__).parent.parent.parent.parent.parent
-    
-    os.environ['BOT_DIRECTORY'] = str(story_bot_dir)
-    os.environ['WORKING_AREA'] = str(workspace_root)
-    bot = Bot('story_bot', story_bot_dir, config_path)
-    
-    generator = CliParserGenerator()
-    code = generator.generate_parsers_for_bot(bot)
-    
-    output_path = Path(__file__).parent / 'cli_action_parsers.py'
-    output_path.write_text(code, encoding='utf-8')
-    print(f'Generated: {output_path}')
-    return code
-
-
-if __name__ == '__main__':
-    generate_parsers_for_story_bot()
-
-
-
-
 

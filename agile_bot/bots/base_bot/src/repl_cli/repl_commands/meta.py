@@ -1,5 +1,5 @@
 from agile_bot.bots.base_bot.src.repl_cli.repl_results import REPLCommandResponse
-from agile_bot.bots.base_bot.src.repl_cli.repl_commands.base import REPLCommand
+from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import REPLCommand, InstructionDisplayCommand
 
 
 class MetaCommand(REPLCommand):
@@ -71,7 +71,7 @@ class ExitCommand(MetaCommand):
         )
 
 
-class CurrentCommand(MetaCommand):
+class CurrentCommand(InstructionDisplayCommand):
     @property
     def name(self) -> str:
         return "current"
@@ -80,38 +80,37 @@ class CurrentCommand(MetaCommand):
         if not self.has_current_action:
             return self.error_no_current_action()
         
-        phase = self.session.action_phase
-        if phase in ('not_started', 'instructions_given'):
-            return self._execute_instructions()
-        elif phase == 'submitted':
-            return self._execute_submit()
-        return self._execute_instructions()
-    
-    def _execute_instructions(self) -> REPLCommandResponse:
-        output = "\n".join([
-            f"EXECUTING {self.current_behavior_name}.{self.current_action_name}.instructions",
-            "",
-            "[INSTRUCTIONS]",
-            "- Review context and requirements",
-            "- Answer key questions",
-            "- Provide necessary evidence",
-            "",
-            "Next: Provide your work using 'submit'."
-        ])
-        return REPLCommandResponse(output=output, response=output, status="success", action=self.current_action_name)
-    
-    def _execute_submit(self) -> REPLCommandResponse:
-        output = "\n".join([
-            f"EXECUTING {self.current_behavior_name}.{self.current_action_name}.submit",
-            "",
-            "[ACKNOWLEDGMENT]",
-            "- Answers received",
-            "- Evidence recorded",
-            "- Ready for confirmation",
-            "",
-            "Next: Type 'confirm' to mark complete and advance."
-        ])
-        return REPLCommandResponse(output=output, response=output, status="success", action=self.current_action_name)
+        # Re-execute current operation based on progress state
+        # Progress format is: behavior.action.operation
+        progress = self.session.get_progress_line()
+        
+        # Extract operation from progress (last part after final dot)
+        if '.' in progress and 'Progress: ' in progress:
+            parts = progress.replace('Progress: ', '').split('.')
+            if len(parts) >= 3:
+                operation = parts[2]
+                
+                # Re-execute the current operation
+                if operation == 'instructions':
+                    # Import here to avoid circular dependency
+                    from agile_bot.bots.base_bot.src.repl_cli.repl_commands.workflow import InstructionsCommand
+                    cmd = InstructionsCommand(self.session)
+                    return cmd.execute(args)
+                elif operation == 'submit':
+                    # Import here to avoid circular dependency
+                    from agile_bot.bots.base_bot.src.repl_cli.repl_commands.workflow import SubmitCommand
+                    cmd = SubmitCommand(self.session)
+                    return cmd.execute(args)
+                elif operation == 'confirm':
+                    # Confirm doesn't make sense to re-execute
+                    return REPLCommandResponse(
+                        output="Cannot re-execute 'confirm'. Use 'next' or 'back' to navigate.",
+                        response="Cannot re-execute confirm",
+                        status="error"
+                    )
+        
+        # Default: show instructions
+        return self.display_instructions()
 
 
 class LoopBackCommand(MetaCommand):

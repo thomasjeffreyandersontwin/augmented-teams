@@ -1,8 +1,9 @@
+import json
 from agile_bot.bots.base_bot.src.repl_cli.repl_results import REPLCommandResponse
-from agile_bot.bots.base_bot.src.repl_cli.repl_commands.base import REPLCommand
+from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import InstructionDisplayCommand
 
 
-class StateCommand(REPLCommand):
+class StateCommand(InstructionDisplayCommand):
     """Base for state commands - provides access to behavior/action lookup."""
     
     @property
@@ -14,19 +15,6 @@ class StateCommand(REPLCommand):
     
     def find_action(self, behavior, action_name: str):
         return behavior.actions.find_by_name(action_name)
-    
-    def execute_instructions(self) -> REPLCommandResponse:
-        output = "\n".join([
-            f"EXECUTING {self.current_behavior_name}.{self.current_action_name}.instructions",
-            "",
-            "[INSTRUCTIONS]",
-            "- Review context and requirements",
-            "- Answer key questions",
-            "- Provide necessary evidence",
-            "",
-            "Next: Provide your work using 'submit'."
-        ])
-        return REPLCommandResponse(output=output, response=output, status="success", action=self.current_action_name)
 
 
 class BehaviorCommand(StateCommand):
@@ -58,10 +46,9 @@ class BehaviorCommand(StateCommand):
                 status="error"
             )
         
-        self.bot.behaviors.navigate_to(behavior_name)
         first_action_name = behavior.actions.names[0]
-        behavior.actions.navigate_to(first_action_name)
-        return self.execute_instructions()
+        self.navigate_to_behavior_action(behavior_name, first_action_name)
+        return self.display_navigation()
 
 
 class ActionCommand(StateCommand):
@@ -91,7 +78,7 @@ class ActionCommand(StateCommand):
             return self.error_action_not_found(action_name)
         
         behavior.actions.navigate_to(action_name)
-        return self.execute_instructions()
+        return self.display_navigation()
 
 
 class WorkspaceCommand(StateCommand):
@@ -111,11 +98,26 @@ class WorkspaceCommand(StateCommand):
                 response="ERROR: No workspace path specified",
                 status="error"
             )
+        
+        # Update state file with working_directory
+        self._update_state_file(workspace_path)
+        
         return REPLCommandResponse(
             output=f"OK workspace={workspace_path}",
             response=f"OK workspace={workspace_path}",
             status="success"
         )
+    
+    def _update_state_file(self, workspace_path: str) -> None:
+        """Update behavior_action_state.json with working_directory."""
+        state_file = self.session.workspace_directory / 'behavior_action_state.json'
+        if state_file.exists():
+            state_data = json.loads(state_file.read_text())
+        else:
+            state_data = {}
+        state_data['working_directory'] = workspace_path
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(json.dumps(state_data, indent=2))
 
 
 class ScopeCommand(StateCommand):
