@@ -1,0 +1,321 @@
+{
+  "epics": [
+    {
+      "name": "Manage Mobs",
+      "sequential_order": 1,
+      "estimated_stories": 6,
+      "domain_concepts": [
+        {
+          "name": "Mob",
+          "responsibilities": [
+            {
+              "name": "groups minions together",
+              "collaborators": ["Minion"]
+            },
+            {
+              "name": "coordinates group actions",
+              "collaborators": ["Strategy", "Action"]
+            }
+          ]
+        },
+        {
+          "name": "Minion",
+          "responsibilities": [
+            {
+              "name": "represents individual token",
+              "collaborators": ["Foundry Token"]
+            },
+            {
+              "name": "belongs to mob",
+              "collaborators": ["Mob"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Create Mobs",
+          "sequential_order": 1,
+          "estimated_stories": 3,
+          "domain_concepts": [
+            {
+              "name": "Mob Template",
+              "responsibilities": [
+                {
+                  "name": "defines preset mob configuration",
+                  "collaborators": ["Mob"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Groups Minions into Mob",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Spawns Mob from Actors",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Creates Mob from Template",
+                  "sequential_order": 3,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Edit Mobs",
+          "sequential_order": 2,
+          "estimated_stories": 3,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Adds Minion to Mob",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Removes Minion from Mob",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Dissolves Mob",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Assign Strategies",
+      "sequential_order": 2,
+      "estimated_stories": 6,
+      "domain_concepts": [
+        {
+          "name": "Strategy",
+          "responsibilities": [
+            {
+              "name": "determines target selection algorithm",
+              "collaborators": ["Target"]
+            },
+            {
+              "name": "guides mob behavior",
+              "collaborators": ["Mob", "Action"]
+            }
+          ]
+        },
+        {
+          "name": "Target",
+          "responsibilities": [
+            {
+              "name": "represents entity being attacked",
+              "collaborators": ["Foundry Token"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Configure Mob Strategy",
+          "sequential_order": 1,
+          "estimated_stories": 2,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Assigns Strategy to Mob",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Changes Mob Strategy",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Select Strategy",
+          "sequential_order": 2,
+          "estimated_stories": 4,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Attacks Strongest Target",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Attacks Weakest Target",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Defends Leader",
+                  "sequential_order": 3,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Attacks Most Damaged",
+                  "sequential_order": 4,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Execute Mob Actions",
+      "sequential_order": 3,
+      "estimated_stories": 5,
+      "domain_concepts": [
+        {
+          "name": "Action",
+          "responsibilities": [
+            {
+              "name": "represents combat action",
+              "collaborators": ["Mob", "Target"]
+            },
+            {
+              "name": "executed by all minions in mob",
+              "collaborators": ["Minion"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Trigger Mob Action",
+          "sequential_order": 1,
+          "estimated_stories": 1,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Clicks Minion to Trigger Mob Action",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Combat Actions",
+          "sequential_order": 2,
+          "estimated_stories": 4,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Executes Melee Attack",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Executes Ranged Attack",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Executes Area Attack",
+                  "sequential_order": 3,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                },
+                {
+                  "name": "Moves to Target",
+                  "sequential_order": 4,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    }
+  ]
+}
+

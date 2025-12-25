@@ -56,7 +56,13 @@ class RenderOutputAction(Action):
         executed_specs = [spec for spec in render_specs if spec.is_executed]
         template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]
         
-        instructions._data['base_instructions'] = merged_instructions
+        # Update instructions with properly formatted data from merged_instructions dict
+        instructions._data['base_instructions'] = merged_instructions.get('base_instructions', [])
+        instructions.set('render_instructions', merged_instructions.get('render_instructions', {}))
+        instructions.set('render_configs', merged_instructions.get('render_configs', []))
+        instructions.set('executed_configs', merged_instructions.get('executed_configs', []))
+        if 'workspace_path' in merged_instructions:
+            instructions.set('workspace_path', merged_instructions['workspace_path'])
         instructions.set('executed_specs', [spec.config_data for spec in executed_specs])
         instructions.set('template_specs', [spec.config_data for spec in template_specs])
     

@@ -5,7 +5,7 @@
   "output": "story-graph.json",
   "template": "story-graph-examples.json",
   "process": [
-    "Check decision criteria: agile_bot/bots/story_bot/behaviors/scenarios/guardrails/planning/decision_criteria/scenario_outline.json",
+    "Check decision criteria: agile_bot/bots/story_bot/behaviors/scenarios/guardrails/strategy/decision_criteria/scenario_outline.json",
     "IF decision criteria = 'Yes':",
     "  Load existing story graph from project area",
     "  For each story, review scenarios from specification_scenarios stage",

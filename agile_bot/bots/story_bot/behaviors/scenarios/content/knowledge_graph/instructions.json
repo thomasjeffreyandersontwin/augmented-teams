@@ -45,7 +45,7 @@
     "1. **Load existing story graph** from project area: docs/stories/story-graph.json",
     "",
     "2. **Check decision criteria:**",
-    "   - Review planning decision criteria: agile_bot/bots/story_bot/behaviors/scenarios/guardrails/planning/decision_criteria/scenario_outline.json",
+    "   - Review planning decision criteria: agile_bot/bots/story_bot/behaviors/scenarios/guardrails/strategy/decision_criteria/scenario_outline.json",
     "   - **IF decision criteria answer is 'Yes' (formulas/calculations need multiple data points OR domain has named entities OR parameter variations exist):**",
     "     * Proceed to create Scenario Outlines with Examples tables (see step 3b)",
     "   - **IF decision criteria answer is 'No' (behavior is simple/obvious and doesn't need data variations):**",

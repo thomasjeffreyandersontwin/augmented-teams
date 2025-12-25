@@ -1,6 +1,6 @@
 {
   "priority": 8,
-  "description": "When creating story maps from code, start with the outermost layer (entry points), analyze operations and domain concepts, create epics from higher-order goals, and lay out the story journey.",
+  "description": "When creating story maps from code, start with the outermost layer (entry points), analyze operations, create epics from higher-order goals, and lay out the story journey.",
   "do": {
     "description": "Start with entry points and trace to epics and stories. Example: Operations 'render-outline, render-increments' → Goal 'Render StoryGraph' → Epic 'Render StoryGraph'",
     "guidance": [
@@ -9,7 +9,7 @@
         "example": ["CLI commands (main(), argparse)", "UI entry points (routes, handlers, button clicks)", "MCP server tools (names, parameters)", "API contracts (REST, GraphQL, WSDL)", "Acceptance tests (end-to-end, BDD)"]
       },
       {
-        "description": "Step 2: Analyze Operations and Domain (list operations, identify major/minor domain concepts, document relationships)"
+        "description": "Step 2: Analyze Operations (list operations, group by functional purpose)"
       },
       {
         "description": "Step 3: Create Epics from Goals (group operations by higher-order goals, create epics from goals NOT class structure)",
