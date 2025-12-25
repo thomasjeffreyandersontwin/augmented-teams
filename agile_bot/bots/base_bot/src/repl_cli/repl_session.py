@@ -154,32 +154,11 @@ class REPLSession:
                 )
             return self.display_current_state(full=full)
         
-        # Build just the behaviors/actions menu (header already printed by repl_main.py at startup)
+        # Build hierarchical status display
         lines = []
         
-        # Show behaviors with marker on current
-        current_behavior = self.current_behavior_name
-        behavior_names = [b.name for b in self.bot.behaviors] if self.bot and self.bot.behaviors else []
-        marked_behaviors = [f"[* {name}]" if name == current_behavior else name for name in behavior_names]
-        lines.append("Behaviors: " + " | ".join(marked_behaviors))
-        
-        # Show actions with marker on current
-        current_action = self.current_action_name
-        if self.bot and self.bot.behaviors:
-            behavior = self.bot.behaviors.current
-            if behavior:
-                action_names = behavior.actions.names
-                marked_actions = [f"[* {name}]" if name == current_action else name for name in action_names]
-                lines.append("Actions: " + " | ".join(marked_actions))
-        
-        lines.append("  status        - Show workflow progress")
-        lines.append("  back          - Return to previous action")
-        lines.append("  current       - Re-execute current operation")
-        lines.append("  next          - Advance to next action")
-        lines.append("  help          - Show detailed help")
-        lines.append("  exit          - Exit CLI")
-        lines.append("")
-        lines.append("Run: echo 'instructions' | python repl_main.py to see instructions for this action.")
+        # Show hierarchical breadcrumbs
+        lines.append(self.status.hierarchical_status)
         
         return REPLStateDisplay(
             output="\n".join(lines),
@@ -224,29 +203,9 @@ class REPLSession:
             lines.append(f"Bot Path: {bot_path}")
         lines.append(f"Work Path: {self.workspace_directory}")
         lines.append(self.get_progress_line())
-        lines.append("=" * 60)
         
-        # Show behaviors with marker on current
-        current_behavior = self.current_behavior_name
-        behavior_names = [b.name for b in self.bot.behaviors] if self.bot and self.bot.behaviors else []
-        marked_behaviors = [f"[* {name}]" if name == current_behavior else name for name in behavior_names]
-        lines.append("Behaviors: " + " | ".join(marked_behaviors))
-        
-        # Show actions with marker on current
-        current_action = self.current_action_name
-        if self.bot and self.bot.behaviors:
-            behavior = self.bot.behaviors.current
-            if behavior:
-                action_names = behavior.actions.names
-                marked_actions = [f"[* {name}]" if name == current_action else name for name in action_names]
-                lines.append("Actions: " + " | ".join(marked_actions))
-        
-        lines.append("  status        - Show workflow progress")
-        lines.append("  back          - Return to previous action")
-        lines.append("  current       - Re-execute current operation")
-        lines.append("  next          - Advance to next action")
-        lines.append("  help          - Show detailed help")
-        lines.append("  exit          - Exit CLI")
+        # Show hierarchical breadcrumbs
+        lines.append(self.status.hierarchical_status)
         
         return "\n".join(lines)
     
@@ -476,6 +435,129 @@ class REPLSession:
         state_data['scope'] = scope.to_dict()
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state_data, indent=2))
+    
+    def clear_scope(self) -> None:
+        """Clear scope from behavior action state file."""
+        state_file = self._get_state_file_path()
+        if state_file.exists():
+            state_data = json.loads(state_file.read_text())
+            if 'scope' in state_data:
+                del state_data['scope']
+                state_file.write_text(json.dumps(state_data, indent=2))
+    
+    def _get_scope_display_lines(self) -> List[str]:
+        """Get scope display lines for showing current filter with matched items and children."""
+        scope_data = self.get_stored_scope()
+        if not scope_data:
+            return []
+        
+        lines = []
+        scope_type = scope_data.get('type', 'unknown')
+        scope_value = scope_data.get('value', [])
+        
+        # Show the scope filter value
+        filter_str = ', '.join(scope_value) if isinstance(scope_value, list) else str(scope_value)
+        lines.append(f"Scope Filter: {filter_str}")
+        
+        # For story scope, load story graph and show matches with children
+        if scope_type == 'story':
+            story_graph_path = self.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+            if story_graph_path.exists():
+                try:
+                    graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
+                    matched_items = self._find_scope_matches(graph_data, scope_value)
+                    for item in matched_items:
+                        lines.append(item)
+                except Exception:
+                    # Fallback to simple display
+                    for item in (scope_value if isinstance(scope_value, list) else [scope_value]):
+                        lines.append(f"  - {item}")
+            else:
+                for item in (scope_value if isinstance(scope_value, list) else [scope_value]):
+                    lines.append(f"  - {item}")
+        else:
+            if isinstance(scope_value, list):
+                for item in scope_value:
+                    lines.append(f"  - {item}")
+            else:
+                lines.append(f"  - {scope_value}")
+        
+        return lines
+    
+    def _find_scope_matches(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
+        """Find matching items in story graph and return formatted lines with children."""
+        lines = []
+        epics = graph_data.get('epics', [])
+        
+        for scope_val in scope_values:
+            found = False
+            # Search for matches in epics, sub_epics, and stories
+            for epic in epics:
+                if self._matches_name(epic.get('name', ''), scope_val):
+                    lines.extend(self._format_node_with_children(epic, 'epic', 0))
+                    found = True
+                    break
+                # Check sub_epics (features)
+                for sub_epic in epic.get('sub_epics', []):
+                    if self._matches_name(sub_epic.get('name', ''), scope_val):
+                        lines.extend(self._format_node_with_children(sub_epic, 'sub epic', 0))
+                        found = True
+                        break
+                    # Check stories in story_groups
+                    for story_group in sub_epic.get('story_groups', []):
+                        for story in story_group.get('stories', []):
+                            if self._matches_name(story.get('name', ''), scope_val):
+                                lines.extend(self._format_node_with_children(story, 'story', 0))
+                                found = True
+                                break
+                        if found:
+                            break
+                    # Also check direct stories (some structures have this)
+                    if not found:
+                        for story in sub_epic.get('stories', []):
+                            if self._matches_name(story.get('name', ''), scope_val):
+                                lines.extend(self._format_node_with_children(story, 'story', 0))
+                                found = True
+                                break
+                    if found:
+                        break
+                if found:
+                    break
+            
+            if not found:
+                lines.append(f"  - {scope_val} (no match)")
+        
+        return lines
+    
+    def _matches_name(self, name: str, pattern: str) -> bool:
+        """Check if name matches pattern (case-insensitive contains)."""
+        return pattern.lower() in name.lower()
+    
+    def _format_node_with_children(self, node: Dict[str, Any], node_type: str, indent: int) -> List[str]:
+        """Format a node and its children with labels (down to story level only)."""
+        lines = []
+        prefix = "  " * indent
+        name = node.get('name', 'Unknown')
+        lines.append(f"{prefix}[{node_type}] {name}")
+        
+        # Don't recurse into stories - stop at story level
+        if node_type == 'story':
+            return lines
+        
+        # Add sub_epics (features)
+        for sub_epic in node.get('sub_epics', []):
+            lines.extend(self._format_node_with_children(sub_epic, 'sub epic', indent + 1))
+        
+        # Add stories from story_groups
+        for story_group in node.get('story_groups', []):
+            for story in story_group.get('stories', []):
+                lines.extend(self._format_node_with_children(story, 'story', indent + 1))
+        
+        # Add direct stories (some structures have this)
+        for story in node.get('stories', []):
+            lines.extend(self._format_node_with_children(story, 'story', indent + 1))
+        
+        return lines
     
     def _get_state_file_path(self) -> Path:
         """Get the path to behavior_action_state.json."""

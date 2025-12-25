@@ -160,7 +160,8 @@ class REPLHelp:
         
         lines = [
             "Core Commands:",
-            "  [behavior][.action][.operation]  - Navigate workflow and perform current",
+            "  echo '[behavior.][action.]operation' | python repl_main.py  - navigate and perform operation",
+            "  echo '[behavior][.action]' | python repl_main.py           - navigate to behavior/action",
             "",
             "  Available Components:",
             f"    behaviors   -> {behaviors_list}",

@@ -1,10 +1,10 @@
 {
   "behaviorName": "shape",
   "order": 1,
-  "description": "Outline a story map made up of epics, features, stories and domain concepts",
-  "goal": "Shape both story map and domain model together from user context - capture domain concepts, responsibilities, and requirements alongside story structure",
-  "inputs": "User context, interviews, vision documents, existing requirements, business Domain Experts interviews",
-  "outputs": "story-graph.json, story-map.md, story-map-outline.drawio, story-map.txt, domain_outline.md, domain-model-description.md",
+  "description": "Outline a story map made up of epics, sub-epics, and stories",
+  "goal": "Shape story map from user context - outline epics, sub-epics, story groups, and stories that deliver user value",
+  "inputs": "User context, interviews, vision documents, existing requirements, business stakeholder interviews",
+  "outputs": "story-graph.json, story-map.md, story-map-outline.drawio, story-map.txt",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "instructions": [
     "create the initial outline of a story map."
@@ -16,7 +16,7 @@
         "order": 1,
         "next_action": "strategy",
         "instructions": [
-          "Gather context for both story mapping and domain modeling"
+          "Gather context for story mapping"
         ]
       },
       {
@@ -33,8 +33,7 @@
         "next_action": "validate",
         "instructions": [
           "Build initial story map structure using rules and context listed below",
-          "Apply story shaping rules when shaping Epics, Sub-Epics, Stories",
-          "Apply domain shaping rules when shaping domain concepts"
+          "Apply story shaping rules when shaping Epics, Sub-Epics, Stories"
         ]
       },
       {
@@ -42,28 +41,27 @@
         "order": 4,
         "next_action": "render",
         "instructions": [
-          "shape: validate hierarchy, story structure, AND domain model",
-          "Apply story shaping rules (context: 'when shaping stories') for story structure",
-          "Apply domain shaping rules (context: 'when shaping the domain') for domain model validation"
+          "validate hierarchy and story structure",
+          "Apply story shaping rules for story structure validation"
         ]
       },
       {
         "name": "render",
         "order": 5,
         "instructions": [
-          "shape: render story map documents AND domain model documents"
+          "render story map documents"
         ]
       },
       {
         "name": "rules",
         "instructions": [
-          "Display digested rules for this behavior as AI context"
+          "Display story rules for this behavior as AI context"
         ]
       }
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to shaping/scoping/initial planning behavior, including domain shaping integration",
+    "description": "Behavior-level trigger words - specific to shaping/scoping/initial planning behavior for story mapping",
     "patterns": [
       "start.*shaping",
       "let.*s.*shape",
@@ -145,17 +143,7 @@
       "set.*up.*new",
       "commence.*new",
       "embark.*on.*new",
-      "undertake.*new",
-      "shape.*domain",
-      "model.*domain",
-      "identify.*bounded.*contexts",
-      "map.*domain",
-      "discover.*domain.*concepts",
-      "define.*ubiquitous.*language",
-      "start.*domain.*modeling",
-      "begin.*ddd",
-      "explore.*domain",
-      "domain.*shaping"
+      "undertake.*new"
     ]
   }
 }

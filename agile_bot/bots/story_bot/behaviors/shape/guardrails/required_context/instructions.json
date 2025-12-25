@@ -9,7 +9,7 @@
     "Before asking questions, you MUST thoroughly examine all context passed in:",
     "1. **Review Initial Request:** Understand what they asked for, what problem they're solving, and desired outcome",
     "2. **Examine Provided Evidence:** Review documents, requirements, and context files for problem type, complexity, scope, and constraints",
-    "3. **Identify Context Patterns:** Look for problem nature (new system/integration/workflow/domain modeling), complexity signals (user types, journeys, integrations), value drivers (customer experience, efficiency, compliance, revenue), and pain points (struggles, inefficiencies, workarounds)",
+    "3. **Identify Context Patterns:** Look for problem nature (new system/integration/workflow improvement), complexity signals (user types, journeys, integrations), value drivers (customer experience, efficiency, compliance, revenue), and pain points (struggles, inefficiencies, workarounds)",
     "",
     "**STEP 1: ASK KEY QUESTIONS**",
     "1. Present each required question to the user clearly and explicitly in the chat window",

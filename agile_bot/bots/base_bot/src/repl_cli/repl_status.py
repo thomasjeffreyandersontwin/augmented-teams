@@ -39,6 +39,152 @@ class REPLStatus:
         output_lines.append("[*] current  [OK] done  [ ] not started")
         return output_lines
     
+    def _get_scope_display(self) -> List[str]:
+        """Get scope display from state provider."""
+        if hasattr(self.state, '_get_scope_display_lines'):
+            return self.state._get_scope_display_lines()
+        return []
+    
+    @property
+    def hierarchical_status(self) -> str:
+        """Generate hierarchical breadcrumb display showing workflow position."""
+        lines = []
+        
+        # Show scope if set
+        scope_lines = self._get_scope_display()
+        if scope_lines:
+            lines.extend(scope_lines)
+            lines.append("")
+        
+        lines.append("-" * 60)
+        
+        if not self.bot or not self.bot.behaviors:
+            lines.append("No behaviors available")
+            lines.append("-" * 60)
+            return "\n".join(lines)
+        
+        current_behavior_name = self.state.current_behavior_name
+        current_action_name = self.state.current_action_name
+        completed_behaviors = self.state.completed_behaviors or []
+        completed_actions = self.state.completed_action_names or []
+        stage = self.state.stage_name
+        
+        for behavior in self.bot.behaviors:
+            b_name = behavior.name
+            is_current_behavior = b_name == current_behavior_name
+            is_completed_behavior = b_name in completed_behaviors
+            
+            # Get behavior description if available
+            b_desc = getattr(behavior, 'description', '') or ''
+            
+            # Format behavior marker
+            if is_completed_behavior:
+                marker = "[x]"
+            elif is_current_behavior:
+                marker = "[*]"
+            else:
+                marker = "[ ]"
+            
+            # Show behavior line - only show description for current behavior
+            if is_current_behavior and b_desc:
+                lines.append(f"{marker} {b_name} - {b_desc}")
+            else:
+                lines.append(f"{marker} {b_name}")
+            
+            # Only show actions for current behavior
+            if is_current_behavior and behavior.actions:
+                for action in behavior.actions:
+                    a_name = action.action_name
+                    is_current_action = a_name == current_action_name
+                    is_completed_action = a_name in completed_actions
+                    
+                    # Get action description if available
+                    a_desc = getattr(action, 'description', '') or ''
+                    
+                    # Format action marker
+                    if is_completed_action:
+                        a_marker = "[x]"
+                    elif is_current_action:
+                        a_marker = "[*]"
+                    else:
+                        a_marker = "[ ]"
+                    
+                    # Show action line
+                    if is_current_action and a_desc:
+                        lines.append(f"  {a_marker} {a_name} - {a_desc}")
+                    else:
+                        lines.append(f"  {a_marker} {a_name}")
+                    
+                    # Only show operations for current action
+                    if is_current_action:
+                        # Get parameter hints
+                        instr_params = self._get_instructions_params(action)
+                        submit_params = self._get_submit_params(action)
+                        common_params = ' --path="..." --scope="..."'
+                        
+                        # Instructions
+                        if stage == 'instructions' or stage == 'not_started':
+                            lines.append(f"    [*] instructions{instr_params}{common_params}")
+                        else:
+                            lines.append(f"    [x] instructions{instr_params}{common_params}")
+                        
+                        # Submit
+                        if stage == 'submitted':
+                            lines.append(f"    [*] submit{submit_params}{common_params}")
+                        elif stage in ('instructions', 'not_started', 'instructions_given'):
+                            lines.append(f"    [ ] submit{submit_params}{common_params}")
+                        else:
+                            lines.append(f"    [x] submit{submit_params}{common_params}")
+                        
+                        # Confirm
+                        lines.append(f"    [ ] confirm")
+        
+        lines.append("")
+        lines.append("Run:")
+        lines.append("echo 'instructions' | python repl_main.py to see instructions for this action.")
+        lines.append("echo '[behavior.][action.]operation' | python repl_main.py  - navigate and perform operation")
+        lines.append("echo '[behavior][.action]' | python repl_main.py           - navigate to behavior/action")
+        lines.append("-" * 60)
+        
+        # Add quick commands menu
+        lines.append("")
+        lines.append("Commands: status | back | current | next | path [dir] | scope [filter] | help | exit")
+        lines.append("run echo '[command]' | python repl_main.py to invoke commands")
+        
+        return "\n".join(lines)
+    
+    def _get_instructions_params(self, action) -> str:
+        """Get parameter hints for instructions operation."""
+        # Check if action has context_class with fields
+        if hasattr(action, 'context_class') and action.context_class:
+            try:
+                import dataclasses
+                if dataclasses.is_dataclass(action.context_class):
+                    fields = [f.name for f in dataclasses.fields(action.context_class)]
+                    if 'context' in fields:
+                        return ' --context="..."'
+            except:
+                pass
+        return ''
+    
+    def _get_submit_params(self, action) -> str:
+        """Get parameter hints for submit operation."""
+        params = []
+        if hasattr(action, 'context_class') and action.context_class:
+            try:
+                import dataclasses
+                if dataclasses.is_dataclass(action.context_class):
+                    fields = [f.name for f in dataclasses.fields(action.context_class)]
+                    if 'decisions' in fields:
+                        params.append('--decisions="1:option,..."')
+                    if 'assumptions_made' in fields or 'assumptions' in fields:
+                        params.append('--assumptions="..."')
+            except:
+                pass
+        if params:
+            return ' ' + ' '.join(params)
+        return ''
+    
     @property
     def compact_status(self) -> List[str]:
         output_lines = [""]
@@ -53,6 +199,8 @@ class REPLStatus:
             "  back          - Return to previous action",
             "  current       - Re-execute current operation",
             "  next          - Advance to next action",
+            "  path [dir]    - Show/set working directory",
+            "  scope [filter]- Show/set/clear scope filter",
             "  help          - Show detailed help",
             "  exit          - Exit CLI"
         ])

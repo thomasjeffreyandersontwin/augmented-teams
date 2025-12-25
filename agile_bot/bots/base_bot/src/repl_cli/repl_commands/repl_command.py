@@ -212,6 +212,7 @@ class InstructionDisplayCommand(REPLCommand):
             
             # Build content (just instructions, no submit message yet)
             content = "\n".join([
+                "=================================",
                 exec_line,
                 "",
                 formatted_output

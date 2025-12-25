@@ -39,31 +39,106 @@ class ValidateRulesAction(Action):
 
     def _prepare_instructions(self, instructions, context: ValidateActionContext):
         """Prepare validation instructions with rules and validation data."""
-        # Get rules digest
-        rules_text = self._rules.formatted_rules_digest()
+        # Get rules with file paths for AI to read
+        rules_text = self._format_rules_with_file_paths()
         
         # Get story graph schema path
         schema_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
         
+        # Get scope description
+        scope_text = self._format_scope_description(context)
+        
         # Build replacement data
         replacements = {
             'rules': rules_text if rules_text else 'No rules defined',
+            'scanner_output': 'Scanner violations are shown above in the validation report.',
             'schema': f'**Schema:** Story graph at `{schema_path}`',
-            'description': f'**Task:** Validate {self.behavior.name} behavior artifacts against rules'
+            'description': f'Validate **{self.behavior.name}** artifacts against rules. Scanner results shown above.',
+            'scope': scope_text
         }
         
-        # Replace placeholders in base instructions
+        # Replace placeholders in base instructions (both {{}} and {} formats)
         base_instructions = instructions.get('base_instructions', [])
         new_instructions = []
         for line in base_instructions:
             if isinstance(line, str):
+                # Replace {{placeholder}} format
                 for key, value in replacements.items():
                     placeholder = '{{' + key + '}}'
+                    if placeholder in line:
+                        line = line.replace(placeholder, value)
+                # Replace {placeholder} format
+                for key, value in replacements.items():
+                    placeholder = '{' + key + '}'
                     if placeholder in line:
                         line = line.replace(placeholder, value)
             new_instructions.append(line)
         
         instructions._data['base_instructions'] = new_instructions
+
+    def _format_scope_description(self, context: ValidateActionContext) -> str:
+        """Format scope description for validation instructions."""
+        if context.scope:
+            scope_dict = context.scope
+            scope_type = scope_dict.get('type', 'all')
+            scope_value = scope_dict.get('value', [])
+            
+            if scope_type == 'epic':
+                return f"epic(s): {', '.join(scope_value)}"
+            elif scope_type == 'story':
+                return f"story/stories: {', '.join(scope_value)}"
+            elif scope_type == 'files':
+                return f"file(s): {', '.join(scope_value)}"
+            else:
+                return "all epics, sub-epics, stories, and domain concepts in the knowledge graph"
+        else:
+            return "all epics, sub-epics, stories, and domain concepts in the knowledge graph"
+
+    def _format_rules_with_file_paths(self) -> str:
+        """Format rules with file paths for AI to read and analyze."""
+        rules_data = self.inject_behavior_specific_and_bot_rules()
+        all_rules = rules_data.get('validation_rules', [])
+        
+        if not all_rules:
+            return 'No validation rules found.'
+        
+        lines = []
+        lines.append("**Rules to validate against (read each file for full DO/DON'T examples):**")
+        lines.append("")
+        
+        for rule in all_rules:
+            rule_file = rule.get('rule_file', 'unknown')
+            rule_content = rule.get('rule_content', {})
+            
+            # Extract rule info
+            name = rule_content.get('name', rule_file.split('/')[-1].replace('.json', '').replace('_', ' ').title())
+            description = rule_content.get('description', 'No description')
+            priority = rule_content.get('priority', 99)
+            has_scanner = 'scanner' in rule_content or 'scanners' in rule_content
+            
+            # Format rule entry with file path
+            scanner_status = '[Scanner]' if has_scanner else '[Manual Check]'
+            lines.append(f"### Rule: {name} (Priority {priority}) {scanner_status}")
+            lines.append(f"**File:** `{rule_file}`")
+            lines.append(f"**Description:** {description}")
+            
+            # Add DO section
+            do_section = rule_content.get('do', {})
+            do_desc = do_section.get('description', '')
+            if do_desc:
+                lines.append(f"**DO:** {do_desc}")
+            
+            # Add DON'T section
+            dont_section = rule_content.get('dont', {})
+            dont_desc = dont_section.get('description', '')
+            if dont_desc:
+                lines.append(f"**DON'T:** {dont_desc}")
+            
+            lines.append("")
+        
+        lines.append("**IMPORTANT:** For rules marked [Manual Check], you MUST read the rule file and manually verify compliance since no scanner exists.")
+        
+        return '\n'.join(lines)
     
     def _do_submit(self, context: ValidateActionContext) -> Dict[str, Any]:
         """Run validation scanners and generate reports."""

@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Any
 from .story_scanner import StoryScanner
-from .story_map import StoryNode
+from .story_map import StoryNode, Story
 from .violation import Violation
 import re
 
@@ -19,6 +19,11 @@ class ImplementationDetailsScanner(StoryScanner):
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
+        
+        # Only scan actual Story nodes, not Epic or SubEpic nodes
+        # Sub-epics can have imperative names like "Create Mobs" because they group stories
+        if not isinstance(node, Story):
+            return violations
         
         if not hasattr(node, 'name') or not node.name:
             return violations
