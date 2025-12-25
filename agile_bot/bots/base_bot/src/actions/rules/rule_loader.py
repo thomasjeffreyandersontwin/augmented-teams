@@ -17,7 +17,7 @@ class RuleLoader:
         bot_rules_dir = self.bot_paths.bot_directory / 'rules'
         bot_rules = self._load_rules_from_glob(bot_rules_dir, '*.json', 'common')
         bot_rules.extend(self._load_specialization_rules(bot_rules_dir))
-        return bot_rules
+        return sorted(bot_rules, key=lambda r: r.priority)
 
     def _load_rules_from_glob(self, rules_dir: Path, pattern: str, behavior: str=None) -> List[Rule]:
         if behavior is None:
@@ -59,7 +59,7 @@ class RuleLoader:
             if subdir != behavior_rules_dir:
                 behavior_rules.extend(self._load_rules_from_subdir(subdir, behavior_rules_dir))
         logger.info(f'Loaded {len(behavior_rules)} behavior rules for {self.behavior_name}')
-        return behavior_rules
+        return sorted(behavior_rules, key=lambda r: r.priority)
 
     def _create_rule(self, rule_file: Path) -> Rule:
         return Rule(rule_file_path=rule_file, behavior_name=self.behavior_name, bot_name=self.bot_name)

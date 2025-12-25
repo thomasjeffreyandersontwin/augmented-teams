@@ -118,14 +118,17 @@ class InstructionDisplayCommand(REPLCommand):
                     field_obj = fields[field]
                     
                     # Provide generic examples based on field type
-                    if field == 'key_questions_answered':
-                        param_examples.append(f'--{field}=\'{{"question_key_1": "answer 1", "question_key_2": "answer 2"}}\'')
+                    if field == 'answers':
+                        action_name = self.current_action_name if self.has_current_action else 'action'
+                        param_examples.append(f'{action_name}.key_questions.q1="answer 1" {action_name}.key_questions.q2="answer 2"')
                     elif field == 'evidence_provided':
-                        param_examples.append(f'--{field}=\'{{"evidence_type_1": "description or file path", "evidence_type_2": "description"}}\'')
-                    elif field == 'decisions_made':
-                        param_examples.append(f'--{field}=\'{{"decision_key_1": "selected option", "decision_key_2": "selected option"}}\'')
-                    elif field == 'assumptions_made':
-                        param_examples.append(f'--{field}=\'["assumption 1", "assumption 2"]\'')
+                        action_name = self.current_action_name if self.has_current_action else 'action'
+                        param_examples.append(f'{action_name}.evidence.e1="description or file path" {action_name}.evidence.e2="description"')
+                    elif field == 'context':
+                        action_name = self.current_action_name if self.has_current_action else 'action'
+                        param_examples.append(f'{action_name}.context="original chat, file references, etc."')
+                    elif field == 'assumptions':
+                        param_examples.append('decision1="option1" decision2="option2" assumptions="assumption1, assumption2"')
                     elif 'Dict' in str(field_obj.type):
                         # Generic dict fields
                         param_examples.append(f'--{field}=\'{{"key_1": "value 1", "key_2": "value 2"}}\'')
@@ -137,9 +140,9 @@ class InstructionDisplayCommand(REPLCommand):
                         param_examples.append(f'--{field}="value"')
                 
                 params_str = ' '.join(param_examples)
-                return f"Type 'submit {params_str}' when ready to submit your work."
+                return f"Run: echo 'submit {params_str}' | python repl_main.py when ready to submit your work."
         
-        return "Type 'submit' when ready to submit your work."
+        return "Run: echo 'submit' | python repl_main.py when ready to submit your work."
     
     def navigate_to_behavior_action(self, behavior_name: str, action_name: str) -> None:
         """
@@ -156,7 +159,7 @@ class InstructionDisplayCommand(REPLCommand):
         """
         Display navigation result (moving to a behavior/action).
         
-        Shows: location + prompt to type 'instructions', then header at bottom (via template method)
+        Shows: location + prompt to run echo 'instructions' | python repl_main.py to see instructions, then header at bottom (via template method)
         """
         if not self.has_current_action:
             return REPLCommandResponse(
@@ -170,7 +173,7 @@ class InstructionDisplayCommand(REPLCommand):
         content = "\n".join([
             f"Now at: {location}",
             "",
-            "Type 'instructions' to see instructions for this action."
+            "Run: echo 'instructions' | python repl_main.py to see instructions for this action."
         ])
         
         return self._wrap_with_context_header(content, f"Moved to {location}")
@@ -214,12 +217,8 @@ class InstructionDisplayCommand(REPLCommand):
                 formatted_output
             ])
             
-            # Wrap with context header, then add submit message at the very end
+            # Wrap with context header
             response = self._wrap_with_context_header(content, content)
-            
-            # Add submit message after header (at the very bottom)
-            submit_message = self._get_submit_message(action)
-            response.output = response.output + "\n\n" + submit_message
             
             response.action = action.action_name
             response.context_passed_to_action = context

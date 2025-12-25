@@ -66,14 +66,24 @@ class ScopeActionContext(ActionContext):
 
 @dataclass
 class ClarifyActionContext(ActionContext):
-    key_questions_answered: Optional[Dict[str, Any]] = None
+    answers: Optional[Dict[str, Any]] = None
     evidence_provided: Optional[Dict[str, Any]] = None
+    context: Optional[str] = None
 
 
 @dataclass
 class StrategyActionContext(ActionContext):
-    decisions_made: Optional[Dict[str, Any]] = None
-    assumptions_made: Optional[List[str]] = None
+    assumptions: Optional[List[str]] = None
+    
+    def __post_init__(self):
+        # Allow dynamic attributes for decisions
+        pass
+    
+    def get_decisions(self) -> Dict[str, Any]:
+        """Get all decision attributes (exclude assumptions and internal attrs)."""
+        excluded = {'assumptions'}
+        return {k: v for k, v in self.__dict__.items() 
+                if not k.startswith('_') and k not in excluded and v is not None}
 
 
 @dataclass

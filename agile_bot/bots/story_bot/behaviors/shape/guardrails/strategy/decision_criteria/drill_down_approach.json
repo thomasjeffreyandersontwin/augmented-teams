@@ -1,7 +1,6 @@
 {
   "description": "drill down approach",
   "question": "What areas of the story map do you want to explore more deeply as a part of shaping?",
-  "outcome": "Determines which epics/stories get detailed breakdown",
   "options": [
     "Dig deep on business complexity",
     "Dig deep on system interactions",

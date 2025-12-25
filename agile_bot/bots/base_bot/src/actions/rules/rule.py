@@ -69,6 +69,10 @@ class Rule:
         return self._scanner
 
     @property
+    def priority(self) -> int:
+        return self._rule_content.get('priority', 999)
+    
+    @property
     def description(self) -> str:
         return self._rule_content.get('description', '')
 
@@ -199,6 +203,16 @@ class Rule:
                 result['error'] = self._scan_error
             return result
 
+    def _format_guidance(self, guidance_list: list, formatted: list) -> None:
+        for guidance in guidance_list:
+            desc = guidance.get('description', '')
+            examples = guidance.get('example', [])
+            if desc:
+                formatted.append(f'\n{desc}')
+            if examples:
+                for ex in examples:
+                    formatted.append(f'  - {ex}')
+    
     def _format_examples(self, examples: list, formatted: list) -> None:
         for example in examples:
             desc = example.get('description', '')
@@ -231,14 +245,29 @@ class Rule:
         formatted.append(f'\n**Rule:** {self.rule_file}')
         if self.description:
             formatted.append(f'{self.description}')
-        do_examples = self._rule_content.get('do', {}).get('examples', [])
-        if do_examples:
+        
+        # DO section with description
+        do_section = self._rule_content.get('do', {})
+        do_desc = do_section.get('description', '')
+        do_guidance = do_section.get('guidance', [])
+        if do_desc or do_guidance:
             formatted.append('\n**DO:**')
-            self._format_examples(do_examples, formatted)
-        dont_examples = self._rule_content.get('dont', {}).get('examples', [])
-        if dont_examples:
+            if do_desc:
+                formatted.append(f'{do_desc}')
+            if do_guidance:
+                self._format_guidance(do_guidance, formatted)
+        
+        # DON'T section with description
+        dont_section = self._rule_content.get('dont', {})
+        dont_desc = dont_section.get('description', '')
+        dont_guidance = dont_section.get('guidance', [])
+        if dont_desc or dont_guidance:
             formatted.append("\n**DON'T:**")
-            self._format_examples(dont_examples, formatted)
+            if dont_desc:
+                formatted.append(f'{dont_desc}')
+            if dont_guidance:
+                self._format_guidance(dont_guidance, formatted)
+        
         if 'examples' in self._rule_content:
             self._format_inline_examples(formatted)
         formatted.append('')

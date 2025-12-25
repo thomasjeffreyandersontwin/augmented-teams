@@ -102,11 +102,34 @@ class CliContextBuilder:
         
         return context_class(**kwargs)
     
-    def _parse_scope_config(self, json_str: str) -> Optional[Scope]:
-        if not json_str:
+    def _parse_scope_config(self, scope_str: str) -> Optional[Scope]:
+        """Parse scope from simplified format:
+        Two types only:
+        - Story graph: "Item 1, Item 2" (searches entire graph - epics, sub-epics, stories, scenarios, increments)
+        - Files: "files:path/file.py, path/file2.py"
+        """
+        if not scope_str:
             return None
-        data = json.loads(json_str.replace("'", '"'))
-        return Scope.from_dict(data)
+        
+        # Check if it's files scope (only special type)
+        if ':' in scope_str and not scope_str.startswith('{'):
+            parts = scope_str.split(':', 1)
+            if len(parts) == 2 and parts[0].strip().lower() == 'files':
+                scope_value_str = parts[1].strip()
+                scope_values_raw = [v.strip() for v in scope_value_str.split(',') if v.strip()]
+                return Scope(type=ScopeType.FILES, value=scope_values_raw)
+        
+        # Everything else searches the story graph
+        if not scope_str.startswith('{'):
+            scope_values_raw = [v.strip() for v in scope_str.split(',') if v.strip()]
+            return Scope(type=ScopeType.STORY, value=scope_values_raw)
+        
+        # Fallback to old JSON format for backwards compatibility
+        try:
+            data = json.loads(scope_str.replace("'", '"'))
+            return Scope.from_dict(data)
+        except (json.JSONDecodeError, KeyError):
+            return None
     
     def _parse_json_dict(self, json_str: str) -> Optional[dict]:
         if not json_str:

@@ -124,3 +124,15 @@ desktop.ini
 # **/extracted-*.json
 # **/structured*.json
 
+# ============================================================================
+# CLI (Hidden from AI - use REPL instead)
+# ============================================================================
+# AI agents should use the REPL (repl_main.py) via Desktop Commander MCP
+# NOT the CLI directly. Hide CLI from indexing to force REPL usage.
+**/src/cli/
+**/src/*_cli.py
+story_bot_cli
+story_bot_cli.ps1
+base_bot_cli
+base_bot_cli.ps1
+

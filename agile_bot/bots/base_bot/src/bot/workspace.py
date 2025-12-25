@@ -8,13 +8,13 @@ def get_bot_directory() -> Path:
     bot_dir = os.environ.get('BOT_DIRECTORY')
     if not bot_dir:
         raise RuntimeError('BOT_DIRECTORY environment variable is not set. Entry points must bootstrap this before importing other modules.')
-    return Path(bot_dir)
+    return Path(bot_dir.strip())
 
 def get_workspace_directory() -> Path:
     workspace = os.environ.get('WORKING_AREA') or os.environ.get('WORKING_DIR')
     if not workspace:
         raise RuntimeError('WORKING_AREA environment variable is not set. Entry points must bootstrap this before importing other modules.')
-    return Path(workspace)
+    return Path(workspace.strip())
 
 def get_base_actions_directory(bot_directory: Path=None) -> Path:
     repo_root = get_python_workspace_root()

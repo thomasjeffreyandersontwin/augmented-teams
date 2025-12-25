@@ -98,32 +98,68 @@ def main():
     # Create REPL session
     repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
     
-    # Get progress for header
-    progress_line = repl_session.get_progress_line()
+    # Check TTY before printing header
+    tty_result = repl_session.detect_tty()
+    is_pipe_mode = not tty_result.tty_detected
     
-    # Print header with progress
+    # Print header
     print("=" * 60)
     print(f"{bot_name.upper()} CLI")
+    
+    # Add explicit instruction when in piped mode
+    if is_pipe_mode:
+        print("")
+        print("=" * 60)
+        print("AI AGENT INSTRUCTIONS - PIPED MODE")
+        print("=" * 60)
+        print("")
+        print("*** THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND ***")
+        print("This is NORMAL and EXPECTED behavior in piped mode.")
+        print("")
+        print("HOW TO RUN COMMANDS (PowerShell):")
+        print("-" * 60)
+        print("Commands must be PIPED via echo, NOT passed as arguments!")
+        print("")
+        print("  # Set environment and pipe command:")
+        print("  cd C:\\dev\\augmented-teams")
+        print("  $env:PYTHONPATH = 'C:\\dev\\augmented-teams'")
+        print("  $env:BOT_DIRECTORY = 'C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot'")
+        print("  $env:WORKING_AREA = '<project_path>'  # e.g. demo\\mob_minion")
+        print("  echo '<command>' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py")
+        print("")
+        print("WHAT DOES NOT WORK:")
+        print("-" * 60)
+        print("  [X] python repl_main.py instructions        # No args!")
+        print("  [X] python repl_main.py --command instructions  # No flags!")
+        print("")
+        print("WHAT WORKS:")
+        print("-" * 60)
+        print("  [OK] echo 'instructions' | python repl_main.py  # Piped input")
+        print("  [OK] echo 'next' | python repl_main.py")
+        print("  [OK] echo 'status' | python repl_main.py")
+        print("")
+        print("PIPED MODE WORKFLOW:")
+        print("-" * 60)
+        print("1. Pipe command -> REPL runs -> shows output -> EXITS")
+        print("2. Read output, do work (create files, etc.)")
+        print("3. Pipe next command -> REPL runs -> shows output -> EXITS")
+        print("4. Repeat for each step in workflow")
+        print("")
+        print("CRITICAL RULES:")
+        print("-" * 60)
+        print("  - ALWAYS pipe commands: echo <cmd> | python repl_main.py")
+        print("  - DO NOT manipulate behavior_action_state.json directly")
+        print("  - Each command starts fresh REPL session (this is normal)")
+        print("")
+    
     print("-" * 60)
     print(f"Bot Path: {bot_directory}")
     print(f"Work Path: {workspace_directory}")
-    print(progress_line)
-    print("=" * 60)
+    print("-" * 60)
     
     # Display rest of state (commands menu)
     state_display = repl_session.display_current_state()
     print(state_display.output)
-    
-    # Check TTY
-    tty_result = repl_session.detect_tty()
-    is_pipe_mode = not tty_result.tty_detected
-    
-    if is_pipe_mode:
-        # Pipe/automation mode: no prompts, read until EOF
-        pass
-    else:
-        # Interactive mode
-        pass
     
     # Main REPL loop
     try:

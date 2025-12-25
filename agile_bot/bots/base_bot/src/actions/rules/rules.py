@@ -224,11 +224,24 @@ class Rules:
         if not rules:
             return 'No validation rules found.'
         
-        lines = ["**Rules to follow:**", ""]
+        lines = []
         for rule in rules:
             description = rule.description or 'No description'
             lines.append(f"- **{rule.name}**: {description}")
-            lines.append(f"  File: {rule.rule_file}")
+            
+            # Add DO description if present
+            do_section = rule.rule_content.get('do', {})
+            do_desc = do_section.get('description', '')
+            if do_desc:
+                lines.append(f"  DO: {do_desc}")
+            
+            # Add DON'T description if present
+            dont_section = rule.rule_content.get('dont', {})
+            dont_desc = dont_section.get('description', '')
+            if dont_desc:
+                lines.append(f"  DON'T: {dont_desc}")
+            
+            lines.append("")  # Add blank line between rules
         
         return '\n'.join(lines)
 

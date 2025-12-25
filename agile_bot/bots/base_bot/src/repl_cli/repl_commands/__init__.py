@@ -2,7 +2,7 @@ from .repl_command import REPLCommand
 from .navigation import NextCommand, BackCommand, GoCommand
 from .workflow import InstructionsCommand, SubmitCommand, ConfirmCommand
 from .meta import HelpCommand, StatusCommand, ExitCommand, CurrentCommand, LoopBackCommand
-from .state import BehaviorCommand, ActionCommand, WorkspaceCommand, ScopeCommand
+from .state import BehaviorCommand, ActionCommand, WorkspaceCommand, PathCommand, ScopeCommand
 from .dot_notation import DotNotationCommand
 
 
@@ -22,6 +22,7 @@ def register_commands(session) -> dict:
         BehaviorCommand(session),
         ActionCommand(session),
         WorkspaceCommand(session),
+        PathCommand(session),
         ScopeCommand(session),
     ]
     return {cmd.name: cmd for cmd in commands}

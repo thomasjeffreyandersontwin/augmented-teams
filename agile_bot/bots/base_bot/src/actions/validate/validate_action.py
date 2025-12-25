@@ -37,7 +37,50 @@ class ValidateRulesAction(Action):
     def rules(self) -> Rules:
         return self._rules
 
+    def _prepare_instructions(self, instructions, context: ValidateActionContext):
+        """Prepare validation instructions with rules and validation data."""
+        # Get rules digest
+        rules_text = self._rules.formatted_rules_digest()
+        
+        # Get story graph schema path
+        schema_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+        
+        # Build replacement data
+        replacements = {
+            'rules': rules_text if rules_text else 'No rules defined',
+            'schema': f'**Schema:** Story graph at `{schema_path}`',
+            'description': f'**Task:** Validate {self.behavior.name} behavior artifacts against rules'
+        }
+        
+        # Replace placeholders in base instructions
+        base_instructions = instructions.get('base_instructions', [])
+        new_instructions = []
+        for line in base_instructions:
+            if isinstance(line, str):
+                for key, value in replacements.items():
+                    placeholder = '{{' + key + '}}'
+                    if placeholder in line:
+                        line = line.replace(placeholder, value)
+            new_instructions.append(line)
+        
+        instructions._data['base_instructions'] = new_instructions
+    
+    def _do_submit(self, context: ValidateActionContext) -> Dict[str, Any]:
+        """Run validation scanners and generate reports."""
+        logger.info('=== Starting validation ===')
+        logger.info(f'Behavior: {self.behavior.name}')
+        logger.info(f'Context: scope={context.scope}, skip_cross_file={context.skip_cross_file}')
+        
+        result = self._executor.execute_synchronous(context)
+        
+        return {
+            'status': 'submitted',
+            'message': 'Validation completed',
+            'validation_result': result
+        }
+    
     def do_execute(self, context: ValidateActionContext) -> Dict[str, Any]:
+        """Legacy method for backwards compatibility."""
         logger.info('=== Starting validation ===')
         logger.info(f'Behavior: {self.behavior.name}')
         logger.info(f'Context: scope={context.scope}, skip_cross_file={context.skip_cross_file}')

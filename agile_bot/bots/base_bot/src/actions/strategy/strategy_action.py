@@ -31,14 +31,42 @@ class StrategyAction(Action):
     @property
     def typical_assumptions(self):
         return self.strategy.assumptions.assumptions
-
-    @property
-    def recommended_activities(self):
-        return self.strategy.recommended_activities.recommended_activities
     
     def _prepare_instructions(self, instructions, context: StrategyActionContext):
         """Add strategy data (criteria, assumptions, activities) to instructions."""
         instructions.update(self.strategy.instructions)
+    
+    def _do_submit(self, context: StrategyActionContext) -> Dict[str, Any]:
+        """Save strategy decisions and assumptions to planning.json."""
+        decisions = context.get_decisions()
+        if decisions or context.assumptions:
+            self.save_strategy(context)
+            
+            # Count what was saved
+            decisions_count = len(decisions)
+            assumptions_count = len(context.assumptions or [])
+            
+            # Build detailed message
+            message_parts = []
+            if decisions_count > 0:
+                message_parts.append(f"{decisions_count} decision(s)")
+            if assumptions_count > 0:
+                message_parts.append(f"{assumptions_count} assumption(s)")
+            
+            saved_items = " and ".join(message_parts) if message_parts else "data"
+            
+            # Get file path
+            saved_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'planning.json'
+            
+            return {
+                'status': 'submitted',
+                'message': f'Strategy saved: {saved_items} saved to {saved_path}',
+                'saved_path': str(saved_path),
+                'choices': decisions,
+                'assumptions': context.assumptions or []
+            }
+        
+        return {'status': 'submitted', 'message': 'No strategy data to save'}
     
     def _format_instructions_for_display(self, instructions) -> str:
         """Format strategy data for REPL display."""
@@ -52,44 +80,34 @@ class StrategyAction(Action):
         strategy_criteria = instructions_dict.get('strategy_criteria', {})
         if strategy_criteria:
             output_lines.append("")
-            output_lines.append("**DECISION CRITERIA:**")
+            output_lines.append("**Decisions:**")
             for criteria_key, criteria_data in strategy_criteria.items():
                 output_lines.append("")
-                output_lines.append(f"**{criteria_key}:**")
                 question = criteria_data.get('question', '')
                 if question:
-                    output_lines.append(f"  Question: {question}")
+                    output_lines.append(f"**{criteria_key}:** {question}")
+                else:
+                    output_lines.append(f"**{criteria_key}:**")
                 options = criteria_data.get('options', [])
                 if options:
-                    output_lines.append("  Options:")
                     for option in options:
-                        output_lines.append(f"    - {option}")
-                outcome = criteria_data.get('outcome', '')
-                if outcome:
-                    output_lines.append(f"  Outcome: {outcome}")
+                        output_lines.append(f"  - {option}")
         
         # Format assumptions
         assumptions = instructions_dict.get('assumptions', [])
         if assumptions:
             output_lines.append("")
-            output_lines.append("**TYPICAL ASSUMPTIONS:**")
+            output_lines.append("**Assumptions:**")
             for assumption in assumptions:
                 output_lines.append(f"- {assumption}")
-        
-        # Format recommended activities
-        recommended_activities = instructions_dict.get('recommended_activities', [])
-        if recommended_activities:
-            output_lines.append("")
-            output_lines.append("**RECOMMENDED HUMAN ACTIVITIES:**")
-            for activity in recommended_activities:
-                output_lines.append(f"- {activity}")
         
         return "\n".join(output_lines)
 
     def do_execute(self, context: StrategyActionContext) -> Dict[str, Any]:
         instructions = self.instructions.copy()
         instructions.update(self.strategy.instructions)
-        if context.decisions_made or context.assumptions_made:
+        decisions = context.get_decisions()
+        if decisions or context.assumptions:
             self.save_strategy(context)
         return {'instructions': instructions.to_dict()}
 
@@ -98,7 +116,7 @@ class StrategyAction(Action):
             behavior_name=self.behavior.name,
             bot_paths=self.behavior.bot_paths,
             strategy=self.strategy,
-            decisions_made=context.decisions_made or {},
-            assumptions_made=context.assumptions_made or []
+            decisions_made=context.get_decisions(),
+            assumptions_made=context.assumptions or []
         )
         strategy_decision.save()

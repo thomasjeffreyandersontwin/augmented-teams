@@ -110,8 +110,9 @@ class BehaviorHelp:
 
 
 class REPLHelp:
-    def __init__(self, bot):
+    def __init__(self, bot, session=None):
         self.bot = bot
+        self.session = session
     
     @property
     def behavior_names(self) -> List[str]:
@@ -132,23 +133,25 @@ class REPLHelp:
     @property
     def command_examples(self) -> List[CommandExample]:
         return [
-            CommandExample(".", "Execute current behavior.action.operation"),
-            CommandExample("behavior", "e.g., shape - jump to behavior and execute first action.operation"),
-            CommandExample("action", "e.g., build - jump to action and execute first operation"),
-            CommandExample("operation", "e.g., submit - jump to operation and execute"),
-            CommandExample("behavior.action", "e.g., shape.build - jump to behavior.action and execute first operation"),
-            CommandExample("behavior.action.operation", "e.g., shape.build.submit - jump and execute"),
+            CommandExample("echo '.' | python repl_main.py", "Execute current behavior.action.operation"),
+            CommandExample("echo 'shape' | python repl_main.py", "Jump to behavior and execute first action.operation"),
+            CommandExample("echo 'build' | python repl_main.py", "Jump to action and execute first operation"),
+            CommandExample("echo 'submit scope=\"s1\"' | python repl_main.py", "Jump to operation with params and execute"),
+            CommandExample("echo 'shape.build' | python repl_main.py", "Jump to behavior.action and execute first operation"),
+            CommandExample("echo 'shape.build.submit' | python repl_main.py", "Jump to behavior.action.operation and execute"),
         ]
     
     @property
     def other_commands(self) -> List[CommandExample]:
         return [
-            CommandExample("status", "Show full workflow hierarchy"),
-            CommandExample("back", "Go back to previous action"),
-            CommandExample("current", "Re-execute current operation"),
-            CommandExample("next", "Advance to next action"),
-            CommandExample("help", "Show this help"),
-            CommandExample("exit", "Exit CLI"),
+            CommandExample("echo 'status' | python repl_main.py", "Show full workflow hierarchy"),
+            CommandExample("echo 'back' | python repl_main.py", "Go back to previous action"),
+            CommandExample("echo 'current' | python repl_main.py", "Re-execute current operation"),
+            CommandExample("echo 'next' | python repl_main.py", "Advance to next action"),
+            CommandExample("echo 'path [dir]' | python repl_main.py", "Show/set working directory"),
+            CommandExample("echo 'scope [filter]' | python repl_main.py", "Show/set/clear scope filter"),
+            CommandExample("echo 'help' | python repl_main.py", "Show this help"),
+            CommandExample("echo 'exit' | python repl_main.py", "Exit CLI"),
         ]
     
     @property
@@ -165,24 +168,72 @@ class REPLHelp:
             "    actions:"
         ]
         
-        for action in self.action_descriptions:
-            lines.append(f"      {action.name:12} - {action.description}")
+        # Show actions with their parameter hints
+        if self.session and self.session.has_current_behavior:
+            behavior = self.session.current_behavior
+            for action in behavior.actions._actions:
+                action_name = action.action_name
+                action_desc = next((a.description for a in self.action_descriptions if a.name == action_name), "")
+                
+                # Get parameter hints for this action
+                instructions_hint = self.session._get_instructions_params_hint(action)
+                submit_hint = self.session._get_submit_params_hint(action)
+                
+                # Combine hints
+                hints = []
+                if instructions_hint:
+                    hints.append(instructions_hint)
+                if submit_hint:
+                    hints.append(submit_hint)
+                
+                params_line = " | ".join(hints) if hints else ""
+                
+                lines.append(f"      {action_name:12} - {action_desc}")
+                if params_line:
+                    lines.append(f"                     {params_line}")
+        else:
+            # Fallback if no current behavior
+            for action in self.action_descriptions:
+                lines.append(f"      {action.name:12} - {action.description}")
+        
+        lines.append("")
+        lines.append("    operations:")
+        
+        # Show operations with parameter hints if we have a current action
+        if self.session and self.session.has_current_action:
+            action_obj = self.session.current_action
+            instructions_hint = self.session._get_instructions_params_hint(action_obj)
+            submit_hint = self.session._get_submit_params_hint(action_obj)
+            
+            if instructions_hint:
+                lines.append(f"      instructions  {instructions_hint}")
+            else:
+                lines.append(f"      instructions")
+            
+            if submit_hint:
+                lines.append(f"      submit        {submit_hint}")
+            else:
+                lines.append(f"      submit")
+            
+            lines.append(f"      confirm")
+        else:
+            lines.append(f"      instructions  [context, scope, or action-specific params]")
+            lines.append(f"      submit        [scope, decisions, assumptions, or action-specific params]")
+            lines.append(f"      confirm")
         
         lines.extend([
-            "",
-            "    operations  -> instructions | submit | confirm",
             "",
             "  Examples:"
         ])
         
         for example in self.command_examples:
-            lines.append(f"    {example.pattern:27} -> {example.description}")
+            lines.append(f"    {example.pattern:45} -> {example.description}")
         
         lines.append("")
         lines.append("  Other Commands:")
         
         for cmd in self.other_commands:
-            lines.append(f"    {cmd.pattern:11} - {cmd.description}")
+            lines.append(f"    {cmd.pattern:45} - {cmd.description}")
         
         return "\n".join(lines)
     
