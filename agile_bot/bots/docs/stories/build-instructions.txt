@@ -7,7 +7,7 @@ The clarification data is organized by behavior name, with each behavior contain
 **STRATEGY DATA AVAILABLE:**
 The 'strategy' data in your instructions contains planning decisions and assumptions made during previous strategy sessions across all behaviors.
 This data represents the strategic choices and assumptions that guide how work should be approached. Reference this data to ensure your actions align with established strategic decisions.
-The strategy data is organized by behavior name, with each behavior containing 'strategy_criteria' (decision criteria and decisions made), 'assumptions' (typical assumptions and assumptions made), and 'recommended_activities'.
+The strategy data is organized by behavior name, with each behavior containing 'strategy_criteria' (decision criteria and decisions made) and 'assumptions' (typical assumptions and assumptions made).
 
 **ORIGINAL CONTEXT FILES AVAILABLE:**
 The following original context files are available in the docs/context/ folder: 

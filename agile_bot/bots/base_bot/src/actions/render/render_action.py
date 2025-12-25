@@ -29,7 +29,46 @@ class RenderOutputAction(Action):
     def action_name(self, value: str):
         raise AttributeError('action_name is read-only for RenderOutputAction')
 
+    def _prepare_instructions(self, instructions, context: ScopeActionContext):
+        """Prepare render instructions with render specs and templates."""
+        render_instructions = self._config_loader.load_render_instructions()
+        render_specs = self._render_specs
+        
+        # Execute synchronizers during preparation
+        for spec in render_specs:
+            if spec.synchronizer:
+                try:
+                    result = spec.execute_synchronizer()
+                    spec.mark_executed(result)
+                    logger.info(f"Executed synchronizer for {spec.name}: {result.get('output_path', 'N/A')}")
+                except Exception as e:
+                    logger.error(f'Failed to execute synchronizer for {spec.name}: {e}')
+                    spec.mark_failed(str(e))
+        
+        # Merge and inject render data
+        merged_instructions = MergedInstructions(
+            base_instructions=instructions.get('base_instructions', []),
+            render_instructions=render_instructions
+        ).merge()
+        self._instruction_formatter.inject_render_data(merged_instructions, render_instructions, render_specs)
+        
+        # Store render specs for later use
+        executed_specs = [spec for spec in render_specs if spec.is_executed]
+        template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]
+        
+        instructions._data['base_instructions'] = merged_instructions
+        instructions.set('executed_specs', [spec.config_data for spec in executed_specs])
+        instructions.set('template_specs', [spec.config_data for spec in template_specs])
+    
+    def _do_submit(self, context: ScopeActionContext) -> Dict[str, Any]:
+        """Render actions execute synchronizers during preparation - nothing to submit."""
+        return {
+            'status': 'submitted',
+            'message': 'Render instructions provided to AI - documents will be rendered by AI'
+        }
+    
     def do_execute(self, context: ScopeActionContext) -> Dict[str, Any]:
+        """Legacy method for backwards compatibility."""
         render_instructions = self._config_loader.load_render_instructions()
         render_specs = self._render_specs
         for spec in render_specs:

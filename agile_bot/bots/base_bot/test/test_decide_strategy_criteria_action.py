@@ -162,8 +162,7 @@ def given_strategy_json_exists_with_data(workspace_directory: Path, behavior: st
             'assumptions': {
                 'typical_assumptions': [],
                 'assumptions_made': assumptions_made
-            },
-            'recommended_activities': []
+            }
         }
     }
     strategy_file.write_text(json.dumps(existing_data, indent=2), encoding='utf-8')
@@ -178,8 +177,7 @@ def when_action_injects_strategy_criteria_and_assumptions(action: StrategyAction
     # Return just the strategy criteria portion for testing
     return {
         'strategy_criteria': instructions.get('strategy_criteria', {}),
-        'assumptions': instructions.get('assumptions', []),
-        'recommended_activities': instructions.get('recommended_activities', [])
+        'assumptions': instructions.get('assumptions', [])
     }
 
 

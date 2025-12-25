@@ -62,13 +62,13 @@ class ActionDataCollector:
     
     def _get_single_parameter_description(self, action_name: str, param: str) -> str:
         """Get description for a single parameter."""
-        if 'key_questions_answered' in param:
+        if 'answers' in param or 'key_questions_answered' in param:
             return "Dict mapping question keys to answer strings"
         if 'evidence_provided' in param:
             return "Dict mapping evidence types to evidence content"
-        if 'decisions_made' in param:
+        if 'choices' in param or 'decisions_made' in param:
             return "Dict mapping decision criteria keys to selected options/values"
-        if 'assumptions_made' in param:
+        if 'assumptions' in param or 'assumptions_made' in param:
             return "List of assumption strings"
         if 'scope' in param:
             return self._get_scope_description(action_name)

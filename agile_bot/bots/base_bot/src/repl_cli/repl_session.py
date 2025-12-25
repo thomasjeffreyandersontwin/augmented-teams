@@ -179,7 +179,7 @@ class REPLSession:
         lines.append("  help          - Show detailed help")
         lines.append("  exit          - Exit CLI")
         lines.append("")
-        lines.append("Type 'instructions' to see instructions for this action.")
+        lines.append("Run: echo 'instructions' | python repl_main.py to see instructions for this action.")
         
         return REPLStateDisplay(
             output="\n".join(lines),
@@ -207,6 +207,16 @@ class REPLSession:
         else:
             bot_name = 'UNKNOWN'
         lines.append(f"{bot_name.upper()} CLI")
+        
+        # Detect piped mode and add explicit AI instruction
+        tty_result = self.detect_tty()
+        if not tty_result.tty_detected:
+            lines.append("")
+            lines.append("*** PIPED MODE DETECTED ***")
+            lines.append("This command will EXIT upon processing.")
+            lines.append("AI: Please follow ALL instructions below.")
+            lines.append("")
+        
         lines.append("-" * 60)
         
         if self.bot:

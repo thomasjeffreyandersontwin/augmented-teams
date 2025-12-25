@@ -1,0 +1,46 @@
+{
+  "priority": 2,
+  "description": "Use active business language focused on user/system behavior. Describe what actors do with clear action verbs, not technical implementation or passive constructions.",
+  "scanners": [
+    "agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner",
+    "agile_bot.bots.base_bot.src.scanners.technical_language_scanner.TechnicalLanguageScanner"
+  ],
+  "do": {
+    "description": "Use active voice with business language. Example: 'User submits order' (active voice, business language describing what actor does)",
+    "guidance": [
+      {
+        "description": "Use action verbs to describe what happens in active voice with business language focused on user/system behavior",
+        "example": ["User --> submits order", "System --> validates payment", "Customer --> places order", "Admin --> approves request"]
+      },
+      {
+        "description": "Action verbs that describe user/system behavior clearly - use verbs like submits, views, validates, sends, displays, places, edits, creates, loads, saves, invokes, processes, generates, updates",
+        "example": ["User --> submits form", "Customer --> views product catalog", "System --> validates input data", "Admin --> sends notification", "System --> displays results", "User --> places order", "Developer --> edits configuration", "System --> creates report", "User --> loads dashboard", "System --> saves changes", "User --> invokes command", "System --> processes payment", "System --> generates invoice", "Admin --> updates settings"]
+      },
+      {
+        "description": "Prefer user/system stories over technical stories - transform technical language into business behavior. Wrong: 'Set up database schema' (technical). Correct: 'System --> stores user data' (business, user story).",
+        "example": ["System --> stores user data (not 'Set up database schema')", "System --> exposes user data via API (not 'Create API endpoint')", "Developer --> verifies story behavior (not 'Write unit tests')"]
+      },
+      {
+        "description": "When technical stories are necessary, mark with story_type: 'technical' and keep minimal and focused",
+        "example": ["System --> migrates legacy data format (story_type: 'technical')", "Developer --> refactors authentication module (story_type: 'technical')"]
+      }
+    ]
+  },
+  "dont": {
+    "description": "Don't use passive voice or technical implementation language. Example: 'Order is submitted' (passive voice, unclear actor) → 'User submits order' (active voice, clear actor)",
+    "guidance": [
+      {
+        "description": "Don't describe behaviors passively or vaguely - always use active voice that clearly identifies who performs the action. Wrong: 'Order is submitted' (passive - by whom?). Correct: 'User --> submits order' (active, clear actor).",
+        "example": ["User --> submits order (not 'Order is submitted')", "System --> validates payment (not 'Payment gets validated')", "User --> places order (not 'Order is placed by user')"]
+      },
+      {
+        "description": "Don't use technical implementation details or development task language - focus on business behavior. Wrong: 'Developer --> writes code', 'Developer --> creates class'. Correct: 'Developer --> implements feature', 'System --> stores data'.",
+        "example": ["Developer --> writes code", "Developer --> creates class", "Developer --> adds method", "Developer --> sets up CI/CD", "Developer --> configures database", "Developer --> installs package", "Developer --> implements order system", "Developer --> creates database schema", "System --> queries database", "System --> calls API", "System --> updates table"]
+      },
+      {
+        "description": "Development task verbs to avoid - these describe implementation, not business behavior. Use business language instead.",
+        "example": ["Developer --> implements feature (avoid)", "Developer --> creates module (avoid)", "Developer --> refactors code (avoid)", "Developer --> optimizes performance (avoid)", "Developer --> fixes bug (avoid)", "Developer --> builds system (avoid)", "Developer --> sets up infrastructure (avoid)"]
+      }
+    ]
+  }
+}

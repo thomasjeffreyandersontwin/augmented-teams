@@ -49,9 +49,10 @@ class Action:
         action_config = self.action_config
         if 'order' in action_config:
             self._base_config['order'] = action_config['order']
-        behavior_instructions = action_config.get('instructions', [])
-        base_instructions = self._base_config.get('instructions', [])
-        self._base_config['instructions'] = self._merge_instructions(base_instructions, behavior_instructions)
+        # DON'T merge behavior instructions into base - keep them separate for display ordering
+        # behavior_instructions = action_config.get('instructions', [])
+        # base_instructions = self._base_config.get('instructions', [])
+        # self._base_config['instructions'] = self._merge_instructions(base_instructions, behavior_instructions)
         self._base_config['custom_class'] = action_config.get('action_class') or action_config.get('custom_class')
         if 'next_action' in action_config:
             self._base_config['next_action'] = action_config['next_action']
@@ -79,6 +80,11 @@ class Action:
     @action_name.setter
     def action_name(self, value: str):
         raise AttributeError("action_name is read-only. It's derived from the class name.")
+
+    @property
+    def description(self) -> str:
+        """Get the action description from base config."""
+        return self._base_config.get('description', '')
 
     def _merge_instructions(self, base_instructions, behavior_instructions) -> List:
         if isinstance(base_instructions, list) and isinstance(behavior_instructions, list):
@@ -315,23 +321,34 @@ class Action:
         instructions_dict = instructions.to_dict()
         output_lines = []
         
-        # Add base instructions
+        # 1. Add behavior description at the very top if present
+        if self.behavior and hasattr(self.behavior, 'description') and self.behavior.description:
+            output_lines.append(self.behavior.description)
+            output_lines.append("")
+        
+        # 2. Add behavior-specific action instructions if present
+        if self.action_config and 'instructions' in self.action_config:
+            behavior_action_instructions = self.action_config.get('instructions', [])
+            if behavior_action_instructions:
+                output_lines.extend(behavior_action_instructions)
+                output_lines.append("")
+        
+        # 3. Add base instructions (context sources + base action instructions)
         base_instructions = instructions_dict.get('base_instructions', [])
         output_lines.extend(base_instructions)
         
         # Add guardrails (questions and evidence) if present
         guardrails_dict = instructions_dict.get('guardrails', {})
         if guardrails_dict:
-            output_lines.append("")
-            output_lines.append("**GUARDRAILS:**")
-            
             required_context = guardrails_dict.get('required_context', {})
             if required_context:
-                # Display key questions (can be list or dict)
                 key_questions = required_context.get('key_questions', [])
+                evidence = required_context.get('evidence', [])
+                
+                # Display key questions (can be list or dict)
                 if key_questions:
                     output_lines.append("")
-                    output_lines.append("**Required Key Questions:**")
+                    output_lines.append("**Key Questions:**")
                     if isinstance(key_questions, list):
                         for question in key_questions:
                             output_lines.append(f"- {question}")
@@ -340,10 +357,9 @@ class Action:
                             output_lines.append(f"- **{question_key}**: {question_text}")
                 
                 # Display evidence requirements (can be list or dict)
-                evidence = required_context.get('evidence', [])
                 if evidence:
                     output_lines.append("")
-                    output_lines.append("**Required Evidence:**")
+                    output_lines.append("**Evidence:**")
                     if isinstance(evidence, list):
                         # Show as comma-delimited list instead of one per line
                         output_lines.append(', '.join(evidence))

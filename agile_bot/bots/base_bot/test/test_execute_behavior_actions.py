@@ -330,11 +330,6 @@ def create_minimal_guardrails_files(bot_dir: Path, behavior_name: str, bot_name:
     assumptions_file = strategy_dir / 'typical_assumptions.json'
     assumptions_file.write_text(json.dumps({'typical_assumptions': []}), encoding='utf-8')
     
-    # Check for both naming conventions
-    for activity_file_name in ['recommended_activities.json', 'recommended_human_activity.json']:
-        activity_file = strategy_dir / activity_file_name
-        activity_file.write_text(json.dumps({'recommended_activities': []}), encoding='utf-8')
-    
     # Decision criteria folder
     decision_criteria_dir = strategy_dir / 'decision_criteria'
     decision_criteria_dir.mkdir(parents=True, exist_ok=True)

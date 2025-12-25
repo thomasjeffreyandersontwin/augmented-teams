@@ -2064,8 +2064,7 @@ class TestInsertContextIntoInstructions:
                 "assumptions": {
                     "typical_assumptions": ["Assume X"],
                     "assumptions_made": ["Assume Y"]
-                },
-                "recommended_activities": ["Activity 1"]
+                }
             }
         }
         
@@ -2758,8 +2757,6 @@ def given_bot_with_behaviors(tmp_path: Path, bot_name: str, behaviors: list) -> 
         strategy_dir.mkdir(parents=True, exist_ok=True)
         assumptions_file = strategy_dir / 'typical_assumptions.json'
         assumptions_file.write_text(json.dumps({'typical_assumptions': []}), encoding='utf-8')
-        recommended_activities_file = strategy_dir / 'recommended_activities.json'
-        recommended_activities_file.write_text(json.dumps({'recommended_activities': []}), encoding='utf-8')
         decision_criteria_dir = strategy_dir / 'decision_criteria'
         decision_criteria_dir.mkdir(parents=True, exist_ok=True)
     

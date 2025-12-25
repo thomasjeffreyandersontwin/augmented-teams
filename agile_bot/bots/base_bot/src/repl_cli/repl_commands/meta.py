@@ -40,7 +40,10 @@ class HelpCommand(MetaCommand):
             else:
                 output = action_help.help_text
         
-        return REPLCommandResponse(output=output, response=output, status="success")
+        # Wrap with context header (includes Progress line)
+        header = self.session.get_context_header_for_ai()
+        full_output = f"{output}\n{header}"
+        return REPLCommandResponse(output=full_output, response=output, status="success")
 
 
 class StatusCommand(MetaCommand):

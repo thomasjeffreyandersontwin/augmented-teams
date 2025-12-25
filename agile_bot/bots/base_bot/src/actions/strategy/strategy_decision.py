@@ -18,8 +18,7 @@ class StrategyDecision(JsonPersistent):
         for key, criteria in self.strategy.strategy_criterias.strategy_criterias.items():
             original_strategy_criteria[key] = {'question': criteria.question, 'options': criteria.options}
         original_assumptions = self.strategy.assumptions.assumptions
-        original_recommended_activities = self.strategy.recommended_activities.recommended_activities
-        new_data = {'strategy_criteria': {'criteria': original_strategy_criteria, 'decisions_made': self.decisions_made}, 'assumptions': {'typical_assumptions': original_assumptions, 'assumptions_made': self.assumptions_made}, 'recommended_activities': original_recommended_activities}
+        new_data = {'strategy_criteria': {'criteria': original_strategy_criteria, 'decisions_made': self.decisions_made}, 'assumptions': {'typical_assumptions': original_assumptions, 'assumptions_made': self.assumptions_made}}
         merged_data = self.merge(existing_data, new_data, self.behavior_name)
         super().save(merged_data)
 

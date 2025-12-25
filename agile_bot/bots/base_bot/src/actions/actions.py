@@ -113,7 +113,7 @@ class Actions:
     def _filter_completed_actions_after_target(self, completed_actions: list, target_index: int) -> list:
         return self._state_manager.filter_completed_actions_after_target(completed_actions, target_index, self._actions)
 
-    def navigate_to(self, action_name: str, out_of_order: bool=False):
+    def navigate_to(self, action_name: str, out_of_order: bool=True):
         action = self.find_by_name(action_name)
         if action is None:
             raise ValueError(f"Action '{action_name}' not found")
@@ -129,15 +129,33 @@ class Actions:
                 target_index = i
                 self._current_index = i
                 break
-        if not out_of_order or not self.behavior.bot_paths:
-            self.save_state()
-            return
-        state_file = self._state_manager.get_state_file_path()
-        state_data = json.loads(state_file.read_text(encoding='utf-8'))
-        completed_actions = state_data.get('completed_actions', [])
-        if completed_actions:
+        
+        # When navigating: mark all actions before target as complete, clear actions after target
+        if out_of_order and self.behavior.bot_paths and target_index is not None:
+            state_file = self._state_manager.get_state_file_path()
+            if state_file.exists():
+                state_data = json.loads(state_file.read_text(encoding='utf-8'))
+            else:
+                state_data = {}
+            
+            completed_actions = state_data.get('completed_actions', [])
+            
+            # Mark all actions before target as complete
+            for i in range(target_index):
+                action_state = f"{self.behavior.bot_name}.{self.behavior.name}.{self._actions[i].action_name}"
+                # Check if already completed
+                is_completed = any(a.get('action_state') == action_state for a in completed_actions if isinstance(a, dict))
+                if not is_completed:
+                    completed_actions.append({
+                        'action_state': action_state,
+                        'timestamp': datetime.now().isoformat()
+                    })
+            
+            # Clear completed actions after the target
             state_data['completed_actions'] = self._filter_completed_actions_after_target(completed_actions, target_index)
+            state_file.parent.mkdir(parents=True, exist_ok=True)
             state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+        
         self.save_state()
 
     def close_current(self):

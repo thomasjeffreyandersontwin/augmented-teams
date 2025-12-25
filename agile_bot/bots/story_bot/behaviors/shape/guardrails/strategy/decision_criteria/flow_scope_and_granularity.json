@@ -1,7 +1,6 @@
 {
   "description": "Flow scope and granularity",
   "question": "How wide are we going with the flow and what level of scope are we documenting?",
-  "outcome": "Determines the breadth user-system interactions we're mapping",
   "options": [
     "End-to-end user-system behavior – One user interaction followed by one system response",
     "Journey level – Complete user journey across multiple touchpoints, systems, and interactions. Captures full experience flow.",

@@ -336,8 +336,7 @@ behaviors/shape/guardrails/
 │   └── evidence.json           # Evidence to collect
 └── planning/
     ├── decision_criteria.json  # Criteria for strategy decisions
-    ├── typical_assumptions.json
-    └── recommended_activities.json
+    └── typical_assumptions.json
 ```
 
 ### Example Key Questions

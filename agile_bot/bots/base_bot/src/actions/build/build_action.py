@@ -42,9 +42,12 @@ class BuildKnowledgeAction(Action):
     def rules(self):
         return ValidateRulesAction(behavior=self.behavior, action_config=None)
 
-    def do_execute(self, context: ScopeActionContext) -> Dict[str, Any]:
-        instructions = self.instructions.copy()
+    def _prepare_instructions(self, instructions, context: ScopeActionContext):
+        """Prepare build instructions with knowledge graph data, rules, and scope."""
+        # Add knowledge instructions
         instructions.update(self.knowledge.instructions)
+        
+        # Handle scope
         build_scope = BuildScope.from_context(context, self.behavior.bot_paths)
         instructions.set('scope', build_scope.scope)
         story_names = build_scope.get_story_names(self.knowledge_graph_spec.knowledge_graph.content)
@@ -63,11 +66,29 @@ class BuildKnowledgeAction(Action):
                 'template': self.knowledge_graph_spec.template_filename
             })
         
+        # Add update/create instructions
         self._add_update_instructions(instructions)
+        
+        # Replace placeholders
         self._replace_schema_placeholders(instructions)
+        
+        # Inject rules
         self.inject_rules(instructions)
+        
+        # Replace content with file references
         self._replace_content_with_file_references(instructions)
-        return {'instructions': instructions.to_dict()}
+    
+    def _do_submit(self, context: ScopeActionContext) -> Dict[str, Any]:
+        """Build actions don't have a submit step - AI does the work directly."""
+        return {
+            'status': 'submitted',
+            'message': 'Build instructions provided to AI - knowledge graph will be built by AI'
+        }
+    
+    def do_execute(self, context: ScopeActionContext) -> Dict[str, Any]:
+        """Legacy method for backwards compatibility."""
+        result = self.get_instructions(context)
+        return result
 
     def _add_update_instructions(self, instructions) -> None:
         file_exists = self.knowledge_graph_spec.knowledge_graph.path.exists()
@@ -93,8 +114,7 @@ class BuildKnowledgeAction(Action):
         new_instructions = []
         
         template = self.knowledge_graph_template
-        schema_reference = ''
-        description_text = ''
+        description_lines_list = []
         
         if template and template.exists:
             template_path = template.template_path
@@ -120,21 +140,28 @@ class BuildKnowledgeAction(Action):
                 # No template path available
                 template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/knowledge_graph/template.json"
             
-            # Create reference to template file
-            schema_reference = f"**Template:** `{template_reference}` - Reference this template file for the exact JSON structure your output MUST match."
-            description_text = f"**Template Structure:** The template file `{template_reference}` shows the exact structure (fields, nesting, types) that your knowledge graph output must follow. Read this file to understand the required schema."
+            # Get output filename and path
+            output_filename = self.knowledge_graph_spec.output_filename if self.knowledge_graph_spec else 'knowledge-graph.json'
+            output_path = str(self.knowledge_graph_spec.knowledge_graph.path.parent) if self.knowledge_graph_spec else ''
+            
+            # Create description text for template file and output instructions
+            description_lines_list = [
+                f"Review the template file at `{template_reference}`. It shows the exact structure (fields, nesting, types) that your knowledge graph output must follow during this behavior. Read this file to understand the required schema.",
+                "",
+                f"Create `{output_filename}` if it does not exist. Place file at `{output_path}/`. Using the template for guidance.",
+                "",
+                f"If the file already exists then make SAFE edits only. Preserve existing structure and content. Add or modify only what is necessary. Do NOT overwrite indiscriminately unless explicitly asked. When adding nodes to the graph follow the template and do not add extra elements that you might see in other nodes, they will be added as a part of later behaviors."
+            ]
         
         for line in base_instructions:
             if isinstance(line, str):
                 if '{{schema}}' in line:
-                    if schema_reference:
-                        new_instructions.append(schema_reference)
-                    else:
-                        # Remove the line if no template available
-                        pass
+                    # Skip schema placeholder - not needed
+                    pass
                 elif '{{description}}' in line:
-                    if description_text:
-                        new_instructions.append(description_text)
+                    if description_lines_list:
+                        # Add each description line as a separate instruction
+                        new_instructions.extend(description_lines_list)
                     else:
                         # Remove the line if no description available
                         pass
@@ -157,31 +184,36 @@ class BuildKnowledgeAction(Action):
         new_instructions = []
         rules_section = []
         
-        # CRITICAL: Add execution prompt at the very beginning
-        new_instructions.append('**CRITICAL: EXECUTE THESE INSTRUCTIONS**')
-        new_instructions.append('This file contains instructions to BUILD/UPDATE the knowledge graph.')
-        new_instructions.append('You MUST read these instructions and actually BUILD the knowledge graph - do NOT just generate instructions.')
-        new_instructions.append('')
+        # Get schema path for placeholder replacement
+        schema_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
         
-        # Keep ALL other instructions as-is (they are the custom instructions)
+        # Keep ALL other instructions, replacing placeholders as we go
         for line in existing_instructions:
-            if isinstance(line, str) and '{{rules}}' in line:
-                pass  # Don't add this line
-            else:
-                # Keep all custom instructions
-                new_instructions.append(line)
+            if isinstance(line, str):
+                # Replace {{rules}} - skip it here, will add rules section at the end
+                if '{{rules}}' in line:
+                    continue
+                # Replace {{schema}} placeholder
+                if '{{schema}}' in line:
+                    line = line.replace('{{schema}}', f'**Schema:** Story graph template at `{schema_path}`')
+                # Replace {{description}} placeholder
+                if '{{description}}' in line:
+                    line = line.replace('{{description}}', f'**Task:** Build {self.behavior.name} knowledge graph from clarification and strategy data')
+            # Keep all custom instructions
+            new_instructions.append(line)
         
         # Prepare rules section to append at the END
         if rules_text != 'No validation rules found.':
             rules_lines = rules_text.split('\n')
             rules_section.extend(rules_lines)
         
-        # CRITICAL: Append rules section at the VERY END (after ALL custom instructions)
-        # This ensures: CUSTOM INSTRUCTIONS FIRST, RULES LAST
+        # Append rules section at the VERY END (after ALL custom instructions)
         if rules_section:
-            new_instructions.append('')  # Blank line separator
-            new_instructions.append('**VALIDATION RULES:**')  # Section header
-            new_instructions.append('')  # Blank line
+            # Strip trailing blank lines before adding rules
+            while new_instructions and new_instructions[-1] == '':
+                new_instructions.pop()
+            new_instructions.append('')
+            new_instructions.append('When building story graph follow these rules,')
             new_instructions.extend(rules_section)
         
         # Replace base_instructions with: [custom instructions] + [rules at end]
@@ -205,24 +237,6 @@ class BuildKnowledgeAction(Action):
             except Exception:
                 template_reference = template_path
             instructions._data['template_path'] = template_reference
-            # Add instruction to read template in base_instructions
-            base_instructions = instructions.get('base_instructions', [])
-            if base_instructions:
-                # Find where to insert template reference instruction
-                insert_idx = None
-                for i, line in enumerate(base_instructions):
-                    if isinstance(line, str) and 'template' in line.lower() and ('read' not in line.lower() and 'reference' not in line.lower()):
-                        insert_idx = i + 1
-                        break
-                if insert_idx is None:
-                    # Insert after the execution prompt
-                    for i, line in enumerate(base_instructions):
-                        if isinstance(line, str) and 'EXECUTE' in line:
-                            insert_idx = i + 2
-                            break
-                    if insert_idx is None:
-                        insert_idx = 1
-                base_instructions.insert(insert_idx, f'**Read template file:** `{template_reference}` - This file contains the exact JSON structure your output MUST match.')
         
         # Convert config path to relative reference
         config_path = instructions.get('config_path')
@@ -251,28 +265,5 @@ class BuildKnowledgeAction(Action):
                     rule_files.append(rule)
             # Replace full rules with just file references
             instructions._data['rules'] = rule_files
-            # Update base_instructions to reference rule files instead of including full content
-            base_instructions = instructions.get('base_instructions', [])
-            new_base_instructions = []
-            in_rules_section = False
-            for line in base_instructions:
-                if isinstance(line, str) and '**VALIDATION RULES:**' in line:
-                    in_rules_section = True
-                    new_base_instructions.append(line)
-                    new_base_instructions.append('')
-                    new_base_instructions.append('**Read these rule files:**')
-                    for rule_file in rule_files:
-                        new_base_instructions.append(f'  - `{rule_file}`')
-                    new_base_instructions.append('')
-                    new_base_instructions.append('These rule files contain the validation rules that your knowledge graph must comply with.')
-                elif in_rules_section and isinstance(line, str) and (line.strip() == '' or line.startswith('  -') or 'Rule:' in line or 'File:' in line or 'scanner:' in line.lower()):
-                    # Skip old rule content lines
-                    continue
-                elif in_rules_section and isinstance(line, str) and not line.strip().startswith('**'):
-                    # Skip old rule content
-                    continue
-                else:
-                    if in_rules_section and isinstance(line, str) and line.strip().startswith('**') and 'VALIDATION' not in line:
-                        in_rules_section = False
-                    new_base_instructions.append(line)
-            instructions._data['base_instructions'] = new_base_instructions
+            # Keep rules content as-is, no need to add file references
+            # Rules are already formatted nicely from inject_rules method
