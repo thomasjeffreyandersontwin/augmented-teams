@@ -3,8 +3,6 @@ from agile_bot.bots.base_bot.src.repl_cli.repl_results import REPLCommandRespons
 
 
 class REPLCommand(ABC):
-    """Base class for all REPL commands."""
-    
     def __init__(self, session):
         self.session = session
         self.bot = session.bot
@@ -70,20 +68,7 @@ class REPLCommand(ABC):
 
 
 class InstructionDisplayCommand(REPLCommand):
-    """Base class for all commands that display action instructions.
-    
-    This is the SINGLE SOURCE OF TRUTH for formatting instruction output.
-    ALL commands that display instructions MUST inherit from this class.
-    
-    Template method pattern: _wrap_with_context_header enforces header at bottom.
-    """
-    
     def _wrap_with_context_header(self, content: str, response_msg: str) -> REPLCommandResponse:
-        """
-        Template method: Wraps content with context header at the bottom.
-        
-        This enforces consistent structure - header is ALWAYS at the bottom.
-        """
         header = self.session.get_context_header_for_ai()
         
         output = "\n".join([
@@ -99,8 +84,6 @@ class InstructionDisplayCommand(REPLCommand):
         )
     
     def _get_submit_message(self, action) -> str:
-        """Generate dynamic submit message based on action's context parameters."""
-        # Get the action's context class
         context_class = action.context_class
         
         # Get field names from the context class (excluding common base fields)
@@ -114,7 +97,6 @@ class InstructionDisplayCommand(REPLCommand):
                 # Build action-specific parameter examples
                 param_examples = []
                 for field in param_fields:
-                    # Get field type annotation for better examples
                     field_obj = fields[field]
                     
                     # Provide generic examples based on field type
@@ -145,22 +127,12 @@ class InstructionDisplayCommand(REPLCommand):
         return "Run: echo 'submit' | python repl_main.py when ready to submit your work."
     
     def navigate_to_behavior_action(self, behavior_name: str, action_name: str) -> None:
-        """
-        Navigate to a specific behavior and action. SINGLE SOURCE OF TRUTH.
-        
-        This consolidates the repeated pattern of navigating to behavior then action.
-        """
         self.bot.behaviors.navigate_to(behavior_name)
         behavior = self.bot.behaviors.current
         if behavior:
             behavior.actions.navigate_to(action_name)
     
     def display_navigation(self) -> REPLCommandResponse:
-        """
-        Display navigation result (moving to a behavior/action).
-        
-        Shows: location + prompt to run echo 'instructions' | python repl_main.py to see instructions, then header at bottom (via template method)
-        """
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action",
@@ -179,12 +151,6 @@ class InstructionDisplayCommand(REPLCommand):
         return self._wrap_with_context_header(content, f"Moved to {location}")
     
     def display_instructions(self, action=None, context=None, operation="instructions") -> REPLCommandResponse:
-        """
-        THE ONLY METHOD that formats and displays action instructions.
-        
-        All instruction display paths (next, back, current, action, behavior, dot notation, etc.)
-        MUST call this method to ensure consistency.
-        """
         # Use current action if none specified
         if action is None:
             action = self.current_action

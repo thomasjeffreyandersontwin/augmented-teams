@@ -44,7 +44,8 @@ class MCPCodeVisitor(Visitor):
             )
         return self._data_collector
     
-    def visit_header(self, bot_name: str) -> None:
+    def visit_header(self, bot_name: str = None) -> None:
+        # bot_name available from self.bot_name (inherited), parameter kept for interface compatibility
         for behavior in self.behaviors:
             trigger_words = self._load_trigger_words(behavior)
             self.trigger_words_map[behavior] = trigger_words

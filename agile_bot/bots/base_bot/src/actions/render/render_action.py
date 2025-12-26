@@ -29,12 +29,8 @@ class RenderOutputAction(Action):
     def action_name(self, value: str):
         raise AttributeError('action_name is read-only for RenderOutputAction')
 
-    def _prepare_instructions(self, instructions, context: ScopeActionContext):
-        """Prepare render instructions with render specs and templates."""
-        render_instructions = self._config_loader.load_render_instructions()
-        render_specs = self._render_specs
-        
-        # Execute synchronizers during preparation
+    def _execute_synchronizers(self, render_specs: List['RenderSpec']) -> None:
+        """Execute synchronizers for all render specs."""
         for spec in render_specs:
             if spec.synchronizer:
                 try:
@@ -44,6 +40,14 @@ class RenderOutputAction(Action):
                 except Exception as e:
                     logger.error(f'Failed to execute synchronizer for {spec.name}: {e}')
                     spec.mark_failed(str(e))
+    
+    def _prepare_instructions(self, instructions, context: ScopeActionContext):
+        """Prepare render instructions with render specs and templates."""
+        render_instructions = self._config_loader.load_render_instructions()
+        render_specs = self._render_specs
+        
+        # Execute synchronizers during preparation
+        self._execute_synchronizers(render_specs)
         
         # Merge and inject render data
         merged_instructions = MergedInstructions(
@@ -77,15 +81,7 @@ class RenderOutputAction(Action):
         """Legacy method for backwards compatibility."""
         render_instructions = self._config_loader.load_render_instructions()
         render_specs = self._render_specs
-        for spec in render_specs:
-            if spec.synchronizer:
-                try:
-                    result = spec.execute_synchronizer()
-                    spec.mark_executed(result)
-                    logger.info(f"Executed synchronizer for {spec.name}: {result.get('output_path', 'N/A')}")
-                except Exception as e:
-                    logger.error(f'Failed to execute synchronizer for {spec.name}: {e}')
-                    spec.mark_failed(str(e))
+        self._execute_synchronizers(render_specs)
         instructions = MergedInstructions(base_instructions=self.instructions.get('base_instructions', []) if isinstance(self.instructions, dict) else self.instructions['base_instructions'], render_instructions=render_instructions).merge()
         self._instruction_formatter.inject_render_data(instructions, render_instructions, render_specs)
         executed_specs = [spec for spec in render_specs if spec.is_executed]

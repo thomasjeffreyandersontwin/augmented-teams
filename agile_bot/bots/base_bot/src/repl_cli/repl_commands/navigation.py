@@ -3,8 +3,6 @@ from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import Inst
 
 
 class NavigationCommand(InstructionDisplayCommand):
-    """Base for navigation commands - provides navigation-specific state."""
-    
     @property
     def next_action(self):
         behavior = self.current_behavior
@@ -45,13 +43,20 @@ class NextCommand(NavigationCommand):
     def name(self) -> str:
         return "next"
     
-    def execute(self, args: str = "") -> REPLCommandResponse:
+    def _validate_navigation_state(self) -> REPLCommandResponse:
         if not self.has_current_action:
             return self.error_no_current_action()
-        
         behavior = self.current_behavior
         if not behavior:
             return self.error_no_current_behavior()
+        return None
+    
+    def execute(self, args: str = "") -> REPLCommandResponse:
+        error = self._validate_navigation_state()
+        if error:
+            return error
+        
+        behavior = self.current_behavior
         
         # Cache next_action to avoid calling it multiple times (side effects)
         next_act = self.next_action
@@ -78,13 +83,20 @@ class BackCommand(NavigationCommand):
     def name(self) -> str:
         return "back"
     
-    def execute(self, args: str = "") -> REPLCommandResponse:
+    def _validate_navigation_state(self) -> REPLCommandResponse:
         if not self.has_current_action:
             return self.error_no_current_action()
-        
         behavior = self.current_behavior
         if not behavior:
             return self.error_no_current_behavior()
+        return None
+    
+    def execute(self, args: str = "") -> REPLCommandResponse:
+        error = self._validate_navigation_state()
+        if error:
+            return error
+        
+        behavior = self.current_behavior
         
         # Cache previous_action to avoid calling it multiple times (side effects)
         prev_act = self.previous_action

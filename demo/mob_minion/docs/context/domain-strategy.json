@@ -1,0 +1,81 @@
+{
+  "decisions": {
+    "bounded_context_strategy": "By epic - Each epic represents a bounded context",
+    "concept_discovery_source": "Story map + existing docs - Include concepts from current documentation",
+    "domain_detail_level": "Moderate - Concept names, responsibilities, key relationships",
+    "domain_modeling_approach": "Hybrid - Mix of approaches based on subdomain complexity",
+    "relationship_depth": "Basic relationships - Collaborators with relationship types (has-a, uses, contains)"
+  },
+  "rationale": {
+    "bounded_context_strategy": "The four epics represent distinct bounded contexts: 1) Foundry API Integration - system interaction concerns, 2) Mob Management - mob lifecycle and CRUD operations, 3) Strategy Management - targeting and behavior rules, 4) Combat Execution - action coordination and execution. Each has cohesive domain concepts with clear boundaries.",
+    "concept_discovery_source": "We have the story map from shaping phase and the original input.txt describing the system vision and high-level concepts (mob, minions, strategies, Foundry VTT). These together provide comprehensive concept sources without needing interviews or code.",
+    "domain_detail_level": "This is a focused enhancement to Foundry VTT, not a complex enterprise domain. Moderate detail (names, responsibilities, key relationships) provides sufficient clarity without over-engineering. We can add more detail during design/implementation if needed.",
+    "domain_modeling_approach": "Hybrid approach fits best: DDD for core concepts (Mob as aggregate root, Minion, Strategy as value objects), Event-Driven for combat flows (Target Selected, Attack Executed), Resource-Oriented for Foundry integration (Token, Actor, Combat Tracker). Each subdomain has different complexity requiring different modeling styles.",
+    "relationship_depth": "Basic relationships (has-a, uses, contains) are sufficient to show how concepts collaborate. We don't need full cardinality and lifecycle dependencies for this focused enhancement. Relationship types will clarify structural (has-a, contains) vs behavioral (uses, interacts-with) connections."
+  },
+  "assumptions": {
+    "accepted": [
+      "Domain concepts emerge from stories and business language, not technical implementation",
+      "Use ubiquitous language from domain experts (GM, mob, minion, strategy, swarm, token, actor)",
+      "Model domain concepts, not technical classes or database tables",
+      "Focus on core domain concepts first (Mob, Minion, Strategy, Target) then supporting concepts",
+      "Concepts placed at most specific level (sub-epic) and elevated only if shared across contexts",
+      "Each bounded context has its own view - e.g., 'Target' means different things in Targeting vs Combat contexts",
+      "Domain concepts capture WHAT exists (Mob, Strategy), not HOW implemented (MobManager, StrategyService)",
+      "Responsibilities describe what concept does in business domain (Mob coordinates minions, Strategy determines targets)",
+      "Collaborators show which concepts work together (Mob uses Strategy, Strategy identifies Targets)",
+      "Relationships reflect business rules (Mob contains Minions, Strategy has TargetCriteria)",
+      "Domain language understood by both GMs and developers (avoid pure tech or pure game jargon)",
+      "Avoid generic technical terms (Manager, Handler, Service) - use domain nouns (Mob, Strategy, Coordinator)",
+      "Favor nouns and resources (Mob, Target, Attack) over verbs (Grouping, Targeting, Attacking)",
+      "Domain concepts are technology-agnostic - no JavaScript classes, Foundry API details, or database schema",
+      "Start lightweight then add detail - begin with concept names/responsibilities, add relationships/rules as needed",
+      "Domain model refinement happens iteratively as understanding deepens through discovery and design phases",
+      "Existing Foundry documentation and input.txt are sources for discovery, not the definition of our domain",
+      "Sub-epics typically represent bounded contexts - true here (Map Token System, Create Mob, Select Strategy, etc.)"
+    ]
+  },
+  "bounded_contexts": {
+    "foundry_api_integration": {
+      "epic": "Map Foundry API",
+      "description": "Integration boundary between Mob System and Foundry VTT",
+      "key_concerns": [
+        "Token selection and state management",
+        "Actor data access and statistics",
+        "Combat tracker registration",
+        "Target identification and setting",
+        "Attack feasibility determination"
+      ]
+    },
+    "mob_management": {
+      "epic": "Manage Mobs",
+      "description": "Mob lifecycle and grouping operations",
+      "key_concerns": [
+        "Creating mobs from selected minions",
+        "Modifying mob membership",
+        "Spawning mobs from templates or actors",
+        "Disbanding mobs"
+      ]
+    },
+    "strategy_management": {
+      "epic": "Assign Strategies",
+      "description": "Combat strategy selection and configuration",
+      "key_concerns": [
+        "Strategy types and their targeting criteria",
+        "Strategy assignment to mobs",
+        "Strategy evaluation logic"
+      ]
+    },
+    "combat_execution": {
+      "epic": "Execute Mob Actions",
+      "description": "Coordinated mob action execution",
+      "key_concerns": [
+        "Target selection based on strategy",
+        "Attack type determination (melee/ranged/area)",
+        "Coordinated action execution across mob",
+        "Movement and positioning"
+      ]
+    }
+  }
+}
+

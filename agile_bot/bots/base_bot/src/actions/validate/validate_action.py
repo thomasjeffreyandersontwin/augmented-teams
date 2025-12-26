@@ -48,10 +48,13 @@ class ValidateRulesAction(Action):
         # Get scope description
         scope_text = self._format_scope_description(context)
         
+        # Run scanners and get formatted results
+        scanner_output = self._run_scanners_and_format_results(context)
+        
         # Build replacement data
         replacements = {
             'rules': rules_text if rules_text else 'No rules defined',
-            'scanner_output': 'Scanner violations are shown above in the validation report.',
+            'scanner_output': scanner_output,
             'schema': f'**Schema:** Story graph at `{schema_path}`',
             'description': f'Validate **{self.behavior.name}** artifacts against rules. Scanner results shown above.',
             'scope': scope_text
@@ -76,12 +79,54 @@ class ValidateRulesAction(Action):
         
         instructions._data['base_instructions'] = new_instructions
 
+    def _run_scanners_and_format_results(self, context: ValidateActionContext) -> str:
+        """Run validation scanners and format results for display in instructions."""
+        logger.info('Running scanners for instructions display...')
+        
+        try:
+            # Execute validation synchronously
+            result = self._executor.execute_synchronous(context)
+            
+            # Get the report path from the result
+            instructions_dict = result.get('instructions', {})
+            report_link = instructions_dict.get('report_link', '')
+            
+            # Read the generated validation report file
+            if report_link:
+                # Extract path from markdown link format [text](path)
+                import re
+                match = re.search(r'\[.*?\]\((.*?)\)', report_link)
+                if match:
+                    report_path = match.group(1)
+                    # Convert to absolute path
+                    from pathlib import Path
+                    report_file = Path(report_path)
+                    if not report_file.is_absolute():
+                        report_file = self.behavior.bot_paths.workspace_directory / report_path
+                    
+                    if report_file.exists():
+                        # Read and return the report content
+                        report_content = report_file.read_text(encoding='utf-8')
+                        return f'**Scanner Results:**\n\n{report_content}\n\n**Full Report:** {report_link}'
+            
+            # Fallback: check violation summary
+            violation_summary = self._rules.violation_summary if hasattr(self._rules, 'violation_summary') else []
+            if violation_summary:
+                return '\n'.join(['**Scanner Violations Found:**', ''] + violation_summary)
+            
+            return '✅ **No scanner violations detected.**\n\nAll automated rule scanners passed successfully.'
+            
+        except Exception as e:
+            logger.error(f'Error running scanners: {e}')
+            import traceback
+            logger.error(traceback.format_exc())
+            return f'Error running scanners: {e}\n\nPlease review the validation report file in docs/stories/reports/'
+    
     def _format_scope_description(self, context: ValidateActionContext) -> str:
         """Format scope description for validation instructions."""
         if context.scope:
-            scope_dict = context.scope
-            scope_type = scope_dict.get('type', 'all')
-            scope_value = scope_dict.get('value', [])
+            scope_type = context.scope.type.value  # ScopeType enum
+            scope_value = context.scope.value
             
             if scope_type == 'epic':
                 return f"epic(s): {', '.join(scope_value)}"

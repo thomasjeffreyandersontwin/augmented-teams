@@ -50,12 +50,21 @@ class ImportPlacementScanner(CodeScanner):
                         break
                     import_section_end += 1
         
+        in_multiline_import = False
         # Skip blank lines, comments, imports, TYPE_CHECKING blocks, and try/except ImportError blocks after docstring
         while import_section_end < len(lines):
             line = lines[import_section_end].strip()
             if not line or line.startswith('#'):
                 import_section_end += 1
             elif self._is_import_statement(line):
+                # Check if this is a multi-line import (has opening paren without closing)
+                if '(' in line and ')' not in line:
+                    in_multiline_import = True
+                import_section_end += 1
+            elif in_multiline_import:
+                # We're inside a multi-line import, keep going until we find the closing paren
+                if ')' in line:
+                    in_multiline_import = False
                 import_section_end += 1
             elif self._is_type_checking_block_start(line):
                 # Skip through the entire TYPE_CHECKING block

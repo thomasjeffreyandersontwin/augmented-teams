@@ -13,14 +13,6 @@ from typing import Optional, Dict
 
 @dataclass
 class REPLStateDisplay:
-    """
-    Result of displaying current REPL state.
-    
-    Returned by: REPLSession.display_current_state()
-    
-    Represents the REPL's current position in the workflow,
-    including behavior, action, and breadcrumbs.
-    """
     output: str
     state_loaded: bool = False
     current_behavior: Optional[str] = None
@@ -30,13 +22,6 @@ class REPLStateDisplay:
 
 @dataclass
 class REPLCommandResponse:
-    """
-    Result of executing a REPL command.
-    
-    Returned by: REPLSession.read_and_execute_command()
-    
-    Contains the command's output, status, and any state changes.
-    """
     output: str
     response: str = ""
     status: Optional[str] = None
@@ -49,14 +34,6 @@ class REPLCommandResponse:
 
 @dataclass
 class TTYDetectionResult:
-    """
-    Result of TTY detection.
-    
-    Returned by: REPLSession.detect_tty()
-    
-    Determines whether interactive prompts should be enabled
-    based on whether stdin is a TTY.
-    """
     tty_detected: bool
     interactive_prompts_enabled: bool
 

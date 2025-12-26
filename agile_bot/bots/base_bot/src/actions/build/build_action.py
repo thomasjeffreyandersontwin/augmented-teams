@@ -220,6 +220,18 @@ class BuildKnowledgeAction(Action):
         instructions._data['base_instructions'] = new_instructions
         instructions.set('rules', all_rules)
 
+    def _convert_path_to_reference(self, path_str: str, bot_dir: Path) -> str:
+        """Helper to convert absolute/relative path to bot-relative reference."""
+        try:
+            path_obj = Path(path_str)
+            if path_obj.is_absolute():
+                rel_path = path_obj.relative_to(bot_dir)
+                return f"{self.behavior.bot_name}/{str(rel_path).replace('\\', '/')}"
+            else:
+                return f"{self.behavior.bot_name}/{str(path_str).replace('\\', '/')}"
+        except Exception:
+            return path_str
+    
     def _replace_content_with_file_references(self, instructions) -> None:
         """Replace full content (templates, configs, rules) with file path references."""
         bot_dir = self.behavior.bot_paths.bot_directory
@@ -227,29 +239,13 @@ class BuildKnowledgeAction(Action):
         # Convert template path to relative reference
         template_path = instructions.get('template_path')
         if template_path:
-            try:
-                template_path_obj = Path(template_path)
-                if template_path_obj.is_absolute():
-                    rel_path = template_path_obj.relative_to(bot_dir)
-                    template_reference = f"{self.behavior.bot_name}/{str(rel_path).replace('\\', '/')}"
-                else:
-                    template_reference = f"{self.behavior.bot_name}/{str(template_path).replace('\\', '/')}"
-            except Exception:
-                template_reference = template_path
+            template_reference = self._convert_path_to_reference(template_path, bot_dir)
             instructions._data['template_path'] = template_reference
         
         # Convert config path to relative reference
         config_path = instructions.get('config_path')
         if config_path:
-            try:
-                config_path_obj = Path(config_path)
-                if config_path_obj.is_absolute():
-                    rel_path = config_path_obj.relative_to(bot_dir)
-                    config_reference = f"{self.behavior.bot_name}/{str(rel_path).replace('\\', '/')}"
-                else:
-                    config_reference = f"{self.behavior.bot_name}/{str(config_path).replace('\\', '/')}"
-            except Exception:
-                config_reference = config_path
+            config_reference = self._convert_path_to_reference(config_path, bot_dir)
             instructions._data['config_path'] = config_reference
         
         # Replace full rules data with file path references

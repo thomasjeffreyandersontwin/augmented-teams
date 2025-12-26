@@ -1,0 +1,107 @@
+{
+  "increment_focus": {
+    "increment": 1,
+    "name": "Foundational Integration + Basic Mob",
+    "story_count": 11,
+    "goal": "Validate Foundry API and deliver core mob coordination"
+  },
+  "discovery_approach": {
+    "story_elaboration_level": "Detailed",
+    "rationale": "Increment 1 has critical technical risk (Foundry API integration). Need detailed understanding of API interactions, data flows, and integration points before implementation.",
+    "focus_areas": [
+      "Foundry API integration patterns",
+      "Data structures for mob management",
+      "Event handling and action coordination",
+      "Error scenarios and edge cases"
+    ]
+  },
+  "story_map_structure": {
+    "approach": "Maintain story map hierarchy from shape phase",
+    "elaboration": "Add detailed descriptions, acceptance criteria, and technical notes to existing stories",
+    "no_new_stories": "Do not add new stories - discovery elaborates existing 11 stories from prioritization"
+  },
+  "documentation_strategy": {
+    "story_format": "Individual markdown files per epic/sub-epic with all stories detailed",
+    "location": "docs/stories/map/{epic-name}/{sub-epic-name}.md",
+    "content_per_story": [
+      "Story name and users",
+      "Story description (what and why)",
+      "Acceptance criteria (Given/When/Then)",
+      "Technical notes (APIs, data structures, integration points)",
+      "Dependencies on other stories",
+      "Open questions or risks"
+    ]
+  },
+  "phased_delivery_plan": {
+    "phase_1": {
+      "name": "API Foundation",
+      "stories": 8,
+      "epics": ["Map Foundry API"],
+      "approach": "Parallel development by sub-system",
+      "validation": "Can we call Foundry APIs and get expected data?",
+      "completion_criteria": "All 4 Foundry sub-systems integrated and tested"
+    },
+    "phase_2": {
+      "name": "Mob Creation",
+      "stories": 2,
+      "epics": ["Manage Mobs - Create Mob"],
+      "approach": "Sequential implementation",
+      "validation": "Can GM create mob from selected tokens?",
+      "completion_criteria": "Mob data structure created and persisted",
+      "depends_on": "Phase 1 (Token and Actor systems)"
+    },
+    "phase_3": {
+      "name": "Coordinated Attack",
+      "stories": 1,
+      "epics": ["Execute Mob Actions - Coordinate Attack"],
+      "approach": "Integration of all previous work",
+      "validation": "Does clicking one minion trigger coordinated mob attack?",
+      "completion_criteria": "End-to-end mob coordination working",
+      "depends_on": "Phase 1 (all systems) + Phase 2 (mob exists)"
+    }
+  },
+  "risk_mitigation": {
+    "critical_risks": [
+      {
+        "risk": "Foundry API doesn't support required features",
+        "mitigation": "Build API integration stories first (Phase 1)",
+        "validation": "Spike/prototype API calls before full implementation"
+      },
+      {
+        "risk": "Mob coordination performance issues with many minions",
+        "mitigation": "Test with realistic mob sizes (5-10 minions) early",
+        "validation": "Performance testing in Phase 3"
+      },
+      {
+        "risk": "Event system doesn't provide needed hooks",
+        "mitigation": "Identify required Foundry hooks in Phase 1",
+        "validation": "Document all hooks and test each one"
+      }
+    ]
+  },
+  "acceptance_criteria_approach": {
+    "format": "Given/When/Then (Gherkin style)",
+    "level_of_detail": "Specific enough to write tests",
+    "coverage": [
+      "Happy path (primary flow)",
+      "Error conditions (API failures, invalid data)",
+      "Edge cases (no targets, single minion mob, etc.)"
+    ],
+    "example": "Given a mob with 3 minions exists, When GM clicks any minion in the mob, Then all 3 minions execute melee attack on selected target"
+  },
+  "assumptions": {
+    "foundry_api_available": "Foundry VTT v11+ API documentation is available and accessible",
+    "development_environment": "Local Foundry VTT instance available for testing",
+    "no_foundry_module_conflicts": "No other modules interfere with mob functionality",
+    "gm_has_permissions": "GM role has required permissions for token manipulation and action execution",
+    "minions_are_actors": "All minions are standard Foundry actors with combat capabilities"
+  },
+  "open_questions": [
+    "Which Foundry VTT version should we target? (v11, v12, latest?)",
+    "How do we handle minions in different combat states (different initiatives)?",
+    "Should mob persist across game sessions or just for current session?",
+    "How do we handle minions being defeated - remove from mob automatically?",
+    "What happens if GM tries to create mob with non-minion tokens?"
+  ]
+}
+

@@ -3,8 +3,6 @@ from agile_bot.bots.base_bot.src.repl_cli.repl_commands.workflow import Workflow
 
 
 class DotNotationCommand(WorkflowCommand):
-    """Handles dot notation commands like behavior.action or behavior.action.operation."""
-    
     VALID_OPERATIONS = {"instructions", "submit", "confirm"}
     
     @property

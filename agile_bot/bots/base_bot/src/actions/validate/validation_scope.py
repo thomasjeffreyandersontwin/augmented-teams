@@ -22,8 +22,8 @@ class ValidationScope(ActionScope):
             exclude_patterns = [exclude_patterns]
         self._file_discovery = FileDiscovery(bot_paths, behavior_name, exclude_patterns)
         self._path_resolver = PathResolver(bot_paths)
-        self._extract_skiprule_from_scope(parameters)
         super().__init__(parameters, bot_paths)
+        self._extract_skiprule_from_scope()
     
     @classmethod
     def from_context(cls, context: 'ValidateActionContext', bot_paths: Optional[BotPaths] = None, behavior_name: Optional[str] = None) -> 'ValidationScope':
@@ -38,14 +38,14 @@ class ValidationScope(ActionScope):
         
         return cls(params, bot_paths, behavior_name)
     
-    def _extract_skiprule_from_scope(self, parameters: Dict[str, Any]) -> None:
+    def _extract_skiprule_from_scope(self) -> None:
         skiprule = []
-        if 'scope' in parameters and isinstance(parameters.get('scope'), dict):
-            skiprule = parameters['scope'].get('skiprule', [])
+        if 'scope' in self._parameters and isinstance(self._parameters.get('scope'), dict):
+            skiprule = self._parameters['scope'].get('skiprule', [])
         if isinstance(skiprule, str):
             skiprule = [skiprule]
         if skiprule:
-            parameters['skiprule'] = skiprule
+            self._parameters['skiprule'] = skiprule
 
     def _should_include_file(self, file_path: Path) -> bool:
         return self._file_discovery.should_include_file(file_path)

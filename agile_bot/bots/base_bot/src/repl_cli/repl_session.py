@@ -81,20 +81,17 @@ class REPLSession:
         return 'not_started'
     
     def set_action_phase(self, phase: str) -> None:
-        """Set the current action's phase in the workflow state."""
         action = self.current_action
         if action and hasattr(action, 'phase'):
             action.phase = phase
-        # Also update in state file for persistence
         state_file = self.workspace_directory / 'behavior_action_state.json'
         if state_file.exists():
-            import json
             try:
                 state_data = json.loads(state_file.read_text())
                 state_data['action_phase'] = phase
                 state_file.write_text(json.dumps(state_data, indent=2))
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"Warning: Could not update action phase in state file: {e}", file=sys.stderr)
     
     @property
     def stage_name(self) -> str:
@@ -169,10 +166,6 @@ class REPLSession:
         )
     
     def get_context_header_for_ai(self) -> str:
-        """Build context header showing current position with markers for AI display.
-        
-        This header should be displayed to the user after showing instructions.
-        """
         if not self.has_current_action:
             return ""
         
@@ -291,7 +284,6 @@ class REPLSession:
         )
     
     def _tokenize_cli_args(self, args_str: str) -> list:
-        """Tokenize CLI-style arguments, handling quoted strings."""
         import shlex
         try:
             return shlex.split(args_str)
@@ -299,7 +291,6 @@ class REPLSession:
             return args_str.split()
     
     def _execute_action_with_args(self, action_name: str, cli_args: list, operation: str = None) -> REPLCommandResponse:
-        """Execute action with parsed CLI arguments."""
         if not self.has_current_behavior:
             return REPLCommandResponse(
                 output="ERROR: No current behavior set. Please select a behavior first.",
@@ -345,12 +336,9 @@ class REPLSession:
                 # Any other parsing errors - proceed without context
                 context = None
         
-        # Use the display_instructions method from InstructionDisplayCommand
-        # Create a temporary command object to access the display method
         from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import InstructionDisplayCommand
         
         class TempInstructionDisplay(InstructionDisplayCommand):
-            """Temporary command to access display_instructions method."""
             def name(self):
                 return "temp"
             def execute(self, args=""):
@@ -385,7 +373,6 @@ class REPLSession:
         )
     
     def parse_command_parameters(self, args: str) -> Dict[str, Any]:
-        """Parse --param value and --param "value with spaces" from command args."""
         params = {}
         if not args:
             return params
@@ -400,18 +387,15 @@ class REPLSession:
         return params
     
     def parse_scope_from_string(self, scope_str: str) -> Optional[Scope]:
-        """Parse scope JSON/dict string into Scope object."""
         if not scope_str:
             return None
         try:
-            # Handle Python-style dict syntax
             data = json.loads(scope_str.replace("'", '"'))
             return Scope.from_dict(data)
         except (json.JSONDecodeError, ValueError) as e:
             raise ValueError(f"Invalid scope format: {e}")
     
     def get_stored_scope(self) -> Optional[Dict[str, Any]]:
-        """Get scope parameters from behavior action state file."""
         state_file = self._get_state_file_path()
         if not state_file.exists():
             return None
@@ -422,7 +406,6 @@ class REPLSession:
             return None
     
     def store_scope_parameters(self, scope: Scope) -> None:
-        """Store scope parameters in behavior action state file."""
         state_file = self._get_state_file_path()
         if state_file.exists():
             state_data = json.loads(state_file.read_text())
@@ -434,7 +417,6 @@ class REPLSession:
         state_file.write_text(json.dumps(state_data, indent=2))
     
     def clear_scope(self) -> None:
-        """Clear scope from behavior action state file."""
         state_file = self._get_state_file_path()
         if state_file.exists():
             state_data = json.loads(state_file.read_text())
@@ -443,7 +425,6 @@ class REPLSession:
                 state_file.write_text(json.dumps(state_data, indent=2))
     
     def _get_scope_display_lines(self) -> List[str]:
-        """Get scope display lines for showing current filter with matched items and children."""
         scope_data = self.get_stored_scope()
         if not scope_data:
             return []
@@ -456,19 +437,13 @@ class REPLSession:
         filter_str = ', '.join(scope_value) if isinstance(scope_value, list) else str(scope_value)
         lines.append(f"Scope Filter: {filter_str}")
         
-        # For story scope, load story graph and show matches with children
         if scope_type == 'story':
             story_graph_path = self.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
             if story_graph_path.exists():
-                try:
-                    graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
-                    matched_items = self._find_scope_matches(graph_data, scope_value)
-                    for item in matched_items:
-                        lines.append(item)
-                except Exception:
-                    # Fallback to simple display
-                    for item in (scope_value if isinstance(scope_value, list) else [scope_value]):
-                        lines.append(f"  - {item}")
+                graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
+                matched_items = self._find_scope_matches(graph_data, scope_value)
+                for item in matched_items:
+                    lines.append(item)
             else:
                 for item in (scope_value if isinstance(scope_value, list) else [scope_value]):
                     lines.append(f"  - {item}")
@@ -482,56 +457,56 @@ class REPLSession:
         return lines
     
     def _find_scope_matches(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
-        """Find matching items in story graph and return formatted lines with children."""
         lines = []
         epics = graph_data.get('epics', [])
         
         for scope_val in scope_values:
-            found = False
-            # Search for matches in epics, sub_epics, and stories
-            for epic in epics:
-                if self._matches_name(epic.get('name', ''), scope_val):
-                    lines.extend(self._format_node_with_children(epic, 'epic', 0))
-                    found = True
-                    break
-                # Check sub_epics (features)
-                for sub_epic in epic.get('sub_epics', []):
-                    if self._matches_name(sub_epic.get('name', ''), scope_val):
-                        lines.extend(self._format_node_with_children(sub_epic, 'sub epic', 0))
-                        found = True
-                        break
-                    # Check stories in story_groups
-                    for story_group in sub_epic.get('story_groups', []):
-                        for story in story_group.get('stories', []):
-                            if self._matches_name(story.get('name', ''), scope_val):
-                                lines.extend(self._format_node_with_children(story, 'story', 0))
-                                found = True
-                                break
-                        if found:
-                            break
-                    # Also check direct stories (some structures have this)
-                    if not found:
-                        for story in sub_epic.get('stories', []):
-                            if self._matches_name(story.get('name', ''), scope_val):
-                                lines.extend(self._format_node_with_children(story, 'story', 0))
-                                found = True
-                                break
-                    if found:
-                        break
-                if found:
-                    break
-            
-            if not found:
+            match_lines = self._search_for_scope_match(epics, scope_val)
+            if match_lines:
+                lines.extend(match_lines)
+            else:
                 lines.append(f"  - {scope_val} (no match)")
         
         return lines
     
+    def _search_for_scope_match(self, epics: List[Dict], scope_val: str) -> Optional[List[str]]:
+        for epic in epics:
+            if self._matches_name(epic.get('name', ''), scope_val):
+                return self._format_node_with_children(epic, 'epic', 0)
+            
+            match_lines = self._search_sub_epics(epic.get('sub_epics', []), scope_val)
+            if match_lines:
+                return match_lines
+        
+        return None
+    
+    def _search_sub_epics(self, sub_epics: List[Dict], scope_val: str) -> Optional[List[str]]:
+        for sub_epic in sub_epics:
+            if self._matches_name(sub_epic.get('name', ''), scope_val):
+                return self._format_node_with_children(sub_epic, 'sub epic', 0)
+            
+            match_lines = self._search_stories(sub_epic, scope_val)
+            if match_lines:
+                return match_lines
+        
+        return None
+    
+    def _search_stories(self, sub_epic: Dict, scope_val: str) -> Optional[List[str]]:
+        for story_group in sub_epic.get('story_groups', []):
+            for story in story_group.get('stories', []):
+                if self._matches_name(story.get('name', ''), scope_val):
+                    return self._format_node_with_children(story, 'story', 0)
+        
+        for story in sub_epic.get('stories', []):
+            if self._matches_name(story.get('name', ''), scope_val):
+                return self._format_node_with_children(story, 'story', 0)
+        
+        return None
+    
     def _matches_name(self, name: str, pattern: str) -> bool:
-        """Check if name matches pattern (case-insensitive contains)."""
         return pattern.lower() in name.lower()
     
     def _format_node_with_children(self, node: Dict[str, Any], node_type: str, indent: int) -> List[str]:
-        """Format a node and its children with labels (down to story level only)."""
         lines = []
         prefix = "  " * indent
         name = node.get('name', 'Unknown')
@@ -557,5 +532,4 @@ class REPLSession:
         return lines
     
     def _get_state_file_path(self) -> Path:
-        """Get the path to behavior_action_state.json."""
         return self.workspace_directory / 'behavior_action_state.json'

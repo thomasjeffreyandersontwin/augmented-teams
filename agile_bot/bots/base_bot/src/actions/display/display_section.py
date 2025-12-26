@@ -3,6 +3,16 @@
 from typing import List
 
 
+class HeaderLineCollection:
+    """Collection class for header lines"""
+    def __init__(self, lines: List[str]):
+        self._lines = lines
+    
+    def add_to_instructions(self, instructions) -> None:
+        for line in self._lines:
+            instructions.add_display(line)
+
+
 class DisplaySection:
     
     def __init__(self, title: str, level: int = 2):
@@ -19,6 +29,7 @@ class DisplaySection:
         ]
     
     def add_to(self, instructions) -> None:
-        for line in self.header_lines:
-            instructions.add_display(line)
+        # Delegate to collection class
+        collection = HeaderLineCollection(self.header_lines)
+        collection.add_to_instructions(instructions)
 

@@ -38,39 +38,45 @@ class GenericCapabilityScanner(StoryScanner):
             return 'story'
         return 'unknown'
     
-    def _check_capability_verbs(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        capability_verbs = ['exposes', 'provides', 'contains', 'represents', 'implements', 'supports']
-        
+    def _check_verb_pattern(
+        self, 
+        name: str, 
+        node: StoryNode, 
+        node_type: str, 
+        rule_obj: Any,
+        verb_list: List[str],
+        verb_category: str,
+        message_template: str
+    ) -> Optional[Dict[str, Any]]:
+        """Helper function to check if name starts with any verb in the list."""
         name_lower = name.lower()
         words = name_lower.split()
         
-        if words and words[0] in capability_verbs:
+        if words and words[0] in verb_list:
             location = node.map_location()
             return Violation(
                 rule=rule_obj,
-                violation_message=f'{node_type.capitalize()} name "{name}" uses capability verb "{words[0]}" - describe what system DOES (behaviors), not what system IS (capabilities). Use specific actions with actors (e.g., "User invokes tool" not "Exposes tool")',
+                violation_message=message_template.format(
+                    node_type=node_type.capitalize(),
+                    name=name,
+                    verb=words[0],
+                    category=verb_category
+                ),
                 location=location,
                 severity='error'
             ).to_dict()
         
         return None
     
+    def _check_capability_verbs(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
+        capability_verbs = ['exposes', 'provides', 'contains', 'represents', 'implements', 'supports']
+        message = '{node_type} name "{name}" uses capability verb "{verb}" - describe what system DOES (behaviors), not what system IS (capabilities). Use specific actions with actors (e.g., "User invokes tool" not "Exposes tool")'
+        return self._check_verb_pattern(name, node, node_type, rule_obj, capability_verbs, 'capability', message)
+    
     def _check_passive_states(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
         passive_patterns = ['tracks', 'maintains', 'stores', 'holds', 'keeps']
-        
-        name_lower = name.lower()
-        words = name_lower.split()
-        
-        if words and words[0] in passive_patterns:
-            location = node.map_location()
-            return Violation(
-                rule=rule_obj,
-                violation_message=f'{node_type.capitalize()} name "{name}" uses passive state verb "{words[0]}" - use active behaviors instead (e.g., "User updates order count" not "Tracks order count")',
-                location=location,
-                severity='error'
-            ).to_dict()
-        
-        return None
+        message = '{node_type} name "{name}" uses passive state verb "{verb}" - use active behaviors instead (e.g., "User updates order count" not "Tracks order count")'
+        return self._check_verb_pattern(name, node, node_type, rule_obj, passive_patterns, 'passive state', message)
     
     def _check_generic_technical_verbs(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
         generic_technical_verbs = ['invokes', 'invoke', 'calls', 'call', 'executes', 'execute', 'triggers', 'trigger']
