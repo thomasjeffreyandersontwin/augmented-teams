@@ -139,8 +139,6 @@ class ValidateRulesAction(Action):
             
             lines.append("")
         
-        lines.append("**IMPORTANT:** For rules marked [Manual Check], you MUST read the rule file and manually verify compliance since no scanner exists.")
-        
         return '\n'.join(lines)
     
     def _do_submit(self, context: ValidateActionContext) -> Dict[str, Any]:

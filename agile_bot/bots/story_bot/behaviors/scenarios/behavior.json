@@ -31,7 +31,7 @@
           "Follow agile_bot/bots/story_bot/behaviors/scenarios/content/knowledge_graph/instructions.json",
           "specification_scenarios: build scenarios AND refine domain model based on scenario details",
           "Refine domain model concepts, relationships, and responsibilities based on detailed scenario specifications",
-          "CRITICAL: Add/update scenarios and scenario_outlines ONLY in main epics section (single source of truth), NOT in increments section"
+          "Add/update scenarios and scenario_outlines ONLY in main epics section (single source of truth), NOT in increments section"
         ]
       },
       {

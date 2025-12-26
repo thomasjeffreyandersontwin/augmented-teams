@@ -1,91 +1,37 @@
 {
-  "description": "Place all import statements at the top of the test file, after module docstrings and comments, but before any executable code. This improves readability and makes test dependencies clear.",
-  "examples": [
-    {
-      "do": {
-        "description": "Place all imports at the top of the test file",
-        "content": [
-          "\"\"\"Test module docstring.\"\"\"",
-          "import pytest",
-          "from pathlib import Path",
-          "from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction",
-          "",
-          "# Test fixtures and helpers",
-          "@pytest.fixture",
-          "def test_fixture():",
-          "    pass"
-        ]
-      },
-      "dont": {
-        "description": "Don't place imports inline with test code or inside test functions",
-        "content": [
-          "\"\"\"Test module docstring.\"\"\"",
-          "@pytest.fixture",
-          "def test_fixture():",
-          "    pass",
-          "",
-          "def test_something():",
-          "    from pathlib import Path  # WRONG - import inside test function",
-          "    from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction  # WRONG",
-          "    pass",
-          "",
-          "# WRONG - import after code",
-          "import pytest"
-        ]
-      }
-    },
-    {
-      "do": {
-        "description": "Group imports: standard library, third-party, then local imports",
-        "content": [
-          "# Standard library imports",
-          "import json",
-          "from pathlib import Path",
-          "",
-          "# Third-party imports",
-          "import pytest",
-          "",
-          "# Local application imports",
-          "from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction",
-          "from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction"
-        ]
-      },
-      "dont": {
-        "description": "Don't mix import groups or place imports randomly",
-        "content": [
-          "import json",
-          "from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction  # WRONG - local before stdlib",
-          "import pytest  # WRONG - third-party mixed with stdlib"
-        ]
-      }
-    }
+  "priority": 15,
+  "description": "Place all imports at top of test file, after docstrings, before code. Group: stdlib, third-party, then local. Example: import json; import pytest; from mymodule import MyClass",
+  "scanners": [
+    "agile_bot.bots.base_bot.src.actions.validate.scanners.import_placement_scanner.ImportPlacementScanner"
   ],
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.import_placement_scanner.ImportPlacementScanner"
+  "do": {
+    "description": "All imports at top, grouped by type. Example: import json; import pytest; from agile_bot.bots... import X",
+    "guidance": [
+      {
+        "description": "Place all imports at top after docstring",
+        "example": ["'''Test module docstring.'''", "import pytest", "from pathlib import Path", "from agile_bot.bots.base_bot... import ClarifyAction"]
+      },
+      {
+        "description": "Group imports: stdlib, third-party, local",
+        "example": ["# Standard library", "import json", "from pathlib import Path", "", "# Third-party", "import pytest", "", "# Local", "from agile_bot... import MyClass"]
+      }
+    ]
+  },
+  "dont": {
+    "description": "Don't place imports inside functions or after code. Example: def test(): from pathlib import Path (wrong - import inside function)",
+    "guidance": [
+      {
+        "description": "Don't import inside test functions",
+        "example": ["def test_something():", "    from pathlib import Path  # WRONG - put at top of file"]
+      },
+      {
+        "description": "Don't place imports after code",
+        "example": ["@pytest.fixture", "def fixture(): pass", "", "import pytest  # WRONG - should be at top"]
+      },
+      {
+        "description": "Don't mix import groups randomly",
+        "example": ["import json", "from agile_bot... import X  # WRONG - local before third-party", "import pytest"]
+      }
+    ]
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
