@@ -147,7 +147,6 @@ class REPLStatus:
         lines.append("-" * 60)
         
         # Add quick commands menu
-        lines.append("")
         lines.append("Commands: status | back | current | next | path [dir] | scope [filter] | help | exit")
         lines.append("run echo '[command]' | python repl_main.py to invoke commands")
         

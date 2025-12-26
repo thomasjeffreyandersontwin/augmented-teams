@@ -1,8 +1,8 @@
 {
   "_explanation": {
-    "hierarchical": "sub_epics can contain: nested sub_epics or story_groups. sequential_order is always an integer (1, 2, 3, 4) - unique within parent, no decimals.",
-    "connector": "Story groups: 'and' or 'or' (null for first group). Stories within groups: 'and' or 'or' (null for first story). Epics and sub_epics don't have connectors.",
-    "domain_placement": "domain_concepts: 'local' if relevant to single sub_epic, 'global' if relevant to multiple sub_epics. Place at most specific level (local preferred), but elevate to parent if used by multiple children."
+    "increments": "Organize stories into increments prioritized by risk and value. Each increment should be a vertical slice delivering end-to-end working flow. Priority 1 = NOW (current increment), Priority 2 = NEXT, Priority 3 = LATER.",
+    "epic_distribution": "Epics and sub_epics can span multiple increments. Show partial completion using estimated_stories (e.g., Epic has 10 total stories: Increment 1 delivers 3, Increment 2 delivers 4, Increment 3 delivers remaining 3).",
+    "architectural_risk": "Prioritize stories that validate architectural risks, test integrations, or prove technology choices in early increments (Priority 1). Defer nice-to-have features to later increments."
   },
   "epics": [
     {

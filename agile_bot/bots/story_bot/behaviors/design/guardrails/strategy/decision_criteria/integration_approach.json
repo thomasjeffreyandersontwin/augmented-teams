@@ -1,0 +1,42 @@
+{
+  "description": "How should domain concepts communicate with each other and external systems?",
+  "question": "What is your default integration approach between components and systems?",
+  "options": [
+    {
+      "id": "direct_in_process",
+      "name": "Direct In-Process",
+      "description": "Components communicate through direct method calls within the same process. Tight coupling, simple, synchronous.",
+      "when_to_use": "Monolithic architecture, single deployment unit, strong consistency required, low latency critical",
+      "example": "Order directly calls InventoryService.CheckAvailability() - same process, immediate response"
+    },
+    {
+      "id": "service_rpc",
+      "name": "Service/RPC Calls",
+      "description": "Components communicate through remote procedure calls (REST, gRPC, SOAP). Request-response pattern over network.",
+      "when_to_use": "Microservices, distributed systems, independent deployment, team autonomy",
+      "example": "Order calls InventoryService via REST API - GET /inventory/{sku}/availability"
+    },
+    {
+      "id": "event_driven",
+      "name": "Event-Driven/Messaging",
+      "description": "Components communicate by publishing and subscribing to domain events. Asynchronous, loosely coupled.",
+      "when_to_use": "Eventual consistency acceptable, scalability priority, decoupled evolution, audit trail needed",
+      "example": "Order publishes OrderPlaced event. InventoryService subscribes and reserves stock asynchronously"
+    },
+    {
+      "id": "data_driven",
+      "name": "Data/Shared Database",
+      "description": "Components communicate through shared data store. One writes, others read. Polling or change detection.",
+      "when_to_use": "Legacy integration, batch processing, reporting systems, data warehouse patterns",
+      "example": "Order writes to Orders table. Warehouse system polls for new orders to fulfill"
+    },
+    {
+      "id": "hybrid_per_boundary",
+      "name": "Hybrid Per Boundary",
+      "description": "Different integration approaches for different boundaries. Direct within bounded context, events across contexts.",
+      "when_to_use": "Complex systems, varying consistency requirements, mixed legacy and modern",
+      "example": "Direct calls within Order context. Events to Shipping context. RPC to external PaymentGateway"
+    }
+  ]
+}
+

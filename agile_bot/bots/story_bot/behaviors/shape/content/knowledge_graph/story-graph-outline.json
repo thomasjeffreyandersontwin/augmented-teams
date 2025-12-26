@@ -1,8 +1,10 @@
 {
   "_explanation": {
-    "hierarchical": "sub_epics can contain: nested sub_epics or story_groups. sequential_order is always an integer (1, 2, 3, 4) - unique within parent, no decimals.",
-    "connector": "Story groups: 'and' or 'or' (null for first group). Stories within groups: 'and' or 'or' (null for first story). Epics and sub_epics don't have connectors.",
-    "domain_concepts": "Domain concepts are NOT part of shape behavior - they are added by domain behavior. Shape focuses on story structure only."
+    "purpose": "Story map outline organizing epics, sub-epics (features), and stories in a hierarchical structure. This is the SHAPE phase - focus on story structure, relationships, and sequence. Do NOT add domain concepts here.",
+    "structure": "epics contain sub_epics (features). Sub-epics can contain nested sub_epics OR story_groups. Story_groups organize related stories with logical connectors (and/or).",
+    "sequential_order": "Always integer (1, 2, 3, 4) - unique within parent, no decimals. Shows the sequence stories/groups must be completed in.",
+    "connectors": "Story_groups have connector ('and' or 'or', null for first). Stories within groups have connector ('and' or 'or', null for first). Shows logical relationships: 'and' = all required, 'or' = alternatives. Epics and sub_epics don't have connectors.",
+    "domain_note": "Domain concepts are added by domain behavior phase, NOT shape phase. Shape focuses only on story structure, users, and relationships."
   },
   "epics": [
     {

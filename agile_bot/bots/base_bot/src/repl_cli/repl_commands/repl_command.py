@@ -206,9 +206,9 @@ class InstructionDisplayCommand(REPLCommand):
             
             # Format execution line
             if operation == "instructions":
-                exec_line = f"EXECUTING {self.current_behavior_name}.{action.action_name}.instructions"
+                exec_line = f"Executing: {self.current_behavior_name}.{action.action_name}.instructions"
             else:
-                exec_line = f"EXECUTING {self.current_behavior_name}.{action.action_name}"
+                exec_line = f"Executing: {self.current_behavior_name}.{action.action_name}"
             
             # Build content (just instructions, no submit message yet)
             content = "\n".join([

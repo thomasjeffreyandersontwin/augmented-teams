@@ -225,7 +225,7 @@ class Rules:
             return 'No validation rules found.'
         
         lines = []
-        for rule in rules:
+        for i, rule in enumerate(rules):
             description = rule.description or 'No description'
             lines.append(f"- **{rule.name}**: {description}")
             
@@ -241,7 +241,9 @@ class Rules:
             if dont_desc:
                 lines.append(f"  DON'T: {dont_desc}")
             
-            lines.append("")  # Add blank line between rules
+            # Add blank line between rules, but not after the last rule
+            if i < len(rules) - 1:
+                lines.append("")
         
         return '\n'.join(lines)
 

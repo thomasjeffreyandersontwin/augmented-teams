@@ -213,7 +213,7 @@ class BuildKnowledgeAction(Action):
             while new_instructions and new_instructions[-1] == '':
                 new_instructions.pop()
             new_instructions.append('')
-            new_instructions.append('When building story graph follow these rules,')
+            new_instructions.append('When building or adding to the story graph follow these rules,')
             new_instructions.extend(rules_section)
         
         # Replace base_instructions with: [custom instructions] + [rules at end]

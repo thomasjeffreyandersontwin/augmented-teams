@@ -1,18 +1,1 @@
-{
-  "behaviorName": "exploration",
-  "instructions": [
-    "Present the assumptions and decision making criteria to the user and ask them to confirm their preferences.",
-    "",
-    "1. Load typical assumptions from `typical_assumptions.json` and review them with the user",
-    "2. Load each decision criteria from `decision_criteria/` folder and present its options",
-    "3. Confirm where they want to emphasize precision, coverage, or simplification in story exploration",
-    "4. Ask user to select acceptance criteria granularity level",
-    "5. Ask user to confirm acceptance criteria count approach and story splitting/merging strategy",
-    "6. Ask user to confirm acceptance criteria types (behavioral vs domain)",
-    "7. Ask user to evaluate increment size and whether splitting is needed",
-    "8. Ask user to confirm acceptance criteria consolidation strategy",
-    "9. Ask user to confirm acceptance criteria validation approach",
-    "10. Validate preferences before generating acceptance criteria"
-  ]
-}
-
+ 

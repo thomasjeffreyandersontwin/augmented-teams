@@ -1,0 +1,14 @@
+{
+  "description": "Key questions that must be answered before this behavior can proceed",
+  "questions": [
+    "What technology, frameworks, and libraries are being used for client interaction (UI, API, CLI)?",
+    "What technology, frameworks, and libraries are being used for integration (messaging, external APIs, events)?",
+    "What technology, frameworks, and libraries are being used for persistence (database, cache, file storage)?",
+    "What common utilities or helpers are already envisioned that will become first-class domain concepts with high reuse?",
+    "How should objects collaborate and delegate responsibilities?",
+    "What are the key integration points and external dependencies?",
+    "How should state and behavior be encapsulated?",
+    "How should dependencies be injected and managed?"
+  ]
+}
+

@@ -1,0 +1,7 @@
+{
+  "name": "render_class_diagram",
+  "path": "docs/stories",
+  "input": "story-graph.json",
+  "output": "docs/design/class-diagram.mmd",
+  "template": "templates/class-diagram.mmd"
+}

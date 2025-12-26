@@ -28,10 +28,7 @@
         "order": 3,
         "next_action": "validate",
         "instructions": [
-          "prioritization: build increment backlog",
-          "**When building increments, consider repeating stories where introducing similar behavior but with additional qualities mentioned in decision criteria for thin slicing spine.**",
-          "**Use adjective + Noun + Verb pattern for story names: <Adjective> <Noun> <Verb> (e.g., 'Manually Create Billing Report' vs 'Automatically Create Billing Report').**",
-          "**Name increments after the quality improvements they add (e.g., 'Automated Payment Processing', 'Dynamic Shipping Calculation', 'Admin Interface for Orders').**"
+          "Organize stories into increments prioritized according to risk and value"
         ]
       },
       {
