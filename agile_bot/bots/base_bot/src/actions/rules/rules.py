@@ -172,8 +172,6 @@ class Rules:
         if self._rules is not None:
             return self._rules
         all_rules = []
-        bot_rules = self._rule_loader.load_bot_rules()
-        all_rules.extend(bot_rules)
         if self.behavior:
             behavior_rules = self._rule_loader.load_behavior_rules()
             all_rules.extend(behavior_rules)
@@ -215,14 +213,22 @@ class Rules:
 
     def formatted_rules(self) -> str:
         rules = self._load_rules()
-        bot_rules, behavior_rules = self._categorize_rules(rules)
-        formatted_sections = self._format_rule_sections(bot_rules, behavior_rules)
-        return '\n'.join(formatted_sections) if formatted_sections else 'No validation rules found.'
+        if not rules:
+            return 'No validation rules found.'
+        # Sort by priority (lower number = higher priority)
+        sorted_rules = sorted(rules, key=lambda r: r.priority)
+        sections = []
+        for rule in sorted_rules:
+            sections.extend(rule.formatted_text())
+        return '\n'.join(sections) if sections else 'No validation rules found.'
 
     def formatted_rules_digest(self) -> str:
         rules = self._load_rules()
         if not rules:
             return 'No validation rules found.'
+        
+        # Sort by priority (lower number = higher priority)
+        rules = sorted(rules, key=lambda r: r.priority)
         
         lines = []
         for i, rule in enumerate(rules):
@@ -246,28 +252,6 @@ class Rules:
                 lines.append("")
         
         return '\n'.join(lines)
-
-    def _categorize_rules(self, rules: List[Rule]) -> tuple:
-        bot_rules, behavior_rules = ([], [])
-        for rule in rules:
-            rule_file = rule.rule_file
-            if 'base_bot/rules' in rule_file or ('behaviors' not in rule_file and '/rules/' in rule_file):
-                bot_rules.append(rule)
-            else:
-                behavior_rules.append(rule)
-        return (bot_rules, behavior_rules)
-
-    def _format_rule_sections(self, bot_rules: List[Rule], behavior_rules: List[Rule]) -> List[str]:
-        sections = []
-        if bot_rules:
-            sections.append('**Bot-level rules:**')
-            for rule in bot_rules:
-                sections.extend(rule.formatted_text())
-        if behavior_rules:
-            sections.append('**Behavior-level rules:**')
-            for rule in behavior_rules:
-                sections.extend(rule.formatted_text())
-        return sections
 
     def _has_scanner_error(self, execution_status: str, scanner_results: Any) -> bool:
         if execution_status.startswith('EXECUTION_FAILED') or execution_status.startswith('EXECUTION_SKIPPED'):

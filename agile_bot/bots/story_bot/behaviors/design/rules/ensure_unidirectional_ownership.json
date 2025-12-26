@@ -1,11 +1,11 @@
 {
   "priority": 9,
-  "description": "Ownership relationships must be unidirectional. If A owns B, B should not own A. References can be bidirectional, but ownership is one-way. Use 'Has X' for ownership and 'References X' for references.",
+  "description": "Ownership relationships must be unidirectional. If A owns B, B should not own A. References can be bidirectional, but ownership is one-way. Example: File Has blocks: Block (ownership down); Block References file: File (reference up).",
   "scanners": [
     "agile_bot.bots.base_bot.src.scanners.unidirectional_ownership_scanner.UnidirectionalOwnershipScanner"
   ],
   "do": {
-    "description": "Ownership flows one-way down hierarchy, references can point any direction",
+    "description": "Ownership flows one-way down hierarchy, references can point any direction. Example: File Has blocks (ownership down); Block References file (reference up)",
     "guidance": [
       {
         "description": "Show ownership with 'Has X' - flows down the hierarchy",
@@ -54,7 +54,7 @@
     ]
   },
   "dont": {
-    "description": "Don't create circular ownership or confuse ownership with references",
+    "description": "Don't create circular ownership or confuse ownership with references. Example: File Has blocks + Block Has file (wrong - circular) vs Block References file (right)",
     "guidance": [
       {
         "description": "Don't create circular ownership (A owns B, B owns A)",

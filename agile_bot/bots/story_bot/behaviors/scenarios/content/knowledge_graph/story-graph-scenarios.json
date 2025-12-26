@@ -1,11 +1,10 @@
 {
   "_explanation": {
-    "hierarchical": "sub_epics can contain: nested sub_epics or story_groups. sequential_order is always an integer (1, 2, 3, 4) - unique within parent, no decimals.",
-    "connector": "Story groups: 'and' or 'or' (null for first group). Stories within groups: 'and' or 'or' (null for first story). Epics and sub_epics don't have connectors.",
-    "domain_placement": "domain_concepts: 'local' if relevant to single sub_epic, 'global' if relevant to multiple sub_epics. Place at most specific level (local preferred), but elevate to parent if used by multiple children.",
-    "scenarios": "Each story contains scenarios (happy_path, edge_case, error_case) with background and steps in Gherkin format.",
-    "scenario_outlines": "When decision criteria chooses Scenario Outline, stories may contain scenario_outlines with Examples tables for data-driven testing. Every variable in Steps must have a column in Examples table. Examples table must include both input and output/expected result variables.",
-    "increments_structure": "The 'increments' section is a MINIMAL REFERENCE VIEW. Stories in increments contain ONLY story names as strings. All story details (story_type, connector, Steps, acceptance_criteria, etc.) come from the main 'epics' section. Increments are just a list of story names to map which stories belong to which increment."
+    "purpose": "Scenarios phase - adds Gherkin scenarios to each story for BDD testing",
+    "scenario_types": "Each story has scenarios array with: happy_path (main success flow), edge_case (boundary conditions), error_case (failure handling)",
+    "gherkin_format": "Each scenario has: title, background (array of context strings), steps (array of Given/When/Then strings in Gherkin format)",
+    "scenario_outlines": "When decision criteria requires data-driven testing, use scenario_outlines with Examples tables. Every <variable> in steps MUST have corresponding column in Examples table (including both inputs and expected outputs)",
+    "structure": "Inherits full story graph structure (epics, sub_epics, story_groups, stories). ONLY adds scenarios and scenario_outlines to stories"
   },
   "epics": [
     {

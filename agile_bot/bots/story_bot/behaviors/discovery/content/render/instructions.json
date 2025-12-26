@@ -1,7 +1,7 @@
 {
   "behaviorName": "discovery",
   "instructions": [
-    "**CRITICAL: Discovery diagram filenames MUST include increment identifier:**",
+    "Discovery diagram filenames MUST include increment identifier:**",
     "",
     "The render-discovery synchronizer automatically modifies output filenames:",
     "- Single increment: Appends sanitized increment name or number",

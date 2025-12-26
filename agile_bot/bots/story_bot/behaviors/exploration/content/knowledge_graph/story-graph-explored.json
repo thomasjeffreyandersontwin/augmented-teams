@@ -1,11 +1,10 @@
 {
   "_explanation": {
-    "hierarchical": "sub_epics can contain: nested sub_epics or story_groups. sequential_order is always an integer (1, 2, 3, 4) - unique within parent, no decimals.",
-    "connector": "Story groups: 'and' or 'or' (null for first group). Stories within groups: 'and' or 'or' (null for first story). Epics and sub_epics don't have connectors.",
-    "domain_placement": "domain_concepts: 'local' if relevant to single sub_epic, 'global' if relevant to multiple sub_epics. Place at most specific level (local preferred), but elevate to parent if used by multiple children.",
-    "exploration_additions": "Stories include: optional, priority, Steps, acceptance_criteria. Story groups are used instead of features.",
-    "acceptance_criteria_format": "Each acceptance criteria is a SINGLE string containing one WHEN/THEN pair. Format: \"WHEN [condition]\\nTHEN [outcome]\" or \"WHEN [condition]\\nTHEN [outcome] AND [additional outcome]\". WHEN and THEN must be on separate lines (use \\n for newline). THEN and its AND must be together on the same line. Each WHEN condition starts a new acceptance criteria. Example: [\"WHEN user selects tokens\\nTHEN system highlights tokens AND tokens are stored\", \"WHEN user selects zero tokens\\nTHEN system shows error message\"]",
-    "increments_structure": "The 'increments' section is a MINIMAL REFERENCE VIEW. Stories in increments contain ONLY story names as strings. All story details (story_type, connector, Steps, acceptance_criteria, etc.) come from the main 'epics' section. Increments are just a list of story names to map which stories belong to which increment."
+    "purpose": "Exploration phase - elaborates each story with detailed steps, acceptance criteria, optional flag, and priority",
+    "story_additions": "Adds to each story: Steps (array of action strings), acceptance_criteria (array of WHEN/THEN strings), optional (boolean), priority (number)",
+    "acceptance_criteria_format": "Each acceptance criteria is ONE string with format: \"WHEN [condition]\\nTHEN [outcome]\" or \"WHEN [condition]\\nTHEN [outcome] AND [additional outcome]\". Use \\n for line break between WHEN and THEN. Each WHEN starts a new acceptance criteria",
+    "steps_format": "Steps array contains action strings describing what the actor does in sequence (e.g., [\"Navigate to settings page\", \"Click export button\", \"Select CSV format\"])",
+    "structure": "Inherits full story graph (epics, sub_epics, story_groups, domain_concepts). Story groups replace features. ONLY adds exploration fields to stories"
   },
   "epics": [
     {

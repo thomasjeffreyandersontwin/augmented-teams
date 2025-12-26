@@ -1,73 +1,41 @@
 {
-  "description": "CRITICAL: Given statements describe STATE/CONFIGURATION, never actions or events. The first action in a scenario is ALWAYS a When, never a Given. Given sets up preconditions, When triggers the behavior being tested.",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner",
-  "examples": [
-    {
-      "do": {
-        "description": "Given describes state, When triggers action",
-        "content": [
-          "CORRECT:",
-          "Given a bot with name 'test_bot'",
-          "And bot has a behavior configured as 'shape'",
-          "And behavior has action 'gather_context'",
-          "When Tool invokes test_bot.Shape.GatherContext() method",
-          "",
-          "Given = STATE (bot exists, is configured)",
-          "When = ACTION (tool invokes method)"
-        ]
+  "priority": 1,
+  "description": "Given statements describe STATE/PRECONDITIONS, not actions or functionality. Given = what exists before test. When = first action. Then = expected behavior. Example: Given user is logged in (state), not Given user logs in (action).",
+  "scanners": [
+    "agile_bot.bots.base_bot.src.actions.validate.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner"
+  ],
+  "do": {
+    "description": "Given describes state/preconditions only. Example: 'Given user is logged in' (state), 'Given character sheet exists' (precondition)",
+    "guidance": [
+      {
+        "description": "Use state language - what EXISTS, not what HAPPENS",
+        "example": ["Given user is logged in", "Given character sheet exists", "Given workflow state is persisted", "Given bot has behavior configured as 'shape'"]
       },
-      "dont": {
-        "description": "Don't use Given for actions - first action is ALWAYS When",
-        "content": [
-          "WRONG:",
-          "Given Tool has invoked test_bot.Shape.GatherContext() method",
-          "",
-          "This is WRONG because 'invoked' is an ACTION, not a state.",
-          "The scenario's first action must be When, not Given.",
-          "",
-          "Other common mistakes:",
-          "- Given user clicks button (WRONG - clicking is action, use When)",
-          "- Given system sends message (WRONG - sending is action, use When)",
-          "- Given API is called (WRONG - calling is action, use When)",
-          "- Given tool executes (WRONG - executing is action, use When)"
-        ]
-      }
-    },
-    {
-      "do": {
-        "description": "Given = preconditions (state), When = trigger (action), Then = outcomes",
-        "content": [
-          "Structure of every scenario:",
-          "",
-          "Given <state/config> - What exists, is configured, is true BEFORE the action",
-          "And <more state> - Additional preconditions",
-          "When <action> - The ONE thing that triggers the behavior (external stimulus)",
-          "Then <outcome> - What should happen as a result",
-          "And <more outcomes> - Additional expected results",
-          "",
-          "Example:",
-          "Given a bot with name 'test_bot' (STATE - bot exists)",
-          "And bot has behavior configured as 'shape' (STATE - configured)",
-          "When Tool invokes test_bot.Shape.GatherContext() (ACTION - trigger)",
-          "Then Action loads instructions (OUTCOME - result)",
-          "And Action merges instructions (OUTCOME - more results)"
-        ]
+      {
+        "description": "First action is always When, never Given",
+        "example": ["Given bot is configured (STATE)", "When Tool invokes method (ACTION)", "Then Action loads instructions (OUTCOME)"]
       },
-      "dont": {
-        "description": "Don't confuse state with actions",
-        "content": [
-          "Ask yourself: Is this describing WHAT EXISTS or WHAT HAPPENS?",
-          "",
-          "If it describes WHAT EXISTS → Given",
-          "If it describes WHAT HAPPENS → When (if first action) or Then (if result)",
-          "",
-          "WRONG patterns to avoid:",
-          "- Given <something> happened (past tense action → use When)",
-          "- Given <actor> does <action> (present tense action → use When)",
-          "- Given <system> executes <process> (action → use When)"
-        ]
+      {
+        "description": "Preconditions describe what's true BEFORE the action",
+        "example": ["Given activity log is initialized (precondition)", "When action completes (trigger)", "Then activity log captures data (functionality being tested)"]
       }
-    }
-  ]
+    ]
+  },
+  "dont": {
+    "description": "Don't describe actions or functionality in Given. Example: 'Given user logs in' (action - wrong), 'Given system validates input' (functionality - wrong)",
+    "guidance": [
+      {
+        "description": "Don't use action verbs in Given - clicking, sending, calling are When actions",
+        "example": ["Given user clicks button (WRONG)", "Given system sends message (WRONG)", "Given API is called (WRONG)", "Given tool executes (WRONG)"]
+      },
+      {
+        "description": "Don't describe functionality being tested in Given - that's what Then is for",
+        "example": ["Given activity log tracks: timestamp, action_state (WRONG - this is functionality to test in Then)"]
+      },
+      {
+        "description": "Don't use past tense actions in Given",
+        "example": ["Given Tool has invoked method (WRONG - 'invoked' is action)", "Given user has clicked (WRONG - 'clicked' is action)"]
+      }
+    ]
+  }
 }
-

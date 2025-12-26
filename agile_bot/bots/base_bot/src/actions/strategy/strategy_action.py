@@ -91,7 +91,7 @@ class StrategyAction(Action):
                 options = criteria_data.get('options', [])
                 if options:
                     for option in options:
-                        output_lines.append(f"  - {option}")
+                        output_lines.extend(self._format_option(option))
         
         # Format assumptions
         assumptions = instructions_dict.get('assumptions', [])
@@ -102,6 +102,28 @@ class StrategyAction(Action):
                 output_lines.append(f"- {assumption}")
         
         return "\n".join(output_lines)
+
+    def _format_option(self, option) -> list:
+        """Format a single decision criteria option for display."""
+        lines = []
+        if isinstance(option, dict):
+            name = option.get('name', option.get('id', 'Unknown'))
+            description = option.get('description', '')
+            when_to_use = option.get('when_to_use', '')
+            example = option.get('example', '')
+            
+            lines.append(f"  [{name}]")
+            if description:
+                lines.append(f"    {description}")
+            if when_to_use:
+                lines.append(f"    When: {when_to_use}")
+            if example:
+                lines.append(f"    Example:")
+                for example_line in example.split('\n'):
+                    lines.append(f"      {example_line}")
+        else:
+            lines.append(f"  - {option}")
+        return lines
 
     def do_execute(self, context: StrategyActionContext) -> Dict[str, Any]:
         instructions = self.instructions.copy()

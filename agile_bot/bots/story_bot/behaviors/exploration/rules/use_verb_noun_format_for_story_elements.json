@@ -1,67 +1,41 @@
 {
-  "description": "Use verb-noun format for all story elements (epic names, feature names, story titles)",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner",
+  "priority": 1,
+  "description": "Use verb-noun format for scenarios and acceptance criteria. Example: 'User submits form' (verb-noun), not 'Form submission' (noun-only).",
+  "scanners": [
+    "agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner"
+  ],
   "do": {
-    "examples": [
-      {
-        "description": "Use verb-noun format for epic names",
-        "content": [
-          "Manage Orders, Create Character, Process Payment"
-        ]
-      },
-      {
-        "description": "Use verb-noun format for feature names",
-        "content": [
-          "Place Order, Validate Payment, Save Character"
-        ]
-      },
-      {
-        "description": "Use verb-noun format for story titles",
-        "content": [
-          "Customer places order, System validates payment, User saves character"
-        ]
-      },
+    "description": "Use verb-noun format with base verb forms. Example: 'User submits order', 'System validates payment', 'Select item from list'",
+    "guidance": [
       {
         "description": "Use verb-noun format for scenario sentences",
-        "content": [
-          "User submits form, System processes request"
-        ]
+        "example": ["User submits form", "System processes request", "Customer places order", "System validates payment"]
+      },
+      {
+        "description": "Use verb-noun format for acceptance criteria",
+        "example": ["User can view order history", "System displays confirmation message", "Customer receives email notification"]
       },
       {
         "description": "Use base verb forms (infinitive/imperative), not third-person singular",
-        "content": [
-          "Select Multiple Tokens, Group Minions Into Mob, Display Confirmation, Add Tokens To Mob, Remove Tokens From Mob"
-        ]
+        "example": ["Select item from list", "Display confirmation", "Add item to cart", "Remove item from cart"]
       }
     ]
   },
   "dont": {
-    "examples": [
+    "description": "Don't use noun-only, gerund, or third-person singular verb forms. Example: 'Form submission' (noun-only), 'Submitting form' (gerund), 'Selects item' (third-person)",
+    "guidance": [
       {
-        "description": "Don't use noun-only or capability-based names",
-        "content": [
-          "Order Management, Payment Processing, Character System"
-        ]
-      },
-      {
-        "description": "Don't mix verb-noun with other formats",
-        "content": [
-          "Order Management and Place Order (mixed format)"
-        ]
+        "description": "Don't use noun-only or capability-based names for scenarios",
+        "example": ["Order submission", "Payment processing", "Form validation"]
       },
       {
         "description": "Don't use gerund forms",
-        "content": [
-          "Ordering, Processing Payments, Creating Characters"
-        ]
+        "example": ["Submitting order", "Processing payment", "Validating form"]
       },
       {
-        "description": "Don't use third-person singular verb forms (selects, groups, displays, adds, removes)",
-        "content": [
-          "Selects Multiple Tokens, Groups Minions Into Mob, Displays Confirmation, Adds Tokens To Mob, Removes Tokens From Mob"
-        ]
+        "description": "Don't use third-person singular verb forms",
+        "example": ["Selects item", "Displays confirmation", "Adds to cart", "Removes from cart"]
       }
     ]
   }
 }
-
