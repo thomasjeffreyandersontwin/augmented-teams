@@ -240,6 +240,19 @@ class Rule:
             if 'dont' in example:
                 self._format_example_block(example['dont'], "DON'T", formatted)
 
+    def _format_rule_section(self, section_key: str, header: str, formatted: list) -> None:
+        """Helper to format a rule section (DO or DON'T) with description and guidance."""
+        section = self._rule_content.get(section_key, {})
+        desc = section.get('description', '')
+        guidance = section.get('guidance', [])
+        
+        if desc or guidance:
+            formatted.append(f'\n**{header}:**')
+            if desc:
+                formatted.append(f'{desc}')
+            if guidance:
+                self._format_guidance(guidance, formatted)
+
     def formatted_text(self) -> List[str]:
         formatted = []
         formatted.append(f'\n**Rule:** {self.rule_file}')
@@ -247,26 +260,10 @@ class Rule:
             formatted.append(f'{self.description}')
         
         # DO section with description
-        do_section = self._rule_content.get('do', {})
-        do_desc = do_section.get('description', '')
-        do_guidance = do_section.get('guidance', [])
-        if do_desc or do_guidance:
-            formatted.append('\n**DO:**')
-            if do_desc:
-                formatted.append(f'{do_desc}')
-            if do_guidance:
-                self._format_guidance(do_guidance, formatted)
+        self._format_rule_section('do', 'DO', formatted)
         
         # DON'T section with description
-        dont_section = self._rule_content.get('dont', {})
-        dont_desc = dont_section.get('description', '')
-        dont_guidance = dont_section.get('guidance', [])
-        if dont_desc or dont_guidance:
-            formatted.append("\n**DON'T:**")
-            if dont_desc:
-                formatted.append(f'{dont_desc}')
-            if dont_guidance:
-                self._format_guidance(dont_guidance, formatted)
+        self._format_rule_section('dont', "DON'T", formatted)
         
         if 'examples' in self._rule_content:
             self._format_inline_examples(formatted)

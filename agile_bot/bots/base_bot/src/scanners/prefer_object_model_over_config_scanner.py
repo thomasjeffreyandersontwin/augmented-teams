@@ -36,13 +36,11 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Dict[str, Any] = None) -> List[Violation]:
         violations = []
         
-        # Need rule_obj to create violations
-        effective_rule_obj = rule_obj if rule_obj is not None else self.rule_obj
-        if not effective_rule_obj:
+        # Use self.rule_obj directly - let code fail if not set
+        if not self.rule_obj:
             return violations
         
-        # Store rule_obj and file_path for creating violations
-        self.rule_obj = effective_rule_obj
+        # Store file_path for creating violations
         self.current_file_path = file_path
         
         # Read the file content

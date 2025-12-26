@@ -1,0 +1,88 @@
+{
+  "assumptions": {
+    "thin_slices_provide_value_learning_or_risk_reduction": {
+      "accepted": true,
+      "justification": "All 3 increments align with this: Increment 1 reduces risk (validates Foundry API) and provides value (basic mob coordination). Increment 2 provides high value (strategic behavior). Increment 3 provides value (convenience features)."
+    },
+    "slices_do_not_need_all_functionality": {
+      "accepted": true,
+      "justification": "Increment 1 delivers mob coordination without strategies. Increment 2 adds strategies without templates. Each is useful independently while building toward complete feature set."
+    },
+    "not_every_increment_must_be_user_visible": {
+      "accepted": true,
+      "modification": "However, for this project, ALL increments will be user-visible and valuable to GMs. Increment 1 includes both API validation (learning/risk reduction) AND basic mob creation + attack (user value). We're combining foundational work with user features rather than doing pure infrastructure increments."
+    },
+    "some_slices_may_be_architectural": {
+      "accepted": true,
+      "justification": "Increment 1's Foundry API mapping is architectural/foundational, but we're bundling it with user-facing mob creation to ensure each increment delivers both technical foundation and user value."
+    }
+  },
+  "strategy_summary": {
+    "approach": "Risk-first with immediate value",
+    "increment_count": 3,
+    "increment_philosophy": "Each increment de-risks technical unknowns while delivering end-to-end user value",
+    "key_principles": [
+      "Validate Foundry API early (Increment 1) to reduce highest technical risk",
+      "Deliver core user value (mob coordination) in Increment 1 to prove concept",
+      "Add strategic depth (targeting behaviors) in Increment 2 for differentiation",
+      "Polish with convenience features (templates, editing) in Increment 3",
+      "Each increment is demonstrable, testable, and independently valuable",
+      "Dependencies flow naturally: API → Basic Mobs → Strategies → Advanced Features"
+    ]
+  },
+  "increment_definitions": {
+    "increment_1": {
+      "name": "Foundational Integration + Basic Mob",
+      "goal": "Validate Foundry API and deliver core mob coordination",
+      "value_proposition": "GM can group minions and execute coordinated attacks",
+      "risk_mitigation": "Validates proprietary Foundry API works for mob coordination",
+      "stories_included": [
+        "All Map Foundry API stories (8 stories)",
+        "Create Mob stories (2 stories)",
+        "Execute Melee Attack (1 story)"
+      ],
+      "estimated_story_count": 11,
+      "acceptance": "GM selects minions, groups them into mob, clicks one minion, all perform melee attack"
+    },
+    "increment_2": {
+      "name": "Strategy System",
+      "goal": "Add intelligent targeting and tactical behavior",
+      "value_proposition": "Mobs use different strategies for tactical combat",
+      "dependencies": "Requires Increment 1 foundation (Foundry API + basic mobs)",
+      "stories_included": [
+        "All Select Strategy stories (4 stories)",
+        "Select Targets stories (2 stories)",
+        "Execute Ranged Attack (1 story)",
+        "Execute Area Attack (1 story)"
+      ],
+      "estimated_story_count": 8,
+      "acceptance": "GM assigns strategy to mob, mob selects targets based on strategy, executes appropriate attack type"
+    },
+    "increment_3": {
+      "name": "Advanced Mob Management",
+      "goal": "Add convenience and polish features",
+      "value_proposition": "Easy mob management and reusable templates",
+      "dependencies": "Requires Increment 1 & 2 (basic mobs + strategies work)",
+      "stories_included": [
+        "Edit Mob stories (3 stories)",
+        "Spawn Mob stories (2 stories)"
+      ],
+      "estimated_story_count": 5,
+      "acceptance": "GM can modify mob membership, spawn mobs from templates, reuse mob configurations"
+    }
+  },
+  "total_stories": 24,
+  "story_distribution": {
+    "increment_1": 11,
+    "increment_2": 8,
+    "increment_3": 5
+  },
+  "rationale": {
+    "why_3_increments": "Natural breakpoints: 1) Foundation + proof of concept, 2) Strategic depth, 3) Convenience. Each increment roughly 4-8 stories, manageable scope.",
+    "why_api_first": "Highest technical risk. If Foundry API doesn't support required features, we learn early before building dependent functionality.",
+    "why_bundle_api_with_value": "Pure infrastructure increment provides no user feedback. Combining API validation with basic mob feature proves the concept works end-to-end.",
+    "why_strategies_second": "Requires stable foundation but delivers high differentiation value. Separating from basic mobs allows focused testing of targeting logic.",
+    "why_advanced_features_last": "Lowest risk, highest polish. Can be deferred if timeline pressure. Core value already delivered in Increments 1 & 2."
+  }
+}
+

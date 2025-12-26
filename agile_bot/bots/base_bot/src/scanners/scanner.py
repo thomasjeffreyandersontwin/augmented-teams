@@ -47,6 +47,10 @@ class Scanner(ABC):
         
         return violations
     
+    def _empty_violation_list(self) -> List[Dict[str, Any]]:
+        """Helper method for default empty implementations."""
+        return []
+    
     def scan_file(
         self,
         file_path: 'Path',
@@ -54,7 +58,7 @@ class Scanner(ABC):
         knowledge_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         # Default implementation - subclasses should override
-        return []
+        return self._empty_violation_list()
     
     def scan_cross_file(
         self,
@@ -65,7 +69,7 @@ class Scanner(ABC):
         all_code_files: Optional[List['Path']] = None,
         status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        return []
+        return self._empty_violation_list()
     
     def _is_test_file(self, file_path: 'Path') -> bool:
         if not file_path:
@@ -111,7 +115,7 @@ class Scanner(ABC):
         scan: 'Scan'
     ) -> List['Violation']:
         # Default implementation - subclasses should override
-        return []
+        return self._empty_violation_list()
     
     def associated_with_rule(self, rule: 'Rule') -> bool:
         # Default implementation - subclasses can override

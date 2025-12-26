@@ -24,7 +24,8 @@ class CoverAllPathsScanner(TestScanner):
         test_methods = [function.node for function in functions.get_many_functions if function.node.name.startswith('test_')]
         
         for test_method in test_methods:
-            has_code = False
+            # Check if test has actual code (not just pass/docstrings)
+            found_code_node = None
             for stmt in test_method.body:
                 if isinstance(stmt, ast.Pass):
                     continue
@@ -34,12 +35,13 @@ class CoverAllPathsScanner(TestScanner):
                 else:
                     for node in ast.walk(stmt):
                         if isinstance(node, (ast.Call, ast.Assign, ast.Assert, ast.Return, ast.Raise)):
-                            has_code = True
+                            found_code_node = node
                             break
-                    if has_code:
+                    # Break outer loop if we found code
+                    if found_code_node is not None:
                         break
             
-            if not has_code:
+            if found_code_node is None:
                 # No code snippet for empty test method violations (method definition line)
                 violations.append(Violation(
                     rule=rule_obj,

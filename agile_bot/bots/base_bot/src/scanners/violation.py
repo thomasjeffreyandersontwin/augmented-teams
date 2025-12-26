@@ -51,11 +51,9 @@ class Violation:
             'rule_file': self._rule.rule_file,
             'violation_message': self._violation_message,
             'severity': self._severity,
-            'line_number': self._line_number  # Always include, even if None
+            'line_number': self._line_number,  # Always include, even if None
+            'location': self._location  # Always include, even if None
         }
-        
-        if self._location is not None:
-            result['location'] = self._location
         
         return result
 

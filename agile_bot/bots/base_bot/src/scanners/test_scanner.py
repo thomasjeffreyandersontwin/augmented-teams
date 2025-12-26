@@ -23,6 +23,10 @@ class TestScanner(Scanner):
         # Use base Scanner.scan() which combines files and calls scan_file() for each
         return super().scan(knowledge_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
     
+    def _empty_violation_list(self) -> List[Dict[str, Any]]:
+        """Helper method for default empty implementations."""
+        return []
+    
     def scan_file(
         self,
         file_path: Path,
@@ -30,7 +34,7 @@ class TestScanner(Scanner):
         knowledge_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         # Default implementation - subclasses must override
-        return []
+        return self._empty_violation_list()
     
     def scan_cross_file(
         self,
@@ -42,7 +46,7 @@ class TestScanner(Scanner):
         status_writer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         # Default implementation - subclasses override
-        return []
+        return self._empty_violation_list()
     
     def _parse_test_file(self, test_file_path: Path) -> Optional[Tuple[str, ast.AST]]:
         if not test_file_path.exists():

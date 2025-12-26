@@ -15,6 +15,65 @@ class CommandExample:
     description: str
 
 
+class StageCollection:
+    def __init__(self, stages: List[List[str]]):
+        self._stages = stages
+    
+    def format_as_lines(self) -> List[str]:
+        result = []
+        for stage in self._stages:
+            result.extend(stage)
+        return result
+
+
+class ParameterCollection:
+    def __init__(self, parameters: List[str]):
+        self._parameters = parameters
+    
+    def format_as_lines(self) -> List[str]:
+        if not self._parameters:
+            return []
+        result = ["Context Parameters (when confirming):"]
+        result.extend([f"  --{param} <value>" for param in self._parameters])
+        result.append("")
+        return result
+
+
+class ActionNameCollection:
+    def __init__(self, action_names: List[str], behavior_name: str):
+        self._action_names = action_names
+        self._behavior_name = behavior_name
+    
+    def format_as_lines(self) -> List[str]:
+        result = [f"Available Actions for behavior: {self._behavior_name}"]
+        result.extend([f"  {name}" for name in self._action_names])
+        return result
+
+
+class ActionDescriptionCollection:
+    def __init__(self, descriptions: List[ActionDescription]):
+        self._descriptions = descriptions
+    
+    def format_as_lines(self) -> List[str]:
+        return [f"      {action.name:12} - {action.description}" for action in self._descriptions]
+
+
+class CommandExampleCollection:
+    def __init__(self, examples: List[CommandExample]):
+        self._examples = examples
+    
+    def format_as_lines(self) -> List[str]:
+        return [f"    {example.pattern:45} -> {example.description}" for example in self._examples]
+
+
+class OtherCommandCollection:
+    def __init__(self, commands: List[CommandExample]):
+        self._commands = commands
+    
+    def format_as_lines(self) -> List[str]:
+        return [f"    {cmd.pattern:45} - {cmd.description}" for cmd in self._commands]
+
+
 class ActionHelp:
     def __init__(self, action, action_name: str):
         self.action = action
@@ -34,19 +93,18 @@ class ActionHelp:
             "",
         ]
         
-        for stage in self._stages:
-            lines.extend(stage)
+        # Delegate to collection class
+        stage_collection = StageCollection(self._stages)
+        lines.extend(stage_collection.format_as_lines())
         
         lines.extend([
             "Note: Calling action name without stage cycles through: instructions → submit → confirm",
             "",
         ])
         
-        if self._context_parameters:
-            lines.append("Context Parameters (when confirming):")
-            for param in self._context_parameters:
-                lines.append(f"  --{param} <value>")
-            lines.append("")
+        # Delegate to collection class
+        param_collection = ParameterCollection(self._context_parameters)
+        lines.extend(param_collection.format_as_lines())
         
         return "\n".join(lines)
     
@@ -97,10 +155,9 @@ class BehaviorHelp:
     
     @property
     def actions_list(self) -> str:
-        lines = [f"Available Actions for behavior: {self.name}"]
-        for name in self.action_names:
-            lines.append(f"  {name}")
-        return "\n".join(lines)
+        # Delegate to collection class
+        collection = ActionNameCollection(self.action_names, self.name)
+        return "\n".join(collection.format_as_lines())
     
     def action(self, action_name: str) -> Optional[ActionHelp]:
         for action in self.behavior.actions._actions:
@@ -176,7 +233,6 @@ class REPLHelp:
                 action_name = action.action_name
                 action_desc = next((a.description for a in self.action_descriptions if a.name == action_name), "")
                 
-                # Get parameter hints for this action
                 instructions_hint = self.session._get_instructions_params_hint(action)
                 submit_hint = self.session._get_submit_params_hint(action)
                 
@@ -193,9 +249,9 @@ class REPLHelp:
                 if params_line:
                     lines.append(f"                     {params_line}")
         else:
-            # Fallback if no current behavior
-            for action in self.action_descriptions:
-                lines.append(f"      {action.name:12} - {action.description}")
+            # Fallback if no current behavior - delegate to collection class
+            desc_collection = ActionDescriptionCollection(self.action_descriptions)
+            lines.extend(desc_collection.format_as_lines())
         
         lines.append("")
         lines.append("    operations:")
@@ -227,14 +283,16 @@ class REPLHelp:
             "  Examples:"
         ])
         
-        for example in self.command_examples:
-            lines.append(f"    {example.pattern:45} -> {example.description}")
+        # Delegate to collection class
+        example_collection = CommandExampleCollection(self.command_examples)
+        lines.extend(example_collection.format_as_lines())
         
         lines.append("")
         lines.append("  Other Commands:")
         
-        for cmd in self.other_commands:
-            lines.append(f"    {cmd.pattern:45} - {cmd.description}")
+        # Delegate to collection class
+        other_cmd_collection = OtherCommandCollection(self.other_commands)
+        lines.extend(other_cmd_collection.format_as_lines())
         
         return "\n".join(lines)
     

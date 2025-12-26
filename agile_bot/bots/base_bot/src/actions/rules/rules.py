@@ -141,8 +141,8 @@ class ValidationContext:
         changed_files = {}
         for file_type, file_list in files.items():
             changed = [f for f in file_list if f.stat().st_mtime > last_report_time]
-            if changed:
-                changed_files[file_type] = changed
+            # Always add the file_type key, even if empty list
+            changed_files[file_type] = changed
         
         return changed_files, files
 

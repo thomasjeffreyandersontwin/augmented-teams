@@ -35,8 +35,8 @@ class CodeScanner(Scanner):
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
         # Store knowledge_graph in instance for scanners that need it
-        if knowledge_graph is not None:
-            self.knowledge_graph = knowledge_graph
+        # Assign directly - let AttributeError propagate if self doesn't support it
+        self.knowledge_graph = knowledge_graph
         
         # Default implementation - subclasses must override
         return []

@@ -298,13 +298,14 @@ class Behaviors:
         requested_matched = requested_behavior_obj.name if requested_behavior_obj else None
         next_behavior_obj = self.next()
         expected_next = next_behavior_obj.name if next_behavior_obj else None
-        if requested_matched is None:
-            matches = False
-        elif requested_matched == current_behavior:
-            matches = True
-        elif expected_next is None:
-            matches = True
-        else:
-            matches = requested_matched == expected_next
+        # Match if: valid behavior requested AND (staying in current OR at workflow end OR requesting next)
+        matches = (
+            requested_matched is not None
+            and (
+                requested_matched == current_behavior
+                or expected_next is None
+                or requested_matched == expected_next
+            )
+        )
         logger.debug(f'Behavior order check: requested={requested_behavior} ({requested_matched}), current={current_behavior}, expected_next={expected_next}, matches={matches}')
         return (matches, current_behavior, expected_next)

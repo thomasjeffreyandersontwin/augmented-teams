@@ -14,6 +14,15 @@ from agile_bot.bots.base_bot.src.actions.validate.violation_formatter import Vio
 from agile_bot.bots.base_bot.src.actions.validate.validation_scanner_status_builder import ValidationScannerStatusBuilder
 logger = logging.getLogger(__name__)
 
+
+def ensure_reports_directory(bot_paths: BotPaths, workspace_directory: Path) -> Path:
+    """Module-level helper to create and return the reports directory."""
+    docs_path = bot_paths.documentation_path
+    docs_dir = workspace_directory / docs_path / 'reports'
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    return docs_dir
+
+
 class StreamingValidationReportWriter:
 
     def __init__(self, behavior_name: str, bot_paths: BotPaths, timestamp: str = None):
@@ -146,9 +155,7 @@ class StreamingValidationReportWriter:
         self._flush()
 
     def _get_status_path(self) -> str:
-        docs_path = self.bot_paths.documentation_path
-        docs_dir = self.workspace_directory / docs_path / 'reports'
-        docs_dir.mkdir(parents=True, exist_ok=True)
+        docs_dir = ensure_reports_directory(self.bot_paths, self.workspace_directory)
         status_file = docs_dir / f'{self.behavior_name}-validation-status-{self._timestamp}.md'
         return str(status_file)
 
@@ -237,9 +244,7 @@ class ValidationReportWriter:
         logger.error(f'Traceback:\n{traceback.format_exc()}')
 
     def get_report_path(self) -> Path:
-        docs_path = self.bot_paths.documentation_path
-        docs_dir = self.workspace_directory / docs_path / 'reports'
-        docs_dir.mkdir(parents=True, exist_ok=True)
+        docs_dir = ensure_reports_directory(self.bot_paths, self.workspace_directory)
         report_file = docs_dir / f'{self.behavior_name}-validation-report-{self._timestamp}.md'
         return report_file
 

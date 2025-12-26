@@ -1,11 +1,21 @@
 import json
+from pathlib import Path
 from agile_bot.bots.base_bot.src.repl_cli.repl_results import REPLCommandResponse
 from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import InstructionDisplayCommand
 
 
+def update_state_file_with_workspace(workspace_directory: Path, workspace_path: str) -> None:
+    state_file = workspace_directory / 'behavior_action_state.json'
+    if state_file.exists():
+        state_data = json.loads(state_file.read_text())
+    else:
+        state_data = {}
+    state_data['working_directory'] = workspace_path
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text(json.dumps(state_data, indent=2))
+
+
 class StateCommand(InstructionDisplayCommand):
-    """Base for state commands - provides access to behavior/action lookup."""
-    
     @property
     def behavior_names(self):
         return self.bot.behaviors.names if self.bot and self.bot.behaviors else []
@@ -99,25 +109,13 @@ class WorkspaceCommand(StateCommand):
                 status="error"
             )
         
-        # Update state file with working_directory
-        self._update_state_file(workspace_path)
+        update_state_file_with_workspace(self.session.workspace_directory, workspace_path)
         
         return REPLCommandResponse(
             output=f"OK workspace={workspace_path}",
             response=f"OK workspace={workspace_path}",
             status="success"
         )
-    
-    def _update_state_file(self, workspace_path: str) -> None:
-        """Update behavior_action_state.json with working_directory."""
-        state_file = self.session.workspace_directory / 'behavior_action_state.json'
-        if state_file.exists():
-            state_data = json.loads(state_file.read_text())
-        else:
-            state_data = {}
-        state_data['working_directory'] = workspace_path
-        state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(json.dumps(state_data, indent=2))
 
 
 class PathCommand(StateCommand):
@@ -140,25 +138,13 @@ class PathCommand(StateCommand):
                 status="success"
             )
         
-        # Update state file with working_directory
-        self._update_state_file(workspace_path)
+        update_state_file_with_workspace(self.session.workspace_directory, workspace_path)
         
         return REPLCommandResponse(
             output=f"OK path={workspace_path}",
             response=f"OK path={workspace_path}",
             status="success"
         )
-    
-    def _update_state_file(self, workspace_path: str) -> None:
-        """Update behavior_action_state.json with working_directory."""
-        state_file = self.session.workspace_directory / 'behavior_action_state.json'
-        if state_file.exists():
-            state_data = json.loads(state_file.read_text())
-        else:
-            state_data = {}
-        state_data['working_directory'] = workspace_path
-        state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(json.dumps(state_data, indent=2))
 
 
 class ScopeCommand(StateCommand):
@@ -200,32 +186,17 @@ class ScopeCommand(StateCommand):
                 status="success"
             )
         
-        # Parse scope - can be story nodes or files:path format
-        # Story nodes: "story1, story2" - searches entire graph (epics, sub-epics, stories, scenarios)
-        # Files: "file:path1, path2"
-        # Legacy: "epic:Name" or "story:Name" - strip prefix and search
-        
-        if ':' in args:
+        if args.startswith(('file:', 'files:')):
             prefix = args.split(':', 1)[0].strip().lower()
             value_part = args.split(':', 1)[1].strip()
-            
-            if prefix in ('file', 'files'):
-                # Files scope (accept both "file:" and "files:")
-                scope_values_raw = [v.strip() for v in value_part.split(',') if v.strip()]
-                scope_type = ScopeType.FILES
-                scope_value = scope_values_raw
-            else:
-                # Legacy format (epic:, story:, increment:) - strip prefix and search graph
-                scope_type = ScopeType.STORY
-                scope_values_raw = [v.strip() for v in value_part.split(',') if v.strip()]
-                scope_value = scope_values_raw
+            scope_values_raw = [v.strip() for v in value_part.split(',') if v.strip()]
+            scope_type = ScopeType.FILES
+            scope_value = scope_values_raw
         else:
-            # Story scope - searches entire graph (epics, sub-epics, stories, scenarios, increments)
             scope_type = ScopeType.STORY
             scope_values_raw = [v.strip() for v in args.split(',') if v.strip()]
             scope_value = scope_values_raw
         
-        # Create scope object and store it
         scope = Scope(type=scope_type, value=scope_value)
         self.session.store_scope_parameters(scope)
         

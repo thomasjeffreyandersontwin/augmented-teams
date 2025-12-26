@@ -1,6 +1,16 @@
 from typing import List
 
 
+class GuidanceLineCollection:
+    """Collection class for guidance lines"""
+    def __init__(self, lines: List[str]):
+        self._lines = lines
+    
+    def add_to_instructions(self, instructions) -> None:
+        for line in self._lines:
+            instructions.add(line)
+
+
 class RulesDigestGuidance:
     
     @property
@@ -22,8 +32,9 @@ class RulesDigestGuidance:
         ]
     
     def add_to(self, instructions) -> None:
-        for line in self.lines:
-            instructions.add(line)
+        # Delegate to collection class
+        collection = GuidanceLineCollection(self.lines)
+        collection.add_to_instructions(instructions)
 
 
 

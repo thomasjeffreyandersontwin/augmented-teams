@@ -26,11 +26,9 @@ class ScannerOrchestrator:
     
     def selects_scanner_helpers_by_rule(
         self,
-        rule: 'Rule',
-        scanner_registry: ScannerRegistry = None
+        rule: 'Rule'
     ) -> 'Scanner':
-        registry = scanner_registry if scanner_registry is not None else self.scanner_registry
-        scanner_class = registry.finds_scanner_by_rule(rule)
+        scanner_class = self.scanner_registry.finds_scanner_by_rule(rule)
         
         if not scanner_class:
             raise ValueError(f"No scanner found for rule: {rule.name}")
@@ -44,10 +42,10 @@ class ScannerOrchestrator:
         rule: 'Rule',
         scanner: 'Scanner' = None
     ) -> 'Scan':
-        if scanner is None:
-            scanner = self.selects_scanner_helpers_by_rule(rule)
+        # Default scanner from rule if not provided
+        selected_scanner = scanner or self.selects_scanner_helpers_by_rule(rule)
         
-        scan.undergoes_scan(scanner)
+        scan.undergoes_scan(selected_scanner)
         
         return scan
     

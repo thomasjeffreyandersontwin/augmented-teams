@@ -68,16 +68,12 @@ from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory, get_wor
 
 
 def main():
-    """Launch interactive REPL session"""
-    
     # Bot directory was set at module level to always be story_bot
     # (where behaviors are loaded from)
     bot_name = 'story_bot'
     
-    # Get workspace directory (where your stories/documents are)
     workspace_directory = get_workspace_directory()
     
-    # Create bot instance
     bot_config_path = bot_directory / 'bot_config.json'
     
     if not bot_config_path.exists():
@@ -95,7 +91,6 @@ def main():
         print(f"ERROR: Failed to initialize bot: {e}")
         sys.exit(1)
     
-    # Create REPL session
     repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
     
     # Check TTY before printing header
@@ -166,28 +161,26 @@ def main():
         while True:
             # Prompt for command
             try:
-                if is_pipe_mode:
-                    # Pipe mode: read from stdin without prompt
-                    command = input().strip()
-                else:
-                    # Interactive mode: show prompt
-                    command = input(f"[{bot_name}] > ").strip()
+                # Use empty prompt for pipe mode, bot prompt for interactive
+                prompt = "" if is_pipe_mode else f"[{bot_name}] > "
+                command = input(prompt).strip()
             except EOFError:
-                if not is_pipe_mode:
-                    print("\nExiting REPL...")
+                # Only print exit message in interactive mode
+                exit_message = "" if is_pipe_mode else "\nExiting REPL..."
+                if exit_message:
+                    print(exit_message)
                 break
             
             if not command:
                 continue
             
-            # Execute command
             response = repl_session.read_and_execute_command(command)
             
             # Display response (sanitize Unicode for Windows console)
             safe_output = response.output.encode('ascii', errors='replace').decode('ascii')
             print(safe_output)
-            if not is_pipe_mode:
-                print()
+            # Add blank line in interactive mode
+            print("" if is_pipe_mode else "\n", end="")
             
             # Check if should exit
             if response.repl_terminated:

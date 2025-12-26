@@ -3,8 +3,6 @@ from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import REPL
 
 
 class MetaCommand(REPLCommand):
-    """Base for meta commands - provides access to help and status resources."""
-    
     @property
     def help_resource(self):
         return self.session.help

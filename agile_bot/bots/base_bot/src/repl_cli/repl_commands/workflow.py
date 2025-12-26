@@ -8,8 +8,6 @@ from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionCont
 
 
 class WorkflowCommand(InstructionDisplayCommand):
-    """Base for workflow commands - provides action phase/state properties and workflow operations."""
-    
     @property
     def action_phase(self) -> str:
         return self.session.action_phase
@@ -31,20 +29,6 @@ class WorkflowCommand(InstructionDisplayCommand):
         return self.action_phase in ('not_started', 'instructions_given')
     
     def _parse_clarification_args(self, args: str) -> Dict[str, Any]:
-        """Parse clarification arguments from simplified formats: 
-        Dot notation (preferred):
-        - answers.q1="answer1"
-        - evidence.item1="value1"
-        - context="item1, item2"
-        
-        Compact format:
-        - answers="q1=answer1, q2=answer2"
-        - evidence="item1=value1, item2=value2"
-        
-        Legacy: key_questions (instead of answers) still supported
-        
-        Returns dict with 'answers', 'evidence_provided', and 'context' (list) keys.
-        """
         answers = {}
         evidence_provided = {}
         context = None
@@ -105,12 +89,6 @@ class WorkflowCommand(InstructionDisplayCommand):
         return {'answers': answers, 'evidence_provided': evidence_provided, 'context': context}
     
     def _parse_strategy_args(self, args: str) -> Dict[str, Any]:
-        """Parse strategy arguments from simplified format:
-        - decision1="option1" decision2="option2"
-        - assumptions="assumption1, assumption2"
-        
-        Returns dict with 'choices' (dict) and 'assumptions' (list) keys.
-        """
         choices = {}
         assumptions = None
         
@@ -139,13 +117,6 @@ class WorkflowCommand(InstructionDisplayCommand):
         return {'choices': choices, 'assumptions': assumptions}
     
     def _parse_scope_args(self, args: str, action_name: str) -> Dict[str, Any]:
-        """Parse scope arguments from simplified format:
-        - scope="story1, story2" (searches entire graph)
-        - scope="file:path1, path2"
-        
-        Also supports legacy format with action prefix (build.scope="...")
-        Returns dict with 'scope' (Scope object) key or empty dict if no scope found.
-        """
         from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
         
         if not args or not args.strip():
@@ -177,7 +148,6 @@ class WorkflowCommand(InstructionDisplayCommand):
         return {}
     
     def execute_submit(self, args: str = "") -> REPLCommandResponse:
-        """Execute the current action's submit() method. SINGLE SOURCE OF TRUTH."""
         action = self.current_action
         if not action:
             return REPLCommandResponse(
@@ -311,7 +281,6 @@ class WorkflowCommand(InstructionDisplayCommand):
             )
     
     def execute_confirm(self) -> REPLCommandResponse:
-        """Execute the current action's confirm() method and advance. SINGLE SOURCE OF TRUTH."""
         action = self.current_action
         behavior = self.current_behavior
         if not behavior or not action:
@@ -366,7 +335,6 @@ class WorkflowCommand(InstructionDisplayCommand):
             )
     
     def _mark_behavior_complete(self, behavior_name: str) -> None:
-        """Add behavior to completed_behaviors in state file."""
         state_file = self.session.workspace_directory / 'behavior_action_state.json'
         if not state_file.exists():
             return

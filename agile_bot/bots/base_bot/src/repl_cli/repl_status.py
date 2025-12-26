@@ -40,14 +40,12 @@ class REPLStatus:
         return output_lines
     
     def _get_scope_display(self) -> List[str]:
-        """Get scope display from state provider."""
         if hasattr(self.state, '_get_scope_display_lines'):
             return self.state._get_scope_display_lines()
         return []
     
     @property
     def hierarchical_status(self) -> str:
-        """Generate hierarchical breadcrumb display showing workflow position."""
         lines = []
         
         # Show scope if set
@@ -115,9 +113,7 @@ class REPLStatus:
                     else:
                         lines.append(f"  {a_marker} {a_name}")
                     
-                    # Only show operations for current action
                     if is_current_action:
-                        # Get parameter hints
                         instr_params = self._get_instructions_params(action)
                         submit_params = self._get_submit_params(action)
                         common_params = ' --path="..." --scope="..."'
@@ -153,7 +149,6 @@ class REPLStatus:
         return "\n".join(lines)
     
     def _get_instructions_params(self, action) -> str:
-        """Get parameter hints for instructions operation."""
         # Check if action has context_class with fields
         if hasattr(action, 'context_class') and action.context_class:
             try:
@@ -167,7 +162,6 @@ class REPLStatus:
         return ''
     
     def _get_submit_params(self, action) -> str:
-        """Get parameter hints for submit operation."""
         params = []
         if hasattr(action, 'context_class') and action.context_class:
             try:
