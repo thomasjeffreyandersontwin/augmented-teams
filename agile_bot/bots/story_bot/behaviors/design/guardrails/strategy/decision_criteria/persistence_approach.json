@@ -1,0 +1,42 @@
+{
+  "description": "How should domain state be persisted and retrieved?",
+  "question": "What is your default approach for persisting domain state?",
+  "options": [
+    {
+      "id": "repository_abstraction",
+      "name": "Repository Abstraction",
+      "description": "Repository pattern abstracts persistence. Domain objects are persistence-ignorant. Repository handles save/load.",
+      "when_to_use": "Clean domain model, testability priority, multiple storage backends possible, DDD approach",
+      "example": "OrderRepository: Saves order, Finds by id, Finds by customer. Order has no persistence knowledge"
+    },
+    {
+      "id": "active_record",
+      "name": "Active Record",
+      "description": "Domain objects know how to persist themselves. Save/load methods on the object itself.",
+      "when_to_use": "Simple CRUD, rapid development, object-relational mapping, framework support (Rails, Django)",
+      "example": "Order: Saves to database, Loads by id, Deletes. Order contains persistence logic"
+    },
+    {
+      "id": "event_sourcing",
+      "name": "Event Sourcing",
+      "description": "State stored as sequence of events. Current state derived by replaying events. Full audit trail.",
+      "when_to_use": "Audit requirements, temporal queries, complex domain logic, event-driven architecture",
+      "example": "Order stored as: OrderCreated, LineItemAdded, LineItemAdded, PaymentReceived, OrderShipped events"
+    },
+    {
+      "id": "unit_of_work",
+      "name": "Unit of Work",
+      "description": "Track changes to objects during business transaction. Commit all changes atomically at end.",
+      "when_to_use": "Complex transactions, multiple aggregates, optimistic concurrency, ORM integration",
+      "example": "UnitOfWork tracks: modified Order, new LineItems, deleted Discounts. Commits all at once"
+    },
+    {
+      "id": "cqrs_separation",
+      "name": "CQRS Separation",
+      "description": "Separate models for commands (writes) and queries (reads). Optimized for each use case.",
+      "when_to_use": "Complex queries, read/write ratio skewed, different scaling needs, eventual consistency OK",
+      "example": "OrderCommandModel for placing orders. OrderQueryModel (denormalized) for order history views"
+    }
+  ]
+}
+

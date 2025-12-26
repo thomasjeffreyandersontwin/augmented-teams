@@ -223,7 +223,7 @@ class WorkflowCommand(InstructionDisplayCommand):
             evidence_count = result.get('evidence_count', 0)
             
             output_lines = [
-                f"EXECUTING {self.current_behavior_name}.{self.current_action_name}.submit",
+                f"Executing: {self.current_behavior_name}.{self.current_action_name}.submit",
                 "",
                 f"[{status.upper()}]",
                 f"- {message}",

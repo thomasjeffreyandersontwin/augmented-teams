@@ -1,0 +1,7 @@
+{
+  "name": "render_design_model",
+  "path": "docs/stories",
+  "input": "story-graph.json",
+  "output": "docs/design/design-model.md",
+  "template": "templates/design-model.md"
+}

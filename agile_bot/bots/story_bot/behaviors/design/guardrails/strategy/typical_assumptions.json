@@ -1,0 +1,11 @@
+{
+  "typical_assumptions": [
+    "Objects follow SOLID principles",
+    "Dependencies are injected at construction time",
+    "State is encapsulated at the lowest appropriate level",
+    "Responsibilities are delegated to the most specific object",
+    "Properties hide implementation details and calculation timing",
+    "Ownership relationships are unidirectional"
+  ]
+}
+

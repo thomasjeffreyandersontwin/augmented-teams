@@ -1,0 +1,12 @@
+{
+  "action": "build",
+  "schema": "story-graph-design.json",
+  "graph_path": "docs/stories/story-graph.json",
+  "instructions": [
+    "Refine domain concepts with detailed OOP design patterns",
+    "Add object responsibilities showing proper encapsulation and delegation",
+    "Define clear dependency injection at instantiation",
+    "Show ownership vs reference relationships"
+  ]
+}
+

@@ -177,8 +177,7 @@ class REPLSession:
             return ""
         
         lines = []
-        lines.append("")
-        lines.append("=" * 60)
+        lines.append("-" * 80)
         
         # Get bot name from bot_directory
         if self.bot and hasattr(self.bot, 'bot_paths'):
@@ -195,8 +194,6 @@ class REPLSession:
             lines.append("This command will EXIT upon processing.")
             lines.append("AI: Please follow ALL instructions below.")
             lines.append("")
-        
-        lines.append("-" * 60)
         
         if self.bot:
             bot_path = self.bot.bot_paths.bot_directory if hasattr(self.bot, 'bot_paths') else 'Unknown'
