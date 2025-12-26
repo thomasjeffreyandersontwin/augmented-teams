@@ -10,6 +10,11 @@ class RenderInstructionFormatter:
         working_dir = self._inject_workspace_info(base_instructions_list, render_specs)
         executed_specs = [spec for spec in render_specs if spec.is_executed]
         template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]
+        
+        # If no template specs require AI handling, clear the template-related instructions
+        if not template_specs:
+            base_instructions_list = []
+        
         self._add_spec_instructions(base_instructions_list, executed_specs, template_specs)
         # Process action_config.json placeholders with ALL render_specs (for {{#for_each_render_config}} loops)
         self.inject_render_template_variables(base_instructions_list, render_instructions, template_specs, all_render_specs=render_specs)

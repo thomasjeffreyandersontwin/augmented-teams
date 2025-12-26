@@ -1,204 +1,45 @@
 {
-  "description": "Tests must use reusable helper functions instead of inline code blocks of 4+ lines. Optimize helper functions for reusability across multiple tests, not exact step names. Helper function names should describe what they do, not necessarily match exact Given/When/Then step text. If extracting steps from scenarios, put the step comments above the helper function as documentation. Helper functions must be placed as locally as possible based on their scope of reuse: story-level helpers go in the test class, sub-epic helpers go at module level in the test file, epic-level helpers go in a separate file named after the epic (e.g., `test_{epic_name}_helpers.py`), and cross-map helpers go in common files (e.g., `conftest.py` or `test_helpers.py`).",
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.given_when_then_helpers_scanner.GivenWhenThenHelpersScanner",
+  "priority": 22,
+  "description": "Use reusable helper functions instead of inline code blocks of 4+ lines. Optimize for reusability, not exact step names. Place helpers at correct scope: story-level in class, sub-epic in module, epic in separate file. Example: given_config_exists(), when_agent_initialized(), then_agent_is_configured()",
+  "scanners": [
+    "agile_bot.bots.base_bot.src.actions.validate.scanners.given_when_then_helpers_scanner.GivenWhenThenHelpersScanner"
+  ],
   "do": {
-    "examples": [
+    "description": "Use Given/When/Then helper functions for setup, action, assertion. Example: given_bot_config_exists(); bot = when_bot_instantiated(); then_bot_uses_correct_directories(bot)",
+    "guidance": [
       {
-        "description": "Use Given helper functions for setup",
-        "content": [
-          "# Given: Environment is bootstrapped",
-          "given_bot_directory_environment_variable_set(bot_directory)",
-          "given_workspace_directory_environment_variable_set(workspace_directory)",
-          "# And: Bot configuration exists",
-          "config_path = given_bot_config_and_behavior_exist(bot_directory, 'test_bot', 'shape')"
-        ]
+        "description": "Given helpers for setup",
+        "example": ["config_path = given_bot_config_exists(workspace, 'test_bot', ['shape'])"]
       },
       {
-        "description": "Use When helper functions for actions",
-        "content": [
-          "# When: Bot is instantiated",
-          "bot = when_bot_is_instantiated('test_bot', bot_directory, config_path)",
-          "",
-          "# When: Action executes with parameters",
-          "when_action_executes_with_clarification_parameters(action, parameters)"
-        ]
+        "description": "When helpers for actions",
+        "example": ["bot = when_bot_is_instantiated('test_bot', bot_directory, config_path)"]
       },
       {
-        "description": "Use Then helper functions for assertions",
-        "content": [
-          "# Then: Bot uses correct directories",
-          "then_bot_uses_correct_directories(bot, bot_directory, workspace_directory)",
-          "",
-          "# Then: File exists with bot-specific filename",
-          "rules_file = then_awareness_file_exists_with_bot_specific_filename(rules_dir, 'test_bot')"
-        ]
+        "description": "Then helpers for assertions",
+        "example": ["then_bot_uses_correct_directories(bot, bot_directory, workspace)"]
       },
       {
-        "description": "Optimize helper functions for reusability, not exact step names",
-        "content": [
-          "# GOOD: Reusable function name that describes what it does",
-          "def create_mob_with_minions(actor_ids):",
-          "    \"\"\"Create a Mob and add minions - reusable across multiple scenarios.\"\"\"",
-          "    mob = Mob()",
-          "    for actor_id in actor_ids:",
-          "        minion = Minion(actor_id=actor_id)",
-          "        mob.add_minion(minion)",
-          "    return mob",
-          "",
-          "# GOOD: If extracting from scenario steps, put step comments above function",
-          "# Given: Mob exists with minions",
-          "# And: Mob has strategy assigned",
-          "def create_mob_with_minions_and_strategy(actor_ids, strategy_name):",
-          "    \"\"\"Create Mob with minions and strategy - reusable setup.\"\"\"",
-          "    mob = create_mob_with_minions(actor_ids)",
-          "    strategy = Strategy(name=strategy_name)",
-          "    mob.assign_strategy(strategy)",
-          "    return mob",
-          "",
-          "# GOOD: Function name describes behavior, not exact scenario text",
-          "def verify_mob_has_expected_minions(mob, expected_count):",
-          "    \"\"\"Verify mob has expected number of minions.\"\"\"",
-          "    assert len(mob.get_minions()) == expected_count",
-          "",
-          "# DON'T: Exact step name that's too specific to one scenario",
-          "# def given_mob_exists_with_minions_and_strategy_assigned_for_combat_encounter():",
-          "#     # Too specific - won't be reusable!"
-        ]
-      },
-      {
-        "description": "Place helper functions hierarchically based on scope",
-        "content": [
-          "# Story-level (used only within one test class):",
-          "class TestGenerateBotTools:",
-          "    def given_bot_config_file_with_working_dir_and_behaviors(self, workspace_root, bot_name, behaviors):",
-          "        # Helper only used by tests in this class",
-          "        ...",
-          "",
-          "# Sub-epic level (used across stories in same test file):",
-          "# At module level in test_generate_bot_server_and_tools.py",
-          "def given_bot_configured_by_config(workspace_root, bot_name):",
-          "    # Helper used by multiple test classes in this file",
-          "    ...",
-          "",
-          "# Epic level (used across sub-epics):",
-          "# In separate file: test_build_agile_bots_helpers.py",
-          "def create_actions_workflow_json(bot_directory, behavior_name, actions=None):",
-          "    # Helper used across multiple test files in the 'Build Agile Bots' epic",
-          "    ...",
-          "",
-          "# Cross-map (global) level (used everywhere):",
-          "# In conftest.py or test_helpers.py",
-          "def create_bot_config_file(bot_dir, bot_name, behaviors, workspace_root=None):",
-          "    # Helper used across all epics and stories",
-          "    ..."
-        ]
+        "description": "Place helpers at correct scope level",
+        "example": ["# Story-level: in test class", "# Sub-epic: module level in test file", "# Epic: separate test_<epic>_helpers.py file", "# Global: conftest.py"]
       }
     ]
   },
   "dont": {
-    "examples": [
+    "description": "Don't use inline operations of 4+ lines. Example: config_dir = ...; config_dir.mkdir(); config_file = ...; config_file.write_text() (wrong - extract to helper)",
+    "guidance": [
       {
-        "description": "Do NOT use inline operations (4+ lines)",
-        "content": [
-          "# BAD: Inline steps (4+ lines) that should be in helper functions",
-          "config_dir = workspace_root / 'agile_bot' / 'bots' / bot_name / 'config'",
-          "config_dir.mkdir(parents=True, exist_ok=True)",
-          "config_file = config_dir / 'bot_config.json'",
-          "config_file.write_text(json.dumps(config), encoding='utf-8')",
-          "",
-          "# GOOD: Use reusable helper function",
-          "config_path = create_bot_config_file(workspace_root, bot_name, behaviors)",
-          "",
-          "# NOTE: 2-3 line blocks are OK - only flag 4+ lines for extraction"
-        ]
+        "description": "Don't use inline setup blocks of 4+ lines",
+        "example": ["# WRONG: 4+ lines inline", "config_dir = workspace / 'config'; config_dir.mkdir()", "config_file = config_dir / 'bot.json'; config_file.write_text('{}')"]
       },
       {
-        "description": "Do NOT use inline instantiation",
-        "content": [
-          "# BAD: Direct Bot instantiation",
-          "bot = Bot(bot_name='test_bot', bot_directory=bot_directory, config_path=config_path)",
-          "",
-          "# GOOD: Use helper function",
-          "bot = when_bot_is_instantiated('test_bot', bot_directory, config_path)"
-        ]
+        "description": "Don't use inline assertions of 4+ lines",
+        "example": ["# WRONG: 4+ lines inline", "file = workspace / 'out.json'; data = json.loads(file.read_text())", "assert 'key' in data; assert data['key'] == 'value'"]
       },
       {
-        "description": "Do NOT use inline assertions (4+ lines)",
-        "content": [
-          "# BAD: Inline assertions (4+ lines) that should be in helper functions",
-          "planning_file = workspace_directory / 'docs' / 'stories' / 'planning.json'",
-          "planning_data = json.loads(planning_file.read_text(encoding='utf-8'))",
-          "assert 'shape' in planning_data",
-          "assert planning_data['shape']['status'] == 'complete'",
-          "",
-          "# GOOD: Use reusable helper function",
-          "verify_planning_contains_behavior_data(planning_file, 'shape', {'drill_down': 'value'})",
-          "",
-          "# NOTE: 2-3 line assertions are OK - optimize for reusable functions, not exact step names"
-        ]
-      },
-      {
-        "description": "Do NOT use inline environment variables",
-        "content": [
-          "# BAD: Direct environment variable setting",
-          "os.environ['BOT_DIRECTORY'] = str(bot_directory)",
-          "os.environ['WORKING_AREA'] = str(workspace_directory)",
-          "",
-          "# GOOD: Use helper function",
-          "given_bot_directory_environment_variable_set(bot_directory)",
-          "given_workspace_directory_environment_variable_set(workspace_directory)"
-        ]
-      },
-      {
-        "description": "Do NOT use inline workflow operations",
-        "content": [
-          "# BAD: Direct workflow operations",
-          "workflow.save_completed_action('gather_context')",
-          "workflow.load_state()",
-          "workflow.transition_to_next()",
-          "",
-          "# GOOD: Use helper function",
-          "when_action_is_closed_and_transitioned(bot, 'shape', 'gather_context')"
-        ]
-      },
-      {
-        "description": "Do NOT place helpers at wrong scope level",
-        "content": [
-          "# BAD: Story-level helper in global file",
-          "# conftest.py",
-          "def given_bot_config_file_with_working_dir_and_behaviors(...):",
-          "    # This is only used in one test class - should be in that class",
-          "    ...",
-          "",
-          "# GOOD: Place in test class",
-          "class TestGenerateBotTools:",
-          "    def given_bot_config_file_with_working_dir_and_behaviors(self, ...):",
-          "        ...",
-          "",
-          "# BAD: Epic-level helper in story-level class",
-          "class TestGenerateBotTools:",
-          "    def create_actions_workflow_json(self, ...):",
-          "        # This is used across multiple test files - should be in epic helpers file",
-          "        ...",
-          "",
-          "# GOOD: Place in epic helpers file",
-          "# test_build_agile_bots_helpers.py",
-          "def create_actions_workflow_json(...):",
-          "    ...",
-          "",
-          "# BAD: Module-level helper in global file when only used in one file",
-          "# test_helpers.py",
-          "def given_bot_configured_by_config(...):",
-          "    # Only used in test_generate_bot_server_and_tools.py - should be at module level there",
-          "    ...",
-          "",
-          "# GOOD: Place at module level in the test file",
-          "# test_generate_bot_server_and_tools.py (at top level, not in class)",
-          "def given_bot_configured_by_config(...):",
-          "    ..."
-        ]
+        "description": "Don't place helpers at wrong scope",
+        "example": ["# WRONG: Story-level helper in conftest.py", "# WRONG: Epic-level helper in test class"]
       }
     ]
   }
 }
-

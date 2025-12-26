@@ -1,10 +1,10 @@
 {
-  "current_behavior": "story_bot.scenarios",
-  "current_action": "story_bot.scenarios.strategy",
+  "current_behavior": "story_bot.tests",
+  "current_action": "story_bot.tests.build",
   "action_phase": "instructions_given",
   "action_state": "started",
   "working_directory": "demo/mob_minion",
-  "timestamp": "2025-12-26T02:01:37.736176",
+  "timestamp": "2025-12-26T02:20:12.505459",
   "completed_actions": [
     {
       "action_state": "story_bot.shape.clarify",
@@ -133,9 +133,22 @@
     {
       "action_state": "story_bot.scenarios.strategy",
       "timestamp": "2025-12-26T02:01:30.019636"
+    },
+    {
+      "action_state": "story_bot.scenarios.build",
+      "timestamp": "2025-12-26T02:15:58.308019"
+    },
+    {
+      "action_state": "story_bot.scenarios.validate",
+      "timestamp": "2025-12-26T02:17:33.992134"
+    },
+    {
+      "action_state": "story_bot.scenarios.render",
+      "timestamp": "2025-12-26T02:20:12.475566"
     }
   ],
   "completed_behaviors": [
-    "shape"
+    "shape",
+    "scenarios"
   ]
 }

@@ -1,0 +1,46 @@
+# 📝 Generate REPL Command Definitions
+
+**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+
+**Epic:** Build Agile Bots
+**Feature:** Generate REPL CLI
+**User:** Generator
+**Sequential Order:** 1
+**Story Type:** user
+
+## Story Description
+
+Generate REPL Command Definitions functionality for the mob minion system.
+
+## Acceptance Criteria
+
+### Behavioral Acceptance Criteria
+
+- **When** generator runs,
+  **then** Orchestrator walks all bot behaviors
+
+- **When** behaviors are walked,
+  **then** ActionDataCollector gathers action metadata for each behavior
+
+- **When** actions are gathered,
+  **then** generator extracts parameters from each action's context_class
+
+- **When** metadata is collected,
+  **then** ReplCommandVisitor generates navigate commands for all behaviors and actions
+
+- **When** commands are generated,
+  **then** scope commands are created for scope.type, scope.value, scope.exclude
+
+- **When** all commands are defined,
+  **then** generator outputs command definition file
+
+## Scenarios
+
+### Scenario: Generate REPL Command Definitions (happy_path)
+
+**Steps:**
+```gherkin
+Given system is ready
+When action executes
+Then action completes successfully
+```

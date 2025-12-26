@@ -1,44 +1,37 @@
 {
-  "description": "Define fixtures in the test file, not in separate conftest.py. Use pytest fixtures for shared setup. Truly reusable fixtures (file operations, location helpers) belong in agents/base/src/conftest.py.",
-  "examples": [
-    {
-      "do": {
-        "description": "Fixtures in test file",
-        "content": [
-          "# In test_agent_configuration.py",
-          "import pytest",
-          "",
-          "@pytest.fixture",
-          "def workspace_root(tmp_path):",
-          "    \"\"\"Fixture: Temporary workspace directory.\"\"\"",
-          "    workspace = tmp_path / \"workspace\"",
-          "    workspace.mkdir()",
-          "    return workspace",
-          "",
-          "@pytest.fixture",
-          "def config_file(workspace_root):",
-          "    \"\"\"Fixture: Agent configuration file.\"\"\"",
-          "    config_path = workspace_root / \"agents\" / \"base\" / \"agent.json\"",
-          "    config_path.parent.mkdir(parents=True, exist_ok=True)",
-          "    config_path.write_text('{\"name\": \"story_bot\"}')",
-          "    return config_path",
-          "",
-          "class TestAgentConfiguration:",
-          "    def test_agent_loads_config(self, workspace_root, config_file):",
-          "        \"\"\"Test uses fixtures defined in same file.\"\"\"",
-          "        agent = Agent('story_bot', workspace_root)",
-          "        agent.load_config(config_file)",
-          "        assert agent.is_initialized"
-        ]
-      },
-      "dont": {
-        "description": "Separate conftest.py for agent-specific fixtures",
-        "content": [
-          "# DON'T: Create src/conftest.py for agent-specific fixtures",
-          "# Use test file instead, or agents/base/src/conftest.py for reusable ones"
-        ]
-      }
-    }
+  "priority": 10,
+  "description": "Define fixtures in the test file, not separate conftest.py. Truly reusable fixtures (file ops, location helpers) go in base conftest.py. Example: @pytest.fixture def workspace_root(tmp_path): return tmp_path / 'workspace'",
+  "scanners": [
+    "agile_bot.bots.base_bot.src.actions.validate.scanners.fixture_placement_scanner.FixturePlacementScanner"
   ],
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.fixture_placement_scanner.FixturePlacementScanner"
+  "do": {
+    "description": "Define fixtures in same test file. Example: @pytest.fixture def config_file(tmp_path): ... (in test_agent.py)",
+    "guidance": [
+      {
+        "description": "Define fixtures in the test file that uses them",
+        "example": ["# In test_agent_configuration.py", "@pytest.fixture", "def workspace_root(tmp_path):", "    workspace = tmp_path / 'workspace'; workspace.mkdir(); return workspace"]
+      },
+      {
+        "description": "Fixtures can depend on other fixtures",
+        "example": ["@pytest.fixture", "def config_file(workspace_root):", "    path = workspace_root / 'config.json'; path.write_text('{}'); return path"]
+      },
+      {
+        "description": "Truly reusable fixtures go in base conftest.py",
+        "example": ["# In agents/base/src/conftest.py (for reuse across all tests)", "@pytest.fixture", "def repo_root(): return Path(__file__).parent.parent.parent"]
+      }
+    ]
+  },
+  "dont": {
+    "description": "Don't create separate conftest.py for agent-specific fixtures. Example: src/conftest.py with agent fixtures (wrong - put in test file)",
+    "guidance": [
+      {
+        "description": "Don't create conftest.py for single-test-file fixtures",
+        "example": ["# WRONG: src/conftest.py with fixtures only used by one test file"]
+      },
+      {
+        "description": "Don't put agent-specific fixtures in shared conftest",
+        "example": ["# WRONG: Base conftest with StoryBot-specific fixtures"]
+      }
+    ]
+  }
 }

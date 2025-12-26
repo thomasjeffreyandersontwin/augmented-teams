@@ -3,7 +3,7 @@
     "purpose": "EXAMPLE TEMPLATE - shows correct format for writing scenarios and scenario_outlines with placeholders",
     "scenario_structure": "scenarios array: each has name, type (happy_path/edge_case/error_case), background (common setup), steps (Given/When/Then)",
     "scenario_outline_structure": "scenario_outlines array: same as scenarios but steps use <variable_name> placeholders. Examples object has columns array (all variable names) and rows array (data values)",
-    "variable_matching": "CRITICAL: Every <variable_name> in steps MUST appear in examples.columns. Include both input variables and expected output/result variables",
+    "variable_matching": "Every <variable_name> in steps MUST appear in examples.columns. Include both input variables and expected output/result variables",
     "use_case": "Reference this template when writing scenarios to see correct Gherkin format and Examples table structure"
   },
   "epics": [
