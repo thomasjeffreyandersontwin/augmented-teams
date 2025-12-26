@@ -96,11 +96,14 @@ class ValidateRulesAction(Action):
 
     def _format_rules_with_file_paths(self) -> str:
         """Format rules with file paths for AI to read and analyze."""
-        rules_data = self.inject_behavior_specific_and_bot_rules()
+        rules_data = self.inject_behavior_specific_rules()
         all_rules = rules_data.get('validation_rules', [])
         
         if not all_rules:
             return 'No validation rules found.'
+        
+        # Sort by priority (lower number = higher priority)
+        all_rules = sorted(all_rules, key=lambda r: r.get('rule_content', {}).get('priority', 99))
         
         lines = []
         lines.append("**Rules to validate against (read each file for full DO/DON'T examples):**")
@@ -161,27 +164,13 @@ class ValidateRulesAction(Action):
         logger.info(f'Context: scope={context.scope}, skip_cross_file={context.skip_cross_file}')
         return self._executor.execute_synchronous(context)
 
-    def inject_common_bot_rules(self) -> Dict[str, Any]:
-        base_bot_rules_dir = self.bot_dir.parent / 'base_bot' / 'rules'
-        common_rules = []
-        for rule_file in base_bot_rules_dir.glob('*.json'):
-            rule_data = read_json_file(rule_file)
-            common_rules.append({'rule_file': f'agile_bot/bots/base_bot/rules/{rule_file.name}', 'rule_content': rule_data})
-        return {'validation_rules': common_rules}
-
-    def inject_behavior_specific_and_bot_rules(self) -> Dict[str, Any]:
+    def inject_behavior_specific_rules(self) -> Dict[str, Any]:
         all_rules = []
         bot_dir = self.behavior.bot_paths.bot_directory
-        bot_rules_dir = bot_dir / 'rules'
-        for rule_file in bot_rules_dir.glob('*.json'):
-            rule_data = read_json_file(rule_file)
-            all_rules.append({'rule_file': f'{bot_dir.name}/rules/{rule_file.name}', 'rule_content': rule_data})
         behavior_rules_dir = bot_dir / 'behaviors' / self.behavior.name / 'rules'
         for rule_file in behavior_rules_dir.glob('*.json'):
             rule_data = read_json_file(rule_file)
             all_rules.append({'rule_file': f'{bot_dir.name}/behaviors/{self.behavior.name}/rules/{rule_file.name}', 'rule_content': rule_data})
-        common_rules_data = self.inject_common_bot_rules()
-        all_rules.extend(common_rules_data.get('validation_rules', []))
         return {'validation_rules': all_rules}
 
     def get_action_instructions(self) -> List[str]:

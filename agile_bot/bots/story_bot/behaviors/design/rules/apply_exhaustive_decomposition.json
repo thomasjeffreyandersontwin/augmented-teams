@@ -1,11 +1,11 @@
 {
   "priority": 1,
-  "description": "Apply exhaustive logic decomposition. Cover all validation paths, calculation branches, and edge cases explicitly. Use inheritance for variations, not enumeration.",
+  "description": "Apply exhaustive logic decomposition. Cover all validation paths, calculation branches, and edge cases explicitly. Use inheritance for variations, not enumeration. Example: Order -> Creates, Validates, Calculates total, Submits (complete flow); ShippingCalculator base, InternationalShippingCalculator : ShippingCalculator (inheritance for variations).",
   "scanners": [
     "agile_bot.bots.base_bot.src.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner"
   ],
   "do": {
-    "description": "Cover all logic paths, use inheritance for variations",
+    "description": "Cover all logic paths, use inheritance for variations. Example: Order -> Creates, Validates, Calculates, Submits (complete flow); ShippingCalculator base with InternationalShippingCalculator : ShippingCalculator subclass (inheritance)",
     "guidance": [
       {
         "description": "Show complete flow including validation, calculation, and persistence steps",
@@ -45,7 +45,7 @@
     ]
   },
   "dont": {
-    "description": "Don't enumerate permutations or skip logic steps",
+    "description": "Don't enumerate permutations or skip logic steps. Example: ShippingCalculator with Calculates standard/express/overnight domestic/international (wrong - enumerate) vs base + subclass (right)",
     "guidance": [
       {
         "description": "Don't enumerate every permutation as separate methods - use inheritance",

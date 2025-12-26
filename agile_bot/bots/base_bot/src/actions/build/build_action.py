@@ -176,7 +176,7 @@ class BuildKnowledgeAction(Action):
         validate_action = self.rules
         rules_obj = validate_action.rules
         rules_text = rules_obj.formatted_rules_digest()
-        rules_data = validate_action.inject_behavior_specific_and_bot_rules()
+        rules_data = validate_action.inject_behavior_specific_rules()
         all_rules = rules_data.get('validation_rules', [])
         
         # Get existing base_instructions (these are the CUSTOM INSTRUCTIONS - keep them FIRST)

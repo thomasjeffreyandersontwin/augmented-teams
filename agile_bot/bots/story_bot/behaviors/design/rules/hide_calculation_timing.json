@@ -1,11 +1,11 @@
 {
   "priority": 6,
-  "description": "Use properties where resource-oriented access makes more sense than explicit operations. Properties hide calculation timing - whether computed on-demand, cached, or pre-computed. Explicit operations are appropriate when the action itself is meaningful.",
+  "description": "Use properties where resource-oriented access makes more sense than explicit operations. Properties hide calculation timing. Explicit operations when action is meaningful. Example: Get total value: Money (property); Submits for fulfillment: FulfillmentRequest (operation).",
   "scanners": [
     "agile_bot.bots.base_bot.src.scanners.calculation_timing_scanner.CalculationTimingScanner"
   ],
   "do": {
-    "description": "Use properties for resource access, explicit operations when action is meaningful",
+    "description": "Use properties for resource access, explicit operations when action is meaningful. Example: Get total value: Money (property); Submits for fulfillment: FulfillmentRequest (operation)",
     "guidance": [
       {
         "description": "Use properties when accessing resource state - hides whether value is computed, cached, or stored",
@@ -53,7 +53,7 @@
     ]
   },
   "dont": {
-    "description": "Don't expose timing details or use operations where properties make more sense",
+    "description": "Don't expose timing details or use operations where properties make more sense. Example: Get cached total (wrong - reveals timing) vs Get total (right); Compute total (wrong) vs Get total (right)",
     "guidance": [
       {
         "description": "Don't expose calculation timing in property names",

@@ -1,13 +1,13 @@
 {
   "priority": 4,
-  "description": "Place state and responsibilities at the lowest-level object that owns them. Delegate to lowest-level objects, chain dependencies through hierarchy, access sub-collaborators through their owners.",
+  "description": "Place state and responsibilities at the lowest-level object that owns them. Delegate to lowest-level objects, chain dependencies through hierarchy. Example: Holding owns Symbol/Quantity and Calculates market value; Portfolio Has holdings and delegates to them.",
   "scanners": [
     "agile_bot.bots.base_bot.src.scanners.delegation_scanner.DelegationScanner",
     "agile_bot.bots.base_bot.src.scanners.state_placement_scanner.StatePlacementScanner",
     "agile_bot.bots.base_bot.src.scanners.dependency_chaining_scanner.DependencyChainingScanner"
   ],
   "do": {
-    "description": "Place state and responsibilities at lowest owner, chain dependencies through hierarchy",
+    "description": "Place state and responsibilities at lowest owner, chain dependencies through hierarchy. Example: Holding owns Symbol/Quantity and Calculates market value; Portfolio Has holdings and delegates",
     "guidance": [
       {
         "description": "Delegate responsibilities to the object that owns the data needed to fulfill them",
@@ -65,7 +65,7 @@
     ]
   },
   "dont": {
-    "description": "Don't place state/responsibilities too high, don't skip hierarchy levels",
+    "description": "Don't place state/responsibilities too high, don't skip hierarchy levels. Example: Portfolio Calculates holding market value (wrong - doing Holding's work) vs Holding Calculates (right)",
     "guidance": [
       {
         "description": "Don't have parent objects doing what child objects should do",

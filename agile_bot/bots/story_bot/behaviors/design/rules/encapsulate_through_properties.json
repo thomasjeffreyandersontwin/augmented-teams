@@ -1,11 +1,11 @@
 {
   "priority": 5,
-  "description": "Objects internalize their own state and functionality, accessed through properties. Avoid methods that receive external state the object should already own. Related objects hide their data behind property access rather than requiring callers to pass that data back to them.",
+  "description": "Objects internalize their own state and functionality, accessed through properties. Avoid methods that receive external state the object should already own. Example: LineItem owns Product/Quantity, so Calculates extended price: Money, Discount (not Money, Product, Quantity, Discount).",
   "scanners": [
     "agile_bot.bots.base_bot.src.scanners.property_encapsulation_scanner.PropertyEncapsulationScanner"
   ],
   "do": {
-    "description": "Objects own their state and expose it through properties",
+    "description": "Objects own their state and expose it through properties. Example: LineItem owns Product/Quantity, Calculates extended price: Money, Discount (uses internal state)",
     "guidance": [
       {
         "description": "Objects internalize state they need and expose through properties - callers don't pass that state back",
@@ -52,7 +52,7 @@
     ]
   },
   "dont": {
-    "description": "Don't pass state to objects that should already own it",
+    "description": "Don't pass state to objects that should already own it. Example: LineItem Calculates: Money, Product, Quantity, Discount (wrong - passing owned state) vs Money, Discount (right)",
     "guidance": [
       {
         "description": "Don't pass data to an object's method that the object should already have as properties",

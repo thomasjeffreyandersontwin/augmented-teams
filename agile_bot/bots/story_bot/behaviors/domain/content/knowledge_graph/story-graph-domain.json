@@ -1,8 +1,9 @@
 {
   "_explanation": {
-    "purpose": "Domain model template - defines structure for domain concepts within story graph",
-    "domain_placement": "domain_concepts: 'local' if relevant to single sub_epic, 'global' if relevant to multiple sub_epics. Place at most specific level (local preferred), but elevate to parent if used by multiple children.",
-    "usage": "This template is for ADDING/UPDATING domain_concepts in existing story-graph.json. Do NOT modify story structure (epics, sub_epics, stories). Only add or update domain_concepts arrays."
+    "purpose": "Domain phase - adds domain concepts (entities, workflows, rules) to existing story graph outline",
+    "scope": "ONLY adds/updates domain_concepts arrays. NEVER modifies story structure (epics, sub_epics, stories)",
+    "domain_placement": "Place domain_concepts at most specific level ('local' scope). Elevate to parent only if concept is shared by multiple children ('global' scope)",
+    "structure": "Each domain concept has: name, responsibilities (with names and descriptions), and attributes (with names and types)"
   },
   "epics": [
     {

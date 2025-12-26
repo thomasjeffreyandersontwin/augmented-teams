@@ -13,38 +13,6 @@ class RuleLoader:
         self.bot_paths = bot_paths
         self.behavior = behavior
 
-    def load_bot_rules(self) -> List[Rule]:
-        bot_rules_dir = self.bot_paths.bot_directory / 'rules'
-        bot_rules = self._load_rules_from_glob(bot_rules_dir, '*.json', 'common')
-        bot_rules.extend(self._load_specialization_rules(bot_rules_dir))
-        return sorted(bot_rules, key=lambda r: r.priority)
-
-    def _load_rules_from_glob(self, rules_dir: Path, pattern: str, behavior: str=None) -> List[Rule]:
-        if behavior is None:
-            if self.behavior and hasattr(self.behavior, 'name'):
-                behavior = self.behavior.name
-            else:
-                behavior = self.behavior_name if self.behavior_name else 'common'
-        rules = []
-        for rule_file in rules_dir.glob(pattern):
-            if self._is_in_disabled_folder(rule_file):
-                logger.debug(f'Skipping disabled rule: {rule_file.name}')
-                continue
-            rules.append(Rule(rule_file_path=rule_file, behavior_name=self.behavior.name if self.behavior and hasattr(self.behavior, 'name') else (self.behavior_name if self.behavior_name else 'common'), bot_name=self.bot_name))
-        return rules
-
-    def _load_specialization_rules(self, bot_rules_dir: Path) -> List[Rule]:
-        specializations_dir = bot_rules_dir / 'specializations'
-        if not (specializations_dir.exists() and specializations_dir.is_dir()):
-            return []
-        rules = []
-        for rule_file in specializations_dir.rglob('*.json'):
-            if self._is_in_disabled_folder(rule_file):
-                logger.debug(f'Skipping disabled rule: {rule_file.name}')
-                continue
-            rules.append(Rule(rule_file_path=rule_file, behavior_name='common', bot_name=self.bot_name))
-        return rules
-
     def load_behavior_rules(self) -> List[Rule]:
         behavior_folder = self.bot_paths.bot_directory / 'behaviors' / self.behavior_name
         behavior_rules_dir = behavior_folder / 'rules'
