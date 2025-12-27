@@ -51,10 +51,17 @@ class REPLStatus:
         # Show scope if set
         scope_lines = self._get_scope_display()
         if scope_lines:
+            lines.append("-" * 60)
             lines.extend(scope_lines)
-            lines.append("")
+            lines.append("-" * 60)
+        else:
+            lines.append("-" * 60)
         
-        lines.append("-" * 60)
+        # Add Progress line after scope
+        if self.state.has_current_action:
+            lines.append(f"Progress: {self.state.progress_path}.{self.state.stage_name}")
+        else:
+            lines.append("Progress: No active workflow")
         
         if not self.bot or not self.bot.behaviors:
             lines.append("No behaviors available")

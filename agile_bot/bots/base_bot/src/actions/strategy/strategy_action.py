@@ -70,7 +70,7 @@ class StrategyAction(Action):
     
     def _format_instructions_for_display(self, instructions) -> str:
         """Format strategy data for REPL display."""
-        # Get base formatting first
+        # Get base formatting first (includes scope warning if set)
         output_lines = super()._format_instructions_for_display(instructions).split('\n')
         
         # Get the instruction data

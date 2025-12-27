@@ -9,7 +9,7 @@ from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker
 from agile_bot.bots.base_bot.src.actions.workflow_status_builder import BehaviorActionStatusBuilder
 from agile_bot.bots.base_bot.src.actions.context_data_injector import ContextDataInjector
 from agile_bot.bots.base_bot.src.actions.instructions import Instructions
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext
+from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, Scope
 from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
 from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
 from agile_bot.bots.base_bot.src.utils import read_json_file
@@ -129,6 +129,19 @@ class Action:
             result.append(replaced)
         return result
     
+    def _load_scope_from_state(self) -> Optional[Scope]:
+        """Load scope from bot state file."""
+        try:
+            state_file = self.behavior.bot_paths.workspace_directory / 'behavior_action_state.json'
+            if state_file.exists():
+                state_data = json.loads(state_file.read_text())
+                scope_dict = state_data.get('scope')
+                if scope_dict:
+                    return Scope.from_dict(scope_dict)
+        except Exception:
+            pass
+        return None
+    
     @property
     def instructions(self) -> Instructions:
         base_instructions = self._base_config.get('instructions', [])
@@ -137,7 +150,14 @@ class Action:
         if isinstance(base_instructions, list):
             base_instructions = self._replace_context_placeholders(base_instructions)
         
-        inst = Instructions(base_instructions if isinstance(base_instructions, list) else [], bot_paths=self.behavior.bot_paths)
+        # Load scope from state file
+        scope = self._load_scope_from_state()
+        
+        inst = Instructions(
+            base_instructions if isinstance(base_instructions, list) else [],
+            bot_paths=self.behavior.bot_paths,
+            scope=scope
+        )
         
         # Add context instructions (clarification, strategy, context files) at the beginning
         context_instructions = []
@@ -322,6 +342,8 @@ class Action:
         instructions_dict = instructions.to_dict()
         output_lines = []
         
+        # Note: Scope display with CLI formatting is handled by CLI layer
+        
         # 1. Add behavior description at the very top if present
         if self.behavior and hasattr(self.behavior, 'description') and self.behavior.description:
             output_lines.append(self.behavior.description)
@@ -375,6 +397,7 @@ class Action:
             output_lines.extend(display_content)
         
         return "\n".join(output_lines)
+    
     
     def submit(self, context: ActionContext = None) -> Dict[str, Any]:
         """Process submitted work - saves files and performs side effects.
