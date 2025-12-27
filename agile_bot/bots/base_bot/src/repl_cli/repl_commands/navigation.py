@@ -6,12 +6,12 @@ class NavigationCommand(InstructionDisplayCommand):
     @property
     def next_action(self):
         behavior = self.current_behavior
-        return behavior.actions.next() if behavior else None
+        return behavior.actions.next if behavior else None
     
     @property
     def previous_action(self):
         behavior = self.current_behavior
-        return behavior.actions.previous() if behavior else None
+        return behavior.actions.previous if behavior else None
     
     @property
     def next_behavior(self):
@@ -61,7 +61,7 @@ class NextCommand(NavigationCommand):
         # Cache next_action to avoid calling it multiple times (side effects)
         next_act = self.next_action
         if next_act:
-            behavior.actions.navigate_to(next_act.action_name)
+            behavior.actions.navigate_to(next_act.name)
             return self.display_navigation()
         
         # At last action - try next behavior
@@ -101,7 +101,7 @@ class BackCommand(NavigationCommand):
         # Cache previous_action to avoid calling it multiple times (side effects)
         prev_act = self.previous_action
         if prev_act:
-            behavior.actions.navigate_to(prev_act.action_name)
+            behavior.actions.navigate_to(prev_act.name)
             return self.display_navigation()
         
         # At first action - try to go to previous behavior's last action

@@ -1,0 +1,782 @@
+{
+  "_explanation": {
+    "purpose": "Story map outline for Mob Minion system - organizing minion tokens into coordinated mobs within Foundry VTT",
+    "structure": "epics contain sub_epics (features). Sub-epics can contain nested sub_epics OR story_groups. Story_groups organize related stories with logical connectors (and/or).",
+    "priority": "Foundry API integration exploration is critical first step before detailed mob functionality",
+    "users": ["Game Master (GM)"],
+    "integration": "Foundry Virtual Tabletop API"
+  },
+  "increments": [
+    {
+      "name": "Foundational Integration + Basic Mob",
+      "priority": 1,
+      "goal": "Validate Foundry API and deliver core mob coordination",
+      "estimated_stories": 11,
+      "stories": [
+        "Retrieve Token Selection State",
+        "Update Token State",
+        "Load Actor Statistics",
+        "Evaluate Actor Combat Capabilities",
+        "Register Combatant In Tracker",
+        "Determine Attack Feasibility",
+        "Identify Valid Combat Targets",
+        "Set Target",
+        "Select Minions",
+        "Group Minions Into Mob",
+        "Execute Melee Attack"
+      ]
+    },
+    {
+      "name": "Strategy System",
+      "priority": 2,
+      "goal": "Add intelligent targeting and tactical behavior",
+      "estimated_stories": 8,
+      "stories": [
+        "Choose Attack Strongest",
+        "Choose Attack Weakest",
+        "Choose Defend Leader",
+        "Choose Attack Most Damaged",
+        "Identify Valid Targets",
+        "Apply Strategy Criteria",
+        "Execute Ranged Attack",
+        "Execute Area Attack"
+      ]
+    },
+    {
+      "name": "Advanced Mob Management",
+      "priority": 3,
+      "goal": "Add convenience and polish features",
+      "estimated_stories": 5,
+      "stories": [
+        "Add Minions To Mob",
+        "Remove Minions From Mob",
+        "Disband Mob",
+        "Spawn Mob From Template",
+        "Spawn Mob From Actors"
+      ]
+    }
+  ],
+  "epics": [
+    {
+      "name": "Map Foundry API",
+      "sequential_order": 1,
+      "estimated_stories": 5,
+      "domain_concepts": [],
+      "sub_epics": [
+        {
+          "name": "Map Token System",
+          "sequential_order": 1,
+          "estimated_stories": 2,
+          "test_file": "test_map_token_system.py",
+          "domain_concepts": [
+            {
+              "name": "Token",
+              "responsibilities": [
+                {
+                  "name": "Represents minion on game map",
+                  "collaborators": []
+                },
+                {
+                  "name": "Tracks selection state",
+                  "collaborators": []
+                },
+                {
+                  "name": "Updates visual state",
+                  "collaborators": ["Actor"]
+                }
+              ]
+            },
+            {
+              "name": "Token Selection",
+              "responsibilities": [
+                {
+                  "name": "Retrieves selected tokens",
+                  "collaborators": ["Token"]
+                },
+                {
+                  "name": "Identifies groupable minions",
+                  "collaborators": ["Token"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Retrieve Token Selection State",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestRetrieveTokenSelectionState"
+                },
+                {
+                  "name": "Update Token State",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "test_class": "TestUpdateTokenState"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Map Actor System",
+          "sequential_order": 2,
+          "estimated_stories": 2,
+          "test_file": "test_map_actor_system.py",
+          "domain_concepts": [
+            {
+              "name": "Actor",
+              "responsibilities": [
+                {
+                  "name": "Stores minion statistics",
+                  "collaborators": []
+                },
+                {
+                  "name": "Evaluates combat capabilities",
+                  "collaborators": []
+                },
+                {
+                  "name": "Tracks HP and power level",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Combat Capabilities",
+              "responsibilities": [
+                {
+                  "name": "Evaluates attack feasibility",
+                  "collaborators": ["Actor"]
+                },
+                {
+                  "name": "Determines attack types available",
+                  "collaborators": ["Actor"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Load Actor Statistics",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestLoadActorStatistics"
+                },
+                {
+                  "name": "Evaluate Actor Combat Capabilities",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "test_class": "TestEvaluateActorCombatCapabilities"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Map Combat System",
+          "sequential_order": 3,
+          "estimated_stories": 2,
+          "test_file": "test_map_combat_system.py",
+          "domain_concepts": [
+            {
+              "name": "Combat Tracker",
+              "responsibilities": [
+                {
+                  "name": "Manages turn order",
+                  "collaborators": []
+                },
+                {
+                  "name": "Registers combatants",
+                  "collaborators": ["Actor"]
+                },
+                {
+                  "name": "Tracks combat state",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Attack Feasibility",
+              "responsibilities": [
+                {
+                  "name": "Determines if attack is possible",
+                  "collaborators": ["Actor", "Target"]
+                },
+                {
+                  "name": "Calculates range to target",
+                  "collaborators": ["Token"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Register Combatant In Tracker",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestRegisterCombatantInTracker"
+                },
+                {
+                  "name": "Determine Attack Feasibility",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "test_class": "TestDetermineAttackFeasibility"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Map Targeting System",
+          "sequential_order": 4,
+          "estimated_stories": 2,
+          "test_file": "test_map_targeting_system.py",
+          "domain_concepts": [
+            {
+              "name": "Target Selector",
+              "responsibilities": [
+                {
+                  "name": "Identifies valid combat targets",
+                  "collaborators": ["Combat Tracker"]
+                },
+                {
+                  "name": "Sets active target",
+                  "collaborators": ["Token"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Identify Valid Combat Targets",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestIdentifyValidCombatTargets"
+                },
+                {
+                  "name": "Set Target",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "test_class": "TestSetTarget"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Manage Mobs",
+      "sequential_order": 2,
+      "estimated_stories": 5,
+      "domain_concepts": [
+        {
+          "name": "Mob",
+          "responsibilities": [
+            {
+              "name": "Coordinates minion actions",
+              "collaborators": ["Minion", "Strategy"]
+            },
+            {
+              "name": "Manages minion membership",
+              "collaborators": ["Minion"]
+            },
+            {
+              "name": "Executes coordinated attacks",
+              "collaborators": ["Minion", "Target", "Attack"]
+            }
+          ]
+        },
+        {
+          "name": "Minion",
+          "responsibilities": [
+            {
+              "name": "Belongs to mob",
+              "collaborators": ["Mob"]
+            },
+            {
+              "name": "Has token representation",
+              "collaborators": ["Token"]
+            },
+            {
+              "name": "Has actor data",
+              "collaborators": ["Actor"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Create Mob",
+          "sequential_order": 1,
+          "estimated_stories": 2,
+          "test_file": "test_create_mob.py",
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Select Minions",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestSelectMinions"
+                },
+                {
+                  "name": "Group Minions Into Mob",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestGroupMinionsIntoMob"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Edit Mob",
+          "sequential_order": 2,
+          "estimated_stories": 3,
+          "test_file": "test_edit_mob.py",
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Add Minions To Mob",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 3,
+                  "test_class": "TestAddMinionsToMob"
+                },
+                {
+                  "name": "Remove Minions From Mob",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 3,
+                  "test_class": "TestRemoveMinionsFromMob"
+                },
+                {
+                  "name": "Disband Mob",
+                  "sequential_order": 3,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 3,
+                  "test_class": "TestDisbandMob"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Spawn Mob",
+          "sequential_order": 3,
+          "estimated_stories": 2,
+          "test_file": "test_spawn_mob.py",
+          "domain_concepts": [
+            {
+              "name": "Mob Template",
+              "responsibilities": [
+                {
+                  "name": "Defines mob configuration",
+                  "collaborators": []
+                },
+                {
+                  "name": "Specifies minion types and count",
+                  "collaborators": ["Actor"]
+                },
+                {
+                  "name": "Includes default strategy",
+                  "collaborators": ["Strategy"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Spawn Mob From Template",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 3,
+                  "test_class": "TestSpawnMobFromTemplate"
+                },
+                {
+                  "name": "Spawn Mob From Actors",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 3,
+                  "test_class": "TestSpawnMobFromActors"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Assign Strategies",
+      "sequential_order": 3,
+      "estimated_stories": 5,
+      "domain_concepts": [
+        {
+          "name": "Strategy",
+          "responsibilities": [
+            {
+              "name": "Defines targeting behavior",
+              "collaborators": ["Target Criteria"]
+            },
+            {
+              "name": "Evaluates target selection",
+              "collaborators": ["Target", "Actor"]
+            }
+          ]
+        },
+        {
+          "name": "Target Criteria",
+          "responsibilities": [
+            {
+              "name": "Specifies selection rules",
+              "collaborators": []
+            },
+            {
+              "name": "Ranks potential targets",
+              "collaborators": ["Actor"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Select Strategy",
+          "sequential_order": 1,
+          "estimated_stories": 1,
+          "test_file": "test_select_strategy.py",
+          "domain_concepts": [
+            {
+              "name": "Attack Strongest Strategy",
+              "responsibilities": [
+                {
+                  "name": "Targets highest power level enemy",
+                  "collaborators": ["Actor", "Target"]
+                }
+              ]
+            },
+            {
+              "name": "Attack Weakest Strategy",
+              "responsibilities": [
+                {
+                  "name": "Targets lowest HP enemy",
+                  "collaborators": ["Actor", "Target"]
+                }
+              ]
+            },
+            {
+              "name": "Defend Leader Strategy",
+              "responsibilities": [
+                {
+                  "name": "Protects designated leader",
+                  "collaborators": ["Actor", "Target"]
+                }
+              ]
+            },
+            {
+              "name": "Attack Most Damaged Strategy",
+              "responsibilities": [
+                {
+                  "name": "Targets enemy with lowest HP",
+                  "collaborators": ["Actor", "Target"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Choose Attack Strongest",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 2,
+                  "test_class": "TestChooseAttackStrongest"
+                },
+                {
+                  "name": "Choose Attack Weakest",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 2,
+                  "test_class": "TestChooseAttackWeakest"
+                },
+                {
+                  "name": "Choose Defend Leader",
+                  "sequential_order": 3,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 2,
+                  "test_class": "TestChooseDefendLeader"
+                },
+                {
+                  "name": "Choose Attack Most Damaged",
+                  "sequential_order": 4,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 2,
+                  "test_class": "TestChooseAttackMostDamaged"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    },
+    {
+      "name": "Execute Mob Actions",
+      "sequential_order": 4,
+      "estimated_stories": 5,
+      "domain_concepts": [
+        {
+          "name": "Target",
+          "responsibilities": [
+            {
+              "name": "Represents enemy combatant",
+              "collaborators": ["Actor", "Token"]
+            },
+            {
+              "name": "Tracks position and status",
+              "collaborators": []
+            }
+          ]
+        },
+        {
+          "name": "Attack",
+          "responsibilities": [
+            {
+              "name": "Executes coordinated action",
+              "collaborators": ["Minion", "Target"]
+            },
+            {
+              "name": "Determines attack type",
+              "collaborators": ["Combat Capabilities"]
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Select Targets",
+          "sequential_order": 1,
+          "estimated_stories": 2,
+          "test_file": "test_select_targets.py",
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Identify Valid Targets",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestIdentifyValidTargets"
+                },
+                {
+                  "name": "Apply Strategy Criteria",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["Mob System"],
+                  "story_type": "system",
+                  "test_class": "TestApplyStrategyCriteria"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Coordinate Attack",
+          "sequential_order": 2,
+          "estimated_stories": 3,
+          "test_file": "test_coordinate_attack.py",
+          "domain_concepts": [
+            {
+              "name": "Melee Attack",
+              "responsibilities": [
+                {
+                  "name": "Executes close-range attack",
+                  "collaborators": ["Minion", "Target", "Token"]
+                },
+                {
+                  "name": "Moves minion to target if needed",
+                  "collaborators": ["Token"]
+                }
+              ]
+            },
+            {
+              "name": "Ranged Attack",
+              "responsibilities": [
+                {
+                  "name": "Executes distance attack",
+                  "collaborators": ["Minion", "Target"]
+                },
+                {
+                  "name": "Validates range to target",
+                  "collaborators": ["Attack Feasibility"]
+                }
+              ]
+            },
+            {
+              "name": "Area Attack",
+              "responsibilities": [
+                {
+                  "name": "Executes multi-target attack",
+                  "collaborators": ["Minion", "Target"]
+                },
+                {
+                  "name": "Identifies targets in area",
+                  "collaborators": ["Target Selector"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "or",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Execute Melee Attack",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "test_class": "TestExecuteMeleeAttack"
+                },
+                {
+                  "name": "Execute Ranged Attack",
+                  "sequential_order": 2,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "test_class": "TestExecuteRangedAttack"
+                },
+                {
+                  "name": "Execute Area Attack",
+                  "sequential_order": 3,
+                  "connector": "or",
+                  "users": ["Game Master"],
+                  "story_type": "user",
+                  "test_class": "TestExecuteAreaAttack"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stories": []
+    }
+  ]
+}

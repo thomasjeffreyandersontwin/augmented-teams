@@ -163,7 +163,8 @@ class Action:
         for line in reversed(context_instructions):
             inst._data['base_instructions'].insert(len(inst.context_sources_text) + 1, line)
         
-        # TODO: Commenting out status breadcrumbs - now handled by REPL context header
+        # Status breadcrumbs for CLI output
+        # COMMENTED OUT: This is now handled by the REPL CLI layer
         # breadcrumbs = self._inject_status_update_breadcrumbs({})
         # for line in breadcrumbs:
         #     inst.add_display(line)

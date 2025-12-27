@@ -1,0 +1,44 @@
+{
+  "decisions": {
+    "depth_of_shaping": "Decompose -> Discover all stories listed",
+    "drill_down_approach": [
+      "Dig deep on system interactions"
+    ],
+    "drill_down_limits": "Approximate story limit: 15-20 stories",
+    "flow_scope_and_granularity": "Intra-system level - Focus on interactions within Foundry VTT system",
+    "structure_exploration_depth": "Skip structure exploration initially"
+  },
+  "rationale": {
+    "depth_of_shaping": "We need to discover and list all stories to understand the complete scope of mob functionality within the Foundry VTT system.",
+    "drill_down_approach": "The Foundry API is proprietary and extremely important. We must explore Foundry VTT's token system, actor model, targeting UI, combat tracker, and movement/action systems in detail before designing the mob functionality.",
+    "drill_down_limits": "This allows adequate coverage for mob management features, strategy implementations, and Foundry API integrations without over-constraining the scope.",
+    "flow_scope_and_granularity": "The Foundry API is proprietary and extremely important to explore first. We need to understand how mob behaviors will interact with Foundry's internal systems, token management, combat mechanics, and API patterns before proceeding with detailed story work.",
+    "structure_exploration_depth": "Focus on understanding Foundry API interactions first before exploring structural details."
+  },
+  "assumptions": {
+    "accepted": [
+      "Focus on user flow over internal systems (with caveat: Must deeply understand Foundry API first)",
+      "Cover the end-to-end scenario within Foundry VTT system boundaries",
+      "Prioritize customer-facing features - All features are GM-facing within Foundry VTT",
+      "Assume stories should be independently testable against Foundry API behavior",
+      "Assume each story delivers user value and contributes to efficient mob control",
+      "Assume technical infrastructure stories are implicit - Foundry VTT provides platform",
+      "Drill down where architectural uncertainty is high - CRITICAL for proprietary Foundry API",
+      "Drill down where integration complexity exists - CRITICAL for multiple Foundry system integrations"
+    ]
+  },
+  "priority": {
+    "critical_first_step": "Foundry API Exploration",
+    "exploration_areas": [
+      "Foundry VTT token API patterns",
+      "Actor data model and manipulation",
+      "Combat tracker integration points",
+      "Targeting system API",
+      "Movement and range calculation APIs",
+      "Action execution framework",
+      "Event system for coordinated behaviors"
+    ],
+    "note": "This API exploration will inform all subsequent story decomposition and acceptance criteria"
+  }
+}
+

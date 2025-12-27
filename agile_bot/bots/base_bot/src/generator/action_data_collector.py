@@ -2,7 +2,7 @@
 import dataclasses
 from typing import List, Dict
 from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
-from agile_bot.bots.base_bot.src.cli.type_hint_converter import TypeHintConverter
+from agile_bot.bots.base_bot.src.actions.help_action import TypeHintConverter
 from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
 from agile_bot.bots.base_bot.src.utils import read_json_file
 

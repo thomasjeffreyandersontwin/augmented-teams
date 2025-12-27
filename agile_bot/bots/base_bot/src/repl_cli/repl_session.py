@@ -17,6 +17,7 @@ from agile_bot.bots.base_bot.src.repl_cli.repl_commands import (
     DotNotationCommand
 )
 from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
+from agile_bot.bots.base_bot.src.repl_cli.cli_bot import CLIBot
 
 
 class REPLSession:
@@ -27,16 +28,20 @@ class REPLSession:
     }
     
     def __init__(self, bot, workspace_directory: Path):
-        self.bot = bot
+        self.cli_bot = CLIBot(bot, self)
         self.workspace_directory = Path(workspace_directory)
         self.help = REPLHelp(bot)
-        self.status = REPLStatus(bot, self)
+        self.status = REPLStatus(self.cli_bot, self)
         self._commands = register_commands(self)
         self._dot_notation_handler = DotNotationCommand(self)
     
     @property
+    def bot(self):
+        return self.cli_bot.domain_bot
+    
+    @property
     def current_behavior(self):
-        return self.bot.behaviors.current
+        return self.cli_bot.behaviors.current
     
     @property
     def current_action(self):
@@ -59,7 +64,7 @@ class REPLSession:
     @property
     def current_action_name(self) -> Optional[str]:
         action = self.current_action
-        return action.action_name if action else None
+        return action.name if action else None
     
     @property
     def current_action_state(self) -> Optional[str]:
@@ -76,14 +81,14 @@ class REPLSession:
     @property
     def action_phase(self) -> str:
         action = self.current_action
-        if action and hasattr(action, 'phase'):
-            return action.phase
+        if action and hasattr(action.domain_action, 'phase'):
+            return action.domain_action.phase
         return 'not_started'
     
     def set_action_phase(self, phase: str) -> None:
         action = self.current_action
-        if action and hasattr(action, 'phase'):
-            action.phase = phase
+        if action and hasattr(action.domain_action, 'phase'):
+            action.domain_action.phase = phase
         state_file = self.workspace_directory / 'behavior_action_state.json'
         if state_file.exists():
             try:
@@ -153,6 +158,14 @@ class REPLSession:
         
         # Build hierarchical status display
         lines = []
+        
+        # In piped mode, add piped mode instructions header
+        tty_result = self.detect_tty()
+        if not tty_result.tty_detected:
+            lines.append("=" * 60)
+            lines.append("AI AGENT INSTRUCTIONS - PIPED MODE")
+            lines.append("=" * 60)
+            lines.append("")
         
         # Show hierarchical breadcrumbs
         lines.append(self.status.hierarchical_status)

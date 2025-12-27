@@ -1,13 +1,9 @@
 
-## Rules Available (10 total)
+## Rules Available (6 total)
 
-1. given_describes_state_not_actions
-2. use_background_for_common_setup
-3. scenario_steps_start_with_scenario_specific_given
-4. scenarios_cover_all_cases
-5. use_scenario_outline_when_needed
-6. write_plain_english_scenarios
-7. scenarios_on_story_docs
-8. map_table_columns_to_scenario_parameters
-9. use_domain_rich_language_in_testing_tables
-10. specify_constants_and_stub_values
+1. use_verb_noun_format_for_story_elements
+2. stories_have_4_to_9_acceptance_criteria
+3. alternate_actors_in_steps
+4. behavioral_ac_at_story_level
+5. use_and_for_multiple_reactions
+6. enumerate_all_ac_permutations

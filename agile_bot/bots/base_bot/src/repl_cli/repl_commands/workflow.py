@@ -158,7 +158,7 @@ class WorkflowCommand(InstructionDisplayCommand):
         
         try:
             # Parse arguments if provided and action uses ClarifyActionContext, StrategyActionContext, or ScopeActionContext
-            context = action.context_class()
+            context = action.domain_action.context_class()
             if args and isinstance(context, ClarifyActionContext):
                 parsed = self._parse_clarification_args(args)
                 # Set the parsed values if we found any
@@ -177,13 +177,13 @@ class WorkflowCommand(InstructionDisplayCommand):
                 if parsed['assumptions']:
                     context.assumptions = parsed['assumptions']
             elif args and isinstance(context, ScopeActionContext):
-                parsed = self._parse_scope_args(args, action.action_name)
+                parsed = self._parse_scope_args(args, action.name)
                 # Set the parsed scope if we found one
                 if 'scope' in parsed:
                     context.scope = parsed['scope']
             
             # Call the real action.submit() method
-            result = action.submit(context)
+            result = action.domain_action.submit(context)
             
             # Format output
             status = result.get('status', 'unknown')
@@ -287,18 +287,18 @@ class WorkflowCommand(InstructionDisplayCommand):
             return self.error_no_current_behavior()
         
         current_behavior_name = behavior.name
-        current_action_name = action.action_name
+        current_action_name = action.name
         
         try:
             # Call the real action.confirm() method
-            context = action.context_class()
-            result = action.confirm(context)
+            context = action.domain_action.context_class()
+            result = action.domain_action.confirm(context)
             
             # Check if at last action BEFORE closing
-            is_last_action = behavior.actions.next() is None
+            is_last_action = behavior.actions.next is None
             
             # Mark current action as complete and advance
-            behavior.actions.close_current()
+            behavior.actions.domain_actions.close_current()
             
             # If not at last action, advance to next action and show navigation
             if not is_last_action:
@@ -309,7 +309,7 @@ class WorkflowCommand(InstructionDisplayCommand):
             self._mark_behavior_complete(current_behavior_name)
             
             # Check for next behavior BEFORE close_current since it advances the index
-            next_behavior = self.bot.behaviors.next()
+            next_behavior = self.bot.behaviors.next
             
             if next_behavior:
                 # Advance to next behavior
@@ -369,7 +369,7 @@ class InstructionsCommand(WorkflowCommand):
         if args:
             action_context = action.context_class()
             if isinstance(action_context, ScopeActionContext):
-                parsed = self._parse_scope_args(args, action.action_name)
+                parsed = self._parse_scope_args(args, action.name)
                 # Set the parsed scope if we found one
                 if 'scope' in parsed:
                     action_context.scope = parsed['scope']

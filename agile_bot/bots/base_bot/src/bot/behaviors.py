@@ -174,6 +174,9 @@ class Behaviors:
             ]
             state_file.parent.mkdir(parents=True, exist_ok=True)
             state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+        
+        # Persist current_behavior and current_action to state file
+        self.save_state()
 
     def close_current(self):
         if self._current_index is not None:

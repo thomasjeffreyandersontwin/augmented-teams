@@ -3,14 +3,66 @@ import re
 import logging
 import dataclasses
 from pathlib import Path
-from typing import Dict, Any, Type
+from typing import Dict, Any, Type, get_origin
 from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.action_context import ActionContext
 from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
 from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
-from agile_bot.bots.base_bot.src.cli.type_hint_converter import TypeHintConverter
 
 logger = logging.getLogger(__name__)
+
+
+class TypeHintConverter:
+    """Converts Python type hints to CLI-friendly type strings for help display"""
+    
+    @staticmethod
+    def to_cli_type(python_type) -> str:
+        """Convert Python type hint to CLI-friendly string.
+        
+        Examples:
+            str -> "string"
+            Path -> "path"
+            dict -> "dict"
+            Dict[str, Any] -> "dict"
+            List[str] -> "list"
+        """
+        # Handle None type
+        if python_type is type(None):
+            return "none"
+        
+        # Handle basic types
+        if python_type == str:
+            return "string"
+        elif python_type == Path:
+            return "path"
+        elif python_type == int:
+            return "int"
+        elif python_type == float:
+            return "float"
+        elif python_type == bool:
+            return "bool"
+        elif python_type == dict:
+            return "dict"
+        elif python_type == list:
+            return "list"
+        elif python_type == tuple:
+            return "tuple"
+        elif python_type == set:
+            return "set"
+        
+        # Handle generic types (Dict[...], List[...], etc.)
+        origin = get_origin(python_type)
+        if origin is dict:
+            return "dict"
+        elif origin is list:
+            return "list"
+        elif origin is tuple:
+            return "tuple"
+        elif origin is set:
+            return "set"
+        
+        # Fallback for unknown types
+        return "value"
 
 class HelpAction(Action):
     context_class: Type[ActionContext] = ActionContext  # Help action needs no parameters
@@ -172,9 +224,34 @@ class HelpAction(Action):
         for field_info in dataclasses.fields(context_class):
             cli_name = f'--{field_info.name.replace("_", "-")}'
             type_hint = TypeHintConverter.to_cli_type(field_info.type)
-            params.append((f'{cli_name} <{type_hint}>', 'Optional parameter'))
+            description = self._get_parameter_description(action_name, field_info.name)
+            params.append((f'{cli_name} <{type_hint}>', description))
         
         return params
+    
+    def _get_parameter_description(self, action_name: str, param_name: str) -> str:
+        """Get meaningful description for a parameter (like ActionDataCollector does)"""
+        # Check common parameter patterns
+        if 'answers' in param_name or 'key_questions_answered' in param_name:
+            return "Dict mapping question keys to answer strings"
+        elif 'evidence_provided' in param_name or 'evidence' in param_name:
+            return "Dict mapping evidence types to evidence content"
+        elif 'choices' in param_name or 'decisions_made' in param_name or 'decisions' in param_name:
+            return "Dict mapping decision criteria keys to selected options/values"
+        elif 'assumptions' in param_name or 'assumptions_made' in param_name:
+            return "List of assumption strings"
+        elif 'scope' in param_name:
+            return self._get_scope_description(action_name)
+        elif 'path' in param_name or 'directory' in param_name:
+            return "Path to working directory or file"
+        else:
+            return "Optional parameter"
+    
+    def _get_scope_description(self, action_name: str) -> str:
+        """Get scope description for an action"""
+        if action_name == 'validate':
+            return "Scope structure: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>}"
+        return "Scope structure: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}"
     
     def _add_single_action_help(self, instructions, base_actions_dir: Path, action_name: str):
         action_dir = base_actions_dir / action_name
