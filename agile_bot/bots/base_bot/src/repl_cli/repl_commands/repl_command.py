@@ -163,18 +163,14 @@ class InstructionDisplayCommand(REPLCommand):
             )
         
         try:
-            # Call the action's get_instructions() - it formats everything
-            if context is None:
-                context = action.context_class()
-            
-            result = action.get_instructions(context)
-            formatted_output = result.get('formatted_output', '')
+            # Call the action's instructions() method - it formats everything
+            formatted_output = action.instructions(args="" if context is None else str(context))
             
             # Format execution line
             if operation == "instructions":
-                exec_line = f"Executing: {self.current_behavior_name}.{action.action_name}.instructions"
+                exec_line = f"Executing: {self.current_behavior_name}.{action.name}.instructions"
             else:
-                exec_line = f"Executing: {self.current_behavior_name}.{action.action_name}"
+                exec_line = f"Executing: {self.current_behavior_name}.{action.name}"
             
             # Build content (just instructions, no submit message yet)
             content = "\n".join([
@@ -187,15 +183,15 @@ class InstructionDisplayCommand(REPLCommand):
             # Wrap with context header
             response = self._wrap_with_context_header(content, content)
             
-            response.action = action.action_name
+            response.action = action.name
             response.context_passed_to_action = context
             return response
         except Exception as e:
-            error_msg = f"ERROR executing {action.action_name}.get_instructions(): {str(e)}"
+            error_msg = f"ERROR executing {action.name}.instructions(): {str(e)}"
             return REPLCommandResponse(
                 output=error_msg,
                 response=error_msg,
                 status="error",
-                action=action.action_name
+                action=action.name
             )
 

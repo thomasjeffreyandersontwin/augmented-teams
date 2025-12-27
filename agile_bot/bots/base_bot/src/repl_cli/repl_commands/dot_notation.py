@@ -40,7 +40,7 @@ class DotNotationCommand(WorkflowCommand):
         self.navigate_to_behavior_action(behavior_name, action_name)
         return self.display_navigation()
     
-    def _handle_behavior_action_operation(self, behavior_name: str, action_name: str, operation: str) -> REPLCommandResponse:
+    def _handle_behavior_action_operation(self, behavior_name: str, action_name: str, operation_with_args: str) -> REPLCommandResponse:
         behavior = self.bot.behaviors.find_by_name(behavior_name)
         if not behavior:
             return self.error_behavior_not_found(behavior_name)
@@ -52,6 +52,11 @@ class DotNotationCommand(WorkflowCommand):
                 response=f"ERROR: Action '{action_name}' not found",
                 status="error"
             )
+        
+        # Split operation from arguments (e.g., "instructions --scope ..." -> "instructions", "--scope ...")
+        parts = operation_with_args.split(maxsplit=1)
+        operation = parts[0]
+        args = parts[1] if len(parts) > 1 else ""
         
         if operation not in self.VALID_OPERATIONS:
             return REPLCommandResponse(
@@ -65,6 +70,6 @@ class DotNotationCommand(WorkflowCommand):
         if operation == "instructions":
             return self.display_instructions()
         elif operation == "submit":
-            return self.execute_submit()
+            return self.execute_submit(args)
         return self.execute_confirm()
 

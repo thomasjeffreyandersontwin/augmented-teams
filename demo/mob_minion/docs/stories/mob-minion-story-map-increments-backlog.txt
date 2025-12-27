@@ -1,0 +1,60 @@
+Incremental Backlog: Mob Minion
+
+## Increment 1: Foundational Integration + Basic Mob
+
+Priority: NOW (Priority 1)
+Goal: Validate Foundry API and deliver core mob coordination
+Estimated Stories: 11
+
+MAP FOUNDRY API:
+- Mob System --> Retrieve Token Selection State
+- Mob System --> Update Token State
+- Mob System --> Load Actor Statistics
+- Mob System --> Evaluate Actor Combat Capabilities
+- Mob System --> Register Combatant In Tracker
+- Mob System --> Determine Attack Feasibility
+- Mob System --> Identify Valid Combat Targets
+- Mob System --> Set Target
+
+MANAGE MOBS:
+- Game Master --> Select Minions
+- Game Master --> Group Minions Into Mob
+
+EXECUTE MOB ACTIONS:
+- Game Master --> Execute Melee Attack
+
+## Increment 2: Strategy System
+
+Priority: NEXT (Priority 2)
+Goal: Add intelligent targeting and tactical behavior
+Estimated Stories: 8
+
+ASSIGN STRATEGIES:
+- Game Master --> Choose Attack Strongest
+- Game Master --> Choose Attack Weakest
+- Game Master --> Choose Defend Leader
+- Game Master --> Choose Attack Most Damaged
+
+EXECUTE MOB ACTIONS:
+- Mob System --> Identify Valid Targets
+- Mob System --> Apply Strategy Criteria
+- Game Master --> Execute Ranged Attack
+- Game Master --> Execute Area Attack
+
+## Increment 3: Advanced Mob Management
+
+Priority: LATER (Priority 3)
+Goal: Add convenience and polish features
+Estimated Stories: 5
+
+MANAGE MOBS:
+- Game Master --> Add Minions To Mob
+- Game Master --> Remove Minions From Mob
+- Game Master --> Disband Mob
+- Game Master --> Spawn Mob From Template
+- Game Master --> Spawn Mob From Actors
+
+---
+
+Total Stories: 24 stories across 3 increments
+

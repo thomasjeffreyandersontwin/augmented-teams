@@ -1,30 +1,14 @@
 {
-  "current_behavior": "story_bot.scenarios",
-  "current_action": "story_bot.scenarios.build",
+  "current_behavior": "story_bot.discovery",
+  "current_action": "story_bot.discovery.build",
   "action_phase": "instructions_given",
   "action_state": "started",
   "working_directory": "demo/mob_minion",
-  "timestamp": "2025-12-26T14:52:58.000906",
+  "timestamp": "2025-12-26T22:28:16.153283",
   "completed_actions": [
     {
       "action_state": "story_bot.shape.clarify",
       "timestamp": "2025-12-24T02:49:00.018184"
-    },
-    {
-      "action_state": "story_bot.shape.strategy",
-      "timestamp": "2025-12-26T11:09:19.509030"
-    },
-    {
-      "action_state": "story_bot.shape.build",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.shape.validate",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.shape.render",
-      "timestamp": "2025-12-26T11:17:07.912193"
     },
     {
       "action_state": "story_bot.domain.clarify",
@@ -44,46 +28,6 @@
     },
     {
       "action_state": "story_bot.domain.render",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.prioritization.clarify",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.prioritization.strategy",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.prioritization.build",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.prioritization.validate",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.prioritization.render",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.discovery.clarify",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.discovery.strategy",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.discovery.build",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.discovery.validate",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.discovery.render",
       "timestamp": "2025-12-26T11:17:07.912193"
     },
     {
@@ -107,60 +51,60 @@
       "timestamp": "2025-12-26T11:17:07.912193"
     },
     {
-      "action_state": "story_bot.exploration.clarify",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.shape.strategy",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.exploration.strategy",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.shape.build",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.exploration.build",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.shape.validate",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.exploration.validate",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.shape.render",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.exploration.render",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.prioritization.clarify",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.scenarios.clarify",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.prioritization.strategy",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.scenarios.strategy",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.prioritization.build",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.scenarios.build",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.prioritization.validate",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.tests.build",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.prioritization.render",
+      "timestamp": "2025-12-26T22:19:34.936006"
     },
     {
-      "action_state": "story_bot.tests.render",
-      "timestamp": "2025-12-26T11:17:07.912193"
+      "action_state": "story_bot.discovery.clarify",
+      "timestamp": "2025-12-26T22:19:39.557037"
     },
     {
-      "action_state": "story_bot.tests.validate",
-      "timestamp": "2025-12-26T11:17:07.912193"
-    },
-    {
-      "action_state": "story_bot.code.strategy",
-      "timestamp": "2025-12-26T11:17:07.925257"
-    },
-    {
-      "action_state": "story_bot.code.render",
-      "timestamp": "2025-12-26T11:17:07.925257"
+      "action_state": "story_bot.discovery.strategy",
+      "timestamp": "2025-12-26T22:28:16.143284"
     }
   ],
   "completed_behaviors": [
     "shape",
     "scenarios"
-  ]
+  ],
+  "scope": {
+    "type": "story",
+    "value": [
+      "Invoke MCP"
+    ],
+    "exclude": [],
+    "skiprule": []
+  }
 }

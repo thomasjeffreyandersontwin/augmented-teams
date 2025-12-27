@@ -1,0 +1,46 @@
+(E) Map Foundry API
+    (E) Map Token System
+            (S) Mob System --> Retrieve Token Selection State
+            (S) Mob System --> Update Token State
+    (E) Map Actor System
+            (S) Mob System --> Load Actor Statistics
+            (S) Mob System --> Evaluate Actor Combat Capabilities
+    (E) Map Combat System
+            (S) Mob System --> Register Combatant In Tracker
+            (S) Mob System --> Determine Attack Feasibility
+    (E) Map Targeting System
+            (S) Mob System --> Identify Valid Combat Targets
+            (S) Mob System --> Set Target
+
+(E) Manage Mobs
+    (E) Create Mob
+            (S) Game Master --> Select Minions
+            (S) Game Master --> Group Minions Into Mob
+    (E) Edit Mob
+        or
+            (S) Game Master --> Add Minions To Mob
+            or (S) Game Master --> Remove Minions From Mob
+            or (S) Game Master --> Disband Mob
+    (E) Spawn Mob
+        or
+            (S) Game Master --> Spawn Mob From Template
+            or (S) Game Master --> Spawn Mob From Actors
+
+(E) Assign Strategies
+    (E) Select Strategy
+        or
+            (S) Game Master --> Choose Attack Strongest
+            or (S) Game Master --> Choose Attack Weakest
+            or (S) Game Master --> Choose Defend Leader
+            or (S) Game Master --> Choose Attack Most Damaged
+
+(E) Execute Mob Actions
+    (E) Select Targets
+            (S) Mob System --> Identify Valid Targets
+            (S) Mob System --> Apply Strategy Criteria
+    (E) Coordinate Attack
+        or
+            (S) Game Master --> Execute Melee Attack
+            or (S) Game Master --> Execute Ranged Attack
+            or (S) Game Master --> Execute Area Attack
+

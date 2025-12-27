@@ -92,7 +92,7 @@ class REPLStatus:
             # Only show actions for current behavior
             if is_current_behavior and behavior.actions:
                 for action in behavior.actions:
-                    a_name = action.action_name
+                    a_name = action.name
                     is_current_action = a_name == current_action_name
                     is_completed_action = a_name in completed_actions
                     
@@ -208,7 +208,7 @@ class REPLStatus:
         completed = self.state.completed_action_names
         parts = []
         for action in behavior.actions:
-            name = action.action_name
+            name = action.name
             is_completed = name in completed
             is_current = name == self.state.current_action_name
             parts.append(self._format_item(name, is_current, is_completed, current_marker="*"))
@@ -229,9 +229,9 @@ class REPLStatus:
         parts = []
         completed = self.state.completed_action_names
         for action in self.state.current_behavior.actions:
-            is_completed = action.action_name in completed
-            is_current = action.action_name == self.state.current_action_name
-            parts.append(self._format_item(action.action_name, is_current, is_completed))
+            is_completed = action.name in completed
+            is_current = action.name == self.state.current_action_name
+            parts.append(self._format_item(action.name, is_current, is_completed))
         return parts
     
     @property

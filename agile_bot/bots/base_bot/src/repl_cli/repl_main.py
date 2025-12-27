@@ -147,10 +147,8 @@ def main():
         print("  - Each command starts fresh REPL session (this is normal)")
         print("")
     
-    print("-" * 60)
     print(f"Bot Path: {bot_directory}")
     print(f"Work Path: {workspace_directory}")
-    print("-" * 60)
     
     # Display rest of state (commands menu)
     state_display = repl_session.display_current_state()

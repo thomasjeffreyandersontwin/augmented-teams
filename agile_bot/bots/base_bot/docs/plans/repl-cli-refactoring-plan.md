@@ -1220,7 +1220,85 @@ ScopeActionContext (from actions/action_context.py)
     Has scope: Scope
     Extends: ActionContext
 ``
+## Object Flow
 
+Demonstrates how objects collaborate through nested message passing to fulfill responsibilities.
+
+### Example: Execute Instructions Operation
+
+```
+REPLSession
+    output = REPLSession.run_repl_loop()
+        ->True =  is_interactive()
+            ->= TTYDetector.is_interactive()
+        -> command: {behavior: "shape", action: "build", operation: "instructions"}  = CommandParser.parse_command(input_line: "shape.build.instructions")
+            -> behavior_name: "shape" = CommandParser.extract_behavior(input_line: "shape.build.instructions")
+            -> action_name: "build" = CommandParser.extract_action(input_line: "shape.build.instructions")
+            -> operation_name: "instructions" = CommandParser.extract_operation(input_line: "shape.build.instructions")
+            return command: {behavior: "shape", action: "build", operation: "instructions"}
+        -> cli_behavior: <CLIBehavior wrapping shape> = CLIBot.behaviors.get_behavior(name: "shape")
+            -> domain_behavior: <Behavior shape> = Bot.behaviors.find_behavior(name: "shape")
+            return cli_behavior: <CLIBehavior wrapping shape>
+        -> cli_action: <CLIAction wrapping build> = cli_behavior.actions.get_action(name: "build")
+            -> domain_action: <Action build> = Behavior.actions.find_action(name: "build")
+            return cli_action: <CLIAction wrapping build>
+        -> result: "Build knowledge graph..." = cli_action.execute_operation(operation: "instructions", args: "")
+            -> context: {} = CLIAction._parse_args_to_context(args: "")
+            -> instruction_dict: {template: "...", rules: [...]} = Action.get_instructions(context)
+            -> formatted: "Build knowledge graph..." = CLIAction._format_result(instruction_dict)
+            return result: "Build knowledge graph..."
+        -> status: "STORY_BOT CLI\n[x] shape..." = StatusDisplay.render(CLIBot)
+            -> header: "STORY_BOT CLI\nBot Path: ..." = HeaderDisplay.render(CLIBot)
+            -> tree: "[x] shape\n[*] domain..." = HierarchyTreeDisplay.render(CLIBot)
+            -> footer: "Commands: status | back..." = FooterDisplay.render()
+            return status: "STORY_BOT CLI\n...\nCommands: ..."
+        return output: "Build knowledge graph...\n\nSTORY_BOT CLI\n..."
+```
+### Example: Set and View Scope
+
+```
+CLIBot
+    result: "Scope set to: Story1, Story2" = CLIScope.set_scope(scope_string: "Story1, Story2")
+        -> scope: {type: STORY, value: ["Story1", "Story2"], filter: <KnowledgeGraphFilter>} = CLIScope._parse_scope_string(scope_string: "Story1, Story2")
+            -> scope_type: STORY = Scope.infer_type(value: ["Story1", "Story2"])
+            -> filter: <KnowledgeGraphFilter> = Scope.__post_init__(type: STORY)
+                return filter: <KnowledgeGraphFilter>
+            return scope: {type: STORY, value: ["Story1", "Story2"], filter: <KnowledgeGraphFilter>}
+        -> session.scope = scope
+        return result: "Scope set to: Story1, Story2"
+    
+    display: "Scope Filter: Story1 ✓, Story2 ✓" = CLIScope.view_scope()
+        -> validation: [("Story1", True), ("Story2", True)] = Scope.validate_scope(story_graph)
+            -> results: [("Story1", True), ("Story2", True)] = KnowledgeGraphFilter.check_nodes(nodes: ["Story1", "Story2"], graph)
+                -> story1_exists: True = KnowledgeGraphFilter.find_node(graph, "Story1")
+                -> story2_exists: True = KnowledgeGraphFilter.find_node(graph, "Story2")
+                return results: [("Story1", True), ("Story2", True)]
+            return validation: [("Story1", True), ("Story2", True)]
+        -> formatted: "Scope Filter: Story1 ✓, Story2 ✓" = CLIScope._format_scope_display(scope, validation_results)
+        return display: "Scope Filter: Story1 ✓, Story2 ✓"
+
+### Example: Navigate and Execute
+
+```
+REPLSession
+    result: "Prioritize stories...\n\nSTORY_BOT CLI..." = REPLSession.navigate_and_execute(input: "next")
+        -> current_position: {behavior: "shape", action: "render", operation: "confirm"} = CLIBot.get_current_position()
+            -> behavior: "shape" = CLIBot.behaviors.get_current_behavior()
+            -> action: "render" = behavior.actions.get_current_action()
+            -> operation: "confirm" = action.get_current_operation()
+            return current_position: {behavior: "shape", action: "render", operation: "confirm"}
+        -> next_action: <CLIAction wrapping prioritization.clarify> = CLIBot.behaviors.get_next_action()
+            -> next: "prioritization.clarify" = Behaviors.find_next_action(current_behavior: "shape", current_action: "render")
+            -> domain_action: <Action prioritization.clarify> = Behaviors.get_domain_action(next)
+            return next_action: <CLIAction wrapping prioritization.clarify>
+        -> REPLSession.update_state(next_action)
+        -> instructions: "Prioritize stories by business value..." = next_action.execute_operation(operation: "instructions")
+            -> context: {} = CLIAction._parse_args_to_context(args: "")
+            -> instruction_result: {instructions: "Prioritize stories..."} = Action.get_instructions(context)
+            -> formatted: "Prioritize stories by business value..." = CLIAction._format_result(instruction_result)
+            return instructions: "Prioritize stories by business value..."
+        return result: "Prioritize stories...\n\nSTORY_BOT CLI\n[x] shape\n[*] prioritization..."
+```
 # Key Architectural Decisions
 
 1. **CLI Mirror Pattern**: CLI objects (CLIBot, CLIBehavior, CLIAction) mirror domain structure with string interfaces

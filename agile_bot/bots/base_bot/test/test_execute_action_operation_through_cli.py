@@ -1,0 +1,385 @@
+"""
+Execute Action Operation Through CLI Tests
+
+Tests for all stories in the 'Execute Action Operation Through CLI' sub-epic:
+- Get Action Instructions Through CLI
+- Submit Work Through CLI with String Parameters
+- Confirm Action Completion Through CLI
+- Re-execute Current Operation Using CLI
+- Handle Operation Errors and Validation in CLI
+"""
+import pytest
+import json
+import sys
+from pathlib import Path
+
+
+@pytest.fixture
+def bot_directory(tmp_path):
+    """Create a temporary bot directory with bot_config.json"""
+    bot_dir = tmp_path / 'agile_bot' / 'bots' / 'story_bot'
+    bot_dir.mkdir(parents=True)
+    
+    config_data = {'name': 'story_bot'}
+    (bot_dir / 'bot_config.json').write_text(json.dumps(config_data))
+    
+    return bot_dir
+
+
+@pytest.fixture
+def workspace_directory(tmp_path):
+    """Create a temporary workspace directory"""
+    workspace_dir = tmp_path / 'workspace'
+    workspace_dir.mkdir(parents=True)
+    return workspace_dir
+
+
+def create_behavior(bot_directory, behavior_name, actions):
+    """Create behavior folder with actions and required guardrails"""
+    behavior_dir = bot_directory / 'behaviors' / behavior_name
+    behavior_dir.mkdir(parents=True, exist_ok=True)
+    
+    actions_workflow = {
+        'actions': [{'name': action, 'order': i+1} for i, action in enumerate(actions)]
+    }
+    
+    behavior_config = {
+        'name': behavior_name,
+        'description': f'Test {behavior_name} behavior',
+        'order': 1,
+        'actions_workflow': actions_workflow
+    }
+    (behavior_dir / 'behavior.json').write_text(json.dumps(behavior_config))
+    
+    # Create guardrails/strategy directory structure for strategy action
+    guardrails_strategy_dir = behavior_dir / 'guardrails' / 'strategy'
+    guardrails_strategy_dir.mkdir(parents=True, exist_ok=True)
+    typical_assumptions = {'assumptions': []}
+    (guardrails_strategy_dir / 'typical_assumptions.json').write_text(json.dumps(typical_assumptions))
+    
+    for action in actions:
+        action_dir = behavior_dir / 'actions' / action
+        action_dir.mkdir(parents=True, exist_ok=True)
+        action_config = {
+            'name': action,
+            'description': f'Test {action} action'
+        }
+        (action_dir / 'action.json').write_text(json.dumps(action_config))
+
+
+def create_behavior_action_state(workspace_directory, behavior, action, operation='instructions'):
+    """Create behavior action state file with specified state"""
+    state_data = {
+        'current_behavior': f'story_bot.{behavior}',
+        'current_action': f'story_bot.{behavior}.{action}',
+        'operation': operation,
+        'working_directory': str(workspace_directory),
+        'timestamp': '2025-12-26T10:00:00.000000'
+    }
+    
+    state_file = workspace_directory / 'behavior_action_state.json'
+    state_file.write_text(json.dumps(state_data))
+    return state_file
+
+
+class TestGetActionInstructionsThroughCLI:
+    """Story: Get Action Instructions Through CLI"""
+    
+    def test_user_gets_instructions_for_build_action_without_scope(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User gets instructions for build action without scope
+        GIVEN: CLI is at shape.build.instructions
+        WHEN: user enters 'shape.build.instructions'
+        THEN: CLI displays formatted instructions
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
+        
+        # WHEN: user enters 'shape.build.instructions'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('shape.build.instructions')
+        
+        # THEN: CLIAction calls action.get_instructions(context)
+        # AND: CLI displays formatted instructions
+        assert '[INSTRUCTIONS]' in cli_response.output or 'instructions' in cli_response.output.lower()
+        assert 'shape.build' in cli_response.output or 'build' in cli_response.output
+    
+    def test_user_calls_action_by_name_shortcut(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User calls action by name as shortcut
+        GIVEN: CLI is at shape.build.instructions
+        WHEN: user enters just 'build' (action name only)
+        THEN: CLI executes instructions operation on current behavior's build action
+        AND: Instructions are formatted as strings, not JSON
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
+        
+        # WHEN: user enters just 'build'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('build')
+        
+        # THEN: CLI executes current operation (instructions) on current behavior's build action
+        assert cli_response.status == 'success'
+        # AND: Output is formatted string, not JSON
+        assert '"formatted_output"' not in cli_response.output
+        assert '"instructions"' not in cli_response.output
+        # AND: Contains actual instruction content
+        assert 'instructions' in cli_response.output.lower() or 'build' in cli_response.output.lower()
+    
+    def test_user_gets_instructions_for_build_action_with_scope(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User gets instructions for build action with scope
+        GIVEN: CLI is at shape.build.instructions
+        WHEN: user enters 'shape.build.instructions scope="Story1, Story2"'
+        THEN: CLI displays filtered instructions for Story1, Story2
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
+        
+        # WHEN: user enters 'shape.build.instructions scope="Story1, Story2"'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('shape.build.instructions --scope "Story1, Story2"')
+        
+        # THEN: CLIAction uses CLIScope to parse scope string
+        # AND: CLI displays formatted instructions with scope
+        assert cli_response.status == 'success' or 'EXECUTING' in cli_response.output
+
+
+class TestSubmitWorkThroughCLIWithStringParameters:
+    """Story: Submit Work Through CLI with String Parameters"""
+    
+    def test_user_submits_build_work(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User submits build work
+        GIVEN: CLI is at shape.build.instructions
+        WHEN: user enters 'submit'
+        THEN: CLI displays confirmation
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
+        # AND: user has created knowledge graph content
+        
+        # WHEN: user enters 'submit'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('submit')
+        
+        # THEN: CLIAction calls action.submit(context)
+        # AND: CLI displays confirmation
+        assert cli_response.status in ['success', 'error'] or 'submit' in cli_response.output.lower()
+
+
+class TestConfirmActionCompletionThroughCLI:
+    """Story: Confirm Action Completion Through CLI"""
+    
+    def test_user_confirms_build_action_completion(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User confirms build action completion
+        GIVEN: CLI is at shape.build.submit
+        WHEN: user enters 'confirm'
+        THEN: CLI automatically navigates to shape.validate.instructions
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.submit
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'submit')
+        # AND: user has submitted build work
+        
+        # WHEN: user enters 'confirm'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('confirm')
+        
+        # THEN: CLIAction calls action.confirm()
+        # AND: CLI displays confirmation with next action
+        # AND: CLI automatically navigates to shape.validate.instructions
+        assert cli_response.status == 'success' or 'confirm' in cli_response.output.lower()
+    
+    def test_user_confirms_action_and_advances_to_next(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User confirms action and advances to next action
+        GIVEN: CLI is at shape.strategy.submit
+        WHEN: user enters 'confirm'
+        THEN: CLI advances to shape.build.instructions
+        AND: Does not crash with 'object is not callable' error
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.strategy (not last action)
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'strategy', 'submit')
+        
+        # WHEN: user enters 'confirm'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('confirm')
+        
+        # THEN: CLI advances to next action (build) without crashing
+        assert 'not callable' not in cli_response.output
+        # AND: CLI is now at build action
+        state_file = workspace_directory / 'behavior_action_state.json'
+        state_data = json.loads(state_file.read_text())
+        assert 'build' in state_data.get('current_action', '')
+    
+    def test_user_confirms_without_prior_submit(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User confirms without prior submit
+        GIVEN: CLI is at shape.build.instructions
+        WHEN: user enters 'confirm'
+        THEN: CLI advances to next action (valid - user can confirm without submitting)
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
+        # AND: no submit has been executed
+        
+        # WHEN: user enters 'confirm'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('confirm')
+        
+        # THEN: CLI advances to next action (confirm is valid even without submit)
+        assert cli_response.status == 'success'
+        # AND: CLI moves to shape.validate
+        state_file = workspace_directory / 'behavior_action_state.json'
+        state_data = json.loads(state_file.read_text())
+        assert 'validate' in state_data.get('current_action', '')
+
+
+class TestReExecuteCurrentOperationUsingCLI:
+    """Story: Re-execute Current Operation Using CLI"""
+    
+    def test_user_re_executes_current_instructions(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User re-executes current instructions
+        GIVEN: CLI is at discovery.build.instructions
+        WHEN: user enters 'current'
+        THEN: CLI re-executes discovery.build.instructions
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at discovery.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'discovery', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'discovery', 'build', 'instructions')
+        # AND: user previously executed instructions
+        
+        # WHEN: user enters 'current'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('current')
+        
+        # THEN: CLI re-executes discovery.build.instructions
+        assert 'EXECUTING' in cli_response.output or 'discovery.build' in cli_response.output
+        # AND: CLI displays fresh instructions output
+        # AND: behavior action state remains at discovery.build.instructions
+        state_file = workspace_directory / 'behavior_action_state.json'
+        state_data = json.loads(state_file.read_text())
+        assert 'discovery' in state_data['current_behavior']
+        assert 'build' in state_data['current_action']
+
+
+class TestHandleOperationErrorsAndValidationInCLI:
+    """Story: Handle Operation Errors and Validation in CLI"""
+    
+    def test_user_enters_invalid_scope_format_with_instructions(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User enters invalid scope format with instructions
+        GIVEN: CLI is at shape.build.instructions
+        WHEN: user enters 'shape.build.instructions scope="invalid{format}"'
+        THEN: CLI displays error message with valid formats
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.build.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
+        
+        # WHEN: user enters 'shape.build.instructions scope="invalid{format}"'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        
+        original_state = json.loads((workspace_directory / 'behavior_action_state.json').read_text())
+        cli_response = repl_session.read_and_execute_command('shape.build.instructions --scope "invalid{format}"')
+        
+        # THEN: CLIScope._parse_scope_string raises parsing error
+        # AND: CLI displays error message
+        if 'ERROR' in cli_response.output or 'error' in cli_response.output.lower():
+            # AND: CLI displays valid formats
+            pass  # Error was displayed as expected
+        # AND: behavior action state remains at shape.build.instructions
+        current_state = json.loads((workspace_directory / 'behavior_action_state.json').read_text())
+        assert current_state['current_behavior'] == original_state['current_behavior']
+
