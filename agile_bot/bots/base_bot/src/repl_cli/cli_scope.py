@@ -31,21 +31,27 @@ class CLIScope:
             return None
     
     def to_formatted_display(self) -> str:
-        """Render scope with CLI-specific formatting (warnings, separators)."""
+        """Render scope with CLI-specific formatting (warnings, separators, and AI instructions)."""
         lines = []
         
-        lines.append("-" * 60)
-        lines.append("⚠️  SCOPE FILTER ACTIVE - Work ONLY on the following scope:")
-        lines.append("-" * 60)
+        # Add explicit AI instruction at the very top
+        lines.append("=" * 90)
+        lines.append("***                 INSTRUCTIONS SECTION       ***:")
+        lines.append("☢️ This section contains both scope filter and a prompt that you must follow for the current action. ☢️")
+        lines.append("☢️ You MUST follow the instructions below in this section to the letter. ☢️")
+  
+        lines.append("-" * 90)
+        lines.append("⚠️  Scope Filter Is Active - Work ONLY on the following scope:")
         
         # Get plain scope display lines from domain object
         scope_lines = self._scope.to_display_lines(self._workspace_directory)
         lines.extend(scope_lines)
         
         lines.append("")
-        lines.append("⚠️  DO NOT work on all files or the entire story graph")
-        lines.append("⚠️  Focus EXCLUSIVELY on the items listed above")
-        lines.append("-" * 60)
+        lines.append(" DO NOT work on all files or the entire story graph")
+        lines.append("Focus EXCLUSIVELY on the items listed above")
+        lines.append("-" * 90)
+        lines.append("⚠️  Instruction Prompt -- follow all instructions below! ⚠️")
         lines.append("")
         
         return "\n".join(lines)
@@ -54,4 +60,5 @@ class CLIScope:
     def domain_scope(self) -> Scope:
         """Access the underlying domain Scope object."""
         return self._scope
+
 

@@ -15,3 +15,4 @@ $env:BOT_DIRECTORY = $SCRIPT_DIR
 # Launch REPL
 python "$SCRIPT_DIR\src\repl_cli\repl_main.py"
 
+

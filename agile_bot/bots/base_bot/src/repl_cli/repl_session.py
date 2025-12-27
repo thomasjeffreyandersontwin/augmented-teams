@@ -162,9 +162,9 @@ class REPLSession:
         # In piped mode, add piped mode instructions header
         tty_result = self.detect_tty()
         if not tty_result.tty_detected:
-            lines.append("=" * 60)
+            lines.append("=" * 90)
             lines.append("AI AGENT INSTRUCTIONS - PIPED MODE")
-            lines.append("=" * 60)
+            lines.append("=" * 90)
             lines.append("")
         
         # Show hierarchical breadcrumbs
@@ -183,7 +183,6 @@ class REPLSession:
             return ""
         
         lines = []
-        lines.append("-" * 80)
         
         # Get bot name from bot_directory
         if self.bot and hasattr(self.bot, 'bot_paths'):
@@ -208,6 +207,8 @@ class REPLSession:
         
         # Show hierarchical breadcrumbs (includes Progress line after scope)
         lines.append(self.status.hierarchical_status)
+        
+        
         
         return "\n".join(lines)
     

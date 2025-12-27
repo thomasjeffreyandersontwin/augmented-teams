@@ -84,3 +84,4 @@
 
 **Answer:** Must integrate with Foundry's token selection, targeting UI, actor data model, combat tracker, movement system (melee vs range), and action execution framework. Strategy behaviors depend on querying actor stats (HP, power level) to choose appropriate targets.
 
+
