@@ -27,11 +27,16 @@ Following **behavioral_ac_at_story_level**, **stories_have_4_to_9_acceptance_cri
 
 5. WHEN REPLStatus builds hierarchical display THEN status uses formatter for section separators AND status uses formatter for status markers AND status uses formatter for list items
 
-6. WHEN cursor command generator runs THEN generator creates base command file with piped syntax AND generator creates per-behavior command files with piped syntax AND generator updates bot registry with REPL path
 
 7. WHEN terminal mode displays output THEN output matches current plain text format exactly
 
 8. WHEN piped mode displays output THEN output contains markdown formatting AND output uses rich status markers
+
+9. **WHEN scope display is returned THEN output includes explicit AI instruction to print scope section AND instruction appears before scope content**
+
+10. **WHEN instructions are wrapped with context header THEN output includes explicit AI instruction to print CLI status section AND instruction appears before CLI status content**
+
+11. **WHEN context header is generated THEN output includes reminder at end listing what sections must be displayed**
 
 ## Domain Concepts
 
@@ -86,15 +91,87 @@ Following **given_describes_state_not_actions**, **write_plain_english_scenarios
 - And status uses formatter for status markers
 - And status uses formatter for list items
 
-### Scenario 6: Cursor commands use piped syntax
-- Given cursor command generator runs
-- When generator creates behavior command file
-- Then command uses piped input format
-- And command invokes REPL with dot notation
+### Scenario 6: Scope display includes explicit AI instruction
+- Given scope is set in bot state
+- When CLI action formats instructions with scope
+- Then output includes "AI AGENT CRITICAL INSTRUCTION" header
+- And output includes "You MUST print the SCOPE section" text
+- And instruction appears before scope content
+
+### Scenario 8: Context header includes explicit AI instruction
+- Given REPL command wraps instructions with context header
+- When command builds output response
+- Then output includes "AI AGENT CRITICAL INSTRUCTION" header
+- And output includes "You MUST display the CLI STATUS section" text
+- And instruction appears before CLI status content
+
+### Scenario 8: Context header includes reminder at end
+- Given context header is generated
+- When header is appended to instructions
+- Then header includes "AI AGENT: The above CLI STATUS section contains" text
+- And header lists what sections are included
+- And header includes "You MUST display this entire section" text
 
 ## Test Structure
 
 Following **use_class_based_organization**, **pytest_bdd_orchestrator_pattern**, and **use_given_when_then_helpers** rules:
+
+### File: `test/repl_cli/test_explicit_ai_instructions.py`
+
+```python
+class TestScopeDisplayInstructions:
+    """Test explicit AI instructions for scope display"""
+    
+    def test_scope_display_includes_ai_instruction(self):
+        # Given scope is set and CLI scope is created
+        # When to_formatted_display is called
+        # Then output includes "AI AGENT CRITICAL INSTRUCTION"
+        # And output includes "You MUST print the SCOPE section"
+        pass
+    
+    def test_scope_instruction_appears_before_content(self):
+        # Given scope display is formatted
+        # When output is generated
+        # Then instruction header appears before scope content
+        pass
+
+class TestContextHeaderInstructions:
+    """Test explicit AI instructions for context header"""
+    
+    def test_context_header_wrapper_includes_ai_instruction(self):
+        # Given instructions are wrapped with context header
+        # When _wrap_with_context_header is called
+        # Then output includes "AI AGENT CRITICAL INSTRUCTION"
+        # And output includes "You MUST display the CLI STATUS section"
+        pass
+    
+    def test_context_header_instruction_appears_before_status(self):
+        # Given context header is wrapped
+        # When output is generated
+        # Then instruction appears before CLI status content
+        pass
+    
+    def test_context_header_includes_end_reminder(self):
+        # Given context header is generated
+        # When get_context_header_for_ai is called
+        # Then output includes "AI AGENT: The above CLI STATUS section contains"
+        # And output lists sections included
+        # And output includes "You MUST display this entire section"
+        pass
+
+class TestInstructionsWithScopeAndHeader:
+    """Integration test for instructions with scope and header"""
+    
+    def test_full_output_includes_all_instructions(self):
+        # Given scope is set and action has instructions
+        # When instructions command is executed
+        # Then output includes scope AI instruction
+        # And output includes scope content
+        # And output includes action instructions
+        # And output includes context header AI instruction
+        # And output includes CLI status
+        pass
+```
 
 ### File: `test/repl_cli/formatters/test_terminal_formatter.py`
 
@@ -416,97 +493,159 @@ class REPLStatus:
         return "\n".join(lines)
 ```
 
-## Cursor Command Generation
-
-### File: `src/repl_cli/repl_command_generator.py`
-
-```python
-from pathlib import Path
-from typing import Dict, Any
-import json
-
-class REPLCommandGenerator:
-    """Generates Cursor IDE slash commands for REPL CLI."""
-    
-    def __init__(self, workspace_root: Path, bot_directory: Path, bot_name: str):
-        self.workspace_root = workspace_root
-        self.bot_directory = bot_directory
-        self.bot_name = bot_name
-        self.commands_dir = workspace_root / '.cursor' / 'commands'
-    
-    def generate_commands(self, bot, repl_path: Path) -> Dict[str, Any]:
-        """Generate all cursor command files for this bot's REPL."""
-        self.commands_dir.mkdir(parents=True, exist_ok=True)
-        
-        files_created = []
-        
-        base_file = self._create_base_commands(bot, repl_path)
-        files_created.append(base_file)
-        
-        for behavior in bot.behaviors:
-            behavior_file = self._create_behavior_commands(behavior, repl_path)
-            files_created.append(behavior_file)
-        
-        return {
-            'bot_name': self.bot_name,
-            'commands_generated': len(files_created),
-            'files': [str(f) for f in files_created]
-        }
-    
-    def _create_base_commands(self, bot, repl_path: Path) -> Path:
-        """Create base command file with status, help, navigation."""
-        lines = [
-            f"# {self.bot_name} - {bot.goal or 'Bot CLI'}",
-            "",
-            "## Quick Navigation",
-            "",
-            "### Check Status",
-            f"echo 'status' | python {repl_path}",
-            "",
-            "### Get Help",
-            f"echo 'help' | python {repl_path}",
-            "",
-            "## Available Behaviors",
-            ""
-        ]
-        
-        for behavior in bot.behaviors:
-            desc = getattr(behavior, 'description', '') or behavior.name
-            lines.append(f"- **{behavior.name}** - {desc}")
-            lines.append(f"  - See: `/{self.bot_name}-{behavior.name}`")
-        
-        content = "\n".join(lines)
-        file_path = self.commands_dir / f'{self.bot_name}.md'
-        file_path.write_text(content, encoding='utf-8')
-        return file_path
-    
-    def _create_behavior_commands(self, behavior, repl_path: Path) -> Path:
-        """Create behavior-specific command file."""
-        desc = getattr(behavior, 'description', '') or behavior.name
-        lines = [
-            f"# {self.bot_name}-{behavior.name} - {desc}",
-            "",
-            "## Quick Reference",
-            ""
-        ]
-        
-        for action in behavior.actions:
-            action_desc = getattr(action, 'description', '') or action.name
-            lines.extend([
-                f"### {action.name.title()} - {action_desc}",
-                f"echo '{behavior.name}.{action.name}.instructions' | python {repl_path}",
-                ""
-            ])
-        
-        content = "\n".join(lines)
-        file_path = self.commands_dir / f'{self.bot_name}-{behavior.name}.md'
-        file_path.write_text(content, encoding='utf-8')
-        return file_path
-```
-
 ## Implementation Phases
 
-### Phase 1: Create Formatter Infrastructure (2 hours)
+### Phase 1: Add Explicit AI Instructions for Formatted Sections (1 hour)
+**CRITICAL:** AI agents often skip formatted sections unless explicitly told to print them.
+
+**Problem:** When AI agents receive REPL output with formatted sections (scope filters, CLI status, hierarchical displays), they frequently:
+- Summarize instead of displaying verbatim
+- Skip "boring" technical sections
+- Focus only on action instructions and ignore context
+
+**Solution:** Add explicit instructions before and after formatted sections telling the AI it MUST display them exactly as provided. This ensures users see:
+- Current scope filter (what they're working on)
+- Current progress and workflow state
+- Available commands and navigation options
+
+**Locations to Update:**
+1. `cli_scope.py` - Scope display formatting (prepends to instructions)
+2. `cli_action.py` - Scope integration point (where scope is added)
+3. `repl_command.py` - Context header wrapper (wraps all instruction output)
+4. `repl_session.py` - Context header generation (generates CLI status)
+
+#### 1.1 Update `cli_scope.py` - Add AI Instructions to Scope Display
+**Location:** `agile_bot/bots/base_bot/src/repl_cli/cli_scope.py`  
+**Method:** `to_formatted_display()`  
+**Current Code:**
+```python
+def to_formatted_display(self) -> str:
+    """Render scope with CLI-specific formatting (warnings, separators)."""
+    lines = []
+    
+    lines.append("-" * 60)
+    lines.append("⚠️  SCOPE FILTER ACTIVE - Work ONLY on the following scope:")
+    lines.append("-" * 60)
+    
+    # Get plain scope display lines from domain object
+    scope_lines = self._scope.to_display_lines(self._workspace_directory)
+    lines.extend(scope_lines)
+    
+    lines.append("")
+    lines.append("⚠️  DO NOT work on all files or the entire story graph")
+    lines.append("⚠️  Focus EXCLUSIVELY on the items listed above")
+    lines.append("-" * 60)
+    lines.append("")
+    
+    return "\n".join(lines)
+```
+
+**Updated Code:**
+```python
+def to_formatted_display(self) -> str:
+    """Render scope with CLI-specific formatting (warnings, separators, and AI instructions)."""
+    lines = []
+    
+    # Add explicit AI instruction at the very top
+    lines.append("")
+    lines.append("=" * 60)
+    lines.append("AI AGENT CRITICAL INSTRUCTION:")
+    lines.append("You MUST print the SCOPE section below EXACTLY as shown.")
+    lines.append("Do NOT summarize, skip, or modify this section.")
+    lines.append("=" * 60)
+    lines.append("")
+    
+    lines.append("-" * 60)
+    lines.append("⚠️  SCOPE FILTER ACTIVE - Work ONLY on the following scope:")
+    lines.append("-" * 60)
+    
+    # Get plain scope display lines from domain object
+    scope_lines = self._scope.to_display_lines(self._workspace_directory)
+    lines.extend(scope_lines)
+    
+    lines.append("")
+    lines.append("⚠️  DO NOT work on all files or the entire story graph")
+    lines.append("⚠️  Focus EXCLUSIVELY on the items listed above")
+    lines.append("-" * 60)
+    lines.append("")
+    
+    return "\n".join(lines)
+```
+
+**Note:** CLI layer handles ALL formatting including AI instructions. Domain `Scope` only provides plain data via `to_display_lines()`.
+
+#### 1.2 Verify `cli_action.py` - Scope Integration (No Changes Needed)
+**Location:** `agile_bot/bots/base_bot/src/repl_cli/cli_bot/cli_actions/cli_action.py`  
+**Method:** `instructions()`  
+**Current Code (Already Correct):**
+```python
+def instructions(self, args: str = "") -> str:
+    try:
+        context = self._parse_args_to_context(args)
+        result = self._action.get_instructions(context)
+        formatted = self._format_result(result)
+        
+        # Prepend scope display if scope is set (CLI layer adds formatting)
+        instructions_obj = self._action.instructions
+        if instructions_obj.scope:
+            cli_scope = CLIScope(instructions_obj.scope, self._action.behavior.bot_paths.workspace_directory)
+            scope_display = cli_scope.to_formatted_display()  # Already includes AI instructions
+            formatted = scope_display + formatted
+        
+        return formatted
+    except Exception as e:
+        return f"Error getting instructions: {str(e)}"
+```
+
+**Explanation:** The `cli_action.py` just checks if scope exists in the `Instructions` object, wraps it in `CLIScope` for formatting, and prepends the result. All formatting logic (including AI instructions) is handled by `CLIScope.to_formatted_display()`. This follows proper separation: domain provides data, CLI provides formatting.
+
+#### 1.3 Update `repl_command.py` - Context Header Wrapper
+**Location:** `agile_bot/bots/base_bot/src/repl_cli/repl_commands/repl_command.py`  
+**Method:** `_wrap_with_context_header()`  
+**Add instruction before header:**
+```python
+def _wrap_with_context_header(self, content: str, response_msg: str) -> REPLCommandResponse:
+    header = self.session.get_context_header_for_ai()
+    
+    ai_instruction = "\n".join([
+        "",
+        "=" * 60,
+        "AI AGENT CRITICAL INSTRUCTION:",
+        "You MUST display the CLI STATUS section below EXACTLY as shown.",
+        "This includes: Bot Path, Work Path, Scope, Progress, and Commands.",
+        "Do NOT summarize, skip, or modify this section.",
+        "=" * 60,
+        ""
+    ])
+    
+    output = "\n".join([
+        content,
+        "",
+        ai_instruction,
+        header
+    ])
+    
+    return REPLCommandResponse(
+        output=output,
+        response=response_msg,
+        status="success"
+    )
+```
+
+#### 1.4 Update `repl_session.py` - Context Header Generation
+**Location:** `agile_bot/bots/base_bot/src/repl_cli/repl_session.py`  
+**Method:** `get_context_header_for_ai()`  
+**Add at end before return:**
+```python
+lines.append("")
+lines.append("AI AGENT: The above CLI STATUS section contains:")
+lines.append("  - Current scope filter (if set)")
+lines.append("  - Current progress in workflow")
+lines.append("  - Available commands")
+lines.append("You MUST display this entire section in your response to the user exactly as you see it.")
+```
+
+### Phase 2: Create Formatter Infrastructure (2 hours)
 1. Create `formatters/` directory
 2. Implement `OutputFormatter` abstract base class
 3. Implement `TerminalFormatter` 
@@ -514,37 +653,34 @@ class REPLCommandGenerator:
 5. Implement `FormatterFactory`
 6. Write unit tests for all formatters
 
-### Phase 2: Integrate with REPLSession (1 hour)
+### Phase 3: Integrate with REPLSession (1 hour)
 1. Modify `REPLSession.__init__` to create formatter
 2. Pass formatter to `REPLStatus` constructor
 3. Update `REPLStatus.__init__` signature
 
-### Phase 3: Update REPLStatus (1 hour)
+### Phase 4: Update REPLStatus (1 hour)
 1. Replace direct string formatting in `hierarchical_status()`
 2. Use `formatter.section_separator()`
 3. Use `formatter.status_marker()`
 4. Use `formatter.list_item()`
 
-### Phase 4: Testing (2 hours)
+### Phase 5: Testing (2 hours)
 1. Test TerminalFormatter output matches current
 2. Test MarkdownFormatter produces valid markdown
 3. Integration test with mocked TTY detection
 4. Manual test with actual pipe
-
-### Phase 5: Cursor Command Generation (1.5 hours)
-1. Implement `REPLCommandGenerator`
-2. Generate base and behavior command files
-3. Update bot registry
-4. Test generated commands
+5. Test explicit AI instructions are present in output
 
 ### Phase 6: Documentation (30 minutes)
 1. NO docstrings! or comments in classes
 2. Update REPL documentation
-3. Document cursor command generation
+3. Document explicit AI instruction pattern
 
 ## Estimated Effort
 
-**Total: 8 hours**
+**Total: 7.5 hours**
+
+**Note:** Cursor command generation is now its own separate story: "Generate Cursor Commands for REPL"
 
 ## Rules Applied
 
@@ -580,7 +716,339 @@ class REPLCommandGenerator:
 - [ ] Piped mode produces rich Markdown output
 - [ ] All existing tests pass
 - [ ] New tests achieve 80%+ coverage
-- [ ] Cursor commands generated for all behaviors
-- [ ] Bot registry updated with REPL CLI path
+- [ ] Explicit AI instructions present in formatted output
 - [ ] No breaking changes to CLI commands or behavior
+
+# 📝 Generate Cursor Commands for REPL
+
+**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+
+**Epic:** Build Agile Bots
+**Feature:** Generate REPL CLI
+**User:** Generator
+**Sequential Order:** 4
+**Story Type:** user
+
+## Story Description
+
+Generate Cursor Command Files for REPL CLI that use piped input syntax (`echo 'command' | python repl_main.py`). Commands provide shortcuts for navigating behaviors, actions, and executing REPL operations through Cursor's command palette.
+
+## Key Design Principles
+
+1. **Emulate Cursor Syntax**: Follow Cursor's command file format as closely as possible for consistency with existing CLI commands
+2. **Orchestrator-Visitor Pattern**: Use the existing orchestrator-visitor pattern to traverse bot structure and generate commands
+3. **Piped Input Format**: All REPL commands must use `echo 'command' | python repl_main.py` syntax (NOT command-line arguments)
+4. **Dot Notation Support**: Generate shortcuts using REPL's dot notation (e.g., `behavior.action.operation`)
+
+## Acceptance Criteria
+
+### Behavioral Acceptance Criteria
+
+- **When** generator creates REPLCursorCommandVisitor,
+  **then** visitor follows orchestrator-visitor pattern from existing CLI command generation
+
+- **When** visitor generates base commands,
+  **then** visitor creates `<bot-name>-repl.md` with piped syntax: `echo 'status' | python repl_main.py`
+
+- **When** visitor generates behavior shortcuts,
+  **then** visitor creates `<bot-name>-repl-<behavior>.md` for each behavior with piped syntax: `echo '<behavior>' | python repl_main.py`
+
+- **When** visitor generates action shortcuts,
+  **then** visitor creates `<bot-name>-repl-<behavior>-<action>.md` for each action with piped dot notation: `echo '<behavior>.<action>.instructions' | python repl_main.py`
+
+- **When** visitor generates operation shortcuts,
+  **then** visitor includes instructions, submit, and confirm operations for each action
+
+- **When** visitor generates help shortcuts,
+  **then** visitor creates status, help, next, back, and exit commands
+
+- **When** visitor completes generation,
+  **then** visitor removes obsolete command files for behaviors/actions that no longer exist
+
+- **When** generator updates bot registry,
+  **then** generator adds `repl_path` field pointing to `repl_main.py` relative to workspace root
+
+## Implementation Notes
+
+### Cursor Command File Format
+
+Commands must follow Cursor's syntax for placeholders and parameter prompts:
+- `${1:parameter_name}` - First parameter with prompt
+- `${2:+ }` - Optional space before second parameter
+- `${2:param}` - Second parameter with prompt
+- Multi-line commands with instructions for AI
+
+### REPL Command Patterns
+
+```markdown
+# Base Status Command
+echo 'status' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+# Navigate to Behavior
+echo '${1:behavior}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+# Navigate to Action
+echo '${1:behavior}.${2:action}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+# Execute Operation
+echo '${1:behavior}.${2:action}.${3|instructions,submit,confirm|}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+# With Scope Parameter
+echo '${1:behavior}.${2:action}.submit --scope "${3:story_name}"' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+```
+
+## Scenarios
+
+### Scenario: Generate base REPL command file
+
+**Steps:**
+```gherkin
+Given: REPLCursorCommandVisitor is initialized
+And: commands directory path is .cursor/commands/
+And: REPL script path is agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+When: visitor generates base commands
+Then: visitor creates <bot-name>-repl.md command file
+And: command file contains "echo 'status' | python repl_main.py"
+And: command file contains "echo 'help' | python repl_main.py"
+And: command file contains "echo 'next' | python repl_main.py"
+And: command file contains "echo 'back' | python repl_main.py"
+And: command file contains "echo 'exit' | python repl_main.py"
+```
+
+### Scenario: Generate behavior navigation shortcuts
+
+**Steps:**
+```gherkin
+Given: bot has behaviors ["shape", "discovery", "exploration"]
+When: visitor generates behavior shortcuts
+Then: visitor creates story_bot-repl-shape.md
+And: visitor creates story_bot-repl-discovery.md
+And: visitor creates story_bot-repl-exploration.md
+And: each command file contains "echo '<behavior>' | python repl_main.py"
+And: each command file lists available actions for that behavior
+```
+
+### Scenario: Generate action operation shortcuts
+
+**Steps:**
+```gherkin
+Given: "discovery" behavior has action "build"
+When: visitor generates action shortcuts
+Then: visitor creates story_bot-repl-discovery-build.md
+And: command file contains "echo 'discovery.build.instructions' | python repl_main.py"
+And: command file contains "echo 'discovery.build.submit' | python repl_main.py"
+And: command file contains "echo 'discovery.build.confirm' | python repl_main.py"
+And: command file includes scope parameter example: --scope "${1:story_name}"
+```
+
+### Scenario: Generate cursor commands creates directory if missing
+
+**Steps:**
+```gherkin
+Given: REPLCursorCommandVisitor is initialized
+And: .cursor/commands/ directory does NOT exist
+When: visitor generates commands
+Then: visitor creates .cursor/commands/ directory
+And: visitor creates all REPL command files
+```
+
+### Scenario: Remove obsolete command files when behavior removed
+
+**Steps:**
+```gherkin
+Given: bot previously had behavior "old_behavior"
+And: obsolete command file exists: story_bot-repl-old_behavior.md
+And: bot no longer has behavior "old_behavior"
+When: visitor generates commands
+Then: visitor creates new command files for current behaviors
+And: visitor removes story_bot-repl-old_behavior.md
+And: visitor removes all story_bot-repl-old_behavior-*.md files
+```
+
+### Scenario: Update bot registry with REPL path
+
+**Steps:**
+```gherkin
+Given: generator has created REPL command files
+When: generator updates bot registry
+Then: generator adds "repl_path" field to bot registry entry
+And: repl_path points to "agile_bot/bots/base_bot/src/repl_cli/repl_main.py"
+And: registry entry includes existing trigger_patterns
+And: registry entry includes existing cli_path
+```
+
+## Technical Design
+
+### Class Structure
+
+```python
+class REPLCursorCommandVisitor(Visitor):
+    """Visitor that generates Cursor command files for REPL CLI using piped syntax."""
+    
+    def __init__(self, workspace_root: Path, repl_script_path: Path, bot=None):
+        super().__init__(bot=bot)
+        self.workspace_root = workspace_root
+        self.repl_script_path = repl_script_path
+        self.commands_dir: Optional[Path] = None
+        self.python_command: Optional[str] = None
+        self.commands: Dict[str, Path] = {}
+        self.current_command_files: Set[Path] = set()
+    
+    def visit_header(self, bot_name: str) -> None:
+        # Create .cursor/commands/ directory
+        # Track existing command files for cleanup
+        # Generate base REPL commands (status, help, next, back, exit)
+        pass
+    
+    def visit_behavior(self, context: BehaviorHelpContext) -> None:
+        # Generate navigation shortcut for behavior
+        # Create <bot-name>-repl-<behavior>.md
+        pass
+    
+    def visit_action(self, context: ActionHelpContext) -> None:
+        # Generate operation shortcuts for action
+        # Create <bot-name>-repl-<behavior>-<action>.md
+        # Include instructions, submit, confirm operations
+        pass
+    
+    def visit_footer(self) -> None:
+        # Remove obsolete command files
+        pass
+    
+    def get_commands(self) -> Dict[str, Path]:
+        # Return mapping of command names to file paths
+        pass
+```
+
+### Command File Templates
+
+#### Base REPL Command (`story_bot-repl.md`)
+```markdown
+# story_bot-repl - REPL Status and Navigation
+
+## Status
+echo 'status' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Help
+echo 'help' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Navigation
+echo 'next' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+echo 'back' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Exit
+echo 'exit' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+```
+
+#### Behavior Command (`story_bot-repl-discovery.md`)
+```markdown
+# story_bot-repl-discovery - Navigate to Discovery Behavior
+
+## Navigate to Behavior
+echo 'discovery' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Navigate to Specific Action
+echo 'discovery.${1|build,validate,clarify,strategy|}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Available Actions:
+- build - Build knowledge graph
+- validate - Validate requirements
+- clarify - Clarify ambiguities
+- strategy - Define strategy
+```
+
+#### Action Command (`story_bot-repl-discovery-build.md`)
+```markdown
+# story_bot-repl-discovery-build - Execute Discovery Build Action
+
+## Get Instructions
+echo 'discovery.build.instructions' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Submit Work
+echo 'discovery.build.submit${1:+ }${1:--scope "${2:story_name}"}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Confirm and Advance
+echo 'discovery.build.confirm' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+
+## Display Instructions
+After running 'instructions', the output will include formatted instructions and CLI status.
+AI AGENT: You MUST display all sections including:
+- Scope filter (if set)
+- Current progress
+- Available commands
+```
+
+## Implementation Steps
+
+### Phase 1: Create REPLCursorCommandVisitor (2 hours)
+1. Create `repl_cli/cursor_command_visitor.py`
+2. Implement `REPLCursorCommandVisitor` class following `CursorCommandFileVisitor` pattern
+3. Implement `visit_header()` for base commands
+4. Implement `visit_behavior()` for behavior shortcuts
+5. Implement `visit_action()` for action operation shortcuts
+6. Implement `visit_footer()` for cleanup
+7. Implement command file generation with piped syntax
+
+### Phase 2: Integrate with Generator (1 hour)
+1. Create `repl_cli/repl_cursor_command_generator.py`
+2. Implement `REPLCursorCommandGenerator` class
+3. Wire up orchestrator with `REPLCursorCommandVisitor`
+4. Implement bot registry update with `repl_path` field
+
+### Phase 3: Testing (2 hours)
+1. Test base command generation
+2. Test behavior shortcut generation
+3. Test action operation shortcut generation
+4. Test obsolete file cleanup
+5. Test bot registry update
+6. Manual test in Cursor command palette
+
+### Phase 4: Documentation (30 minutes)
+1. Document REPL cursor command generation
+2. Document piped syntax patterns
+3. Update bot registry schema documentation
+
+## Estimated Effort
+
+**Total: 5.5 hours**
+
+## Related Files to Reference
+
+### Existing CLI Command Generation
+- `agile_bot/bots/base_bot/src/cli/cursor_command_generator.py` - Main generator
+- `agile_bot/bots/base_bot/src/cli/cursor_command_file_visitor.py` - Visitor for CLI commands
+- `agile_bot/bots/base_bot/src/cli/cursor_command_renderer_visitor.py` - Renderer for action help
+- `agile_bot/bots/base_bot/src/generator/orchestrator.py` - Orchestrator pattern
+- `agile_bot/bots/base_bot/src/generator/visitor.py` - Base Visitor class
+
+### REPL Implementation
+- `agile_bot/bots/base_bot/src/repl_cli/repl_main.py` - REPL entry point
+- `agile_bot/bots/base_bot/src/repl_cli/repl_session.py` - REPL session management
+- `agile_bot/bots/base_bot/src/repl_cli/command_parser.py` - Command parsing logic
+
+## Success Criteria
+
+- [ ] REPLCursorCommandVisitor follows orchestrator-visitor pattern
+- [ ] Base REPL commands generated with piped syntax
+- [ ] Behavior navigation shortcuts generated for all behaviors
+- [ ] Action operation shortcuts generated for all actions
+- [ ] Commands use correct dot notation (behavior.action.operation)
+- [ ] Obsolete command files removed when behaviors/actions removed
+- [ ] Bot registry updated with `repl_path` field
+- [ ] Commands work correctly in Cursor command palette
+- [ ] All tests pass with 90%+ coverage
+- [ ] Command files match Cursor syntax conventions
+
+## Source Material
+
+This story was created by analyzing:
+1. Existing "Generate Cursor Command Files" story for CLI pattern
+2. `CursorCommandGenerator` and `CursorCommandFileVisitor` implementation
+3. REPL CLI command syntax and dot notation patterns
+4. Cursor command file format and conventions
+
+Generated: 2025-12-26
+Context: Part of REPL CLI infrastructure for Cursor IDE integration
+
+
 

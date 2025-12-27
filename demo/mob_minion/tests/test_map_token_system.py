@@ -21,3 +21,4 @@ class TestUpdateTokenState:
         """Placeholder test - will be implemented when scenarios are defined."""
         pytest.skip("Awaiting scenario definition")
 
+

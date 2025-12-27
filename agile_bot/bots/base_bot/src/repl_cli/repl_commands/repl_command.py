@@ -71,9 +71,20 @@ class InstructionDisplayCommand(REPLCommand):
     def _wrap_with_context_header(self, content: str, response_msg: str) -> REPLCommandResponse:
         header = self.session.get_context_header_for_ai()
         
+        ai_instruction = "\n".join([
+            "",
+            "=" * 90,
+            " ***                    CLI STATUS section                    ***",
+            "This section contains current scope filter (if set), current progress in workflow, and available commands",
+            "Review the CLI STATUS section below to understand both current state and available commands.",
+            "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
+            "-" * 116
+        ])
+        
         output = "\n".join([
             content,
             "",
+            ai_instruction,
             header
         ])
         
@@ -174,9 +185,7 @@ class InstructionDisplayCommand(REPLCommand):
             
             # Build content (just instructions, no submit message yet)
             content = "\n".join([
-                "=================================",
                 exec_line,
-                "",
                 formatted_output
             ])
             
