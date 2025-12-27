@@ -205,9 +205,8 @@ class REPLSession:
             bot_path = self.bot.bot_paths.bot_directory if hasattr(self.bot, 'bot_paths') else 'Unknown'
             lines.append(f"Bot Path: {bot_path}")
         lines.append(f"Work Path: {self.workspace_directory}")
-        lines.append(self.get_progress_line())
         
-        # Show hierarchical breadcrumbs
+        # Show hierarchical breadcrumbs (includes Progress line after scope)
         lines.append(self.status.hierarchical_status)
         
         return "\n".join(lines)

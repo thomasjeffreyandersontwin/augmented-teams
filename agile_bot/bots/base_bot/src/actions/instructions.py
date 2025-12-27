@@ -3,15 +3,17 @@ from typing import Any, List, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+    from agile_bot.bots.base_bot.src.actions.action_context import Scope
 
 
 class Instructions:
     
-    def __init__(self, base_instructions: List[str] = None, bot_paths: 'BotPaths' = None):
+    def __init__(self, base_instructions: List[str] = None, bot_paths: 'BotPaths' = None, scope: Optional['Scope'] = None):
         self._data = {}
         self._data['base_instructions'] = list(base_instructions) if base_instructions else []
         self._display_content: List[str] = []
         self._bot_paths = bot_paths
+        self._scope = scope
     
     def add(self, *lines: str) -> 'Instructions':
         for line in lines:
@@ -26,6 +28,11 @@ class Instructions:
     @property
     def display_content(self) -> List[str]:
         return list(self._display_content)
+    
+    @property
+    def scope(self) -> Optional['Scope']:
+        """Get the scope filter if set."""
+        return self._scope
     
     @property
     def context_sources_text(self) -> List[str]:
@@ -88,7 +95,7 @@ class Instructions:
         return result
     
     def copy(self) -> 'Instructions':
-        new_inst = Instructions(bot_paths=self._bot_paths)
+        new_inst = Instructions(bot_paths=self._bot_paths, scope=self._scope)
         new_inst._data = dict(self._data)
         new_inst._data['base_instructions'] = list(self._data['base_instructions'])
         new_inst._display_content = list(self._display_content)

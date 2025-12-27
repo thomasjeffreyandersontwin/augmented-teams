@@ -164,6 +164,124 @@ class Scope:
             'exclude': self.exclude,
             'skiprule': self.skiprule,
         }
+    
+    def to_display_lines(self, workspace_directory: 'Path') -> List[str]:
+        """Render scope as display lines with hierarchical expansion.
+        
+        Returns plain text lines showing scope filter and matched items.
+        """
+        from pathlib import Path
+        import json
+        
+        lines = []
+        
+        # Show the scope filter value
+        filter_str = ', '.join(self.value) if isinstance(self.value, list) else str(self.value)
+        lines.append(f"Scope Filter: {filter_str}")
+        
+        if self.type == ScopeType.STORY:
+            story_graph_path = workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+            if story_graph_path.exists():
+                try:
+                    graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
+                    matched_items = self._find_scope_matches_in_graph(graph_data, self.value)
+                    lines.extend(matched_items)
+                except Exception:
+                    # Fallback to simple list
+                    for item in (self.value if isinstance(self.value, list) else [self.value]):
+                        lines.append(f"  - {item}")
+            else:
+                for item in (self.value if isinstance(self.value, list) else [self.value]):
+                    lines.append(f"  - {item}")
+        else:
+            if isinstance(self.value, list):
+                for item in self.value:
+                    lines.append(f"  - {item}")
+            else:
+                lines.append(f"  - {self.value}")
+        
+        return lines
+    
+    def _find_scope_matches_in_graph(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
+        """Find and display scope matches from story graph."""
+        lines = []
+        epics = graph_data.get('epics', [])
+        
+        for scope_val in scope_values:
+            match_lines = self._search_for_scope_match(epics, scope_val)
+            if match_lines:
+                lines.extend(match_lines)
+            else:
+                lines.append(f"  - {scope_val} (no match)")
+        
+        return lines
+    
+    def _search_for_scope_match(self, epics: List[Dict], scope_val: str) -> Optional[List[str]]:
+        """Search for scope match and return formatted lines with full hierarchy."""
+        for epic in epics:
+            if self._matches_name(epic.get('name', ''), scope_val):
+                return self._format_node_with_children(epic, 'epic', 0)
+            
+            match_lines = self._search_sub_epics(epic.get('sub_epics', []), scope_val)
+            if match_lines:
+                return match_lines
+        
+        return None
+    
+    def _search_sub_epics(self, sub_epics: List[Dict], scope_val: str) -> Optional[List[str]]:
+        """Search sub-epics for scope match."""
+        for sub_epic in sub_epics:
+            if self._matches_name(sub_epic.get('name', ''), scope_val):
+                return self._format_node_with_children(sub_epic, 'sub epic', 0)
+            
+            match_lines = self._search_stories(sub_epic, scope_val)
+            if match_lines:
+                return match_lines
+        
+        return None
+    
+    def _search_stories(self, sub_epic: Dict, scope_val: str) -> Optional[List[str]]:
+        """Search stories for scope match."""
+        for story_group in sub_epic.get('story_groups', []):
+            for story in story_group.get('stories', []):
+                if self._matches_name(story.get('name', ''), scope_val):
+                    return self._format_node_with_children(story, 'story', 0)
+        
+        for story in sub_epic.get('stories', []):
+            if self._matches_name(story.get('name', ''), scope_val):
+                return self._format_node_with_children(story, 'story', 0)
+        
+        return None
+    
+    def _matches_name(self, name: str, pattern: str) -> bool:
+        """Check if pattern matches name (case-insensitive)."""
+        return pattern.lower() in name.lower()
+    
+    def _format_node_with_children(self, node: Dict[str, Any], node_type: str, indent: int) -> List[str]:
+        """Format a node and its children recursively."""
+        lines = []
+        prefix = "  " * indent
+        name = node.get('name', 'Unknown')
+        lines.append(f"{prefix}[{node_type}] {name}")
+        
+        # Don't recurse into stories - stop at story level
+        if node_type == 'story':
+            return lines
+        
+        # Add sub_epics (features)
+        for sub_epic in node.get('sub_epics', []):
+            lines.extend(self._format_node_with_children(sub_epic, 'sub epic', indent + 1))
+        
+        # Add stories from story_groups
+        for story_group in node.get('story_groups', []):
+            for story in story_group.get('stories', []):
+                lines.extend(self._format_node_with_children(story, 'story', indent + 1))
+        
+        # Add direct stories (some structures have this)
+        for story in node.get('stories', []):
+            lines.extend(self._format_node_with_children(story, 'story', indent + 1))
+        
+        return lines
 
 
 @dataclass

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, Any
 import json
+from agile_bot.bots.base_bot.src.repl_cli.cli_scope import CLIScope
 
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.actions.action import Action
@@ -31,7 +32,16 @@ class CLIAction:
         try:
             context = self._parse_args_to_context(args)
             result = self._action.get_instructions(context)
-            return self._format_result(result)
+            formatted = self._format_result(result)
+            
+            # Prepend scope display if scope is set (CLI layer adds formatting)
+            instructions_obj = self._action.instructions
+            if instructions_obj.scope:
+                cli_scope = CLIScope(instructions_obj.scope, self._action.behavior.bot_paths.workspace_directory)
+                scope_display = cli_scope.to_formatted_display()
+                formatted = scope_display + formatted
+            
+            return formatted
         except Exception as e:
             return f"Error getting instructions: {str(e)}"
     
