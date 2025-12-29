@@ -63,6 +63,7 @@ class Behaviors:
 
     @property
     def completed_behaviors(self) -> List[str]:
+        """Get list of completed behavior names."""
         completed = []
         for behavior in self._behaviors:
             if behavior.is_completed:
@@ -100,18 +101,98 @@ class Behaviors:
         return None
 
     def next(self) -> Optional['Behavior']:
+        """Get the next behavior without changing current state."""
         next_index = self._current_index + 1
         if next_index < len(self._behaviors):
             return self._behaviors[next_index]
         return None
     
     def previous(self) -> Optional['Behavior']:
+        """Get the previous behavior without changing current state."""
         if self._current_index is None or self._current_index <= 0:
             return None
         prev_index = self._current_index - 1
         if prev_index >= 0:
             return self._behaviors[prev_index]
         return None
+    
+    def advance(self) -> Dict[str, Any]:
+        """Advance to the next action in the current behavior, or next behavior if at end.
+        
+        Returns:
+            Dict with status and information about the advancement
+        """
+        if not self.current:
+            return {
+                'status': 'error',
+                'message': 'No current behavior set'
+            }
+        
+        # Try to advance within current behavior
+        current_behavior = self.current
+        next_action_result = current_behavior.actions.advance()
+        
+        if next_action_result['status'] == 'success':
+            return next_action_result
+        
+        # If at end of behavior, try to advance to next behavior
+        next_behavior = self.next()
+        if next_behavior:
+            self._current_index += 1
+            self.save_state()
+            # Navigate to first action of next behavior
+            if next_behavior.actions._actions:
+                next_behavior.actions.navigate_to(next_behavior.actions.names[0])
+            return {
+                'status': 'success',
+                'message': f'Advanced to behavior: {next_behavior.name}',
+                'behavior': next_behavior.name,
+                'action': next_behavior.actions.current.action_name if next_behavior.actions.current else None
+            }
+        
+        return {
+            'status': 'complete',
+            'message': 'Workflow complete - no more behaviors'
+        }
+    
+    def go_back(self) -> Dict[str, Any]:
+        """Go back to the previous action in the current behavior, or previous behavior if at start.
+        
+        Returns:
+            Dict with status and information about going back
+        """
+        if not self.current:
+            return {
+                'status': 'error',
+                'message': 'No current behavior set'
+            }
+        
+        # Try to go back within current behavior
+        current_behavior = self.current
+        back_result = current_behavior.actions.go_back()
+        
+        if back_result['status'] == 'success':
+            return back_result
+        
+        # If at start of behavior actions, check if we can go to previous behavior
+        # If no previous behavior, return the actions error message  
+        prev_behavior = self.previous()
+        if prev_behavior:
+            self._current_index -= 1
+            self.save_state()
+            # Navigate to last action of previous behavior
+            if prev_behavior.actions._actions:
+                last_action_name = prev_behavior.actions.names[-1]
+                prev_behavior.actions.navigate_to(last_action_name)
+            return {
+                'status': 'success',
+                'message': f'Went back to behavior: {prev_behavior.name}',
+                'behavior': prev_behavior.name,
+                'action': prev_behavior.actions.current.action_name if prev_behavior.actions.current else None
+            }
+        
+        # No previous behavior - return the action's error message
+        return back_result
 
     def __iter__(self) -> Iterator['Behavior']:
         for behavior in self._behaviors:

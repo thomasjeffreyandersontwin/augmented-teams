@@ -23,6 +23,10 @@ class CLIBehavior:
         return self._behavior.description
     
     @property
+    def is_completed(self) -> bool:
+        return self._behavior.is_completed
+    
+    @property
     def status(self) -> str:
         if self._behavior.is_completed:
             return "completed"
@@ -38,4 +42,11 @@ class CLIBehavior:
     @property
     def domain_behavior(self) -> Behavior:
         return self._behavior
+    
+    @property
+    def help(self) -> str:
+        """Get help for this specific behavior"""
+        from agile_bot.bots.base_bot.src.repl_cli.repl_help import BehaviorHelp
+        behavior_help = BehaviorHelp(self._behavior)
+        return behavior_help.actions_list
 

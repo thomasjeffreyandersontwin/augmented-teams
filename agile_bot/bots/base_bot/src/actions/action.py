@@ -311,6 +311,10 @@ class Action:
         if context is None:
             context = self.context_class()
         
+        # If context has a new scope, let the scope apply itself to the bot
+        if hasattr(context, 'scope') and context.scope:
+            context.scope.apply_to_bot(self.behavior.bot_paths.workspace_directory)
+        
         # Get base instructions
         instructions = self.instructions.copy()
         

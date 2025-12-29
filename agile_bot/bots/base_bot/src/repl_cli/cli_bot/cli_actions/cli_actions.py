@@ -78,6 +78,21 @@ class CLIActions:
     def domain_actions(self) -> Actions:
         return self._actions
     
+    @property
+    def help(self) -> str:
+        """Get help for actions"""
+        actions_list = ", ".join(self.all)
+        lines = [
+            "**Available Actions:**",
+            f"  {actions_list}",
+            "",
+            "**Usage:**",
+            "  actions.current          - access current action",
+            "  actions.navigate_to(name) - navigate to specific action",
+            "  actions.current.help     - get help for current action",
+        ]
+        return "\n".join(lines)
+    
     def __iter__(self):
         """Make CLIActions iterable - yields CLIAction objects for each action"""
         for action_name in self._actions.names:

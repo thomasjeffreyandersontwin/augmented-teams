@@ -1616,46 +1616,32 @@ class DuplicationScanner(CodeScanner):
                     logger.debug(f'Could not write to status file: {type(e).__name__}: {e}')
         
         write_status(f"\n## Cross-File Duplication Analysis")
-        write_status(f"Scanning {len(all_files)} files...")
+        write_status(f"Scanning {len(changed_files)} changed file(s) against {len(all_files)} total files...")
         
-        all_blocks = []  # List of (file_path, func_name, block_info) tuples
+        # Extract blocks from changed files (files to check for duplication)
+        changed_blocks = []
+        # Extract blocks from all files (reference set for comparison)
+        all_blocks = []
         
-        for file_idx, file_path in enumerate(all_files):
-            # #region agent log
-            import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1886','message':'Processing file','data':{'file_idx':file_idx,'total':len(all_files),'file':str(file_path)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'A'})+'\n')
-            # #endregion
-            # Progress every 10 files
+        # First, extract blocks from changed files
+        _safe_print(f"[CROSS-FILE] Extracting blocks from {len(changed_files)} changed file(s)...")
+        for file_idx, file_path in enumerate(changed_files):
             if file_idx % 10 == 0:
-                _safe_print(f"[CROSS-FILE] Extracting blocks: {file_idx}/{len(all_files)} files - {file_path.name}")
+                _safe_print(f"[CROSS-FILE] Changed files: {file_idx}/{len(changed_files)} - {file_path.name}")
                 sys.stdout.flush()
             if not file_path.exists():
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1891','message':'File does not exist','data':{'file':str(file_path)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'B'})+'\n')
-                # #endregion
                 continue
             
             try:
                 file_size = file_path.stat().st_size
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1896','message':'File size check','data':{'file':str(file_path),'size_bytes':file_size},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'C'})+'\n')
-                # #endregion
                 if file_size > 500_000:  # Skip files larger than 500KB
                     _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
-                    # #region agent log
-                    import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1899','message':'Skipping large file','data':{'file':str(file_path),'size_kb':file_size/1024},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'C'})+'\n')
-                    # #endregion
                     continue
             except Exception as e:
                 logger.debug(f'Error checking file size for {file_path}: {type(e).__name__}: {e}')
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1902','message':'Error checking file size','data':{'file':str(file_path),'error':str(e)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'B'})+'\n')
-                # #endregion
                 continue
             
             try:
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1905','message':'Reading file content','data':{'file':str(file_path)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'B'})+'\n')
-                # #endregion
                 content = file_path.read_text(encoding='utf-8')
                 tree = ast.parse(content, filename=str(file_path))
                 lines = content.split('\n')
@@ -1666,11 +1652,53 @@ class DuplicationScanner(CodeScanner):
                         func_body = ast.unparse(node.body) if hasattr(ast, 'unparse') else str(node.body)
                         functions.append((node.name, func_body, node.lineno, node))
                 
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1918','message':'Extracted functions','data':{'file':str(file_path),'func_count':len(functions)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'C'})+'\n')
-                # #endregion
+                for func_tuple in functions:
+                    if len(func_tuple) == 5:
+                        func_name, func_body, func_line, func_node, _ = func_tuple
+                    else:
+                        func_name, func_body, func_line, func_node = func_tuple
+                    blocks = self._extract_code_blocks(func_node, func_line, func_name)
+                    for block in blocks:
+                        block['file_path'] = file_path
+                        block['lines'] = lines
+                        changed_blocks.append(block)
+                        
+            except (SyntaxError, UnicodeDecodeError) as e:
+                logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
+                continue
+            except Exception as e:
+                _safe_print(f"Error processing {file_path} for cross-file scan: {e}")
+                continue
+        
+        # Second, extract blocks from all files (reference set)
+        _safe_print(f"\n[CROSS-FILE] Extracting blocks from {len(all_files)} reference file(s)...")
+        for file_idx, file_path in enumerate(all_files):
+            if file_idx % 10 == 0:
+                _safe_print(f"[CROSS-FILE] Reference files: {file_idx}/{len(all_files)} - {file_path.name}")
+                sys.stdout.flush()
+            if not file_path.exists():
+                continue
+            
+            try:
+                file_size = file_path.stat().st_size
+                if file_size > 500_000:  # Skip files larger than 500KB
+                    _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
+                    continue
+            except Exception as e:
+                logger.debug(f'Error checking file size for {file_path}: {type(e).__name__}: {e}')
+                continue
+            
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                tree = ast.parse(content, filename=str(file_path))
+                lines = content.split('\n')
                 
-                # Note: In cross-file scan, functions are extracted differently, so handle both formats
+                functions = []
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        func_body = ast.unparse(node.body) if hasattr(ast, 'unparse') else str(node.body)
+                        functions.append((node.name, func_body, node.lineno, node))
+                
                 for func_tuple in functions:
                     if len(func_tuple) == 5:
                         func_name, func_body, func_line, func_node, _ = func_tuple
@@ -1681,42 +1709,26 @@ class DuplicationScanner(CodeScanner):
                         block['file_path'] = file_path
                         block['lines'] = lines
                         all_blocks.append(block)
-                
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1933','message':'File processing complete','data':{'file':str(file_path),'total_blocks':len(all_blocks)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'A'})+'\n')
-                # #endregion
                         
             except (SyntaxError, UnicodeDecodeError) as e:
                 logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1938','message':'Syntax/Unicode error','data':{'file':str(file_path),'error_type':type(e).__name__},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'B'})+'\n')
-                # #endregion
                 continue
             except Exception as e:
                 _safe_print(f"Error processing {file_path} for cross-file scan: {e}")
-                # #region agent log
-                import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1944','message':'Unexpected error','data':{'file':str(file_path),'error':str(e),'error_type':type(e).__name__},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'B'})+'\n')
-                # #endregion
                 continue
         
-        # #region agent log
-        import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1951','message':'Extraction phase complete','data':{'total_blocks':len(all_blocks),'total_files':len(all_files)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'E'})+'\n')
-        # #endregion
-        _safe_print(f"\n[CROSS-FILE] Extracted {len(all_blocks)} code blocks from {len(all_files)} files")
-        write_status(f"Extracted {len(all_blocks)} code blocks")
+        _safe_print(f"\n[CROSS-FILE] Extracted {len(changed_blocks)} blocks from changed files, {len(all_blocks)} blocks from all files")
+        write_status(f"Extracted {len(changed_blocks)} changed blocks, {len(all_blocks)} reference blocks")
         
-        # Compare blocks across files
+        # Compare changed blocks against all blocks (including changed blocks)
         SIMILARITY_THRESHOLD = 0.90
         compared_pairs = set()
-        total_comparisons = (len(all_blocks) * (len(all_blocks) - 1)) // 2
+        total_comparisons = len(changed_blocks) * len(all_blocks)
         comparison_count = 0
         last_progress = 0
         
-        # #region agent log
-        import json;open(r'c:\dev\augmented-teams\.cursor\debug.log','a').write(json.dumps({'location':'duplication_scanner.py:1963','message':'Starting comparison phase','data':{'total_comparisons':total_comparisons},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'E'})+'\n')
-        # #endregion
-        _safe_print(f"[CROSS-FILE] Starting {total_comparisons} pairwise comparisons...")
-        write_status(f"Starting {total_comparisons} pairwise comparisons...")
+        _safe_print(f"[CROSS-FILE] Starting {total_comparisons:,} pairwise comparisons (changed vs all)...")
+        write_status(f"Starting {total_comparisons:,} pairwise comparisons...")
         
         start_time = datetime.now()
         last_report_time = start_time
@@ -1724,8 +1736,19 @@ class DuplicationScanner(CodeScanner):
         REPORT_INTERVAL_COMPARISONS = 50000  # Or every 50K comparisons
         last_comparison_report = 0
         
-        for i, block1 in enumerate(all_blocks):
-            for j, block2 in enumerate(all_blocks[i+1:], start=i+1):
+        # Compare each changed block against all blocks
+        for i, block1 in enumerate(changed_blocks):
+            for j, block2 in enumerate(all_blocks):
+                # Skip if same file (within-file duplication already checked in scan_file)
+                if block1['file_path'] == block2['file_path']:
+                    continue
+                
+                # Skip comparing a block against itself
+                if (block1['file_path'] == block2['file_path'] and 
+                    block1['start_line'] == block2['start_line'] and
+                    block1['func_name'] == block2['func_name']):
+                    continue
+                
                 comparison_count += 1
                 
                 # Report progress: every 5%, every 50K comparisons, or every 10 seconds
@@ -1750,15 +1773,6 @@ class DuplicationScanner(CodeScanner):
                     last_progress = progress_pct
                     last_report_time = now
                     last_comparison_report = comparison_count
-                # Skip if same file (already checked in scan_code_file)
-                if block1['file_path'] == block2['file_path']:
-                    continue
-                
-                # Skip if already compared
-                pair_key = tuple(sorted([i, j]))
-                if pair_key in compared_pairs:
-                    continue
-                compared_pairs.add(pair_key)
                 
                 # Calculate similarity
                 ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])

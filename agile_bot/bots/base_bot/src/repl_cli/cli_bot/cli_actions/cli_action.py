@@ -28,16 +28,24 @@ class CLIAction:
             return "completed"
         return "pending"
     
-    def instructions(self, args: str = "") -> str:
+    def instructions(self, args: str = "", context = None) -> str:
         try:
-            context = self._parse_args_to_context(args)
+            # Update phase to 'instructions' to indicate we're at the instructions operation
+            self._session.set_action_phase('instructions')
+            # If a context object is provided, use it directly; otherwise parse from args
+            if context is None:
+                context = self._parse_args_to_context(args)
             result = self._action.get_instructions(context)
             formatted = self._format_result(result)
             
             # Prepend scope display if scope is set (CLI layer adds formatting)
             instructions_obj = self._action.instructions
             if instructions_obj.scope:
-                cli_scope = CLIScope(instructions_obj.scope, self._action.behavior.bot_paths.workspace_directory)
+                cli_scope = CLIScope(
+                    instructions_obj.scope, 
+                    self._action.behavior.bot_paths.workspace_directory,
+                    self._session.formatter
+                )
                 scope_display = cli_scope.to_formatted_display()
                 formatted = scope_display + formatted
             
@@ -47,6 +55,8 @@ class CLIAction:
     
     def submit(self, args: str) -> str:
         try:
+            # Update phase to 'submitting' to indicate we're at the submit operation
+            self._session.set_action_phase('submitting')
             context = self._parse_args_to_context(args)
             result = self._action.submit(context)
             return self._format_result(result)
@@ -55,6 +65,8 @@ class CLIAction:
     
     def confirm(self) -> str:
         try:
+            # Update phase to 'confirming' to indicate we're at the confirm operation
+            self._session.set_action_phase('confirming')
             context = self._action.context_class()
             result = self._action.confirm(context)
             return self._format_result(result)
@@ -91,4 +103,11 @@ class CLIAction:
     @property
     def domain_action(self) -> Action:
         return self._action
+    
+    @property
+    def help(self) -> str:
+        """Get help for this specific action"""
+        from agile_bot.bots.base_bot.src.repl_cli.repl_help import ActionHelp
+        action_help = ActionHelp(self._action, self.name)
+        return action_help.help_text
 

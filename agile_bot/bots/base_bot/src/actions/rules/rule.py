@@ -121,12 +121,15 @@ class Rule:
         files_to_scan = changed_files if changed_files else files
         test_files = files_to_scan.get('test', [])
         code_files = files_to_scan.get('src', [])
+        # For cross-file scanning: use scoped files if scope is active, otherwise all files
+        # The 'files' parameter already contains scoped files when scope is active
         all_test_files = files.get('test', [])
         all_code_files = files.get('src', [])
         self._initialize_scan_state()
         try:
             scanner_instance = self._get_scanner_instance()
             self._execute_file_by_file_scan(scanner_instance, knowledge_graph, test_files, code_files, on_file_scanned)
+            # Cross-file scan uses the same scoped files - all_test_files/all_code_files are already scoped
             self._execute_cross_file_scan(scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer)
             return self._build_scan_result()
         except Exception as e:

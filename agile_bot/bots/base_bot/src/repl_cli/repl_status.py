@@ -1,16 +1,12 @@
 from typing import List
+from agile_bot.bots.base_bot.src.repl_cli.formatters.output_formatter import OutputFormatter
 
 
 class REPLStatus:
-    STAGE_MAP = {
-        'not_started': 'instructions',
-        'instructions_given': 'instructions',
-        'submitted': 'submitted'
-    }
-    
-    def __init__(self, bot, state_provider):
+    def __init__(self, bot, state_provider, formatter: OutputFormatter):
         self.bot = bot
         self.state = state_provider
+        self.formatter = formatter
     
     @property
     def behavior_names(self) -> List[str]:
@@ -36,7 +32,11 @@ class REPLStatus:
             output_lines.append("    Operations: " + " -> ".join(self._operation_status_items))
         
         output_lines.append("")
-        output_lines.append("[*] current  [OK] done  [ ] not started")
+        # Legend line using formatter markers
+        current_marker = self.formatter.status_marker(is_current=True, is_completed=False)
+        completed_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+        pending_marker = self.formatter.status_marker(is_current=False, is_completed=False)
+        output_lines.append(f"{current_marker} current  {completed_marker} done  {pending_marker} not started")
         return output_lines
     
     def _get_scope_display(self) -> List[str]:
@@ -48,47 +48,32 @@ class REPLStatus:
     def hierarchical_status(self) -> str:
         lines = []
         
-        # Show scope if set
-        scope_lines = self._get_scope_display()
-        if scope_lines:
-            lines.append("-" * 60)
-            lines.extend(scope_lines)
-            lines.append("-" * 60)
-        else:
-            lines.append("-" * 60)
-        
-        # Add Progress line after scope
-        if self.state.has_current_action:
-            lines.append(f"Progress: {self.state.progress_path}.{self.state.stage_name}")
-        else:
-            lines.append("Progress: No active workflow")
-        
         if not self.bot or not self.bot.behaviors:
             lines.append("No behaviors available")
-            lines.append("-" * 60)
+            lines.append(self.formatter.subsection_separator())
             return "\n".join(lines)
         
         current_behavior_name = self.state.current_behavior_name
         current_action_name = self.state.current_action_name
-        completed_behaviors = self.state.completed_behaviors or []
-        completed_actions = self.state.completed_action_names or []
+        
         stage = self.state.stage_name
         
-        for behavior in self.bot.behaviors:
+        # Get domain behaviors (not CLI wrappers)
+        domain_bot = self.bot.domain_bot if hasattr(self.bot, 'domain_bot') else self.bot
+        for behavior in domain_bot.behaviors:
             b_name = behavior.name
             is_current_behavior = b_name == current_behavior_name
-            is_completed_behavior = b_name in completed_behaviors
+            # Use domain logic - each behavior knows if it's completed
+            is_completed_behavior = behavior.is_completed
             
             # Get behavior description if available
             b_desc = getattr(behavior, 'description', '') or ''
             
-            # Format behavior marker
-            if is_completed_behavior:
-                marker = "[x]"
-            elif is_current_behavior:
-                marker = "[*]"
-            else:
-                marker = "[ ]"
+            # Format behavior marker using formatter
+            marker = self.formatter.status_marker(
+                is_current=is_current_behavior,
+                is_completed=is_completed_behavior
+            )
             
             # Show behavior line - only show description for current behavior
             if is_current_behavior and b_desc:
@@ -99,22 +84,21 @@ class REPLStatus:
             # Only show actions for current behavior
             if is_current_behavior and behavior.actions:
                 for action in behavior.actions:
-                    a_name = action.name
+                    a_name = action.action_name
                     is_current_action = a_name == current_action_name
-                    is_completed_action = a_name in completed_actions
+                    # Use domain logic to determine completion
+                    is_completed_action = behavior.actions.is_action_completed(a_name)
                     
                     # Get action description if available
                     a_desc = getattr(action, 'description', '') or ''
                     
-                    # Format action marker
-                    if is_completed_action:
-                        a_marker = "[x]"
-                    elif is_current_action:
-                        a_marker = "[*]"
-                    else:
-                        a_marker = "[ ]"
+                    # Format action marker using formatter
+                    a_marker = self.formatter.status_marker(
+                        is_current=is_current_action,
+                        is_completed=is_completed_action
+                    )
                     
-                    # Show action line
+                    # Show action line with proper indentation
                     if is_current_action and a_desc:
                         lines.append(f"  {a_marker} {a_name} - {a_desc}")
                     else:
@@ -125,34 +109,51 @@ class REPLStatus:
                         submit_params = self._get_submit_params(action)
                         common_params = ' --path="..." --scope="..."'
                         
-                        # Instructions
+                        # Instructions - use formatter
                         if stage == 'instructions' or stage == 'not_started':
-                            lines.append(f"    [*] instructions{instr_params}{common_params}")
+                            instr_marker = self.formatter.status_marker(is_current=True, is_completed=False)
                         else:
-                            lines.append(f"    [x] instructions{instr_params}{common_params}")
+                            instr_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+                        lines.append(f"    {instr_marker} instructions{instr_params}{common_params} -> Returns instructions for the AI Chat (you) to follow for this action.")
                         
-                        # Submit
-                        if stage == 'submitted':
-                            lines.append(f"    [*] submit{submit_params}{common_params}")
-                        elif stage in ('instructions', 'not_started', 'instructions_given'):
-                            lines.append(f"    [ ] submit{submit_params}{common_params}")
+                        # Submit - use formatter
+                        if stage == 'submitting':
+                            submit_marker = self.formatter.status_marker(is_current=True, is_completed=False)
+                        elif stage in ('instructions', 'not_started'):
+                            submit_marker = self.formatter.status_marker(is_current=False, is_completed=False)
                         else:
-                            lines.append(f"    [x] submit{submit_params}{common_params}")
+                            submit_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+                        lines.append(f"    {submit_marker} submit{submit_params}{common_params} -> Submit data the AI Chat (you) have created as a result of following instructions for this action")
                         
-                        # Confirm
-                        lines.append(f"    [ ] confirm")
+                        # Confirm - use formatter
+                        if stage == 'confirming':
+                            confirm_marker = self.formatter.status_marker(is_current=True, is_completed=False)
+                        elif stage in ('instructions', 'not_started', 'submitting'):
+                            confirm_marker = self.formatter.status_marker(is_current=False, is_completed=False)
+                        else:
+                            confirm_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+                        lines.append(f"    {confirm_marker} confirm -> Confirm all operations have been completed for this action. Move on to next action.")
         
         lines.append("")
         lines.append("Run:")
-        lines.append("echo 'instructions' | python repl_main.py to see instructions for this action.")
-        lines.append("echo '[behavior.][action.]operation' | python repl_main.py  - navigate and perform operation")
+        lines.append("```")
+        lines.append("echo '[behavior]' | python repl_main.py           - navigate to behavior")
         lines.append("echo '[behavior][.action]' | python repl_main.py           - navigate to behavior/action")
-        lines.append("-" * 60)
+        lines.append("echo '[behavior.][action.]operation' | python repl_main.py  - navigate and perform operation")
+        lines.append("```")
+        lines.append(self.formatter.subsection_separator())
         
         # Add quick commands menu
-        lines.append("Commands: status | back | current | next | path [dir] | scope [filter] | help | exit")
-        lines.append("run echo '[command]' | python repl_main.py to invoke commands")
-        lines.append("=" * 90)
+        lines.append("## 💻 **Commands:**")
+        lines.append("**status | back | current | next | path [dir] | scope [filter] | help | exit**")
+        lines.append("")
+        lines.append("```")
+        lines.append("// Run")
+        lines.append("echo '[command]' | python repl_main.py")
+        lines.append("// to invoke commands")
+        lines.append("```")
+        lines.append("")
+        lines.append(self.formatter.section_separator())
         
         return "\n".join(lines)
     
@@ -201,7 +202,7 @@ class REPLStatus:
             "  current       - Re-execute current operation",
             "  next          - Advance to next action",
             "  path [dir]    - Show/set working directory",
-            "  scope [filter]- Show/set/clear scope filter",
+            "  scope [filter]- Show/set/clear scope filter (use COMPLETE paths)",
             "  help          - Show detailed help",
             "  exit          - Exit CLI"
         ])
@@ -245,16 +246,27 @@ class REPLStatus:
     @property
     def _operation_status_items(self) -> List[str]:
         stage = self.state.stage_name
+        current_marker = self.formatter.status_marker(is_current=True, is_completed=False)
+        pending_marker = self.formatter.status_marker(is_current=False, is_completed=False)
+        completed_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+        
         if stage == 'instructions':
-            return ["instructions [*]", "submit [ ]", "confirm [ ]"]
+            return [f"instructions {current_marker}", f"submit {pending_marker}", f"confirm {pending_marker}"]
         elif stage == 'submitted':
-            return ["instructions [OK]", "submit [*]", "confirm [ ]"]
+            return [f"instructions {completed_marker}", f"submit {current_marker}", f"confirm {pending_marker}"]
         return []
     
-    def _format_item(self, name: str, is_current: bool, is_completed: bool, current_marker: str = "[*]") -> str:
-        if is_completed:
-            return f"{name} [OK]"
-        elif is_current:
-            return f"{name} {current_marker}"
-        return f"{name} [ ]"
+    def _format_item(self, name: str, is_current: bool, is_completed: bool, current_marker: str = None) -> str:
+        if current_marker is None:
+            # Use formatter to generate marker
+            marker = self.formatter.status_marker(is_current=is_current, is_completed=is_completed)
+        else:
+            # Use provided marker (for backward compatibility)
+            if is_completed:
+                marker = self.formatter.status_marker(is_current=False, is_completed=True)
+            elif is_current:
+                marker = current_marker
+            else:
+                marker = self.formatter.status_marker(is_current=False, is_completed=False)
+        return f"{name} {marker}"
 
