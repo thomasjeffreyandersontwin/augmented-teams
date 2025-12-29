@@ -10,7 +10,13 @@
 
 ## Domain Model Descriptions
 
-{domain_model_descriptions}
+### Module: {module}
+
+{domain_model_descriptions_for_module}
+
+### Module: {another_module}
+
+{domain_model_descriptions_for_module}
 
 ---
 

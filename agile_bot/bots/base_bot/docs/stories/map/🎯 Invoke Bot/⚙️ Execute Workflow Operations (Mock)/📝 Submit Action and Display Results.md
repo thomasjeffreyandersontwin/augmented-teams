@@ -48,6 +48,8 @@ And REPLSession displays list of files that would be saved (stubbed)
 | behavior | action |
 | --- | --- |
 | shape | build |
+| shape | clarify |
+| discovery | clarify |
 | exploration | validate |
 | scenarios | build |
 
@@ -63,5 +65,44 @@ When user enters command: "submit"
 Then Bot delegates to build.submit with ActionContext
 And Action returns stubbed result with files: ["story-graph.json", "Navigate To Behavior.md"]
 And REPLSession displays "[STUBBED] Would save: story-graph.json, Navigate To Behavior.md"
+```
+
+
+### Scenario: User submits clarify answers (happy_path)
+
+**Steps:**
+```gherkin
+Given REPLSession is active with Bot
+And current behavior is "<behavior>" and action is "clarify"
+And user has reviewed key questions
+When user enters command: "submit {"answers": {"What are goals?": "Create bot"}}"
+Then REPLSession parses JSON to ClarifyActionContext
+And REPLSession calls action.submit(context)
+And Action saves clarification.json with answers
+And REPLSession displays formatted output with:
+  - **INSTRUCTIONS SECTION:** header (if navigating to next action)
+  - "Clarification saved: N question(s) and answer(s) saved to <path>"
+  - CLI STATUS section showing current progress
+```
+
+**Examples:**
+| behavior | answers | evidence_provided |
+| --- | --- | --- |
+| shape | {"What are goals?": "Create bot"} | {} |
+| discovery | {} | {"domain_doc": "path/to/doc.md"} |
+| scenarios | {"Who are users?": "Developers"} | {"story_map": "path/to/map.md"} |
+
+
+### Scenario: User submits clarify with evidence (happy_path)
+
+**Steps:**
+```gherkin
+Given REPLSession is active with Bot
+And current behavior is "discovery" and action is "clarify"
+When user enters command: "submit {"evidence_provided": {"domain_doc": "path/to/doc.md"}}"
+Then REPLSession parses JSON to ClarifyActionContext
+And Action saves evidence to clarification.json
+And REPLSession displays "Clarification saved: 1 evidence item(s) saved to <path>"
+And REPLSession wraps output with CLI STATUS section
 ```
 

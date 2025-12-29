@@ -756,9 +756,9 @@ class TestNavigateToAction:
 class TestNavigateWithinBehavior:
     
     @pytest.mark.parametrize("behavior,current_action,completed_actions,command,expected_in_output,new_action", [
-        ("shape", "build", ["clarify", "strategy"], "current", "EXECUTING shape.build.instructions", "build"),
-        ("shape", "build", ["clarify", "strategy"], "confirm", "EXECUTING shape.validate.instructions", "validate"),
-        ("shape", "validate", ["clarify", "strategy", "build"], "back", "EXECUTING shape.build.instructions", "build"),
+        ("shape", "build", ["clarify", "strategy"], "current", "CLI STATUS", "build"),
+        ("shape", "build", ["clarify", "strategy"], "confirm", "CLI STATUS", "validate"),
+        ("shape", "validate", ["clarify", "strategy", "build"], "back", "CLI STATUS", "build"),
         ("shape", "clarify", [], "back", "ERROR: Already at first action", "clarify"),
         ("shape", "render", ["clarify", "strategy", "build", "validate"], "confirm", "COMPLETE: shape behavior finished", "render")
     ])
@@ -773,6 +773,7 @@ class TestNavigateWithinBehavior:
         
         cli_response = when_user_enters_command(repl_session, command)
         
+        # New display format no longer uses "EXECUTING" prefix
         then_cli_displays(cli_response, expected_in_output)
         then_behavior_action_state_is_set(workspace_directory, 'current_action', f'story_bot.{behavior}.{new_action}')
 

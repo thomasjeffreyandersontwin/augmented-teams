@@ -192,56 +192,6 @@ Commands:
 
 ---
 
-### 6. Invoke Rules Action Outside Workflow
-**Epic:** Navigate Bot Behaviors and Actions With CLI  
-**Sequential Order:** 3  
-**Story Type:** User  
-**Actor:** User
-
-**Purpose:** Allow users to directly invoke the `rules` action to load behavior-specific rules into AI context at any time, without being part of the sequential behavior_action_flow.
-
-**Implementation Notes:**
-- The `rules` action has `workflow: false` in its `action_config.json`
-- Purpose of rules action: Load behavior-specific rules into AI context for guidance on writing compliant content
-- Infrastructure should support ANY independent action (`workflow: false`), but this story focuses specifically on `rules`
-- Other independent actions (like `help`) will benefit from the same infrastructure
-- Users should be able to invoke rules using:
-  - `rules` - Invoke for current bot/behavior context
-  - `<behavior>.rules` - Invoke rules for specific behavior
-  - `<bot_name>.rules` - Invoke rules for specific bot
-- Rules invocation doesn't affect workflow state (current_action, next_action, etc.)
-- Can be invoked at any point without interrupting the workflow
-- Rules action loads rule files and injects them into AI context for validation/guidance
-
-**Example Commands:**
-```bash
-# Invoke rules action directly for current context
-> rules
-
-# Invoke rules for specific behavior context
-> discovery.rules
-
-# Invoke rules for specific bot
-> story_bot.rules
-> crc_bot.rules
-
-# Rules don't change workflow position
-> rules
-> build  # Still at your previous workflow position
-```
-
-**Acceptance Criteria:**
-- Rules action is discoverable in tree display (marked as independent/non-workflow)
-- Can invoke rules action directly without navigating through workflow
-- Rules action doesn't modify workflow state
-- Can invoke rules action across bots
-- Rules action loads and displays behavior-specific rules
-- Help text explains that rules is independent from workflow
-- Display distinguishes workflow actions from independent actions like rules
-- Infrastructure supports other independent actions (help, etc.) using same pattern
-
----
-
 ## Implementation Order
 
 1. **Load All Registered Bots** (Foundation)

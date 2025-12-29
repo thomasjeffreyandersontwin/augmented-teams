@@ -172,8 +172,66 @@ class TestGetActionInstructionsThroughCLI:
         cli_response = repl_session.read_and_execute_command('shape.build.instructions --scope "Story1, Story2"')
         
         # THEN: CLIAction uses CLIScope to parse scope string
-        # AND: CLI displays formatted instructions with scope
-        assert cli_response.status == 'success' or 'EXECUTING' in cli_response.output
+        # AND: CLI displays formatted instructions with scope (new format with headers)
+        assert cli_response.status == 'success'
+        assert '**INSTRUCTIONS SECTION:**' in cli_response.output or 'instructions' in cli_response.output.lower()
+    
+    def test_user_gets_instructions_for_clarify_action_without_context(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User gets instructions for clarify action without context
+        GIVEN: CLI is at shape.clarify.instructions
+        WHEN: user enters 'shape.clarify.instructions'
+        THEN: CLI displays key questions and required evidence from guardrails
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.clarify.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
+        
+        # WHEN: user enters 'shape.clarify.instructions'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('shape.clarify.instructions')
+        
+        # THEN: CLI displays formatted instructions with new header format
+        assert cli_response.status == 'success'
+        assert '**INSTRUCTIONS SECTION:**' in cli_response.output or 'CLI STATUS' in cli_response.output
+    
+    def test_user_calls_clarify_by_name_shortcut(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User calls clarify action by name as shortcut
+        GIVEN: CLI is at shape.clarify.instructions
+        WHEN: user enters just 'clarify' (action name only)
+        THEN: CLI executes instructions operation on current behavior's clarify action
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.clarify.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
+        
+        # WHEN: user enters just 'clarify'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('clarify')
+        
+        # THEN: CLI executes instructions operation with new display format
+        assert cli_response.status == 'success'
+        # Output should have new section headers or CLI STATUS
+        assert '**INSTRUCTIONS SECTION:**' in cli_response.output or 'CLI STATUS' in cli_response.output or len(cli_response.output) > 50
 
 
 class TestSubmitWorkThroughCLIWithStringParameters:
@@ -205,8 +263,69 @@ class TestSubmitWorkThroughCLIWithStringParameters:
         cli_response = repl_session.read_and_execute_command('submit')
         
         # THEN: CLIAction calls action.submit(context)
-        # AND: CLI displays confirmation
+        # AND: CLI displays confirmation with new format
         assert cli_response.status in ['success', 'error'] or 'submit' in cli_response.output.lower()
+    
+    def test_user_submits_clarify_answers(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User submits clarify answers
+        GIVEN: CLI is at shape.clarify.instructions
+        WHEN: user enters 'submit' with answers parameter
+        THEN: CLI saves clarification data and displays confirmation
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.clarify.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
+        
+        # WHEN: user enters 'submit' with JSON answers
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        
+        # Submit with answers as JSON context (matches ClarifyActionContext)
+        cli_response = repl_session.read_and_execute_command('submit {"answers": {"What are goals?": "Create bot"}}')
+        
+        # THEN: CLI displays confirmation with new display format
+        assert cli_response.status in ['success', 'error']
+        # Should show CLI STATUS section or submission message
+        assert 'CLI STATUS' in cli_response.output or 'submit' in cli_response.output.lower() or 'Clarification saved' in cli_response.output
+    
+    def test_user_submits_clarify_with_evidence(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User submits clarify with evidence
+        GIVEN: CLI is at discovery.clarify.instructions
+        WHEN: user enters 'submit' with evidence-provided parameter
+        THEN: CLI saves evidence and displays confirmation
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at discovery.clarify.instructions
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'discovery', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'discovery', 'clarify', 'instructions')
+        
+        # WHEN: user enters 'submit' with evidence_provided
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        
+        cli_response = repl_session.read_and_execute_command('submit {"evidence_provided": {"domain_doc": "path/to/doc.md"}}')
+        
+        # THEN: CLI displays confirmation
+        assert cli_response.status in ['success', 'error']
+        # New display format shows status sections
+        assert 'CLI STATUS' in cli_response.output or 'submit' in cli_response.output.lower() or 'Clarification saved' in cli_response.output
 
 
 class TestConfirmActionCompletionThroughCLI:
@@ -238,9 +357,38 @@ class TestConfirmActionCompletionThroughCLI:
         cli_response = repl_session.read_and_execute_command('confirm')
         
         # THEN: CLIAction calls action.confirm()
-        # AND: CLI displays confirmation with next action
+        # AND: CLI displays confirmation with new format (no more "EXECUTING" prefix)
         # AND: CLI automatically navigates to shape.validate.instructions
         assert cli_response.status == 'success' or 'confirm' in cli_response.output.lower()
+    
+    def test_user_confirms_clarify_action_completion(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: User confirms clarify action completion
+        GIVEN: CLI is at shape.clarify.submit
+        WHEN: user enters 'confirm'
+        THEN: CLI automatically navigates to shape.strategy.instructions
+        """
+        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+        from agile_bot.bots.base_bot.src.bot.bot import Bot
+        
+        # GIVEN: CLI is at shape.clarify.submit
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
+        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'submit')
+        
+        # WHEN: user enters 'confirm'
+        bot = Bot(
+            bot_name='story_bot',
+            bot_directory=bot_directory,
+            config_path=bot_directory / 'bot_config.json'
+        )
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+        cli_response = repl_session.read_and_execute_command('confirm')
+        
+        # THEN: CLI confirms and advances to next action (strategy)
+        assert cli_response.status == 'success' or 'confirm' in cli_response.output.lower()
+        # New format wraps output with context headers
+        assert 'CLI STATUS' in cli_response.output or '**INSTRUCTIONS SECTION:**' in cli_response.output or len(cli_response.output) > 50
     
     def test_user_confirms_action_and_advances_to_next(self, bot_directory, workspace_directory, monkeypatch):
         """

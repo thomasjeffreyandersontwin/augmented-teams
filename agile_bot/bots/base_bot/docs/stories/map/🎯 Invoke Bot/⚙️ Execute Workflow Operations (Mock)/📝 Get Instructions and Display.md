@@ -47,8 +47,11 @@ And REPLSession displays formatted instructions to user
 | behavior | action | scope_type | scope_value |
 | --- | --- | --- | --- |
 | shape | build | story | Navigate To Behavior |
+| shape | clarify | all | all |
+| discovery | clarify | epic | Invoke Bot |
 | exploration | validate | increment | 11 |
 | scenarios | build | epic | Run Interactive REPL |
+| scenarios | clarify | story | Request Help |
 
 
 ### Scenario: User requests instructions with inline scope parameter (happy_path)
@@ -64,4 +67,29 @@ And REPLSession routes to Bot
 And Bot delegates to build.get_instructions with ActionContext
 And REPLSession displays instructions for story "Request Status"
 ```
+
+
+### Scenario: User requests clarify instructions without parameters (happy_path)
+
+**Steps:**
+```gherkin
+Given REPLSession is active with Bot
+And current behavior is "<behavior>" and action is "clarify"
+When user enters command: "clarify" or "clarify.instructions"
+Then REPLSession routes to CLIBot
+And CLIBot calls action.instructions() with empty ClarifyActionContext
+And Action returns required questions and evidence from guardrails
+And REPLSession displays formatted instructions with:
+  - **INSTRUCTIONS SECTION:** header
+  - Key questions to answer
+  - Required evidence to provide
+  - CLI STATUS section with current progress
+```
+
+**Examples:**
+| behavior | key_questions_shown | evidence_shown |
+| --- | --- | --- |
+| shape | Yes | Yes |
+| discovery | Yes | Yes |
+| scenarios | Yes | Yes |
 
