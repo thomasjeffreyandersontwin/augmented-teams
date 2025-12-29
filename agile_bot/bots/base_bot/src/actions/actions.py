@@ -14,7 +14,8 @@ class Actions:
 
     def __init__(self, behavior: 'Behavior'):
         self.behavior = behavior
-        actions_list = behavior.actions_workflow
+        actions_workflow = behavior._config.get('actions_workflow', {})
+        actions_list = actions_workflow.get('actions', [])
         
         # Separate workflow actions (have order) from non-workflow actions (no order)
         workflow_actions = [a for a in actions_list if a.get('order') is not None]
@@ -94,12 +95,6 @@ class Actions:
             return self._actions[next_index]
         return None
 
-    def previous(self) -> Optional[Action]:
-        prev_index = self._current_index - 1
-        if prev_index >= 0:
-            return self._actions[prev_index]
-        return None
-
     def __iter__(self) -> Iterator[Action]:
         for action in self._actions:
             yield action
@@ -113,11 +108,12 @@ class Actions:
     def _filter_completed_actions_after_target(self, completed_actions: list, target_index: int) -> list:
         return self._state_manager.filter_completed_actions_after_target(completed_actions, target_index, self._actions)
 
-    def navigate_to(self, action_name: str, out_of_order: bool=True):
+    def navigate_to(self, action_name: str, out_of_order: bool=False):
         action = self.find_by_name(action_name)
         if action is None:
             raise ValueError(f"Action '{action_name}' not found")
         
+        # Check if this is a non-workflow action (no order)
         is_non_workflow = action in self._non_workflow_actions
         if is_non_workflow:
             # Non-workflow actions don't affect workflow state
@@ -129,33 +125,15 @@ class Actions:
                 target_index = i
                 self._current_index = i
                 break
-        
-        # When navigating: mark all actions before target as complete, clear actions after target
-        if out_of_order and self.behavior.bot_paths and target_index is not None:
-            state_file = self._state_manager.get_state_file_path()
-            if state_file.exists():
-                state_data = json.loads(state_file.read_text(encoding='utf-8'))
-            else:
-                state_data = {}
-            
-            completed_actions = state_data.get('completed_actions', [])
-            
-            # Mark all actions before target as complete
-            for i in range(target_index):
-                action_state = f"{self.behavior.bot_name}.{self.behavior.name}.{self._actions[i].action_name}"
-                # Check if already completed
-                is_completed = any(a.get('action_state') == action_state for a in completed_actions if isinstance(a, dict))
-                if not is_completed:
-                    completed_actions.append({
-                        'action_state': action_state,
-                        'timestamp': datetime.now().isoformat()
-                    })
-            
-            # Clear completed actions after the target
+        if not out_of_order or not self.behavior.bot_paths:
+            self.save_state()
+            return
+        state_file = self._state_manager.get_state_file_path()
+        state_data = json.loads(state_file.read_text(encoding='utf-8'))
+        completed_actions = state_data.get('completed_actions', [])
+        if completed_actions:
             state_data['completed_actions'] = self._filter_completed_actions_after_target(completed_actions, target_index)
-            state_file.parent.mkdir(parents=True, exist_ok=True)
             state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
-        
         self.save_state()
 
     def close_current(self):
@@ -282,11 +260,21 @@ class Actions:
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
 
     def is_action_completed(self, action_name: str) -> bool:
-        workspace_dir = self.behavior.bot_paths.workspace_directory
-        state_file = workspace_dir / 'behavior_action_state.json'
-        if not state_file.exists():
+        """Check if an action is completed using positional logic.
+        
+        An action is considered completed if the current action is past it in the workflow.
+        This matches the terminal formatter's logic.
+        """
+        action_names = self.names
+        if action_name not in action_names:
             return False
-        state_data = json.loads(state_file.read_text(encoding='utf-8'))
-        completed_actions = state_data.get('completed_actions', [])
-        action_state = f'{self.behavior.bot_name}.{self.behavior.name}.{action_name}'
-        return any((action.get('action_state') == action_state for action in completed_actions))
+        
+        current_action_name = self.current_action_name
+        if not current_action_name or current_action_name not in action_names:
+            return False
+        
+        action_index = action_names.index(action_name)
+        current_index = action_names.index(current_action_name)
+        
+        # Action is completed if current action is past it
+        return action_index < current_index

@@ -87,6 +87,8 @@ class Scope:
     Uses KnowledgeGraphFilter for story/epic/increment scoping
     and FileFilter for file-based scoping. Maintains backward compatibility
     with type/value/exclude API.
+    
+    The Scope object is responsible for its own persistence to the bot state file.
     """
     type: ScopeType = ScopeType.ALL
     value: List[str] = field(default_factory=list)
@@ -165,6 +167,52 @@ class Scope:
             'skiprule': self.skiprule,
         }
     
+    def apply_to_bot(self, workspace_directory: 'Path') -> None:
+        """Clear old scope and store this scope to the bot state file.
+        
+        The Scope object is responsible for its own persistence.
+        """
+        import json
+        state_file = self._get_state_file_path(workspace_directory)
+        
+        # Read existing state or create new
+        if state_file.exists():
+            try:
+                state_data = json.loads(state_file.read_text())
+            except (json.JSONDecodeError, IOError):
+                state_data = {}
+        else:
+            state_data = {}
+        
+        # Clear old scope and store new scope
+        state_data['scope'] = self.to_dict()
+        
+        # Write back to file
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(json.dumps(state_data, indent=2))
+    
+    @staticmethod
+    def clear_from_bot(workspace_directory: 'Path') -> None:
+        """Remove scope from the bot state file."""
+        import json
+        state_file = Scope._get_state_file_path(workspace_directory)
+        
+        if not state_file.exists():
+            return
+        
+        try:
+            state_data = json.loads(state_file.read_text())
+            if 'scope' in state_data:
+                del state_data['scope']
+                state_file.write_text(json.dumps(state_data, indent=2))
+        except (json.JSONDecodeError, IOError):
+            pass
+    
+    @staticmethod
+    def _get_state_file_path(workspace_directory: 'Path') -> 'Path':
+        """Get path to the bot state file."""
+        return workspace_directory / 'behavior_action_state.json'
+    
     def to_display_lines(self, workspace_directory: 'Path') -> List[str]:
         """Render scope as display lines with hierarchical expansion.
         
@@ -193,6 +241,21 @@ class Scope:
             else:
                 for item in (self.value if isinstance(self.value, list) else [self.value]):
                     lines.append(f"  - {item}")
+        elif self.type == ScopeType.FILES:
+            # Expand file paths to show all actual files that will be scanned
+            expanded_files = self._expand_file_paths(workspace_directory)
+            if expanded_files:
+                for file_path in sorted(expanded_files):
+                    # Show relative path from workspace
+                    try:
+                        rel_path = file_path.relative_to(workspace_directory)
+                        lines.append(f"  - {rel_path}")
+                    except ValueError:
+                        lines.append(f"  - {file_path}")
+            else:
+                # Fallback to showing the scope value if expansion fails
+                for item in (self.value if isinstance(self.value, list) else [self.value]):
+                    lines.append(f"  - {item} (no files found)")
         else:
             if isinstance(self.value, list):
                 for item in self.value:
@@ -201,6 +264,48 @@ class Scope:
                 lines.append(f"  - {self.value}")
         
         return lines
+    
+    def _expand_file_paths(self, workspace_directory: 'Path') -> List['Path']:
+        """Expand file scope paths to actual files that will be scanned."""
+        from pathlib import Path
+        import glob as glob_module
+        
+        all_files = []
+        # Ensure value is treated as a list
+        paths = self.value if isinstance(self.value, list) else [self.value]
+        
+        for path_str in paths:
+            # Check if path contains glob patterns
+            has_glob = any(char in path_str for char in ['*', '?', '['])
+            
+            if has_glob:
+                # Handle glob patterns
+                # If not absolute, make it relative to workspace
+                if not Path(path_str).is_absolute():
+                    pattern = str(workspace_directory / path_str)
+                else:
+                    pattern = path_str
+                
+                # Expand glob pattern
+                matched_files = glob_module.glob(pattern, recursive=True)
+                for match in matched_files:
+                    match_path = Path(match)
+                    if match_path.is_file():
+                        all_files.append(match_path)
+            else:
+                # No glob pattern - handle as literal path
+                file_path = Path(path_str)
+                if not file_path.is_absolute():
+                    file_path = workspace_directory / file_path
+                
+                # Expand directories to .py files
+                if file_path.exists() and file_path.is_dir():
+                    py_files = list(file_path.rglob('*.py'))
+                    all_files.extend(py_files)
+                elif file_path.exists() and file_path.is_file():
+                    all_files.append(file_path)
+        
+        return all_files
     
     def _find_scope_matches_in_graph(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
         """Find and display scope matches from story graph."""
@@ -262,7 +367,15 @@ class Scope:
         lines = []
         prefix = "  " * indent
         name = node.get('name', 'Unknown')
-        lines.append(f"{prefix}[{node_type}] {name}")
+        
+        # Use emojis matching the story map folder structure
+        emoji_map = {
+            'epic': '🎯',
+            'sub epic': '⚙️',
+            'story': '📝'
+        }
+        emoji = emoji_map.get(node_type, '•')
+        lines.append(f"{prefix}{emoji} {name}")
         
         # Don't recurse into stories - stop at story level
         if node_type == 'story':

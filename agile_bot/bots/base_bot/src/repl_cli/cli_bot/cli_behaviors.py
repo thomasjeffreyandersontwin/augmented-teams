@@ -61,6 +61,21 @@ class CLIBehaviors:
     def domain_behaviors(self) -> Behaviors:
         return self._behaviors
     
+    @property
+    def help(self) -> str:
+        """Get help for behaviors"""
+        behaviors_list = ", ".join(self.all)
+        lines = [
+            "**Available Behaviors:**",
+            f"  {behaviors_list}",
+            "",
+            "**Usage:**",
+            "  bot.behaviors.current          - access current behavior",
+            "  bot.behaviors.navigate_to(name) - navigate to specific behavior",
+            "  bot.behaviors.current.help     - get help for current behavior",
+        ]
+        return "\n".join(lines)
+    
     def __iter__(self):
         """Make CLIBehaviors iterable - yields CLIBehavior objects for each behavior"""
         for behavior in self._behaviors._behaviors:

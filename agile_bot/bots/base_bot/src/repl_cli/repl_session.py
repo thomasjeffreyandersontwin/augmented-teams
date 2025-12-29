@@ -9,31 +9,17 @@ from agile_bot.bots.base_bot.src.repl_cli.repl_results import (
     REPLCommandResponse,
     TTYDetectionResult
 )
-from agile_bot.bots.base_bot.src.repl_cli.repl_help import REPLHelp
-from agile_bot.bots.base_bot.src.repl_cli.repl_status import REPLStatus
-from agile_bot.bots.base_bot.src.repl_cli.repl_commands import (
-    register_commands,
-    ACTION_SHORTCUTS,
-    DotNotationCommand
-)
 from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
 from agile_bot.bots.base_bot.src.repl_cli.cli_bot import CLIBot
+from agile_bot.bots.base_bot.src.repl_cli.formatters.formatter_factory import FormatterFactory
 
 
 class REPLSession:
-    STAGE_MAP = {
-        'not_started': 'instructions',
-        'instructions_given': 'instructions',
-        'submitted': 'submitted'
-    }
-    
     def __init__(self, bot, workspace_directory: Path):
         self.cli_bot = CLIBot(bot, self)
         self.workspace_directory = Path(workspace_directory)
-        self.help = REPLHelp(bot)
-        self.status = REPLStatus(self.cli_bot, self)
-        self._commands = register_commands(self)
-        self._dot_notation_handler = DotNotationCommand(self)
+        tty_result = self.detect_tty()
+        self.formatter = FormatterFactory.create_formatter(tty_detected=tty_result.tty_detected)
     
     @property
     def bot(self):
@@ -83,6 +69,14 @@ class REPLSession:
         action = self.current_action
         if action and hasattr(action.domain_action, 'phase'):
             return action.domain_action.phase
+        # Fallback: read from state file
+        state_file = self.workspace_directory / 'behavior_action_state.json'
+        if state_file.exists():
+            try:
+                state_data = json.loads(state_file.read_text())
+                return state_data.get('action_phase', 'not_started')
+            except (json.JSONDecodeError, IOError):
+                pass
         return 'not_started'
     
     def set_action_phase(self, phase: str) -> None:
@@ -100,7 +94,7 @@ class REPLSession:
     
     @property
     def stage_name(self) -> str:
-        return self.STAGE_MAP.get(self.action_phase, self.action_phase)
+        return self.action_phase
     
     @property
     def progress_path(self) -> str:
@@ -148,6 +142,15 @@ class REPLSession:
         return True
     
     def display_current_state(self, full=False) -> REPLStateDisplay:
+        """Single source of truth for displaying current bot state.
+        
+        Returns REPLStateDisplay with formatted status output showing:
+        - Bot name and paths
+        - Current position header
+        - Scope filter (if set)
+        - Progress in workflow
+        - Hierarchical behavior/action/operation tree
+        """
         if not self.has_current_action:
             if not self._initialize_to_first_behavior_action():
                 return REPLStateDisplay(
@@ -156,61 +159,153 @@ class REPLSession:
                 )
             return self.display_current_state(full=full)
         
-        # Build hierarchical status display
         lines = []
-        
-        # In piped mode, add piped mode instructions header
-        tty_result = self.detect_tty()
-        if not tty_result.tty_detected:
-            lines.append("=" * 90)
-            lines.append("AI AGENT INSTRUCTIONS - PIPED MODE")
-            lines.append("=" * 90)
-            lines.append("")
-        
-        # Show hierarchical breadcrumbs
-        lines.append(self.status.hierarchical_status)
-        
-        return REPLStateDisplay(
-            output="\n".join(lines),
-            state_loaded=True,
-            current_behavior=self.current_behavior_state,
-            current_action=self.current_action_state,
-            breadcrumbs=self.status.breadcrumbs
-        )
-    
-    def get_context_header_for_ai(self) -> str:
-        if not self.has_current_action:
-            return ""
-        
-        lines = []
+        formatter = self.formatter
         
         # Get bot name from bot_directory
         if self.bot and hasattr(self.bot, 'bot_paths'):
             bot_name = self.bot.bot_paths.bot_directory.name
         else:
             bot_name = 'UNKNOWN'
-        lines.append(f"{bot_name.upper()} CLI")
         
-        # Detect piped mode and add explicit AI instruction
-        tty_result = self.detect_tty()
-        if not tty_result.tty_detected:
-            lines.append("")
-            lines.append("*** PIPED MODE DETECTED ***")
-            lines.append("This command will EXIT upon processing.")
-            lines.append("AI: Please follow ALL instructions below.")
-            lines.append("")
+        # THICK LINE at top
+        lines.append(formatter.section_separator())
+        lines.append("")
+        
+        # Bot section header
+        lines.append(f"## {formatter.bot_icon()} Bot: {bot_name}")
         
         if self.bot:
             bot_path = self.bot.bot_paths.bot_directory if hasattr(self.bot, 'bot_paths') else 'Unknown'
-            lines.append(f"Bot Path: {bot_path}")
-        lines.append(f"Work Path: {self.workspace_directory}")
+            lines.append(f"**Bot Path:**")
+            lines.append("```")
+            lines.append(str(bot_path))
+            lines.append("```")
         
-        # Show hierarchical breadcrumbs (includes Progress line after scope)
-        lines.append(self.status.hierarchical_status)
+        lines.append("")
         
+        # Workspace section
+        workspace_name = self.workspace_directory.name if hasattr(self.workspace_directory, 'name') else 'base_bot'
+        lines.append(f"{formatter.workspace_icon()} **Workspace:** {workspace_name}")
+        lines.append(f"**Path:**")
+        lines.append("```")
+        lines.append(str(self.workspace_directory))
+        lines.append("```")
+        lines.append("")
+        lines.append("To change path:")
+        lines.append("```")
+        lines.append("path demo/mob_minion              # Change to specific project")
+        lines.append("path ../another_bot               # Change to relative path")
+        lines.append("```")
         
+        # Scope section (thin line separator)
+        lines.append(formatter.subsection_separator())
         
-        return "\n".join(lines)
+        # Get scope display
+        scope_display = self.cli_bot.get_scope_display()
+        if scope_display:
+            lines.append(scope_display)
+        else:
+            # No scope set - show brief message
+            lines.append(f"{formatter.scope_icon()} Scope")
+            lines.append(f"{formatter.scope_icon()} Current Scope: all (entire project)")
+            lines.append("")
+            lines.append("To change scope:")
+            lines.append("```powershell")
+            lines.append("scope all                                                           # Work on entire project")
+            lines.append('scope "Enter Password, Authenticate User"                           # Work on specific story')
+            lines.append('scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/src/**/*.py"  # Work on specific files (must be absolute path)')
+            lines.append("```")
+        
+        lines.append(formatter.subsection_separator())
+        
+        # Progress section
+        lines.append(f"## {formatter.position_icon()} **Progress**")
+        lines.append("**Current Position:**")
+        lines.append("```")
+        lines.append(f"{self.progress_path}.{self.stage_name}")
+        lines.append("```")
+        lines.append("")
+        
+        # Show hierarchical status (Behaviors, Actions tree)
+        lines.append(self.cli_bot.status.hierarchical_status)
+        
+        output = "\n".join(lines)
+        
+        return REPLStateDisplay(
+            output=output,
+            state_loaded=True,
+            current_behavior=self.current_behavior_state,
+            current_action=self.current_action_state,
+            breadcrumbs=self.cli_bot.status.breadcrumbs
+        )
+    
+    def get_context_header_for_ai(self) -> str:
+        """Get status display as a string for AI context headers.
+        
+        This is a convenience method that extracts just the output string
+        from display_current_state().
+        """
+        state_display = self.display_current_state()
+        return state_display.output
+    
+    def _convert_domain_result_to_repl_response(self, result: Dict[str, Any], command: str) -> REPLCommandResponse:
+        """Convert a domain method result to a REPL response.
+        
+        Args:
+            result: Dict returned from domain method
+            command: The command that was executed
+        
+        Returns:
+            REPLCommandResponse with appropriate formatting
+        """
+        status = result.get('status', 'success')
+        message = result.get('message', '')
+        
+        # Special handling for exit command
+        if command == 'exit' or status == 'exit':
+            return REPLCommandResponse(
+                output=message or "Goodbye!",
+                response="",
+                status="exit",
+                repl_terminated=True
+            )
+        
+        # Special handling for help command
+        if command == 'help':
+            help_text = result.get('help_text', message)
+            return REPLCommandResponse(
+                output=help_text,
+                response=help_text,
+                status=status
+            )
+        
+        # For scope and path commands, just show the message
+        if command in ['scope', 'path']:
+            return REPLCommandResponse(
+                output=message,
+                response=message,
+                status=status
+            )
+        
+        # For navigation commands, auto-execute instructions for new position (if successful)
+        if command in ['next', 'back', 'advance', 'previous']:
+            # If navigation failed (error or at_start/at_end status), just return the error message
+            if status in ['error', 'at_start', 'at_end']:
+                return REPLCommandResponse(
+                    output=message,
+                    response=message,
+                    status='error'
+                )
+            # Navigation succeeded - auto-execute instructions for new position
+            return self._handle_current_command()
+        
+        # Default: just return the message
+        return REPLCommandResponse(
+            output=message,
+            response=message,
+            status=status
+        )
     
     def read_and_execute_command(self, command: str) -> REPLCommandResponse:
         command = command.strip()
@@ -221,7 +316,7 @@ class REPLSession:
         # Avoid false positives from dots in arguments like "*.pyc" or file paths
         first_word = command.split()[0] if command.split() else ""
         if '.' in first_word and not first_word.startswith('--'):
-            return self._dot_notation_handler.execute(command)
+            return self._handle_dot_notation(command)
         
         return self._handle_simple_command(command)
     
@@ -230,22 +325,625 @@ class REPLSession:
         command_verb = parts[0].lower()
         command_args = parts[1] if len(parts) > 1 else ""
         
-        if command_verb in self._commands:
-            cmd = self._commands[command_verb]
-            return cmd.execute(command_args) if cmd.takes_args else cmd.execute()
+        # Meta commands
+        if command_verb == 'help':
+            return self._handle_help_command(command_args)
+        if command_verb == 'status':
+            return self._handle_status_command()
+        if command_verb == 'exit':
+            return REPLCommandResponse(output="Goodbye!", response="Goodbye!", status="success", repl_terminated=True)
+        if command_verb == 'current':
+            return self._handle_current_command()
+        if command_verb == 'no':
+            state_display = self.display_current_state()
+            return REPLCommandResponse(output=state_display.output, response="Remaining in current action", status="success")
         
-        if command_verb in ACTION_SHORTCUTS:
+        # Navigation commands
+        if command_verb in ['next', 'advance']:
+            return self._handle_next_command()
+        if command_verb in ['back', 'previous']:
+            return self._handle_back_command()
+        
+        # Workflow commands
+        if command_verb == 'instructions':
+            return self._handle_instructions_command(command_args)
+        if command_verb == 'submit':
+            return self._handle_submit_command(command_args)
+        if command_verb == 'confirm':
+            return self._handle_confirm_command()
+        
+        # State commands
+        if command_verb == 'path':
+            return self._handle_path_command(command_args)
+        if command_verb == 'workspace':
+            return self._handle_path_command(command_args)  # Alias for path
+        if command_verb == 'scope':
+            return self._handle_scope_command(command_args)
+        
+        # Check if it's an action shortcut
+        action_shortcuts = ["clarify", "strategy", "build", "validate", "render"]
+        if command_verb in action_shortcuts:
             return self._handle_action_shortcut(command_verb, command_args)
         
-        behavior = self.bot.behaviors.find_by_name(command_verb)
+        # Check if it's a behavior name
+        behavior = self.cli_bot.behaviors.domain_behaviors.find_by_name(command_verb)
         if behavior:
-            return self._commands["behavior"].execute(command_verb)
+            return self._handle_behavior_command(command_verb)
         
         return REPLCommandResponse(
             output=f"ERROR: Unknown command '{command_verb}'",
             response=f"ERROR: Unknown command '{command_verb}'",
             status="error"
         )
+    
+    def _handle_help_command(self, args: str = "") -> REPLCommandResponse:
+        """Handle help command using bot.help"""
+        if not args:
+            output = self.cli_bot.help.main_help
+        else:
+            if not self.has_current_behavior:
+                return REPLCommandResponse(
+                    output="ERROR: No current behavior set. Please select a behavior first.",
+                    response="ERROR: No current behavior set",
+                    status="error"
+                )
+            action_help = self.cli_bot.help.action_help(self.current_behavior_name, args)
+            if not action_help:
+                behavior_help = self.cli_bot.help.behavior_help(self.current_behavior_name)
+                if not behavior_help:
+                    available = ", ".join(self.cli_bot.behaviors.all)
+                    return REPLCommandResponse(
+                        output=f"ERROR: behavior '{self.current_behavior_name}' not found\nAvailable behaviors: {available}",
+                        response=f"ERROR: behavior '{self.current_behavior_name}' not found",
+                        status="error"
+                    )
+                output = f"ERROR: Action '{args}' not found"
+            else:
+                output = action_help.help_text
+        
+        # Wrap with context header
+        header = self.get_context_header_for_ai()
+        full_output = f"{output}\n{header}"
+        return REPLCommandResponse(output=full_output, response=output, status="success")
+    
+    def _handle_status_command(self) -> REPLCommandResponse:
+        """Handle status command using bot.status"""
+        state_display = self.display_current_state(full=True)
+        return REPLCommandResponse(
+            output=state_display.output,
+            response=state_display.output,
+            status="success"
+        )
+    
+    def _handle_current_command(self) -> REPLCommandResponse:
+        """Re-execute current operation based on progress state"""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        # Extract operation from progress (behavior.action.operation)
+        progress = self.get_progress_line()
+        if '.' in progress and 'Progress: ' in progress:
+            parts = progress.replace('Progress: ', '').split('.')
+            if len(parts) >= 3:
+                operation = parts[2]
+                if operation == 'instructions':
+                    return self._handle_instructions_command("")
+                elif operation == 'submit':
+                    return self._handle_submit_command("")
+                elif operation == 'confirm':
+                    return REPLCommandResponse(
+                        output="Cannot re-execute 'confirm'. Use 'next' or 'back' to navigate.",
+                        response="Cannot re-execute confirm",
+                        status="error"
+                    )
+        
+        # Default: show instructions
+        return self._handle_instructions_command("")
+    
+    def _handle_next_command(self) -> REPLCommandResponse:
+        """Handle next/advance navigation"""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        behavior = self.current_behavior
+        if not behavior:
+            return REPLCommandResponse(
+                output="ERROR: No current behavior set. Please select a behavior first.",
+                response="ERROR: No current behavior set",
+                status="error"
+            )
+        
+        # Try to advance to next action within current behavior
+        next_action = behavior.actions.next
+        if next_action:
+            behavior.actions.domain_actions.navigate_to(next_action.name)
+            return self._wrap_navigation_with_instructions()
+        
+        # At last action - try next behavior
+        next_behavior = self.cli_bot.behaviors.next
+        if next_behavior:
+            if next_behavior.actions.all:
+                self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.all[0])
+            return self._wrap_navigation_with_instructions()
+        
+        return REPLCommandResponse(
+            output="ERROR: Already at last action of last behavior",
+            response="ERROR: Already at last action",
+            status="error"
+        )
+    
+    def _handle_back_command(self) -> REPLCommandResponse:
+        """Handle back/previous navigation"""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        behavior = self.current_behavior
+        if not behavior:
+            return REPLCommandResponse(
+                output="ERROR: No current behavior set. Please select a behavior first.",
+                response="ERROR: No current behavior set",
+                status="error"
+            )
+        
+        # Try to go back to previous action within current behavior
+        prev_action = behavior.actions.previous
+        if prev_action:
+            behavior.actions.domain_actions.navigate_to(prev_action.name)
+            return self._wrap_navigation_with_instructions()
+        
+        # At first action - try previous behavior's last action
+        # Get previous behavior using domain behaviors directly
+        current_idx = None
+        behaviors_list = list(self.cli_bot.behaviors.domain_behaviors._behaviors)
+        for idx, beh in enumerate(behaviors_list):
+            if beh.name == behavior.name:
+                current_idx = idx
+                break
+        
+        if current_idx is not None and current_idx > 0:
+            prev_behavior_domain = behaviors_list[current_idx - 1]
+            prev_behavior = self.cli_bot.behaviors.get_behavior(prev_behavior_domain.name)
+            if prev_behavior and prev_behavior.actions.all:
+                last_action_name = prev_behavior.actions.all[-1]
+                self.navigate_to_behavior_action(prev_behavior.name, last_action_name)
+                return self._wrap_navigation_with_instructions()
+        
+        return REPLCommandResponse(
+            output="ERROR: Already at first action of first behavior",
+            response="ERROR: Already at first action",
+            status="error"
+        )
+    
+    def _handle_instructions_command(self, args: str = "") -> REPLCommandResponse:
+        """Handle instructions command"""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action to get instructions for",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        action = self.current_action
+        try:
+            # For now, pass args as-is to the action.instructions() method
+            output = action.instructions(args)
+            return self._wrap_with_context_header(output, "Instructions displayed")
+        except Exception as e:
+            return REPLCommandResponse(
+                output=f"ERROR getting instructions: {str(e)}",
+                response=f"ERROR getting instructions: {str(e)}",
+                status="error"
+            )
+    
+    def _handle_submit_command(self, args: str = "") -> REPLCommandResponse:
+        """Handle submit command"""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action to submit for",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        action = self.current_action
+        try:
+            output = action.submit(args)
+            # Wrap with context header to show full dashboard just like instructions
+            return self._wrap_with_context_header(output, "Submission processed")
+        except Exception as e:
+            return REPLCommandResponse(
+                output=f"ERROR submitting: {str(e)}",
+                response=f"ERROR submitting: {str(e)}",
+                status="error"
+            )
+    
+    def _handle_confirm_command(self) -> REPLCommandResponse:
+        """Handle confirm command"""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action to confirm",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        behavior = self.current_behavior
+        action = self.current_action
+        current_behavior_name = behavior.name
+        current_action_name = action.name
+        
+        try:
+            # Call confirm on the action
+            result_output = action.confirm()
+            
+            # Check if at last action BEFORE closing
+            action_names = behavior.actions.all
+            is_last_action = (current_action_name == action_names[-1] if action_names else False)
+            
+            # Mark current action as complete and advance
+            behavior.actions.domain_actions.close_current()
+            
+            # If not at last action, advance to next action and auto-execute instructions
+            if not is_last_action:
+                return self._handle_instructions_command()
+            
+            # At last action - behavior is complete
+            self._mark_behavior_complete(current_behavior_name)
+            
+            # Check for next behavior
+            next_behavior = self.cli_bot.behaviors.next
+            if next_behavior:
+                # Advance to next behavior
+                self.cli_bot.behaviors.domain_behaviors.close_current()
+                # Navigate to next behavior's first action and auto-execute instructions
+                if next_behavior.actions.all:
+                    self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.all[0])
+                    return self._handle_instructions_command()
+            
+            # No more behaviors - all complete
+            return REPLCommandResponse(
+                output=f"COMPLETE: {current_behavior_name} behavior finished\n\nALL BEHAVIORS COMPLETE!",
+                response="COMPLETE: All behaviors finished",
+                status="success"
+            )
+        except Exception as e:
+            return REPLCommandResponse(
+                output=f"ERROR confirming: {str(e)}",
+                response=f"ERROR confirming: {str(e)}",
+                status="error"
+            )
+    
+    def _handle_path_command(self, args: str = "") -> REPLCommandResponse:
+        """Handle path/workspace command"""
+        if not args:
+            # Show current path
+            current_path = self.workspace_directory
+            return REPLCommandResponse(
+                output=f"Current path: {current_path}",
+                response=f"Current path: {current_path}",
+                status="success"
+            )
+        
+        # Change path
+        result = self.cli_bot.change_path(args)
+        return REPLCommandResponse(
+            output=result['message'],
+            response=result['message'],
+            status=result['status']
+        )
+    
+    def _handle_scope_command(self, args: str = "") -> REPLCommandResponse:
+        """Handle scope command"""
+        if not args:
+            # Show current scope
+            output = self.cli_bot.get_scope_display()
+            return REPLCommandResponse(
+                output=output,
+                response=output,
+                status="success"
+            )
+        
+        # Handle "all" - clears the scope filter
+        if args.lower() == 'all':
+            result = self.cli_bot.clear_scope()
+            return REPLCommandResponse(
+                output=result['message'],
+                response=result['message'],
+                status=result['status']
+            )
+        
+        # Parse and set scope
+        if args.startswith(('file:', 'files:')):
+            prefix = args.split(':', 1)[0].strip().lower()
+            value_part = args.split(':', 1)[1].strip()
+            scope_values_raw = [v.strip().strip('"').strip("'") for v in value_part.split(',') if v.strip()]
+            scope_type = ScopeType.FILES
+            scope_value = scope_values_raw
+        else:
+            scope_values_raw = [v.strip().strip('"').strip("'") for v in args.split(',') if v.strip()]
+            
+            # Strip "file:" or "files:" prefix if present (can happen when args are quoted)
+            cleaned_values = []
+            for v in scope_values_raw:
+                if v.startswith('file:'):
+                    cleaned_values.append(v[5:])  # Remove "file:" prefix
+                elif v.startswith('files:'):
+                    cleaned_values.append(v[6:])  # Remove "files:" prefix
+                else:
+                    cleaned_values.append(v)
+            
+            # Auto-detect if this looks like a file path (absolute or relative with separators)
+            import os
+            looks_like_path = any(
+                os.path.isabs(v) or '\\' in v or '/' in v 
+                for v in cleaned_values
+            )
+            if looks_like_path:
+                scope_type = ScopeType.FILES
+                scope_value = cleaned_values
+            else:
+                scope_type = ScopeType.STORY
+                scope_value = cleaned_values
+        
+        scope = Scope(type=scope_type, value=scope_value)
+        result = self.cli_bot.set_scope(scope)
+        
+        # Get the scope display lines
+        output = self.cli_bot.get_scope_display()
+        
+        return REPLCommandResponse(
+            output=output,
+            response=output,
+            status=result['status'],
+            scope_stored=True
+        )
+    
+    def _handle_behavior_command(self, behavior_name: str) -> REPLCommandResponse:
+        """Handle behavior navigation"""
+        behavior = self.cli_bot.behaviors.domain_behaviors.find_by_name(behavior_name)
+        if not behavior:
+            available = ", ".join(self.cli_bot.behaviors.all)
+            return REPLCommandResponse(
+                output=f"ERROR: behavior '{behavior_name}' not found\nAvailable behaviors: {available}",
+                response=f"ERROR: behavior '{behavior_name}' not found",
+                status="error"
+            )
+        
+        if not behavior.actions.names:
+            return REPLCommandResponse(
+                output=f"ERROR: behavior '{behavior_name}' has no actions",
+                response=f"ERROR: behavior '{behavior_name}' has no actions",
+                status="error"
+            )
+        
+        first_action_name = behavior.actions.names[0]
+        try:
+            self.navigate_to_behavior_action(behavior_name, first_action_name)
+        except ValueError as e:
+            return REPLCommandResponse(
+                output=f"ERROR: {str(e)}",
+                response=f"ERROR: {str(e)}",
+                status="error"
+            )
+        return self._handle_instructions_command()
+    
+    def navigate_to_behavior_action(self, behavior_name: str, action_name: str):
+        """Navigate to a specific behavior and action
+        
+        Raises:
+            ValueError: If behavior or action not found
+        """
+        # Navigate to behavior
+        self.cli_bot.behaviors.domain_behaviors.navigate_to(behavior_name)
+        # Get the behavior
+        behavior = self.cli_bot.behaviors.domain_behaviors.find_by_name(behavior_name)
+        if behavior:
+            # Navigate to action within the behavior
+            try:
+                behavior.actions.navigate_to(action_name)
+            except ValueError as e:
+                # Add behavior context to error message
+                available_actions = ", ".join(behavior.actions.names)
+                raise ValueError(f"Action '{action_name}' not found in behavior '{behavior_name}'. Available actions: {available_actions}")
+        else:
+            raise ValueError(f"Behavior '{behavior_name}' not found")
+    
+    def _wrap_navigation_with_instructions(self) -> REPLCommandResponse:
+        """After navigation, auto-execute instructions for new position"""
+        return self._handle_instructions_command()
+    
+    def _wrap_with_context_header(self, content: str, response_msg: str) -> REPLCommandResponse:
+        """Wrap content with instructions header and CLI status section"""
+        formatter = self.formatter
+        header = self.get_context_header_for_ai()
+        
+        # Instructions section header (thick line)
+        instructions_header = "\n".join([
+            "",
+            formatter.section_separator(),
+            "**INSTRUCTIONS SECTION:**",
+            "☢️ This section contains both scope filter and a prompt that you must follow for the current action. ☢️",
+            "☢️ You MUST follow the instructions below in this section to the letter. ☢️",
+            formatter.subsection_separator()
+        ])
+        
+        # CLI STATUS section header (comes after the actual content)
+        cli_status_header = "\n".join([
+            "",
+            formatter.section_separator(),
+            "***                    CLI STATUS section                    ***",
+            "This section contains current scope filter (if set), current progress in workflow, and available commands",
+            "Review the CLI STATUS section below to understand both current state and available commands.",
+            "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
+            formatter.subsection_separator()
+        ])
+        
+        output = "\n".join([
+            instructions_header,
+            content,
+            cli_status_header,
+            header,
+            formatter.section_separator()
+        ])
+        
+        return REPLCommandResponse(
+            output=output,
+            response=response_msg,
+            status="success"
+        )
+    
+    def _mark_behavior_complete(self, behavior_name: str) -> None:
+        """Mark a behavior as complete in the state file"""
+        state_file = self.workspace_directory / 'behavior_action_state.json'
+        if not state_file.exists():
+            return
+        try:
+            state_data = json.loads(state_file.read_text())
+            completed = state_data.get('completed_behaviors', [])
+            if behavior_name not in completed:
+                completed.append(behavior_name)
+            state_data['completed_behaviors'] = completed
+            state_file.write_text(json.dumps(state_data, indent=2))
+        except (json.JSONDecodeError, IOError):
+            pass
+    
+    def _handle_dot_notation(self, command: str) -> REPLCommandResponse:
+        """Handle dot notation commands (behavior.action.operation)"""
+        # Parse dot notation: behavior.action.operation or action.operation or .operation
+        parts = command.split()
+        dot_path = parts[0]
+        args = ' '.join(parts[1:]) if len(parts) > 1 else ""
+        
+        path_parts = dot_path.split('.')
+        
+        # . alone means current position
+        if dot_path == '.':
+            return self._handle_current_command()
+        
+        # .operation means current behavior.action, just execute operation
+        if dot_path.startswith('.'):
+            operation = path_parts[1] if len(path_parts) > 1 else ""
+            if operation == 'instructions':
+                return self._handle_instructions_command(args)
+            elif operation == 'submit':
+                return self._handle_submit_command(args)
+            elif operation == 'confirm':
+                return self._handle_confirm_command()
+            else:
+                return REPLCommandResponse(
+                    output=f"ERROR: Unknown operation '{operation}'\nUse: instructions, submit, or confirm",
+                    response=f"ERROR: Unknown operation '{operation}'",
+                    status="error"
+                )
+        
+        # behavior.action.operation or behavior.action or action.operation
+        if len(path_parts) == 3:
+            # Full path: behavior.action.operation
+            behavior_name, action_name, operation = path_parts
+            
+            # Validate operation first before navigating (to avoid state changes on error)
+            if operation not in ('instructions', 'submit', 'confirm'):
+                return REPLCommandResponse(
+                    output=f"ERROR: Unknown operation '{operation}'\nUse: instructions, submit, or confirm",
+                    response=f"ERROR: Unknown operation '{operation}'",
+                    status="error"
+                )
+            
+            try:
+                self.navigate_to_behavior_action(behavior_name, action_name)
+            except ValueError as e:
+                return REPLCommandResponse(
+                    output=f"ERROR: {str(e)}",
+                    response=f"ERROR: {str(e)}",
+                    status="error"
+                )
+            
+            if operation == 'instructions':
+                return self._handle_instructions_command(args)
+            elif operation == 'submit':
+                return self._handle_submit_command(args)
+            elif operation == 'confirm':
+                return self._handle_confirm_command()
+        elif len(path_parts) == 2:
+            # behavior.action or action.operation
+            first, second = path_parts
+            # Check if first part is a behavior name
+            behavior = self.cli_bot.behaviors.domain_behaviors.find_by_name(first)
+            if behavior:
+                # It's behavior.action
+                try:
+                    self.navigate_to_behavior_action(first, second)
+                except ValueError as e:
+                    return REPLCommandResponse(
+                        output=f"ERROR: {str(e)}",
+                        response=f"ERROR: {str(e)}",
+                        status="error"
+                    )
+                return self._handle_instructions_command(args)
+            else:
+                # Could be action.operation or invalid behavior
+                # Check if we have a current behavior (for action.operation)
+                if not self.has_current_behavior:
+                    # No current behavior, so this must be an invalid behavior name
+                    available_behaviors = ", ".join(self.cli_bot.behaviors.domain_behaviors.names)
+                    return REPLCommandResponse(
+                        output=f"ERROR: behavior '{first}' not found\nAvailable behaviors: {available_behaviors}",
+                        response=f"ERROR: behavior '{first}' not found",
+                        status="error"
+                    )
+                # Check if first part is a valid action in current behavior
+                action = self.current_behavior.actions.find_by_name(first)
+                if action:
+                    # It's action.operation
+                    action_name, operation = first, second
+                    try:
+                        self.current_behavior.actions.domain_actions.navigate_to(action_name)
+                    except ValueError as e:
+                        # Add behavior context to error message
+                        behavior_name = self.current_behavior.name
+                        available_actions = ", ".join(self.current_behavior.actions.names)
+                        error_msg = f"Action '{action_name}' not found in behavior '{behavior_name}'. Available actions: {available_actions}"
+                        return REPLCommandResponse(
+                            output=f"ERROR: {error_msg}",
+                            response=f"ERROR: Action '{action_name}' not found in behavior '{behavior_name}'",
+                            status="error"
+                        )
+                    if operation == 'instructions':
+                        return self._handle_instructions_command(args)
+                    elif operation == 'submit':
+                        return self._handle_submit_command(args)
+                    elif operation == 'confirm':
+                        return self._handle_confirm_command()
+                    else:
+                        return REPLCommandResponse(
+                            output=f"ERROR: Unknown operation '{operation}'",
+                            response=f"ERROR: Unknown operation",
+                            status="error"
+                        )
+                else:
+                    # Not a behavior or action, must be invalid behavior
+                    available_behaviors = ", ".join(self.cli_bot.behaviors.domain_behaviors.names)
+                    return REPLCommandResponse(
+                        output=f"ERROR: behavior '{first}' not found\nAvailable behaviors: {available_behaviors}",
+                        response=f"ERROR: behavior '{first}' not found",
+                        status="error"
+                    )
+        else:
+            return REPLCommandResponse(
+                output=f"ERROR: Invalid dot notation '{dot_path}'",
+                response=f"ERROR: Invalid dot notation",
+                status="error"
+            )
     
     def _handle_action_shortcut(self, action_name: str, args_str: str) -> REPLCommandResponse:
         args_str = args_str.strip()
@@ -287,8 +985,20 @@ class REPLSession:
                     response=f"ERROR: action '{action_name}' not found",
                     status="error"
                 )
-            behavior.actions.navigate_to(action_name)
-            return self._commands[subcommand].execute()
+            try:
+                behavior.actions.domain_actions.navigate_to(action_name)
+            except ValueError as e:
+                # Add behavior context to error message
+                available_actions = ", ".join(behavior.actions.names)
+                return REPLCommandResponse(
+                    output=f"ERROR: Action '{action_name}' not found in behavior '{behavior.name}'. Available actions: {available_actions}",
+                    response=f"ERROR: Action '{action_name}' not found in behavior '{behavior.name}'",
+                    status="error"
+                )
+            if subcommand == "submit":
+                return self._handle_submit_command("")
+            else:  # confirm
+                return self._handle_confirm_command()
         
         return REPLCommandResponse(
             output=f"ERROR: Unknown subcommand '{subcommand}'. Use 'instructions', 'submit', or 'confirm'.",
@@ -321,7 +1031,16 @@ class REPLSession:
                 status="error"
             )
         
-        behavior.actions.navigate_to(action_name)
+        try:
+            behavior.actions.navigate_to(action_name)
+        except ValueError as e:
+            # Add behavior context to error message
+            available_actions = ", ".join(behavior.actions.names)
+            return REPLCommandResponse(
+                output=f"ERROR: Action '{action_name}' not found in behavior '{behavior.name}'. Available actions: {available_actions}",
+                response=f"ERROR: Action '{action_name}' not found in behavior '{behavior.name}'",
+                status="error"
+            )
         
         # Parse CLI args into context if provided
         context = None
@@ -331,9 +1050,9 @@ class REPLSession:
                 builder = CliContextBuilder()
                 context = builder.build_context(action, cli_args)
                 
-                # Store scope if present in context
+                # Store scope if present in context - Scope manages its own persistence
                 if context and hasattr(context, 'scope') and context.scope:
-                    self.store_scope_parameters(context.scope)
+                    context.scope.apply_to_bot(self.workspace_directory)
             except ValueError as e:
                 error_msg = str(e)
                 # Invalid scope type is a real validation error
@@ -349,16 +1068,16 @@ class REPLSession:
                 # Any other parsing errors - proceed without context
                 context = None
         
-        from agile_bot.bots.base_bot.src.repl_cli.repl_commands.repl_command import InstructionDisplayCommand
-        
-        class TempInstructionDisplay(InstructionDisplayCommand):
-            def name(self):
-                return "temp"
-            def execute(self, args=""):
-                pass
-        
-        temp_cmd = TempInstructionDisplay(self)
-        return temp_cmd.display_instructions(action=action, context=context, operation=operation)
+        # Call the action's instructions method directly
+        try:
+            output = action.instructions(args="", context=context)
+            return self._wrap_with_context_header(output, f"Instructions for {action.name}")
+        except Exception as e:
+            return REPLCommandResponse(
+                output=f"ERROR getting instructions: {str(e)}",
+                response=f"ERROR getting instructions: {str(e)}",
+                status="error"
+            )
     
     def display_confirm_prompt(self) -> REPLStateDisplay:
         if not self.has_current_action:
@@ -418,56 +1137,29 @@ class REPLSession:
         except (json.JSONDecodeError, KeyError):
             return None
     
-    def store_scope_parameters(self, scope: Scope) -> None:
-        state_file = self._get_state_file_path()
-        if state_file.exists():
-            state_data = json.loads(state_file.read_text())
-        else:
-            state_data = {}
-        
-        state_data['scope'] = scope.to_dict()
-        state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(json.dumps(state_data, indent=2))
-    
-    def clear_scope(self) -> None:
-        state_file = self._get_state_file_path()
-        if state_file.exists():
-            state_data = json.loads(state_file.read_text())
-            if 'scope' in state_data:
-                del state_data['scope']
-                state_file.write_text(json.dumps(state_data, indent=2))
-    
     def _get_scope_display_lines(self) -> List[str]:
         scope_data = self.get_stored_scope()
         if not scope_data:
             return []
         
-        lines = []
-        scope_type = scope_data.get('type', 'unknown')
-        scope_value = scope_data.get('value', [])
-        
-        # Show the scope filter value
-        filter_str = ', '.join(scope_value) if isinstance(scope_value, list) else str(scope_value)
-        lines.append(f"Scope Filter: {filter_str}")
-        
-        if scope_type == 'story':
-            story_graph_path = self.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
-            if story_graph_path.exists():
-                graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
-                matched_items = self._find_scope_matches(graph_data, scope_value)
-                for item in matched_items:
-                    lines.append(item)
-            else:
-                for item in (scope_value if isinstance(scope_value, list) else [scope_value]):
-                    lines.append(f"  - {item}")
-        else:
+        # Use the Scope object's to_display_lines for consistency
+        from agile_bot.bots.base_bot.src.actions.action_context import Scope
+        try:
+            scope = Scope.from_dict(scope_data)
+            return scope.to_display_lines(self.workspace_directory)
+        except Exception:
+            # Fallback to simple display
+            lines = []
+            scope_type = scope_data.get('type', 'unknown')
+            scope_value = scope_data.get('value', [])
+            filter_str = ', '.join(scope_value) if isinstance(scope_value, list) else str(scope_value)
+            lines.append(f"Scope Filter: {filter_str}")
             if isinstance(scope_value, list):
                 for item in scope_value:
                     lines.append(f"  - {item}")
             else:
                 lines.append(f"  - {scope_value}")
-        
-        return lines
+            return lines
     
     def _find_scope_matches(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
         lines = []

@@ -25,7 +25,8 @@
         "next_action": "build",
         "instructions": [
           "Determine walkthrough purpose: business complexity, architecture complexity, integration complexity, or new frameworks",
-          "Make strategic decisions about walkthrough scope and depth",
+          "Make strategic decisions about walkthrough scope and depth"
+        ]
       },
       {
         "name": "build",

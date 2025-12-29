@@ -206,7 +206,8 @@ class REPLHelp:
             CommandExample("echo 'current' | python repl_main.py", "Re-execute current operation"),
             CommandExample("echo 'next' | python repl_main.py", "Advance to next action"),
             CommandExample("echo 'path [dir]' | python repl_main.py", "Show/set working directory"),
-            CommandExample("echo 'scope [filter]' | python repl_main.py", "Show/set/clear scope filter"),
+            CommandExample("echo 'scope C:\\full\\path' | python repl_main.py", "Set scope to COMPLETE folder path"),
+            CommandExample("echo 'scope all' | python repl_main.py", "Clear scope filter"),
             CommandExample("echo 'help' | python repl_main.py", "Show this help"),
             CommandExample("echo 'exit' | python repl_main.py", "Exit CLI"),
         ]
@@ -293,6 +294,29 @@ class REPLHelp:
         # Delegate to collection class
         other_cmd_collection = OtherCommandCollection(self.other_commands)
         lines.extend(other_cmd_collection.format_as_lines())
+        
+        lines.extend([
+            "",
+            "  Scope Command Details:",
+            "    IMPORTANT: When passing file/folder paths to scope, you MUST provide the COMPLETE",
+            "    folder structure. Use ABSOLUTE paths or FULL relative paths from the work path.",
+            "",
+            "    Usage:",
+            "      echo 'scope' | python repl_main.py                           - Show current scope",
+            "      echo 'scope all' | python repl_main.py                       - Clear scope filter",
+            "      echo 'scope \"Story Name\"' | python repl_main.py              - Filter by story name",
+            '      echo \'scope "file:C:/path/to/src/**/*.py"\' | python repl_main.py - Filter by files (absolute path required)',
+            "",
+            "    Examples (CORRECT):",
+            '      scope "Enter Password, Authenticate User"                                        - Story scope',
+            '      scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/src/**/*.py"          - File scope with glob (absolute path)',
+            '      scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/test/**/*.py"         - File scope with glob (absolute path)',
+            "",
+            "    Examples (INCORRECT - DO NOT USE):",
+            "      scope src              [X] partial path - missing parent directories",
+            "      scope repl_cli         [X] folder name only - incomplete structure",
+            "      scope ..\\src           [X] relative navigation - use complete paths",
+        ])
         
         return "\n".join(lines)
     
