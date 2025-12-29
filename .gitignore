@@ -1,6 +1,9 @@
 # Bun runtime and cache directories
 **/.bun/
 
+# Cache directories
+.cache/
+
 # Runtime artifacts
 **/activity_log.json
 

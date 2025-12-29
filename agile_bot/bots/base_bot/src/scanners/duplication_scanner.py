@@ -9,6 +9,7 @@ from .code_scanner import CodeScanner
 from .violation import Violation
 import hashlib
 from difflib import SequenceMatcher
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,76 @@ def _safe_print(*args, **kwargs):
 
 
 class DuplicationScanner(CodeScanner):
+    
+    SCANNER_VERSION = "1.0"
+    
+    def _get_cache_dir(self, file_path: Optional[Path] = None) -> Path:
+        if file_path:
+            current = file_path.parent
+            while current and current.parent != current:
+                if (current / '.git').exists() or (current / 'pyproject.toml').exists() or (current / 'setup.py').exists():
+                    cache_dir = current / '.cache' / 'duplication_blocks'
+                    break
+                current = current.parent
+            else:
+                import tempfile
+                cache_dir = Path(tempfile.gettempdir()) / 'agile_bot_cache' / 'duplication_blocks'
+        else:
+            import tempfile
+            cache_dir = Path(tempfile.gettempdir()) / 'agile_bot_cache' / 'duplication_blocks'
+        
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        return cache_dir
+    
+    def _get_file_cache_key(self, file_path: Path) -> Optional[str]:
+        try:
+            mtime = file_path.stat().st_mtime
+            file_size = file_path.stat().st_size
+            key_data = f"{file_path}:{mtime}:{file_size}:{self.SCANNER_VERSION}"
+            return hashlib.md5(key_data.encode()).hexdigest()
+        except Exception:
+            return None
+    
+    def _load_blocks_from_cache(self, file_path: Path) -> Optional[List[Dict]]:
+        cache_key = self._get_file_cache_key(file_path)
+        if not cache_key:
+            return None
+        
+        cache_file = self._get_cache_dir(file_path) / f"{cache_key}.json"
+        if not cache_file.exists():
+            return None
+        
+        try:
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                cached_data = json.load(f)
+                return cached_data.get('blocks', [])
+        except Exception as e:
+            logger.debug(f"Cache read failed for {file_path}: {e}")
+            return None
+    
+    def _save_blocks_to_cache(self, file_path: Path, blocks: List[Dict]):
+        cache_key = self._get_file_cache_key(file_path)
+        if not cache_key:
+            return
+        
+        cache_file = self._get_cache_dir(file_path) / f"{cache_key}.json"
+        
+        try:
+            serializable_blocks = []
+            for block in blocks:
+                serializable_block = {k: v for k, v in block.items() if k not in ('ast_nodes', 'file_path', 'lines')}
+                serializable_blocks.append(serializable_block)
+            
+            cache_data = {
+                'file_path': str(file_path),
+                'cached_at': datetime.now().isoformat(),
+                'blocks': serializable_blocks
+            }
+            
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, indent=2)
+        except Exception as e:
+            logger.debug(f"Cache write failed for {file_path}: {e}")
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -1672,13 +1743,35 @@ class DuplicationScanner(CodeScanner):
         
         # Second, extract blocks from all files (reference set)
         _safe_print(f"\n[CROSS-FILE] Extracting blocks from {len(all_files)} reference file(s)...")
+        cache_hits = 0
+        cache_misses = 0
+        
         for file_idx, file_path in enumerate(all_files):
             if file_idx % 10 == 0:
-                _safe_print(f"[CROSS-FILE] Reference files: {file_idx}/{len(all_files)} - {file_path.name}")
+                _safe_print(f"[CROSS-FILE] Reference files: {file_idx}/{len(all_files)} - {file_path.name} (cache: {cache_hits} hits, {cache_misses} misses)")
                 sys.stdout.flush()
+            
             if not file_path.exists():
                 continue
             
+            # Try to load from cache first
+            cached_blocks = self._load_blocks_from_cache(file_path)
+            if cached_blocks is not None:
+                cache_hits += 1
+                try:
+                    content = file_path.read_text(encoding='utf-8')
+                    lines = content.split('\n')
+                    for block in cached_blocks:
+                        block['file_path'] = file_path
+                        block['lines'] = lines
+                        all_blocks.append(block)
+                except Exception as e:
+                    logger.debug(f'Error rehydrating cached blocks for {file_path}: {e}')
+                continue
+            
+            cache_misses += 1
+            
+            # Not in cache - extract blocks normally
             try:
                 file_size = file_path.stat().st_size
                 if file_size > 500_000:  # Skip files larger than 500KB
@@ -1699,6 +1792,7 @@ class DuplicationScanner(CodeScanner):
                         func_body = ast.unparse(node.body) if hasattr(ast, 'unparse') else str(node.body)
                         functions.append((node.name, func_body, node.lineno, node))
                 
+                file_blocks = []
                 for func_tuple in functions:
                     if len(func_tuple) == 5:
                         func_name, func_body, func_line, func_node, _ = func_tuple
@@ -1709,6 +1803,10 @@ class DuplicationScanner(CodeScanner):
                         block['file_path'] = file_path
                         block['lines'] = lines
                         all_blocks.append(block)
+                        file_blocks.append(block)
+                
+                # Save to cache for next time
+                self._save_blocks_to_cache(file_path, file_blocks)
                         
             except (SyntaxError, UnicodeDecodeError) as e:
                 logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
@@ -1716,6 +1814,8 @@ class DuplicationScanner(CodeScanner):
             except Exception as e:
                 _safe_print(f"Error processing {file_path} for cross-file scan: {e}")
                 continue
+        
+        _safe_print(f"[CROSS-FILE] Cache statistics: {cache_hits} hits, {cache_misses} misses ({cache_hits/(cache_hits+cache_misses)*100:.1f}% hit rate)" if (cache_hits + cache_misses) > 0 else "[CROSS-FILE] No files processed")
         
         _safe_print(f"\n[CROSS-FILE] Extracted {len(changed_blocks)} blocks from changed files, {len(all_blocks)} blocks from all files")
         write_status(f"Extracted {len(changed_blocks)} changed blocks, {len(all_blocks)} reference blocks")
