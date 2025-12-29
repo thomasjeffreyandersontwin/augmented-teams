@@ -46,4 +46,23 @@ class MarkdownFormatter(OutputFormatter):
     
     def file_icon(self) -> str:
         return "📄"
+    
+    # Additional formatting methods for validation reports
+    def format_heading(self, text: str, level: int = 2) -> str:
+        return f"{'#' * level} {text}"
+    
+    def format_code_block(self, code: str, language: str = '') -> list:
+        return [f'```{language}', code, '```']
+    
+    def format_section_separator(self) -> list:
+        return ['---', '']
+    
+    def format_bold(self, text: str) -> str:
+        return f'**{text}**'
+    
+    def format_italic(self, text: str) -> str:
+        return f'*{text}*'
+    
+    def format_code_inline(self, text: str) -> str:
+        return f'`{text}`'
 

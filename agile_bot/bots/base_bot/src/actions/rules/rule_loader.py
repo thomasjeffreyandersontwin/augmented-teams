@@ -13,6 +13,23 @@ class RuleLoader:
         self.bot_paths = bot_paths
         self.behavior = behavior
 
+    def load_bot_rules(self) -> List[Rule]:
+        """Load bot-level rules from <bot_directory>/rules/"""
+        bot_rules_dir = self.bot_paths.bot_directory / 'rules'
+        bot_rules = []
+        if not bot_rules_dir.exists():
+            logger.debug(f'Bot rules directory does not exist: {bot_rules_dir}')
+            return bot_rules
+        
+        for rule_file in bot_rules_dir.glob('*.json'):
+            if self._is_in_disabled_folder(rule_file):
+                logger.debug(f'Skipping disabled rule: {rule_file.name}')
+                continue
+            bot_rules.append(self._create_rule(rule_file))
+        
+        logger.info(f'Loaded {len(bot_rules)} bot-level rules')
+        return sorted(bot_rules, key=lambda r: r.priority)
+
     def load_behavior_rules(self) -> List[Rule]:
         behavior_folder = self.bot_paths.bot_directory / 'behaviors' / self.behavior_name
         behavior_rules_dir = behavior_folder / 'rules'

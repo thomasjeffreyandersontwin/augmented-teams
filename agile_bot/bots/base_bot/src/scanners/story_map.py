@@ -275,6 +275,13 @@ class StoryMap:
         epics_data = self.knowledge_graph.get('epics', [])
         return [Epic(epic_data, epic_idx) for epic_idx, epic_data in enumerate(epics_data)]
     
+    def find_epic_by_name(self, epic_name: str) -> 'Epic':
+        """Find an epic by name."""
+        for epic in self.epics():
+            if epic.name == epic_name:
+                return epic
+        return None
+    
     def walk(self, node: StoryNode) -> Iterator[StoryNode]:
         yield node
         for child in node.children:

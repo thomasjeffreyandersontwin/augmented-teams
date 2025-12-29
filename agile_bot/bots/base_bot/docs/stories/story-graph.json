@@ -184,6 +184,952 @@
               ]
             }
           ]
+        },
+        {
+          "name": "StoryBotMCPServer",
+          "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+          "responsibilities": [
+            {
+              "name": "Bootstraps environment",
+              "collaborators": [
+                "BOT_DIRECTORY",
+                "WORKING_AREA",
+                "Bot Config"
+              ]
+            },
+            {
+              "name": "Creates Bot instance",
+              "collaborators": [
+                "Bot",
+                "Bot Config",
+                "Bot Directory"
+              ]
+            },
+            {
+              "name": "Creates FastMCP server",
+              "collaborators": [
+                "FastMCP",
+                "Server Name"
+              ]
+            },
+            {
+              "name": "Registers bot tool",
+              "collaborators": [
+                "Bot",
+                "Current Behavior",
+                "Current Action"
+              ]
+            },
+            {
+              "name": "Registers behavior tools",
+              "collaborators": [
+                "Bot",
+                "Behavior",
+                "Action",
+                "Tool Generator"
+              ]
+            },
+            {
+              "name": "Registers utility tools",
+              "collaborators": [
+                "Working Directory Manager",
+                "Action State Manager",
+                "Server Restart Manager"
+              ]
+            },
+            {
+              "name": "Delegates to Bot",
+              "collaborators": [
+                "Bot",
+                "Behavior",
+                "Action"
+              ]
+            },
+            {
+              "name": "Runs MCP server",
+              "collaborators": [
+                "FastMCP",
+                "Event Loop"
+              ]
+            },
+            {
+              "name": "Get bot_directory",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get workspace_directory",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get bot",
+              "collaborators": [
+                "Bot"
+              ]
+            },
+            {
+              "name": "Get server",
+              "collaborators": [
+                "FastMCP"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryBotCLI",
+          "module": "agile_bot.bots.story_bot.src.story_bot_cli",
+          "responsibilities": [
+            {
+              "name": "Bootstraps environment",
+              "collaborators": [
+                "BOT_DIRECTORY",
+                "WORKING_AREA",
+                "Bot Config"
+              ]
+            },
+            {
+              "name": "Delegates to BaseBotCli",
+              "collaborators": [
+                "Base Bot CLI",
+                "Bot Name",
+                "Bot Config Path"
+              ]
+            },
+            {
+              "name": "Executes CLI",
+              "collaborators": [
+                "Base Bot CLI",
+                "Command Arguments"
+              ]
+            },
+            {
+              "name": "Get bot_directory",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get workspace_directory",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get bot_name",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get bot_config_path",
+              "collaborators": [
+                "Path"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "BehaviorToolGenerator",
+          "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+          "responsibilities": [
+            {
+              "name": "Generates behavior tool function",
+              "collaborators": [
+                "Behavior",
+                "Trigger Patterns"
+              ]
+            },
+            {
+              "name": "Routes to behavior",
+              "collaborators": [
+                "Bot",
+                "Behavior Name"
+              ]
+            },
+            {
+              "name": "Routes to action",
+              "collaborators": [
+                "Behavior",
+                "Action Name"
+              ]
+            },
+            {
+              "name": "Executes action",
+              "collaborators": [
+                "Action",
+                "Parameters"
+              ]
+            },
+            {
+              "name": "Returns result",
+              "collaborators": [
+                "Bot Result",
+                "Status",
+                "Data"
+              ]
+            },
+            {
+              "name": "Handles missing action",
+              "collaborators": [
+                "Current Action",
+                "State"
+              ]
+            },
+            {
+              "name": "Loads action state",
+              "collaborators": [
+                "Behavior",
+                "Action State"
+              ]
+            },
+            {
+              "name": "Get tool_name",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get tool_description",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get trigger_patterns",
+              "collaborators": [
+                "List"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "WorkingDirectoryManager",
+          "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+          "responsibilities": [
+            {
+              "name": "Gets working directory",
+              "collaborators": [
+                "Workspace Directory",
+                "WORKING_AREA"
+              ]
+            },
+            {
+              "name": "Sets working directory",
+              "collaborators": [
+                "New Path",
+                "Persist Flag"
+              ]
+            },
+            {
+              "name": "Validates path",
+              "collaborators": [
+                "Path",
+                "Validation Rules"
+              ]
+            },
+            {
+              "name": "Updates environment",
+              "collaborators": [
+                "WORKING_AREA",
+                "Environment Variables"
+              ]
+            },
+            {
+              "name": "Updates bot config",
+              "collaborators": [
+                "Bot Config",
+                "Working Area",
+                "Persist Flag"
+              ]
+            },
+            {
+              "name": "Persists to config",
+              "collaborators": [
+                "Bot Config File",
+                "JSON"
+              ]
+            },
+            {
+              "name": "Returns previous directory",
+              "collaborators": [
+                "Previous Path",
+                "Workspace Directory"
+              ]
+            },
+            {
+              "name": "Get working_directory",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get previous_directory",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get persisted",
+              "collaborators": [
+                "Boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ActionStateManager",
+          "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+          "responsibilities": [
+            {
+              "name": "Closes current action",
+              "collaborators": [
+                "Current Action",
+                "Behavior",
+                "State File"
+              ]
+            },
+            {
+              "name": "Loads action state",
+              "collaborators": [
+                "Behavior",
+                "Action State",
+                "State File"
+              ]
+            },
+            {
+              "name": "Determines next action",
+              "collaborators": [
+                "Behavior",
+                "Action Names",
+                "Current Index"
+              ]
+            },
+            {
+              "name": "Transitions to next action",
+              "collaborators": [
+                "Behavior",
+                "Current Action",
+                "Next Action"
+              ]
+            },
+            {
+              "name": "Detects behavior completion",
+              "collaborators": [
+                "Current Action",
+                "Final Action",
+                "Behavior"
+              ]
+            },
+            {
+              "name": "Transitions to next behavior",
+              "collaborators": [
+                "Bot",
+                "Next Behavior",
+                "First Action"
+              ]
+            },
+            {
+              "name": "Returns transition result",
+              "collaborators": [
+                "Status",
+                "Completed Action",
+                "Next Action"
+              ]
+            },
+            {
+              "name": "Handles out-of-order confirmation",
+              "collaborators": [
+                "Behavior",
+                "Confirmation",
+                "State File"
+              ]
+            },
+            {
+              "name": "Validates human confirmation",
+              "collaborators": [
+                "Confirmed By",
+                "Timestamp"
+              ]
+            },
+            {
+              "name": "Persists confirmation",
+              "collaborators": [
+                "State File",
+                "Confirmation Data",
+                "JSON"
+              ]
+            },
+            {
+              "name": "Get state_file",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get current_action",
+              "collaborators": [
+                "Action"
+              ]
+            },
+            {
+              "name": "Get next_action",
+              "collaborators": [
+                "Action"
+              ]
+            },
+            {
+              "name": "Get behavior_complete",
+              "collaborators": [
+                "Boolean"
+              ]
+            },
+            {
+              "name": "Get out_of_order_confirmations",
+              "collaborators": [
+                "Dict"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Synchronizer",
+          "module": "agile_bot.bots.base_bot.src.synchronizers",
+          "responsibilities": [
+            {
+              "name": "Synchronizes formats",
+              "collaborators": [
+                "Source Format",
+                "Target Format"
+              ]
+            },
+            {
+              "name": "Extracts from source",
+              "collaborators": [
+                "Extractor",
+                "Source File"
+              ]
+            },
+            {
+              "name": "Renders to target",
+              "collaborators": [
+                "Renderer",
+                "Target File"
+              ]
+            },
+            {
+              "name": "Validates sync",
+              "collaborators": [
+                "Source",
+                "Target",
+                "Rules"
+              ]
+            },
+            {
+              "name": "Get source_format",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get target_format",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get extractor",
+              "collaborators": [
+                "Extractor"
+              ]
+            },
+            {
+              "name": "Get renderer",
+              "collaborators": [
+                "Renderer"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryIOSynchronizer : Synchronizer",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_synchronizer",
+          "responsibilities": [
+            {
+              "name": "Syncs story graph with drawio",
+              "collaborators": [
+                "Story Graph",
+                "Drawio File"
+              ]
+            },
+            {
+              "name": "Extracts stories from drawio",
+              "collaborators": [
+                "Drawio Parser",
+                "Story Components"
+              ]
+            },
+            {
+              "name": "Renders stories to drawio",
+              "collaborators": [
+                "Story Renderer",
+                "Drawio Generator"
+              ]
+            },
+            {
+              "name": "Manages story positions",
+              "collaborators": [
+                "Position Manager",
+                "Story Layout"
+              ]
+            },
+            {
+              "name": "Updates increments",
+              "collaborators": [
+                "Increment Manager",
+                "Priority Data"
+              ]
+            },
+            {
+              "name": "Validates story structure",
+              "collaborators": [
+                "Structure Validator",
+                "Story Rules"
+              ]
+            },
+            {
+              "name": "Get story_graph_path",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get drawio_path",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get increments",
+              "collaborators": [
+                "List"
+              ]
+            },
+            {
+              "name": "Get epics",
+              "collaborators": [
+                "List"
+              ]
+            },
+            {
+              "name": "Get stories",
+              "collaborators": [
+                "List"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "DomainModelSynchronizer : Synchronizer",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.domain_model.domain_model_synchronizer",
+          "responsibilities": [
+            {
+              "name": "Syncs CRC text with story graph",
+              "collaborators": [
+                "CRC Text",
+                "Story Graph",
+                "Domain Concepts"
+              ]
+            },
+            {
+              "name": "Extracts domain concepts",
+              "collaborators": [
+                "CRC Parser",
+                "Concept Extractor"
+              ]
+            },
+            {
+              "name": "Renders domain concepts",
+              "collaborators": [
+                "Concept Renderer",
+                "CRC Template"
+              ]
+            },
+            {
+              "name": "Validates CRC format",
+              "collaborators": [
+                "CRC Validator",
+                "Format Rules"
+              ]
+            },
+            {
+              "name": "Preserves module paths",
+              "collaborators": [
+                "Module Mapper",
+                "Code Structure"
+              ]
+            },
+            {
+              "name": "Get crc_path",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get story_graph_path",
+              "collaborators": [
+                "Path"
+              ]
+            },
+            {
+              "name": "Get domain_concepts",
+              "collaborators": [
+                "List"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryIOEpic",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_epic",
+          "responsibilities": [
+            {
+              "name": "Owns features",
+              "collaborators": [
+                "Feature List",
+                "Epic Context"
+              ]
+            },
+            {
+              "name": "Calculates total stories",
+              "collaborators": [
+                "Feature",
+                "Story Count"
+              ]
+            },
+            {
+              "name": "Renders epic section",
+              "collaborators": [
+                "Epic Renderer",
+                "Template"
+              ]
+            },
+            {
+              "name": "Validates epic structure",
+              "collaborators": [
+                "Epic Validator",
+                "Rules"
+              ]
+            },
+            {
+              "name": "Get name",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get description",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get features",
+              "collaborators": [
+                "List"
+              ]
+            },
+            {
+              "name": "Get total_stories",
+              "collaborators": [
+                "Integer"
+              ]
+            },
+            {
+              "name": "Get sequential_order",
+              "collaborators": [
+                "Float"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryIOFeature",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_feature",
+          "responsibilities": [
+            {
+              "name": "Owns stories",
+              "collaborators": [
+                "Story List",
+                "Feature Context"
+              ]
+            },
+            {
+              "name": "Calculates story count",
+              "collaborators": [
+                "Story",
+                "Count"
+              ]
+            },
+            {
+              "name": "Renders feature section",
+              "collaborators": [
+                "Feature Renderer",
+                "Template"
+              ]
+            },
+            {
+              "name": "Validates feature structure",
+              "collaborators": [
+                "Feature Validator",
+                "Rules"
+              ]
+            },
+            {
+              "name": "Get name",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get description",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get stories",
+              "collaborators": [
+                "List"
+              ]
+            },
+            {
+              "name": "Get story_count",
+              "collaborators": [
+                "Integer"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryIOStory",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_story",
+          "responsibilities": [
+            {
+              "name": "Owns acceptance criteria",
+              "collaborators": [
+                "Criteria List",
+                "Story Context"
+              ]
+            },
+            {
+              "name": "Owns increment assignment",
+              "collaborators": [
+                "Increment",
+                "Priority"
+              ]
+            },
+            {
+              "name": "Renders story card",
+              "collaborators": [
+                "Story Renderer",
+                "Template"
+              ]
+            },
+            {
+              "name": "Validates story format",
+              "collaborators": [
+                "Story Validator",
+                "Rules"
+              ]
+            },
+            {
+              "name": "Calculates position",
+              "collaborators": [
+                "Position Manager",
+                "Layout"
+              ]
+            },
+            {
+              "name": "Get name",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get description",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get acceptance_criteria",
+              "collaborators": [
+                "List"
+              ]
+            },
+            {
+              "name": "Get increment",
+              "collaborators": [
+                "Integer"
+              ]
+            },
+            {
+              "name": "Get priority",
+              "collaborators": [
+                "Integer"
+              ]
+            },
+            {
+              "name": "Get position",
+              "collaborators": [
+                "Position"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryIOIncrement",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_increment",
+          "responsibilities": [
+            {
+              "name": "Owns story assignments",
+              "collaborators": [
+                "Story List",
+                "Increment Context"
+              ]
+            },
+            {
+              "name": "Manages priorities",
+              "collaborators": [
+                "Priority Order",
+                "Story Sequence"
+              ]
+            },
+            {
+              "name": "Calculates capacity",
+              "collaborators": [
+                "Story Count",
+                "Capacity Limit"
+              ]
+            },
+            {
+              "name": "Renders increment view",
+              "collaborators": [
+                "Increment Renderer",
+                "Template"
+              ]
+            },
+            {
+              "name": "Validates increment structure",
+              "collaborators": [
+                "Increment Validator",
+                "Rules"
+              ]
+            },
+            {
+              "name": "Get number",
+              "collaborators": [
+                "Integer"
+              ]
+            },
+            {
+              "name": "Get name",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get stories",
+              "collaborators": [
+                "List"
+              ]
+            },
+            {
+              "name": "Get capacity",
+              "collaborators": [
+                "Integer"
+              ]
+            },
+            {
+              "name": "Get priority_order",
+              "collaborators": [
+                "List"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StoryIORenderer",
+          "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_renderer",
+          "responsibilities": [
+            {
+              "name": "Renders epic cells",
+              "collaborators": [
+                "Epic",
+                "Cell Generator",
+                "XML"
+              ]
+            },
+            {
+              "name": "Renders feature cells",
+              "collaborators": [
+                "Feature",
+                "Cell Generator",
+                "XML"
+              ]
+            },
+            {
+              "name": "Renders story cells",
+              "collaborators": [
+                "Story",
+                "Cell Generator",
+                "XML"
+              ]
+            },
+            {
+              "name": "Renders increment lanes",
+              "collaborators": [
+                "Increment",
+                "Lane Generator",
+                "XML"
+              ]
+            },
+            {
+              "name": "Calculates layout",
+              "collaborators": [
+                "Layout Manager",
+                "Position Calculator"
+              ]
+            },
+            {
+              "name": "Formats XML",
+              "collaborators": [
+                "XML Formatter",
+                "Pretty Print"
+              ]
+            },
+            {
+              "name": "Get cell_style",
+              "collaborators": [
+                "String"
+              ]
+            },
+            {
+              "name": "Get layout_config",
+              "collaborators": [
+                "Dict"
+              ]
+            },
+            {
+              "name": "Get xml_formatter",
+              "collaborators": [
+                "XMLFormatter"
+              ]
+            }
+          ]
         }
       ],
       "sub_epics": [
@@ -539,11 +1485,11 @@
     {
       "name": "Invoke Bot",
       "sequential_order": 2.0,
-          "domain_concepts": [
-            {
-              "name": "Router",
-              "module": "ext",
-              "responsibilities": [
+      "domain_concepts": [
+        {
+          "name": "Router",
+          "module": "ext",
+          "responsibilities": [
             {
               "name": "Match trigger patterns",
               "collaborators": [
@@ -1538,6 +2484,14 @@
                   "collaborators": [
                     "Content"
                   ]
+                },
+                {
+                  "name": "Gets action by name",
+                  "collaborators": ["Action", "String"]
+                },
+                {
+                  "name": "Gets actions in sequence",
+                  "collaborators": ["List", "Action"]
                 }
               ]
             },
@@ -1728,7 +2682,7 @@
                   "scenarios": [
                     {
                       "name": "Complete end-to-end workflow test demonstrating all fixes working together",
-                      "steps": "Flow:\n1. Start at initialize_project\n2. Confirm \u2192 Saves to completed_actions\n3. Forward to gather_context\n4. Close gather_context \u2192 Transitions to decide_planning_criteria\n5. Jump to discovery.gather_context (out of order)\n6. Verify state shows discovery.gather_context (not initialize_project)\n7. Close and verify proper transition\n8. Verify all completed actions tracked across both behaviors",
+                      "steps": "Flow:\n1. Start at initialize_project\n2. Confirm → Saves to completed_actions\n3. Forward to gather_context\n4. Close gather_context → Transitions to decide_planning_criteria\n5. Jump to discovery.gather_context (out of order)\n6. Verify state shows discovery.gather_context (not initialize_project)\n7. Close and verify proper transition\n8. Verify all completed actions tracked across both behaviors",
                       "test_method": "test_complete_workflow_end_to_end"
                     }
                   ]
@@ -3230,6 +4184,1004 @@
                         "User"
                       ],
                       "story_type": "user"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Execute In Headless Mode",
+          "sequential_order": 1,
+          "estimated_stories": null,
+          "domain_concepts": [
+            {
+              "name": "HeadlessSession",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Invokes with message and context file",
+                  "collaborators": ["Message", "ContextFile", "ExecutionResult"]
+                },
+                {
+                  "name": "Invokes operation with behavior, action, operation, and context file",
+                  "collaborators": ["ExecutionResult", "Behavior", "Action", "Operation", "ContextFile"]
+                },
+                {
+                  "name": "Invokes complete action with behavior, action, and context file",
+                  "collaborators": ["ExecutionResult", "Behavior", "Action", "ContextFile"]
+                },
+                {
+                  "name": "Invokes complete behavior with behavior name and context file",
+                  "collaborators": ["ExecutionResult", "Behavior", "ContextFile"]
+                }
+              ],
+              "realization": [
+                {
+                  "scope": "Execute In Headless Mode.Execute In Headless Mode.Execute Direct Instructions",
+                  "scenario": "Human sends direct instructions to headless mode for immediate execution",
+                  "walks": [
+                    {
+                      "covers": "Steps 1-4 (CLI invocation through instruction preparation)",
+                      "object_flow": [
+                        "result: ExecutionResult = HeadlessSession.invokes(",
+                        "    message: 'Implement user authentication',",
+                        "    context_file: 'headless-context.md'",
+                        ")",
+                        "",
+                        "  -> config: HeadlessConfig = HeadlessSession.get_configuration()",
+                        "     return config: {api_key: 'sk-...', log_dir: 'logs/'}",
+                        "",
+                        "  -> context: ExecutionContext = HeadlessSession.get_execution_context()",
+                        "     -> context_loaded: ExecutionContext = ExecutionContext.loads_from_context_file(",
+                        "            path: 'headless-context.md'",
+                        "        )",
+                        "        -> user_message: UserMessage = ExecutionContext.get_user_message()",
+                        "           return user_message: 'Please implement authentication with JWT tokens'",
+                        "        ",
+                        "        -> history: ChatHistory = ExecutionContext.get_chat_history()",
+                        "           return history: ['User: We need secure login', 'AI: I'll implement JWT...']",
+                        "        ",
+                        "        -> refs: List[FileReference] = ExecutionContext.get_file_references()",
+                        "           return refs: ['src/auth/login.py', 'src/models/user.py']",
+                        "        ",
+                        "        return context_loaded: ExecutionContext",
+                        "     return context: ExecutionContext",
+                        "",
+                        "  -> instructions: Instructions = HeadlessSession.prepares_instructions_with_persistence_directive()",
+                        "     -> with_message: str = Instructions.prepends_message_parameter(",
+                        "            message: 'Implement user authentication'",
+                        "        )",
+                        "        return with_message: 'Implement user authentication\\n\\n'",
+                        "     ",
+                        "     -> with_context: str = Instructions.prepends_context(",
+                        "            context: context",
+                        "        )",
+                        "        return with_context: '[message]\\n\\nUser: Please implement...\\nHistory: ...\\nFiles: ...'",
+                        "     ",
+                        "     -> with_directive: str = Instructions.wraps_with_persistence_directive()",
+                        "        return with_directive: 'Keep doing this until 100% done or blocked:\\n\\n[instructions]'",
+                        "     ",
+                        "     -> final: str = Instructions.appends_block_reporting_directive()",
+                        "        return final: '[instructions]\\n\\nIf blocked, report reason clearly.'",
+                        "     ",
+                        "     return instructions: final"
+                      ]
+                    },
+                    {
+                      "covers": "Steps 5-8 (API execution, monitoring, reporting)",
+                      "object_flow": [
+                        "  -> response: Response = HeadlessSession.executes_via_cursor_headless_api()",
+                        "     -> api: CursorHeadlessAPI = CursorHeadlessAPI.connect(",
+                        "            api_key: config.api_key",
+                        "        )",
+                        "        return api: CursorHeadlessAPI(connected: True)",
+                        "     ",
+                        "     -> session_id: SessionId = api.start_session(",
+                        "            instructions: instructions",
+                        "        )",
+                        "        return session_id: 'session_abc123'",
+                        "     ",
+                        "     return response: Response",
+                        "",
+                        "  -> log: SessionLog = HeadlessSession.get_session_log()",
+                        "     -> log_path: Path = SessionLog.creates_with_timestamped_path(",
+                        "            base_dir: 'logs/'",
+                        "        )",
+                        "        return log_path: 'logs/headless-2025-12-29-13-18-26.log'",
+                        "     ",
+                        "     -> while True:",
+                        "            api_response: Response = api.poll_session_status(",
+                        "                session_id: session_id",
+                        "            )",
+                        "            ",
+                        "            -> logged: bool = SessionLog.appends_response(",
+                        "                   response: api_response",
+                        "               )",
+                        "               return logged: True",
+                        "            ",
+                        "            -> status: SessionStatus = HeadlessSession.detects_completion_or_block()",
+                        "               return status: {state: 'running', progress: 'Implementing auth...'}",
+                        "            ",
+                        "            if status.state in ['completed', 'blocked']:",
+                        "                break",
+                        "     ",
+                        "     return log: SessionLog",
+                        "",
+                        "  -> transcript: str = SessionLog.get_transcript()",
+                        "     return transcript: 'Session abc123:\\n  - Created auth module\\n  - Added JWT validation\\n  - Updated tests\\n  Completed successfully.'",
+                        "",
+                        "  -> outcome: str = HeadlessSession.reports_outcome_to_console()",
+                        "     -> console_output: str = format_outcome(",
+                        "            status: status,",
+                        "            transcript: transcript",
+                        "        )",
+                        "        return console_output: '✓ Headless execution completed\\n  Log: logs/headless-2025-12-29-13-18-26.log'",
+                        "     ",
+                        "     print(console_output)",
+                        "     return outcome: 'success'",
+                        "",
+                        "return result: {status: 'completed', log_path: 'logs/headless-2025-12-29-13-18-26.log'}"
+                      ]
+                    }
+                  ],
+                  "model_updates": [
+                    "HeadlessSession - Change primary responsibility to single entry point: Remove multiple public methods exposing internals, Add 'Invokes with message and context file: ExecutionResult, Message, ContextFile', Keep internal responsibilities as private implementation details",
+                    "ExecutionContext - Should be owned by HeadlessSession: 'Loads from context file' becomes internal to HeadlessSession, Public interface only exposes what HeadlessSession needs",
+                    "Instructions - Should be internal to HeadlessSession: All preparation methods become internal, Not exposed to caller",
+                    "SessionLog - Should be owned by HeadlessSession: Creation and management internal, Only log path returned in result",
+                    "Design Principle Applied: Encapsulation - HeadlessSession owns the complete headless execution flow. Caller provides message and context file, receives result. All intermediate steps (context loading, instruction preparation, API execution, monitoring, logging) are internal implementation details."
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "ExecutionContext",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Loads from context file",
+                  "collaborators": ["Path"]
+                },
+                {
+                  "name": "Get user message",
+                  "collaborators": ["UserMessage"]
+                },
+                {
+                  "name": "Get chat history",
+                  "collaborators": ["ChatHistory"]
+                },
+                {
+                  "name": "Get file references",
+                  "collaborators": ["FileReference"]
+                }
+              ]
+            },
+            {
+              "name": "SessionLog",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Creates with timestamped path",
+                  "collaborators": ["Path"]
+                },
+                {
+                  "name": "Appends response",
+                  "collaborators": ["Response"]
+                },
+                {
+                  "name": "Appends total loops",
+                  "collaborators": []
+                },
+                {
+                  "name": "Get transcript",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "REPLHelp",
+              "module": "repl_cli.repl_help",
+              "responsibilities": [
+                {
+                  "name": "Includes headless mode documentation",
+                  "collaborators": ["HeadlessConfig"]
+                },
+                {
+                  "name": "Shows headless command examples",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "StatusDisplay",
+              "module": "repl_cli.status_display",
+              "responsibilities": [
+                {
+                  "name": "Shows headless availability",
+                  "collaborators": ["HeadlessConfig"]
+                },
+                {
+                  "name": "Shows active session status",
+                  "collaborators": ["HeadlessSession"]
+                }
+              ]
+            },
+            {
+              "name": "Action",
+              "module": "bot",
+              "responsibilities": [
+                {
+                  "name": "Gets instructions for operation",
+                  "collaborators": ["String", "Operation"]
+                }
+              ]
+            },
+            {
+              "name": "ActionSummary",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Aggregates operation results",
+                  "collaborators": ["ActionSummary", "List", "OperationResult"]
+                },
+                {
+                  "name": "Reports action completion",
+                  "collaborators": ["String", "ActionSummary"]
+                }
+              ]
+            },
+            {
+              "name": "BehaviorSummary",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Aggregates action results",
+                  "collaborators": ["BehaviorSummary", "List", "ActionResult"]
+                },
+                {
+                  "name": "Reports behavior completion",
+                  "collaborators": ["String", "BehaviorSummary"]
+                }
+              ]
+            },
+            {
+              "name": "RecoverableError",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Indicates AI hang",
+                  "collaborators": []
+                },
+                {
+                  "name": "Indicates AI stuck in planning",
+                  "collaborators": []
+                },
+                {
+                  "name": "Can be retried",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "NonRecoverableError",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Indicates CLI failure",
+                  "collaborators": []
+                },
+                {
+                  "name": "Indicates API connection failure",
+                  "collaborators": []
+                },
+                {
+                  "name": "Indicates max recovery attempts exceeded",
+                  "collaborators": ["RecoveryAttemptCount"]
+                },
+                {
+                  "name": "Cannot be retried",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "ErrorRecovery",
+              "module": "repl_cli.headless",
+              "responsibilities": [
+                {
+                  "name": "Tracks recovery attempt count",
+                  "collaborators": ["RecoveryAttemptCount"]
+                },
+                {
+                  "name": "Waits before retry",
+                  "collaborators": ["Duration"]
+                },
+                {
+                  "name": "Restarts session",
+                  "collaborators": ["HeadlessSession"]
+                },
+                {
+                  "name": "Determines if error is recoverable",
+                  "collaborators": ["RecoverableError", "NonRecoverableError"]
+                },
+                {
+                  "name": "Enforces max retry limit",
+                  "collaborators": ["RecoveryAttemptCount"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [
+            {
+              "name": "Document Headless Mode Requirements",
+              "sequential_order": 1,
+              "estimated_stories": null,
+              "sub_epics": [],
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "sequential_order": 1,
+                  "stories": [
+                    {
+                      "name": "Add Headless Mode To Help",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["REPL"],
+                      "story_type": "system",
+                      "scenarios": [
+                        {
+                          "name": "Display headless mode documentation in help",
+                          "steps": [
+                            "Given REPL is initialized",
+                            "And headless mode is configured with API key",
+                            "When user runs help command",
+                            "Then help output includes headless mode section",
+                            "And section explains --headless flag purpose",
+                            "And section shows --message parameter usage",
+                            "And section includes example command with headless flag"
+                          ]
+                        },
+                        {
+                          "name": "Show headless mode unavailable when not configured",
+                          "steps": [
+                            "Given REPL is initialized",
+                            "And headless mode API key is not configured",
+                            "When user runs help command",
+                            "Then help output includes headless mode section",
+                            "And section indicates headless mode is unavailable",
+                            "And section explains configuration requirement"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Add Headless Mode To Status",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": ["REPL"],
+                      "story_type": "system",
+                      "scenarios": [
+                        {
+                          "name": "Show headless mode available in status",
+                          "steps": [
+                            "Given REPL is initialized",
+                            "And headless mode is configured with API key",
+                            "When user runs status command",
+                            "Then status display includes headless mode section",
+                            "And section shows headless mode is available",
+                            "And section displays configured API key prefix"
+                          ]
+                        },
+                        {
+                          "name": "Show active headless session in status",
+                          "steps": [
+                            "Given REPL is initialized",
+                            "And headless session is running with session ID session_abc123",
+                            "When user runs status command",
+                            "Then status display includes active session section",
+                            "And section shows session ID session_abc123",
+                            "And section shows session status as running",
+                            "And section shows log file path"
+                          ]
+                        },
+                        {
+                          "name": "Show headless mode unavailable in status",
+                          "steps": [
+                            "Given REPL is initialized",
+                            "And headless mode API key is not configured",
+                            "When user runs status command",
+                            "Then status display includes headless mode section",
+                            "And section shows headless mode is unavailable"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Execute In Headless Mode",
+              "sequential_order": 2,
+              "estimated_stories": null,
+              "sub_epics": [],
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "sequential_order": 1,
+                  "stories": [
+                    {
+                      "name": "Execute Direct Instructions",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["Human", "CLI"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Execute direct message in headless mode",
+                          "steps": [
+                            "Given AI has written headless-context.md with user intent and chat history",
+                            "And headless mode is configured with API key",
+                            "When human invokes CLI with --headless flag and --message Implement user authentication",
+                            "Then CLI reads headless-context.md file",
+                            "And CLI prepends message before context content",
+                            "And CLI wraps instructions with Keep doing this until 100% done or blocked directive",
+                            "And CLI sends combined instructions to Cursor Headless API",
+                            "And CLI creates timestamped log file in logs directory",
+                            "And AI executes instruction and indicates not done",
+                            "And CLI appends AI response to log file",
+                            "And CLI loops instruction again with persistence directive",
+                            "And AI continues work and indicates not done",
+                            "And CLI appends AI response to log file",
+                            "And CLI loops instruction again with persistence directive",
+                            "And AI completes work and indicates done",
+                            "And CLI appends AI response to log file",
+                            "And CLI detects AI completion signal",
+                            "And CLI stops looping",
+                            "And CLI reports success with log file path"
+                          ]
+                        },
+                        {
+                          "name": "Execute direct message without context file",
+                          "steps": [
+                            "Given headless mode is configured with API key",
+                            "And headless-context.md file does not exist",
+                            "When human invokes CLI with --headless flag and --message Run tests",
+                            "Then CLI wraps message with Keep doing this until 100% done or blocked directive",
+                            "And CLI sends message to Cursor Headless API",
+                            "And CLI creates timestamped log file",
+                            "And AI executes instruction and indicates not done",
+                            "And CLI appends AI response to log file",
+                            "And CLI loops instruction again with persistence directive",
+                            "And AI completes tests and indicates done",
+                            "And CLI appends AI response to log file",
+                            "And CLI detects AI completion signal",
+                            "And CLI stops looping",
+                            "And CLI reports success with log file path"
+                          ]
+                        },
+                        {
+                          "name": "Handle blocked execution in direct message mode",
+                          "steps": [
+                            "Given AI has written headless-context.md",
+                            "And headless mode is configured",
+                            "When human invokes CLI with --headless and --message Deploy application",
+                            "And headless session blocks waiting for user input",
+                            "Then CLI detects blocked state from API response",
+                            "And CLI writes block reason to log file",
+                            "And CLI reports blocked status to console",
+                            "And CLI displays block reason from session",
+                            "And CLI exits with blocked status code"
+                          ]
+                        },
+                        {
+                          "name": "Restart session when AI gets stuck in direct message mode",
+                          "steps": [
+                            "Given headless session is executing direct message",
+                            "And AI has looped instructions multiple times",
+                            "And RecoverableError indicates AI stuck or unable to proceed",
+                            "And ErrorRecovery tracks recovery attempt count less than 3",
+                            "When ErrorRecovery determines error is recoverable",
+                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery terminates current headless session",
+                            "And ErrorRecovery restarts session with same message and context",
+                            "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
+                            "And ErrorRecovery sends to new Cursor Headless API session",
+                            "And ErrorRecovery tracks recovery attempt count incremented",
+                            "And AI executes with fresh context",
+                            "And CLI continues monitoring new session"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Execute Single Operation",
+                      "sequential_order": 2,
+                      "connector": null,
+                      "users": ["Human", "CLI"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Execute instructions operation in headless mode",
+                          "steps": [
+                            "Given AI has written headless-context.md",
+                            "And headless mode is configured",
+                            "And user is at shape.build action",
+                            "When human invokes CLI with --headless flag for instructions operation",
+                            "Then CLI retrieves instructions for shape.build.instructions",
+                            "And CLI prepends headless-context.md content to instructions",
+                            "And CLI wraps with Keep doing this until 100% done or blocked directive",
+                            "And CLI sends to Cursor Headless API",
+                            "And AI executes instruction and indicates not done",
+                            "And CLI appends AI response to log file",
+                            "And CLI loops instruction again with persistence directive",
+                            "And AI executes instruction and indicates completion",
+                            "And CLI appends AI response to log file",
+                            "And CLI detects AI completion signal",
+                            "And CLI stops looping",
+                            "And CLI reports operation completion with log path"
+                          ]
+                        },
+                        {
+                          "name": "Execute submit operation in headless mode",
+                          "steps": [
+                            "Given AI has written headless-context.md with submission data",
+                            "And headless mode is configured",
+                            "And user is at shape.build action",
+                            "When human invokes CLI with --headless flag for submit operation",
+                            "Then CLI retrieves submit instructions for shape.build.submit",
+                            "And CLI includes submission parameters from context",
+                            "And CLI wraps with Keep doing this until 100% done or blocked directive",
+                            "And CLI sends to Cursor Headless API",
+                            "And AI executes submit and indicates not done",
+                            "And CLI appends AI response to log file",
+                            "And CLI loops instruction again with persistence directive",
+                            "And AI completes submission and indicates done",
+                            "And CLI appends AI response to log file",
+                            "And CLI detects AI completion signal",
+                            "And CLI stops looping",
+                            "And CLI reports data saved successfully"
+                          ]
+                        },
+                        {
+                          "name": "Execute confirm operation in headless mode",
+                          "steps": [
+                            "Given headless mode is configured",
+                            "And user is at shape.build action",
+                            "And all required operations are complete",
+                            "When human invokes CLI with --headless flag for confirm operation",
+                            "Then CLI retrieves confirm instructions",
+                            "And CLI wraps with Keep doing this until 100% done or blocked directive",
+                            "And CLI sends to Cursor Headless API",
+                            "And AI executes confirmation and indicates done",
+                            "And CLI appends AI response to log file",
+                            "And CLI detects AI completion signal",
+                            "And CLI stops looping",
+                            "And CLI reports action confirmed and moves to next action"
+                          ]
+                        },
+                        {
+                          "name": "Restart session when AI gets stuck",
+                          "steps": [
+                            "Given headless session is running",
+                            "And AI has looped instructions multiple times",
+                            "And RecoverableError indicates AI stuck or unable to proceed",
+                            "And ErrorRecovery tracks recovery attempt count less than 3",
+                            "When ErrorRecovery determines error is recoverable",
+                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery terminates current headless session",
+                            "And ErrorRecovery restarts session with same instructions",
+                            "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
+                            "And ErrorRecovery sends to new Cursor Headless API session",
+                            "And ErrorRecovery tracks recovery attempt count incremented",
+                            "And AI executes with fresh context",
+                            "And CLI continues monitoring new session"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Execute Complete Action",
+                      "sequential_order": 3,
+                      "connector": null,
+                      "users": ["Human", "CLI"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Execute complete action workflow in headless mode",
+                          "steps": [
+                            "Given AI has written headless-context.md",
+                            "And headless mode is configured",
+                            "And user is at shape.build action",
+                            "When human invokes CLI with --headless flag for complete action",
+                            "Then CLI executes instructions operation with persistence directive",
+                            "And AI loops until instructions operation indicates done",
+                            "And CLI detects instructions completion",
+                            "And CLI executes submit operation with persistence directive",
+                            "And AI loops until submit operation indicates done",
+                            "And CLI detects submit completion",
+                            "And CLI executes confirm operation with persistence directive",
+                            "And AI completes confirmation and indicates done",
+                            "And CLI detects confirm completion",
+                            "And CLI reports entire action completed successfully"
+                          ]
+                        },
+                        {
+                          "name": "Handle block during action workflow",
+                          "steps": [
+                            "Given AI has written headless-context.md",
+                            "And headless mode is configured",
+                            "And user is at shape.build action",
+                            "When human invokes CLI with --headless for complete action",
+                            "And submit operation blocks waiting for clarification",
+                            "Then CLI detects blocked state during submit",
+                            "And CLI stops action workflow execution",
+                            "And CLI reports which operation blocked",
+                            "And CLI displays block reason",
+                            "And CLI preserves completed operation results"
+                          ]
+                        },
+                        {
+                          "name": "Restart session when AI gets stuck during action workflow",
+                          "steps": [
+                            "Given headless session is executing complete action workflow",
+                            "And AI is stuck during build operation",
+                            "And RecoverableError indicates AI unable to proceed",
+                            "And ErrorRecovery tracks recovery attempt count less than 3",
+                            "When ErrorRecovery determines error is recoverable",
+                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery terminates current headless session",
+                            "And ErrorRecovery restarts session for build operation only",
+                            "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
+                            "And ErrorRecovery sends to new Cursor Headless API session",
+                            "And ErrorRecovery tracks recovery attempt count incremented",
+                            "And AI executes build with fresh context",
+                            "And CLI continues with remaining operations after build completes"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Execute Complete Behavior",
+                      "sequential_order": 4,
+                      "connector": null,
+                      "users": ["Human", "CLI"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Execute complete behavior workflow in headless mode",
+                          "steps": [
+                            "Given AI has written headless-context.md",
+                            "And headless mode is configured",
+                            "And user wants to execute shape behavior",
+                            "When human invokes CLI with --headless flag for complete behavior",
+                            "Then CLI executes clarify action with persistence directive",
+                            "And AI loops until clarify action indicates done",
+                            "And CLI detects clarify completion",
+                            "And CLI executes strategy action with persistence directive",
+                            "And AI loops until strategy action indicates done",
+                            "And CLI detects strategy completion",
+                            "And CLI executes build action with persistence directive",
+                            "And AI loops until build action indicates done",
+                            "And CLI detects build completion",
+                            "And CLI executes validate action with persistence directive",
+                            "And AI loops until validate action indicates done",
+                            "And CLI detects validate completion",
+                            "And CLI executes render action with persistence directive",
+                            "And AI loops until render action indicates done",
+                            "And CLI detects render completion",
+                            "And CLI reports entire behavior completed successfully"
+                          ]
+                        },
+                        {
+                          "name": "Handle block during behavior workflow",
+                          "steps": [
+                            "Given AI has written headless-context.md",
+                            "And headless mode is configured",
+                            "And user wants to execute shape behavior",
+                            "When human invokes CLI with --headless for complete behavior",
+                            "And strategy action blocks waiting for decision",
+                            "Then CLI detects blocked state during strategy",
+                            "And CLI stops behavior workflow execution",
+                            "And CLI reports which action blocked",
+                            "And CLI displays block reason",
+                            "And CLI preserves completed action results"
+                          ]
+                        },
+                        {
+                          "name": "Restart session when AI gets stuck during behavior workflow",
+                          "steps": [
+                            "Given headless session is executing complete behavior workflow",
+                            "And AI is stuck during build action",
+                            "And RecoverableError indicates AI unable to proceed",
+                            "And ErrorRecovery tracks recovery attempt count less than 3",
+                            "When ErrorRecovery determines error is recoverable",
+                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery terminates current headless session",
+                            "And ErrorRecovery restarts session for build action only",
+                            "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
+                            "And ErrorRecovery sends to new Cursor Headless API session",
+                            "And ErrorRecovery tracks recovery attempt count incremented",
+                            "And AI executes build action with fresh context",
+                            "And CLI continues with remaining actions after build completes"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Monitor Session",
+              "sequential_order": 3,
+              "estimated_stories": null,
+              "sub_epics": [],
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "sequential_order": 1,
+                  "stories": [
+                    {
+                      "name": "Monitor Execution",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["CLI"],
+                      "story_type": "system",
+                      "scenarios": [
+                        {
+                          "name": "Poll session status during execution",
+                          "steps": [
+                            "Given headless session is running with session ID session_abc123",
+                            "And session log file is created at logs/headless-2025-12-29.log",
+                            "And this is loop iteration 3",
+                            "When CLI polls Cursor Headless API for session status",
+                            "Then API returns session status as running",
+                            "And API returns progress message Implementing authentication",
+                            "And CLI appends loop number 3 to log file",
+                            "And CLI appends instruction sent to log file",
+                            "And CLI appends AI response summary to log file",
+                            "And CLI appends work completed in this iteration to log file",
+                            "And CLI continues polling at regular intervals"
+                          ]
+                        },
+                        {
+                          "name": "Detect completion during monitoring",
+                          "steps": [
+                            "Given headless session is running",
+                            "And CLI is polling session status",
+                            "When API returns session status as completed",
+                            "Then CLI stops polling",
+                            "And CLI appends final status to log file",
+                            "And CLI prepares completion report"
+                          ]
+                        },
+                        {
+                          "name": "Log multiple loop iterations with progress tracking",
+                          "steps": [
+                            "Given headless session is running",
+                            "And CLI is executing instruction loop",
+                            "When CLI completes loop iteration 1",
+                            "Then CLI appends Loop 1 to log file",
+                            "And CLI appends instruction sent Keep doing this until done: Implement authentication",
+                            "And CLI appends AI response summary Created user model and login endpoint",
+                            "And AI indicates not done",
+                            "When CLI completes loop iteration 2",
+                            "Then CLI appends Loop 2 to log file",
+                            "And CLI appends instruction sent Keep doing this until done: Implement authentication",
+                            "And CLI appends AI response summary Added JWT token generation and validation",
+                            "And AI indicates not done",
+                            "When CLI completes loop iteration 3",
+                            "Then CLI appends Loop 3 to log file",
+                            "And CLI appends instruction sent Keep doing this until done: Implement authentication",
+                            "And CLI appends AI response summary Added tests and documentation, authentication complete",
+                            "And AI indicates done",
+                            "And CLI appends Total loops: 3 to log file"
+                          ]
+                        },
+                        {
+                          "name": "Detect blocked state during monitoring",
+                          "steps": [
+                            "Given headless session is running",
+                            "And CLI is polling session status",
+                            "When API returns session status as blocked",
+                            "And API returns block reason Waiting for API key configuration",
+                            "Then CLI stops polling",
+                            "And CLI appends block reason to log file",
+                            "And CLI prepares blocked report"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Surface Block Reason",
+                      "sequential_order": 2,
+                      "connector": null,
+                      "users": ["CLI", "Human"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Display block reason to user",
+                          "steps": [
+                            "Given headless session has blocked",
+                            "And session log contains block reason Waiting for API key configuration",
+                            "When CLI prepares blocked report",
+                            "Then CLI extracts block reason from session log",
+                            "And CLI formats block reason for console display",
+                            "And CLI displays Blocked: Waiting for API key configuration to console",
+                            "And CLI shows log file path for details"
+                          ]
+                        },
+                        {
+                          "name": "Display block reason with context",
+                          "steps": [
+                            "Given headless session has blocked during submit operation",
+                            "And session log contains block reason Missing required parameter --data",
+                            "When CLI prepares blocked report",
+                            "Then CLI displays operation context submit operation",
+                            "And CLI displays block reason Missing required parameter --data",
+                            "And CLI suggests resolution Check --data parameter",
+                            "And CLI shows log file path"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "or",
+                  "connector": "or",
+                  "sequential_order": 2,
+                  "stories": [
+                    {
+                      "name": "Report Completion",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["CLI", "Human"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Report successful completion to console",
+                          "steps": [
+                            "Given headless session has completed successfully",
+                            "And session log contains execution transcript",
+                            "When CLI prepares completion report",
+                            "Then CLI extracts transcript from session log",
+                            "And CLI displays Headless execution completed to console",
+                            "And CLI shows summary of work completed",
+                            "And CLI displays log file path logs/headless-2025-12-29.log",
+                            "And CLI exits with success status code"
+                          ]
+                        },
+                        {
+                          "name": "Report completion with operation details",
+                          "steps": [
+                            "Given headless session completed shape.build action",
+                            "And session log shows story-graph.json was created",
+                            "When CLI prepares completion report",
+                            "Then CLI displays Action completed: shape.build",
+                            "And CLI shows files created story-graph.json",
+                            "And CLI displays log file path",
+                            "And CLI exits with success status code"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Recover and Report Failures",
+                      "sequential_order": 2,
+                      "connector": "or",
+                      "users": ["CLI", "Human"],
+                      "story_type": "user",
+                      "scenarios": [
+                        {
+                          "name": "Report non-recoverable failure to console",
+                          "steps": [
+                            "Given headless session has failed",
+                            "And NonRecoverableError indicates CLI failure",
+                            "And session log contains error message File not found: config.json",
+                            "When CLI prepares failure report",
+                            "Then CLI extracts error message from session log",
+                            "And CLI displays Headless execution failed (non-recoverable) to console",
+                            "And CLI shows error message File not found: config.json",
+                            "And NonRecoverableError cannot be retried",
+                            "And CLI displays log file path for full details",
+                            "And CLI exits with failure status code"
+                          ]
+                        },
+                        {
+                          "name": "Report non-recoverable API connection failure",
+                          "steps": [
+                            "Given CLI attempts to connect to Cursor Headless API",
+                            "And API connection fails with timeout",
+                            "And CLI has retried connection 3 times",
+                            "And NonRecoverableError indicates API connection failure",
+                            "When CLI prepares failure report",
+                            "Then CLI displays Failed to connect to Cursor Headless API (non-recoverable) to console",
+                            "And CLI shows error details Connection timeout after 30 seconds",
+                            "And NonRecoverableError cannot be retried",
+                            "And CLI suggests checking API key configuration",
+                            "And CLI exits with failure status code"
+                          ]
+                        },
+                        {
+                          "name": "Recover from AI hang by restarting session",
+                          "steps": [
+                            "Given headless session is running",
+                            "And AI has not responded for 5 minutes",
+                            "And RecoverableError indicates AI hang",
+                            "And ErrorRecovery tracks recovery attempt count less than 3",
+                            "When ErrorRecovery determines error is recoverable",
+                            "Then ErrorRecovery logs AI hung, attempting recovery (attempt 1 of 3) to log file",
+                            "And ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery terminates current headless session",
+                            "And ErrorRecovery restarts session with same instructions",
+                            "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
+                            "And ErrorRecovery sends to new Cursor Headless API session",
+                            "And ErrorRecovery tracks recovery attempt count incremented to 1",
+                            "And ErrorRecovery logs Session restarted due to AI hang to log file",
+                            "And CLI continues monitoring new session"
+                          ]
+                        },
+                        {
+                          "name": "Recover from AI stuck in planning mode",
+                          "steps": [
+                            "Given headless session is running",
+                            "And AI indicates stuck in planning mode",
+                            "And RecoverableError indicates AI stuck in planning",
+                            "And ErrorRecovery tracks recovery attempt count less than 3",
+                            "When ErrorRecovery determines error is recoverable",
+                            "Then ErrorRecovery logs AI stuck in planning, attempting recovery (attempt 1 of 3) to log file",
+                            "And ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery terminates current headless session",
+                            "And ErrorRecovery restarts session with same instructions",
+                            "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
+                            "And ErrorRecovery sends to new Cursor Headless API session",
+                            "And ErrorRecovery tracks recovery attempt count incremented to 1",
+                            "And ErrorRecovery logs Session restarted due to AI stuck to log file",
+                            "And CLI continues monitoring new session"
+                          ]
+                        },
+                        {
+                          "name": "Stop after 3 consecutive recovery attempts",
+                          "steps": [
+                            "Given headless session is running",
+                            "And RecoverableError indicates AI hung or stuck",
+                            "And ErrorRecovery tracks recovery attempt count equals 3",
+                            "And ErrorRecovery has already recovered 3 times in a row",
+                            "When ErrorRecovery determines error is recoverable",
+                            "And ErrorRecovery enforces max retry limit",
+                            "Then NonRecoverableError indicates max recovery attempts exceeded",
+                            "And CLI logs Maximum recovery attempts (3) reached, treating as non-recoverable to log file",
+                            "And CLI displays Headless execution failed after 3 recovery attempts to console",
+                            "And CLI shows all recovery attempts made",
+                            "And NonRecoverableError cannot be retried",
+                            "And CLI displays log file path for full details",
+                            "And CLI exits with failure status code"
+                          ]
+                        },
+                        {
+                          "name": "Report non-recoverable failure with partial results",
+                          "steps": [
+                            "Given headless session was executing shape behavior",
+                            "And clarify action completed successfully",
+                            "And strategy action failed with validation error",
+                            "And NonRecoverableError indicates CLI failure",
+                            "When CLI prepares failure report",
+                            "Then CLI displays Behavior execution failed at strategy action (non-recoverable)",
+                            "And CLI shows completed actions clarify",
+                            "And CLI shows failed action strategy with error",
+                            "And NonRecoverableError cannot be retried",
+                            "And CLI displays log file path",
+                            "And CLI exits with failure status code"
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -4950,6 +6902,23 @@
         "Navigate to Bot using CLI Dot Notation",
         "Display Available Bot in Tree Hierarchy",
         "Display CLI Bot Command in Navigation Menu Footer"
+      ]
+    },
+    {
+      "name": "Execute In Headless Mode",
+      "priority": 14,
+      "description": "Headless mode execution for CLI operations, actions, and behaviors",
+      "stories": [
+        "Add Headless Mode To Help",
+        "Add Headless Mode To Status",
+        "Execute Direct Instructions",
+        "Execute Single Operation",
+        "Execute Complete Action",
+        "Execute Complete Behavior",
+        "Monitor Execution",
+        "Surface Block Reason",
+        "Report Completion",
+        "Recover and Report Failures"
       ]
     }
   ]

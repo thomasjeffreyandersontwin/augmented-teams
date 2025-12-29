@@ -8,7 +8,7 @@ from agile_bot.bots.base_bot.src.actions.action import Action
 from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, ScopeActionContext
 from agile_bot.bots.base_bot.src.actions.render.render_spec import RenderSpec
 from agile_bot.bots.base_bot.src.actions.render.render_config_loader import RenderConfigLoader
-from agile_bot.bots.base_bot.src.actions.render.render_instruction_formatter import RenderInstructionFormatter
+from agile_bot.bots.base_bot.src.actions.render.render_instruction_builder import RenderInstructionBuilder
 from agile_bot.bots.base_bot.src.bot.merged_instructions import MergedInstructions
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class RenderOutputAction(Action):
     def __init__(self, behavior=None, action_config=None):
         super().__init__(behavior=behavior, action_config=action_config)
         self._config_loader = RenderConfigLoader(self.behavior)
-        self._instruction_formatter = RenderInstructionFormatter()
+        self._instruction_formatter = RenderInstructionBuilder()
         self._render_specs: List[RenderSpec] = self._config_loader.load_render_specs()
 
     @property

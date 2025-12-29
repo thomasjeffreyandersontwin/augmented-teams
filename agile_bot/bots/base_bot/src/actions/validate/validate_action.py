@@ -5,17 +5,9 @@ from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, Va
 from agile_bot.bots.base_bot.src.actions.rules.rules import Rules
 from agile_bot.bots.base_bot.src.actions.validate.validation_executor import ValidationExecutor
 from agile_bot.bots.base_bot.src.utils import read_json_file
+from agile_bot.bots.base_bot.src.scanners.scanner_execution_error import ScannerExecutionError
 
 logger = logging.getLogger(__name__)
-
-class ScannerExecutionError(Exception):
-
-    def __init__(self, rule_file: str, scanner_path: str, original_error: Exception):
-        self.rule_file = rule_file
-        self.scanner_path = scanner_path
-        self.original_error = original_error
-        message = f"Scanner execution failed for rule '{rule_file}' (scanner: {scanner_path}): {original_error}"
-        super().__init__(message)
 
 class ValidateRulesAction(Action):
     context_class: Type[ActionContext] = ValidateActionContext

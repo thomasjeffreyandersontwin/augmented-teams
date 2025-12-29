@@ -7,11 +7,14 @@ import re
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Classes
+from .vocabulary_helper import VocabularyHelper
 
 
 class TechnicalAbstractionCodeScanner(CodeScanner):
-    
-    TECHNICAL_ABSTRACTION_PATTERNS = ['Saver', 'Loader', 'Storage']
+    """
+    Validates that code classes avoid exposing technical abstractions.
+    Uses NLTK to detect agent nouns like Saver, Loader, Storage.
+    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
@@ -33,8 +36,9 @@ class TechnicalAbstractionCodeScanner(CodeScanner):
     def _check_technical_abstraction(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         class_name = class_node.name
         
-        for pattern in self.TECHNICAL_ABSTRACTION_PATTERNS:
-            if class_name.endswith(pattern):
+        # Check if class name is an agent noun related to technical operations
+        is_agent, base_verb, suffix = VocabularyHelper.is_agent_noun(class_name)
+        if is_agent and base_verb in ['save', 'load', 'store']:
                 # Read file content for snippet extraction
                 try:
                     content = file_path.read_text(encoding='utf-8')
@@ -50,6 +54,32 @@ class TechnicalAbstractionCodeScanner(CodeScanner):
                     )
                 except Exception:
                     return Violation(
+                        rule=rule_obj,
+                        violation_message=f'Class "{class_name}" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.',
+                        location=str(file_path),
+                        line_number=class_node.lineno,
+                        severity='warning'
+                    ).to_dict()
+        
+        return None
+
+
+
+
+
+                        rule=rule_obj,
+                        violation_message=f'Class "{class_name}" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.',
+                        location=str(file_path),
+                        line_number=class_node.lineno,
+                        severity='warning'
+                    ).to_dict()
+        
+        return None
+
+
+
+
+
                         rule=rule_obj,
                         violation_message=f'Class "{class_name}" separates technical abstraction. Keep technical details (saving, loading) as part of domain concepts instead.',
                         location=str(file_path),

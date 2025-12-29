@@ -44,7 +44,7 @@ class Instructions:
                 "- in this message and chat history",
                 "- in `{project_area}/docs/context/`",
                 "- generated files in `{project_area}/docs/stories/`",
-                "  clarification.json, planning.json"
+                "  clarification.json, strategy.json"
             ]
         
         workspace = str(self._bot_paths.workspace_directory)
@@ -53,7 +53,7 @@ class Instructions:
             "- in this message and chat history",
             f"- in `{workspace}/docs/context/`",
             f"- generated files in `{workspace}/docs/stories/`",
-            "  clarification.json, planning.json"
+            "  clarification.json, strategy.json"
         ]
     
     def write_display_to_file(self, filename: str = 'status.md') -> Path:

@@ -51,7 +51,7 @@ def verify_block_has_content(block: Block, expected_content: str):
 def workspace_root(tmp_path):
     """Fixture: Temporary workspace directory."""
     workspace = tmp_path / 'workspace'
-    workspace.mkdir()
+    workspace.mkdir(exist_ok=True)
     return workspace
 
 # ============================================================================

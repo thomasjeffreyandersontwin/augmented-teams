@@ -95,8 +95,14 @@ def when_generator_generates_cursor_commands(workspace_root: Path, bot_dir: Path
     """When: Generator generates cursor commands."""
     from agile_bot.bots.base_bot.src.cli.cursor.command_generator import CursorCommandGenerator
     from agile_bot.bots.base_bot.src.bot.bot import Bot
+    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
     # Bootstrap environment before creating Bot
     bootstrap_env(bot_dir, workspace_root)
+    # Ensure each behavior has a minimal behavior.json so the generator can discover behaviors
+    for behavior_name in behaviors:
+        create_actions_workflow_json(bot_dir, behavior_name)
+        create_minimal_guardrails_files(bot_dir, behavior_name, bot_name)
     generator = CursorCommandGenerator(workspace_root, bot_dir, bot_name)
     config_path = bot_dir / 'bot_config.json'
     bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=config_path)
@@ -106,8 +112,14 @@ def when_generator_updates_registry(workspace_root: Path, bot_dir: Path, bot_nam
     """When: Generator updates registry."""
     from agile_bot.bots.base_bot.src.cli.cursor.command_generator import CursorCommandGenerator
     from agile_bot.bots.base_bot.src.bot.bot import Bot
+    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
     # Bootstrap environment before creating Bot
     bootstrap_env(bot_dir, workspace_root)
+    # Ensure behaviors are present for command generation and registry updates
+    for behavior_name in behaviors:
+        create_actions_workflow_json(bot_dir, behavior_name)
+        create_minimal_guardrails_files(bot_dir, behavior_name, bot_name)
     generator = CursorCommandGenerator(workspace_root, bot_dir, bot_name)
     config_path = bot_dir / 'bot_config.json'
     bot = Bot(bot_name=bot_name, bot_directory=bot_dir, config_path=config_path)
@@ -305,7 +317,7 @@ class TestGenerateHelp:
         # Example 2: Single behavior with actions
         (['shape'], 'actions', ['clarify', 'strategy', 'build', 'validate', 'render']),
         # Example 3: Action parameters for clarify
-        (['shape'], 'action_parameters', {'action': 'clarify', 'params': ['--key-questions-answered', '--evidence-provided']}),
+        (['shape'], 'action_parameters', {'action': 'clarify', 'params': ['--answers', '--evidence-provided']}),
         # Example 4: Action parameters for build
         (['shape'], 'action_parameters', {'action': 'build', 'params': ['--scope']}),
     ])
@@ -663,9 +675,9 @@ class TestGenerateHelpParametersFromActionContextClasses:
     def test_parameters_extracted_from_clarify_context_use_dashes(self):
         """
         SCENARIO: Parameters from ClarifyActionContext use dashes
-        GIVEN: ClarifyActionContext with key_questions_answered field
+        GIVEN: ClarifyActionContext with answers and evidence_provided fields
         WHEN: Parameters are extracted from context class
-        THEN: Parameter is --key-questions-answered (dashes, not underscores)
+        THEN: Parameters are --answers and --evidence-provided (dashes, not underscores)
         """
         from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
         
@@ -674,7 +686,7 @@ class TestGenerateHelpParametersFromActionContextClasses:
         
         # Then
         then_parameters_use_dashes_not_underscores(parameters)
-        assert '--key-questions-answered' in parameters
+        assert '--answers' in parameters
         assert '--evidence-provided' in parameters
     
     def test_parameters_extracted_from_strategy_context_use_dashes(self):

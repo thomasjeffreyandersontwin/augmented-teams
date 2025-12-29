@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
+from .vocabulary_helper import VocabularyHelper
 
 import nltk
 from nltk import pos_tag, word_tokenize
@@ -228,8 +229,8 @@ class VerbNounScanner(StoryScanner):
             if (self._is_noun(first_tag) or self._is_proper_noun(first_tag)) and \
                self._is_verb(second_tag) and \
                (self._is_noun(third_tag) or self._is_proper_noun(third_tag)):
-                actor_words = ["customer", "user", "admin", "developer", "system", "api"]
-                if words[0] in actor_words:
+                # Check if first word is an actor/role using NLTK
+                if VocabularyHelper.is_actor_or_role(words[0]):
                     location = node.map_location()
                     return Violation(
                         rule=rule_obj,
@@ -314,8 +315,8 @@ class VerbNounScanner(StoryScanner):
         if not words:
             return None
         
-        actor_words = ["customer", "user", "admin", "developer", "system", "api"]
-        if words[0] in actor_words:
+        # Check if first word is an actor/role using NLTK
+        if VocabularyHelper.is_actor_or_role(words[0]):
             location = node.map_location()
             return Violation(
                 rule=rule_obj,

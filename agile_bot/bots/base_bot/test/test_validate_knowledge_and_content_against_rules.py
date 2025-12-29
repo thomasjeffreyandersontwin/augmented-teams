@@ -105,7 +105,7 @@ def given_rule_with_combined_files(test_files: List[Path], code_files: List[Path
     rule_content = {
         'name': 'test_rule',
         'description': 'Test rule for unified architecture',
-        'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.function_size_scanner.FunctionSizeScanner'
+        'scanner': 'agile_bot.bots.base_bot.src.scanners.function_size_scanner.FunctionSizeScanner'
     }
     rule_file.write_text(json.dumps(rule_content), encoding='utf-8')
     
@@ -612,7 +612,7 @@ def given_rule_file_created(bot_directory: Path, behavior: str, rule_filename: s
         rule_file = rules_dir / 'test_scenarios_rule.json'
         default_content = {
             "description": "Stories must have scenarios",
-            "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.scenarios_on_story_docs_scanner.ScenariosOnStoryDocsScanner"
+            "scanner": "agile_bot.bots.base_bot.src.scanners.scenarios_on_story_docs_scanner.ScenariosOnStoryDocsScanner"
         }
         rule_file.write_text(json.dumps(default_content, indent=2), encoding='utf-8')
         return rule_file
@@ -620,7 +620,7 @@ def given_rule_file_created(bot_directory: Path, behavior: str, rule_filename: s
     elif rule_type == 'test_scope_verification':
         rule_content = {
             "description": "Test classes must match story names",
-            "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
+            "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
         }
         return given_rule_file_created(bot_directory, 'tests', 'test_scope_verification_rule.json', rule_content, rule_type='behavior')
     
@@ -1393,7 +1393,7 @@ def given_rule_content_dict(rule_type: str = None):
     if rule_type is None or rule_type == 'verb_noun':
         return {
             'description': 'Use verb-noun format for all story elements',
-            'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner',
+            'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner',
             'do': {
                 'examples': [{
                     'description': 'Use verb-noun format',
@@ -1482,7 +1482,7 @@ class TestExampleStory:
 ''')
         given_rule_file_created(bot_directory, behavior, 'test_naming_rule.json', {
             "description": "Test files must follow naming conventions",
-            "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner"
+            "scanner": "agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner"
         })
         given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
         return test_file
@@ -1516,7 +1516,7 @@ class TestExampleStory:
         given_rule_file_created(bot_directory, behavior, 'test_naming_rule.json', {
             'rule_id': 'test_naming_rule',
             'description': 'Test classes must follow naming convention',
-            'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'
+            'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'
         })
         given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
         return test_file
@@ -1558,7 +1558,7 @@ class TestExampleStory:
         )
         given_behavior_rule_created(bot_directory, 'tests', 'test_class_organization_rule.json', {
             "description": "Test classes must match story names exactly",
-            "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
+            "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
         })
         return story_graph, story_graph_path, test_file
     
@@ -1584,7 +1584,7 @@ class TestExampleStory:
         )
         given_behavior_rule_created(bot_directory, 'tests', 'test_class_organization_rule.json', {
             "description": "Test classes must match story names exactly",
-            "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
+            "scanner": "agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner"
         })
         return story_graph, story_graph_path, test_file1, test_file2
     
@@ -2555,9 +2555,9 @@ class TestDiscoversScanners:
                 'agile_bot/bots/test_story_bot/behaviors/shape/3_rules/apply_exhaustive_decomposition.json'
             ],
             [
-                {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
-                {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
-                {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner', 'description': 'Apply exhaustive decomposition', 'do': {}}
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.exhaustive_decomposition_scanner.ExhaustiveDecompositionScanner', 'description': 'Apply exhaustive decomposition', 'do': {}}
             ],
             3
         ),
@@ -2568,15 +2568,15 @@ class TestDiscoversScanners:
                 'agile_bot/bots/test_story_bot/rules/use_active_behavioral_language.json'
             ],
             [
-                {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
-                {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}}
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}}
             ],
             2
         ),
         # Example 3: Single scanner
         (
             ['agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json'],
-            [{'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}}],
+            [{'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}}],
             1
         ),
     ])
@@ -2610,42 +2610,42 @@ class TestRunScannersAgainstKnowledgeGraph:
         # Example 1: Epic with noun-only name (violation)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {'epics': [{'name': 'Sales Management'}]},
             True
         ),
         # Example 2: Correct verb-noun format (no violations)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {'epics': [{'name': 'Place Order', 'features': [{'name': 'Validates Payment', 'stories': [{'name': 'Place Order'}]}]}]},
             False
         ),
         # Example 3: Story with actor in name (violation)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {'epics': [{'name': 'Place Order', 'features': [{'name': 'Validates Payment', 'stories': [{'name': 'Customer places order'}]}]}]},
             True
         ),
         # Example 4: Feature with capability noun (violation)
         (
             'agile_bot/bots/test_story_bot/behaviors/shape/3_rules/use_active_behavioral_language.json',
-            {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner', 'description': 'Use active behavioral language', 'do': {}},
             {'epics': [{'name': 'Place Order', 'features': [{'name': 'Payment Processing'}]}]},
             True
         ),
         # Example 5: Story sizing violation
         (
             'agile_bot/bots/test_story_bot/behaviors/shape/3_rules/size_stories_3_to_12_days.json',
-                {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.story_sizing_scanner.StorySizingScanner', 'description': 'Size stories 3-12 days', 'do': {}},
+                {'scanner': 'agile_bot.bots.base_bot.src.scanners.story_sizing_scanner.StorySizingScanner', 'description': 'Size stories 3-12 days', 'do': {}},
             {'epics': [{'name': 'Place Order', 'features': [{'name': 'Validates Payment', 'stories': [{'name': 'Place Order', 'sizing': '15 days'}]}]}]},
             True
         ),
         # Example 6: Empty graph (no violations)
         (
             'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json',
-            {'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
+            {'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner', 'description': 'Use verb-noun format', 'do': {}},
             {},
             False
         ),
@@ -3463,25 +3463,25 @@ class TestRunAllScanners:
     @pytest.mark.parametrize("scanner_class_path,behavior,bad_example,expected_violation_message", [
         # Shape behavior scanners
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.verb_noun_scanner.VerbNounScanner',
+            'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner',
             'shape',
             {'epics': [{'name': 'Sales Management'}]},  # Noun-only epic name
             'appears to be noun-only'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.active_language_scanner.ActiveLanguageScanner',
+            'agile_bot.bots.base_bot.src.scanners.active_language_scanner.ActiveLanguageScanner',
             'shape',
             {'epics': [{'name': 'Order Placement', 'sub_epics': [{'name': 'Payment Processing'}]}]},  # Capability noun
             'uses capability noun'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.story_sizing_scanner.StorySizingScanner',
+            'agile_bot.bots.base_bot.src.scanners.story_sizing_scanner.StorySizingScanner',
             'shape',
             {'epics': [{'name': 'Places Order', 'sub_epics': [{'name': 'Validates Payment', 'story_groups': [{'stories': [{'name': 'Place Order', 'sizing': '15 days'}]}]}]}]},
             'should be'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.specificity_scanner.SpecificityScanner',
+            'agile_bot.bots.base_bot.src.scanners.specificity_scanner.SpecificityScanner',
             'shape',
             {'epics': [{'name': 'Places Order', 'sub_epics': [{'name': 'Validates Payment', 'story_groups': [{'stories': [{'name': 'Delete Mobs'}]}]}]}]},
             'too generic'
@@ -3489,13 +3489,13 @@ class TestRunAllScanners:
         
         # Scenarios behavior scanners
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.plain_english_scenarios_scanner.PlainEnglishScenariosScanner',
+            'agile_bot.bots.base_bot.src.scanners.plain_english_scenarios_scanner.PlainEnglishScenariosScanner',
             'scenarios',
             {'epics': [{'name': 'Places Order', 'sub_epics': [{'name': 'Validates Payment', 'story_groups': [{'stories': [{'name': 'Place Order', 'scenarios': [{'scenario': 'Given user has typed request message "<request_message>"'}]}]}]}]}]},
             'contains variable placeholder'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner',
+            'agile_bot.bots.base_bot.src.scanners.given_state_not_actions_scanner.GivenStateNotActionsScanner',
             'scenarios',
             {'epics': [{'name': 'Places Order', 'sub_epics': [{'name': 'Validates Payment', 'story_groups': [{'stories': [{'name': 'Place Order', 'scenarios': [{'steps': ['Given Tool invokes test_bot.Shape.GatherContext() method']}]}]}]}]}]},
             'contains action verb'
@@ -3503,7 +3503,7 @@ class TestRunAllScanners:
         
         # Tests behavior scanners (TestScanner - extends StoryScanner + scans code)
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner',
+            'agile_bot.bots.base_bot.src.scanners.class_based_organization_scanner.ClassBasedOrganizationScanner',
             'tests',
             None,  # Will be created below with test file
             'appears abbreviated'
@@ -3511,25 +3511,25 @@ class TestRunAllScanners:
         
         # Code behavior scanners (CodeScanner)
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.useless_comments_scanner.UselessCommentsScanner',
+            'agile_bot.bots.base_bot.src.scanners.useless_comments_scanner.UselessCommentsScanner',
             'code',
             None,  # Code scanner works on files, not knowledge graph
             'Useless comment'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner',
+            'agile_bot.bots.base_bot.src.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner',
             'code',
             None,  # Code scanner works on files, not knowledge graph
             'uses generic name'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.separate_concerns_scanner.SeparateConcernsScanner',
+            'agile_bot.bots.base_bot.src.scanners.separate_concerns_scanner.SeparateConcernsScanner',
             'code',
             None,
             'mixes incompatible responsibilities'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.simplify_control_flow_scanner.SimplifyControlFlowScanner',
+            'agile_bot.bots.base_bot.src.scanners.simplify_control_flow_scanner.SimplifyControlFlowScanner',
             'code',
             None,
             'nesting depth'
@@ -3541,7 +3541,7 @@ class TestRunAllScanners:
             'Fallback/legacy support code found'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.meaningful_context_scanner.MeaningfulContextScanner',
+            'agile_bot.bots.base_bot.src.scanners.meaningful_context_scanner.MeaningfulContextScanner',
             'code',
             None,
             'magic number'
@@ -3553,49 +3553,49 @@ class TestRunAllScanners:
             'mutates state'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.vertical_density_scanner.VerticalDensityScanner',
+            'agile_bot.bots.base_bot.src.scanners.vertical_density_scanner.VerticalDensityScanner',
             'code',
             None,
             'vertical density'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.abstraction_levels_scanner.AbstractionLevelsScanner',
+            'agile_bot.bots.base_bot.src.scanners.abstraction_levels_scanner.AbstractionLevelsScanner',
             'code',
             None,
             'mixes high-level operations'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.test_quality_scanner.TestQualityScanner',
+            'agile_bot.bots.base_bot.src.scanners.test_quality_scanner.TestQualityScanner',
             'tests',
             None,
             'generic name'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.encapsulation_scanner.EncapsulationScanner',
+            'agile_bot.bots.base_bot.src.scanners.encapsulation_scanner.EncapsulationScanner',
             'code',
             None,
             'Law of Demeter'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.exception_classification_scanner.ExceptionClassificationScanner',
+            'agile_bot.bots.base_bot.src.scanners.exception_classification_scanner.ExceptionClassificationScanner',
             'code',
             None,
             'component-based exception'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.error_handling_isolation_scanner.ErrorHandlingIsolationScanner',
+            'agile_bot.bots.base_bot.src.scanners.error_handling_isolation_scanner.ErrorHandlingIsolationScanner',
             'code',
             None,
             'try-except blocks'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.third_party_isolation_scanner.ThirdPartyIsolationScanner',
+            'agile_bot.bots.base_bot.src.scanners.third_party_isolation_scanner.ThirdPartyIsolationScanner',
             'code',
             None,
             'third-party library'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.open_closed_principle_scanner.OpenClosedPrincipleScanner',
+            'agile_bot.bots.base_bot.src.scanners.open_closed_principle_scanner.OpenClosedPrincipleScanner',
             'code',
             None,
             'type-based conditional'
@@ -3603,7 +3603,7 @@ class TestRunAllScanners:
         
         # Additional shape scanners
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.noun_redundancy_scanner.NounRedundancyScanner',
+            'agile_bot.bots.base_bot.src.scanners.noun_redundancy_scanner.NounRedundancyScanner',
             'shape',
             {'epics': [{'name': 'Animation System', 'sub_epics': [{'name': 'Animation Component'}]}]},
             'redundant noun'
@@ -3615,13 +3615,13 @@ class TestRunAllScanners:
             'technical implementation'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.implementation_details_scanner.ImplementationDetailsScanner',
+            'agile_bot.bots.base_bot.src.scanners.implementation_details_scanner.ImplementationDetailsScanner',
             'shape',
             {'epics': [{'name': 'Serialize Components to JSON', 'sub_epics': []}]},
             'implementation operation'
         ),
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.invest_principles_scanner.InvestPrinciplesScanner',
+            'agile_bot.bots.base_bot.src.scanners.invest_principles_scanner.InvestPrinciplesScanner',
             'shape',
             {'epics': [{'name': 'Places Order', 'sub_epics': [{'name': 'Validates Payment', 'story_groups': [{'stories': [{'name': 'Place Order'}]}]}]}]},
             'lacks scenarios'
@@ -3629,7 +3629,7 @@ class TestRunAllScanners:
         
         # Test scanners
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.specification_match_scanner.SpecificationMatchScanner',
+            'agile_bot.bots.base_bot.src.scanners.specification_match_scanner.SpecificationMatchScanner',
             'tests',
             None,
             'scenario format'
@@ -3637,7 +3637,7 @@ class TestRunAllScanners:
         
         # Primitive vs Object scanner
         (
-            'agile_bot.bots.base_bot.src.actions.validate.scanners.primitive_vs_object_scanner.PrimitiveVsObjectScanner',
+            'agile_bot.bots.base_bot.src.scanners.primitive_vs_object_scanner.PrimitiveVsObjectScanner',
             'code',
             None,
             'primitive'
@@ -3858,7 +3858,7 @@ def given_rules_with_scanner_paths_exist(bot_directory: Path, behavior: str):
     rule_file.write_text(json.dumps({
         'name': 'scanner_rule',
         'description': 'Rule with scanner',
-        'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner'
+        'scanner': 'agile_bot.bots.base_bot.src.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner'
     }), encoding='utf-8')
 
 
@@ -3877,7 +3877,7 @@ def given_rule_with_scanner_path(bot_directory: Path, behavior: str):
     rule_file.parent.mkdir(parents=True, exist_ok=True)
     rule_file.write_text(json.dumps({
         'name': 'scanner_rule',
-        'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner'
+        'scanner': 'agile_bot.bots.base_bot.src.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner'
     }), encoding='utf-8')
     # Extract bot_name from bot_directory path
     bot_name = bot_directory.name if bot_directory.name else 'test_bot'
@@ -4223,7 +4223,7 @@ def given_scanner_loader_created():
 
 def given_valid_scanner_module_path():
     """Given: Valid scanner module path."""
-    return 'agile_bot.bots.base_bot.src.actions.validate.scanners.code_scanner.CodeScanner'
+    return 'agile_bot.bots.base_bot.src.scanners.code_scanner.CodeScanner'
 
 
 def given_scanner_name_for_test():
@@ -4290,11 +4290,11 @@ class TestLoadRulesCollection:
         
         # Create bot-level rule
         bot_rules_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'description': 'Bot rule', 'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'})
+        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'description': 'Bot rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         # Create behavior-specific rule
         behavior_rules_dir = given_behavior_rules_directory_created(bot_directory, behavior_name)
-        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'description': 'Behavior rule', 'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'})
+        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'description': 'Behavior rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         # When: Rules instantiated
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
@@ -4366,11 +4366,11 @@ class TestFindRuleByName:
         
         # Bot-level rule
         bot_rules_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'})
+        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         # Behavior-specific rule
         behavior_rules_dir = given_behavior_rules_directory_created(bot_directory, behavior_name)
-        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'})
+        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
         
@@ -4442,10 +4442,10 @@ class TestIterateRules:
         behavior, bot_paths = given_behavior_with_bot_paths(bot_directory, workspace_directory, bot_name, behavior_name)
         
         bot_rules_dir = given_bot_rules_directory_created(bot_directory)
-        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'})
+        given_rule_file_created_in_dir(bot_rules_dir, 'bot_rule', {'name': 'bot_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         behavior_rules_dir = given_behavior_rules_directory_created(bot_directory, behavior_name)
-        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'scanner': 'agile_bot.bots.base_bot.src.actions.validate.scanners.test_scanner.TestScanner'})
+        given_rule_file_created_in_dir(behavior_rules_dir, 'behavior_rule', {'name': 'behavior_rule', 'scanner': 'agile_bot.bots.base_bot.src.scanners.test_scanner.TestScanner'})
         
         rules = when_rules_instantiated_with_behavior(behavior, bot_paths)
         
@@ -4536,7 +4536,7 @@ class TestLoadScannerForRule:
     
     @pytest.mark.parametrize("scanner_config,scanner_result,scanner_class_result", [
         # Example 1: Valid scanner path (use concrete scanner, not abstract CodeScanner)
-        ('agile_bot.bots.base_bot.src.actions.validate.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner', 'scanner instance', 'scanner class type'),
+        ('agile_bot.bots.base_bot.src.scanners.intention_revealing_names_scanner.IntentionRevealingNamesScanner', 'scanner instance', 'scanner class type'),
         # Example 2: No scanner path
         (None, None, None),
         # Example 3: Invalid scanner path

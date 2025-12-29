@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, List
-from agile_bot.bots.base_bot.src.actions.display.markdown_formatter import MarkdownFormatter
-from agile_bot.bots.base_bot.src.actions.display.list_items import ListItem
+from agile_bot.bots.base_bot.src.repl_cli.formatters.markdown_formatter import MarkdownFormatter
 
 class ValidationViolationsBuilder:
 
@@ -20,8 +19,8 @@ class ValidationViolationsBuilder:
             lines.append('')
         else:
             lines.append(f'{self._formatter.format_bold("Total Violations:")} {total_violations}')
-            lines.append(ListItem(f'{self._formatter.format_bold("File-by-File Violations:")} {total_file_by_file}').formatted)
-            lines.append(ListItem(f'{self._formatter.format_bold("Cross-File Violations:")} {total_cross_file}').formatted)
+            lines.append(f'- {self._formatter.format_bold("File-by-File Violations:")} {total_file_by_file}')
+            lines.append(f'- {self._formatter.format_bold("Cross-File Violations:")} {total_cross_file}')
             lines.append('')
             if file_by_file_violations_by_rule:
                 lines.extend(self._build_violations_by_type(file_by_file_violations_by_rule, 'File-by-File Violations (Pass 1)', 'These violations were detected by scanning each file individually.'))
@@ -60,7 +59,8 @@ class ValidationViolationsBuilder:
         for rule_name, violations in violations_by_rule.items():
             violations_anchor_id = f"{rule_name.replace('_', '-').lower()}-violations"
             rule_display_name = rule_name.replace('_', ' ').title()
-            lines.append(f'{self._formatter.format_heading(f"<span id=\\"{violations_anchor_id}\\">{rule_display_name}: {len(violations)} violation(s)</span>", level=4)}')
+            heading_text = f'<span id="{violations_anchor_id}">{rule_display_name}: {len(violations)} violation(s)</span>'
+            lines.append(self._formatter.format_heading(heading_text, level=4))
             lines.append('')
             for violation in violations:
                 lines.extend(self._format_violation_line(violation))

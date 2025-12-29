@@ -1875,14 +1875,19 @@ class DuplicationScanner(CodeScanner):
                     last_comparison_report = comparison_count
                 
                 # Calculate similarity
-                ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
+                # Check if both blocks have ast_nodes (cached blocks don't have them)
+                if 'ast_nodes' in block1 and 'ast_nodes' in block2:
+                    ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
+                else:
+                    ast_similarity = 0.0  # No AST comparison if nodes not available
+                
                 normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
                 
                 preview1_normalized = ' '.join(block1['preview'].split())
                 preview2_normalized = ' '.join(block2['preview'].split())
                 content_similarity = SequenceMatcher(None, preview1_normalized, preview2_normalized).ratio()
                 
-                # Use AST similarity as primary indicator
+                # Use AST similarity as primary indicator (if available)
                 if ast_similarity >= SIMILARITY_THRESHOLD or (normalized_similarity >= SIMILARITY_THRESHOLD and content_similarity >= 0.85):
                     # Found duplicate across files
                     file1 = block1['file_path']
