@@ -33,7 +33,7 @@ from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyCo
 from conftest import (
     Workflow,
     bootstrap_env, create_behavior_action_state_file, create_bot_config_file, 
-    create_test_behavior_action_state, given_bot_name_and_behavior_setup, given_bot_name_and_behaviors_setup
+    given_bot_name_and_behavior_setup, given_bot_name_and_behaviors_setup
 )
 from agile_bot.bots.base_bot.test.test_helpers import (
     bootstrap_env, read_activity_log, create_activity_log_file,
@@ -2472,7 +2472,7 @@ def then_breadcrumbs_not_included_in_instructions(instructions: dict):
 def given_bot_directory_and_config_file(tmp_path: Path, bot_name: str, config_data: dict) -> Path:
     """Given: Bot directory and config file exist."""
     bot_dir = tmp_path / 'agile_bot' / 'bots' / bot_name
-    bot_dir.mkdir(parents=True)
+    bot_dir.mkdir(parents=True, exist_ok=True)
     # BotConfig expects bot_config.json directly in bot_directory, not in config/ subdirectory
     config_file = bot_dir / 'bot_config.json'
     config_file.write_text(
@@ -2498,14 +2498,14 @@ def given_bot_directory_and_config_file(tmp_path: Path, bot_name: str, config_da
 def given_bot_directory_without_config_file(tmp_path: Path, bot_name: str) -> Path:
     """Given: Bot directory exists but config file is missing."""
     bot_dir = tmp_path / 'agile_bot' / 'bots' / bot_name
-    bot_dir.mkdir(parents=True)
+    bot_dir.mkdir(parents=True, exist_ok=True)
     return bot_dir
 
 
 def given_bot_directory_with_invalid_config_file(tmp_path: Path, bot_name: str) -> Path:
     """Given: Bot directory exists with invalid JSON config file."""
     bot_dir = tmp_path / 'agile_bot' / 'bots' / bot_name
-    bot_dir.mkdir(parents=True)
+    bot_dir.mkdir(parents=True, exist_ok=True)
     # BotConfig expects bot_config.json directly in bot_directory, not in config/ subdirectory
     config_file = bot_dir / 'bot_config.json'
     config_file.write_text('invalid json {', encoding='utf-8')
@@ -2723,7 +2723,7 @@ class TestLoadBehaviorConfiguration:
 def given_bot_with_behaviors(tmp_path: Path, bot_name: str, behaviors: list) -> Bot:
     """Given: Bot with behaviors list (BotConfig merged into Bot)."""
     bot_dir = tmp_path / 'agile_bot' / 'bots' / bot_name
-    bot_dir.mkdir(parents=True)
+    bot_dir.mkdir(parents=True, exist_ok=True)
     # Bot expects bot_config.json directly in bot_directory
     config_file = bot_dir / 'bot_config.json'
     # Behaviors are discovered from folders, not stored in config
@@ -4325,13 +4325,13 @@ def when_validation_scope_filters_story_graph(scope_type, scope_value, story_gra
 
 
 def when_render_scope_filters_story_graph(scope_type, scope_value, story_graph, bot_paths=None):
-    """When: RenderScope filters story graph."""
-    from agile_bot.bots.base_bot.src.actions.render.render_scope import RenderScope
+    """When: ActionScope filters story graph."""
+    from agile_bot.bots.base_bot.src.actions.action_scope import ActionScope
     parameters = {'scope': {'type': scope_type}}
     if scope_value is not None:
         parameters['scope']['value'] = scope_value
-    render_scope = RenderScope(parameters, bot_paths)
-    return render_scope.filter_story_graph(story_graph)
+    action_scope = ActionScope(parameters, bot_paths)
+    return action_scope.filter_story_graph(story_graph)
 
 
 def then_story_graph_contains_epic(filtered_graph, epic_name):
@@ -4484,17 +4484,17 @@ class TestFilterActionBasedOnScope:
         assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
         then_story_graph_contains_increment(filtered_graph, 'Increment 1')
     
-    def test_render_scope_filters_by_story_names(self):
+    def test_action_scope_filters_by_story_names(self):
         """
-        SCENARIO: RenderScope filters story graph by story names
+        SCENARIO: ActionScope filters story graph by story names
         GIVEN: Story graph with multiple stories
-        WHEN: RenderScope filters with story names
+        WHEN: ActionScope filters with story names
         THEN: Story graph contains only matching stories and their parent epics
         """
         # Given: Story graph with stories
         story_graph = given_story_graph_with_epics_and_increments()
         
-        # When: RenderScope filters by story names
+        # When: ActionScope filters by story names
         filtered_graph = when_render_scope_filters_story_graph('story', ['Story A1'], story_graph)
         
         # Then: Only matching story and its parent epic present
@@ -4502,17 +4502,17 @@ class TestFilterActionBasedOnScope:
         then_story_graph_contains_story(filtered_graph, 'Story A1')
         assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
     
-    def test_render_scope_filters_by_epic_names(self):
+    def test_action_scope_filters_by_epic_names(self):
         """
-        SCENARIO: RenderScope filters story graph by epic names
+        SCENARIO: ActionScope filters story graph by epic names
         GIVEN: Story graph with multiple epics
-        WHEN: RenderScope filters with epic names
+        WHEN: ActionScope filters with epic names
         THEN: Story graph contains only matching epics and their increments
         """
         # Given: Story graph with epics
         story_graph = given_story_graph_with_epics_and_increments()
         
-        # When: RenderScope filters by epic names
+        # When: ActionScope filters by epic names
         filtered_graph = when_render_scope_filters_story_graph('epic', ['Epic A'], story_graph)
         
         # Then: Only matching epic present
@@ -4520,17 +4520,17 @@ class TestFilterActionBasedOnScope:
         assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
         then_story_graph_contains_increment(filtered_graph, 'Increment 1')
     
-    def test_render_scope_returns_all_when_scope_is_all(self):
+    def test_action_scope_returns_all_when_scope_is_all(self):
         """
-        SCENARIO: RenderScope returns all when scope is all
+        SCENARIO: ActionScope returns all when scope is all
         GIVEN: Story graph with multiple epics and increments
-        WHEN: RenderScope filters with scope type 'all'
+        WHEN: ActionScope filters with scope type 'all'
         THEN: Story graph contains all epics and increments
         """
         # Given: Story graph with epics and increments
         story_graph = given_story_graph_with_epics_and_increments()
         
-        # When: RenderScope filters with scope 'all'
+        # When: ActionScope filters with scope 'all'
         filtered_graph = when_render_scope_filters_story_graph('all', None, story_graph)
         
         # Then: All epics and increments present

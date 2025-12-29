@@ -3,7 +3,7 @@ from typing import Dict, Any, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.actions.render.render_spec import RenderSpec
 
-class RenderInstructionFormatter:
+class RenderInstructionBuilder:
 
     def inject_render_data(self, instructions: Dict[str, Any], render_instructions: Dict[str, Any], render_specs: List['RenderSpec']) -> None:
         base_instructions_list = instructions.get('base_instructions', []).copy()

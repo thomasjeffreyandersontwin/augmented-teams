@@ -37,7 +37,7 @@ class StrategyAction(Action):
         instructions.update(self.strategy.instructions)
     
     def _do_submit(self, context: StrategyActionContext) -> Dict[str, Any]:
-        """Save strategy decisions and assumptions to planning.json."""
+        """Save strategy decisions and assumptions to strategy.json."""
         decisions = context.get_decisions()
         if decisions or context.assumptions:
             self.save_strategy(context)
@@ -56,7 +56,7 @@ class StrategyAction(Action):
             saved_items = " and ".join(message_parts) if message_parts else "data"
             
             # Get file path
-            saved_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'planning.json'
+            saved_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'strategy.json'
             
             return {
                 'status': 'submitted',

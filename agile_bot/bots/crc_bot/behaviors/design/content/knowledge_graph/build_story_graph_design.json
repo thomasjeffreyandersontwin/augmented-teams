@@ -4,6 +4,7 @@
   "graph_path": "docs/stories/story-graph.json",
   "instructions": [
     "Refine domain concepts with detailed OOP design patterns",
+    "Preserve inheritance relationships from domain phase (inherits_from field)",
     "Add object responsibilities showing proper encapsulation and delegation",
     "Define clear dependency injection at instantiation",
     "Show ownership vs reference relationships"

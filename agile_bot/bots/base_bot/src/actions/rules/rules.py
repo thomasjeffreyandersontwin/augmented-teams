@@ -172,9 +172,16 @@ class Rules:
         if self._rules is not None:
             return self._rules
         all_rules = []
+        
+        # Load bot-level rules
+        bot_rules = self._rule_loader.load_bot_rules()
+        all_rules.extend(bot_rules)
+        
+        # Load behavior-specific rules if behavior is provided
         if self.behavior:
             behavior_rules = self._rule_loader.load_behavior_rules()
             all_rules.extend(behavior_rules)
+        
         self._rules = all_rules
         return self._rules
 
@@ -230,7 +237,7 @@ class Rules:
         # Sort by priority (lower number = higher priority)
         rules = sorted(rules, key=lambda r: r.priority)
         
-        lines = []
+        lines = ['Rules to follow:', '']
         for i, rule in enumerate(rules):
             description = rule.description or 'No description'
             lines.append(f"- **{rule.name}**: {description}")

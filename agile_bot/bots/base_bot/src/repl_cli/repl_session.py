@@ -799,7 +799,8 @@ class REPLSession:
         return REPLCommandResponse(
             output=output,
             response=response_msg,
-            status="success"
+            status="success",
+            action=self.current_action.name if self.has_current_action else None
         )
     
     def _mark_behavior_complete(self, behavior_name: str) -> None:

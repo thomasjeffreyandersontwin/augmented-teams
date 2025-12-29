@@ -19,6 +19,7 @@
     "3. Collect all domain_concepts from sub_epic-level domain_concepts arrays",
     "4. Create a unified list of all domain concepts with their:",
     "   - Name",
+    "   - Inheritance (inherits_from field if present)",
     "   - Responsibilities (with collaborators)",
     "   - Source location (epic/sub_epic name)",
     "",

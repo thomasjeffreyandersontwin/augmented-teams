@@ -4,20 +4,16 @@ import re
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from agile_bot.bots.base_bot.src.scanners.violation import Violation
+from .vocabulary_helper import VocabularyHelper
 
 logger = logging.getLogger(__name__)
 
 
 class ActiveLanguageScanner(StoryScanner):
-    
-    # Common actor patterns that should NOT appear in story names
-    ACTOR_PATTERNS = [
-        # Human actors
-        r'^(User|GM|Admin|Administrator|Customer|Developer|Manager|Operator|Owner)\s+',
-        # System actors
-        r'^(System|Server|Service|API|Database|Module|Component|Handler|Controller|Processor|Validator|Manager)\s+',
-        r'^(The\s+)?(user|admin|system|gm)\s+',
-    ]
+    """
+    Validates that story names use active language without actor prefixes.
+    Uses NLTK to detect actor/role words at the beginning of story names.
+    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -43,21 +39,37 @@ class ActiveLanguageScanner(StoryScanner):
         return violations
     
     def _check_actor_in_name(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        for pattern in self.ACTOR_PATTERNS:
-            match = re.match(pattern, name, re.IGNORECASE)
-            if match:
-                actor = match.group(0).strip()
-                location = node.map_location()
-                # Suggest the corrected name (without the actor prefix)
-                suggested_name = name[len(match.group(0)):].strip()
-                if suggested_name:
-                    suggested_name = suggested_name[0].upper() + suggested_name[1:] if len(suggested_name) > 1 else suggested_name.upper()
-                return Violation(
-                    rule=rule_obj,
-                    violation_message=f'{node_type.capitalize()} name "{name}" has actor "{actor}" in the name - actor should be in "users" field, not in name. Use Verb-Noun format: "{suggested_name}"',
-                    location=location,
-                    severity='error'
-                ).to_dict()
+        # Tokenize the name and check if first word is an actor/role
+        words = name.split()
+        if not words:
+            return None
+        
+        first_word = words[0].lower()
+        actor_index = 0
+        
+        # Skip "the" if present
+        if first_word == 'the' and len(words) > 1:
+            first_word = words[1].lower()
+            actor_index = 1
+        
+        # Check if first word is an actor/role using NLTK
+        if VocabularyHelper.is_actor_or_role(first_word):
+            actor = words[actor_index]
+            location = node.map_location()
+            # Suggest the corrected name (without the actor prefix)
+            suggested_name = ' '.join(words[actor_index + 1:])
+            if suggested_name:
+                suggested_name = suggested_name[0].upper() + suggested_name[1:] if len(suggested_name) > 1 else suggested_name.upper()
+            else:
+                suggested_name = "[Verb Noun]"
+            
+            return Violation(
+                rule=rule_obj,
+                violation_message=f'{node_type.capitalize()} name "{name}" has actor "{actor}" in the name - actor should be in "users" field, not in name. Use Verb-Noun format: "{suggested_name}"',
+                location=location,
+                severity='error'
+            ).to_dict()
+        
         return None
     
     def _get_node_type(self, node: StoryNode) -> str:

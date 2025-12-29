@@ -8,10 +8,10 @@ from typing import Dict, Any, List, Optional
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
 from agile_bot.bots.base_bot.src.actions.validate.validation_report_builder import ValidationReportBuilder
 from agile_bot.bots.base_bot.src.actions.validate.validation_report_formatter import ValidationReportFormatter
-from agile_bot.bots.base_bot.src.actions.validate.scanner_status_formatter import ScannerStatusFormatter
+from agile_bot.bots.base_bot.src.scanners.scanner_status_formatter import ScannerStatusFormatter
+from agile_bot.bots.base_bot.src.scanners.validation_scanner_status_builder import ValidationScannerStatusBuilder
 from agile_bot.bots.base_bot.src.actions.validate.file_link_builder import FileLinkBuilder
 from agile_bot.bots.base_bot.src.actions.validate.violation_formatter import ViolationFormatter
-from agile_bot.bots.base_bot.src.actions.validate.validation_scanner_status_builder import ValidationScannerStatusBuilder
 logger = logging.getLogger(__name__)
 
 

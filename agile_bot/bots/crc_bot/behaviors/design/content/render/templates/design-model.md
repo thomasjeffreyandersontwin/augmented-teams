@@ -8,7 +8,7 @@
 ## Epic: {{name}}
 
 {{#domain_concepts}}
-### {{name}}
+### {{name}}{{#inherits_from}} : {{inherits_from}}{{/inherits_from}}
 
 **Instantiated with:** {{#instantiated_with}}{{.}}, {{/instantiated_with}}
 

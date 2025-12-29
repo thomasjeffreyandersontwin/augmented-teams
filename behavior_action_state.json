@@ -6,12 +6,13 @@
     }
   ],
   "current_behavior": "story_bot.shape",
-  "current_action": "story_bot.shape.clarify",
-  "timestamp": "2025-12-28T15:48:45.847198",
+  "current_action": "story_bot.shape.strategy",
+  "timestamp": "2025-12-29T00:26:40.310547",
+  "action_phase": "instructions",
   "scope": {
-    "type": "files",
+    "type": "story",
     "value": [
-      "agile_bot\\bots\\base_bot\\src\\repl_cli"
+      "LangGraph Orchestration"
     ],
     "exclude": [],
     "skiprule": []

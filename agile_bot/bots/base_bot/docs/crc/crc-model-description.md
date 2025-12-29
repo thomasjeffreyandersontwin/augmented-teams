@@ -137,8 +137,223 @@ Domain model for Base Bot
 - **Inject correct bot instructions**: This responsibility involves collaboration with Behavior, Correct Bot Instructions.
 - **Load + inject diagnostics results**: This responsibility involves collaboration with Content, Diagnostic Report, Violations, Suggestions.
 
+### Module: agile_bot.bots.base_bot.src.synchronizers
+
+
+#### Synchronizer
+
+**Key Responsibilities:**
+- **Synchronizes formats**: This responsibility involves collaboration with Source Format, Target Format.
+- **Extracts from source**: This responsibility involves collaboration with Extractor, Source File.
+- **Renders to target**: This responsibility involves collaboration with Renderer, Target File.
+- **Validates sync**: This responsibility involves collaboration with Source, Target, Rules.
+- **Get source_format**: This responsibility involves collaboration with String.
+- **Get target_format**: This responsibility involves collaboration with String.
+- **Get extractor**: This responsibility involves collaboration with Extractor.
+- **Get renderer**: This responsibility involves collaboration with Renderer.
+
+### Module: agile_bot.bots.story_bot.src.story_bot_cli
+
+
+#### StoryBotCLI
+
+**Key Responsibilities:**
+- **Bootstraps environment**: This responsibility involves collaboration with BOT_DIRECTORY, WORKING_AREA, Bot Config.
+- **Delegates to BaseBotCli**: This responsibility involves collaboration with Base Bot CLI, Bot Name, Bot Config Path.
+- **Executes CLI**: This responsibility involves collaboration with Base Bot CLI, Command Arguments.
+- **Get bot_directory**: This responsibility involves collaboration with Path.
+- **Get workspace_directory**: This responsibility involves collaboration with Path.
+- **Get bot_name**: This responsibility involves collaboration with String.
+- **Get bot_config_path**: This responsibility involves collaboration with Path.
+
+### Module: agile_bot.bots.story_bot.src.story_bot_mcp_server
+
+
+#### ActionStateManager
+
+**Key Responsibilities:**
+- **Closes current action**: This responsibility involves collaboration with Current Action, Behavior, State File.
+- **Loads action state**: This responsibility involves collaboration with Behavior, Action State, State File.
+- **Determines next action**: This responsibility involves collaboration with Behavior, Action Names, Current Index.
+- **Transitions to next action**: This responsibility involves collaboration with Behavior, Current Action, Next Action.
+- **Detects behavior completion**: This responsibility involves collaboration with Current Action, Final Action, Behavior.
+- **Transitions to next behavior**: This responsibility involves collaboration with Bot, Next Behavior, First Action.
+- **Returns transition result**: This responsibility involves collaboration with Status, Completed Action, Next Action.
+- **Handles out-of-order confirmation**: This responsibility involves collaboration with Behavior, Confirmation, State File.
+- **Validates human confirmation**: This responsibility involves collaboration with Confirmed By, Timestamp.
+- **Persists confirmation**: This responsibility involves collaboration with State File, Confirmation Data, JSON.
+- **Get state_file**: This responsibility involves collaboration with Path.
+- **Get current_action**: This responsibility involves collaboration with Action.
+- **Get next_action**: This responsibility involves collaboration with Action.
+- **Get behavior_complete**: This responsibility involves collaboration with Boolean.
+- **Get out_of_order_confirmations**: This responsibility involves collaboration with Dict.
+
+#### BehaviorToolGenerator
+
+**Key Responsibilities:**
+- **Generates behavior tool function**: This responsibility involves collaboration with Behavior, Trigger Patterns.
+- **Routes to behavior**: This responsibility involves collaboration with Bot, Behavior Name.
+- **Routes to action**: This responsibility involves collaboration with Behavior, Action Name.
+- **Executes action**: This responsibility involves collaboration with Action, Parameters.
+- **Returns result**: This responsibility involves collaboration with Bot Result, Status, Data.
+- **Handles missing action**: This responsibility involves collaboration with Current Action, State.
+- **Loads action state**: This responsibility involves collaboration with Behavior, Action State.
+- **Get tool_name**: This responsibility involves collaboration with String.
+- **Get tool_description**: This responsibility involves collaboration with String.
+- **Get trigger_patterns**: This responsibility involves collaboration with List.
+
+#### StoryBotMCPServer
+
+**Key Responsibilities:**
+- **Bootstraps environment**: This responsibility involves collaboration with BOT_DIRECTORY, WORKING_AREA, Bot Config.
+- **Creates Bot instance**: This responsibility involves collaboration with Bot, Bot Config, Bot Directory.
+- **Creates FastMCP server**: This responsibility involves collaboration with FastMCP, Server Name.
+- **Registers bot tool**: This responsibility involves collaboration with Bot, Current Behavior, Current Action.
+- **Registers behavior tools**: This responsibility involves collaboration with Bot, Behavior, Action, Tool Generator.
+- **Registers utility tools**: This responsibility involves collaboration with Working Directory Manager, Action State Manager, Server Restart Manager.
+- **Delegates to Bot**: This responsibility involves collaboration with Bot, Behavior, Action.
+- **Runs MCP server**: This responsibility involves collaboration with FastMCP, Event Loop.
+- **Get bot_directory**: This responsibility involves collaboration with Path.
+- **Get workspace_directory**: This responsibility involves collaboration with Path.
+- **Get bot**: This responsibility involves collaboration with Bot.
+- **Get server**: This responsibility involves collaboration with FastMCP.
+
+#### WorkingDirectoryManager
+
+**Key Responsibilities:**
+- **Gets working directory**: This responsibility involves collaboration with Workspace Directory, WORKING_AREA.
+- **Sets working directory**: This responsibility involves collaboration with New Path, Persist Flag.
+- **Validates path**: This responsibility involves collaboration with Path, Validation Rules.
+- **Updates environment**: This responsibility involves collaboration with WORKING_AREA, Environment Variables.
+- **Updates bot config**: This responsibility involves collaboration with Bot Config, Working Area, Persist Flag.
+- **Persists to config**: This responsibility involves collaboration with Bot Config File, JSON.
+- **Returns previous directory**: This responsibility involves collaboration with Previous Path, Workspace Directory.
+- **Get working_directory**: This responsibility involves collaboration with Path.
+- **Get previous_directory**: This responsibility involves collaboration with Path.
+- **Get persisted**: This responsibility involves collaboration with Boolean.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.domain_model.domain_model_synchronizer
+
+
+#### DomainModelSynchronizer : Synchronizer
+
+**Key Responsibilities:**
+- **Syncs CRC text with story graph**: This responsibility involves collaboration with CRC Text, Story Graph, Domain Concepts.
+- **Extracts domain concepts**: This responsibility involves collaboration with CRC Parser, Concept Extractor.
+- **Renders domain concepts**: This responsibility involves collaboration with Concept Renderer, CRC Template.
+- **Validates CRC format**: This responsibility involves collaboration with CRC Validator, Format Rules.
+- **Preserves module paths**: This responsibility involves collaboration with Module Mapper, Code Structure.
+- **Get crc_path**: This responsibility involves collaboration with Path.
+- **Get story_graph_path**: This responsibility involves collaboration with Path.
+- **Get domain_concepts**: This responsibility involves collaboration with List.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_epic
+
+
+#### StoryIOEpic
+
+**Key Responsibilities:**
+- **Owns features**: This responsibility involves collaboration with Feature List, Epic Context.
+- **Calculates total stories**: This responsibility involves collaboration with Feature, Story Count.
+- **Renders epic section**: This responsibility involves collaboration with Epic Renderer, Template.
+- **Validates epic structure**: This responsibility involves collaboration with Epic Validator, Rules.
+- **Get name**: This responsibility involves collaboration with String.
+- **Get description**: This responsibility involves collaboration with String.
+- **Get features**: This responsibility involves collaboration with List.
+- **Get total_stories**: This responsibility involves collaboration with Integer.
+- **Get sequential_order**: This responsibility involves collaboration with Float.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_feature
+
+
+#### StoryIOFeature
+
+**Key Responsibilities:**
+- **Owns stories**: This responsibility involves collaboration with Story List, Feature Context.
+- **Calculates story count**: This responsibility involves collaboration with Story, Count.
+- **Renders feature section**: This responsibility involves collaboration with Feature Renderer, Template.
+- **Validates feature structure**: This responsibility involves collaboration with Feature Validator, Rules.
+- **Get name**: This responsibility involves collaboration with String.
+- **Get description**: This responsibility involves collaboration with String.
+- **Get stories**: This responsibility involves collaboration with List.
+- **Get story_count**: This responsibility involves collaboration with Integer.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_increment
+
+
+#### StoryIOIncrement
+
+**Key Responsibilities:**
+- **Owns story assignments**: This responsibility involves collaboration with Story List, Increment Context.
+- **Manages priorities**: This responsibility involves collaboration with Priority Order, Story Sequence.
+- **Calculates capacity**: This responsibility involves collaboration with Story Count, Capacity Limit.
+- **Renders increment view**: This responsibility involves collaboration with Increment Renderer, Template.
+- **Validates increment structure**: This responsibility involves collaboration with Increment Validator, Rules.
+- **Get number**: This responsibility involves collaboration with Integer.
+- **Get name**: This responsibility involves collaboration with String.
+- **Get stories**: This responsibility involves collaboration with List.
+- **Get capacity**: This responsibility involves collaboration with Integer.
+- **Get priority_order**: This responsibility involves collaboration with List.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_renderer
+
+
+#### StoryIORenderer
+
+**Key Responsibilities:**
+- **Renders epic cells**: This responsibility involves collaboration with Epic, Cell Generator, XML.
+- **Renders feature cells**: This responsibility involves collaboration with Feature, Cell Generator, XML.
+- **Renders story cells**: This responsibility involves collaboration with Story, Cell Generator, XML.
+- **Renders increment lanes**: This responsibility involves collaboration with Increment, Lane Generator, XML.
+- **Calculates layout**: This responsibility involves collaboration with Layout Manager, Position Calculator.
+- **Formats XML**: This responsibility involves collaboration with XML Formatter, Pretty Print.
+- **Get cell_style**: This responsibility involves collaboration with String.
+- **Get layout_config**: This responsibility involves collaboration with Dict.
+- **Get xml_formatter**: This responsibility involves collaboration with XMLFormatter.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_story
+
+
+#### StoryIOStory
+
+**Key Responsibilities:**
+- **Owns acceptance criteria**: This responsibility involves collaboration with Criteria List, Story Context.
+- **Owns increment assignment**: This responsibility involves collaboration with Increment, Priority.
+- **Renders story card**: This responsibility involves collaboration with Story Renderer, Template.
+- **Validates story format**: This responsibility involves collaboration with Story Validator, Rules.
+- **Calculates position**: This responsibility involves collaboration with Position Manager, Layout.
+- **Get name**: This responsibility involves collaboration with String.
+- **Get description**: This responsibility involves collaboration with String.
+- **Get acceptance_criteria**: This responsibility involves collaboration with List.
+- **Get increment**: This responsibility involves collaboration with Integer.
+- **Get priority**: This responsibility involves collaboration with Integer.
+- **Get position**: This responsibility involves collaboration with Position.
+
+### Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_synchronizer
+
+
+#### StoryIOSynchronizer : Synchronizer
+
+**Key Responsibilities:**
+- **Syncs story graph with drawio**: This responsibility involves collaboration with Story Graph, Drawio File.
+- **Extracts stories from drawio**: This responsibility involves collaboration with Drawio Parser, Story Components.
+- **Renders stories to drawio**: This responsibility involves collaboration with Story Renderer, Drawio Generator.
+- **Manages story positions**: This responsibility involves collaboration with Position Manager, Story Layout.
+- **Updates increments**: This responsibility involves collaboration with Increment Manager, Priority Data.
+- **Validates story structure**: This responsibility involves collaboration with Structure Validator, Story Rules.
+- **Get story_graph_path**: This responsibility involves collaboration with Path.
+- **Get drawio_path**: This responsibility involves collaboration with Path.
+- **Get increments**: This responsibility involves collaboration with List.
+- **Get epics**: This responsibility involves collaboration with List.
+- **Get stories**: This responsibility involves collaboration with List.
+
 ### Module: bot
 
+
+#### Action
+
+**Key Responsibilities:**
+- **Gets instructions for operation**: This responsibility involves collaboration with String, Operation.
 
 #### Base Bot
 
@@ -159,6 +374,8 @@ Domain model for Base Bot
 - **Provide Guardrails**: This responsibility involves collaboration with GuardRails.
 - **Provide Rules**: This responsibility involves collaboration with Rule, Validation.
 - **Provide Content Specs**: This responsibility involves collaboration with Content.
+- **Gets action by name**: This responsibility involves collaboration with Action, String.
+- **Gets actions in sequence**: This responsibility involves collaboration with List, Action.
 
 #### Behavior Workflow
 
@@ -256,6 +473,87 @@ Domain model for Base Bot
 - **Get behaviors: CLIBehaviors**: This responsibility involves collaboration with CLIBehaviors.
 - **Get status text: str**: This responsibility involves collaboration with CLIBehaviors, CLIBehavior, CLIActions, CLIAction.
 - **Wraps domain bot**: This responsibility involves collaboration with Bot.
+
+### Module: repl_cli.headless
+
+
+#### ActionSummary
+
+**Key Responsibilities:**
+- **Aggregates operation results**: This responsibility involves collaboration with ActionSummary, List, OperationResult.
+- **Reports action completion**: This responsibility involves collaboration with String, ActionSummary.
+
+#### BehaviorSummary
+
+**Key Responsibilities:**
+- **Aggregates action results**: This responsibility involves collaboration with BehaviorSummary, List, ActionResult.
+- **Reports behavior completion**: This responsibility involves collaboration with String, BehaviorSummary.
+
+#### ErrorRecovery
+
+**Key Responsibilities:**
+- **Tracks recovery attempt count**: This responsibility involves collaboration with RecoveryAttemptCount.
+- **Waits before retry**: This responsibility involves collaboration with Duration.
+- **Restarts session**: This responsibility involves collaboration with HeadlessSession.
+- **Determines if error is recoverable**: This responsibility involves collaboration with RecoverableError, NonRecoverableError.
+- **Enforces max retry limit**: This responsibility involves collaboration with RecoveryAttemptCount.
+
+#### ExecutionContext
+
+**Key Responsibilities:**
+- **Loads from context file**: This responsibility involves collaboration with Path.
+- **Get user message**: This responsibility involves collaboration with UserMessage.
+- **Get chat history**: This responsibility involves collaboration with ChatHistory.
+- **Get file references**: This responsibility involves collaboration with FileReference.
+
+#### HeadlessSession
+
+**Key Responsibilities:**
+- **Invokes with message and context file**: This responsibility involves collaboration with Message, ContextFile, ExecutionResult.
+- **Invokes operation with behavior, action, operation, and context file**: This responsibility involves collaboration with ExecutionResult, Behavior, Action, Operation, ContextFile.
+- **Invokes complete action with behavior, action, and context file**: This responsibility involves collaboration with ExecutionResult, Behavior, Action, ContextFile.
+- **Invokes complete behavior with behavior name and context file**: This responsibility involves collaboration with ExecutionResult, Behavior, ContextFile.
+
+#### NonRecoverableError
+
+**Key Responsibilities:**
+- **Indicates CLI failure**: Indicates CLI failure
+- **Indicates API connection failure**: Indicates API connection failure
+- **Indicates max recovery attempts exceeded**: This responsibility involves collaboration with RecoveryAttemptCount.
+- **Cannot be retried**: Cannot be retried
+
+#### RecoverableError
+
+**Key Responsibilities:**
+- **Indicates AI hang**: Indicates AI hang
+- **Indicates AI stuck in planning**: Indicates AI stuck in planning
+- **Can be retried**: Can be retried
+
+#### SessionLog
+
+**Key Responsibilities:**
+- **Creates with timestamped path**: This responsibility involves collaboration with Path.
+- **Appends response**: This responsibility involves collaboration with Response.
+- **Appends total loops**: Appends total loops
+- **Get transcript**: Get transcript
+
+### Module: repl_cli.repl_help
+
+
+#### REPLHelp
+
+**Key Responsibilities:**
+- **Includes headless mode documentation**: This responsibility involves collaboration with HeadlessConfig.
+- **Shows headless command examples**: Shows headless command examples
+
+### Module: repl_cli.status_display
+
+
+#### StatusDisplay
+
+**Key Responsibilities:**
+- **Shows headless availability**: This responsibility involves collaboration with HeadlessConfig.
+- **Shows active session status**: This responsibility involves collaboration with HeadlessSession.
 
 ### Module: workflow
 

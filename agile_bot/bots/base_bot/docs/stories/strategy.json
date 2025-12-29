@@ -11,7 +11,9 @@
       "test_organization": "All tests use the same parameterized list of behavior-action combinations",
       "test_execution": "Each test runs the parameterized list through its own specific verification",
       "integration_test": "One final test at the end that goes through the whole sequence of steps",
-      "common_helper": "All tests use the same common helper for creating bots with behaviors and actions"
+      "common_helper": "All tests use the same common helper for creating bots with behaviors and actions",
+      "examples_representation": "Inline Values in Steps",
+      "scenario_outline": "Individual Scenarios"
     },
     "assumptions_made": [
       "One story is specified at a time",

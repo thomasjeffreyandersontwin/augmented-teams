@@ -2,13 +2,17 @@
   "name": "build",
   "order": 1,
   "instructions": [
-    "{{description}}",
-    "",
+    "Build knowledge graph for build",
+    "Base instructions for build",
+    "Use verb-noun format for actions",
+    "{{rules}}",
     "{{schema}}",
-    "",
-    "{{rules}}"
+    "{{description}}",
+    "Epics should be organized in verb-noun format",
+    "Top-level features should follow the schema"
   ]
 }
+
 
 
 

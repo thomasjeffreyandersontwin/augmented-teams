@@ -8,13 +8,18 @@ import logging
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Classes
+from .vocabulary_helper import VocabularyHelper
 
 logger = logging.getLogger(__name__)
 
 
 class ResourceOrientedCodeScanner(CodeScanner):
+    """
+    Validates that code classes are named after resources (what they ARE)
+    rather than actions (what they DO).
     
-    MANAGER_PATTERNS = ['Manager', 'Loader', 'Handler', 'Doer', 'Processor', 'Executor', 'Builder']
+    Uses NLTK to detect agent nouns (Manager, Loader, Handler, etc.)
+    """
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         # No violations in single-file scan - all checking happens in cross-file scan
@@ -56,21 +61,22 @@ class ResourceOrientedCodeScanner(CodeScanner):
                 for cls in classes.get_many_classes:
                     all_classes[(file_path, cls.node.name)] = cls.node
                     
-                    for pattern in self.MANAGER_PATTERNS:
-                        if cls.node.name.endswith(pattern):
-                            loader_classes[cls.node.name] = (file_path, cls.node, pattern)
-                            break
+                    # Check if class name is an agent noun using NLTK
+                    is_agent, base_verb, suffix = VocabularyHelper.is_agent_noun(cls.node.name)
+                    if is_agent:
+                        loader_classes[cls.node.name] = (file_path, cls.node, suffix)
             except (SyntaxError, UnicodeDecodeError) as e:
                 logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
                 continue
         
-        # Second pass: check if each loader class is owned by a domain object
-        for loader_class_name, (loader_file, loader_node, pattern) in loader_classes.items():
+        # Second pass: check if each agent noun class is owned by a domain object
+        for loader_class_name, (loader_file, loader_node, suffix) in loader_classes.items():
             if not self._is_owned_by_domain_object(loader_class_name, loader_node, all_files, all_classes):
+                suggested_name = loader_class_name[:-len(suffix)] if loader_class_name.endswith(suffix) else loader_class_name
                 # No code snippet for class-level design violations (class definition line)
                 violation = Violation(
                     rule=rule_obj,
-                    violation_message=f'Class "{loader_class_name}" uses manager/doer/loader pattern but is not owned by a domain object. Use resource-oriented design instead (e.g., make it a property of a domain object like "{loader_class_name.replace(pattern, "")}").',
+                    violation_message=f'Class "{loader_class_name}" is an agent noun (doer of action) but is not owned by a domain object. Use resource-oriented design instead (e.g., make it a property of a domain object like "{suggested_name}").',
                     location=str(loader_file),
                     line_number=loader_node.lineno,
                     severity='error'
@@ -144,6 +150,22 @@ class ResourceOrientedCodeScanner(CodeScanner):
                             return True
                         if isinstance(node.returns, ast.Attribute):
                             if node.returns.attr == loader_class_name:
+                                return True
+        
+        return False
+
+
+
+
+
+                                return True
+        
+        return False
+
+
+
+
+
                                 return True
         
         return False

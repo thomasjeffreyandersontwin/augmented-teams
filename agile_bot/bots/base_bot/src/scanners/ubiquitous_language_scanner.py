@@ -147,11 +147,11 @@ class UbiquitousLanguageScanner(TestScanner):
         Check if classes being tested are in the domain model.
         Flag violations for:
         1. Classes not in domain model
-        2. Generic implementation patterns (Handler, Manager, Service, Processor)
+        2. Agent nouns (Handler, Manager, Service, Processor) detected via NLTK
         """
-        violations = []
+        from .vocabulary_helper import VocabularyHelper
         
-        generic_suffixes = ['Handler', 'Manager', 'Service', 'Processor', 'Controller', 'Executor']
+        violations = []
         
         # Common pytest/testing classes and standard library classes to ignore
         ignore_classes = {
@@ -175,11 +175,11 @@ class UbiquitousLanguageScanner(TestScanner):
             
             # Check if class is in domain model
             if class_name not in domain_entities:
-                # Check if it's a generic pattern
-                is_generic = any(class_name.endswith(suffix) for suffix in generic_suffixes)
+                # Check if it's an agent noun using NLTK
+                is_agent, base_verb, suffix = VocabularyHelper.is_agent_noun(class_name)
                 
-                if is_generic:
-                    message = f"Class '{class_name}' uses generic implementation pattern not in domain model. Use domain entity names from story graph."
+                if is_agent:
+                    message = f"Class '{class_name}' is an agent noun (doer of action from verb '{base_verb}') not in domain model. Use domain entity names from story graph."
                     if code_snippet:
                         message += f"\n\n```python\n{code_snippet}\n```"
                     
@@ -201,6 +201,22 @@ class UbiquitousLanguageScanner(TestScanner):
                         rule=rule_obj,
                         violation_message=message,
                         location=f"{file_path}",
+                        line_number=line_num,
+                        severity='warning'
+                    ).to_dict()
+                    violations.append(violation)
+        
+        return violations
+
+
+                        line_number=line_num,
+                        severity='warning'
+                    ).to_dict()
+                    violations.append(violation)
+        
+        return violations
+
+
                         line_number=line_num,
                         severity='warning'
                     ).to_dict()
