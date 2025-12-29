@@ -6,6 +6,7 @@
       "domain_concepts": [
         {
           "name": "Base Bot",
+          "module": "bot",
           "responsibilities": [
             {
               "name": "Executes Actions",
@@ -49,6 +50,7 @@
         },
         {
           "name": "Specific Bot",
+          "module": "bot",
           "responsibilities": [
             {
               "name": "Provide Behavior config",
@@ -83,6 +85,7 @@
         },
         {
           "name": "BotLangActionNode",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Wrap action.execute(context) method",
@@ -114,6 +117,7 @@
         },
         {
           "name": "BehaviorGraphBuilder",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Read behavior workflow definitions",
@@ -147,6 +151,7 @@
         },
         {
           "name": "BotLangFlowRunner",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Load BotLangFlow Python files",
@@ -534,10 +539,11 @@
     {
       "name": "Invoke Bot",
       "sequential_order": 2.0,
-      "domain_concepts": [
-        {
-          "name": "Router",
-          "responsibilities": [
+          "domain_concepts": [
+            {
+              "name": "Router",
+              "module": "ext",
+              "responsibilities": [
             {
               "name": "Match trigger patterns",
               "collaborators": [
@@ -592,6 +598,7 @@
         },
         {
           "name": "Base Bot",
+          "module": "bot",
           "responsibilities": [
             {
               "name": "Executes Actions",
@@ -635,6 +642,7 @@
         },
         {
           "name": "Workflow State",
+          "module": "actions",
           "responsibilities": [
             {
               "name": "Track current action",
@@ -674,6 +682,7 @@
         },
         {
           "name": "Checkpoint",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Save workflow state",
@@ -706,6 +715,7 @@
         },
         {
           "name": "BotMode",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Determine AI interaction",
@@ -725,6 +735,7 @@
         },
         {
           "name": "BotLangFlow",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Execute nodes in sequence",
@@ -765,6 +776,7 @@
         },
         {
           "name": "BotLangState",
+          "module": "workflow",
           "responsibilities": [
             {
               "name": "Contain story graph",
@@ -816,6 +828,7 @@
         },
         {
           "name": "Behavior Action State",
+          "module": "actions",
           "responsibilities": [
             {
               "name": "Track current action",
@@ -861,6 +874,7 @@
           "domain_concepts": [
             {
               "name": "Project",
+              "module": "bot",
               "responsibilities": [
                 {
                   "name": "Move project to working area",
@@ -1486,6 +1500,7 @@
           "domain_concepts": [
             {
               "name": "Behavior",
+              "module": "bot",
               "responsibilities": [
                 {
                   "name": "Perform Configured Actions",
@@ -1528,6 +1543,7 @@
             },
             {
               "name": "Base Action",
+              "module": "actions",
               "responsibilities": [
                 {
                   "name": "Inject Instructions",
@@ -2687,115 +2703,71 @@
           "domain_concepts": [
             {
               "name": "REPLSession",
+              "module": "repl_cli",
               "responsibilities": [
                 {
-                  "name": "Reads input line",
-                  "collaborators": [
-                    "TTYDetector"
-                  ]
-                },
-                {
-                  "name": "Routes to CLI operation",
-                  "collaborators": [
-                    "CLIBot",
-                    "CommandParser"
-                  ]
-                },
-                {
-                  "name": "Displays output",
-                  "collaborators": [
-                    "StatusDisplay"
-                  ]
-                },
-                {
-                  "name": "Loops until exit",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "TTYDetector",
-              "responsibilities": [
-                {
-                  "name": "Detects interactive mode",
+                  "name": "Runs REPL loop",
                   "collaborators": []
                 },
                 {
-                  "name": "Detects pipe mode",
+                  "name": "Reads input from stdin or terminal",
                   "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "CommandParser",
-              "responsibilities": [
-                {
-                  "name": "Parses dot notation",
-                  "collaborators": [
-                    "Behavior",
-                    "Action"
-                  ]
                 },
                 {
-                  "name": "Extracts arguments",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "StatusDisplay",
-              "responsibilities": [
-                {
-                  "name": "Renders bot status",
+                  "name": "Parses command input",
                   "collaborators": [
                     "CLIBot"
                   ]
                 },
                 {
-                  "name": "Has header",
+                  "name": "Routes commands to CLI bot",
                   "collaborators": [
-                    "HeaderDisplay"
+                    "CLIBot"
                   ]
                 },
                 {
-                  "name": "Has hierarchy tree",
+                  "name": "Displays status and results",
                   "collaborators": [
-                    "HierarchyTreeDisplay"
+                    "CLIBot"
                   ]
                 },
                 {
-                  "name": "Has footer",
+                  "name": "Has CLI bot",
                   "collaborators": [
-                    "FooterDisplay"
+                    "CLIBot"
                   ]
                 }
               ]
             },
             {
               "name": "CLIBot",
+              "module": "repl_cli.cli_bot",
               "responsibilities": [
                 {
-                  "name": "Get name",
+                  "name": "Get name: str",
                   "collaborators": []
                 },
                 {
-                  "name": "Get path",
+                  "name": "Get workspace directory: Path",
                   "collaborators": []
                 },
                 {
-                  "name": "Get status",
-                  "collaborators": [
-                    "StatusDisplay"
-                  ]
-                },
-                {
-                  "name": "Has behaviors",
+                  "name": "Get behaviors: CLIBehaviors",
                   "collaborators": [
                     "CLIBehaviors"
                   ]
                 },
                 {
-                  "name": "References domain bot",
+                  "name": "Get status text: str",
+                  "collaborators": [
+                    "CLIBehaviors",
+                    "CLIBehavior",
+                    "CLIActions",
+                    "CLIAction"
+                  ]
+                },
+                {
+                  "name": "Wraps domain bot",
                   "collaborators": [
                     "Bot"
                   ]
@@ -2804,27 +2776,28 @@
             },
             {
               "name": "CLIBehaviors",
+              "module": "repl_cli.cli_bot",
               "responsibilities": [
                 {
-                  "name": "Get current behavior",
+                  "name": "Get all: List[CLIBehavior]",
                   "collaborators": [
                     "CLIBehavior"
                   ]
                 },
                 {
-                  "name": "Get next behavior",
+                  "name": "Get current: CLIBehavior",
                   "collaborators": [
                     "CLIBehavior"
                   ]
                 },
                 {
-                  "name": "Navigates to behavior",
+                  "name": "Find by name: CLIBehavior",
                   "collaborators": [
                     "CLIBehavior"
                   ]
                 },
                 {
-                  "name": "References domain behaviors",
+                  "name": "Wraps domain behaviors",
                   "collaborators": [
                     "Behaviors"
                   ]
@@ -2833,27 +2806,28 @@
             },
             {
               "name": "CLIBehavior",
+              "module": "repl_cli.cli_bot",
               "responsibilities": [
                 {
-                  "name": "Get name",
+                  "name": "Get name: str",
                   "collaborators": []
                 },
                 {
-                  "name": "Get description",
+                  "name": "Get description: str",
                   "collaborators": []
                 },
                 {
-                  "name": "Get status",
-                  "collaborators": []
-                },
-                {
-                  "name": "Has actions",
+                  "name": "Get actions: CLIActions",
                   "collaborators": [
                     "CLIActions"
                   ]
                 },
                 {
-                  "name": "References domain behavior",
+                  "name": "Is current: bool",
+                  "collaborators": []
+                },
+                {
+                  "name": "Wraps domain behavior",
                   "collaborators": [
                     "Behavior"
                   ]
@@ -2862,27 +2836,28 @@
             },
             {
               "name": "CLIActions",
+              "module": "repl_cli.cli_bot",
               "responsibilities": [
                 {
-                  "name": "Get current action",
+                  "name": "Get all: List[CLIAction]",
                   "collaborators": [
                     "CLIAction"
                   ]
                 },
                 {
-                  "name": "Get next action",
+                  "name": "Get current: CLIAction",
                   "collaborators": [
                     "CLIAction"
                   ]
                 },
                 {
-                  "name": "Navigates to action",
+                  "name": "Find by name: CLIAction",
                   "collaborators": [
                     "CLIAction"
                   ]
                 },
                 {
-                  "name": "References domain actions",
+                  "name": "Wraps domain actions",
                   "collaborators": [
                     "Actions"
                   ]
@@ -2891,43 +2866,32 @@
             },
             {
               "name": "CLIAction",
+              "module": "repl_cli.cli_bot",
               "responsibilities": [
                 {
-                  "name": "Get name",
+                  "name": "Get name: str",
                   "collaborators": []
                 },
                 {
-                  "name": "Get description",
+                  "name": "Get description: str",
                   "collaborators": []
                 },
                 {
-                  "name": "Executes instructions",
+                  "name": "Is current: bool",
+                  "collaborators": []
+                },
+                {
+                  "name": "Is completed: bool",
+                  "collaborators": []
+                },
+                {
+                  "name": "Executes: ActionResult",
                   "collaborators": [
                     "Action"
                   ]
                 },
                 {
-                  "name": "Executes submit",
-                  "collaborators": [
-                    "Action"
-                  ]
-                },
-                {
-                  "name": "Executes confirm",
-                  "collaborators": [
-                    "Action"
-                  ]
-                },
-                {
-                  "name": "Parses arguments",
-                  "collaborators": []
-                },
-                {
-                  "name": "Formats results",
-                  "collaborators": []
-                },
-                {
-                  "name": "References domain action",
+                  "name": "Wraps domain action",
                   "collaborators": [
                     "Action"
                   ]
@@ -3281,6 +3245,7 @@
       "domain_concepts": [
         {
           "name": "Behavior Workflow",
+          "module": "bot",
           "responsibilities": [
             {
               "name": "Determine next Action",
@@ -3308,6 +3273,7 @@
           "domain_concepts": [
             {
               "name": "GatherContextAction",
+              "module": "actions.clarify",
               "responsibilities": [
                 {
                   "name": "Inject gather context instructions",
@@ -3330,6 +3296,7 @@
             },
             {
               "name": "Guardrails",
+              "module": "actions",
               "responsibilities": [
                 {
                   "name": "Provide required context",
@@ -3580,6 +3547,7 @@
           "domain_concepts": [
             {
               "name": "PlanningAction",
+              "module": "actions.strategy",
               "responsibilities": [
                 {
                   "name": "Inject planning instructions",
@@ -3603,6 +3571,7 @@
             },
             {
               "name": "Guardrails",
+              "module": "actions",
               "responsibilities": [
                 {
                   "name": "Provide required context",
@@ -3762,6 +3731,7 @@
           "domain_concepts": [
             {
               "name": "BuildKnowledgeAction",
+              "module": "actions.build",
               "responsibilities": [
                 {
                   "name": "Inject knowledge graph template",
@@ -3792,6 +3762,7 @@
             },
             {
               "name": "Content",
+              "module": "actions",
               "responsibilities": [
                 {
                   "name": "Render outputs",
@@ -3991,6 +3962,7 @@
           "domain_concepts": [
             {
               "name": "RenderOutputAction",
+              "module": "actions.render",
               "responsibilities": [
                 {
                   "name": "Inject render output instructions",
@@ -4030,6 +4002,7 @@
             },
             {
               "name": "Renderer",
+              "module": "actions.render",
               "responsibilities": [
                 {
                   "name": "Render complex output",
@@ -4051,6 +4024,7 @@
             },
             {
               "name": "Template",
+              "module": "actions.render",
               "responsibilities": [
                 {
                   "name": "Define output structure",
@@ -4076,6 +4050,7 @@
             },
             {
               "name": "Content",
+              "module": "actions",
               "responsibilities": [
                 {
                   "name": "Render outputs",
@@ -4405,6 +4380,7 @@
           "domain_concepts": [
             {
               "name": "ValidateRulesAction",
+              "module": "actions.rules",
               "responsibilities": [
                 {
                   "name": "Inject common bot rules",
@@ -4435,6 +4411,7 @@
             },
             {
               "name": "Rule",
+              "module": "actions.rules",
               "responsibilities": [
                 {
                   "name": "Validate content",
@@ -4497,6 +4474,7 @@
             },
             {
               "name": "CorrectBotAction",
+              "module": "actions.validate",
               "responsibilities": [
                 {
                   "name": "Inject correct bot instructions",
@@ -4918,7 +4896,7 @@
       ]
     },
     {
-      "name": "Front-End REPL (Interactive Testing)",
+      "name": "REPL CLI",
       "priority": 10,
       "stories": [
         "Launch REPL Loop",
@@ -4941,19 +4919,6 @@
         "Advance To Next Action",
         "Loop Back To Display State",
         "Exit REPL",
-        "Support Dot Notation Commands"
-      ]
-    },
-    {
-      "name": "REPL All Scope Parameters (Mock Backend)",
-      "priority": 11,
-      "description": "Combined mock backend increment for Base, Story, and File scope parameters",
-      "stories": [
-        "Show Available Behaviors and Actions",
-        "Navigate To Behavior",
-        "Navigate To Action",
-        "Request Help",
-        "Request Status",
         "Provide Context For Instructions",
         "Provide Story Scope Context For Instructions",
         "Provide File Scope Context For Instructions",
@@ -4961,16 +4926,7 @@
         "Get Instructions and Display",
         "Submit Action and Display Results",
         "Confirm Action and Display Results",
-        "Advance To Next Action",
-        "Loop Back To Display State",
-        "Show Current Behavior Action Help"
-      ]
-    },
-    {
-      "name": "REPL All Scope Parameters (Real Backend)",
-      "priority": 12,
-      "description": "Combined real backend increment for generation and real action execution",
-      "stories": [
+        "Show Current Behavior Action Help",
         "Generate REPL Command Definitions",
         "Generate CLI Entry Point",
         "Generate Cursor Commands",
@@ -4979,34 +4935,13 @@
         "Parse Command Input",
         "Retrieve and Display Bot Behavior Action Instructions",
         "Display Action Output",
-        "Launch REPL Loop",
-        "Detect TTY Input",
-        "Support Pipe Automation Mode",
-        "Display Fresh Start",
-        "Display Existing State",
-        "Support Dot Notation Commands",
-        "Display Fresh Start",
-        "Display Existing State",
-        "Show Current Position In Workflow Breadcrumbs",
-        "Show Available Behaviors and Actions",
-        "Navigate To Behavior",
-        "Navigate To Action",
-        "Navigate Within Behavior",
-        "Confirm Advances Across Behaviors",
-        "Request Help",
-        "Request Status",
-        "Enter Action",
         "Prompt For Basic Parameters",
         "Prompt For Story Scope Parameters",
-        "Prompt For File Scope Parameters",
-        "Display Confirm and Continue Prompt",
-        "Advance To Next Action",
-        "Loop Back To Display State",
-        "Exit REPL"
+        "Prompt For File Scope Parameters"
       ]
     },
     {
-      "name": "CLI Extra",
+      "name": "CLI Multi Bots",
       "priority": 13,
       "description": "Additional CLI features for bot switching, command display, and behavior invocation",
       "stories": [

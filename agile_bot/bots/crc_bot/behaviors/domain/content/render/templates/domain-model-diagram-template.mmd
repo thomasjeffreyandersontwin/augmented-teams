@@ -1,5 +1,5 @@
 classDiagram
-    namespace {NamespaceName} {
+    namespace {module} {
         class {ConceptName} {
             +{responsibility}()
             +{responsibility}()
@@ -12,8 +12,8 @@ classDiagram
         }
     }
     
-    namespace {AnotherNamespace} {
-        class {ConceptInOtherNamespace} {
+    namespace {another_module} {
+        class {ConceptInOtherModule} {
             +{responsibility}()
         }
     }
@@ -24,4 +24,10 @@ classDiagram
     %% Associations
     {ConceptName} --> {CollaboratorConcept} : {relationship_label}
     {ConceptName} --> {AnotherConcept} : uses
+
+%% Instructions:
+%% - Group domain concepts by module (source folder structure)
+%% - Module names use dot notation for nested folders (e.g., repl_cli.cli_bot)
+%% - Show inheritance relationships with --|>
+%% - Show associations/collaborations with -->
 

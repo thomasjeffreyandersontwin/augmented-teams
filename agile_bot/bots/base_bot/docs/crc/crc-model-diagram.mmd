@@ -1,0 +1,310 @@
+classDiagram
+    namespace actions {
+        class Base Action {
+            +inject_instructions()
+            +load_relevant_content_+_inject_into_instructions()
+            +save_content_changes()
+        }
+        class Behavior Action State {
+            +track_current_action()
+            +track_completed_actions()
+            +determine_next_action()
+            +pause_workflow()
+            +resume_workflow()
+        }
+        class Content {
+            +render_outputs()
+            +synchronize_formats()
+            +save_knowledge_graph()
+            +load_rendered_content()
+            +present_rendered_content()
+        }
+        class Guardrails {
+            +provide_required_context()
+            +guide_planning_decisions()
+            +define_recommended_human_activity()
+        }
+        class Workflow State {
+            +track_current_action()
+            +track_completed_actions()
+            +determine_next_action()
+            +pause_workflow()
+            +resume_workflow()
+        }
+    }
+
+    namespace actions.build {
+        class BuildKnowledgeAction {
+            +inject_knowledge_graph_template()
+            +inject_builder_instructions()
+            +save_knowledge_graph()
+        }
+    }
+
+    namespace actions.clarify {
+        class GatherContextAction {
+            +inject_gather_context_instructions()
+            +inject_questions_and_evidence()
+        }
+    }
+
+    namespace actions.render {
+        class RenderOutputAction {
+            +inject_render_output_instructions()
+            +inject_templates()
+            +inject_transformers()
+            +load_+_inject_structured_content()
+        }
+        class Renderer {
+            +render_complex_output()
+            +render_outputs_using_components_in_context()
+        }
+        class Template {
+            +define_output_structure()
+            +transform_content()
+            +load_template()
+        }
+    }
+
+    namespace actions.rules {
+        class Rule {
+            +validate_content()
+            +find_behavior_specific_rules_from_context()
+            +find_common_bot_rules_from_context()
+            +load_+_inject_diagnostics_results()
+            +suggest_corrections()
+            +provide_examples_-_do()
+            +provide_examples_-_dont()
+            +specialized_examples()
+        }
+        class ValidateRulesAction {
+            +inject_common_bot_rules()
+            +inject_behavior_specific_rules()
+            +load_+_inject_content_for_validation()
+        }
+    }
+
+    namespace actions.strategy {
+        class PlanningAction {
+            +inject_planning_instructions()
+            +inject_decision_criteria_and_assumptions()
+        }
+    }
+
+    namespace actions.validate {
+        class CorrectBotAction {
+            +inject_correct_bot_instructions()
+            +load_+_inject_diagnostics_results()
+        }
+    }
+
+    namespace bot {
+        class Base Bot {
+            +executes_actions()
+            +track_activity()
+            +route_to_behaviors_and_actions()
+            +persist_content()
+            +manage_project_state()
+            +render()
+        }
+        class Behavior {
+            +perform_configured_actions()
+            +invoke_on_trigger_words()
+            +inject_instructions()
+            +provide_guardrails()
+            +provide_rules()
+            +provide_content_specs()
+        }
+        class Behavior Workflow {
+            +determine_next_action()
+            +track_state()
+        }
+        class Project {
+            +move_project_to_working_area()
+            +save_project_in_context()
+            +update_project_area()
+        }
+        class Specific Bot {
+            +provide_behavior_config()
+            +provide_mcp_config()
+            +provide_renderers()
+            +provide_extractors()
+            +provide_synchronizer()
+            +provide_trigger_words()
+        }
+    }
+
+    namespace ext {
+        class Router {
+            +match_trigger_patterns()
+            +route_to_mcp_bot_tool()
+            +route_to_behavior_tool()
+            +route_to_action_tool()
+            +forward_to_behavior()
+            +forward_to_action()
+            +forward_to_current_behavior_and_action()
+        }
+    }
+
+    namespace repl_cli {
+        class REPLSession {
+            +runs_repl_loop()
+            +reads_input_from_stdin_or_terminal()
+            +parses_command_input()
+            +routes_commands_to_cli_bot()
+            +displays_status_and_results()
+            +has_cli_bot()
+        }
+    }
+
+    namespace repl_cli.cli_bot {
+        class CLIAction {
+            +get_name:_str()
+            +get_description:_str()
+            +is_current:_bool()
+            +is_completed:_bool()
+            +executes:_actionresult()
+            +wraps_domain_action()
+        }
+        class CLIActions {
+            +get_all:_list[cliaction]()
+            +get_current:_cliaction()
+            +find_by_name:_cliaction()
+            +wraps_domain_actions()
+        }
+        class CLIBehavior {
+            +get_name:_str()
+            +get_description:_str()
+            +get_actions:_cliactions()
+            +is_current:_bool()
+            +wraps_domain_behavior()
+        }
+        class CLIBehaviors {
+            +get_all:_list[clibehavior]()
+            +get_current:_clibehavior()
+            +find_by_name:_clibehavior()
+            +wraps_domain_behaviors()
+        }
+        class CLIBot {
+            +get_name:_str()
+            +get_workspace_directory:_path()
+            +get_behaviors:_clibehaviors()
+            +get_status_text:_str()
+            +wraps_domain_bot()
+        }
+    }
+
+    namespace workflow {
+        class BehaviorGraphBuilder {
+            +read_behavior_workflow_definitions()
+            +create_langgraph_stategraph()
+            +build_node_instances_from_actions()
+            +connect_nodes_based_on_workflow_order()
+        }
+        class BotLangActionNode {
+            +wrap_action.execute(context)_method()
+            +implement_two-pass_pattern()
+            +support_execution_modes()
+            +provide_langgraph_entry_point()
+        }
+        class BotLangFlow {
+            +execute_nodes_in_sequence()
+            +handle_conditional_branching()
+            +support_loops_and_iterations()
+            +pause_at_interactive_points()
+            +resume_from_checkpoint()
+        }
+        class BotLangFlowRunner {
+            +load_botlangflow_python_files()
+            +compile_graph_with_checkpointer()
+            +execute_workflow_graph()
+            +resume_from_checkpoint()
+        }
+        class BotLangState {
+            +contain_story_graph()
+            +contain_clarification_data()
+            +contain_strategy_data()
+            +contain_context_files()
+            +contain_files_dictionary()
+            +contain_workspace_directory()
+            +contain_workflow_execution_state()
+        }
+        class BotMode {
+            +determine_ai_interaction()
+            +control_pause_points()
+        }
+        class Checkpoint {
+            +save_workflow_state()
+            +restore_workflow_state()
+            +track_execution_history()
+            +enable_resume_capability()
+        }
+    }
+
+    
+    %% Associations
+    Base Bot --> Behavior : uses
+    Base Bot --> Router : uses
+    Base Bot --> Content : uses
+    Base Bot --> Project : uses
+    Specific Bot --> Behavior : uses
+    BotLangActionNode --> BotMode : uses
+    BehaviorGraphBuilder --> Behavior : uses
+    BehaviorGraphBuilder --> BotLangState : uses
+    BehaviorGraphBuilder --> BotLangActionNode : uses
+    BotLangFlowRunner --> BotLangFlow : uses
+    BotLangFlowRunner --> Checkpoint : uses
+    BotLangFlowRunner --> BotLangActionNode : uses
+    BotLangFlowRunner --> BotLangState : uses
+    Router --> Base Bot : uses
+    Router --> Behavior : uses
+    Workflow State --> Behavior : uses
+    Checkpoint --> BotLangState : uses
+    Checkpoint --> BotLangFlowRunner : uses
+    Checkpoint --> BotLangFlow : uses
+    BotMode --> BotLangActionNode : uses
+    BotLangFlow --> BotLangActionNode : uses
+    BotLangFlow --> BotLangFlowRunner : uses
+    BotLangFlow --> BotLangState : uses
+    BotLangFlow --> BotMode : uses
+    BotLangFlow --> Checkpoint : uses
+    Behavior Action State --> Behavior : uses
+    Project --> Workflow State : uses
+    Project --> Content : uses
+    Behavior --> Rule : uses
+    Behavior --> Content : uses
+    Base Action --> Behavior : uses
+    Base Action --> Content : uses
+    REPLSession --> CLIBot : uses
+    CLIBot --> CLIBehaviors : uses
+    CLIBot --> CLIBehavior : uses
+    CLIBot --> CLIActions : uses
+    CLIBot --> CLIAction : uses
+    CLIBehaviors --> CLIBehavior : uses
+    CLIBehavior --> CLIActions : uses
+    CLIBehavior --> Behavior : uses
+    CLIActions --> CLIAction : uses
+    Behavior Workflow --> Behavior : uses
+    GatherContextAction --> Behavior : uses
+    GatherContextAction --> Guardrails : uses
+    PlanningAction --> Behavior : uses
+    PlanningAction --> Guardrails : uses
+    BuildKnowledgeAction --> Behavior : uses
+    BuildKnowledgeAction --> Content : uses
+    Content --> Template : uses
+    Content --> Renderer : uses
+    RenderOutputAction --> Behavior : uses
+    RenderOutputAction --> Content : uses
+    RenderOutputAction --> Renderer : uses
+    RenderOutputAction --> Template : uses
+    Renderer --> Template : uses
+    Renderer --> Content : uses
+    Template --> Content : uses
+    Template --> Behavior : uses
+    ValidateRulesAction --> Base Bot : uses
+    ValidateRulesAction --> Behavior : uses
+    ValidateRulesAction --> Content : uses
+    Rule --> Behavior : uses
+    Rule --> Base Bot : uses
+    CorrectBotAction --> Behavior : uses
+    CorrectBotAction --> Content : uses

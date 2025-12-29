@@ -3,7 +3,8 @@
     "purpose": "Design phase - refines domain concepts with OOP design patterns, object responsibilities, and technical implementation details",
     "scope": "ONLY refines domain_concepts with detailed object responsibilities, collaborations, and design patterns. Does NOT modify story structure",
     "design_patterns": "Add object responsibilities showing encapsulation, delegation, dependency injection, and factory patterns",
-    "structure": "Each domain concept has: name, responsibilities (with collaborators showing dependencies), instantiation details, and ownership patterns"
+    "structure": "Each domain concept has: name, module (source folder path), responsibilities (with collaborators showing dependencies), instantiation details, and ownership patterns",
+    "module_field": "REQUIRED - Preserve module field from domain phase and verify accuracy (see preserve_module_from_domain rule for details)"
   },
   "epics": [
     {
@@ -11,6 +12,7 @@
       "domain_concepts": [
         {
           "name": "",
+          "module": "",
           "instantiated_with": ["Collaborator1", "Collaborator2"],
           "responsibilities": [
             {

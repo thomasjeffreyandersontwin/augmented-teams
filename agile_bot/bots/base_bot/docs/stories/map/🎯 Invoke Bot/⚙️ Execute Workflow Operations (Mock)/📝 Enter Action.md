@@ -27,18 +27,22 @@ Enter Action functionality for the mob minion system.
 ```gherkin
 Given BehaviorActionState.current_behavior is "<behavior>"
 And BehaviorActionState.current_action is "<action>"
-When user enters command: "<action>"
-Then CLI displays "EXECUTING <behavior>.<action>.instructions"
-And CLI displays "[INSTRUCTIONS]"
+When user enters command: "<action>" or "<action>.instructions"
+Then CLI calls action.instructions() with ActionContext
+And CLI displays formatted output with:
+  - **INSTRUCTIONS SECTION:** header
+  - Instructions content for the action
+  - CLI STATUS section with current progress
 And CLI returns response with status='success'
 ```
 
 **Examples:**
-| behavior | action |
-| --- | --- |
-| shape | clarify |
-| shape | strategy |
-| shape | build |
-| prioritization | validate |
-| discovery | render |
+| behavior | action | command |
+| --- | --- | --- |
+| shape | clarify | clarify |
+| shape | clarify | clarify.instructions |
+| shape | strategy | strategy |
+| shape | build | build |
+| prioritization | validate | validate |
+| discovery | render | render |
 

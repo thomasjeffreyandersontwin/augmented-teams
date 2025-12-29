@@ -1,10 +1,10 @@
 {
   "behaviorName": "domain",
   "order": 2,
-  "description": "Model the business domain by extracting and refining CRC concepts from stories in the story-graph",
-  "goal": "Create a comprehensive CRC model from domain concepts captured in story-graph.json - define responsibilities, collaborators, and relationships",
-  "inputs": "story-graph.json domain concepts, domain expert interviews, existing domain documentation",
-  "outputs": "crc-model-outline.md, crc-model-description.md, crc-model-diagram.mmd",
+  "description": "Model the business domain by extracting and refining CRC concepts from stories in the story-graph. Organize concepts into modules matching source code folder structure.",
+  "goal": "Create a comprehensive CRC model from domain concepts captured in story-graph.json - define responsibilities, collaborators, relationships, and modules",
+  "inputs": "story-graph.json domain concepts, domain expert interviews, existing domain documentation, source code folder structure",
+  "outputs": "crc-model-outline.md, crc-model-description.md, crc-model-diagram.mmd (grouped by modules)",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "instructions": [
     "Synthesize context into CRC cards and build a CRC model that connects business and solution language"
@@ -34,9 +34,10 @@
         "instructions": [
           "Extract context from story-graph.json",
           "Refine CRC card definitions, responsibilities, and collaborators",
+          "Assign each domain concept to a module matching its source code folder structure (use dot notation for nesting)",
           "Apply CRC rules when defining responsibilities and collaborators",
           "Use CRC rules to guide the creation of the CRC model",
-          "Update story-graph.json with the new / updated domain concepts, responsibilities, and collaborators"
+          "Update story-graph.json with the new / updated domain concepts, responsibilities, collaborators, and modules"
         ]
       },
       {
@@ -46,7 +47,8 @@
         "instructions": [
           "validate CRC model against CRC rules",
           "Ensure CRC cards use ubiquitous language",
-          "Verify collaborators and responsibilities are clear"
+          "Verify collaborators and responsibilities are clear",
+          "Verify every domain concept has a module field matching source folder structure"
         ]
       },
       {

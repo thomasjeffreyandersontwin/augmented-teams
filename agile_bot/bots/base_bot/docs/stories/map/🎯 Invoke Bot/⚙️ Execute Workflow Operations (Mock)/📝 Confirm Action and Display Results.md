@@ -44,8 +44,14 @@ And Action validates and confirms work
 And Bot marks "<current_action>" as complete in BehaviorActionState
 And Bot advances to next action "<next_action>"
 And Bot returns Result with next action info
-And REPLSession displays "<current_action> confirmed. Next: <next_action>"
-And REPLSession displays instructions for "<next_action>"
+And REPLSession displays formatted output with:
+  - **INSTRUCTIONS SECTION:** header
+  - Instructions for next action
+  - CLI STATUS section showing:
+    - Current position: <behavior>.<next_action>.instructions
+    - Completed actions marked with checkmarks
+    - Current action marked with arrow
+And REPLSession automatically navigates to <next_action>.instructions
 ```
 
 **Examples:**

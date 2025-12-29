@@ -1,10 +1,10 @@
 {
-  "current_behavior": "story_bot.code",
-  "current_action": "story_bot.code.validate",
+  "current_behavior": "crc_bot.domain",
+  "current_action": "crc_bot.domain.render",
   "action_phase": "instructions",
   "action_state": "started",
   "working_directory": "demo/mob_minion",
-  "timestamp": "2025-12-28T20:53:57.256323",
+  "timestamp": "2025-12-28T22:18:37.994515",
   "completed_actions": [
     {
       "action_state": "story_bot.shape.clarify",
