@@ -59,37 +59,19 @@
     {
       "action_state": "story_bot.shape.render",
       "timestamp": "2025-12-28T21:13:15.639955"
-    },
-    {
-      "action_state": "story_bot.prioritization.clarify",
-      "timestamp": "2025-12-28T21:13:15.644209"
-    },
-    {
-      "action_state": "story_bot.prioritization.strategy",
-      "timestamp": "2025-12-28T21:13:15.644209"
-    },
-    {
-      "action_state": "story_bot.prioritization.build",
-      "timestamp": "2025-12-28T21:13:15.644209"
-    },
-    {
-      "action_state": "story_bot.prioritization.validate",
-      "timestamp": "2025-12-28T21:13:15.644209"
-    },
-    {
-      "action_state": "story_bot.prioritization.render",
-      "timestamp": "2025-12-28T21:13:15.644209"
     }
   ],
-  "current_behavior": "story_bot.discovery",
-  "current_action": "story_bot.discovery.strategy",
-  "timestamp": "2025-12-28T21:13:29.531208",
+  "current_behavior": "story_bot.shape",
+  "current_action": "story_bot.shape.validate",
+  "timestamp": "2025-12-30T14:00:13.109902",
   "working_directory": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot",
   "action_phase": "instructions",
   "scope": {
     "type": "story",
     "value": [
-      "Create Mob"
+      "Select Minions",
+      "Group Minions Into Mob",
+      "Execute Melee Attack"
     ],
     "exclude": [],
     "skiprule": []

@@ -165,27 +165,49 @@ class HeadlessSession:
         return final_result
     
     def _is_truly_complete(self, original_instructions: str, message: str) -> bool:
-        last_paragraph = message.strip().split('\n\n')[-1]
+        """Check if task is truly complete using a second AI to review the work.
         
-        check_prompt = f"""Analyze if the AI has completed the ORIGINAL TASK or wandered off-task.
+        This provides a more thorough check by:
+        1. Reviewing the full response (not just last paragraph)
+        2. Checking what files were created/modified
+        3. Verifying the work matches the original task requirements
+        """
+        # Get full response (last 3000 chars to keep context manageable but thorough)
+        full_response = message.strip()
+        response_excerpt = full_response[-3000:] if len(full_response) > 3000 else full_response
+        
+        # Get list of files created/modified in this session
+        files_info = self._get_session_file_changes()
+        
+        check_prompt = f"""You are a thorough QA reviewer. Analyze if the AI has completed the ORIGINAL TASK correctly.
 
 ORIGINAL TASK:
 {original_instructions}
 
-AI'S LAST RESPONSE:
-{last_paragraph}
+AI'S RESPONSE (last 3000 chars):
+{response_excerpt}
 
-Answer with ONLY one word:
-- "COMPLETE" if the AI has finished the ORIGINAL TASK
-- "OFFTASK" if the AI is doing something different from the original task
-- "CONTINUE" if the AI is still working on the original task
+FILES CREATED/MODIFIED:
+{files_info}
+
+Review the task requirements carefully:
+1. Did the AI complete what was asked in the ORIGINAL TASK?
+2. If the task said "do not make changes", did the AI follow that instruction?
+3. If the task asked for a plan/document, was it created?
+4. Is there any indication the AI is still working or needs to continue?
+5. Did the AI wander off-task or do something different?
+
+Based on your thorough analysis, answer with ONLY one word:
+- "COMPLETE" if the AI has successfully finished the ORIGINAL TASK
+- "OFFTASK" if the AI did something different from the original task
+- "CONTINUE" if the AI is still working on the task or missed something
 
 Your answer (one word only):"""
         
         try:
             checker_api = CursorHeadlessAPI(
                 api_key=self.config.api_key,
-                timeout=30,
+                timeout=45,  # Increased timeout for more thorough check
                 workspace_path=self.workspace_directory
             )
             
@@ -199,6 +221,65 @@ Your answer (one word only):"""
         except Exception as e:
             self.log.appends_response(f'Completion check failed: {e}, defaulting to continue')
             return False
+    
+    def _get_session_file_changes(self) -> str:
+        """Get a summary of files created/modified during this session."""
+        import subprocess
+        try:
+            # Get git status to see what changed
+            result = subprocess.run(
+                ['git', 'status', '--short'],
+                cwd=self.workspace_directory,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0 and result.stdout.strip():
+                lines = result.stdout.strip().split('\n')
+                # Limit to first 20 files to keep context manageable
+                if len(lines) > 20:
+                    files_list = '\n'.join(lines[:20]) + f'\n... and {len(lines) - 20} more files'
+                else:
+                    files_list = '\n'.join(lines)
+                return f"Git status:\n{files_list}"
+            else:
+                return "No files modified (git status clean)"
+        except Exception as e:
+            # If git fails, try to list recently modified files
+            try:
+                import os
+                import time
+                
+                # Get files modified in last 5 minutes
+                current_time = time.time()
+                recent_files = []
+                
+                for root, dirs, files in os.walk(self.workspace_directory):
+                    # Skip .git directory
+                    if '.git' in root:
+                        continue
+                    for file in files:
+                        filepath = Path(root) / file
+                        try:
+                            mtime = filepath.stat().st_mtime
+                            if current_time - mtime < 300:  # 5 minutes
+                                rel_path = filepath.relative_to(self.workspace_directory)
+                                recent_files.append(str(rel_path))
+                        except:
+                            continue
+                
+                if recent_files:
+                    # Limit to first 20 files
+                    if len(recent_files) > 20:
+                        files_list = '\n'.join(recent_files[:20]) + f'\n... and {len(recent_files) - 20} more files'
+                    else:
+                        files_list = '\n'.join(recent_files)
+                    return f"Recently modified files:\n{files_list}"
+                else:
+                    return "No recently modified files detected"
+            except Exception as e2:
+                return f"Could not determine file changes: {e}"
     
     def _create_blocked_result(
         self,

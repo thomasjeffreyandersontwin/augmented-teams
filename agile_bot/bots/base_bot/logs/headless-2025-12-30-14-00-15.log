@@ -1,0 +1,39 @@
+
+[2025-12-30 14:00:15] Session session_20251230_140015 started
+[2025-12-30 14:00:15] Instructions: Keep doing this until 100% done or blocked:
+
+Keep doing this until 100% done or blocked:
+
+Making this very clear, run the following repl commands
+
+nothing
+
+status
+
+help
+
+scope with files
+multiple entries must actually return a result, go to SRC for some examples.
+
+Scope with stories, multiple entries must actually return a result, go into the agile_bot/bots/base_bot/docs/stories/story-graph.json  To determine good examples.
+
+<behavior>
+What do you see and what happens?
+
+<behavior>.<action> What do you see happen?
+<behavior>.<action>.<instructions>
+
+same
+
+next , back , etc you get the picture?
+
+I want you to simply create a file called UI Walkthrough.md in demo/mob_minion/docs/context/ and paste the command result into it so it's very clear.
+
+
+
+Do NOT ask questions or wait for user input - just complete the work autonomously.
+
+If blocked, report reason clearly.
+[2025-12-30 14:01:26] Loop 1: Completed
+[2025-12-30 14:01:38] Completion check: COMPLETED
+[2025-12-30 14:01:38] Completed: Work is truly complete
