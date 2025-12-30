@@ -45,6 +45,9 @@ class CliParameterParser:
         parser.add_argument('--skip-cross-file', action='store_true', help='Skip cross-file duplicate checking (default: False, meaning cross-file check runs)')
         parser.add_argument('--all-files', action='store_true', help='Scan all files instead of only changed files (default: False, meaning incremental scan)')
         parser.add_argument('--scope', nargs='?', help='Scope parameter: JSON dict like {"type": "files", "value": ["path/to/file.py"], "exclude": ["pattern"], "skiprule": ["rule"]}')
+        parser.add_argument('--headless', action='store_true', help='Execute in headless mode using Cursor API')
+        parser.add_argument('--message', nargs='?', help='Direct message to execute in headless mode')
+        parser.add_argument('--context-file', nargs='?', help='Path to headless-context.md file')
         parser.add_argument('context', nargs='*', help='Additional context (file paths, parameters, etc.)')
         return parser
 

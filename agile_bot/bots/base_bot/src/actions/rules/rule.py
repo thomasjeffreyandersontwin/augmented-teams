@@ -114,7 +114,7 @@ class Rule:
             return False
         return issubclass(self._scanner, TestScanner) or issubclass(self._scanner, CodeScanner)
 
-    def scan(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]]=None, on_file_scanned: Optional[Any]=None, skip_cross_file: bool=False, changed_files: Optional[Dict[str, List[Path]]]=None, status_writer: Optional[Any]=None) -> Dict[str, Any]:
+    def scan(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]]=None, on_file_scanned: Optional[Any]=None, skip_cross_file: bool=False, changed_files: Optional[Dict[str, List[Path]]]=None, status_writer: Optional[Any]=None, max_cross_file_comparisons: int=20) -> Dict[str, Any]:
         if not self.has_scanner:
             return {}
         files = files or {}
@@ -130,7 +130,7 @@ class Rule:
             scanner_instance = self._get_scanner_instance()
             self._execute_file_by_file_scan(scanner_instance, knowledge_graph, test_files, code_files, on_file_scanned)
             # Cross-file scan uses the same scoped files - all_test_files/all_code_files are already scoped
-            self._execute_cross_file_scan(scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer)
+            self._execute_cross_file_scan(scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer, max_cross_file_comparisons)
             return self._build_scan_result()
         except Exception as e:
             self._scan_error = str(e)
@@ -162,9 +162,9 @@ class Rule:
         if not hasattr(self, '_file_by_file_violations') or self._file_by_file_violations is None:
             self._file_by_file_violations = []
 
-    def _execute_cross_file_scan(self, scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer=None):
+    def _execute_cross_file_scan(self, scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer=None, max_cross_file_comparisons=20):
         if not skip_cross_file and self.requires_two_pass_scan and hasattr(scanner_instance, 'scan_cross_file'):
-            violations_cross_file = scanner_instance.scan_cross_file(rule_obj=self, test_files=test_files, code_files=code_files, all_test_files=all_test_files, all_code_files=all_code_files, status_writer=status_writer)
+            violations_cross_file = scanner_instance.scan_cross_file(rule_obj=self, test_files=test_files, code_files=code_files, all_test_files=all_test_files, all_code_files=all_code_files, status_writer=status_writer, max_cross_file_comparisons=max_cross_file_comparisons)
             if violations_cross_file:
                 self._cross_file_violations = violations_cross_file
 

@@ -48,7 +48,22 @@ def build_validate_action_context_parser() -> argparse.ArgumentParser:
 def parse_scope_config(json_str: Optional[str]) -> Optional[Scope]:
     if not json_str:
         return None
-    data = json.loads(json_str.replace("'", '"'))
+    
+    json_str = json_str.strip()
+    
+    if not json_str.startswith('{'):
+        if json_str.startswith(('file:', 'files:')):
+            prefix_len = len('file:') if json_str.startswith('file:') else len('files:')
+            json_str = json_str[prefix_len:].strip()
+        
+        paths = [p.strip() for p in json_str.split(',')]
+        data = {
+            'type': 'files',
+            'value': paths
+        }
+    else:
+        data = json.loads(json_str.replace("'", '"'))
+    
     return Scope.from_dict(data)
 
 

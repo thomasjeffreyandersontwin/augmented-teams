@@ -48,6 +48,8 @@ class Instructions:
             ]
         
         workspace = str(self._bot_paths.workspace_directory)
+        # Convert Windows paths to forward slashes for cross-platform compatibility
+        workspace = workspace.replace('\\', '/')
         return [
             "**Look for context in the following locations:**",
             "- in this message and chat history",

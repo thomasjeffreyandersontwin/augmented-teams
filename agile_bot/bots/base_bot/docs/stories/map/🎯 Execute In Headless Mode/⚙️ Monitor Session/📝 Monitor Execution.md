@@ -5,7 +5,32 @@
 
 ## Acceptance Criteria
 
-*(No acceptance criteria defined yet)*
+1. **CLI polls session status during execution:**
+   - WHEN Headless session is active
+   - THEN CLI streams responses to log file
+   - AND CLI maintains full execution transcript
+   - AND CLI polls session status periodically
+   - AND CLI checks for completion or block signals
+   - AND CLI detects block markers in output
+   - AND CLI captures block reason when detected
+   - AND CLI appends loop iteration number to log file for each loop
+   - AND CLI appends instruction sent to log file for each iteration
+   - AND CLI appends AI response summary to log file for each iteration
+   - AND CLI appends work completed in iteration to log file
+   - AND CLI tracks total number of loops executed
+   - AND CLI appends total loops count to log file when execution completes
+
+2. **CLI detects completion during monitoring:**
+   - WHEN CLI detects completion signal (done=true) from API response
+   - THEN CLI stops polling when completion detected
+   - AND CLI appends final status to log file when completed
+   - AND CLI prepares completion report with log file path
+
+3. **CLI detects blocked state during monitoring:**
+   - WHEN CLI detects blocked state (blocked=true) from API response
+   - THEN CLI stops polling when blocked detected
+   - AND CLI appends block reason to log file when blocked
+   - AND CLI prepares blocked report with block reason
 
 ## Scenarios
 
@@ -41,19 +66,20 @@
 - And CLI is executing instruction loop
 - When CLI completes loop iteration 1
 - Then CLI appends Loop 1 to log file
-- And CLI appends instruction sent Keep doing this until done: Implement authentication
+- And CLI appends instruction sent Keep doing this until 100% done or blocked: Implement authentication
 - And CLI appends AI response summary Created user model and login endpoint
 - And AI indicates not done
 - When CLI completes loop iteration 2
 - Then CLI appends Loop 2 to log file
-- And CLI appends instruction sent Keep doing this until done: Implement authentication
+- And CLI appends instruction sent Keep doing this until 100% done or blocked: Implement authentication
 - And CLI appends AI response summary Added JWT token generation and validation
 - And AI indicates not done
 - When CLI completes loop iteration 3
 - Then CLI appends Loop 3 to log file
-- And CLI appends instruction sent Keep doing this until done: Implement authentication
+- And CLI appends instruction sent Keep doing this until 100% done or blocked: Implement authentication
 - And CLI appends AI response summary Added tests and documentation, authentication complete
 - And AI indicates done
+- And CLI stops looping (within MAX_LOOPS limit of 50)
 - And CLI appends Total loops: 3 to log file
 
 ### Scenario: Detect blocked state during monitoring

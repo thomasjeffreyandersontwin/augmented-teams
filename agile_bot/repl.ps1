@@ -37,7 +37,7 @@ $WORKSPACE_ROOT = Split-Path -Parent $SCRIPT_DIR
 # Set environment variables
 $env:PYTHONPATH = $WORKSPACE_ROOT
 $env:BOT_DIRECTORY = Join-Path $WORKSPACE_ROOT "agile_bot\bots\story_bot"
-$env:WORKING_AREA = $WORKSPACE_ROOT
+# WORKING_AREA is read from bot_config.json by repl_main.py - don't set it here
 
 # Launch REPL
 $REPL_PATH = Join-Path $WORKSPACE_ROOT "agile_bot\bots\base_bot\src\repl_cli\repl_main.py"

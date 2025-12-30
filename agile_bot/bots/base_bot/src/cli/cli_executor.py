@@ -4,7 +4,13 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, List
 import argparse
+
+from agile_bot.bots.base_bot.src.repl_cli.headless.headless_session import HeadlessSession
+from agile_bot.bots.base_bot.src.repl_cli.headless.headless_config import HeadlessConfig
+from agile_bot.bots.base_bot.src.repl_cli.headless.non_recoverable_error import NonRecoverableError
+
 logger = logging.getLogger(__name__)
+
 
 class CliExecutor:
 
@@ -14,7 +20,10 @@ class CliExecutor:
     def execute_and_output(self, args: argparse.Namespace, cli_args: List[str]):
         self._log_execution_info(args, cli_args)
         try:
-            result = self._execute_command(args, cli_args)
+            if getattr(args, 'headless', False):
+                result = self._execute_headless(args)
+            else:
+                result = self._execute_command(args, cli_args)
             self._output_result(result)
             return result
         except Exception as e:
@@ -23,6 +32,72 @@ class CliExecutor:
     def _log_execution_info(self, args: argparse.Namespace, cli_args: List[str]):
         logger.info(f'Executing: behavior={args.behavior}, action={args.action}')
         logger.info(f'CLI args: {cli_args}')
+        if getattr(args, 'headless', False):
+            logger.info('Headless mode enabled')
+
+    def _execute_headless(self, args: argparse.Namespace) -> Dict[str, Any]:
+        workspace_dir = self.cli.bot.bot_paths.workspace_directory
+        
+        config = HeadlessConfig.load()
+        if not config.is_configured:
+            raise NonRecoverableError(
+                'Headless mode requires API key. Set CURSOR_API_KEY env var or add key to agile_bot/secrets/cursor_api_key.txt'
+            )
+        
+        session = HeadlessSession(workspace_directory=workspace_dir, config=config)
+        
+        context_file = None
+        context_file_path = getattr(args, 'context_file', None)
+        if context_file_path:
+            context_file = Path(context_file_path)
+        else:
+            default_context = workspace_dir / 'headless-context.md'
+            if default_context.exists():
+                context_file = default_context
+        
+        message = getattr(args, 'message', None)
+        behavior = getattr(args, 'behavior', None)
+        action = getattr(args, 'action', None)
+        
+        if message:
+            result = session.invokes(message=message, context_file=context_file)
+        elif behavior and action:
+            result = session.invokes_action(
+                behavior=behavior,
+                action=action,
+                context_file=context_file
+            )
+        elif behavior:
+            result = session.invokes_behavior(
+                behavior=behavior,
+                context_file=context_file
+            )
+        else:
+            raise NonRecoverableError(
+                'Headless mode requires --message, --behavior, or --behavior and --action'
+            )
+        
+        return self._format_headless_result(result)
+    
+    def _format_headless_result(self, result) -> Dict[str, Any]:
+        return {
+            'status': result.status,
+            'completed': result.completed,
+            'log_path': str(result.log_path) if result.log_path else None,
+            'session_id': result.session_id,
+            'loop_count': result.loop_count,
+            'message': result.message,
+            'blocked': result.blocked,
+            'block_reason': result.block_reason,
+            'exit_code': result.exit_code,
+            'behavior': result.behavior,
+            'action': result.action,
+            'operation': result.operation,
+            'action_completed': result.action_completed,
+            'behavior_completed': result.behavior_completed,
+            'operations_executed': result.operations_executed,
+            'actions_executed': result.actions_executed,
+        }
 
     def _execute_command(self, args: argparse.Namespace, cli_args: List[str]):
         if args.close:

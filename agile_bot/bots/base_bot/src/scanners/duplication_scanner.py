@@ -1639,6 +1639,82 @@ class DuplicationScanner(CodeScanner):
         
         _safe_print("")  # Blank line after violations
     
+    def _filter_files_by_package_proximity(
+        self,
+        changed_files: List[Path],
+        all_files: List[Path],
+        max_parent_levels: int = 3,
+        max_files: int = 20
+    ) -> List[Path]:
+        """Filter all_files to only include files in nearby packages.
+        
+        Priority:
+        1. Same package (immediate siblings)
+        2. Parent package
+        3. Parent's parent package (up to max_parent_levels)
+        
+        Stops adding files once max_files limit is reached.
+        
+        Args:
+            changed_files: Files that were changed (to determine package context)
+            all_files: All files available for comparison
+            max_parent_levels: Maximum number of parent levels to traverse (default: 3)
+            max_files: Maximum number of files to include in comparison (default: 20)
+        
+        Returns:
+            Filtered list of files in nearby packages (up to max_files)
+        """
+        if not changed_files:
+            return all_files[:max_files] if len(all_files) > max_files else all_files
+        
+        nearby_files = []
+        seen_files = set()
+        
+        for changed_file in changed_files:
+            if len(nearby_files) >= max_files:
+                break
+            
+            changed_dir = changed_file.parent
+            
+            # Level 0: Same package (immediate siblings) - highest priority
+            for file in all_files:
+                if len(nearby_files) >= max_files:
+                    break
+                if file not in seen_files and file.parent == changed_dir:
+                    nearby_files.append(file)
+                    seen_files.add(file)
+            
+            # Level 1-N: Parent packages - lower priority
+            current_dir = changed_dir
+            for level in range(1, max_parent_levels + 1):
+                if len(nearby_files) >= max_files:
+                    break
+                
+                current_dir = current_dir.parent
+                if not current_dir or current_dir == current_dir.parent:
+                    break
+                
+                for file in all_files:
+                    if len(nearby_files) >= max_files:
+                        break
+                    
+                    if file in seen_files:
+                        continue
+                    
+                    # Include files in this parent package
+                    if file.parent == current_dir:
+                        nearby_files.append(file)
+                        seen_files.add(file)
+                    # Include files in sibling packages at this level
+                    elif file.parent.parent == current_dir:
+                        nearby_files.append(file)
+                        seen_files.add(file)
+        
+        if len(nearby_files) < len(all_files):
+            _safe_print(f"[CROSS-FILE] Filtered to {len(nearby_files)} nearby files (from {len(all_files)} total, max: {max_files}) based on package proximity")
+        
+        return nearby_files
+    
     def scan_cross_file(
         self,
         rule_obj: Any = None,
@@ -1646,7 +1722,8 @@ class DuplicationScanner(CodeScanner):
         code_files: Optional[List[Path]] = None,
         all_test_files: Optional[List[Path]] = None,
         all_code_files: Optional[List[Path]] = None,
-        status_writer: Optional[Any] = None
+        status_writer: Optional[Any] = None,
+        max_cross_file_comparisons: int = 20
     ) -> List[Dict[str, Any]]:
         violations = []
         
@@ -1672,6 +1749,9 @@ class DuplicationScanner(CodeScanner):
         
         if not changed_files or not all_files:
             return violations
+        
+        # Filter all_files to only include files in nearby packages
+        all_files = self._filter_files_by_package_proximity(changed_files, all_files, max_files=max_cross_file_comparisons)
         
         if len(changed_files) < len(all_files):
             _safe_print(f"\n[CROSS-FILE] Incremental scan: Checking {len(changed_files)} changed file(s) against {len(all_files)} total files...")

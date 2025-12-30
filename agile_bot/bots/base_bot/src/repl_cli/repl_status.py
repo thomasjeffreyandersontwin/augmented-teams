@@ -109,12 +109,14 @@ class REPLStatus:
                         submit_params = self._get_submit_params(action)
                         common_params = ' --path="..." --scope="..."'
                         
+                        headless_flag = ' [--headless]'
+                        
                         # Instructions - use formatter
                         if stage == 'instructions' or stage == 'not_started':
                             instr_marker = self.formatter.status_marker(is_current=True, is_completed=False)
                         else:
                             instr_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {instr_marker} instructions{instr_params}{common_params} -> Returns instructions for the AI Chat (you) to follow for this action.")
+                        lines.append(f"    {instr_marker} instructions{instr_params}{common_params}{headless_flag} -> Returns instructions for the AI Chat (you) to follow for this action.")
                         
                         # Submit - use formatter
                         if stage == 'submitting':
@@ -123,7 +125,7 @@ class REPLStatus:
                             submit_marker = self.formatter.status_marker(is_current=False, is_completed=False)
                         else:
                             submit_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {submit_marker} submit{submit_params}{common_params} -> Submit data the AI Chat (you) have created as a result of following instructions for this action")
+                        lines.append(f"    {submit_marker} submit{submit_params}{common_params}{headless_flag} -> Submit data the AI Chat (you) have created as a result of following instructions for this action")
                         
                         # Confirm - use formatter
                         if stage == 'confirming':
@@ -132,7 +134,7 @@ class REPLStatus:
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=False)
                         else:
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {confirm_marker} confirm -> Confirm all operations have been completed for this action. Move on to next action.")
+                        lines.append(f"    {confirm_marker} confirm{headless_flag} -> Confirm all operations have been completed for this action. Move on to next action.")
         
         lines.append("")
         lines.append("Run:")
@@ -140,12 +142,13 @@ class REPLStatus:
         lines.append("echo '[behavior]' | python repl_main.py           - navigate to behavior")
         lines.append("echo '[behavior][.action]' | python repl_main.py           - navigate to behavior/action")
         lines.append("echo '[behavior.][action.]operation' | python repl_main.py  - navigate and perform operation")
+        lines.append("python repl_main.py headless [behavior.action]              - execute in headless mode (unattended)")
         lines.append("```")
         lines.append(self.formatter.subsection_separator())
         
         # Add quick commands menu
         lines.append("## 💻 **Commands:**")
-        lines.append("**status | back | current | next | path [dir] | scope [filter] | help | exit**")
+        lines.append("**status | back | current | next | path [dir] | scope [filter] | headless \"msg\" | help | exit**")
         lines.append("")
         lines.append("```")
         lines.append("// Run")
@@ -197,14 +200,15 @@ class REPLStatus:
         output_lines.extend([
             "Actions: clarify | strategy | build | validate | render",
             "",
-            "  status        - Show workflow progress",
-            "  back          - Return to previous action",
-            "  current       - Re-execute current operation",
-            "  next          - Advance to next action",
-            "  path [dir]    - Show/set working directory",
-            "  scope [filter]- Show/set/clear scope filter (use COMPLETE paths)",
-            "  help          - Show detailed help",
-            "  exit          - Exit CLI"
+            "  status          - Show workflow progress",
+            "  back            - Return to previous action",
+            "  current         - Re-execute current operation",
+            "  next            - Advance to next action",
+            "  path [dir]      - Show/set working directory",
+            "  scope [filter]  - Show/set/clear scope filter (use COMPLETE paths)",
+            "  headless \"msg\" - Execute message in headless mode",
+            "  help            - Show detailed help",
+            "  exit            - Exit CLI"
         ])
         return output_lines
     

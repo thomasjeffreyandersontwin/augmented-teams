@@ -3971,6 +3971,45 @@
               ]
             },
             {
+              "name": "Navigate Bot Behaviors and Actions Via Domain Model",
+              "sequential_order": 2.5,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Navigate To First Behavior Action",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": [
+                        "System"
+                      ],
+                      "story_type": "system"
+                    },
+                    {
+                      "name": "Advance Action And Persist State",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "System"
+                      ],
+                      "story_type": "system"
+                    },
+                    {
+                      "name": "Show Remaining Actions After Completion",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "System"
+                      ],
+                      "story_type": "system"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
               "name": "Execute Action Operation Through CLI",
               "sequential_order": 3,
               "story_groups": [
@@ -4518,6 +4557,7 @@
               "name": "Document Headless Mode Requirements",
               "sequential_order": 1,
               "estimated_stories": null,
+              "test_file": "test_document_headless_mode_requirements.py",
               "sub_epics": [],
               "story_groups": [
                 {
@@ -4531,9 +4571,17 @@
                       "connector": null,
                       "users": ["REPL"],
                       "story_type": "system",
+                      "test_class": "TestAddHeadlessModeToHelp",
+                      "acceptance_criteria": [
+                        "WHEN AI executes echo 'help' | python repl_main.py\nTHEN REPL adds headless mode section to main_help output AND REPL explains --headless flag purpose AND REPL explains context file requirement (docs/context/headless-context.md) AND REPL lists required context content (user message, chat history, file references)",
+                        "WHEN REPL displays headless mode section\nTHEN REPL shows headless command format with --headless flag AND REPL shows --message parameter usage AND REPL documents CURSOR_API_KEY environment variable requirement AND REPL provides example: echo 'shape.build.instructions --headless' | python repl_main.py AND REPL includes example command with headless flag",
+                        "WHEN REPL documents headless mode behavior\nTHEN REPL explains persistence directive: \"Keep doing this until 100% done or blocked:\" and \"If blocked, report reason clearly.\" AND REPL documents MAX_LOOPS limit of 50 iterations per operation AND REPL explains looping behavior: CLI loops instructions until AI indicates done (done=true) or blocked (blocked=true) AND REPL documents error recovery: up to 3 recovery attempts when AI gets stuck",
+                        "WHEN Headless mode API key is not configured\nTHEN REPL indicates headless mode is unavailable when API key not configured AND REPL explains configuration requirement when unavailable"
+                      ],
                       "scenarios": [
                         {
                           "name": "Display headless mode documentation in help",
+                          "test_method": "test_display_headless_mode_documentation_in_help",
                           "steps": [
                             "Given REPL is initialized",
                             "And headless mode is configured with API key",
@@ -4546,6 +4594,7 @@
                         },
                         {
                           "name": "Show headless mode unavailable when not configured",
+                          "test_method": "test_show_headless_mode_unavailable_when_not_configured",
                           "steps": [
                             "Given REPL is initialized",
                             "And headless mode API key is not configured",
@@ -4563,9 +4612,17 @@
                       "connector": "and",
                       "users": ["REPL"],
                       "story_type": "system",
+                      "test_class": "TestAddHeadlessModeToStatus",
+                      "acceptance_criteria": [
+                        "WHEN AI executes echo 'status' | python repl_main.py\nTHEN REPL adds headless mode section to status output AND REPL shows headless mode is available when API key configured AND REPL displays configured API key prefix when available",
+                        "WHEN Headless mode API key is not configured\nTHEN REPL shows headless mode is unavailable when API key not configured AND REPL shows context preparation reminder if headless-context.md missing",
+                        "WHEN Headless session is running\nTHEN REPL displays active session section when headless session is running AND REPL shows session ID in active session section AND REPL shows session status (running) in active session section AND REPL shows log file path in active session section AND REPL shows current iteration count (if available) in active session section AND REPL shows MAX_LOOPS limit (50 iterations) in active session section AND REPL indicates if session is looping (waiting for done/blocked signal) in active session section",
+                        "WHEN Session is blocked (blocked=true)\nTHEN REPL shows blocked state when session is blocked AND REPL displays block reason when session is blocked AND REPL shows recovery attempt count when error recovery is active (up to 3 attempts)"
+                      ],
                       "scenarios": [
                         {
                           "name": "Show headless mode available in status",
+                          "test_method": "test_show_headless_mode_available_in_status",
                           "steps": [
                             "Given REPL is initialized",
                             "And headless mode is configured with API key",
@@ -4577,6 +4634,7 @@
                         },
                         {
                           "name": "Show active headless session in status",
+                          "test_method": "test_show_active_headless_session_in_status",
                           "steps": [
                             "Given REPL is initialized",
                             "And headless session is running with session ID session_abc123",
@@ -4589,6 +4647,7 @@
                         },
                         {
                           "name": "Show headless mode unavailable in status",
+                          "test_method": "test_show_headless_mode_unavailable_in_status",
                           "steps": [
                             "Given REPL is initialized",
                             "And headless mode API key is not configured",
@@ -4607,6 +4666,7 @@
               "name": "Execute In Headless Mode",
               "sequential_order": 2,
               "estimated_stories": null,
+              "test_file": "test_execute_in_headless_mode.py",
               "sub_epics": [],
               "story_groups": [
                 {
@@ -4615,14 +4675,27 @@
                   "sequential_order": 1,
                   "stories": [
                     {
+                    
                       "name": "Execute Direct Instructions",
                       "sequential_order": 1,
                       "connector": null,
                       "users": ["Human", "CLI"],
                       "story_type": "user",
+                      "test_class": "TestExecuteDirectInstructions",
+                      "acceptance_criteria": [
+                        "WHEN Human executes CLI with --headless and --message parameters\nTHEN CLI enables headless execution mode AND CLI loads CURSOR_API_KEY from environment AND CLI validates API key is present AND CLI creates timestamped log file path",
+                        "WHEN Context file exists at docs/context/headless-context.md\nTHEN CLI reads headless-context.md AND CLI loads ExecutionContext from context file AND CLI constructs instructions starting with user message then appends context content",
+                        "WHEN CLI constructs instructions\nTHEN CLI wraps instructions with \"Keep doing this until 100% done or blocked:\" directive AND CLI appends \"If blocked, report reason clearly.\" to instructions",
+                        "WHEN CLI sends instructions to Cursor Headless API\nTHEN CLI appends AI responses to log file after each iteration AND CLI loops instruction with persistence directive until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations",
+                        "WHEN AI indicates completion signal (done=true)\nTHEN CLI stops looping AND CLI reports success with log file path",
+                        "WHEN AI indicates blocked signal (blocked=true)\nTHEN CLI detects blocked state from API response AND CLI writes block reason to log file AND CLI reports blocked status to console AND CLI displays block reason from session AND CLI exits with blocked status code (exit_code=2)",
+                        "WHEN Context file does not exist\nTHEN CLI wraps message with \"Keep doing this until 100% done or blocked:\" directive AND CLI sends message to Cursor Headless API AND CLI creates timestamped log file",
+                        "WHEN ErrorRecovery detects recoverable errors (AI stuck/hung, max loops reached)\nTHEN ErrorRecovery waits before retry for 2 seconds AND ErrorRecovery terminates current headless session AND ErrorRecovery restarts session with same message and context AND ErrorRecovery wraps with \"Keep doing this until 100% done or blocked:\" directive AND ErrorRecovery sends to new Cursor Headless API session AND ErrorRecovery tracks recovery attempt count incremented AND ErrorRecovery allows up to 3 recovery attempts before failing AND AI executes with fresh context AND CLI continues monitoring new session"
+                      ],
                       "scenarios": [
                         {
                           "name": "Execute direct message in headless mode",
+                          "test_method": "test_execute_direct_message_in_headless_mode",
                           "steps": [
                             "Given AI has written headless-context.md with user intent and chat history",
                             "And headless mode is configured with API key",
@@ -4647,6 +4720,7 @@
                         },
                         {
                           "name": "Execute direct message without context file",
+                          "test_method": "test_execute_direct_message_without_context_file",
                           "steps": [
                             "Given headless mode is configured with API key",
                             "And headless-context.md file does not exist",
@@ -4666,6 +4740,7 @@
                         },
                         {
                           "name": "Handle blocked execution in direct message mode",
+                          "test_method": "test_handle_blocked_execution_in_direct_message_mode",
                           "steps": [
                             "Given AI has written headless-context.md",
                             "And headless mode is configured",
@@ -4680,13 +4755,14 @@
                         },
                         {
                           "name": "Restart session when AI gets stuck in direct message mode",
+                          "test_method": "test_restart_session_when_ai_gets_stuck_in_direct_message_mode",
                           "steps": [
                             "Given headless session is executing direct message",
                             "And AI has looped instructions multiple times",
                             "And RecoverableError indicates AI stuck or unable to proceed",
                             "And ErrorRecovery tracks recovery attempt count less than 3",
                             "When ErrorRecovery determines error is recoverable",
-                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "Then ErrorRecovery waits before retry for 2 seconds",
                             "And ErrorRecovery terminates current headless session",
                             "And ErrorRecovery restarts session with same message and context",
                             "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
@@ -4704,9 +4780,20 @@
                       "connector": null,
                       "users": ["Human", "CLI"],
                       "story_type": "user",
+                      "test_class": "TestExecuteSingleOperation",
+                      "acceptance_criteria": [
+                        "WHEN Human executes CLI with behavior.action.operation and --headless flag\nTHEN CLI enables headless execution mode AND CLI loads CURSOR_API_KEY from environment AND CLI validates API key is present AND CLI creates timestamped log file path",
+                        "WHEN CLI executes operation\nTHEN CLI constructs message \"Execute operation: {behavior}.{action}.{operation}\" AND CLI loads headless-context.md content when available AND CLI constructs instructions starting with operation message then appends context content when available",
+                        "WHEN CLI constructs operation instructions\nTHEN CLI wraps with \"Keep doing this until 100% done or blocked:\" directive AND CLI appends \"If blocked, report reason clearly.\" to instructions",
+                        "WHEN CLI sends operation instructions to Cursor Headless API\nTHEN CLI appends AI responses to log file after each iteration AND CLI loops instruction with persistence directive until AI indicates completion or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations",
+                        "WHEN AI indicates completion signal (done=true) for operation\nTHEN CLI stops looping AND CLI reports operation completion with log path AND CLI marks action_completed=true when confirm operation completes successfully",
+                        "WHEN AI indicates blocked signal (blocked=true) for operation\nTHEN CLI detects blocked state AND CLI stops looping AND CLI reports blocked status with block reason",
+                        "WHEN ErrorRecovery detects recoverable errors (AI stuck/hung, max loops reached)\nTHEN ErrorRecovery waits before retry for 2 seconds AND ErrorRecovery terminates current headless session AND ErrorRecovery restarts session with same instructions AND ErrorRecovery logs recoverable error with attempt number to log file AND ErrorRecovery sends to new Cursor Headless API session AND ErrorRecovery tracks recovery attempt count incremented AND ErrorRecovery allows up to 3 recovery attempts before failing AND AI executes with fresh context AND CLI continues monitoring new session"
+                      ],
                       "scenarios": [
                         {
                           "name": "Execute instructions operation in headless mode",
+                          "test_method": "test_execute_instructions_operation_in_headless_mode",
                           "steps": [
                             "Given AI has written headless-context.md",
                             "And headless mode is configured",
@@ -4728,6 +4815,7 @@
                         },
                         {
                           "name": "Execute submit operation in headless mode",
+                          "test_method": "test_execute_submit_operation_in_headless_mode",
                           "steps": [
                             "Given AI has written headless-context.md with submission data",
                             "And headless mode is configured",
@@ -4749,6 +4837,7 @@
                         },
                         {
                           "name": "Execute confirm operation in headless mode",
+                          "test_method": "test_execute_confirm_operation_in_headless_mode",
                           "steps": [
                             "Given headless mode is configured",
                             "And user is at shape.build action",
@@ -4766,13 +4855,14 @@
                         },
                         {
                           "name": "Restart session when AI gets stuck",
+                          "test_method": "test_restart_session_when_ai_gets_stuck",
                           "steps": [
                             "Given headless session is running",
                             "And AI has looped instructions multiple times",
                             "And RecoverableError indicates AI stuck or unable to proceed",
                             "And ErrorRecovery tracks recovery attempt count less than 3",
                             "When ErrorRecovery determines error is recoverable",
-                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "Then ErrorRecovery waits before retry for 2 seconds",
                             "And ErrorRecovery terminates current headless session",
                             "And ErrorRecovery restarts session with same instructions",
                             "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
@@ -4790,9 +4880,19 @@
                       "connector": null,
                       "users": ["Human", "CLI"],
                       "story_type": "user",
+                      "test_class": "TestExecuteCompleteAction",
+                      "acceptance_criteria": [
+                        "WHEN Human executes CLI with behavior.action and --headless flag\nTHEN CLI enables headless execution mode AND CLI reads headless-context.md",
+                        "WHEN CLI executes instructions operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.instructions\" AND CLI wraps operation with \"Keep doing this until 100% done or blocked:\" and \"If blocked, report reason clearly.\" AND CLI sends to Cursor Headless API and loops until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects instructions completion (done=true) or blocked state",
+                        "WHEN CLI executes submit operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.submit\" AND CLI wraps submit with persistence directive and loops until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects submit completion (done=true) or blocked state",
+                        "WHEN CLI executes confirm operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.confirm\" AND CLI wraps confirm with persistence directive and loops until AI indicates done AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects confirm completion (done=true) and marks action_completed=true AND CLI reports entire action completed successfully",
+                        "WHEN CLI detects blocked state (blocked=true) during any operation\nTHEN CLI stops action workflow execution when blocked AND CLI sets blocked_operation to indicate which operation blocked AND CLI sets operations_status to show completed vs blocked operations AND CLI reports which operation blocked AND CLI displays block reason from API response AND CLI preserves completed operation results in operations_executed list AND CLI exits with blocked status code (exit_code=2)",
+                        "WHEN ErrorRecovery detects recoverable errors (AI stuck/hung, max loops reached) at operation level\nTHEN ErrorRecovery waits before retry for 2 seconds AND ErrorRecovery terminates current headless session AND ErrorRecovery restarts session for the stuck operation AND ErrorRecovery sends to new Cursor Headless API session AND ErrorRecovery tracks recovery attempt count incremented (allows up to 3 attempts) AND ErrorRecovery logs recovery attempt to log file AND AI executes operation with fresh context AND CLI continues with remaining operations in the action after recovery completes"
+                      ],
                       "scenarios": [
                         {
                           "name": "Execute complete action workflow in headless mode",
+                          "test_method": "test_execute_complete_action_workflow_in_headless_mode",
                           "steps": [
                             "Given AI has written headless-context.md",
                             "And headless mode is configured",
@@ -4812,6 +4912,7 @@
                         },
                         {
                           "name": "Handle block during action workflow",
+                          "test_method": "test_handle_block_during_action_workflow",
                           "steps": [
                             "Given AI has written headless-context.md",
                             "And headless mode is configured",
@@ -4827,13 +4928,14 @@
                         },
                         {
                           "name": "Restart session when AI gets stuck during action workflow",
+                          "test_method": "test_restart_session_when_ai_gets_stuck_during_action_workflow",
                           "steps": [
                             "Given headless session is executing complete action workflow",
                             "And AI is stuck during build operation",
                             "And RecoverableError indicates AI unable to proceed",
                             "And ErrorRecovery tracks recovery attempt count less than 3",
                             "When ErrorRecovery determines error is recoverable",
-                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "Then ErrorRecovery waits before retry for 2 seconds",
                             "And ErrorRecovery terminates current headless session",
                             "And ErrorRecovery restarts session for build operation only",
                             "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
@@ -4851,9 +4953,21 @@
                       "connector": null,
                       "users": ["Human", "CLI"],
                       "story_type": "user",
+                      "test_class": "TestExecuteCompleteBehavior",
+                      "acceptance_criteria": [
+                        "WHEN Human executes CLI with behavior and --headless flag\nTHEN CLI enables headless execution mode AND CLI reads headless-context.md",
+                        "WHEN CLI executes clarify action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI wraps each operation with \"Keep doing this until 100% done or blocked:\" and \"If blocked, report reason clearly.\" AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects clarify completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes strategy action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects strategy completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes build action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects build completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes validate action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects validate completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes render action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects render completion (action_completed=true) or blocked state AND CLI marks behavior_completed=true when all actions complete AND CLI reports entire behavior completed successfully",
+                        "WHEN CLI detects blocked state (blocked=true) during any action\nTHEN CLI stops behavior workflow execution when blocked AND CLI sets blocked_action to indicate which action blocked AND CLI sets actions_status to show completed vs blocked actions AND CLI reports which action blocked AND CLI displays block reason from API response AND CLI preserves completed action results in actions_executed list AND CLI exits with blocked status code (exit_code=2)",
+                        "WHEN ErrorRecovery detects recoverable errors (AI stuck/hung, max loops reached) at operation level\nTHEN ErrorRecovery waits before retry for 2 seconds AND ErrorRecovery terminates current headless session AND ErrorRecovery restarts session for the stuck operation AND ErrorRecovery sends to new Cursor Headless API session AND ErrorRecovery tracks recovery attempt count incremented (allows up to 3 attempts) AND ErrorRecovery logs recovery attempt to log file AND AI executes action with fresh context AND CLI continues with remaining actions after recovery completes"
+                      ],
                       "scenarios": [
                         {
                           "name": "Execute complete behavior workflow in headless mode",
+                          "test_method": "test_execute_complete_behavior_workflow_in_headless_mode",
                           "steps": [
                             "Given AI has written headless-context.md",
                             "And headless mode is configured",
@@ -4879,6 +4993,7 @@
                         },
                         {
                           "name": "Handle block during behavior workflow",
+                          "test_method": "test_handle_block_during_behavior_workflow",
                           "steps": [
                             "Given AI has written headless-context.md",
                             "And headless mode is configured",
@@ -4894,13 +5009,14 @@
                         },
                         {
                           "name": "Restart session when AI gets stuck during behavior workflow",
+                          "test_method": "test_restart_session_when_ai_gets_stuck_during_behavior_workflow",
                           "steps": [
                             "Given headless session is executing complete behavior workflow",
                             "And AI is stuck during build action",
                             "And RecoverableError indicates AI unable to proceed",
                             "And ErrorRecovery tracks recovery attempt count less than 3",
                             "When ErrorRecovery determines error is recoverable",
-                            "Then ErrorRecovery waits before retry for 1 minute",
+                            "Then ErrorRecovery waits before retry for 2 seconds",
                             "And ErrorRecovery terminates current headless session",
                             "And ErrorRecovery restarts session for build action only",
                             "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
@@ -4920,6 +5036,7 @@
               "name": "Monitor Session",
               "sequential_order": 3,
               "estimated_stories": null,
+              "test_file": "test_monitor_session.py",
               "sub_epics": [],
               "story_groups": [
                 {
@@ -4933,9 +5050,17 @@
                       "connector": null,
                       "users": ["CLI"],
                       "story_type": "system",
+                      "test_class": "TestMonitorExecution",
+                      "acceptance_criteria": [
+                        "WHEN Headless session is active\nTHEN CLI streams responses to log file AND CLI maintains full execution transcript AND CLI polls session status periodically AND CLI checks for completion or block signals",
+                        "WHEN CLI polls session status\nTHEN CLI appends loop iteration number to log file for each loop AND CLI appends instruction sent to log file for each iteration AND CLI appends AI response summary to log file for each iteration AND CLI appends work completed in iteration to log file AND CLI tracks total number of loops executed",
+                        "WHEN CLI detects completion signal (done=true) from API response\nTHEN CLI stops polling when completion detected AND CLI appends final status to log file when completed AND CLI appends total loops count to log file when execution completes AND CLI prepares completion report with log file path",
+                        "WHEN CLI detects blocked state (blocked=true) from API response\nTHEN CLI detects block markers in output AND CLI captures block reason when detected AND CLI stops polling when blocked detected AND CLI appends block reason to log file when blocked AND CLI prepares blocked report with block reason"
+                      ],
                       "scenarios": [
                         {
                           "name": "Poll session status during execution",
+                          "test_method": "test_poll_session_status_during_execution",
                           "steps": [
                             "Given headless session is running with session ID session_abc123",
                             "And session log file is created at logs/headless-2025-12-29.log",
@@ -4952,6 +5077,7 @@
                         },
                         {
                           "name": "Detect completion during monitoring",
+                          "test_method": "test_detect_completion_during_monitoring",
                           "steps": [
                             "Given headless session is running",
                             "And CLI is polling session status",
@@ -4963,6 +5089,7 @@
                         },
                         {
                           "name": "Log multiple loop iterations with progress tracking",
+                          "test_method": "test_log_multiple_loop_iterations_with_progress_tracking",
                           "steps": [
                             "Given headless session is running",
                             "And CLI is executing instruction loop",
@@ -4986,6 +5113,7 @@
                         },
                         {
                           "name": "Detect blocked state during monitoring",
+                          "test_method": "test_detect_blocked_state_during_monitoring",
                           "steps": [
                             "Given headless session is running",
                             "And CLI is polling session status",
@@ -5004,9 +5132,14 @@
                       "connector": null,
                       "users": ["CLI", "Human"],
                       "story_type": "user",
+                      "test_class": "TestSurfaceBlockReason",
+                      "acceptance_criteria": [
+                        "WHEN Block condition is detected\nTHEN CLI writes block reason to stdout AND CLI writes block reason to log file"
+                      ],
                       "scenarios": [
                         {
                           "name": "Display block reason to user",
+                          "test_method": "test_display_block_reason_to_user",
                           "steps": [
                             "Given headless session has blocked",
                             "And session log contains block reason Waiting for API key configuration",
@@ -5019,6 +5152,7 @@
                         },
                         {
                           "name": "Display block reason with context",
+                          "test_method": "test_display_block_reason_with_context",
                           "steps": [
                             "Given headless session has blocked during submit operation",
                             "And session log contains block reason Missing required parameter --data",
@@ -5044,9 +5178,14 @@
                       "connector": null,
                       "users": ["CLI", "Human"],
                       "story_type": "user",
+                      "test_class": "TestReportCompletion",
+                      "acceptance_criteria": [
+                        "WHEN Session completes successfully\nTHEN CLI writes completion status to stdout AND CLI writes log file path"
+                      ],
                       "scenarios": [
                         {
                           "name": "Report successful completion to console",
+                          "test_method": "test_report_successful_completion_to_console",
                           "steps": [
                             "Given headless session has completed successfully",
                             "And session log contains execution transcript",
@@ -5060,6 +5199,7 @@
                         },
                         {
                           "name": "Report completion with operation details",
+                          "test_method": "test_report_completion_with_operation_details",
                           "steps": [
                             "Given headless session completed shape.build action",
                             "And session log shows story-graph.json was created",
@@ -5078,9 +5218,14 @@
                       "connector": "or",
                       "users": ["CLI", "Human"],
                       "story_type": "user",
+                      "test_class": "TestRecoverAndReportFailures",
+                      "acceptance_criteria": [
+                        "WHEN Session fails or times out\nTHEN CLI writes failure reason to stdout AND CLI writes log file path for debugging"
+                      ],
                       "scenarios": [
                         {
                           "name": "Report non-recoverable failure to console",
+                          "test_method": "test_report_non_recoverable_failure_to_console",
                           "steps": [
                             "Given headless session has failed",
                             "And NonRecoverableError indicates CLI failure",
@@ -5096,6 +5241,7 @@
                         },
                         {
                           "name": "Report non-recoverable API connection failure",
+                          "test_method": "test_report_non_recoverable_api_connection_failure",
                           "steps": [
                             "Given CLI attempts to connect to Cursor Headless API",
                             "And API connection fails with timeout",
@@ -5111,6 +5257,7 @@
                         },
                         {
                           "name": "Recover from AI hang by restarting session",
+                          "test_method": "test_recover_from_ai_hang_by_restarting_session",
                           "steps": [
                             "Given headless session is running",
                             "And AI has not responded for 5 minutes",
@@ -5118,7 +5265,7 @@
                             "And ErrorRecovery tracks recovery attempt count less than 3",
                             "When ErrorRecovery determines error is recoverable",
                             "Then ErrorRecovery logs AI hung, attempting recovery (attempt 1 of 3) to log file",
-                            "And ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery waits before retry for 2 seconds",
                             "And ErrorRecovery terminates current headless session",
                             "And ErrorRecovery restarts session with same instructions",
                             "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
@@ -5130,6 +5277,7 @@
                         },
                         {
                           "name": "Recover from AI stuck in planning mode",
+                          "test_method": "test_recover_from_ai_stuck_in_planning_mode",
                           "steps": [
                             "Given headless session is running",
                             "And AI indicates stuck in planning mode",
@@ -5137,7 +5285,7 @@
                             "And ErrorRecovery tracks recovery attempt count less than 3",
                             "When ErrorRecovery determines error is recoverable",
                             "Then ErrorRecovery logs AI stuck in planning, attempting recovery (attempt 1 of 3) to log file",
-                            "And ErrorRecovery waits before retry for 1 minute",
+                            "And ErrorRecovery waits before retry for 2 seconds",
                             "And ErrorRecovery terminates current headless session",
                             "And ErrorRecovery restarts session with same instructions",
                             "And ErrorRecovery wraps with Keep doing this until 100% done or blocked directive",
@@ -5149,6 +5297,7 @@
                         },
                         {
                           "name": "Stop after 3 consecutive recovery attempts",
+                          "test_method": "test_stop_after_3_consecutive_recovery_attempts",
                           "steps": [
                             "Given headless session is running",
                             "And RecoverableError indicates AI hung or stuck",
@@ -5167,6 +5316,7 @@
                         },
                         {
                           "name": "Report non-recoverable failure with partial results",
+                          "test_method": "test_report_non_recoverable_failure_with_partial_results",
                           "steps": [
                             "Given headless session was executing shape behavior",
                             "And clarify action completed successfully",

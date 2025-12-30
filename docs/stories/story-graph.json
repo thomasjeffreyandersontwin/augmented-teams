@@ -1,0 +1,182 @@
+{
+  "_explanation": {
+    "purpose": "Story map for User Authentication system - secure login and registration with JWT tokens",
+    "structure": "epics contain sub_epics (features). Sub-epics contain story_groups. Story_groups organize related stories with logical connectors (and/or).",
+    "priority": "Core authentication functionality is complete and tested",
+    "users": ["End User", "Application"],
+    "integration": "FastAPI, JWT, bcrypt"
+  },
+  "epics": [
+    {
+      "name": "Authenticate Users",
+      "sequential_order": 1,
+      "estimated_stories": 5,
+      "domain_concepts": [
+        {
+          "name": "User",
+          "responsibilities": [
+            {
+              "name": "Represents authenticated user",
+              "collaborators": []
+            },
+            {
+              "name": "Stores user credentials (hashed password)",
+              "collaborators": []
+            },
+            {
+              "name": "Provides user identity (id, username, email)",
+              "collaborators": []
+            }
+          ]
+        },
+        {
+          "name": "JWT Token",
+          "responsibilities": [
+            {
+              "name": "Encodes user identity",
+              "collaborators": ["User"]
+            },
+            {
+              "name": "Provides secure authentication",
+              "collaborators": []
+            },
+            {
+              "name": "Expires after configured time",
+              "collaborators": []
+            }
+          ]
+        },
+        {
+          "name": "Password Hash",
+          "responsibilities": [
+            {
+              "name": "Securely stores password",
+              "collaborators": []
+            },
+            {
+              "name": "Verifies password without storing plain text",
+              "collaborators": []
+            }
+          ]
+        }
+      ],
+      "sub_epics": [
+        {
+          "name": "Register User",
+          "sequential_order": 1,
+          "estimated_stories": 1,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Register New User",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["End User"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestRegisterUser"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Login User",
+          "sequential_order": 2,
+          "estimated_stories": 1,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Login With Credentials",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["End User"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestLoginUser"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Verify Authentication",
+          "sequential_order": 3,
+          "estimated_stories": 1,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Verify Token Validity",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["Application"],
+                  "story_type": "system",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestVerifyToken"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Access Protected Resources",
+          "sequential_order": 4,
+          "estimated_stories": 2,
+          "domain_concepts": [],
+          "sub_epics": [],
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "sequential_order": 1,
+              "stories": [
+                {
+                  "name": "Access Protected Route",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": ["End User"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 1,
+                  "test_class": "TestProtectedRoute"
+                },
+                {
+                  "name": "Get Current User Info",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": ["End User"],
+                  "story_type": "user",
+                  "optional": false,
+                  "priority": 2,
+                  "test_class": "TestGetCurrentUser"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "story_groups": []
+    }
+  ]
+}

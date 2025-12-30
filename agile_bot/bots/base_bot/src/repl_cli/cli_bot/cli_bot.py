@@ -8,6 +8,8 @@ if TYPE_CHECKING:
 from agile_bot.bots.base_bot.src.repl_cli.cli_bot.cli_behaviors import CLIBehaviors
 from agile_bot.bots.base_bot.src.repl_cli.repl_help import REPLHelp
 from agile_bot.bots.base_bot.src.repl_cli.repl_status import REPLStatus
+from agile_bot.bots.base_bot.src.cli.cli_command_router import CliCommandRouter
+from typing import Dict, Any, List, Optional
 
 
 class CLIBot:
@@ -109,4 +111,18 @@ class CLIBot:
                 # Return formatted error with details for debugging
                 return f"{self._session.formatter.scope_icon()} **Scope**\n{self._session.formatter.scope_icon()} Error loading scope: {str(e)}"
         return ""
+    
+    def run(self, behavior_name: Optional[str] = None, action_name: Optional[str] = None, cli_args: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Execute a behavior and/or action with CLI arguments.
+        
+        Args:
+            behavior_name: Name of the behavior to execute
+            action_name: Name of the action to execute (optional)
+            cli_args: List of CLI arguments to pass to the action
+            
+        Returns:
+            Dictionary with status, behavior, action, and data keys
+        """
+        router = CliCommandRouter(self._bot, self._session.formatter)
+        return router.route_to_action(behavior_name, action_name, cli_args or [])
 

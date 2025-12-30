@@ -1,0 +1,11 @@
+
+[2025-12-30 00:23:32] Session session_20251230_002332 started
+[2025-12-30 00:23:32] Instructions: Keep doing this until 100% done or blocked:
+
+Execute shape.build.instructions with the following instruction:
+
+please make sure all acceptance Criteria are up-to-date for the changes we have made to the headless scenarios --scope 'Document Headless Mode Requirement'
+
+
+
+If blocked, report reason clearly.

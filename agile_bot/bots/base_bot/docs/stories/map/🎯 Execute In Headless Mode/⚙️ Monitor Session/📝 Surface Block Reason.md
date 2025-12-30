@@ -5,7 +5,21 @@
 
 ## Acceptance Criteria
 
-*(No acceptance criteria defined yet)*
+1. **CLI displays block reason to user:**
+   - WHEN Block condition is detected
+   - THEN CLI writes block reason to stdout
+   - AND CLI writes block reason to log file
+   - AND CLI extracts block reason from session log
+   - AND CLI formats block reason for console display
+   - AND CLI displays blocked status with reason to console (e.g., "Blocked: Waiting for API key configuration")
+   - AND CLI shows log file path for details
+
+2. **CLI displays block reason with context:**
+   - WHEN Block condition is detected with operation context
+   - THEN CLI displays operation context where block occurred (e.g., "submit operation")
+   - AND CLI displays block reason
+   - AND CLI suggests resolution when applicable
+   - AND CLI shows log file path
 
 ## Scenarios
 

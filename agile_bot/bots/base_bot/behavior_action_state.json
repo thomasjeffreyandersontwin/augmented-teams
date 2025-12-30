@@ -1,10 +1,10 @@
 {
-  "current_behavior": "crc_bot.domain",
-  "current_action": "crc_bot.domain.render",
+  "current_behavior": "story_bot.code",
+  "current_action": "story_bot.code.validate",
   "action_phase": "instructions",
   "action_state": "started",
-  "working_directory": "demo/mob_minion",
-  "timestamp": "2025-12-29T15:12:59.571915",
+  "working_directory": "../another_bot               # Change to relative path",
+  "timestamp": "2025-12-30T03:24:22.234769",
   "completed_actions": [
     {
       "action_state": "story_bot.shape.clarify",
@@ -68,83 +68,95 @@
     },
     {
       "action_state": "story_bot.prioritization.clarify",
-      "timestamp": "2025-12-29T13:39:36.630124"
+      "timestamp": "2025-12-30T02:41:37.922599"
     },
     {
       "action_state": "story_bot.prioritization.strategy",
-      "timestamp": "2025-12-29T13:39:36.630124"
+      "timestamp": "2025-12-30T02:41:37.922599"
     },
     {
       "action_state": "story_bot.prioritization.build",
-      "timestamp": "2025-12-29T13:39:36.630124"
+      "timestamp": "2025-12-30T02:41:37.922599"
     },
     {
       "action_state": "story_bot.prioritization.validate",
-      "timestamp": "2025-12-29T13:39:36.630124"
+      "timestamp": "2025-12-30T02:41:37.922599"
     },
     {
       "action_state": "story_bot.prioritization.render",
-      "timestamp": "2025-12-29T13:39:36.630124"
+      "timestamp": "2025-12-30T02:41:37.922599"
     },
     {
       "action_state": "story_bot.discovery.clarify",
-      "timestamp": "2025-12-29T13:39:36.635104"
+      "timestamp": "2025-12-30T02:41:37.930601"
     },
     {
       "action_state": "story_bot.discovery.strategy",
-      "timestamp": "2025-12-29T13:39:36.635104"
+      "timestamp": "2025-12-30T02:41:37.930601"
     },
     {
       "action_state": "story_bot.discovery.build",
-      "timestamp": "2025-12-29T13:39:36.635104"
+      "timestamp": "2025-12-30T02:41:37.930601"
     },
     {
       "action_state": "story_bot.discovery.validate",
-      "timestamp": "2025-12-29T13:39:36.635104"
+      "timestamp": "2025-12-30T02:41:37.930601"
     },
     {
       "action_state": "story_bot.discovery.render",
-      "timestamp": "2025-12-29T13:39:36.635104"
+      "timestamp": "2025-12-30T02:41:37.930601"
     },
     {
       "action_state": "story_bot.exploration.clarify",
-      "timestamp": "2025-12-29T13:39:36.639104"
+      "timestamp": "2025-12-30T02:41:37.935599"
     },
     {
       "action_state": "story_bot.exploration.strategy",
-      "timestamp": "2025-12-29T13:39:36.639104"
+      "timestamp": "2025-12-30T02:41:37.935599"
     },
     {
       "action_state": "story_bot.exploration.build",
-      "timestamp": "2025-12-29T13:39:36.639104"
+      "timestamp": "2025-12-30T02:41:37.935599"
     },
     {
       "action_state": "story_bot.exploration.validate",
-      "timestamp": "2025-12-29T13:39:36.639104"
+      "timestamp": "2025-12-30T02:41:37.935599"
     },
     {
       "action_state": "story_bot.exploration.render",
-      "timestamp": "2025-12-29T13:39:36.639104"
-    },
-    {
-      "action_state": "story_bot.scenarios.strategy",
-      "timestamp": "2025-12-29T13:41:40.473899"
-    },
-    {
-      "action_state": "story_bot.scenarios.render",
-      "timestamp": "2025-12-29T14:00:10.622394"
+      "timestamp": "2025-12-30T02:41:37.935599"
     },
     {
       "action_state": "story_bot.scenarios.clarify",
-      "timestamp": "2025-12-29T14:00:10.648547"
+      "timestamp": "2025-12-30T02:41:37.939599"
+    },
+    {
+      "action_state": "story_bot.scenarios.strategy",
+      "timestamp": "2025-12-30T02:41:37.939599"
     },
     {
       "action_state": "story_bot.scenarios.build",
-      "timestamp": "2025-12-29T14:00:10.648547"
+      "timestamp": "2025-12-30T02:41:37.939599"
     },
     {
       "action_state": "story_bot.scenarios.validate",
-      "timestamp": "2025-12-29T14:00:10.648547"
+      "timestamp": "2025-12-30T02:41:37.939599"
+    },
+    {
+      "action_state": "story_bot.scenarios.render",
+      "timestamp": "2025-12-30T02:41:37.939599"
+    },
+    {
+      "action_state": "story_bot.tests.build",
+      "timestamp": "2025-12-30T02:41:37.941599"
+    },
+    {
+      "action_state": "story_bot.tests.render",
+      "timestamp": "2025-12-30T02:41:37.941599"
+    },
+    {
+      "action_state": "story_bot.tests.validate",
+      "timestamp": "2025-12-30T02:41:37.941599"
     }
   ],
   "completed_behaviors": [
@@ -154,7 +166,7 @@
   "scope": {
     "type": "story",
     "value": [
-      "Execute In Headless Mode"
+      "c:devaugmented-teamsagile_botbotsbase_botsrcrepl_cliheadless"
     ],
     "exclude": [],
     "skiprule": []

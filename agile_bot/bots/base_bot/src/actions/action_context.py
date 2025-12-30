@@ -76,8 +76,50 @@ class FileFilter:
         """Filter file list to only files matching this filter."""
         if not self.include_patterns and not self.exclude_patterns:
             return file_list
-        # TODO: Implement actual filtering logic in Phase 3
-        return file_list
+        
+        from pathlib import PurePath
+        filtered = []
+        
+        for file_path in file_list:
+            file_str = str(file_path).replace('\\', '/')
+            file_path_obj = PurePath(file_str)
+            
+            if self.include_patterns:
+                matches_include = False
+                for pattern in self.include_patterns:
+                    pattern_normalized = pattern.replace('\\', '/')
+                    try:
+                        if (file_path_obj.match(pattern_normalized) or
+                            file_path_obj.match(f'**/{pattern_normalized}') or
+                            pattern_normalized in file_str):
+                            matches_include = True
+                            break
+                    except (ValueError, TypeError):
+                        if pattern_normalized in file_str:
+                            matches_include = True
+                            break
+                
+                if not matches_include:
+                    continue
+            
+            if self.exclude_patterns:
+                matches_exclude = False
+                for pattern in self.exclude_patterns:
+                    pattern_normalized = pattern.replace('\\', '/')
+                    try:
+                        if (file_path_obj.match(pattern_normalized) or
+                            file_path_obj.match(f'**/{pattern_normalized}')):
+                            matches_exclude = True
+                            break
+                    except (ValueError, TypeError):
+                        pass
+                
+                if matches_exclude:
+                    continue
+            
+            filtered.append(file_path)
+        
+        return filtered
 
 
 @dataclass
@@ -458,6 +500,7 @@ class ValidateActionContext(ScopeActionContext):
     skip_cross_file: bool = False
     all_files: bool = False
     force_full: bool = False  # Alias for all_files for backward compatibility
+    max_cross_file_comparisons: int = 20  # Maximum number of files to compare against in cross-file duplication scan
     
     def __post_init__(self):
         # Sync force_full and all_files - they mean the same thing

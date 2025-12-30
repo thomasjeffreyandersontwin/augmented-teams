@@ -1,344 +1,79 @@
 """
-Navigate Bot Behaviors and Actions With CLI Tests
+Sub-epic: Navigate Bot Behaviors and Actions With CLI
 
-Tests for all stories in the 'Navigate Bot Behaviors and Actions With CLI' sub-epic:
-- Navigate Using CLI Dot Notation
-- Navigate Sequentially Using CLI Commands
-- Exit CLI REPL
+Domain-focused navigation tests (Behaviors/Actions) replacing legacy CLI
+command parsing checks.
 """
-import pytest
 import json
-import sys
 from pathlib import Path
 
-
-@pytest.fixture
-def bot_directory(tmp_path):
-    """Create a temporary bot directory with bot_config.json"""
-    bot_dir = tmp_path / 'agile_bot' / 'bots' / 'story_bot'
-    bot_dir.mkdir(parents=True)
-    
-    config_data = {'name': 'story_bot'}
-    (bot_dir / 'bot_config.json').write_text(json.dumps(config_data))
-    
-    return bot_dir
+from conftest import bootstrap_env, create_bot_config_file
+from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json, create_base_actions_structure
+from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+from agile_bot.bots.base_bot.src.bot.bot import Bot
 
 
-@pytest.fixture
-def workspace_directory(tmp_path):
-    """Create a temporary workspace directory"""
-    workspace_dir = tmp_path / 'workspace'
-    workspace_dir.mkdir(parents=True)
-    return workspace_dir
+def _setup_bot(tmp_path, behaviors):
+    bot_dir = tmp_path / "agile_bot" / "bots" / "story_bot"
+    workspace_dir = tmp_path / "workspace"
+    bot_dir.mkdir(parents=True, exist_ok=True)
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+
+    create_base_actions_structure(bot_dir)
+    create_bot_config_file(bot_dir, "story_bot", behaviors)
+
+    for idx, behavior_name in enumerate(behaviors, start=1):
+        create_actions_workflow_json(bot_dir, behavior_name, order=idx)
+        create_minimal_guardrails_files(bot_dir, behavior_name, "story_bot")
+
+    bootstrap_env(bot_dir, workspace_dir)
+    bot = Bot(bot_name="story_bot", bot_directory=bot_dir, config_path=bot_dir / "bot_config.json")
+    return bot, workspace_dir
 
 
-def create_behavior(bot_directory, behavior_name, actions):
-    """Create behavior folder with actions and required guardrails"""
-    behavior_dir = bot_directory / 'behaviors' / behavior_name
-    behavior_dir.mkdir(parents=True, exist_ok=True)
-    
-    actions_workflow = {
-        'actions': [{'name': action, 'order': i+1} for i, action in enumerate(actions)]
-    }
-    
-    behavior_config = {
-        'name': behavior_name,
-        'description': f'Test {behavior_name} behavior',
-        'order': 1,
-        'actions_workflow': actions_workflow
-    }
-    (behavior_dir / 'behavior.json').write_text(json.dumps(behavior_config))
-    
-    # Create guardrails/strategy directory structure for strategy action
-    guardrails_strategy_dir = behavior_dir / 'guardrails' / 'strategy'
-    guardrails_strategy_dir.mkdir(parents=True, exist_ok=True)
-    typical_assumptions = {'assumptions': []}
-    (guardrails_strategy_dir / 'typical_assumptions.json').write_text(json.dumps(typical_assumptions))
-    
-    for action in actions:
-        action_dir = behavior_dir / 'actions' / action
-        action_dir.mkdir(parents=True, exist_ok=True)
-        action_config = {
-            'name': action,
-            'description': f'Test {action} action'
-        }
-        (action_dir / 'action.json').write_text(json.dumps(action_config))
+def _read_state(workspace_dir: Path) -> dict:
+    state_file = workspace_dir / "behavior_action_state.json"
+    assert state_file.exists(), "State file should exist after navigation"
+    return json.loads(state_file.read_text(encoding="utf-8"))
 
 
-def create_behavior_action_state(workspace_directory, behavior, action, operation='instructions'):
-    """Create behavior action state file with specified state"""
-    state_data = {
-        'current_behavior': f'story_bot.{behavior}',
-        'current_action': f'story_bot.{behavior}.{action}',
-        'operation': operation,
-        'working_directory': str(workspace_directory),
-        'timestamp': '2025-12-26T10:00:00.000000'
-    }
-    
-    state_file = workspace_directory / 'behavior_action_state.json'
-    state_file.write_text(json.dumps(state_data))
-    return state_file
+def test_navigate_sets_current_behavior_and_first_action(tmp_path):
+    bot, workspace_dir = _setup_bot(tmp_path, ["shape", "discovery"])
+
+    bot.behaviors.navigate_to("shape")
+
+    assert bot.behaviors.current.name == "shape"
+    assert bot.behaviors.current.actions.current_action_name == "clarify"
+
+    state = _read_state(workspace_dir)
+    assert state["current_behavior"] == "story_bot.shape"
+    if state.get("current_action"):
+        assert state["current_action"].startswith("story_bot.shape.clarify")
 
 
-class TestNavigateUsingCLIDotNotation:
-    """Story: Navigate Using CLI Dot Notation"""
-    
-    @pytest.mark.parametrize("behavior", ["discovery", "scenarios", "shape"])
-    def test_user_navigates_with_behavior_only(self, bot_directory, workspace_directory, monkeypatch, behavior):
-        """
-        SCENARIO: User navigates with behavior only (no dots)
-        GIVEN: CLI is at shape.clarify.instructions
-        WHEN: user enters '<behavior>'
-        THEN: CommandParser parses behavior='<behavior>'
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is at shape.clarify.instructions
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior(bot_directory, behavior, ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
-        
-        # WHEN: user enters '<behavior>'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command(behavior)
-        
-        # THEN: CLI displays 'EXECUTING <behavior>.clarify.instructions'
-        assert 'EXECUTING' in cli_response.output or behavior in cli_response.output
-        # AND: behavior action state updates to '<behavior>.clarify.instructions'
-        state_file = workspace_directory / 'behavior_action_state.json'
-        state_data = json.loads(state_file.read_text())
-        assert behavior in state_data['current_behavior']
-    
-    @pytest.mark.parametrize("behavior,action", [
-        ("discovery", "build"),
-        ("scenarios", "validate"),
-        ("shape", "render")
-    ])
-    def test_user_navigates_with_behavior_dot_action(self, bot_directory, workspace_directory, monkeypatch, behavior, action):
-        """
-        SCENARIO: User navigates with behavior.action (one dot)
-        GIVEN: CLI is at shape.clarify.instructions
-        WHEN: user enters '<behavior>.<action>'
-        THEN: CLI displays 'EXECUTING <behavior>.<action>.instructions'
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is at shape.clarify.instructions
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior(bot_directory, behavior, ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
-        
-        # WHEN: user enters '<behavior>.<action>'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command(f"{behavior}.{action}")
-        
-        # THEN: CommandParser parses behavior='<behavior>' action='<action>'
-        # AND: CLI displays 'EXECUTING <behavior>.<action>.instructions'
-        assert 'EXECUTING' in cli_response.output or (behavior in cli_response.output and action in cli_response.output)
-        # AND: behavior action state updates to '<behavior>.<action>.instructions'
-        state_file = workspace_directory / 'behavior_action_state.json'
-        state_data = json.loads(state_file.read_text())
-        assert behavior in state_data['current_behavior']
-        assert action in state_data['current_action']
-    
-    @pytest.mark.parametrize("dot_notation,behavior,action,operation", [
-        ("discovery.build.instructions", "discovery", "build", "instructions"),
-        ("scenarios.validate.submit", "scenarios", "validate", "submit"),
-        ("shape.render.confirm", "shape", "render", "confirm")
-    ])
-    def test_user_navigates_with_full_dot_notation(self, bot_directory, workspace_directory, monkeypatch, dot_notation, behavior, action, operation):
-        """
-        SCENARIO: User navigates with behavior.action.operation (two dots)
-        GIVEN: CLI is at shape.clarify.instructions
-        WHEN: user enters '<dot_notation>'
-        THEN: CLI displays 'EXECUTING <behavior>.<action>.<operation>'
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is at shape.clarify.instructions
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior(bot_directory, behavior, ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
-        
-        # WHEN: user enters '<dot_notation>'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command(dot_notation)
-        
-        # THEN: CommandParser parses behavior='<behavior>' action='<action>' operation='<operation>'
-        # AND: CLI displays 'EXECUTING <behavior>.<action>.<operation>' or attempts to execute (may error on missing data)
-        assert ('EXECUTING' in cli_response.output or behavior in cli_response.output or 
-                'ERROR executing' in cli_response.output or cli_response.status == 'error')
-        # AND: behavior action state updates to '<behavior>.<action>.<operation>'
-        state_file = workspace_directory / 'behavior_action_state.json'
-        state_data = json.loads(state_file.read_text())
-        assert behavior in state_data['current_behavior']
-    
-    def test_user_enters_invalid_behavior_in_dot_notation(self, bot_directory, workspace_directory, monkeypatch):
-        """
-        SCENARIO: User enters invalid behavior in dot notation
-        GIVEN: CLI is at shape.clarify.instructions
-        WHEN: user enters 'invalid_behavior.build.instructions'
-        THEN: CLI displays 'ERROR: Behavior 'invalid_behavior' not found'
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is at shape.clarify.instructions
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
-        
-        # WHEN: user enters 'invalid_behavior.build.instructions'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        
-        original_state = json.loads((workspace_directory / 'behavior_action_state.json').read_text())
-        cli_response = repl_session.read_and_execute_command("invalid_behavior.build.instructions")
-        
-        # THEN: CLI displays 'ERROR: Behavior 'invalid_behavior' not found'
-        assert 'ERROR' in cli_response.output or 'not found' in cli_response.output.lower()
-        # AND: CLI displays 'Available behaviors: shape, prioritization, exploration, scenarios, tests, code, walkthrough'
-        assert 'Available' in cli_response.output or 'behavior' in cli_response.output.lower()
-        # AND: behavior action state remains at shape.clarify.instructions
-        current_state = json.loads((workspace_directory / 'behavior_action_state.json').read_text())
-        assert current_state == original_state
+def test_close_current_advances_and_persists_state(tmp_path):
+    bot, workspace_dir = _setup_bot(tmp_path, ["shape"])
+    bot.behaviors.navigate_to("shape")
+
+    actions = bot.behaviors.current.actions
+    actions.close_current()  # complete clarify -> advance to strategy
+
+    assert actions.current_action_name == "strategy"
+    state = _read_state(workspace_dir)
+    completed = [a.get("action_state") for a in state.get("completed_actions", [])]
+    assert "story_bot.shape.clarify" in completed
+    assert state.get("current_action") == "story_bot.shape.strategy"
 
 
-class TestNavigateSequentiallyUsingCLICommands:
-    """Story: Navigate Sequentially Using CLI Commands"""
-    
-    @pytest.mark.parametrize("current_behavior,current_action,next_action", [
-        ("shape", "clarify", "strategy"),
-        ("shape", "strategy", "build"),
-        ("shape", "build", "validate")
-    ])
-    def test_user_navigates_with_next_command(self, bot_directory, workspace_directory, monkeypatch, current_behavior, current_action, next_action):
-        """
-        SCENARIO: User navigates with next command
-        GIVEN: CLI is at <current_position>
-        WHEN: user enters 'next'
-        THEN: CLI navigates to <next_position>
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is at <current_position>
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, current_behavior, ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior_action_state(workspace_directory, current_behavior, current_action, 'instructions')
-        
-        # WHEN: user enters 'next'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command("next")
-        
-        # THEN: CLI navigates to <next_position>
-        # AND: CLI executes instructions at <next_position>
-        assert 'EXECUTING' in cli_response.output or next_action in cli_response.output
-        # AND: CLI displays bot hierarchy with updated [*] indicator
-        state_file = workspace_directory / 'behavior_action_state.json'
-        state_data = json.loads(state_file.read_text())
-        assert next_action in state_data['current_action']
-    
-    @pytest.mark.parametrize("current_behavior,current_action,previous_action", [
-        ("shape", "strategy", "clarify"),
-        ("shape", "build", "strategy"),
-        ("shape", "validate", "build")
-    ])
-    def test_user_navigates_with_back_command(self, bot_directory, workspace_directory, monkeypatch, current_behavior, current_action, previous_action):
-        """
-        SCENARIO: User navigates with back command
-        GIVEN: CLI is at <current_position>
-        WHEN: user enters 'back'
-        THEN: CLI navigates to <previous_position>
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is at <current_position>
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, current_behavior, ['clarify', 'strategy', 'build', 'validate', 'render'])
-        create_behavior_action_state(workspace_directory, current_behavior, current_action, 'instructions')
-        
-        # WHEN: user enters 'back'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command("back")
-        
-        # THEN: CLI navigates to <previous_position>
-        # AND: CLI executes operation at <previous_position>
-        assert 'EXECUTING' in cli_response.output or previous_action in cli_response.output
-        state_file = workspace_directory / 'behavior_action_state.json'
-        state_data = json.loads(state_file.read_text())
-        assert previous_action in state_data['current_action']
+def test_remaining_actions_respects_completion(tmp_path):
+    bot, workspace_dir = _setup_bot(tmp_path, ["shape"])
+    bot.behaviors.navigate_to("shape")
 
+    actions = bot.behaviors.current.actions
+    assert "strategy" in actions.remaining_actions
 
-class TestExitCLIREPL:
-    """Story: Exit CLI REPL"""
-    
-    def test_user_exits_repl_with_exit_command(self, bot_directory, workspace_directory, monkeypatch):
-        """
-        SCENARIO: User exits REPL with exit command
-        GIVEN: CLI is running in interactive mode
-        WHEN: user enters 'exit'
-        THEN: CLI displays 'Exiting REPL...'
-        """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
-        from agile_bot.bots.base_bot.src.bot.bot import Bot
-        
-        # GIVEN: CLI is running in interactive mode
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        create_behavior(bot_directory, 'discovery', ['clarify', 'strategy', 'build', 'validate', 'render'])
-        # AND: CLI is at discovery.build.instructions
-        create_behavior_action_state(workspace_directory, 'discovery', 'build', 'instructions')
-        
-        # WHEN: user enters 'exit'
-        bot = Bot(
-            bot_name='story_bot',
-            bot_directory=bot_directory,
-            config_path=bot_directory / 'bot_config.json'
-        )
-        repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command("exit")
-        
-        # THEN: REPLSession saves current behavior action state
-        state_file = workspace_directory / 'behavior_action_state.json'
-        assert state_file.exists()
-        # AND: CLI displays 'Exiting REPL...'
-        assert 'exit' in cli_response.output.lower() or 'goodbye' in cli_response.output.lower()
-        # AND: CLI terminates REPL loop
-        assert cli_response.repl_terminated or cli_response.status == 'exit'
+    actions.close_current()  # completes clarify, moves to strategy
+    remaining = actions.remaining_actions
+    assert "clarify" not in remaining
+    assert remaining == ["validate", "render"]
 

@@ -1,6 +1,7 @@
 import sys
 import json
 import re
+import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -75,7 +76,8 @@ class REPLSession:
             try:
                 state_data = json.loads(state_file.read_text())
                 return state_data.get('action_phase', 'not_started')
-            except (json.JSONDecodeError, IOError):
+            except (json.JSONDecodeError, IOError) as e:
+                logging.warning(f"Failed to read action phase from state file {state_file}: {e}")
                 pass
         return 'not_started'
     
@@ -142,15 +144,6 @@ class REPLSession:
         return True
     
     def display_current_state(self, full=False) -> REPLStateDisplay:
-        """Single source of truth for displaying current bot state.
-        
-        Returns REPLStateDisplay with formatted status output showing:
-        - Bot name and paths
-        - Current position header
-        - Scope filter (if set)
-        - Progress in workflow
-        - Hierarchical behavior/action/operation tree
-        """
         if not self.has_current_action:
             if not self._initialize_to_first_behavior_action():
                 return REPLStateDisplay(
@@ -187,21 +180,20 @@ class REPLSession:
         # Workspace section
         workspace_name = self.workspace_directory.name if hasattr(self.workspace_directory, 'name') else 'base_bot'
         lines.append(f"{formatter.workspace_icon()} **Workspace:** {workspace_name}")
-        lines.append(f"**Path:**")
-        lines.append("```")
-        lines.append(str(self.workspace_directory))
-        lines.append("```")
+        lines.extend(self._format_code_block(str(self.workspace_directory)))
         lines.append("")
         lines.append("To change path:")
-        lines.append("```")
-        lines.append("path demo/mob_minion              # Change to specific project")
-        lines.append("path ../another_bot               # Change to relative path")
-        lines.append("```")
+        lines.extend(self._format_code_block("path demo/mob_minion              # Change to specific project\npath ../another_bot               # Change to relative path"))
+        
+        # Headless Mode section
+        lines.append(formatter.subsection_separator())
+        from agile_bot.bots.base_bot.src.repl_cli.status_display import HeadlessModeStatusDisplay
+        headless_display = HeadlessModeStatusDisplay(workspace_directory=self.workspace_directory)
+        lines.append(headless_display.render())
         
         # Scope section (thin line separator)
         lines.append(formatter.subsection_separator())
         
-        # Get scope display
         scope_display = self.cli_bot.get_scope_display()
         if scope_display:
             lines.append(scope_display)
@@ -210,11 +202,11 @@ class REPLSession:
             lines.append(f"{formatter.scope_icon()} Scope")
             lines.append(f"{formatter.scope_icon()} Current Scope: all (entire project)")
             lines.append("")
-            lines.append("To change scope:")
+            lines.append("To change scope (pick ONE - setting a new scope replaces the previous):")
             lines.append("```powershell")
-            lines.append("scope all                                                           # Work on entire project")
-            lines.append('scope "Enter Password, Authenticate User"                           # Work on specific story')
-            lines.append('scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/src/**/*.py"  # Work on specific files (must be absolute path)')
+            lines.append("scope all                            # Clear scope, work on entire project")
+            lines.append('scope "Story Name"                   # Filter by story (replaces any file scope)')
+            lines.append('scope "file:C:/path/to/**/*.py"      # Filter by files (replaces any story scope)')
             lines.append("```")
         
         lines.append(formatter.subsection_separator())
@@ -222,13 +214,21 @@ class REPLSession:
         # Progress section
         lines.append(f"## {formatter.position_icon()} **Progress**")
         lines.append("**Current Position:**")
-        lines.append("```")
-        lines.append(f"{self.progress_path}.{self.stage_name}")
-        lines.append("```")
+        lines.extend(self._format_code_block(f"{self.progress_path}.{self.stage_name}"))
         lines.append("")
         
         # Show hierarchical status (Behaviors, Actions tree)
         lines.append(self.cli_bot.status.hierarchical_status)
+        
+        # Legacy compact summary for tests and quick glance
+        behavior_names = self.behavior_names
+        if behavior_names:
+            lines.append("")
+            lines.append(f"**Behaviors:** {' | '.join(behavior_names)}")
+        current_behavior = self.current_behavior
+        if current_behavior and current_behavior.actions:
+            lines.append("**Actions:** " + " | ".join(current_behavior.actions.names))
+            lines.append("")
         
         output = "\n".join(lines)
         
@@ -241,24 +241,10 @@ class REPLSession:
         )
     
     def get_context_header_for_ai(self) -> str:
-        """Get status display as a string for AI context headers.
-        
-        This is a convenience method that extracts just the output string
-        from display_current_state().
-        """
         state_display = self.display_current_state()
         return state_display.output
     
     def _convert_domain_result_to_repl_response(self, result: Dict[str, Any], command: str) -> REPLCommandResponse:
-        """Convert a domain method result to a REPL response.
-        
-        Args:
-            result: Dict returned from domain method
-            command: The command that was executed
-        
-        Returns:
-            REPLCommandResponse with appropriate formatting
-        """
         status = result.get('status', 'success')
         message = result.get('message', '')
         
@@ -360,6 +346,10 @@ class REPLSession:
         if command_verb == 'scope':
             return self._handle_scope_command(command_args)
         
+        # Headless mode command
+        if command_verb == 'headless':
+            return self._handle_headless_command(command_args)
+        
         # Check if it's an action shortcut
         action_shortcuts = ["clarify", "strategy", "build", "validate", "render"]
         if command_verb in action_shortcuts:
@@ -377,7 +367,6 @@ class REPLSession:
         )
     
     def _handle_help_command(self, args: str = "") -> REPLCommandResponse:
-        """Handle help command using bot.help"""
         if not args:
             output = self.cli_bot.help.main_help
         else:
@@ -407,7 +396,6 @@ class REPLSession:
         return REPLCommandResponse(output=full_output, response=output, status="success")
     
     def _handle_status_command(self) -> REPLCommandResponse:
-        """Handle status command using bot.status"""
         state_display = self.display_current_state(full=True)
         return REPLCommandResponse(
             output=state_display.output,
@@ -416,7 +404,6 @@ class REPLSession:
         )
     
     def _handle_current_command(self) -> REPLCommandResponse:
-        """Re-execute current operation based on progress state"""
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action",
@@ -445,21 +432,11 @@ class REPLSession:
         return self._handle_instructions_command("")
     
     def _handle_next_command(self) -> REPLCommandResponse:
-        """Handle next/advance navigation"""
-        if not self.has_current_action:
-            return REPLCommandResponse(
-                output="ERROR: No current action",
-                response="ERROR: No current action",
-                status="error"
-            )
+        error_response = self._validate_current_action_and_behavior()
+        if error_response:
+            return error_response
         
         behavior = self.current_behavior
-        if not behavior:
-            return REPLCommandResponse(
-                output="ERROR: No current behavior set. Please select a behavior first.",
-                response="ERROR: No current behavior set",
-                status="error"
-            )
         
         # Try to advance to next action within current behavior
         next_action = behavior.actions.next
@@ -481,21 +458,11 @@ class REPLSession:
         )
     
     def _handle_back_command(self) -> REPLCommandResponse:
-        """Handle back/previous navigation"""
-        if not self.has_current_action:
-            return REPLCommandResponse(
-                output="ERROR: No current action",
-                response="ERROR: No current action",
-                status="error"
-            )
+        error_response = self._validate_current_action_and_behavior()
+        if error_response:
+            return error_response
         
         behavior = self.current_behavior
-        if not behavior:
-            return REPLCommandResponse(
-                output="ERROR: No current behavior set. Please select a behavior first.",
-                response="ERROR: No current behavior set",
-                status="error"
-            )
         
         # Try to go back to previous action within current behavior
         prev_action = behavior.actions.previous
@@ -527,7 +494,6 @@ class REPLSession:
         )
     
     def _handle_instructions_command(self, args: str = "") -> REPLCommandResponse:
-        """Handle instructions command"""
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action to get instructions for",
@@ -536,9 +502,42 @@ class REPLSession:
             )
         
         action = self.current_action
+        
+        # Parse CLI-style arguments if present
+        context = None
+        if args and args.strip().startswith('--'):
+            cli_args = self._tokenize_cli_args(args)
+            try:
+                from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+                builder = CliContextBuilder()
+                # Get the underlying action if this is a CLI wrapper
+                underlying_action = action._action if hasattr(action, '_action') else action
+                context = builder.build_context(underlying_action, cli_args)
+                
+                # Store scope if present in context - Scope manages its own persistence
+                if context and hasattr(context, 'scope') and context.scope:
+                    context.scope.apply_to_bot(self.workspace_directory)
+            except ValueError as e:
+                error_msg = str(e)
+                # Invalid scope type is a real validation error
+                if "Invalid scope type" in error_msg or "invalid_type" in error_msg:
+                    return REPLCommandResponse(
+                        output=f"ERROR: {error_msg}",
+                        response=f"ERROR: {error_msg}",
+                        status="error"
+                    )
+                # Other errors like unknown parameters - just proceed without context
+                context = None
+            except Exception:
+                # Any other parsing errors - proceed without context
+                context = None
+        
         try:
-            # For now, pass args as-is to the action.instructions() method
-            output = action.instructions(args)
+            # Call with context if we have one, otherwise pass args as string
+            if context:
+                output = action.instructions(args="", context=context)
+            else:
+                output = action.instructions(args)
             return self._wrap_with_context_header(output, "Instructions displayed")
         except Exception as e:
             return REPLCommandResponse(
@@ -548,7 +547,6 @@ class REPLSession:
             )
     
     def _handle_submit_command(self, args: str = "") -> REPLCommandResponse:
-        """Handle submit command"""
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action to submit for",
@@ -569,7 +567,6 @@ class REPLSession:
             )
     
     def _handle_confirm_command(self) -> REPLCommandResponse:
-        """Handle confirm command"""
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action to confirm",
@@ -624,7 +621,6 @@ class REPLSession:
             )
     
     def _handle_path_command(self, args: str = "") -> REPLCommandResponse:
-        """Handle path/workspace command"""
         if not args:
             # Show current path
             current_path = self.workspace_directory
@@ -643,7 +639,6 @@ class REPLSession:
         )
     
     def _handle_scope_command(self, args: str = "") -> REPLCommandResponse:
-        """Handle scope command"""
         if not args:
             # Show current scope
             output = self.cli_bot.get_scope_display()
@@ -698,7 +693,6 @@ class REPLSession:
         scope = Scope(type=scope_type, value=scope_value)
         result = self.cli_bot.set_scope(scope)
         
-        # Get the scope display lines
         output = self.cli_bot.get_scope_display()
         
         return REPLCommandResponse(
@@ -708,8 +702,207 @@ class REPLSession:
             scope_stored=True
         )
     
+    def _validate_headless_ready(self, args: str) -> tuple[bool, REPLCommandResponse | None, any]:
+        from agile_bot.bots.base_bot.src.repl_cli.headless.headless_config import HeadlessConfig
+        
+        # Check if args provided
+        if not args:
+            return False, REPLCommandResponse(
+                output="ERROR: headless command requires a message\n"
+                       "Usage: headless \"Your instruction here\"",
+                response="Missing message argument",
+                status="error"
+            ), None
+        
+        # Check if headless mode is configured
+        try:
+            config = HeadlessConfig.load()
+            if not config.is_configured:
+                return False, REPLCommandResponse(
+                    output="ERROR: Headless mode not configured. API key required.\n"
+                           "To configure:\n"
+                           "  1. Create file: agile_bot/secrets/cursor_api_key.txt\n"
+                           "  2. Add your Cursor API key to the file\n"
+                           "  3. Restart the REPL",
+                    response="Headless mode not configured",
+                    status="error"
+                ), None
+        except Exception as e:
+            return False, REPLCommandResponse(
+                output=f"ERROR: Failed to load headless config: {e}",
+                response="Failed to load headless config",
+                status="error"
+            ), None
+        
+        return True, None, config
+    
+    def _parse_headless_args(self, args: str) -> tuple[str | None, str]:
+        import shlex
+        
+        try:
+            parsed_args = shlex.split(args)
+        except ValueError:
+            # If shlex fails, treat entire args as message
+            return None, args.strip().strip('"').strip("'")
+        
+        if not parsed_args:
+            return None, args.strip().strip('"').strip("'")
+        
+        first_arg = parsed_args[0]
+        
+        # Check if first arg looks like a target (behavior.action format)
+        if '.' in first_arg and all(c.isalnum() or c in '._-' for c in first_arg):
+            # It's a target
+            target = first_arg
+            rest_of_args = ' '.join(parsed_args[1:]) if len(parsed_args) > 1 else ""
+            return target, rest_of_args
+        else:
+            # Not a target, everything is a message
+            return None, args.strip().strip('"').strip("'")
+    
+    def _execute_operation_locally(self, target: str, cli_args: str = "") -> str:
+        # Parse target
+        parts = target.split('.')
+        if len(parts) < 2:
+            return f"[Error: Invalid target '{target}']"
+        
+        behavior_name = parts[0]
+        action_name = parts[1]
+        operation = parts[2] if len(parts) >= 3 else 'instructions'  # Default to instructions
+        
+        try:
+            # Parse CLI args into list
+            import shlex
+            cli_args_list = shlex.split(cli_args) if cli_args else []
+            
+            # Use the CLI router to execute with proper parameter parsing
+            result = self.cli_bot.run(behavior_name, action_name, cli_args_list)
+            
+            if isinstance(result, dict):
+                instructions_data = result.get('instructions', result.get('message', ''))
+                
+                if isinstance(instructions_data, dict):
+                    base_instructions = instructions_data.get('base_instructions', [])
+                    if isinstance(base_instructions, list):
+                        instructions = '\n'.join(str(item) for item in base_instructions)
+                    else:
+                        report_link = instructions_data.get('report_link', '')
+                        if report_link:
+                            instructions = f"Validation complete. Report: {report_link}"
+                        else:
+                            instructions = str(instructions_data.get('action', 'Operation complete'))
+                elif isinstance(instructions_data, list):
+                    instructions = '\n'.join(str(item) for item in instructions_data)
+                elif instructions_data:
+                    instructions = str(instructions_data)
+                else:
+                    instructions = result.get('status', 'Operation complete')
+            elif isinstance(result, str):
+                instructions = result
+            else:
+                instructions = str(result)
+            
+            return instructions
+                
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            return f"[Error executing {target}: {e}]\n{error_trace}"
+    
+    def _prepare_headless_message(self, target: str | None, message: str) -> str:
+        if target:
+            import shlex
+            try:
+                parsed = shlex.split(message)
+            except:
+                parsed = [message]
+            
+            message_parts = []
+            cli_args_parts = []
+            i = 0
+            while i < len(parsed):
+                if parsed[i].startswith('--'):
+                    cli_args_parts = parsed[i:]
+                    break
+                else:
+                    message_parts.append(parsed[i])
+                    i += 1
+            
+            user_message = ' '.join(message_parts)
+            cli_args = ' '.join(cli_args_parts)
+            
+            operation_output = self._execute_operation_locally(target, cli_args)
+            
+            if user_message:
+                return f"{operation_output}\n\nAdditional context: {user_message}"
+            else:
+                return operation_output
+        elif message:
+            return message
+        else:
+            return ""
+    
+    def _format_headless_result(self, execution_result) -> REPLCommandResponse:
+        output_lines = [
+            f"Headless execution completed: {execution_result.status}",
+            f"Session ID: {execution_result.session_id}",
+            f"Log file: {execution_result.log_path}",
+            f"Loop count: {execution_result.loop_count}",
+        ]
+        
+        if execution_result.block_reason:
+            output_lines.append(f"Block reason: {execution_result.block_reason}")
+        
+        output = "\n".join(output_lines)
+        
+        return REPLCommandResponse(
+            output=output,
+            response=output,
+            status="success" if execution_result.status == "completed" else "blocked"
+        )
+    
+    def _handle_headless_command(self, args: str = "") -> REPLCommandResponse:
+        from agile_bot.bots.base_bot.src.repl_cli.headless.headless_session import HeadlessSession
+        from agile_bot.bots.base_bot.src.repl_cli.headless.non_recoverable_error import NonRecoverableError
+        
+        # Validate headless is ready
+        is_valid, error_response, config = self._validate_headless_ready(args)
+        if not is_valid:
+            return error_response
+        
+        target, message = self._parse_headless_args(args)
+        
+        try:
+            session = HeadlessSession(
+                workspace_directory=self.workspace_directory, 
+                config=config, 
+                timeout=600
+            )
+            
+            # Prepare message with target context if provided
+            if target:
+                final_message = self._prepare_headless_message(target, message)
+            else:
+                final_message = message
+            
+            execution_result = session.invokes(message=final_message, context_file=None)
+            
+            return self._format_headless_result(execution_result)
+            
+        except NonRecoverableError as e:
+            return REPLCommandResponse(
+                output=f"ERROR: {e}",
+                response=str(e),
+                status="error"
+            )
+        except Exception as e:
+            return REPLCommandResponse(
+                output=f"ERROR: Headless execution failed: {e}",
+                response=str(e),
+                status="error"
+            )
+    
     def _handle_behavior_command(self, behavior_name: str) -> REPLCommandResponse:
-        """Handle behavior navigation"""
         behavior = self.cli_bot.behaviors.domain_behaviors.find_by_name(behavior_name)
         if not behavior:
             available = ", ".join(self.cli_bot.behaviors.all)
@@ -738,14 +931,7 @@ class REPLSession:
         return self._handle_instructions_command()
     
     def navigate_to_behavior_action(self, behavior_name: str, action_name: str):
-        """Navigate to a specific behavior and action
-        
-        Raises:
-            ValueError: If behavior or action not found
-        """
-        # Navigate to behavior
         self.cli_bot.behaviors.domain_behaviors.navigate_to(behavior_name)
-        # Get the behavior
         behavior = self.cli_bot.behaviors.domain_behaviors.find_by_name(behavior_name)
         if behavior:
             # Navigate to action within the behavior
@@ -759,11 +945,9 @@ class REPLSession:
             raise ValueError(f"Behavior '{behavior_name}' not found")
     
     def _wrap_navigation_with_instructions(self) -> REPLCommandResponse:
-        """After navigation, auto-execute instructions for new position"""
         return self._handle_instructions_command()
     
     def _wrap_with_context_header(self, content: str, response_msg: str) -> REPLCommandResponse:
-        """Wrap content with instructions header and CLI status section"""
         formatter = self.formatter
         header = self.get_context_header_for_ai()
         
@@ -804,7 +988,6 @@ class REPLSession:
         )
     
     def _mark_behavior_complete(self, behavior_name: str) -> None:
-        """Mark a behavior as complete in the state file"""
         state_file = self.workspace_directory / 'behavior_action_state.json'
         if not state_file.exists():
             return
@@ -815,11 +998,11 @@ class REPLSession:
                 completed.append(behavior_name)
             state_data['completed_behaviors'] = completed
             state_file.write_text(json.dumps(state_data, indent=2))
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, IOError) as e:
+            logging.warning(f"Failed to mark behavior {behavior_name} as complete in state file {state_file}: {e}")
             pass
     
     def _handle_dot_notation(self, command: str) -> REPLCommandResponse:
-        """Handle dot notation commands (behavior.action.operation)"""
         # Parse dot notation: behavior.action.operation or action.operation or .operation
         parts = command.split()
         dot_path = parts[0]
@@ -1014,6 +1197,43 @@ class REPLSession:
         except ValueError:
             return args_str.split()
     
+    def _convert_repl_scope_to_cli_format(self, cli_args: list) -> list:
+        import json
+        converted_args = []
+        i = 0
+        while i < len(cli_args):
+            arg = cli_args[i]
+            if arg == '--scope' and i + 1 < len(cli_args):
+                scope_value = cli_args[i + 1]
+                if scope_value.startswith(('file:', 'files:')):
+                    prefix = 'file:' if scope_value.startswith('file:') else 'files:'
+                    paths = scope_value[len(prefix):].split(',')
+                    paths = [p.strip() for p in paths if p.strip()]
+                    json_scope = json.dumps({"type": "files", "value": paths})
+                    converted_args.append('--scope')
+                    converted_args.append(json_scope)
+                    i += 2
+                else:
+                    converted_args.append(arg)
+                    converted_args.append(scope_value)
+                    i += 2
+            elif arg.startswith('--scope='):
+                scope_value = arg.split('=', 1)[1]
+                if scope_value.startswith(('file:', 'files:')):
+                    prefix = 'file:' if scope_value.startswith('file:') else 'files:'
+                    paths = scope_value[len(prefix):].split(',')
+                    paths = [p.strip() for p in paths if p.strip()]
+                    json_scope = json.dumps({"type": "files", "value": paths})
+                    converted_args.append(f'--scope={json_scope}')
+                    i += 1
+                else:
+                    converted_args.append(arg)
+                    i += 1
+            else:
+                converted_args.append(arg)
+                i += 1
+        return converted_args
+    
     def _execute_action_with_args(self, action_name: str, cli_args: list, operation: str = None) -> REPLCommandResponse:
         if not self.has_current_behavior:
             return REPLCommandResponse(
@@ -1046,15 +1266,20 @@ class REPLSession:
         # Parse CLI args into context if provided
         context = None
         if cli_args:
+            import sys
+            print(f"[DEBUG REPL] Parsing CLI args: {cli_args}", file=sys.stderr)
             try:
                 from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
                 builder = CliContextBuilder()
                 context = builder.build_context(action, cli_args)
+                print(f"[DEBUG REPL] Built context: {context}", file=sys.stderr)
                 
                 # Store scope if present in context - Scope manages its own persistence
                 if context and hasattr(context, 'scope') and context.scope:
+                    print(f"[DEBUG REPL] Applying scope to bot: {context.scope}", file=sys.stderr)
                     context.scope.apply_to_bot(self.workspace_directory)
             except ValueError as e:
+                print(f"[DEBUG REPL] ValueError: {e}", file=sys.stderr)
                 error_msg = str(e)
                 # Invalid scope type is a real validation error
                 if "Invalid scope type" in error_msg or "invalid_type" in error_msg:
@@ -1065,7 +1290,10 @@ class REPLSession:
                     )
                 # Other errors like unknown parameters - just proceed without context
                 context = None
-            except Exception:
+            except Exception as e:
+                print(f"[DEBUG REPL] Exception: {type(e).__name__}: {e}", file=sys.stderr)
+                import traceback
+                traceback.print_exc(file=sys.stderr)
                 # Any other parsing errors - proceed without context
                 context = None
         
@@ -1105,9 +1333,32 @@ class REPLSession:
             current_action=self.current_action_state
         )
     
+    def _format_code_block(self, content: str) -> List[str]:
+        """Format content as a code block with triple backticks."""
+        return ["```", content, "```"]
+    
+    def _validate_current_action_and_behavior(self) -> Optional[REPLCommandResponse]:
+        """Validate that current action and behavior exist. Returns error response if invalid, None if valid."""
+        if not self.has_current_action:
+            return REPLCommandResponse(
+                output="ERROR: No current action",
+                response="ERROR: No current action",
+                status="error"
+            )
+        
+        behavior = self.current_behavior
+        if not behavior:
+            return REPLCommandResponse(
+                output="ERROR: No current behavior set. Please select a behavior first.",
+                response="ERROR: No current behavior set",
+                status="error"
+            )
+        
+        return None
+    
     def parse_command_parameters(self, args: str) -> Dict[str, Any]:
         params = {}
-        if not args:
+        if args is None or args == "":
             return params
         
         # Match --param "quoted value" or --param value
