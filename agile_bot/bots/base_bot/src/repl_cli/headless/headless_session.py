@@ -164,21 +164,58 @@ class HeadlessSession:
             final_result.behavior_completed = True
         return final_result
     
+    def _is_truly_complete(self, original_instructions: str, message: str) -> bool:
+        last_paragraph = message.strip().split('\n\n')[-1]
+        
+        check_prompt = f"""Analyze if the AI has completed the ORIGINAL TASK or wandered off-task.
+
+ORIGINAL TASK:
+{original_instructions}
+
+AI'S LAST RESPONSE:
+{last_paragraph}
+
+Answer with ONLY one word:
+- "COMPLETE" if the AI has finished the ORIGINAL TASK
+- "OFFTASK" if the AI is doing something different from the original task
+- "CONTINUE" if the AI is still working on the original task
+
+Your answer (one word only):"""
+        
+        try:
+            checker_api = CursorHeadlessAPI(
+                api_key=self.config.api_key,
+                timeout=30,
+                workspace_path=self.workspace_directory
+            )
+            
+            check_response = checker_api.starts_session(check_prompt)
+            answer = check_response.message.strip().upper()
+            
+            self.log.appends_response(f'Completion check: {answer}')
+            
+            # Stop if complete OR if AI went off-task
+            return "COMPLETE" in answer or "OFFTASK" in answer
+        except Exception as e:
+            self.log.appends_response(f'Completion check failed: {e}, defaulting to continue')
+            return False
+    
     def _create_blocked_result(
         self,
         response: APIResponse,
         instructions: str,
-        context_loaded: bool
+        context_loaded: bool,
+        loop_count: int = 1,
+        loop_responses: list = None
     ) -> ExecutionResult:
-        """Create a blocked ExecutionResult from an APIResponse."""
         self.log.appends_response(f'Blocked: {response.block_reason or "Unknown reason"}')
         result = ExecutionResult.creates_blocked(
             log_path=self.log.log_path,
             session_id=self.session_id,
             context_loaded=context_loaded,
             instructions=instructions,
-            loop_count=1,
-            loop_responses=[response.message]
+            loop_count=loop_count,
+            loop_responses=loop_responses or [response.message]
         )
         result.block_reason = response.block_reason or 'Waiting for user input'
         return result
@@ -243,25 +280,47 @@ class HeadlessSession:
         self.log.appends_response(f'Session {self.session_id} started')
         self.log.appends_response(f'Instructions: {instructions}')
         
-        # cursor-agent is synchronous - when starts_session returns, it's done
-        # Output is streamed in real-time during execution
         response = self._api.starts_session(instructions)
         self.session_id = response.session_id or self.session_id
         
-        # Log completion
-        if response.done:
-            self.log.appends_response(f'Completed: {response.message}')
-            return ExecutionResult.creates_completed(
-                log_path=self.log.log_path,
-                session_id=self.session_id,
-                context_loaded=context_loaded,
-                instructions=instructions,
-                loop_count=1,
-                loop_responses=[response.message]
-            )
+        loop_count = 1
+        loop_responses = [response.message]
         
-        if response.blocked:
-            return self._create_blocked_result(response, instructions, context_loaded)
+        while loop_count < MAX_LOOPS:
+            if response.blocked:
+                return self._create_blocked_result(response, instructions, context_loaded, loop_count, loop_responses)
+            
+            if not response.done:
+                raise NonRecoverableError('Unexpected: cursor-agent returned without done or blocked status')
+            
+            self.log.appends_response(f'Loop {loop_count}: {response.message}')
+            
+            if self._is_truly_complete(instructions, response.message):
+                self.log.appends_response(f'Completed: Work is truly complete')
+                return ExecutionResult.creates_completed(
+                    log_path=self.log.log_path,
+                    session_id=self.session_id,
+                    context_loaded=context_loaded,
+                    instructions=instructions,
+                    loop_count=loop_count,
+                    loop_responses=loop_responses
+                )
+            
+            loop_count += 1
+            if loop_count >= MAX_LOOPS:
+                break
+            
+            self.log.appends_response(f'Loop {loop_count}: Continuing with original task...')
+            continue_prompt = f"Continue working on the original task:\n\n{instructions}"
+            response = self._api.resumes_session(continue_prompt)
+            loop_responses.append(response.message)
         
-        # Shouldn't reach here since cursor-agent is synchronous
-        raise NonRecoverableError('Unexpected: cursor-agent returned without done or blocked status')
+        self.log.appends_response(f'Completed after {loop_count} loops')
+        return ExecutionResult.creates_completed(
+            log_path=self.log.log_path,
+            session_id=self.session_id,
+            context_loaded=context_loaded,
+            instructions=instructions,
+            loop_count=loop_count,
+            loop_responses=loop_responses
+        )

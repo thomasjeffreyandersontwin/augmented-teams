@@ -156,25 +156,8 @@ def _execute_headless_with_context(target: str, message_and_cli_args: str, bot=N
     # The message_and_cli_args might be: "update tests" --scope "X"
     # We need to extract just the CLI args (--scope "X") for the target execution
     import shlex
-    try:
-        parsed = shlex.split(message_and_cli_args)
-    except:
-        parsed = [message_and_cli_args]
-    
-    # Separate message from CLI args
-    message_parts = []
-    cli_args_parts = []
-    i = 0
-    while i < len(parsed):
-        if parsed[i].startswith('--'):
-            # Rest are CLI args
-            cli_args_parts = parsed[i:]
-            break
-        else:
-            message_parts.append(parsed[i])
-            i += 1
-    
-    message = ' '.join(message_parts)
+    from agile_bot.bots.base_bot.src.repl_cli.message_parser import parse_message_and_cli_args
+    message, cli_args_parts = parse_message_and_cli_args(message_and_cli_args)
     cli_command = target + (' ' + ' '.join(cli_args_parts) if cli_args_parts else '')
     
     try:

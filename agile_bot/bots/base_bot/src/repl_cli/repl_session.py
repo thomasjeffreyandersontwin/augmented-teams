@@ -78,7 +78,6 @@ class REPLSession:
                 return state_data.get('action_phase', 'not_started')
             except (json.JSONDecodeError, IOError) as e:
                 logging.warning(f"Failed to read action phase from state file {state_file}: {e}")
-                pass
         return 'not_started'
     
     def set_action_phase(self, phase: str) -> None:
@@ -811,27 +810,18 @@ class REPLSession:
     
     def _prepare_headless_message(self, target: str | None, message: str) -> str:
         if target:
-            import shlex
-            try:
-                parsed = shlex.split(message)
-            except:
-                parsed = [message]
-            
-            message_parts = []
-            cli_args_parts = []
-            i = 0
-            while i < len(parsed):
-                if parsed[i].startswith('--'):
-                    cli_args_parts = parsed[i:]
-                    break
-                else:
-                    message_parts.append(parsed[i])
-                    i += 1
-            
-            user_message = ' '.join(message_parts)
-            cli_args = ' '.join(cli_args_parts)
+            from agile_bot.bots.base_bot.src.repl_cli.message_parser import parse_message_and_cli_args
+            user_message, cli_args_list = parse_message_and_cli_args(message)
+            cli_args = ' '.join(cli_args_list)
             
             operation_output = self._execute_operation_locally(target, cli_args)
+            
+            parts = target.split('.')
+            action_name = parts[1] if len(parts) > 1 else None
+            
+            if action_name == 'validate':
+                headless_override = "\n\n## HEADLESS MODE OVERRIDE\n\nYou are running in autonomous headless mode. DO NOT wait for user confirmation. After analyzing violations:\n1. Fix all ERROR-level violations immediately\n2. Fix WARNING-level violations that are straightforward\n3. Skip violations that require design decisions or major refactoring\n4. Make the changes directly to the code files\n5. Report what you fixed when done"
+                operation_output += headless_override
             
             if user_message:
                 return f"{operation_output}\n\nAdditional context: {user_message}"
@@ -1000,7 +990,6 @@ class REPLSession:
             state_file.write_text(json.dumps(state_data, indent=2))
         except (json.JSONDecodeError, IOError) as e:
             logging.warning(f"Failed to mark behavior {behavior_name} as complete in state file {state_file}: {e}")
-            pass
     
     def _handle_dot_notation(self, command: str) -> REPLCommandResponse:
         # Parse dot notation: behavior.action.operation or action.operation or .operation
@@ -1414,79 +1403,8 @@ class REPLSession:
             return lines
     
     def _find_scope_matches(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
-        lines = []
-        epics = graph_data.get('epics', [])
-        
-        for scope_val in scope_values:
-            match_lines = self._search_for_scope_match(epics, scope_val)
-            if match_lines:
-                lines.extend(match_lines)
-            else:
-                lines.append(f"  - {scope_val} (no match)")
-        
-        return lines
-    
-    def _search_for_scope_match(self, epics: List[Dict], scope_val: str) -> Optional[List[str]]:
-        for epic in epics:
-            if self._matches_name(epic.get('name', ''), scope_val):
-                return self._format_node_with_children(epic, 'epic', 0)
-            
-            match_lines = self._search_sub_epics(epic.get('sub_epics', []), scope_val)
-            if match_lines:
-                return match_lines
-        
-        return None
-    
-    def _search_sub_epics(self, sub_epics: List[Dict], scope_val: str) -> Optional[List[str]]:
-        for sub_epic in sub_epics:
-            if self._matches_name(sub_epic.get('name', ''), scope_val):
-                return self._format_node_with_children(sub_epic, 'sub epic', 0)
-            
-            match_lines = self._search_stories(sub_epic, scope_val)
-            if match_lines:
-                return match_lines
-        
-        return None
-    
-    def _search_stories(self, sub_epic: Dict, scope_val: str) -> Optional[List[str]]:
-        for story_group in sub_epic.get('story_groups', []):
-            for story in story_group.get('stories', []):
-                if self._matches_name(story.get('name', ''), scope_val):
-                    return self._format_node_with_children(story, 'story', 0)
-        
-        for story in sub_epic.get('stories', []):
-            if self._matches_name(story.get('name', ''), scope_val):
-                return self._format_node_with_children(story, 'story', 0)
-        
-        return None
-    
-    def _matches_name(self, name: str, pattern: str) -> bool:
-        return pattern.lower() in name.lower()
-    
-    def _format_node_with_children(self, node: Dict[str, Any], node_type: str, indent: int) -> List[str]:
-        lines = []
-        prefix = "  " * indent
-        name = node.get('name', 'Unknown')
-        lines.append(f"{prefix}[{node_type}] {name}")
-        
-        # Don't recurse into stories - stop at story level
-        if node_type == 'story':
-            return lines
-        
-        # Add sub_epics (features)
-        for sub_epic in node.get('sub_epics', []):
-            lines.extend(self._format_node_with_children(sub_epic, 'sub epic', indent + 1))
-        
-        # Add stories from story_groups
-        for story_group in node.get('story_groups', []):
-            for story in story_group.get('stories', []):
-                lines.extend(self._format_node_with_children(story, 'story', indent + 1))
-        
-        # Add direct stories (some structures have this)
-        for story in node.get('stories', []):
-            lines.extend(self._format_node_with_children(story, 'story', indent + 1))
-        
-        return lines
+        from agile_bot.bots.base_bot.src.actions.scope_matcher import find_scope_matches
+        return find_scope_matches(graph_data, scope_values, use_emoji=False)
     
     def _get_state_file_path(self) -> Path:
         return self.workspace_directory / 'behavior_action_state.json'
