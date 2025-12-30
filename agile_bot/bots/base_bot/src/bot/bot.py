@@ -164,8 +164,21 @@ class Bot:
         import os
         
         if scope_filter is None:
-            # Return current scope
-            # TODO: Load from persistent storage
+            # Return current scope from persistent storage
+            state_file = self.bot_paths.workspace_directory / 'behavior_action_state.json'
+            if state_file.exists():
+                try:
+                    state_data = json.loads(state_file.read_text())
+                    scope_dict = state_data.get('scope')
+                    if scope_dict:
+                        scope = Scope.from_dict(scope_dict)
+                        return {
+                            'status': 'success',
+                            'message': 'Current scope',
+                            'scope': scope.to_dict()
+                        }
+                except (json.JSONDecodeError, IOError):
+                    pass
             return {
                 'status': 'success',
                 'message': 'No scope set',
@@ -173,8 +186,8 @@ class Bot:
             }
         
         if scope_filter.lower() == 'all':
-            # Clear scope
-            # TODO: Clear from persistent storage
+            # Clear scope from persistent storage
+            Scope.clear_from_bot(self.bot_paths.workspace_directory)
             return {
                 'status': 'success',
                 'message': 'Scope filter cleared'
@@ -196,7 +209,8 @@ class Bot:
         
         scope = Scope(type=scope_type, value=scope_values)
         
-        # TODO: Persist scope to storage
+        # Persist scope to storage
+        scope.apply_to_bot(self.bot_paths.workspace_directory)
         
         return {
             'status': 'success',

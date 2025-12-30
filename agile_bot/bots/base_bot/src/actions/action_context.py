@@ -62,10 +62,13 @@ class FileFilter:
     exclude_patterns: List[str] = field(default_factory=list)
     
     def matches_file(self, file_path: Path) -> bool:
-        """Check if file matches the filter."""
+        """Check if file matches the filter.
+        
+        Note: This method performs simple substring matching. For full glob pattern
+        matching, use filter_files() which implements complete glob pattern support.
+        """
         if not self.include_patterns:
             return True
-        # TODO: Implement glob pattern matching in Phase 3
         file_str = str(file_path)
         for pattern in self.include_patterns:
             if pattern in file_str:

@@ -16,8 +16,14 @@ class CliCommandRouter:
 
     def route_to_action(self, behavior_name: str, action_name: str, cli_args: List[str]):
         if action_name:
-            behavior_obj = self.bot.behaviors.find_by_name(behavior_name) if behavior_name else None
+            if not behavior_name:
+                return {'status': 'error', 'behavior': None, 'action': action_name, 'data': {'error': 'Behavior name is required when action name is provided'}}
+            behavior_obj = self.bot.behaviors.find_by_name(behavior_name)
+            if behavior_obj is None:
+                return {'status': 'error', 'behavior': behavior_name, 'action': action_name, 'data': {'error': f"Behavior '{behavior_name}' not found"}}
             action_obj = behavior_obj.actions.find_by_name(action_name)
+            if action_obj is None:
+                return {'status': 'error', 'behavior': behavior_name, 'action': action_name, 'data': {'error': f"Action '{action_name}' not found in behavior '{behavior_name}'"}}
             return self._route_to_specific_action(behavior_obj, action_obj, cli_args)
         return self._route_to_behavior(behavior_name)
         # Note: _route_to_current_behavior_and_action not reached from here
@@ -33,6 +39,8 @@ class CliCommandRouter:
 
     def _route_to_behavior(self, behavior_name: str):
         behavior_obj = self.bot.behaviors.find_by_name(behavior_name)
+        if behavior_obj is None:
+            return {'status': 'error', 'behavior': behavior_name, 'action': None, 'data': {'error': f"Behavior '{behavior_name}' not found"}}
         return self._execute_current_action(behavior_obj)
 
     def _route_to_current_behavior_and_action(self):
@@ -47,7 +55,11 @@ class CliCommandRouter:
         return current_behavior
 
     def _execute_current_action(self, behavior):
+        if behavior is None:
+            return {'status': 'error', 'behavior': None, 'action': None, 'data': {'error': 'No behavior provided'}}
         action = behavior.actions.forward_to_current()
+        if action is None:
+            return {'status': 'error', 'behavior': behavior.name, 'action': None, 'data': {'error': f"No current action found in behavior '{behavior.name}'"}}
         result_data = action.execute()
         result = BotResult('completed', behavior.name, action.action_name, result_data)
         return self._format_result(result)

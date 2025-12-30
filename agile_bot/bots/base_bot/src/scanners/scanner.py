@@ -67,7 +67,8 @@ class Scanner(ABC):
         code_files: Optional[List['Path']] = None,
         all_test_files: Optional[List['Path']] = None,
         all_code_files: Optional[List['Path']] = None,
-        status_writer: Optional[Any] = None
+        status_writer: Optional[Any] = None,
+        max_cross_file_comparisons: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         return self._empty_violation_list()
     
