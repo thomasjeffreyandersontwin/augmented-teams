@@ -166,10 +166,69 @@ class BehaviorHelp:
         return None
 
 
+class HeadlessModeHelp:
+    def __init__(self):
+        from agile_bot.bots.base_bot.src.repl_cli.headless.headless_config import HeadlessConfig
+        try:
+            self._config = HeadlessConfig.load()
+        except Exception:
+            self._config = None
+    
+    @property
+    def is_configured(self) -> bool:
+        return self._config is not None and self._config.is_configured
+    
+    def format_as_lines(self) -> List[str]:
+        lines = [
+            "",
+            "  Headless Mode:",
+        ]
+        
+        if self.is_configured:
+            lines.extend([
+                "    Status: Available (API key configured)",
+                "",
+                "    Usage:",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless \"Your instruction\"",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless shape.build",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless shape.build \"context message\"",
+                "",
+                "    Commands:",
+                "      headless \"text\"                    Execute pass-through instruction",
+                "      headless shape                      Execute entire behavior",
+                "      headless shape.build                Execute single action",
+                "      headless shape.build.submit         Execute single operation",
+                "      headless shape.build \"message\"      Execute action with context message",
+                "",
+                "    Options:",
+                "      --context file.md    Context file to include",
+                "      --timeout N          API timeout in seconds (default: 600, use 30 for tests)",
+                "",
+                "    Examples:",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless \"Create hello world function\"",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless shape",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless shape.build --timeout 30",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless shape.build \"Focus on error handling\"",
+                "      python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless \"Build feature\" --context context.md",
+            ])
+        else:
+            lines.extend([
+                "    Status: Unavailable (API key not configured)",
+                "",
+                "    To configure headless mode:",
+                "      1. Create file: agile_bot/secrets/cursor_api_key.txt",
+                "      2. Add your Cursor API key to the file",
+                "      3. Restart the REPL",
+            ])
+        
+        return lines
+
+
 class REPLHelp:
     def __init__(self, bot, session=None):
         self.bot = bot
         self.session = session
+        self._headless_help = HeadlessModeHelp()
     
     @property
     def behavior_names(self) -> List[str]:
@@ -196,6 +255,7 @@ class REPLHelp:
             CommandExample("echo 'submit scope=\"s1\"' | python repl_main.py", "Jump to operation with params and execute"),
             CommandExample("echo 'shape.build' | python repl_main.py", "Jump to behavior.action and execute first operation"),
             CommandExample("echo 'shape.build.submit' | python repl_main.py", "Jump to behavior.action.operation and execute"),
+            CommandExample("python repl_main.py headless shape", "Execute behavior in headless mode (unattended)"),
         ]
     
     @property
@@ -208,6 +268,7 @@ class REPLHelp:
             CommandExample("echo 'path [dir]' | python repl_main.py", "Show/set working directory"),
             CommandExample("echo 'scope C:\\full\\path' | python repl_main.py", "Set scope to COMPLETE folder path"),
             CommandExample("echo 'scope all' | python repl_main.py", "Clear scope filter"),
+            CommandExample("echo 'headless \"message\"' | python repl_main.py", "Execute message in headless mode"),
             CommandExample("echo 'help' | python repl_main.py", "Show this help"),
             CommandExample("echo 'exit' | python repl_main.py", "Exit CLI"),
         ]
@@ -298,25 +359,30 @@ class REPLHelp:
         lines.extend([
             "",
             "  Scope Command Details:",
-            "    IMPORTANT: When passing file/folder paths to scope, you MUST provide the COMPLETE",
+            "    IMPORTANT: You can only have ONE scope type at a time (story OR files, never both).",
+            "    Setting a new scope REPLACES any previous scope.",
+            "",
+            "    When passing file/folder paths to scope, you MUST provide the COMPLETE",
             "    folder structure. Use ABSOLUTE paths or FULL relative paths from the work path.",
             "",
-            "    Usage:",
+            "    Usage (pick ONE - each replaces the previous scope):",
             "      echo 'scope' | python repl_main.py                           - Show current scope",
             "      echo 'scope all' | python repl_main.py                       - Clear scope filter",
-            "      echo 'scope \"Story Name\"' | python repl_main.py              - Filter by story name",
-            '      echo \'scope "file:C:/path/to/src/**/*.py"\' | python repl_main.py - Filter by files (absolute path required)',
+            "      echo 'scope \"Story Name\"' | python repl_main.py              - Filter by story (replaces file scope)",
+            '      echo \'scope "file:C:/path/to/src/**/*.py"\' | python repl_main.py - Filter by files (replaces story scope)',
             "",
-            "    Examples (CORRECT):",
+            "    Examples (CORRECT - each sets a SINGLE scope type):",
             '      scope "Enter Password, Authenticate User"                                        - Story scope',
-            '      scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/src/**/*.py"          - File scope with glob (absolute path)',
-            '      scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/test/**/*.py"         - File scope with glob (absolute path)',
+            '      scope "file:C:/dev/augmented-teams/agile_bot/bots/base_bot/src/**/*.py"          - File scope with glob',
             "",
             "    Examples (INCORRECT - DO NOT USE):",
             "      scope src              [X] partial path - missing parent directories",
             "      scope repl_cli         [X] folder name only - incomplete structure",
             "      scope ..\\src           [X] relative navigation - use complete paths",
         ])
+        
+        # Add headless mode section
+        lines.extend(self._headless_help.format_as_lines())
         
         return "\n".join(lines)
     

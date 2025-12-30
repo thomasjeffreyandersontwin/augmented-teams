@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "permissions": {
+    "shell": {
+      "allow": [
+        "python",
+        "python3",
+        "python3.12",
+        "echo",
+        "cd",
+        "ls",
+        "dir",
+        "cat",
+        "git",
+        "pytest",
+        "pip",
+        "powershell",
+        "pwsh"
+      ],
+      "deny": [
+        "rm",
+        "del",
+        "format",
+        "shutdown",
+        "reboot"
+      ]
+    },
+    "fileSystem": {
+      "allow": [
+        "read",
+        "write",
+        "create"
+      ],
+      "allowedPaths": [
+        "c:/dev/augmented-teams/**",
+        "C:/dev/augmented-teams/**"
+      ],
+      "denyPaths": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/venv/**",
+        "**/__pycache__/**"
+      ]
+    }
+  },
+  "security": {
+    "requireConfirmation": false,
+    "allowNetworkAccess": true,
+    "maxExecutionTime": 600
+  }
+}
+

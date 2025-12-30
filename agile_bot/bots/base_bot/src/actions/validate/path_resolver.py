@@ -37,6 +37,13 @@ class PathResolver:
         return candidate if candidate.exists() else None
 
     def expand_path_if_needed(self, file_path: Path, expand_fn) -> List[Path]:
+        path_str = str(file_path)
+        
+        if '*' in path_str or '?' in path_str:
+            base_path = self._repo_root if self._repo_root else (self.bot_paths.workspace_directory if self.bot_paths else Path.cwd())
+            matched_paths = list(base_path.glob(path_str))
+            return [p for p in matched_paths if p.is_file()]
+        
         if file_path.exists() and file_path.is_dir():
             return expand_fn(file_path)
         elif file_path.exists() and file_path.is_file():

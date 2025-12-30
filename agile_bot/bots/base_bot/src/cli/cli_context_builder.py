@@ -114,7 +114,7 @@ class CliContextBuilder:
         # Check if it's files scope (only special type)
         if ':' in scope_str and not scope_str.startswith('{'):
             parts = scope_str.split(':', 1)
-            if len(parts) == 2 and parts[0].strip().lower() == 'files':
+            if len(parts) == 2 and parts[0].strip().lower() in ('file', 'files'):
                 scope_value_str = parts[1].strip()
                 scope_values_raw = [v.strip() for v in scope_value_str.split(',') if v.strip()]
                 return Scope(type=ScopeType.FILES, value=scope_values_raw)

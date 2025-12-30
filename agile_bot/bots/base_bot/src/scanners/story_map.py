@@ -72,6 +72,20 @@ class Epic(StoryNode):
         
         return children
 
+    @property
+    def all_stories(self) -> List['Story']:
+        """Return all Story nodes within this epic (including nested sub-epics)."""
+        stories: List['Story'] = []
+
+        def _collect(node: StoryNode):
+            if isinstance(node, Story):
+                stories.append(node)
+            for child in node.children:
+                _collect(child)
+
+        _collect(self)
+        return stories
+
 
 class SubEpic(StoryNode):
     

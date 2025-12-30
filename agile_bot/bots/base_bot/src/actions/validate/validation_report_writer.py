@@ -53,7 +53,7 @@ class StreamingValidationReportWriter:
         self._write_line(f'Files: {total_files}')
         self._write_line('')
         self._flush()
-        print(f'\n[VALIDATION] Scanning {total_files} files...', file=sys.stderr)
+        print(f'\n[VALIDATION] Scanning {total_files} file(s) in scope...', file=sys.stderr)
         sys.stderr.flush()
 
     def on_scanner_start(self, rule_file: str, scanner_path: str) -> None:

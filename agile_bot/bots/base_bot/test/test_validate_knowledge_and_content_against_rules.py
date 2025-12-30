@@ -3617,7 +3617,7 @@ class TestRunAllScanners:
         (
             'agile_bot.bots.base_bot.src.scanners.implementation_details_scanner.ImplementationDetailsScanner',
             'shape',
-            {'epics': [{'name': 'Serialize Components to JSON', 'sub_epics': []}]},
+            {'epics': [{'name': 'Orders', 'sub_epics': [{'name': 'Payments', 'story_groups': [{'stories': [{'name': 'Serialize Components to JSON'}]}]}]}]},
             'implementation operation'
         ),
         (

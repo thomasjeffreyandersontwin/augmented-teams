@@ -1,9 +1,43 @@
 {
   "shape": {
     "key_questions": {
-      "answers": {}
+      "answers": {
+        "Who are the distinct types of users (e.g., operational users, power users, compliance consumers, content creators, producers)?": "Human users (developers, PMs, QA engineers) via CLI/REPL, AI assistants via MCP tools, and system components (generators, bot behaviors). Primary personas: developers using CLI, AI agents using MCP.",
+        "What are the key goals, behaviors, or decisions each group is trying to accomplish using this capability?": "Transform user needs into structured, testable stories through a 7-behavior workflow (Shape → Prioritization → Discovery → Exploration → Scenarios → Tests → Code). Execute workflows via CLI, REPL, or MCP tools with automated validation and test generation.",
+        "Who are the primary users or stakeholder groups impacted?": "Development teams, Product Managers/Agile Coaches, QA engineers, AI assistants/agents, and bot developers. System supports both human users (CLI/REPL) and AI agents (MCP tools).",
+        "What is the first thing users will try to do with this new capability or system?": "Invoke bot via CLI command, launch REPL for interactive navigation, or invoke MCP tool via AI assistant. First action is typically 'clarify' to gather context and requirements.",
+        "What problems, inefficiencies, or workarounds is this request trying to eliminate?": "Manual ad-hoc story creation, disconnected development phases, lack of automated validation, manual test generation, and workflow interruption losses. Automates synchronization between formats, MCP server setup, and state management.",
+        "Where are users currently struggling, getting stuck, or experiencing delays in the process we're aiming to improve?": "Workflow interruptions causing progress loss, AI execution hangs, interactive confirmation delays, missing context files, complex navigation through 35 workflow steps, and server restarts for code changes. Addressed via checkpoint/resume, error recovery, and state management.",
+        "What are the key drivers for customer value or business value that this capability addresses, and what specific customer or business outcomes are we trying to achieve?": "Faster time-to-market, higher quality specifications, reduced rework, improved test coverage, and consistency across teams. Automated validation, test generation, and format synchronization reduce defects and manual effort.",
+        "What is the user journey from start to finish for the primary use case, and what are the key stages or steps in the user journey?": "Initialize workspace → Navigate to behavior/action → Execute 5-action workflow (clarify → strategy → build → validate → render) → Confirm results → Progress through 7 behaviors → Complete with validated code. Supports pause/resume via checkpoints.",
+        "Where in the user journey are users experiencing frustration, friction, or unhappiness?": "Interactive pause points requiring confirmation, AI execution hangs, blocked states waiting for input, workflow complexity (35 steps), state recovery confusion, validation failures requiring fixes, missing context files, and navigation learning curve.",
+        "What moments of delight or value should users experience during their journey?": "Automated validation catching issues early, seamless format synchronization, clear progression through workflow stages, automated test generation, resume capability after interruptions, intuitive navigation, and automated infrastructure generation.",
+        "What are the critical pain points that prevent users from achieving their goals?": "Workflow interruption without recovery, non-recoverable AI failures, complex 35-step workflows, validation violations blocking progress, format synchronization failures, missing required context, state management complexity, and error recovery limits (3 attempts max).",
+        "What other systems, data sources, or tools does this capability need to interact with in order to deliver value?": "LangGraph for workflow execution, FastMCP for MCP servers, SQLite for checkpoints, Draw.io for visualization, AI Client for two-pass pattern, file system for persistence, Python AST for validation, and JSON/CRC files for configuration.",
+        "What are the key behaviors or integration points that define how these systems support or depend on one another?": "Layered architecture: Entry Points (MCP/CLI/REPL/Headless) → Bot → Router → Behavior → Action → Domain Concepts. BotLangFlowRunner orchestrates LangGraph execution with SQLite checkpoints. BotLangActionNode wraps actions with two-pass AI pattern. Synchronizers maintain consistency between JSON, Draw.io, and CRC text. State managers persist to JSON and manage transitions."
+      }
     },
-    "evidence": {},
-    "context": []
+    "evidence": {
+      "sources": [
+        "docs/stories/story-graph.json - Contains domain concepts and epic structure",
+        "docs/bots-overvew.md - System documentation describing StoryBot workflow",
+        "src/story_graph/domain.py - Domain concept definitions",
+        "docs/crc/bot_lang_domain_outline.md - Domain model outline"
+      ]
+    },
+    "context": [
+        "StoryBot is an AI-powered workflow bot that guides teams through a 7-behavior progressive refinement process (Shape → Prioritization → Discovery → Exploration → Scenarios → Tests → Code)",
+        "The system follows a consistent 5-action workflow within each behavior: clarify → strategy → build → validate → render",
+        "Users interact through multiple modes: CLI commands (Human), REPL interactive sessions (User), MCP tools via AI assistants (AI Chat), and headless execution (Human/CLI)",
+        "The story-graph.json contains explicit user stories with 'users' fields identifying: Human, CLI, REPL, AI Chat, MCP Server Generator, Generator, Bot Developer, Bot Behavior, Bot, User, AI Agent, Automation, System, LangGraph, BotLangActionNode, BotLangFlow, BotLangFlowRunner, TTYDetector",
+        "The system architecture shows layered integration: Entry Points (MCP/CLI/REPL/Headless) → Bot (StoryBotMCPServer/StoryBotCLI) → Router → Behavior → Action → Domain Concepts",
+        "Workflow supports pause/resume through Checkpoint (SqliteSaver) and BotLangFlowRunner.resume_from() with interactive mode (BotLangActionNode) requiring human confirmation via --continue flag",
+        "Error recovery handles AI hangs and stuck scenarios with up to 3 recovery attempts (ErrorRecovery)",
+        "Headless execution mode (HeadlessSession) supports direct instructions, single operations, complete actions, and complete behaviors with blocking detection and monitoring",
+        "State management is handled through multiple layers: checkpoint/resume (BotLangFlowRunner with SqliteSaver), action state (ActionStateManager), workflow state (BotLangState), and behavior state",
+        "Format synchronization maintains consistency between JSON (story-graph.json), markdown (CRC text), and diagrams (Draw.io) through Synchronizers (StoryIOSynchronizer, DomainModelSynchronizer)",
+        "Automated infrastructure generation creates MCP servers, CLI code, REPL commands, Cursor command files, and help documentation through generators (MCP Server Generator, Generator)",
+        "Navigation supports CLI commands, REPL dot notation (e.g., 'shape.clarify'), scope management, and status displays showing bot hierarchy with progress indicators"
+      ]
   }
 }

@@ -5,7 +5,22 @@
 
 ## Acceptance Criteria
 
-*(No acceptance criteria defined yet)*
+1. **CLI reports successful completion to console:**
+   - WHEN Session completes successfully
+   - THEN CLI writes completion status to stdout
+   - AND CLI writes log file path
+   - AND CLI extracts transcript from session log
+   - AND CLI displays "Headless execution completed" to console
+   - AND CLI shows summary of work completed
+   - AND CLI displays log file path
+   - AND CLI exits with success status code
+
+2. **CLI reports completion with operation details:**
+   - WHEN Session completes with operation context
+   - THEN CLI displays action name that was completed (e.g., "Action completed: shape.build")
+   - AND CLI shows files created during execution
+   - AND CLI displays log file path
+   - AND CLI exits with success status code
 
 ## Scenarios
 

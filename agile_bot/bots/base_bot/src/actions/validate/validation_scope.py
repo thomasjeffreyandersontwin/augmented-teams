@@ -150,12 +150,29 @@ class ValidationScope(ActionScope):
             return 'src'
 
     def _get_explicit_files_for_behavior(self, file_key, behavior_dir):
+        # Check if we have a files scope - if so, try both file_key and 'test'/'src' explicitly
+        has_files_scope = (self._parameters.get('scope', {}).get('type') == 'files' if isinstance(self._parameters.get('scope'), dict) else False)
+        
         if file_key in self._scope_config:
-            return self.files(file_key)
-        elif behavior_dir in self._scope_config:
-            return self.files(behavior_dir)
-        else:
-            return []
+            files = self.files(file_key)
+            if files:
+                return files
+        
+        if behavior_dir in self._scope_config:
+            files = self.files(behavior_dir)
+            if files:
+                return files
+        
+        # For files scope, also try the opposite key (test vs src) in case files were categorized differently
+        if has_files_scope:
+            alternate_keys = ['test', 'src']
+            for alt_key in alternate_keys:
+                if alt_key != file_key and alt_key in self._scope_config:
+                    files = self.files(alt_key)
+                    if files:
+                        return files
+        
+        return []
 
     def _handle_general_file_discovery(self, all_files_dict):
         has_any_explicit_params = any((k in self._scope_config for k in ['src', 'test']))

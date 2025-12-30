@@ -1,41 +1,51 @@
 {
-  "priority": 4,
-  "description": "Behavioral AC belongs at story level in story-graph.json. Use When/Then format (NO Given - save for scenarios). Each AC is a SINGLE string with one WHEN/THEN pair. Example: \"WHEN user enters name THEN system saves to character sheet\"",
-  "scanners": [
-    "agile_bot.bots.base_bot.src.scanners.behavioral_ac_scanner.BehavioralACScanner"
-  ],
-  "do": {
-    "description": "Each AC is single string with WHEN/THEN together. Example: \"WHEN action completes THEN system saves state AND system shows success\"",
-    "guidance": [
-      {
-        "description": "Each acceptance criteria is a single string with WHEN/THEN",
-        "example": ["acceptance_criteria: [\"WHEN user enters name THEN system saves to character sheet\"]"]
-      },
-      {
-        "description": "THEN and its AND belong together in same acceptance criteria",
-        "example": ["acceptance_criteria: [\"WHEN action completes THEN system saves state AND system shows success message\"]"]
-      },
-      {
-        "description": "Each WHEN condition starts a new acceptance criteria",
-        "example": ["\"WHEN GM selects tokens THEN system highlights tokens\", \"WHEN GM selects zero tokens THEN system shows error\""]
-      }
-    ]
-  },
-  "dont": {
-    "description": "Don't split WHEN/THEN across multiple strings. Example: [\"WHEN user enters name\", \"THEN system saves\"] (wrong - should be one string)",
-    "guidance": [
-      {
-        "description": "Don't split WHEN/THEN across multiple strings",
-        "example": ["[\"WHEN user enters name\", \"THEN system saves\"] - WRONG: should be one string"]
-      },
-      {
-        "description": "Don't separate THEN and its AND into different strings",
-        "example": ["[\"THEN system saves state\", \"AND system shows success\"] - WRONG: THEN and AND should be together"]
-      },
-      {
-        "description": "Don't combine different WHEN conditions in one AC",
-        "example": ["\"WHEN GM selects tokens THEN highlights WHEN GM selects zero THEN error\" - WRONG: each WHEN needs own AC"]
-      }
-    ]
-  }
+    "priority":  4,
+    "description":  "Behavioral AC belongs at story level in story-graph.json. Use When/Then format (NO Given - save for scenarios). Each AC is a SINGLE string with one WHEN/THEN pair. Example: \"WHEN user enters name THEN system saves to character sheet\"",
+    "do":  {
+               "description":  "Each AC is single string with WHEN/THEN together. Example: \"WHEN action completes THEN system saves state AND system shows success\"",
+               "guidance":  [
+                                {
+                                    "description":  "Each acceptance criteria is a single string with WHEN/THEN",
+                                    "example":  [
+                                                    "acceptance_criteria: [\"WHEN user enters name THEN system saves to character sheet\"]"
+                                                ]
+                                },
+                                {
+                                    "description":  "THEN and its AND belong together in same acceptance criteria",
+                                    "example":  [
+                                                    "acceptance_criteria: [\"WHEN action completes THEN system saves state AND system shows success message\"]"
+                                                ]
+                                },
+                                {
+                                    "description":  "Each WHEN condition starts a new acceptance criteria",
+                                    "example":  [
+                                                    "\"WHEN GM selects tokens THEN system highlights tokens\", \"WHEN GM selects zero tokens THEN system shows error\""
+                                                ]
+                                }
+                            ]
+           },
+    "dont":  {
+                 "description":  "Don\u0027t split WHEN/THEN across multiple strings. Example: [\"WHEN user enters name\", \"THEN system saves\"] (wrong - should be one string)",
+                 "guidance":  [
+                                  {
+                                      "description":  "Don\u0027t split WHEN/THEN across multiple strings",
+                                      "example":  [
+                                                      "[\"WHEN user enters name\", \"THEN system saves\"] - WRONG: should be one string"
+                                                  ]
+                                  },
+                                  {
+                                      "description":  "Don\u0027t separate THEN and its AND into different strings",
+                                      "example":  [
+                                                      "[\"THEN system saves state\", \"AND system shows success\"] - WRONG: THEN and AND should be together"
+                                                  ]
+                                  },
+                                  {
+                                      "description":  "Don\u0027t combine different WHEN conditions in one AC",
+                                      "example":  [
+                                                      "\"WHEN GM selects tokens THEN highlights WHEN GM selects zero THEN error\" - WRONG: each WHEN needs own AC"
+                                                  ]
+                                  }
+                              ]
+             },
+    "scanner":  "agile_bot.bots.base_bot.src.scanners.behavioral_ac_scanner.BehavioralACScanner"
 }

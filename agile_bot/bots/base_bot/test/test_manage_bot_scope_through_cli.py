@@ -204,69 +204,112 @@ class TestFilterWorkUsingFilesScopeInCLI:
         assert cli_response.status in ['success', 'error'] or 'EXECUTING' in cli_response.output
 
 
-class TestCombineScopeFiltersInCLI:
-    """Story: Combine Scope Filters in CLI"""
+class TestScopeTypesMutuallyExclusive:
+    """Story: Scope Types Are Mutually Exclusive in CLI
     
-    def test_user_sets_both_knowledge_graph_and_files_scope(self, bot_directory, workspace_directory, monkeypatch):
+    RULE: You can only have ONE scope type at a time (story, epic, increment, OR files).
+    Setting a new scope type automatically clears any previous scope.
+    """
+    
+    def test_setting_file_scope_replaces_story_scope(self, bot_directory, workspace_directory, monkeypatch):
         """
-        SCENARIO: User sets both knowledge graph and files scope
-        GIVEN: CLI is at code.validate.instructions
-        WHEN: user enters 'scope story="Validate Code" files="src/**/*.py"'
-        THEN: CLI displays active scope filters with both types
+        SCENARIO: Setting file scope replaces existing story scope
+        GIVEN: CLI has story scope set
+        WHEN: user enters file scope
+        THEN: file scope replaces story scope (not combined)
         """
         from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
         from agile_bot.bots.base_bot.src.bot.bot import Bot
+        from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
         
-        # GIVEN: CLI is at code.validate.instructions
+        # GIVEN: CLI has story scope set
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
         create_behavior(bot_directory, 'code', ['strategy', 'validate', 'render', 'rules'])
         create_behavior_action_state(workspace_directory, 'code', 'validate', 'instructions')
         
-        # WHEN: user enters 'scope story="Validate Code" files="src/**/*.py"'
         bot = Bot(
             bot_name='story_bot',
             bot_directory=bot_directory,
             config_path=bot_directory / 'bot_config.json'
         )
         repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command('scope story="Validate Code" files="src/**/*.py"')
         
-        # THEN: CLIScope parses combined scope string
-        # AND: REPLSession stores both filter types in context
-        # AND: CLI displays active scope filters with both types
-        assert 'scope' in cli_response.output.lower() or cli_response.status == 'success'
+        # Set story scope first
+        repl_session.read_and_execute_command('scope "Story1"')
+        
+        # WHEN: user enters file scope
+        repl_session.read_and_execute_command(f'scope "file:{workspace_directory}/**/*.py"')
+        
+        # THEN: file scope replaces story scope (not combined)
+        scope_data = repl_session.get_stored_scope()
+        assert scope_data is not None
+        assert scope_data['type'] == 'files', "File scope should replace story scope"
+        # Story scope should NOT be present
+        scope = Scope.from_dict(scope_data)
+        assert scope.knowledge_graph_filter is None, "Knowledge graph filter should be None for file scope"
+        assert scope.file_filter is not None, "File filter should be set"
     
-    def test_user_executes_validate_with_combined_scope(self, bot_directory, workspace_directory, monkeypatch):
+    def test_setting_story_scope_replaces_file_scope(self, bot_directory, workspace_directory, monkeypatch):
         """
-        SCENARIO: User executes validate with combined scope
-        GIVEN: CLI is at code.validate.instructions
-        WHEN: user enters 'code.validate.instructions'
-        THEN: CLI applies both knowledge graph and files filters
+        SCENARIO: Setting story scope replaces existing file scope
+        GIVEN: CLI has file scope set
+        WHEN: user enters story scope
+        THEN: story scope replaces file scope (not combined)
         """
         from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
         from agile_bot.bots.base_bot.src.bot.bot import Bot
+        from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
         
-        # GIVEN: CLI is at code.validate.instructions
+        # GIVEN: CLI has file scope set
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
         create_behavior(bot_directory, 'code', ['strategy', 'validate', 'render', 'rules'])
         create_behavior_action_state(workspace_directory, 'code', 'validate', 'instructions')
-        # AND: active scope filters are story="Validate Code" AND files="src/**/*.py"
         
-        # WHEN: user enters 'code.validate.instructions'
         bot = Bot(
             bot_name='story_bot',
             bot_directory=bot_directory,
             config_path=bot_directory / 'bot_config.json'
         )
         repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        # First set combined scope
-        repl_session.read_and_execute_command('scope story="Validate Code" files="src/**/*.py"')
-        # Then execute instructions
-        cli_response = repl_session.read_and_execute_command('code.validate.instructions')
         
-        # THEN: CLIAction passes combined filters to action
-        # AND: CLI applies both knowledge graph and files filters
-        assert cli_response.status in ['success', 'error'] or 'EXECUTING' in cli_response.output
+        # Set file scope first
+        repl_session.read_and_execute_command(f'scope "file:{workspace_directory}/**/*.py"')
+        
+        # WHEN: user enters story scope
+        repl_session.read_and_execute_command('scope "Story1"')
+        
+        # THEN: story scope replaces file scope (not combined)
+        scope_data = repl_session.get_stored_scope()
+        assert scope_data is not None
+        assert scope_data['type'] == 'story', "Story scope should replace file scope"
+        # File scope should NOT be present
+        scope = Scope.from_dict(scope_data)
+        assert scope.file_filter is None, "File filter should be None for story scope"
+        assert scope.knowledge_graph_filter is not None, "Knowledge graph filter should be set"
+    
+    def test_scope_only_has_one_type(self, bot_directory, workspace_directory, monkeypatch):
+        """
+        SCENARIO: Scope object can only have one type at a time
+        GIVEN: Any scope is set
+        WHEN: checking the stored scope
+        THEN: only one filter type is active (knowledge_graph_filter OR file_filter, never both)
+        """
+        from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
+        
+        # Test story scope - only knowledge_graph_filter
+        story_scope = Scope(type=ScopeType.STORY, value=['Story1'])
+        assert story_scope.knowledge_graph_filter is not None
+        assert story_scope.file_filter is None
+        
+        # Test file scope - only file_filter
+        file_scope = Scope(type=ScopeType.FILES, value=['/some/path/**/*.py'])
+        assert file_scope.file_filter is not None
+        assert file_scope.knowledge_graph_filter is None
+        
+        # Test all scope - neither filter
+        all_scope = Scope(type=ScopeType.ALL, value=[])
+        assert all_scope.knowledge_graph_filter is None
+        assert all_scope.file_filter is None
 
 
 class TestClearScopeFiltersInCLI:

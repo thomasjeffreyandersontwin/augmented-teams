@@ -33,6 +33,7 @@ class ValidationContext:
     bot_paths: Any
     working_dir: Path
     status_writer: Optional[Any] = None
+    max_cross_file_comparisons: int = 20
 
     @classmethod
     def from_action_context(cls, behavior, context: 'ValidateActionContext', callbacks: Optional[ValidationCallbacks] = None) -> 'ValidationContext':
@@ -44,7 +45,8 @@ class ValidationContext:
         if context.scope:
             knowledge_graph_content = validation_scope.filter_story_graph(knowledge_graph_content)
         
-        files = validation_scope.all_files()
+        # Get files - either from scope filter or discover all
+        files = cls._get_files_for_validation(behavior, context)
         
         skiprule = context.scope.skiprule if context.scope else []
         exclude = context.scope.exclude if context.scope else []
@@ -59,8 +61,40 @@ class ValidationContext:
             all_files=context.all_files,
             behavior=behavior,
             bot_paths=behavior.bot_paths,
-            working_dir=behavior.bot_paths.workspace_directory
+            working_dir=behavior.bot_paths.workspace_directory,
+            max_cross_file_comparisons=context.max_cross_file_comparisons
         )
+    
+    @classmethod
+    def _get_files_for_validation(cls, behavior, context: 'ValidateActionContext') -> Dict[str, List[Path]]:
+        """Get files to validate based on behavior and scope."""
+        from agile_bot.bots.base_bot.src.actions.validate.file_discovery import FileDiscovery
+        
+        # Discover all files for the behavior
+        file_discovery = FileDiscovery(behavior.bot_paths, behavior.name, [])
+        
+        # Determine which file types to discover based on behavior
+        if behavior.name in ('tests', 'test'):
+            all_files = {'test': file_discovery.discover_files_from_directory('test')}
+        elif behavior.name == 'code':
+            all_files = {'src': file_discovery.discover_files_from_directory('src')}
+        else:
+            # For other behaviors, discover both
+            all_files = {
+                'test': file_discovery.discover_files_from_directory('test'),
+                'src': file_discovery.discover_files_from_directory('src')
+            }
+        
+        # Filter files using scope if present
+        if context.scope and context.scope.file_filter:
+            filtered_files = {}
+            for key, file_list in all_files.items():
+                filtered = context.scope.filters_files(file_list)
+                if filtered:
+                    filtered_files[key] = filtered
+            return filtered_files
+        
+        return all_files
     
     @classmethod
     def from_parameters(cls, parameters: Dict[str, Any], behavior, bot_paths, callbacks: Optional[ValidationCallbacks] = None) -> 'ValidationContext':
@@ -320,7 +354,8 @@ class Rules:
         if context.callbacks.on_scanner_start:
             context.callbacks.on_scanner_start(rule.rule_file, scanner_path)
         try:
-            scanner_results = rule.scan(context.knowledge_graph, all_files or files, on_file_scanned=context.callbacks.on_file_scanned, skip_cross_file=context.skip_cross_file, changed_files=changed_files, status_writer=context.status_writer)
+            max_cross_file = getattr(context, 'max_cross_file_comparisons', 20)
+            scanner_results = rule.scan(context.knowledge_graph, all_files or files, on_file_scanned=context.callbacks.on_file_scanned, skip_cross_file=context.skip_cross_file, changed_files=changed_files, status_writer=context.status_writer, max_cross_file_comparisons=max_cross_file)
             rule_result['scanner_results'] = self._convert_violations_to_dicts(scanner_results)
             return self._process_scanner_result(rule, rule_result, scanner_results, scanner_path, scanner_name, logger)
         except Exception as e:

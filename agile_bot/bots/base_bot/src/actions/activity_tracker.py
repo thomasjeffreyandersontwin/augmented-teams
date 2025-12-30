@@ -1,9 +1,15 @@
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field
-from tinydb import TinyDB
 from typing import Optional, Dict, Any
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+
+try:
+    from tinydb import TinyDB
+    TINYDB_AVAILABLE = True
+except ImportError:
+    TINYDB_AVAILABLE = False
+    TinyDB = None
 
 
 def make_json_serializable(obj: Any) -> Any:
@@ -45,11 +51,15 @@ class ActivityTracker:
         return self._bot_paths.workspace_directory / 'activity_log.json'
 
     def track_start(self, state: ActionState):
+        if not TINYDB_AVAILABLE:
+            return  # Skip tracking if tinydb is not available
         self.file.parent.mkdir(parents=True, exist_ok=True)
         with TinyDB(self.file) as db:
             db.insert({'action_state': state.state_key, 'status': 'started', 'timestamp': datetime.now().isoformat()})
 
     def track_completion(self, state: ActionState):
+        if not TINYDB_AVAILABLE:
+            return  # Skip tracking if tinydb is not available
         self.file.parent.mkdir(parents=True, exist_ok=True)
         with TinyDB(self.file) as db:
             entry = {'action_state': state.state_key, 'status': 'completed', 'timestamp': datetime.now().isoformat()}
