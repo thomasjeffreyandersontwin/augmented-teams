@@ -42,6 +42,7 @@ def build_validate_action_context_parser() -> argparse.ArgumentParser:
     parser.add_argument('--skip-cross-file', action='store_true', default=False)
     parser.add_argument('--all-files', action='store_true', default=False)
     parser.add_argument('--force-full', action='store_true', default=False)
+    parser.add_argument('--max-cross-file-comparisons', type=int, default=20, help='Maximum number of files to compare in cross-file duplication scan')
     return parser
 
 

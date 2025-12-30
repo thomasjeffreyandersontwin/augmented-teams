@@ -104,46 +104,57 @@ class REPLStatus:
                     else:
                         lines.append(f"  {a_marker} {a_name}")
                     
+                    # Show operations for current action
                     if is_current_action:
-                        instr_params = self._get_instructions_params(action)
-                        submit_params = self._get_submit_params(action)
-                        common_params = ' --path="..." --scope="..."'
-                        
-                        headless_flag = ' [--headless]'
-                        
-                        # Instructions - use formatter
+                        # Instructions
                         if stage == 'instructions' or stage == 'not_started':
                             instr_marker = self.formatter.status_marker(is_current=True, is_completed=False)
                         else:
                             instr_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {instr_marker} instructions{instr_params}{common_params}{headless_flag} -> Returns instructions for the AI Chat (you) to follow for this action.")
+                        lines.append(f"    {instr_marker} instructions")
                         
-                        # Submit - use formatter
+                        # Submit
                         if stage == 'submitting':
                             submit_marker = self.formatter.status_marker(is_current=True, is_completed=False)
                         elif stage in ('instructions', 'not_started'):
                             submit_marker = self.formatter.status_marker(is_current=False, is_completed=False)
                         else:
                             submit_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {submit_marker} submit{submit_params}{common_params}{headless_flag} -> Submit data the AI Chat (you) have created as a result of following instructions for this action")
+                        lines.append(f"    {submit_marker} submit")
                         
-                        # Confirm - use formatter
+                        # Confirm
                         if stage == 'confirming':
                             confirm_marker = self.formatter.status_marker(is_current=True, is_completed=False)
                         elif stage in ('instructions', 'not_started', 'submitting'):
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=False)
                         else:
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {confirm_marker} confirm{headless_flag} -> Confirm all operations have been completed for this action. Move on to next action.")
+                        lines.append(f"    {confirm_marker} confirm")
         
         lines.append("")
         lines.append("Run:")
         lines.append("```")
-        lines.append("echo '[behavior]' | python repl_main.py           - navigate to behavior")
-        lines.append("echo '[behavior][.action]' | python repl_main.py           - navigate to behavior/action")
-        lines.append("echo '[behavior.][action.]operation' | python repl_main.py  - navigate and perform operation")
-        lines.append("python repl_main.py headless [behavior.action]              - execute in headless mode (unattended)")
+        lines.append("echo 'behavior.action' | python repl_main.py           # Defaults to 'instructions' operation")
+        lines.append("echo 'behavior.action.operation' | python repl_main.py  # Runs operation")
         lines.append("```")
+        lines.append("")
+        lines.append("**Args:**")
+        lines.append("```")
+        lines.append("--scope \"Epic, Sub Epic, Story\"      # Filter by story names")
+        lines.append("--scope \"file:path/one,path/two\"     # Filter by file paths")
+        lines.append("--headless                             # Execute autonomously without user input")
+        
+        # Add action-specific parameters inline if we're on validate
+        if current_action_name == 'validate':
+            lines.append("")
+            lines.append("# Validate-specific:")
+            lines.append("--skip-cross-file                  # Skip cross-file duplication checks")
+            lines.append("--max-cross-file-comparisons N     # Max files to compare (default: 20)")
+            lines.append("--all-files                        # Force full scan of all files")
+            lines.append("--background                       # Run in background")
+        
+        lines.append("```")
+        
         lines.append(self.formatter.subsection_separator())
         
         # Add quick commands menu
@@ -169,6 +180,19 @@ class REPLStatus:
                     fields = [f.name for f in dataclasses.fields(action.context_class)]
                     if 'context' in fields:
                         return ' --context="..."'
+                    # Show validate-specific parameters
+                    if action.action_name == 'validate':
+                        params = []
+                        if 'background' in fields:
+                            params.append('[--background]')
+                        if 'skip_cross_file' in fields:
+                            params.append('[--skip-cross-file]')
+                        if 'all_files' in fields:
+                            params.append('[--all-files]')
+                        if 'max_cross_file_comparisons' in fields:
+                            params.append('[--max-cross-file-comparisons N]')
+                        if params:
+                            return ' ' + ' '.join(params)
             except:
                 pass
         return ''
@@ -189,6 +213,17 @@ class REPLStatus:
         if params:
             return ' ' + ' '.join(params)
         return ''
+    
+    def _get_action_specific_params(self, action_name: str) -> list:
+        """Get action-specific parameter documentation."""
+        params = []
+        
+        if action_name == 'validate':
+            params.append("--skip-cross-file                      # Skip cross-file duplication checks")
+            params.append("--all-files                            # Force full validation (ignore incremental)")
+            params.append("--max-cross-file-comparisons N         # Max files to compare (default: 20)")
+        
+        return params
     
     @property
     def compact_status(self) -> List[str]:
