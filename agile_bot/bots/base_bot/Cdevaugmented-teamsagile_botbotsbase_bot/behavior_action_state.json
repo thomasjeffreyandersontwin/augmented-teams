@@ -1,0 +1,58 @@
+{
+  "scope": {
+    "type": "files",
+    "value": [
+      "/mnt/c/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/clarify/clarify_action.py",
+      "/mnt/c/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/strategy/strategy_action.py",
+      "/mnt/c/dev/augmented-teams/agile_bot/bots/base_bot/src/actions/build/build_action.py"
+    ],
+    "exclude": [],
+    "skiprule": []
+  },
+  "completed_actions": [
+    {
+      "action_state": "story_bot.shape.clarify",
+      "timestamp": "2025-12-30T14:00:04.676730"
+    },
+    {
+      "action_state": "story_bot.shape.strategy",
+      "timestamp": "2025-12-30T14:00:04.676740"
+    },
+    {
+      "action_state": "story_bot.shape.build",
+      "timestamp": "2025-12-30T14:00:04.676742"
+    },
+    {
+      "action_state": "story_bot.shape.validate",
+      "timestamp": "2025-12-30T14:00:04.676744"
+    },
+    {
+      "action_state": "story_bot.shape.render",
+      "timestamp": "2025-12-30T14:00:04.676745"
+    },
+    {
+      "action_state": "story_bot.prioritization.clarify",
+      "timestamp": "2025-12-30T14:00:05.099133"
+    },
+    {
+      "action_state": "story_bot.prioritization.strategy",
+      "timestamp": "2025-12-30T14:00:05.099142"
+    },
+    {
+      "action_state": "story_bot.prioritization.build",
+      "timestamp": "2025-12-30T14:00:05.099143"
+    },
+    {
+      "action_state": "story_bot.prioritization.validate",
+      "timestamp": "2025-12-30T14:00:05.099145"
+    },
+    {
+      "action_state": "story_bot.prioritization.render",
+      "timestamp": "2025-12-30T14:00:05.099146"
+    }
+  ],
+  "current_behavior": "story_bot.discovery",
+  "timestamp": "2025-12-30T14:00:05.751174",
+  "current_action": "story_bot.discovery.clarify",
+  "action_phase": "instructions"
+}
