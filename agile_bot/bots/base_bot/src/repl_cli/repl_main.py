@@ -372,9 +372,8 @@ def run_interactive_mode(bot, workspace_directory: Path):
             
             response = repl_session.read_and_execute_command(command)
             
-            # Display response (sanitize Unicode for Windows console)
-            safe_output = response.output.encode('ascii', errors='replace').decode('ascii')
-            print(safe_output)
+            # Display response (UTF-8 configured at module level for Windows)
+            print(response.output)
             # Add blank line in interactive mode
             print("" if is_pipe_mode else "\n", end="")
             

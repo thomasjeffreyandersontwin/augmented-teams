@@ -142,14 +142,15 @@ class REPLSession:
         first_behavior.actions.navigate_to(first_behavior.actions.names[0])
         return True
     
-    def display_current_state(self, full=False) -> REPLStateDisplay:
+    def display_current_state(self, full=False, auto_initialize=True) -> REPLStateDisplay:
         if not self.has_current_action:
-            if not self._initialize_to_first_behavior_action():
-                return REPLStateDisplay(
-                    output="No behaviors available\n\n  help          - Show detailed help\n  exit          - Exit REPL",
-                    state_loaded=False
-                )
-            return self.display_current_state(full=full)
+            if auto_initialize and self._initialize_to_first_behavior_action():
+                return self.display_current_state(full=full, auto_initialize=False)
+            # No current action and either auto_initialize=False or initialization failed
+            return REPLStateDisplay(
+                output="No current position set\n\n  help          - Show detailed help\n  exit          - Exit REPL",
+                state_loaded=False
+            )
         
         lines = []
         formatter = self.formatter
@@ -159,10 +160,6 @@ class REPLSession:
             bot_name = self.bot.bot_paths.bot_directory.name
         else:
             bot_name = 'UNKNOWN'
-        
-        # THICK LINE at top
-        lines.append(formatter.section_separator())
-        lines.append("")
         
         # Bot section header
         lines.append(f"## {formatter.bot_icon()} Bot: {bot_name}")
@@ -396,9 +393,24 @@ class REPLSession:
     
     def _handle_status_command(self) -> REPLCommandResponse:
         state_display = self.display_current_state(full=True)
+        
+        # Add CLI STATUS section header (for both TTY and piped mode)
+        formatter = self.formatter
+        cli_status_header = "\n".join([
+            "",
+            formatter.section_separator(),
+            "***                    CLI STATUS section                    ***",
+            "This section contains current scope filter (if set), current progress in workflow, and available commands",
+            "Review the CLI STATUS section below to understand both current state and available commands.",
+            "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
+            formatter.subsection_separator(),
+            formatter.section_separator()
+        ])
+        output = cli_status_header + "\n" + state_display.output
+        
         return REPLCommandResponse(
-            output=state_display.output,
-            response=state_display.output,
+            output=output,
+            response=output,
             status="success"
         )
     
