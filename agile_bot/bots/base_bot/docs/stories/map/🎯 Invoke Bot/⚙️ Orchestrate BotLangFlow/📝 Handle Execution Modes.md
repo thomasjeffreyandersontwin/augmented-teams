@@ -1,10 +1,9 @@
 # 📝 Handle Execution Modes
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Orchestrate BotLangFlow
 **User:** BotLangActionNode
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Orchestrate BotLangFlow](.)  
 **Sequential Order:** 15
 **Story Type:** system
 
@@ -18,7 +17,7 @@ Handle Execution Modes functionality for the mob minion system.
 
 - **When** BotLangActionNode executes and BotLangState.mode is 'autonomous'
 
-  **then** BotLangActionNode calls run_autonomous() which submits to AI and continues without pausing
+  **then** BotLangActionNode calls run_autonomous() which sends to AI and continues without pausing
 
 - **When** BotLangActionNode executes and BotLangState.mode is 'interactive'
 

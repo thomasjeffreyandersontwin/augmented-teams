@@ -1,10 +1,9 @@
 # 📝 Run Scanners against Knowledge Graph
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2607)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Validate Knowledge & Content Against Rules
 **User:** Scanner
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Validate Knowledge & Content Against Rules](.)  
 **Sequential Order:** 2
 **Story Type:** user
 
@@ -27,7 +26,7 @@ Run Scanners against Knowledge Graph functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Scanners detect violations in knowledge graph (happy_path)
+### Scenario: Scanners detect violations in knowledge graph (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2654)
 
 **Steps:**
 ```gherkin

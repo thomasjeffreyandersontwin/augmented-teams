@@ -5,12 +5,12 @@ import traceback
 from pathlib import Path
 from typing import List, Optional, Iterator, Tuple, Dict, Any, TYPE_CHECKING
 from datetime import datetime
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
-from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+from .bot_paths import BotPaths
+from ..utils import read_json_file
+from .reminders import inject_reminder_to_instructions
+from .behavior import Behavior
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.bot import BotResult
+    from .bot import BotResult
 logger = logging.getLogger(__name__)
 
 class Behaviors:
@@ -371,7 +371,7 @@ class Behaviors:
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
 
     def get_entry_state_result(self) -> 'BotResult':
-        from agile_bot.bots.base_bot.src.bot.bot import BotResult
+        from .bot import BotResult
         return BotResult(status='requires_confirmation', behavior='', action='', data={'message': f"**ENTRY STATE**\n\nNo behavior state found. Please select a behavior to start:\n\n{chr(10).join((f'- {b}' for b in self.names))}\n\nProvide 'confirmed_behavior' in parameters to proceed.", 'behaviors': self.names, 'requires_confirmation': True})
 
     def does_requested_match_current(self, requested_behavior: str) -> Tuple[bool, Optional[str], Optional[str]]:

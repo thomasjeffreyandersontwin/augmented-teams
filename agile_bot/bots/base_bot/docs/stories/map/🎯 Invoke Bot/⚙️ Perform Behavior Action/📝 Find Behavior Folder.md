@@ -1,10 +1,9 @@
 # 📝 Find Behavior Folder
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Perform Behavior Action
 **User:** Bot Behavior
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Perform Behavior Action](.)  
 **Sequential Order:** 1
 **Story Type:** user
 

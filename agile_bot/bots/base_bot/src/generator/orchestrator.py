@@ -1,5 +1,5 @@
-from agile_bot.bots.base_bot.src.generator.visitor import Visitor
-from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
+from .visitor import Visitor
+from .help_context import BehaviorHelpContext, ActionHelpContext
 
 class Orchestrator:
     

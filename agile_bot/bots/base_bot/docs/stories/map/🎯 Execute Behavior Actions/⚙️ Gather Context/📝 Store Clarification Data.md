@@ -1,10 +1,9 @@
 # 📝 Store Clarification Data
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L584)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Gather Context
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
 **Sequential Order:** 3
 **Story Type:** user
 
@@ -28,7 +27,7 @@ Store Clarification Data functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Save clarification data when parameters provided (happy_path)
+### Scenario: Save clarification data when parameters provided (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L587)
 
 **Steps:**
 ```gherkin
@@ -38,7 +37,7 @@ THEN: gather_context saves to {project_area}/docs/stories/clarification.json
 ```
 
 
-### Scenario: Preserve existing clarification data when saving (happy_path)
+### Scenario: Preserve existing clarification data when saving (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L612)
 
 **Steps:**
 ```gherkin
@@ -49,7 +48,7 @@ AND: new data is merged with existing data
 ```
 
 
-### Scenario: Skip saving when no clarification parameters provided (happy_path)
+### Scenario: Skip saving when no clarification parameters provided (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L632)
 
 **Steps:**
 ```gherkin

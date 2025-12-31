@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from agile_bot.bots.base_bot.src.actions.render.render_spec import RenderSpec
+from ..actions.render.render_spec import RenderSpec
 
 class MergedInstructions:
 

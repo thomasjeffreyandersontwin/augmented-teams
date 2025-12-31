@@ -1284,130 +1284,6 @@
           ]
         },
         {
-          "name": "Generate CLI",
-          "sequential_order": 2.0,
-          "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "stories": [
-                {
-                  "name": "Generate BOT CLI code",
-                  "sequential_order": 1,
-                  "connector": "or",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_generate_cli.py",
-                  "test_class": "TestGenerateBOTCLIcode",
-                  "acceptance_criteria": [
-                    "WHEN MCP Server Generator processes Bot Config",
-                    "THEN Generator creates CLI command wrapper structure for bot invocation",
-                    "AND Generator generates CLI entry point script (e.g., bot_cli.py and bot shell script)",
-                    "AND CLI code includes argument parsing for behavior and action parameters",
-                    "AND CLI code includes help/usage documentation generation",
-                    "AND CLI code supports listing available bots, behaviors, and actions",
-                    "AND Generated CLI code integrates with existing bot instantiation logic",
-                    "AND CLI code follows same routing logic as MCP tools for consistency"
-                  ]
-                },
-                {
-                  "name": "Generate Cursor Command Files",
-                  "sequential_order": 2,
-                  "connector": "or",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_invoke_bot_cli.py",
-                  "test_class": "TestGenerateCursorCommands",
-                  "acceptance_criteria": [
-                    "WHEN Human calls generate_cursor_commands(commands_dir, cli_script_path)",
-                    "THEN CLI creates .cursor/commands/ directory if it doesn't exist",
-                    "AND CLI creates <bot-name>.md command file that invokes CLI with bot name (routes to current behavior/action)",
-                    "AND CLI creates <bot-name>-<behavior>.md command file for each behavior in bot that invokes CLI with bot name and behavior (auto-forwards to current action)",
-                    "AND CLI creates <bot-name>-<behavior>-<action>.md command file for each action in each behavior that invokes CLI with bot name, behavior, and action",
-                    "AND CLI creates <bot-name>-close.md command file that invokes CLI with bot name and --close parameter",
-                    "AND Each command file contains simple wrapper command that calls CLI script",
-                    "AND Bot name, behavior, and action are hardcoded in command files (no parameters needed)",
-                    "AND CLI removes obsolete command files for behaviors/actions that no longer exist in bot",
-                    "AND CLI returns dict mapping command names (e.g., story_bot, story_bot-exploration, story_bot-exploration-gather_context, story_bot-close) to file paths"
-                  ],
-                  "scenarios": [
-                    {
-                      "name": "Generate cursor command files (happy_path)",
-                      "steps": "Given: CLI instance is initialized\nAnd: commands directory path is provided\nAnd: CLI script path is provided\nWhen: Human calls generate_cursor_commands()\nThen: CLI creates .cursor/commands directory\nAnd: CLI creates bot command file\nAnd: CLI creates bot-behavior command file\nAnd: CLI creates bot-behavior-action command file\nAnd: CLI creates bot-close command file\nAnd: Each command file contains correct CLI invocation",
-                      "test_method": "test_generate_cursor_commands_creates_all_files"
-                    },
-                    {
-                      "name": "Generate cursor commands creates directory if missing (edge_case)",
-                      "steps": "Given: CLI instance is initialized\nAnd: commands directory does NOT exist\nWhen: Human calls generate_cursor_commands()\nThen: CLI creates .cursor/commands directory\nAnd: CLI creates all command files",
-                      "test_method": "test_generate_cursor_commands_creates_directory"
-                    },
-                    {
-                      "name": "Generate cursor commands removes obsolete files when behavior removed (edge_case)",
-                      "steps": "Given: CLI instance is initialized\nAnd: Bot previously had behavior \"old_behavior\"\nAnd: Obsolete command file exists for removed behavior\nAnd: Bot no longer has behavior \"old_behavior\"\nWhen: Human calls generate_cursor_commands()\nThen: CLI creates new command files for current behaviors\nAnd: CLI removes obsolete command files for removed behaviors",
-                      "test_method": "test_generate_cursor_commands_removes_obsolete_files"
-                    }
-                  ]
-                },
-                {
-                  "name": "Generate Help",
-                  "sequential_order": 3,
-                  "connector": "or",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_generate_cli.py",
-                  "test_class": "TestGenerateHelp",
-                  "acceptance_criteria": [
-                    "WHEN Help generator generates CLI help",
-                    "THEN Help contains behaviors, actions, and parameters",
-                    "AND Help contains CLI command syntax",
-                    "WHEN Help generator generates cursor help",
-                    "THEN Help contains cursor command syntax"
-                  ]
-                },
-                {
-                  "name": "Generate Cursor Awareness Files",
-                  "sequential_order": 4,
-                  "connector": "or",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_generate_cli.py",
-                  "test_class": "TestGenerateCursorAwarenessFiles",
-                  "acceptance_criteria": [
-                    "WHEN Generator runs generate_awareness_files() method",
-                    "THEN Generator creates workspace rules file with trigger patterns",
-                    "AND File includes bot name and behavior descriptions",
-                    "AND File includes trigger words sectioned by behavior"
-                  ]
-                },
-                {
-                  "name": "Generate Help Parameters From Action Context Classes",
-                  "sequential_order": 5,
-                  "connector": "or",
-                  "users": [
-                    "MCP Server Generator"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_generate_cli.py",
-                  "test_class": "TestGenerateHelpParametersFromActionContextClasses",
-                  "acceptance_criteria": [
-                    "WHEN Help generator processes action context classes",
-                    "THEN Generator extracts parameters from context classes",
-                    "AND Help includes action-specific parameters"
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
           "name": "Generate REPL CLI",
           "sequential_order": 3.0,
           "story_groups": [
@@ -1441,9 +1317,10 @@
                   ],
                   "story_type": "user",
                   "acceptance_criteria": [
-                    "WHEN generator updates base_bot_cli.py, THEN it adds REPL mode with stdio_mode parameter",
-                    "WHEN REPL mode is added, THEN it integrates with existing CliCommandRouter for routing logic",
-                    "WHEN REPL loop is generated, THEN it includes TTY detection, state display, command parsing, and execution"
+                    "WHEN generator creates PowerShell script, THEN it generates bot-specific CLI launcher (e.g., story_cli.ps1)",
+                    "WHEN PowerShell script is generated, THEN it sets BOT_DIRECTORY and PYTHONPATH environment variables",
+                    "WHEN script is generated, THEN it launches repl_main.py for the specific bot",
+                    "WHEN REPL is launched, THEN it includes TTY detection, state display, command parsing, and execution"
                   ]
                 },
                 {
@@ -1859,7 +1736,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInitializeProjectLocation",
                   "acceptance_criteria": [
                     "(AC) WHEN Bot behavior is invoked for the first time (no saved location exists)",
                     "(AC) THEN Bot detects current directory from context",
@@ -2122,7 +1998,6 @@
                     "AI Chat"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInvokeBotTool",
                   "acceptance_criteria": [
                     "WHEN AI Chat invokes bot tool with behavior and action parameters",
                     "THEN Tool routes to correct behavior.action method",
@@ -2139,7 +2014,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestLoadAndMergeBehaviorActionInstructions",
                   "acceptance_criteria": [
                     "WHEN Action method is invoked",
                     "THEN Action loads instructions from base_actions and behavior-specific locations",
@@ -2154,7 +2028,6 @@
                     "AI Chat"
                   ],
                   "story_type": "user",
-                  "test_class": "TestForwardToCurrentBehaviorAndCurrentAction",
                   "acceptance_criteria": [
                     "WHEN Bot tool receives invocation",
                     "AND workflow state shows current_behavior and current_action",
@@ -2183,7 +2056,6 @@
                     "AI Chat"
                   ],
                   "story_type": "user",
-                  "test_class": "TestForwardToCurrentAction",
                   "acceptance_criteria": [
                     "WHEN Behavior tool receives invocation",
                     "AND workflow state shows current_action within behavior",
@@ -2688,7 +2560,7 @@
                   "scenarios": [
                     {
                       "name": "Complete end-to-end workflow test demonstrating all fixes working together",
-                      "steps": "Flow:\n1. Start at initialize_project\n2. Confirm → Saves to completed_actions\n3. Forward to gather_context\n4. Close gather_context → Transitions to decide_planning_criteria\n5. Jump to discovery.gather_context (out of order)\n6. Verify state shows discovery.gather_context (not initialize_project)\n7. Close and verify proper transition\n8. Verify all completed actions tracked across both behaviors",
+                      "steps": "Flow:\n1. Start at initialize_project\n2. Confirm â†’ Saves to completed_actions\n3. Forward to gather_context\n4. Close gather_context â†’ Transitions to decide_planning_criteria\n5. Jump to discovery.gather_context (out of order)\n6. Verify state shows discovery.gather_context (not initialize_project)\n7. Close and verify proper transition\n8. Verify all completed actions tracked across both behaviors",
                       "test_method": "test_complete_workflow_end_to_end"
                     }
                   ]
@@ -2777,7 +2649,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestLoadAndMergeBehaviorActionInstructions",
                   "acceptance_criteria": [
                     "WHEN Tool invokes Bot.Behavior.Action method",
                     "THEN Behavior Action loads instructions from behavior and base_actions",
@@ -3864,6 +3735,7 @@
             {
               "name": "Initialize REPL Session",
               "sequential_order": 1,
+              "test_file": "test_initialize_repl_session.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -3939,6 +3811,7 @@
             {
               "name": "Navigate Bot Behaviors and Actions With CLI",
               "sequential_order": 2,
+              "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -4034,6 +3907,7 @@
             {
               "name": "Navigate Bot Behaviors and Actions Via Domain Model",
               "sequential_order": 2.5,
+              "test_file": "test_navigate_bot_behaviors_and_actions_with_cli.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -4073,6 +3947,7 @@
             {
               "name": "Execute Action Operation Through CLI",
               "sequential_order": 3,
+              "test_file": "test_execute_action_operation_through_cli.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -4197,6 +4072,7 @@
             {
               "name": "Manage Bot Scope Through CLI",
               "sequential_order": 4,
+              "test_file": "test_manage_bot_scope_through_cli.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -4336,6 +4212,7 @@
             {
               "name": "Display Bot State Using CLI",
               "sequential_order": 5,
+              "test_file": "test_display_bot_state_using_cli.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -4378,7 +4255,7 @@
                         },
                         {
                           "name": "CLI displays workspace name and path",
-                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '📂 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains 'ðŸ“‚ **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
                           "test_method": "test_cli_displays_workspace_name_and_path",
                           "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
                         },
@@ -4467,7 +4344,7 @@
                       "scenarios": [
                         {
                           "name": "CLI displays progress section with current position",
-                          "steps": "Given: CLI is at shape.clarify.instructions\nWhen: user enters 'status'\nThen: CLI displays Progress section header with position icon\nAND: CLI shows 'Current Position:' label\nAND: CLI shows current position in code block format: 'shape.clarify.instructions'\nAND: CLI displays hierarchical status tree with behaviors and actions\nAND: CLI shows current behavior marked with current marker (➤)\nAND: CLI shows current action marked with current marker (➤)\nAND: CLI shows current operation marked with current marker (➤)\nAND: CLI shows completed actions with completed marker (☑)\nAND: CLI shows pending actions with pending marker (☐)\nAND: CLI shows behavior descriptions for current behavior and action\nAND: CLI shows operations (instructions, submit, confirm) under current action\nAND: CLI shows 'Run:' section with command examples\nAND: CLI shows 'Args:' section with parameter examples\nAND: CLI applies subsection separator after progress section",
+                          "steps": "Given: CLI is at shape.clarify.instructions\nWhen: user enters 'status'\nThen: CLI displays Progress section header with position icon\nAND: CLI shows 'Current Position:' label\nAND: CLI shows current position in code block format: 'shape.clarify.instructions'\nAND: CLI displays hierarchical status tree with behaviors and actions\nAND: CLI shows current behavior marked with current marker (âž¤)\nAND: CLI shows current action marked with current marker (âž¤)\nAND: CLI shows current operation marked with current marker (âž¤)\nAND: CLI shows completed actions with completed marker (â˜‘)\nAND: CLI shows pending actions with pending marker (â˜)\nAND: CLI shows behavior descriptions for current behavior and action\nAND: CLI shows operations (instructions, submit, confirm) under current action\nAND: CLI shows 'Run:' section with command examples\nAND: CLI shows 'Args:' section with parameter examples\nAND: CLI applies subsection separator after progress section",
                           "test_method": "test_user_views_current_position_in_status",
                           "notes": "Based on screen example from repl-cli-display-refactoring.md lines 297-327 and implementation in repl_status.py hierarchical_status property"
                         },
@@ -4478,13 +4355,13 @@
                         },
                         {
                           "name": "CLI displays Progress section with current position",
-                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders status display\nThen: CLI displays '## 📍 **Progress**' section header\nAND: CLI shows '**Current Position:**' label\nAND: CLI shows current position in code block: 'exploration.validate.instructions'\nAND: CLI displays hierarchical status tree with behaviors and actions",
+                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders status display\nThen: CLI displays '## ðŸ“ **Progress**' section header\nAND: CLI shows '**Current Position:**' label\nAND: CLI shows current position in code block: 'exploration.validate.instructions'\nAND: CLI displays hierarchical status tree with behaviors and actions",
                           "test_method": "test_cli_displays_progress_section_with_current_position",
                           "notes": "Based on implementation in repl_session.py display_current_state() lines 210-217 and screen example lines 70-88"
                         },
                         {
                           "name": "CLI displays hierarchical status tree with progress indicators",
-                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders hierarchical status\nThen: CLI displays behaviors with status markers (☑ completed, ➤ current, ☐ pending)\nAND: CLI displays current behavior 'exploration' with ➤ marker\nAND: CLI displays completed behaviors (shape, prioritization, discovery) with ☑ marker\nAND: CLI displays pending behaviors (scenarios, tests, code) with ☐ marker\nAND: CLI displays actions under current behavior with proper indentation\nAND: CLI displays operations (instructions, confirm) under current action\nAND: CLI shows current operation 'instructions' with ➤ marker",
+                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders hierarchical status\nThen: CLI displays behaviors with status markers (â˜‘ completed, âž¤ current, â˜ pending)\nAND: CLI displays current behavior 'exploration' with âž¤ marker\nAND: CLI displays completed behaviors (shape, prioritization, discovery) with â˜‘ marker\nAND: CLI displays pending behaviors (scenarios, tests, code) with â˜ marker\nAND: CLI displays actions under current behavior with proper indentation\nAND: CLI displays operations (instructions, confirm) under current action\nAND: CLI shows current operation 'instructions' with âž¤ marker",
                           "test_method": "test_cli_displays_hierarchical_status_tree_with_progress_indicators",
                           "notes": "Based on REPLStatus.hierarchical_status property and screen example lines 74-88"
                         },
@@ -4763,6 +4640,7 @@
             {
               "name": "Get Help Using CLI",
               "sequential_order": 6,
+              "test_file": "test_get_help_using_cli_current.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -4963,7 +4841,7 @@
                         "            status: status,",
                         "            transcript: transcript",
                         "        )",
-                        "        return console_output: '✓ Headless execution completed\\n  Log: logs/headless-2025-12-29-13-18-26.log'",
+                        "        return console_output: 'âœ“ Headless execution completed\\n  Log: logs/headless-2025-12-29-13-18-26.log'",
                         "     ",
                         "     print(console_output)",
                         "     return outcome: 'success'",
@@ -6354,14 +6232,14 @@
               ]
             }
           ],
-          "test_file": "test_decide_planning_criteria.py",
+          "test_file": "test_decide_strategy_criteria_action.py",
           "story_groups": [
             {
               "type": "and",
               "connector": "or",
               "stories": [
                 {
-                  "name": "Inject Planning Criteria Into Instructions",
+                  "name": "Inject Strategy Criteria Into Instructions",
                   "sequential_order": 1,
                   "connector": "and",
                   "users": [
@@ -6376,15 +6254,13 @@
                   ]
                 },
                 {
-                  "name": "Track Activity for Planning Action",
+                  "name": "Track Activity for Strategy Action",
                   "sequential_order": 2,
                   "connector": "or",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_decide_planning_criteria.py",
-                  "test_class": "TestTrackActivityForPlanningAction",
                   "acceptance_criteria": [
                     "WHEN PlanningAction executes",
                     "THEN Action creates activity entry with timestamp, action name, behavior name",
@@ -6404,7 +6280,7 @@
                   ]
                 },
                 {
-                  "name": "Save Final Assumptions and Decisions",
+                  "name": "Store Strategy Data",
                   "sequential_order": 3,
                   "connector": "or",
                   "users": [
@@ -6420,8 +6296,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_decide_planning_criteria.py",
-                  "test_class": "TestProceedToBuildKnowledge",
                   "acceptance_criteria": [
                     "WHEN PlanningAction completes execution",
                     "WHEN Human says action is done",
@@ -6454,8 +6328,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_decide_strategy_criteria_action.py",
-                  "test_class": "TestInjectStrategyIntoInstructions",
                   "acceptance_criteria": [
                     "WHEN Strategy is generated",
                     "THEN Strategy is injected into action instructions",
@@ -6470,8 +6342,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_decide_strategy_criteria_action.py",
-                  "test_class": "TestStoreStrategyData",
                   "acceptance_criteria": [
                     "WHEN Strategy data is generated",
                     "THEN Strategy data is stored to project area",
@@ -6590,7 +6460,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInjectKnowledgeGraphTemplateForBuildKnowledge",
                   "acceptance_criteria": [
                     "WHEN Build Knowledge Action executes",
                     "THEN Action loads knowledge graph template from behavior/content/knowledge_graph/",
@@ -6609,7 +6478,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestTrackActivityForBuildKnowledgeAction",
                   "acceptance_criteria": [
                     "WHEN BuildKnowledgeAction executes",
                     "THEN Action creates activity entry with timestamp, action name, behavior name",
@@ -6648,7 +6516,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestProceedToRenderOutput",
                   "acceptance_criteria": [
                     "WHEN BuildKnowledgeAction completes execution",
                     "THEN BuildKnowledgeAction saves Workflow State (per \"Saves Behavior State\" story)",
@@ -6860,7 +6727,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestTrackActivityForRenderOutputAction",
                   "acceptance_criteria": [
                     "WHEN RenderOutputAction executes",
                     "THEN Action creates activity entry with timestamp, action name, behavior name",
@@ -6875,7 +6741,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestProceedToValidateRules",
                   "acceptance_criteria": [
                     "WHEN RenderOutputAction completes execution",
                     "WHEN Human says action is done",
@@ -7283,7 +7148,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestTrackActivityForValidateRulesAction",
                   "acceptance_criteria": [
                     "WHEN ValidateRulesAction executes",
                     "THEN Action creates activity entry with timestamp, action name, behavior name, violations count",
@@ -7401,21 +7265,9 @@
                   ]
                 },
                 {
-                  "name": "Run AST Scanners against Knowledge Graph (OUT OF SCOPE)",
+                  "name": "Validate Rules According To Scope",
                   "sequential_order": 3,
                   "connector": "or",
-                  "users": [
-                    "Scanner"
-                  ],
-                  "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN Scanner configured with AST parsing processes code files THEN Scanner parses code into abstract syntax tree AND Scanner traverses AST nodes to detect structural violations AND Scanner records violation location (file path, line number, node type, violation description)"
-                  ]
-                },
-                {
-                  "name": "Validate Rules According To Scope",
-                  "sequential_order": 4,
-                  "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
@@ -7430,7 +7282,7 @@
                 },
                 {
                   "name": "Generate Violation Report",
-                  "sequential_order": 5,
+                  "sequential_order": 4,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
@@ -7537,12 +7389,10 @@
       "name": "CLI",
       "priority": 4,
       "stories": [
-        "Generate BOT CLI code",
-        "Generate Cursor Command Files",
-        "Invoke Bot CLI",
-        "Invoke Bot Behavior CLI",
-        "Invoke Bot Behavior Action CLI",
-        "Get Help for Command Line Functions"
+        "Generate REPL Command Definitions",
+        "Generate CLI Entry Point",
+        "Generate Cursor Commands",
+        "Generate Help Documentation"
       ]
     },
     {

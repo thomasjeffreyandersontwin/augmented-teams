@@ -1,10 +1,9 @@
 # 📝 proactively Validate knowledge against rules
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Build Knowledge
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
 **Sequential Order:** 1
 **Story Type:** user
 

@@ -1,10 +1,9 @@
 # 📝 Inject Guardrails As Part Of Clarify Requirements
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L557)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Gather Context
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
 **Sequential Order:** 1
 **Story Type:** user
 
@@ -34,7 +33,7 @@ Inject Guardrails As Part Of Clarify Requirements functionality for the mob mini
 
 ## Scenarios
 
-### Scenario: Gather context injects guardrails from behavior folder (happy_path)
+### Scenario: Gather context injects guardrails from behavior folder (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L560)
 
 **Steps:**
 ```gherkin

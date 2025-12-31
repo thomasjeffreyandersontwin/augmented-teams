@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Callable, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.actions.clarify.requirements_clarifications import RequirementsClarifications
-from agile_bot.bots.base_bot.src.actions.strategy.strategy_decision import StrategyDecision
+from .clarify.requirements_clarifications import RequirementsClarifications
+from .strategy.strategy_decision import StrategyDecision
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+    from ..bot.behavior import Behavior
 logger = logging.getLogger(__name__)
 
 class ContextDataInjector:

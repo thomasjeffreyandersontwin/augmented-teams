@@ -1,7 +1,7 @@
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.strategy.json_persistent import JsonPersistent
-from agile_bot.bots.base_bot.src.actions.strategy.strategy import Strategy
+from ...bot.bot_paths import BotPaths
+from .json_persistent import JsonPersistent
+from .strategy import Strategy
 
 class StrategyDecision(JsonPersistent):
 

@@ -1,10 +1,9 @@
 # 📝 Inject Synchronizer Instructions
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Render Output
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  
 **Sequential Order:** 3
 **Story Type:** user
 

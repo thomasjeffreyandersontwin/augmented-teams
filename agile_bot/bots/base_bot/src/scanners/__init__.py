@@ -5,17 +5,17 @@ Only base classes and commonly-used types are eagerly imported here.
 """
 
 # Base classes - always needed
-from agile_bot.bots.base_bot.src.scanners.scanner import Scanner
-from agile_bot.bots.base_bot.src.scanners.violation import Violation
+from .scanner import Scanner
+from .violation import Violation
 
 # Story map data structures - commonly used across many modules
-from agile_bot.bots.base_bot.src.scanners.story_map import (
+from .story_map import (
     StoryMap, StoryNode, Epic, SubEpic, StoryGroup, Story, Scenario, ScenarioOutline
 )
 
 # Scanner base types - used by rule.py for type checking
-from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
-from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
+from .code_scanner import CodeScanner
+from .test_scanner import TestScanner
 
 __all__ = [
     'Scanner', 

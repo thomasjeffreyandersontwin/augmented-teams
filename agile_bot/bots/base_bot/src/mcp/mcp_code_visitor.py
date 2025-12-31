@@ -1,11 +1,11 @@
 import stat
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from agile_bot.bots.base_bot.src.generator.visitor import Visitor
-from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
-from agile_bot.bots.base_bot.src.generator.action_data_collector import ActionDataCollector
-from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
-from agile_bot.bots.base_bot.src.cli.formatter import CliTerminalFormatter
+from ..generator.visitor import Visitor
+from ..generator.help_context import BehaviorHelpContext, ActionHelpContext
+from ..generator.action_data_collector import ActionDataCollector
+from ..repl_cli.description_extractor import DescriptionExtractor
+from ..repl_cli.formatter import CliTerminalFormatter
 
 class MCPCodeVisitor(Visitor):
     

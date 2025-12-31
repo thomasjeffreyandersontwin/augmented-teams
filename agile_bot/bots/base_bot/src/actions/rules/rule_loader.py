@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import List
-from agile_bot.bots.base_bot.src.actions.rules.rule import Rule
+from .rule import Rule
 
 logger = logging.getLogger(__name__)
 

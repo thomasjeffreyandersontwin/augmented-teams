@@ -57,8 +57,11 @@ workspace_root = script_path.parent.parent.parent.parent.parent.parent
 if str(workspace_root) not in sys.path:
     sys.path.insert(0, str(workspace_root))
 
-# Bot directory is ALWAYS story_bot (where behaviors are loaded from)
-bot_directory = workspace_root / 'agile_bot' / 'bots' / 'story_bot'
+# Bot directory - use BOT_DIRECTORY env var if set, otherwise default to story_bot
+if 'BOT_DIRECTORY' in os.environ:
+    bot_directory = Path(os.environ['BOT_DIRECTORY'])
+else:
+    bot_directory = workspace_root / 'agile_bot' / 'bots' / 'story_bot'
 os.environ['BOT_DIRECTORY'] = str(bot_directory)
 
 # Bootstrap WORKING_AREA from bot config if not already set
@@ -174,10 +177,12 @@ def _execute_headless_with_context(target: str, message_and_cli_args: str, bot=N
             repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory or bot.bot_directory)
         else:
             # Create bot if not provided
+            bot_dir = Path(os.environ.get('BOT_DIRECTORY', bot_directory))
+            bot_name_from_dir = bot_dir.name
             bot = Bot(
-                bot_name='story_bot',
-                bot_directory=bot_directory,
-                config_path=bot_directory / 'bot_config.json'
+                bot_name=bot_name_from_dir,
+                bot_directory=bot_dir,
+                config_path=bot_dir / 'bot_config.json'
             )
             repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory or bot_directory)
         
@@ -340,32 +345,58 @@ def run_interactive_mode(bot, workspace_directory: Path, force_pipe_mode: bool =
     if is_pipe_mode:
         print("- THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND")
         print("* This is NORMAL and EXPECTED behavior in piped mode.")
+        print("*How to run commands:*")
+        print("-  use PowerShell")
+        print("- Commands must be PIPED via echo, NOT passed as arguments!")
+        print("- All commands are shown below.")
+        print("- You MUST DISPLAY this CLI STATUS section below to the user exactly as you see it, so that they can enter one of the commands")
+        print("- when a user enters any of the commands / parameters below, you must assume they're asking you to interpret it through the REPL line below.")
     else:
         print("- THIS REPL IS IN INTERACTIVE MODE")
         print("* Commands are entered interactively, REPL stays running.")
-    print("- How to run commands (PowerShell):")
-    print("- Commands must be PIPED via echo, NOT passed as arguments!")
+        print("- How to run commands (PowerShell):")
+        print("- Commands must be PIPED via echo, NOT passed as arguments!")
     print("")
     print("```powershell")
-    print("cd C:\\dev\\augmented-teams")
-    print("$env:PYTHONPATH = 'C:\\dev\\augmented-teams'")
-    print("$env:BOT_DIRECTORY = 'C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot'")
+    workspace_root_str = str(workspace_directory).replace('\\', '\\')
+    repl_script_rel = script_path.relative_to(workspace_directory) if script_path.is_absolute() else script_path
+    repl_script_str = str(repl_script_rel).replace('\\', '/')
+    print(f"# Interactive mode (environment set automatically by script):")
+    print(f"python {repl_script_str}")
+    print("")
+    print(f"# Piped mode (each command is a new process - script sets env vars automatically):")
+    print(f"echo '<command>' | python {repl_script_str}")
+    print("")
+    print("# Optional: Override environment variables if needed:")
+    print(f"$env:PYTHONPATH = '{workspace_root_str}'")
+    print(f"$env:BOT_DIRECTORY = '{bot.bot_paths.bot_directory}'")
     print("$env:WORKING_AREA = '<project_path>'  # e.g. demo\\mob_minion")
-    print("echo '<command>' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py")
     print("```")
     print("=" * 60)
     print("")
+    
+    # Display CLI STATUS section (shown in all modes)
+    state_display = repl_session.display_current_state()
+    
+    # Add CLI STATUS section header (for consistency with status command)
+    formatter = repl_session.formatter
+    cli_status_header = "\n".join([
+        "",
+        formatter.section_separator(),
+        "***                    CLI STATUS section                    ***",
+        "This section contains current scope filter (if set), current progress in workflow, and available commands",
+        "Review the CLI STATUS section below to understand both current state and available commands.",
+        "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
+        formatter.subsection_separator()
+    ])
+    print(cli_status_header)
+    print(state_display.output)
     
     # Show bot paths in interactive mode (additional info)
     if not is_pipe_mode:
         print(f"Bot Path: {bot.bot_paths.bot_directory}")
         print(f"Work Path: {workspace_directory}")
         print("")
-    
-    # Display rest of state (commands menu) - only in interactive mode
-    if not is_pipe_mode:
-        state_display = repl_session.display_current_state()
-        print(state_display.output)
     
     # Main REPL loop
     try:
@@ -449,8 +480,8 @@ def main():
     
     args, extra_args = parse_args()
     
-    # Bot directory was set at module level to always be story_bot
-    bot_name = 'story_bot'
+    # Bot name derived from bot directory path
+    bot_name = bot_directory.name
     workspace_directory = get_workspace_directory()
     bot_config_path = bot_directory / 'bot_config.json'
     

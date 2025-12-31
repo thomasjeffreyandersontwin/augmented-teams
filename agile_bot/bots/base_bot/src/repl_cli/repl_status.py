@@ -1,5 +1,5 @@
 from typing import List
-from agile_bot.bots.base_bot.src.repl_cli.formatters.output_formatter import OutputFormatter
+from .formatters.output_formatter import OutputFormatter
 
 
 class REPLStatus:

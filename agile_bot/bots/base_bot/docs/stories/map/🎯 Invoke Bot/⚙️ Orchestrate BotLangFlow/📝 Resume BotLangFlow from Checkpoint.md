@@ -1,10 +1,9 @@
 # 📝 Resume BotLangFlow from Checkpoint
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Orchestrate BotLangFlow
 **User:** BotLangFlowRunner
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Orchestrate BotLangFlow](.)  
 **Sequential Order:** 16
 **Story Type:** system
 

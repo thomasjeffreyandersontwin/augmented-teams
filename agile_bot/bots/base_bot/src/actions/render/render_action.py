@@ -3,13 +3,13 @@ from typing import Dict, Any, List, Optional, Type
 import json
 import importlib
 import logging
-from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, ScopeActionContext
-from agile_bot.bots.base_bot.src.actions.render.render_spec import RenderSpec
-from agile_bot.bots.base_bot.src.actions.render.render_config_loader import RenderConfigLoader
-from agile_bot.bots.base_bot.src.actions.render.render_instruction_builder import RenderInstructionBuilder
-from agile_bot.bots.base_bot.src.bot.merged_instructions import MergedInstructions
+from ...utils import read_json_file
+from ..action import Action
+from ..action_context import ActionContext, ScopeActionContext
+from .render_spec import RenderSpec
+from .render_config_loader import RenderConfigLoader
+from .render_instruction_builder import RenderInstructionBuilder
+from ...bot.merged_instructions import MergedInstructions
 logger = logging.getLogger(__name__)
 
 class RenderOutputAction(Action):

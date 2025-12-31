@@ -51,10 +51,15 @@
                   "connector": null,
                   "users": [],
                   "story_type": "user",
+                  "test_file": "",
+                  "test_class": "",
+                  "test_line": null,
                   "scenarios": [
                     {
                       "name": "",
                       "type": "happy_path|edge_case|error_case",
+                      "test_method": "",
+                      "test_line": null,
                       "background": [
                         "Given <common_setup_step>",
                         "And <another_common_setup>"
@@ -72,6 +77,8 @@
                     {
                       "name": "",
                       "type": "happy_path|edge_case|error_case",
+                      "test_method": "",
+                      "test_line": null,
                       "background": [
                         "Given <common_setup_step>",
                         "And <another_common_setup>"

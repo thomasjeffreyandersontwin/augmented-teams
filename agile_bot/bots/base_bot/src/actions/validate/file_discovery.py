@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import List, Optional
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from ...bot.bot_paths import BotPaths
 
 class FileDiscovery:
     EXCLUDED_FILES = {'__init__.py'}

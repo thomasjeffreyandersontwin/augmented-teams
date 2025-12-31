@@ -2,10 +2,10 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 import json
 from datetime import datetime
-from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
-from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from .behaviors import Behaviors
+from .behavior import Behavior
+from .bot_paths import BotPaths
+from ..utils import read_json_file
 import logging
 logger = logging.getLogger(__name__)
 __all__ = ['Bot', 'BotResult', 'Behavior']
@@ -72,7 +72,7 @@ class Bot:
         Returns:
             Dict with help information including behaviors, actions, and usage
         """
-        from agile_bot.bots.base_bot.src.repl_cli.repl_help import REPLHelp
+        from ..repl_cli.repl_help import REPLHelp
         
         # Create a minimal session-like object for REPLHelp
         class HelpContext:
@@ -160,7 +160,7 @@ class Bot:
         Returns:
             Dict with scope information or updated scope status
         """
-        from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
+        from ..actions.action_context import Scope, ScopeType
         import os
         
         if scope_filter is None:

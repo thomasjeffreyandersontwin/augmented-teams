@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from typing import Optional, List
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from ...bot.bot_paths import BotPaths
 
 class PathResolver:
 

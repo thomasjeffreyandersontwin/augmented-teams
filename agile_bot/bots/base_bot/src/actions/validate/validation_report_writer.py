@@ -5,13 +5,14 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.validate.validation_report_builder import ValidationReportBuilder
-from agile_bot.bots.base_bot.src.actions.validate.validation_report_formatter import ValidationReportFormatter
-from agile_bot.bots.base_bot.src.scanners.scanner_status_formatter import ScannerStatusFormatter
-from agile_bot.bots.base_bot.src.scanners.validation_scanner_status_builder import ValidationScannerStatusBuilder
-from agile_bot.bots.base_bot.src.actions.validate.file_link_builder import FileLinkBuilder
-from agile_bot.bots.base_bot.src.actions.validate.violation_formatter import ViolationFormatter
+from urllib.parse import quote
+from ...bot.bot_paths import BotPaths
+from .validation_report_builder import ValidationReportBuilder
+from .validation_report_formatter import ValidationReportFormatter
+from ...scanners.scanner_status_formatter import ScannerStatusFormatter
+from ...scanners.validation_scanner_status_builder import ValidationScannerStatusBuilder
+from .file_link_builder import FileLinkBuilder
+from .violation_formatter import ViolationFormatter
 logger = logging.getLogger(__name__)
 
 
@@ -258,7 +259,10 @@ class ValidationReportWriter:
             file_str = str(resolved_path).replace('\\', '/')
             if len(file_str) >= 2 and file_str[1] == ':':
                 file_str = file_str[0].upper() + ':' + file_str[2:]
-            vscode_uri = f'vscode://file/{file_str}'
+            # URL-encode the path to handle special characters like emojis
+            # Preserve forward slashes (path separators) and colons (Windows drive letters)
+            encoded_path = quote(file_str, safe='/:')
+            vscode_uri = f'vscode://file/{encoded_path}'
             try:
                 rel_path = str(report_path.relative_to(self.workspace_directory))
             except ValueError:

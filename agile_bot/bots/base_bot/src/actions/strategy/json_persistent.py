@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import json
 import logging
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from ...bot.bot_paths import BotPaths
 logger = logging.getLogger(__name__)
 
 class JsonPersistent:

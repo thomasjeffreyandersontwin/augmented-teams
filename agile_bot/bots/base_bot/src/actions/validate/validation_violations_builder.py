@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, List
-from agile_bot.bots.base_bot.src.repl_cli.formatters.markdown_formatter import MarkdownFormatter
+from ...repl_cli.formatters.markdown_formatter import MarkdownFormatter
 
 class ValidationViolationsBuilder:
 

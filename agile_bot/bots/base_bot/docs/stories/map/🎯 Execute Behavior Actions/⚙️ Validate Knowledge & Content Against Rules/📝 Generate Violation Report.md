@@ -1,11 +1,10 @@
 # 📝 Generate Violation Report
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Validate Knowledge & Content Against Rules
 **User:** Bot Behavior
-**Sequential Order:** 5
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Validate Knowledge & Content Against Rules](.)  
+**Sequential Order:** 4
 **Story Type:** user
 
 ## Story Description

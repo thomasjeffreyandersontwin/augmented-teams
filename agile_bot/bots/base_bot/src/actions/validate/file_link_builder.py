@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,10 @@ class FileLinkBuilder:
         return file_str
 
     def _build_vscode_uri(self, file_str: str, line_number: Optional[int]) -> str:
-        vscode_uri = f'vscode://file/{file_str}'
+        # URL-encode the path to handle special characters like emojis
+        # Preserve forward slashes (path separators) and colons (Windows drive letters)
+        encoded_path = quote(file_str, safe='/:')
+        vscode_uri = f'vscode://file/{encoded_path}'
         if line_number:
             vscode_uri = f'{vscode_uri}:{line_number}'
         return vscode_uri

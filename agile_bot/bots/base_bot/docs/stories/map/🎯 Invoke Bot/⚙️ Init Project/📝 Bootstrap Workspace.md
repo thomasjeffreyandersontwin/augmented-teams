@@ -1,10 +1,9 @@
 # 📝 Bootstrap Workspace
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_init_project.py#L368)
 
-**Epic:** Invoke Bot
-**Feature:** Init Project
 **User:** Bot Developer
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Init Project](.)  
 **Sequential Order:** 7
 **Story Type:** user
 

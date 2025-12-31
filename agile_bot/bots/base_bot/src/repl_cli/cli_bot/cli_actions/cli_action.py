@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, Any
 import json
-from agile_bot.bots.base_bot.src.repl_cli.cli_scope import CLIScope
+from ...cli_scope import CLIScope
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action import Action
-    from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+    from ...actions.action import Action
+    from ...repl_cli.repl_session import REPLSession
 
 
 class CLIAction:
@@ -97,7 +97,7 @@ class CLIAction:
     @property
     def help(self) -> str:
         """Get help for this specific action"""
-        from agile_bot.bots.base_bot.src.repl_cli.repl_help import ActionHelp
+        from ...repl_cli.repl_help import ActionHelp
         action_help = ActionHelp(self._action, self.name)
         return action_help.help_text
 

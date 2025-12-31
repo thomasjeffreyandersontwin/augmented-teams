@@ -10,6 +10,14 @@ from typing import Dict, Any, Optional, Union
 import json
 import os
 import re
+import sys
+
+# Add base_bot to path for imports
+base_bot_path = Path(__file__).parent.parent.parent.parent.parent / 'base_bot' / 'src'
+if str(base_bot_path) not in sys.path:
+    sys.path.insert(0, str(base_bot_path))
+
+from utils import build_test_file_link, build_test_class_link, build_test_method_link
 
 
 def format_acceptance_criteria(ac_list):
@@ -90,7 +98,7 @@ def get_common_background(scenarios_list):
     return common
 
 
-def format_scenarios(scenarios_list, common_background=None):
+def format_scenarios(scenarios_list, common_background=None, story_test_file='', workspace_directory=None, story_file_path=None):
     """Format scenarios list into markdown"""
     if not scenarios_list:
         return ""
@@ -101,6 +109,14 @@ def format_scenarios(scenarios_list, common_background=None):
         scenario_type = scenario.get('type', 'happy_path')
         background = scenario.get('background', [])
         steps = scenario.get('steps', [])
+        
+        # Format test method link for scenario level using the same helper as CLI scope display
+        scenario_test_link = ""
+        test_method = scenario.get('test_method', '')
+        
+        if story_test_file and test_method and workspace_directory:
+            # Use the helper function to build the link (same as CLI scope display)
+            scenario_test_link = build_test_method_link(story_test_file, test_method, workspace_directory, story_file_path)
 
         # Normalize steps into multi-line text:
         # - If provided as a list, join with newlines.
@@ -170,7 +186,7 @@ def format_scenarios(scenarios_list, common_background=None):
                 )
 
         formatted.append(
-            f"### Scenario: {name} ({scenario_type})\n\n**Steps:**\n```gherkin\n{steps_text}\n```\n{examples_block}"
+            f"### Scenario: {name} ({scenario_type}){scenario_test_link}\n\n**Steps:**\n```gherkin\n{steps_text}\n```\n{examples_block}"
         )
     
     return "\n\n".join(formatted)
@@ -181,6 +197,7 @@ def build_folder_path_from_graph(epic_name, sub_epic_name, story_graph_data):
     Build folder path dynamically from story graph structure.
     Traverses the graph to find the actual epic and sub_epic names.
     Uses emoji monikers: 🎯 for Epic, ⚙️ for Sub-Epic.
+    Handles nested sub-epics by building full folder path.
     """
     # Find the epic in the graph
     for epic in story_graph_data.get('epics', []):
@@ -190,6 +207,15 @@ def build_folder_path_from_graph(epic_name, sub_epic_name, story_graph_data):
             # If sub_epic_name matches the epic itself, it's a top-level epic
             if sub_epic_name == epic_name:
                 return epic_folder, epic_name
+            
+            # Handle nested sub-epics (e.g., "Run Interactive REPL/Display Bot State Using CLI")
+            if '/' in sub_epic_name:
+                parts = sub_epic_name.split('/')
+                # Build path with gear emoji for each part
+                formatted_parts = [f"⚙️ {part.strip()}" for part in parts]
+                # Join with Path separator for folder structure
+                sub_epic_path = Path(*formatted_parts)
+                return epic_folder, str(sub_epic_path)
             
             # Otherwise, find the sub_epic in the epic's sub_epics
             def find_sub_epic(sub_epics, target_name):
@@ -216,7 +242,7 @@ def build_folder_path_from_graph(epic_name, sub_epic_name, story_graph_data):
     return fallback_epic, fallback_sub_epic
 
 
-def create_story_content(story, epic_name, sub_epic_name):
+def create_story_content(story, epic_name, sub_epic_name, workspace_directory, story_file_path=None):
     """Create markdown content for a story. sub_epic_name is the sub-epic name."""
     """Create markdown content for a story"""
     story_name = story['name']
@@ -224,6 +250,18 @@ def create_story_content(story, epic_name, sub_epic_name):
     user_str = ', '.join(users) if users else 'System'
     story_type = story.get('story_type', 'user')
     sequential_order = story.get('sequential_order', 1)
+    
+    # Format test class link for story level using the same helper as CLI scope display
+    test_file_link = ""
+    test_file = story.get('test_file', '')
+    test_class = story.get('test_class', '')
+    
+    if test_file and test_class:
+        # Use the helper function to build the link (same as CLI scope display)
+        test_file_link = build_test_class_link(test_file, test_class, workspace_directory, story_file_path)
+    elif test_file:
+        # If we only have test_file (no test_class), just link to the file
+        test_file_link = build_test_file_link(test_file, workspace_directory, story_file_path)
     
     ac_list = story.get('acceptance_criteria', [])
     ac_formatted = format_acceptance_criteria(ac_list)
@@ -237,8 +275,8 @@ def create_story_content(story, epic_name, sub_epic_name):
     # Get common background from all scenarios
     common_background = get_common_background(all_scenarios)
     
-    # Format scenarios (pass common_background so scenarios include it in their steps)
-    scenarios_formatted = format_scenarios(all_scenarios, common_background)
+    # Format scenarios (pass common_background, test_file, workspace_directory, and story_file_path so scenarios include test links)
+    scenarios_formatted = format_scenarios(all_scenarios, common_background, test_file, workspace_directory, story_file_path)
     
     # Default description if not provided
     description = story.get('description', f'{story_name} functionality for the mob minion system.')
@@ -272,16 +310,36 @@ Then action completes successfully
 
 """
     
-    sub_epic_line = ""
+    # Build clickable path with proper relative links for each level
+    path_parts = [f"[🎯 {epic_name}](../..)"]
+    
     if sub_epic_name != epic_name:
-        sub_epic_line = f"**Sub-Epic:** {sub_epic_name}\n"
+        # Handle nested sub-epics separated by '/'
+        if '/' in sub_epic_name:
+            sub_parts = [part.strip() for part in sub_epic_name.split('/')]
+            # First sub-epic is 1 level up (..)
+            path_parts.append(f"[⚙️ {sub_parts[0]}](..)")
+            # Additional nested sub-epics - last one is current folder (.)
+            for i, part in enumerate(sub_parts[1:], start=1):
+                if i == len(sub_parts) - 1:
+                    path_parts.append(f"[⚙️ {part}](.)")
+                else:
+                    # For middle levels, calculate relative path
+                    levels_up = len(sub_parts) - i - 1
+                    rel_path = '/'.join(['..'] * levels_up) if levels_up > 0 else '.'
+                    path_parts.append(f"[⚙️ {part}]({rel_path})")
+        else:
+            # Single sub-epic - story is inside it, so current folder (.)
+            path_parts.append(f"[⚙️ {sub_epic_name}](.)")
+    
+    path_line = ' / '.join(path_parts)
     
     content = f"""# 📝 {story_name}
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Sub-Epic Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio){test_file_link}
 
-**Epic:** {epic_name}
-{sub_epic_line}**User:** {user_str}
+**User:** {user_str}
+**Path:** {path_line}  
 **Sequential Order:** {sequential_order}
 **Story Type:** {story_type}
 
@@ -306,14 +364,21 @@ def extract_stories_from_graph(epic, epic_path="", sub_epic_path="", parent_is_e
     """
     Extract all stories from story graph recursively.
     Dynamically builds folder structure from the graph itself.
+    Handles nested sub-epics (sub-subs) by building up the full path.
     """
     stories = []
     current_epic_path = epic['name'] if not epic_path else f"{epic_path}/{epic['name']}"
     current_is_epic = parent_is_epic and not sub_epic_path
     
-    # Get stories from story_groups (include all stories; no user-type filtering)
+    # Get stories from story_groups
+    # Exclude Human/AI Chat/AI Agent stories per render instructions
     for group in epic.get('story_groups', []):
         for story in group.get('stories', []):
+            # Filter out Human, AI Chat, and AI Agent stories
+            users = story.get('users', [])
+            if any(u in ['Human', 'AI Chat', 'AI Agent'] for u in users):
+                continue  # Skip this story
+            
             story['epic_path'] = current_epic_path
             story['sub_epic_path'] = sub_epic_path if sub_epic_path else epic['name']
             story['epic_name'] = current_epic_path.split('/')[0] if '/' in current_epic_path else current_epic_path
@@ -322,11 +387,19 @@ def extract_stories_from_graph(epic, epic_path="", sub_epic_path="", parent_is_e
             story['is_sub_epic'] = not current_is_epic
             stories.append(story)
     
-    # Get stories from sub_epics
+    # Get stories from sub_epics (recursively handle nested sub-epics)
     for sub_epic in epic.get('sub_epics', []):
-        current_sub_epic_path = sub_epic['name']
-        # When we go into sub_epics, we're now in sub-epic territory
-        stories.extend(extract_stories_from_graph(sub_epic, current_epic_path, current_sub_epic_path, parent_is_epic=False))
+        # Build up the full sub-epic path for nested sub-epics
+        # If we're already in a sub-epic, append to the path; otherwise start new path
+        if sub_epic_path:
+            # We're in a sub-epic already, so this is a nested sub-epic (sub-sub)
+            # Keep the epic_path as is (just the epic name), and build sub_epic_path
+            current_sub_epic_path = f"{sub_epic_path}/{sub_epic['name']}"
+            stories.extend(extract_stories_from_graph(sub_epic, epic_path, current_sub_epic_path, parent_is_epic=False))
+        else:
+            # This is the first level sub-epic under the epic
+            current_sub_epic_path = sub_epic['name']
+            stories.extend(extract_stories_from_graph(sub_epic, current_epic_path, current_sub_epic_path, parent_is_epic=False))
     
     return stories
 
@@ -389,6 +462,10 @@ class StoryScenariosSynchronizer:
         
         for story in all_stories:
             story_name = story['name']
+            # Sanitize story name for use in file path (replace invalid path characters)
+            # Forward slashes and backslashes are not valid in filenames on Windows
+            sanitized_story_name = story_name.replace('/', '-').replace('\\', '-')
+            
             # Build folder path dynamically from story graph structure
             epic_folder, sub_epic_folder = build_folder_path_from_graph(
                 story['epic_name'], 
@@ -400,12 +477,13 @@ class StoryScenariosSynchronizer:
             story_dir = base_dir / epic_folder / sub_epic_folder
             story_dir.mkdir(parents=True, exist_ok=True)
             
-            # Create file (use 📝 emoji prefix)
-            story_file = story_dir / f"📝 {story_name}.md"
+            # Create file (use 📝 emoji prefix) with sanitized name
+            story_file = story_dir / f"📝 {sanitized_story_name}.md"
             rendered_file_paths.add(story_file)  # Track this as a valid file location
             
-            # Generate content
-            content = create_story_content(story, story['epic_name'], story.get('sub_epic_name', story['epic_name']))
+            # Generate content - workspace_directory is 3 levels up from map directory (map -> stories -> docs -> workspace)
+            workspace_directory = base_dir.parent.parent.parent
+            content = create_story_content(story, story['epic_name'], story.get('sub_epic_name', story['epic_name']), workspace_directory, story_file)
             
             # Check if file exists
             if story_file.exists():

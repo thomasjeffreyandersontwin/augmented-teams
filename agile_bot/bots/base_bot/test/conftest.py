@@ -188,3 +188,57 @@ create_base_actions_structure = _helpers.get('create_base_actions_structure')
 create_actions_workflow_json = _helpers.get('create_actions_workflow_json')
 given_bot_name_and_behavior_setup = _helpers.get('given_bot_name_and_behavior_setup')
 given_bot_name_and_behaviors_setup = _helpers.get('given_bot_name_and_behaviors_setup')
+
+
+# ============================================================================
+# PYTEST HOOKS - Display test docstrings/scenarios
+# ============================================================================
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_setup(item):
+    """Display test docstring/scenario before each test runs."""
+    try:
+        if item.cls and hasattr(item.cls, '__doc__') and item.cls.__doc__:
+            # Extract story name from class docstring
+            class_doc = item.cls.__doc__.strip()
+            if class_doc.startswith('Story:'):
+                story_name = class_doc.replace('Story:', '').strip()
+                sys.stdout.write(f"\n{'='*80}\n")
+                sys.stdout.write(f"STORY: {story_name}\n")
+                sys.stdout.write(f"{'='*80}\n")
+                sys.stdout.flush()
+        
+        # Display test method docstring/scenario
+        if hasattr(item, 'function') and hasattr(item.function, '__doc__') and item.function.__doc__:
+            test_doc = item.function.__doc__.strip()
+            if test_doc:
+                # Extract scenario name if present
+                if 'SCENARIO:' in test_doc:
+                    scenario_line = [line for line in test_doc.split('\n') if 'SCENARIO:' in line]
+                    if scenario_line:
+                        scenario_name = scenario_line[0].replace('SCENARIO:', '').strip()
+                        sys.stdout.write(f"\nSCENARIO: {scenario_name}\n")
+                        sys.stdout.flush()
+                else:
+                    # Show first line of docstring as scenario
+                    first_line = test_doc.split('\n')[0].strip()
+                    if first_line:
+                        sys.stdout.write(f"\nSCENARIO: {first_line}\n")
+                        sys.stdout.flush()
+                
+                # Show steps if present
+                if 'Given:' in test_doc or 'When:' in test_doc or 'Then:' in test_doc:
+                    sys.stdout.write("\nSteps:\n")
+                    for line in test_doc.split('\n'):
+                        line = line.strip()
+                        if line and (line.startswith('# Given:') or line.startswith('# When:') or 
+                                    line.startswith('# Then:') or line.startswith('Given:') or 
+                                    line.startswith('When:') or line.startswith('Then:')):
+                            # Remove # prefix if present
+                            step = line.replace('# ', '').strip()
+                            if step:
+                                sys.stdout.write(f"  {step}\n")
+                    sys.stdout.flush()
+    except Exception:
+        # Don't let hook errors break tests
+        pass

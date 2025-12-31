@@ -1,10 +1,9 @@
 # 📝 Proceed To Render Output
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Build Knowledge
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
 **Sequential Order:** 5
 **Story Type:** user
 
@@ -20,7 +19,7 @@ Proceed To Render Output functionality for the mob minion system.
 
   **then** BuildKnowledgeAction saves Workflow State (per "Saves Behavior State" story)
 
-  **and** BuildKnowledgeAction submits content for saving
+  **and** BuildKnowledgeAction processes content for saving
 
   **and** Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)
 

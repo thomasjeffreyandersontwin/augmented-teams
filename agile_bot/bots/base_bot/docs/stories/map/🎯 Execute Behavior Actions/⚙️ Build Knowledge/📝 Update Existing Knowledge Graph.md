@@ -1,10 +1,9 @@
 # 📝 Update Existing Knowledge Graph
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L916)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Build Knowledge
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
 **Sequential Order:** 4
 **Story Type:** user
 
@@ -26,7 +25,7 @@ Update Existing Knowledge Graph functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Behavior updates existing story graph JSON (happy_path)
+### Scenario: Behavior updates existing story graph JSON (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L919)
 
 **Steps:**
 ```gherkin

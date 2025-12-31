@@ -1,10 +1,9 @@
 # 📝 Invoke Behavior Actions in Workflow Order
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Perform Behavior Action
 **User:** Bot Behavior
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Perform Behavior Action](.)  
 **Sequential Order:** 4
 **Story Type:** user
 
@@ -46,9 +45,9 @@ Invoke Behavior Actions in Workflow Order functionality for the mob minion syste
 ```gherkin
 Flow:
 1. Start at initialize_project
-2. Confirm → Saves to completed_actions
+2. Confirm â†’ Saves to completed_actions
 3. Forward to gather_context
-4. Close gather_context → Transitions to decide_planning_criteria
+4. Close gather_context â†’ Transitions to decide_planning_criteria
 5. Jump to discovery.gather_context (out of order)
 6. Verify state shows discovery.gather_context (not initialize_project)
 7. Close and verify proper transition

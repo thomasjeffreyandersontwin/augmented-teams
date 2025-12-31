@@ -1,10 +1,9 @@
 # 📝 Proceed To Decide Planning
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L488)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Gather Context
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
 **Sequential Order:** 4
 **Story Type:** user
 
@@ -62,7 +61,7 @@ And AI waits for human to say "done" before transitioning
 ```
 
 
-### Scenario: Workflow state captures gather_context completion (happy_path)
+### Scenario: Workflow state captures gather_context completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L503)
 
 **Steps:**
 ```gherkin
@@ -78,7 +77,7 @@ And If workflow is interrupted after this point, gather_context is marked as com
 ```
 
 
-### Scenario: Workflow resumes at decide_planning_criteria after interruption (happy_path)
+### Scenario: Workflow resumes at decide_planning_criteria after interruption (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L515)
 
 **Steps:**
 ```gherkin

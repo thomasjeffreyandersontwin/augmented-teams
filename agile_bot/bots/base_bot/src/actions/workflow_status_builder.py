@@ -2,10 +2,10 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, TYPE_CHECKING, NamedTuple
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ..utils import read_json_file
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-    from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
+    from ..bot.behavior import Behavior
+    from ..bot.behaviors import Behaviors
 logger = logging.getLogger(__name__)
 
 

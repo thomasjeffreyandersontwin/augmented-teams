@@ -1,10 +1,9 @@
 # 📝 Route to Default Behavior Action
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Orchestrate BotLangFlow
 **User:** Bot
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Orchestrate BotLangFlow](.)  
 **Sequential Order:** 7
 **Story Type:** user
 

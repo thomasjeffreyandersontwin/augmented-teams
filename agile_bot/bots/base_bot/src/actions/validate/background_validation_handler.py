@@ -4,10 +4,10 @@ import traceback
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING
 from datetime import datetime
-from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+from .validation_scope import ValidationScope
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+    from ..action_context import ValidateActionContext
 
 class BackgroundValidationHandler:
 

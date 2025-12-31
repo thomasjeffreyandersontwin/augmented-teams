@@ -1,10 +1,9 @@
 # 📝 Stores Activity for Initialize Project Action
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Init Project
 **User:** System
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Init Project](.)  
 **Sequential Order:** 6
 **Story Type:** user
 

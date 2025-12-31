@@ -2,8 +2,8 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ..bot.workspace import get_python_workspace_root
+from ..utils import read_json_file
 logger = logging.getLogger(__name__)
 
 class MCPConfigGenerator:

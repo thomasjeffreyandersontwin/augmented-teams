@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, List
 from datetime import datetime
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.validate.validation_stats import ValidationStats
+from ...bot.bot_paths import BotPaths
+from .validation_stats import ValidationStats
 
 class ValidationReportBuilder:
 

@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Optional
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.ext.bot_matcher import BotMatcher
-from agile_bot.bots.base_bot.src.ext.behavior_matcher import BehaviorMatcher
-from agile_bot.bots.base_bot.src.ext.trigger_domain import BotTriggers
+from ..bot.bot_paths import BotPaths
+from .bot_matcher import BotMatcher
+from .behavior_matcher import BehaviorMatcher
+from .trigger_domain import BotTriggers
 
 class TriggerRouter:
 

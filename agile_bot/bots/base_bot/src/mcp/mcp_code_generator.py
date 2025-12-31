@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Any, List
-from agile_bot.bots.base_bot.src.mcp.mcp_code_visitor import MCPCodeVisitor
-from agile_bot.bots.base_bot.src.cli.formatter import CliTerminalFormatter
-from agile_bot.bots.base_bot.src.bot.bot import Bot
-from agile_bot.bots.base_bot.src.generator.orchestrator import Orchestrator
+from .mcp_code_visitor import MCPCodeVisitor
+from ..repl_cli.formatter import CliTerminalFormatter
+from ..bot.bot import Bot
+from ..generator.orchestrator import Orchestrator
 
 class MCPCodeGenerator:
 

@@ -1,10 +1,9 @@
 # 📝 Track Activity For Workspace
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L869)
 
-**Epic:** Invoke Bot
-**Feature:** Invoke MCP
 **User:** Bot Behavior
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Invoke MCP](.)  
 **Sequential Order:** 5
 **Story Type:** user
 

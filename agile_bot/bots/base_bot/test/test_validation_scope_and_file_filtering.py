@@ -256,7 +256,7 @@ class TestREPLInstructionsCommandCLIArgs:
         This test verifies the fix for the bug where _handle_instructions_command
         was not parsing CLI arguments, causing --scope to be ignored.
         """
-        from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+        from agile_bot.bots.base_bot.src.repl_cli.cli_context_builder import CliContextBuilder
         from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
         from unittest.mock import Mock
         
@@ -285,7 +285,7 @@ class TestREPLInstructionsCommandCLIArgs:
         WHEN: CliContextBuilder parses the arguments
         THEN: A context with no scope is created
         """
-        from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+        from agile_bot.bots.base_bot.src.repl_cli.cli_context_builder import CliContextBuilder
         from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
         from unittest.mock import Mock
         

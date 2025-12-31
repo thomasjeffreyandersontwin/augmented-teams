@@ -1,10 +1,9 @@
 # 📝 Generate Behavior Tools
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Build Agile Bots
-**Feature:** Generate MCP Tools
 **User:** MCP Server Generator
+**Path:** [🎯 Build Agile Bots](../..) / [⚙️ Generate MCP Tools](.)  
 **Sequential Order:** 0.6
 **Story Type:** user
 

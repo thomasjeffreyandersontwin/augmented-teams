@@ -5,18 +5,18 @@ import logging
 import re
 import sys
 import traceback
-from agile_bot.bots.base_bot.src.actions.activity_tracker import ActivityTracker, ActionState
-from agile_bot.bots.base_bot.src.actions.workflow_status_builder import BehaviorActionStatusBuilder
-from agile_bot.bots.base_bot.src.actions.context_data_injector import ContextDataInjector
-from agile_bot.bots.base_bot.src.actions.instructions import Instructions
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, Scope
-from agile_bot.bots.base_bot.src.bot.reminders import inject_reminder_to_instructions
-from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from .activity_tracker import ActivityTracker, ActionState
+from .workflow_status_builder import BehaviorActionStatusBuilder
+from .context_data_injector import ContextDataInjector
+from .instructions import Instructions
+from .action_context import ActionContext, Scope
+from ..bot.reminders import inject_reminder_to_instructions
+from ..bot.workspace import get_base_actions_directory
+from ..utils import read_json_file
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.bot import Bot
-    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-    from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
+    from ..bot.bot import Bot
+    from ..bot.behavior import Behavior
+    from ..bot.behaviors import Behaviors
 logger = logging.getLogger(__name__)
 
 class Action:

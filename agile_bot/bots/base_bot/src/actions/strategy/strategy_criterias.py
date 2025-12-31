@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict
-from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.actions.strategy.strategy_criteria import StrategyCriteria
+from ...utils import read_json_file
+from .strategy_criteria import StrategyCriteria
 
 class StrategyCriterias:
 

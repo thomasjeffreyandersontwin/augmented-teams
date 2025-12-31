@@ -15,6 +15,7 @@ from enum import Enum
 
 class ScopeType(Enum):
     ALL = 'all'
+    SHOW_ALL = 'showAll'
     STORY = 'story'
     EPIC = 'epic'
     INCREMENT = 'increment'
@@ -279,12 +280,25 @@ class Scope:
         filter_str = ', '.join(self.value) if isinstance(self.value, list) else str(self.value)
         lines.append(f"Scope Filter: {filter_str}")
         
-        if self.type == ScopeType.STORY:
+        if self.type == ScopeType.SHOW_ALL:
+            # Display the entire story graph
             story_graph_path = workspace_directory / 'docs' / 'stories' / 'story-graph.json'
             if story_graph_path.exists():
                 try:
                     graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
-                    matched_items = self._find_scope_matches_in_graph(graph_data, self.value)
+                    # Format all epics with their children
+                    epics = graph_data.get('epics', [])
+                    for epic in epics:
+                        epic_lines = self._format_node_with_children(epic, 'epic', 0, workspace_directory, graph_data, epic.get('name', ''), epic.get('name', ''))
+                        lines.extend(epic_lines)
+                except Exception:
+                    lines.append("  - (error loading story graph)")
+        elif self.type == ScopeType.STORY:
+            story_graph_path = workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+            if story_graph_path.exists():
+                try:
+                    graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
+                    matched_items = self._find_scope_matches_in_graph(graph_data, self.value, workspace_directory)
                     lines.extend(matched_items)
                 except Exception:
                     # Fallback to simple list
@@ -359,13 +373,13 @@ class Scope:
         
         return all_files
     
-    def _find_scope_matches_in_graph(self, graph_data: Dict[str, Any], scope_values: List[str]) -> List[str]:
+    def _find_scope_matches_in_graph(self, graph_data: Dict[str, Any], scope_values: List[str], workspace_directory: 'Path') -> List[str]:
         """Find and display scope matches from story graph."""
         lines = []
         epics = graph_data.get('epics', [])
         
         for scope_val in scope_values:
-            match_lines = self._search_for_scope_match(epics, scope_val)
+            match_lines = self._search_for_scope_match(epics, scope_val, workspace_directory, graph_data)
             if match_lines:
                 lines.extend(match_lines)
             else:
@@ -373,40 +387,97 @@ class Scope:
         
         return lines
     
-    def _search_for_scope_match(self, epics: List[Dict], scope_val: str) -> Optional[List[str]]:
+    def _search_for_scope_match(self, epics: List[Dict], scope_val: str, workspace_directory: 'Path', graph_data: Dict[str, Any]) -> Optional[List[str]]:
         """Search for scope match and return formatted lines with full hierarchy."""
         for epic in epics:
-            if self._matches_name(epic.get('name', ''), scope_val):
-                return self._format_node_with_children(epic, 'epic', 0)
+            epic_name = epic.get('name', '')
+            if self._matches_name(epic_name, scope_val):
+                return self._format_node_with_children(epic, 'epic', 0, workspace_directory, graph_data, epic_name, epic_name)
             
-            match_lines = self._search_sub_epics(epic.get('sub_epics', []), scope_val)
+            match_lines = self._search_sub_epics(epic.get('sub_epics', []), scope_val, workspace_directory, graph_data, epic_name)
             if match_lines:
                 return match_lines
         
         return None
     
-    def _search_sub_epics(self, sub_epics: List[Dict], scope_val: str) -> Optional[List[str]]:
+    def _search_sub_epics(self, sub_epics: List[Dict], scope_val: str, workspace_directory: 'Path', graph_data: Dict[str, Any], epic_name: str) -> Optional[List[str]]:
         """Search sub-epics for scope match."""
         for sub_epic in sub_epics:
-            if self._matches_name(sub_epic.get('name', ''), scope_val):
-                return self._format_node_with_children(sub_epic, 'sub epic', 0)
+            sub_epic_name = sub_epic.get('name', '')
+            if self._matches_name(sub_epic_name, scope_val):
+                return self._format_node_with_children(sub_epic, 'sub epic', 0, workspace_directory, graph_data, epic_name, sub_epic_name)
             
-            match_lines = self._search_stories(sub_epic, scope_val)
+            match_lines = self._search_stories(sub_epic, scope_val, workspace_directory, graph_data, epic_name, sub_epic_name)
             if match_lines:
                 return match_lines
         
         return None
     
-    def _search_stories(self, sub_epic: Dict, scope_val: str) -> Optional[List[str]]:
+    def _search_stories(self, sub_epic: Dict, scope_val: str, workspace_directory: 'Path', graph_data: Dict[str, Any], epic_name: str, sub_epic_name: str) -> Optional[List[str]]:
         """Search stories for scope match."""
+        lines = []
+        # Include epic and sub-epic in the hierarchy for context
+        lines.append(f"🎯 {epic_name}")
+        
+        # Format sub-epic line with test_file info if available
+        test_file = sub_epic.get('test_file')
+        if test_file:
+            lines.append(f"  ⚙️ {sub_epic_name}|TEST_FILE:{test_file}")
+        else:
+            lines.append(f"  ⚙️ {sub_epic_name}")
+        
         for story_group in sub_epic.get('story_groups', []):
             for story in story_group.get('stories', []):
                 if self._matches_name(story.get('name', ''), scope_val):
-                    return self._format_node_with_children(story, 'story', 0)
+                    story_lines = self._format_node_with_children(story, 'story', 2, workspace_directory, graph_data, epic_name, sub_epic_name)
+                    # Get test_file ONLY from parent sub-epic (stories should not have test_file)
+                    # Add test_file to story lines
+                    if test_file and story_lines:
+                        test_class = story.get('test_class')
+                        # Always add test_file if available, even if no test_class
+                        if test_class and test_class != '?':
+                            # Replace line to include test_file before test_class
+                            story_lines[0] = story_lines[0].replace(
+                                f"|TEST_CLASS:{test_class}",
+                                f"|TEST_FILE:{test_file}|TEST_CLASS:{test_class}"
+                            )
+                        elif '|TEST_CLASS:' in story_lines[0]:
+                            # No test_class but placeholder exists, add test_file
+                            story_lines[0] = story_lines[0].replace(
+                                f"|TEST_CLASS:",
+                                f"|TEST_FILE:{test_file}|TEST_CLASS:"
+                            )
+                        else:
+                            # No test_class marker, add test_file at end
+                            story_lines[0] = story_lines[0] + f"|TEST_FILE:{test_file}"
+                    lines.extend(story_lines)
+                    return lines
         
         for story in sub_epic.get('stories', []):
             if self._matches_name(story.get('name', ''), scope_val):
-                return self._format_node_with_children(story, 'story', 0)
+                story_lines = self._format_node_with_children(story, 'story', 2, workspace_directory, graph_data, epic_name, sub_epic_name)
+                # Get test_file ONLY from parent sub-epic (stories should not have test_file)
+                # Add test_file to story lines
+                if test_file and story_lines:
+                    test_class = story.get('test_class')
+                    # Always add test_file if available, even if no test_class
+                    if test_class and test_class != '?':
+                        # Replace line to include test_file before test_class
+                        story_lines[0] = story_lines[0].replace(
+                            f"|TEST_CLASS:{test_class}",
+                            f"|TEST_FILE:{test_file}|TEST_CLASS:{test_class}"
+                        )
+                    elif '|TEST_CLASS:' in story_lines[0]:
+                        # No test_class but placeholder exists, add test_file
+                        story_lines[0] = story_lines[0].replace(
+                            f"|TEST_CLASS:",
+                            f"|TEST_FILE:{test_file}|TEST_CLASS:"
+                        )
+                    else:
+                        # No test_class marker, add test_file at end
+                        story_lines[0] = story_lines[0] + f"|TEST_FILE:{test_file}"
+                lines.extend(story_lines)
+                return lines
         
         return None
     
@@ -414,8 +485,10 @@ class Scope:
         """Check if pattern matches name (case-insensitive)."""
         return pattern.lower() in name.lower()
     
-    def _format_node_with_children(self, node: Dict[str, Any], node_type: str, indent: int) -> List[str]:
-        """Format a node and its children recursively."""
+    def _format_node_with_children(self, node: Dict[str, Any], node_type: str, indent: int, 
+                                   workspace_directory: 'Path', graph_data: Dict[str, Any],
+                                   epic_name: str, sub_epic_name: str) -> List[str]:
+        """Format a node and its children recursively with hyperlinks for stories."""
         lines = []
         prefix = "  " * indent
         name = node.get('name', 'Unknown')
@@ -427,24 +500,91 @@ class Scope:
             'story': '📝'
         }
         emoji = emoji_map.get(node_type, '•')
-        lines.append(f"{prefix}{emoji} {name}")
         
-        # Don't recurse into stories - stop at story level
+        # For stories, append test_file and test_class info
         if node_type == 'story':
+            test_class = node.get('test_class')
+            # test_file will be passed from parent sub-epic via the line modification below
+            # Only include test_class marker if there's an actual test class
+            if test_class and test_class != '?':
+                lines.append(f"{prefix}{emoji} {name}|TEST_CLASS:{test_class}")
+            else:
+                # No test_class - just add the story name (parent can add test_file if needed)
+                lines.append(f"{prefix}{emoji} {name}")
             return lines
+        
+        # For sub-epics, append test_file info
+        if node_type == 'sub epic':
+            test_file = node.get('test_file')
+            if test_file:
+                lines.append(f"{prefix}{emoji} {name}|TEST_FILE:{test_file}")
+            else:
+                lines.append(f"{prefix}{emoji} {name}")
+        else:
+            # For epics, just show the name
+            lines.append(f"{prefix}{emoji} {name}")
+        
+        # Update context for children
+        current_epic_name = epic_name
+        current_sub_epic_name = sub_epic_name
+        current_test_file = node.get('test_file') if node_type == 'sub epic' else None
+        
+        if node_type == 'epic':
+            current_epic_name = name
+            current_sub_epic_name = name  # Epic-level stories use epic name as sub-epic
+        elif node_type == 'sub epic':
+            current_sub_epic_name = name  # Update to this sub-epic's name for its children
+            current_test_file = node.get('test_file')
         
         # Add sub_epics
         for sub_epic in node.get('sub_epics', []):
-            lines.extend(self._format_node_with_children(sub_epic, 'sub epic', indent + 1))
+            sub_epic_child_name = sub_epic.get('name', '')
+            lines.extend(self._format_node_with_children(sub_epic, 'sub epic', indent + 1, 
+                                                       workspace_directory, graph_data, 
+                                                       current_epic_name, sub_epic_child_name))
         
         # Add stories from story_groups
         for story_group in node.get('story_groups', []):
             for story in story_group.get('stories', []):
-                lines.extend(self._format_node_with_children(story, 'story', indent + 1))
+                story_lines = self._format_node_with_children(story, 'story', indent + 1,
+                                                           workspace_directory, graph_data,
+                                                           current_epic_name, current_sub_epic_name)
+                # Get test_file ONLY from parent sub-epic (stories should not have test_file)
+                # Modify story lines to include test_file if available
+                if current_test_file and story_lines:
+                    test_class = story.get('test_class')
+                    # Always add test_file if available, even if no test_class
+                    if test_class and test_class != '?':
+                        # Replace line to include test_file before test_class
+                        story_lines[0] = story_lines[0].replace(
+                            f"|TEST_CLASS:{test_class}",
+                            f"|TEST_FILE:{current_test_file}|TEST_CLASS:{test_class}"
+                        )
+                    else:
+                        # No test_class, just add test_file at end
+                        story_lines[0] = story_lines[0] + f"|TEST_FILE:{current_test_file}"
+                lines.extend(story_lines)
         
         # Add direct stories (some structures have this)
         for story in node.get('stories', []):
-            lines.extend(self._format_node_with_children(story, 'story', indent + 1))
+            story_lines = self._format_node_with_children(story, 'story', indent + 1,
+                                                       workspace_directory, graph_data,
+                                                       current_epic_name, current_sub_epic_name)
+            # Get test_file ONLY from parent sub-epic (stories should not have test_file)
+            # Modify story lines to include test_file if available
+            if current_test_file and story_lines:
+                test_class = story.get('test_class')
+                # Always add test_file if available, even if no test_class
+                if test_class and test_class != '?':
+                    # Replace line to include test_file before test_class
+                    story_lines[0] = story_lines[0].replace(
+                        f"|TEST_CLASS:{test_class}",
+                        f"|TEST_FILE:{current_test_file}|TEST_CLASS:{test_class}"
+                    )
+                else:
+                    # No test_class, just add test_file at end
+                    story_lines[0] = story_lines[0] + f"|TEST_FILE:{current_test_file}"
+            lines.extend(story_lines)
         
         return lines
 

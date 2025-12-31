@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="5054" dy="468" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4878" dy="755" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -474,7 +474,7 @@
                     <mxGeometry x="-2251.1299999999997" y="1069.3200000000002" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="323" value="&lt;div&gt;CRC Walkthrough&amp;nbsp;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-1995" y="772.5" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-1850" y="1148.28" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="324" value="&lt;div&gt;Headless Mode&lt;br&gt;&lt;i&gt;10 Stories&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1995" y="835.95" width="50" height="50" as="geometry"/>
@@ -485,14 +485,26 @@
                 <mxCell id="327" value="&lt;div&gt;Scanner is not using an LTK properly&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1850" y="919.22" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="328" value="&lt;div&gt;Scanners not filtering on files&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="328" value="&lt;div&gt;Scanners not filtering on files&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1850" y="974.5000000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="329" value="&lt;div&gt;No Scanners run on Validate&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="329" value="&lt;div&gt;No Scanners run on Validate&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1850" y="860.4700000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="330" value="Domain Orietned Refactor ALL CODE&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="330" value="Domain Orietned Refactor ALL CODE&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1850" y="789.76" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="331" value="&lt;div&gt;Auto advance&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-1850" y="1092.28" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="332" value="&lt;div&gt;Links In Story Scope&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-1995" y="895.47" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="333" value="&lt;div&gt;Links In File Scope&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2127.5" y="903.5" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="334" value="&lt;div&gt;Links In Rendered Documents&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-1995" y="955.01" width="50" height="50" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

@@ -1,10 +1,9 @@
 # 📝 Prepare Action Instructions
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Orchestrate BotLangFlow
 **User:** BotLangActionNode
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Orchestrate BotLangFlow](.)  
 **Sequential Order:** 10
 **Story Type:** system
 

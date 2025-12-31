@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING
 import json
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action import Action
-    from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+    from ....actions.action import Action
+    from ...repl_session import REPLSession
 
-from agile_bot.bots.base_bot.src.repl_cli.cli_bot.cli_actions.cli_action import CLIAction
-from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext, Scope
+from .cli_action import CLIAction
+from ....actions.action_context import ScopeActionContext, Scope
 
 
 class BuildCLIAction(CLIAction):

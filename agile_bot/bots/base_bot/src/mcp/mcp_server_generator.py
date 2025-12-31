@@ -2,11 +2,11 @@ from pathlib import Path
 import json
 import logging
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.bot.bot import Bot
-from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory, get_workspace_directory
-from agile_bot.bots.base_bot.src.mcp.mcp_code_generator import MCPCodeGenerator
-from agile_bot.bots.base_bot.src.mcp.mcp_config_generator import MCPConfigGenerator
+from ..utils import read_json_file
+from ..bot.bot import Bot
+from ..bot.workspace import get_python_workspace_root, get_base_actions_directory, get_workspace_directory
+from .mcp_code_generator import MCPCodeGenerator
+from .mcp_config_generator import MCPConfigGenerator
 
 class MCPServerGenerator:
 

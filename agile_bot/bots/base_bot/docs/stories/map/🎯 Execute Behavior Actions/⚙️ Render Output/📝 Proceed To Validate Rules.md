@@ -1,10 +1,9 @@
 # 📝 Proceed To Validate Rules
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Render Output
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  
 **Sequential Order:** 5
 **Story Type:** user
 
@@ -22,7 +21,7 @@ Proceed To Validate Rules functionality for the mob minion system.
 
   **then** RenderOutputAction saves Workflow State (per "Saves Behavior State" story)
 
-  **and** RenderOutputAction submits content for saving
+  **and** RenderOutputAction processes content for saving
 
   **and** Workflow injects next action instructions (per "Inject Next Behavior-Action" story)
 

@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from agile_bot.bots.base_bot.src.scanners.code_scanner import CodeScanner
-from agile_bot.bots.base_bot.src.scanners.scanner_registry import ScannerRegistry
-from agile_bot.bots.base_bot.src.scanners.test_scanner import TestScanner
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ...scanners.code_scanner import CodeScanner
+from ...scanners.scanner_registry import ScannerRegistry
+from ...scanners.test_scanner import TestScanner
+from ...utils import read_json_file
 
 class Rule:
 

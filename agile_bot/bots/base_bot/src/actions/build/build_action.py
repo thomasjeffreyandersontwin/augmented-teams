@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, Type
 import logging
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, ScopeActionContext
-from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
-from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_spec import KnowledgeGraphSpec
-from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_template import KnowledgeGraphTemplate
-from agile_bot.bots.base_bot.src.actions.build.build_scope import BuildScope
-from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
+from ..action import Action
+from ..action_context import ActionContext, ScopeActionContext
+from .knowledge import Knowledge
+from .knowledge_graph_spec import KnowledgeGraphSpec
+from .knowledge_graph_template import KnowledgeGraphTemplate
+from .build_scope import BuildScope
+from ..validate.validate_action import ValidateRulesAction
 logger = logging.getLogger(__name__)
 
 class BuildKnowledgeAction(Action):

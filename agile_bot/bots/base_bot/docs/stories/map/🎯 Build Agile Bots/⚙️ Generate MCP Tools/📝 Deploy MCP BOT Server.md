@@ -1,10 +1,9 @@
 # 📝 Deploy MCP BOT Server
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Build Agile Bots
-**Feature:** Generate MCP Tools
 **User:** System
+**Path:** [🎯 Build Agile Bots](../..) / [⚙️ Generate MCP Tools](.)  
 **Sequential Order:** 3
 **Story Type:** user
 

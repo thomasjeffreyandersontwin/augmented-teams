@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Any, Type
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, ClarifyActionContext
-from agile_bot.bots.base_bot.src.actions.clarify.required_context import RequiredContext
-from agile_bot.bots.base_bot.src.actions.clarify.requirements_clarifications import RequirementsClarifications
+from ..action import Action
+from ..action_context import ActionContext, ClarifyActionContext
+from .required_context import RequiredContext
+from .requirements_clarifications import RequirementsClarifications
 
 class ClarifyContextAction(Action):
     context_class: Type[ActionContext] = ClarifyActionContext

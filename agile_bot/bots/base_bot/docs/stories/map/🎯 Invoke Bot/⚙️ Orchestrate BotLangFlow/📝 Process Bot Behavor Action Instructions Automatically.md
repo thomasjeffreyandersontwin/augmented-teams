@@ -1,10 +1,9 @@
 # 📝 Process Bot Behavor Action Instructions Automatically
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Orchestrate BotLangFlow
 **User:** BotLangActionNode
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Orchestrate BotLangFlow](.)  
 **Sequential Order:** 11
 **Story Type:** system
 
@@ -20,7 +19,7 @@ Process Bot Behavor Action Instructions Automatically functionality for the mob 
 
   **then** BotLangActionNode calls run_autonomous() method
 
-  **and** run_autonomous() submits instructions to AI via API client
+  **and** run_autonomous() sends instructions to AI via API client
 
   **and** BotLangActionNode waits for AI response
 

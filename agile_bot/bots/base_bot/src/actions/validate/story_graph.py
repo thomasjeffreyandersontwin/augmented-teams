@@ -2,10 +2,10 @@ from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
 import json
 import logging
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ...bot.bot_paths import BotPaths
+from ...utils import read_json_file
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_spec import KnowledgeGraphSpec
+    from ..build.knowledge_graph_spec import KnowledgeGraphSpec
 logger = logging.getLogger(__name__)
 
 class StoryGraph:

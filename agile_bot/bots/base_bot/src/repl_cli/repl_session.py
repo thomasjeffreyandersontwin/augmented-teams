@@ -5,14 +5,14 @@ import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-from agile_bot.bots.base_bot.src.repl_cli.repl_results import (
+from .repl_results import (
     REPLStateDisplay,
     REPLCommandResponse,
     TTYDetectionResult
 )
-from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
-from agile_bot.bots.base_bot.src.repl_cli.cli_bot import CLIBot
-from agile_bot.bots.base_bot.src.repl_cli.formatters.formatter_factory import FormatterFactory
+from ..actions.action_context import Scope, ScopeType
+from .cli_bot import CLIBot
+from .formatters.formatter_factory import FormatterFactory
 
 
 class REPLSession:
@@ -201,6 +201,7 @@ class REPLSession:
             lines.append("To change scope (pick ONE - setting a new scope replaces the previous):")
             lines.append("```powershell")
             lines.append("scope all                            # Clear scope, work on entire project")
+            lines.append("scope showAll                        # Show entire story graph (no filtering)")
             lines.append('scope "Story Name"                   # Filter by story (replaces any file scope)')
             lines.append('scope "file:C:/path/to/**/*.py"      # Filter by files (replaces any story scope)')
             lines.append("```")
@@ -525,7 +526,7 @@ class REPLSession:
             
             if cli_args:
                 try:
-                    from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+                    from agile_bot.bots.base_bot.src.repl_cli.cli_context_builder import CliContextBuilder
                     builder = CliContextBuilder()
                     # Get the underlying action if this is a CLI wrapper
                     underlying_action = action._action if hasattr(action, '_action') else action
@@ -617,7 +618,7 @@ class REPLSession:
             # If not at last action, advance to next action (user will run commands explicitly)
             if not is_last_action:
                 return REPLCommandResponse(
-                    output=output + "\n\n[Action confirmed. Use 'next' or run commands explicitly to continue.]",
+                    output=result_output + "\n\n[Action confirmed. Use 'next' or run commands explicitly to continue.]",
                     response="Action confirmed",
                     status="success"
                 )
@@ -633,7 +634,7 @@ class REPLSession:
                 if next_behavior.actions.names:
                     self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.names[0])
                     return REPLCommandResponse(
-                        output=output + f"\n\n[Behavior complete. Advanced to {next_behavior.name}. Use 'next' or run commands explicitly to continue.]",
+                        output=result_output + f"\n\n[Behavior complete. Advanced to {next_behavior.name}. Use 'next' or run commands explicitly to continue.]",
                         response="Behavior complete, advanced to next",
                         status="success"
                     )
@@ -679,9 +680,22 @@ class REPLSession:
                 status="success"
             )
         
+        # Import Scope and ScopeType for all scope operations
+        from agile_bot.bots.base_bot.src.actions.action_context import Scope, ScopeType
+        
         # Handle "all" - clears the scope filter
         if args.lower() == 'all':
             result = self.cli_bot.clear_scope()
+            return REPLCommandResponse(
+                output=result['message'],
+                response=result['message'],
+                status=result['status']
+            )
+        
+        # Handle "showAll" or "show_all" - shows entire story graph
+        if args.lower() in ('showall', 'show_all'):
+            scope = Scope(type=ScopeType.SHOW_ALL, value=[])
+            result = self.cli_bot.set_scope(scope)
             return REPLCommandResponse(
                 output=result['message'],
                 response=result['message'],
@@ -1281,7 +1295,7 @@ class REPLSession:
             import sys
             print(f"[DEBUG REPL] Parsing CLI args: {cli_args}", file=sys.stderr)
             try:
-                from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+                from agile_bot.bots.base_bot.src.repl_cli.cli_context_builder import CliContextBuilder
                 builder = CliContextBuilder()
                 context = builder.build_context(action, cli_args)
                 print(f"[DEBUG REPL] Built context: {context}", file=sys.stderr)

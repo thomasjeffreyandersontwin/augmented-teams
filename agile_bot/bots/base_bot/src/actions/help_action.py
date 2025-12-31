@@ -4,10 +4,10 @@ import logging
 import dataclasses
 from pathlib import Path
 from typing import Dict, Any, Type, get_origin
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext
-from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
-from agile_bot.bots.base_bot.src.bot.workspace import get_python_workspace_root, get_base_actions_directory
+from .action import Action
+from .action_context import ActionContext
+from .action_factory import ActionFactory
+from ..bot.workspace import get_python_workspace_root, get_base_actions_directory
 
 logger = logging.getLogger(__name__)
 
