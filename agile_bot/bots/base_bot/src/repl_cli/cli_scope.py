@@ -100,11 +100,9 @@ class CLIScope(CLIBase):
         
         # Display scope items
         if self._scope.type == ScopeType.FILES:
-            # Build hierarchical directory structure for files
-            lines.append("```")
-            tree_lines = self._build_file_tree(scope_lines)
+            # Build hierarchical directory structure for files with hyperlinks
+            tree_lines = self._build_file_tree_with_hyperlinks(scope_lines)
             lines.extend(tree_lines)
-            lines.append("```")
         else:
             # For story/other scopes, enhance with hyperlinks and display as markdown (not code block)
             enhanced_lines = self._enhance_story_lines_with_hyperlinks(scope_lines)
@@ -129,8 +127,8 @@ class CLIScope(CLIBase):
         
         return "\n".join(lines)
     
-    def _build_file_tree(self, scope_lines: list) -> list:
-        """Build a hierarchical directory tree from file paths."""
+    def _build_file_tree_with_hyperlinks(self, scope_lines: list) -> list:
+        """Build a hierarchical directory tree from file paths with hyperlinks."""
         from pathlib import Path
         
         # Extract file paths from scope lines
@@ -141,44 +139,104 @@ class CLIScope(CLIBase):
             # Remove leading "  - " and parse as path
             path_str = line.strip().lstrip('- ').strip()
             if path_str and not path_str.endswith("(no files found)"):
-                file_paths.append(Path(path_str))
+                # Path might be relative to workspace or absolute
+                if Path(path_str).is_absolute():
+                    file_paths.append(Path(path_str))
+                else:
+                    # Relative path - make it absolute relative to workspace
+                    file_paths.append(self._workspace_directory / path_str)
         
         if not file_paths:
             return ["  (no files found)"]
         
-        # Build tree structure
+        # Build tree structure, storing full paths at leaf nodes
         tree = {}
+        
         for file_path in file_paths:
-            parts = file_path.parts
+            # Resolve to absolute path
+            abs_path = file_path.resolve() if file_path.exists() else file_path
+            
+            # Get relative path from workspace for display
+            try:
+                rel_path = abs_path.relative_to(self._workspace_directory)
+                parts = rel_path.parts
+            except ValueError:
+                # If can't make relative, use absolute path parts
+                parts = abs_path.parts
+            
             current = tree
             for i, part in enumerate(parts):
                 if part not in current:
                     current[part] = {}
                 current = current[part]
+            
+            # Store the full absolute path at the leaf node
+            # Use a special key to store the path
+            if '_file_path' not in current:
+                current['_file_path'] = abs_path
         
-        # Render tree
-        return self._render_tree(tree, "")
+        # Render tree with hyperlinks (starting at indent level 0, with tree characters)
+        link_builder = FileLinkBuilder(self._workspace_directory)
+        return self._render_tree_with_hyperlinks(tree, 0, link_builder, Path(), "", True)
     
-    def _render_tree(self, tree: dict, prefix: str, is_last: bool = True) -> list:
-        """Recursively render tree structure with proper indentation."""
+    def _render_tree_with_hyperlinks(self, tree: dict, indent_level: int, link_builder: FileLinkBuilder, 
+                                     base_path: Path, prefix: str = "", is_last: bool = True) -> list:
+        """Recursively render tree structure with hyperlinks for files, matching story indentation style with tree characters."""
         lines = []
-        items = list(tree.items())
+        # Filter out the special _file_path key when iterating
+        items = [(k, v) for k, v in tree.items() if k != '_file_path']
         
-        for i, (name, subtree) in enumerate(items):
-            is_last_item = (i == len(items) - 1)
+        # Sort items: directories first, then files (matching story display order)
+        directories = []
+        files = []
+        for name, subtree in items:
+            subtree_keys = [k for k in subtree.keys() if k != '_file_path']
+            is_file = '_file_path' in subtree and len(subtree_keys) == 0
+            if is_file:
+                files.append((name, subtree))
+            else:
+                directories.append((name, subtree))
+        
+        all_items = directories + files
+        
+        for i, (name, subtree) in enumerate(all_items):
+            is_last_item = (i == len(all_items) - 1)
+            subtree_keys = [k for k in subtree.keys() if k != '_file_path']
+            is_file = '_file_path' in subtree and len(subtree_keys) == 0
             
-            # Determine if this is a file or directory
-            is_file = len(subtree) == 0
-            
-            # Build the line
+            # Build tree connector: └── for last item, ├── for others
             connector = "└── " if is_last_item else "├── "
             icon = self.formatter.file_icon() if is_file else "📁"
-            lines.append(f"{prefix}{connector}{icon} {name}")
             
-            # Recurse for directories
-            if subtree:
+            # Build the full line: prefix (tree continuation from parents) + connector + icon + name
+            # This matches the story rendering pattern where prefix contains all parent tree characters
+            # and connector adds the current level's tree character
+            line_content = prefix + connector + f"{icon} {name}"
+            
+            # For files, create hyperlink
+            if is_file:
+                file_path = subtree.get('_file_path')
+                if file_path and file_path.exists():
+                    # Create hyperlink - replace the name in line_content with hyperlinked version
+                    try:
+                        rel_path = file_path.relative_to(self._workspace_directory)
+                        file_uri = link_builder.get_file_uri(str(rel_path))
+                        line_content = prefix + connector + f"{icon} [{name}]({file_uri})"
+                    except ValueError:
+                        # If relative path fails, use absolute path
+                        file_uri = link_builder.get_file_uri(str(file_path))
+                        line_content = prefix + connector + f"{icon} [{name}]({file_uri})"
+            
+            # Add line with tree structure (prefix + connector), matching story display style
+            lines.append(line_content)
+            
+            # Recurse for directories (update prefix for tree structure continuation)
+            if not is_file:
+                # Tree continuation: "    " (4 spaces) if last, "│   " (pipe + 3 spaces) if not last
                 extension = "    " if is_last_item else "│   "
-                lines.extend(self._render_tree(subtree, prefix + extension, is_last_item))
+                lines.extend(self._render_tree_with_hyperlinks(
+                    subtree, indent_level + 1, link_builder, base_path / name, 
+                    prefix + extension, is_last_item))
         
         return lines
     

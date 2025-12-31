@@ -109,10 +109,8 @@
     "scenarios"
   ],
   "scope": {
-    "type": "story",
-    "value": [
-      "Invoke Bot"
-    ],
+    "type": "showAll",
+    "value": [],
     "exclude": [],
     "skiprule": []
   }
