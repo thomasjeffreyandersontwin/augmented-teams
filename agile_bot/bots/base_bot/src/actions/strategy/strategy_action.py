@@ -36,7 +36,7 @@ class StrategyAction(Action):
         """Add strategy data (criteria, assumptions, activities) to instructions."""
         instructions.update(self.strategy.instructions)
     
-    def _do_submit(self, context: StrategyActionContext) -> Dict[str, Any]:
+    def _do_confirm(self, context: StrategyActionContext) -> Dict[str, Any]:
         """Save strategy decisions and assumptions to strategy.json."""
         decisions = context.get_decisions()
         if decisions or context.assumptions:
@@ -59,14 +59,13 @@ class StrategyAction(Action):
             saved_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'strategy.json'
             
             return {
-                'status': 'submitted',
                 'message': f'Strategy saved: {saved_items} saved to {saved_path}',
                 'saved_path': str(saved_path),
                 'choices': decisions,
                 'assumptions': context.assumptions or []
             }
         
-        return {'status': 'submitted', 'message': 'No strategy data to save'}
+        return {'message': 'No strategy data to save'}
     
     def _format_instructions_for_display(self, instructions) -> str:
         """Format strategy data for REPL display."""

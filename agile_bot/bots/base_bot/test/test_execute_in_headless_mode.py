@@ -574,46 +574,6 @@ class TestExecuteSingleOperation:
         then_cli_has_context_loaded(cli_result, expected=True)
     
     @pytest.mark.api_required
-    def test_execute_submit_operation_in_headless_mode(self, workspace_directory):
-        """
-        SCENARIO: Execute submit operation in headless mode
-        GIVEN: AI has written headless-context.md with submission data
-        AND: headless mode is configured
-        AND: user is at shape.build action
-        WHEN: human invokes CLI with --headless flag for submit operation
-        THEN: CLI retrieves submit instructions for shape.build.submit
-        AND: CLI includes submission parameters from context
-        AND: CLI wraps with Keep doing this until 100% done or blocked directive
-        AND: CLI sends to Cursor Headless API
-        AND: AI executes submit and indicates not done
-        AND: CLI appends AI response to log file
-        AND: CLI loops instruction again with persistence directive
-        AND: AI completes submission and indicates done
-        AND: CLI appends AI response to log file
-        AND: CLI detects AI completion signal
-        AND: CLI stops looping
-        AND: CLI reports data saved successfully
-        """
-        # Given
-        given_headless_mode_is_configured()
-        context_file = given_headless_context_file_exists(workspace_directory)
-        
-        # When
-        cli_result = when_cli_invoked_with_headless_operation(
-            behavior='shape',
-            action='build',
-            operation='submit',
-            context_file=context_file
-        )
-        
-        # Then
-        then_cli_output_has_status(cli_result)
-        then_cli_has_operation(cli_result, 'submit')
-        then_cli_has_behavior(cli_result, 'shape')
-        then_cli_has_action(cli_result, 'build')
-        then_cli_has_context_loaded(cli_result, expected=True)
-    
-    @pytest.mark.api_required
     def test_restart_session_when_ai_gets_stuck(self, workspace_directory):
         """
         SCENARIO: Restart session when AI gets stuck
@@ -662,7 +622,7 @@ class TestExecuteCompleteAction:
         SCENARIO: Execute complete action workflow
         GIVEN: headless mode is configured
         WHEN: human invokes CLI with --headless shape.build
-        THEN: CLI executes all operations (instructions, submit, confirm)
+        THEN: CLI executes all operations (instructions, confirm)
         AND: CLI returns JSON with behavior and action
         """
         # Given
@@ -697,8 +657,8 @@ class TestExecuteCompleteAction:
         AND: headless mode is configured
         AND: user is at shape.build action
         WHEN: human invokes CLI with --headless for complete action
-        AND: submit operation blocks waiting for clarification
-        THEN: CLI detects blocked state during submit
+        AND: confirm operation blocks waiting for clarification
+        THEN: CLI detects blocked state during confirm
         AND: CLI stops action workflow execution
         AND: CLI reports which operation blocked
         AND: CLI displays block reason

@@ -103,7 +103,7 @@ def format_node_with_children(node: Dict[str, Any], node_type: str, indent: int,
     if node_type == 'story':
         return lines
     
-    # Add sub_epics (features)
+    # Add sub_epics
     for sub_epic in node.get('sub_epics', []):
         lines.extend(format_node_with_children(sub_epic, 'sub epic', indent + 1, use_emoji))
     

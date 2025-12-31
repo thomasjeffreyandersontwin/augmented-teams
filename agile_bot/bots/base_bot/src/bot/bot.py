@@ -93,8 +93,8 @@ class Bot:
                 """Return parameter hints for instructions - stub implementation."""
                 return ""
             
-            def _get_submit_params_hint(self, action):
-                """Return parameter hints for submit - stub implementation."""
+            def _get_confirm_params_hint(self, action):
+                """Return parameter hints for confirm - stub implementation."""
                 return ""
         
         help_ctx = HelpContext(self)

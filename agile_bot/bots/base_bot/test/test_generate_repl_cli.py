@@ -68,8 +68,8 @@ class TestFormatOutputForAI:
         # When: Separator is formatted
         result = when_formatter_formats_separator(formatter)
         
-        # Then: Separator uses dashes
-        then_result_equals(result, "-" * 60)
+        # Then: Separator uses equals signs
+        then_result_equals(result, "=" * 60)
     
     def test_terminal_mode_uses_plain_text_formatting_for_completed_marker(self):
         # Given: Terminal formatter is created
@@ -128,8 +128,8 @@ class TestFormatOutputForAI:
         # When: Separator is formatted
         result = when_formatter_formats_separator(formatter)
         
-        # Then: Separator uses markdown horizontal rule
-        then_result_equals(result, "---")
+        # Then: Separator uses Unicode box-drawing characters
+        then_result_equals(result, "━" * 90)
     
     def test_piped_mode_uses_markdown_formatting_for_completed_checkbox(self):
         # Given: Markdown formatter is created
@@ -138,8 +138,8 @@ class TestFormatOutputForAI:
         # When: Completed status marker is formatted
         result = when_formatter_formats_status_marker(formatter, is_current=False, is_completed=True)
         
-        # Then: Marker uses markdown bullet with emoji
-        then_result_equals(result, "- ●")
+        # Then: Marker uses markdown bullet with checkbox emoji (REPL_CLI uses ☑)
+        then_result_equals(result, "- ☑")
     
     def test_piped_mode_uses_markdown_formatting_for_current_checkbox(self):
         # Given: Markdown formatter is created
@@ -158,8 +158,8 @@ class TestFormatOutputForAI:
         # When: Pending status marker is formatted
         result = when_formatter_formats_status_marker(formatter, is_current=False, is_completed=False)
         
-        # Then: Marker uses markdown bullet with emoji
-        then_result_equals(result, "- ○")
+        # Then: Marker uses markdown bullet with checkbox emoji
+        then_result_equals(result, "- ☐")
     
     def test_piped_mode_uses_markdown_lists_for_list_items(self):
         # Given: Markdown formatter is created

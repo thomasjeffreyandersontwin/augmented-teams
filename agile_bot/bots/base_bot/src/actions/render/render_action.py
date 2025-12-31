@@ -70,10 +70,9 @@ class RenderOutputAction(Action):
         instructions.set('executed_specs', [spec.config_data for spec in executed_specs])
         instructions.set('template_specs', [spec.config_data for spec in template_specs])
     
-    def _do_submit(self, context: ScopeActionContext) -> Dict[str, Any]:
-        """Render actions execute synchronizers during preparation - nothing to submit."""
+    def _do_confirm(self, context: ScopeActionContext) -> Dict[str, Any]:
+        """Render actions execute synchronizers during preparation."""
         return {
-            'status': 'submitted',
             'message': 'Render instructions provided to AI - documents will be rendered by AI'
         }
     

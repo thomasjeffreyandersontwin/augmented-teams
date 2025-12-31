@@ -4,7 +4,7 @@ Object-oriented story map domain model with DrawIO rendering and synchronization
 
 ## Overview
 
-Story IO provides a complete domain model for representing story maps (Epics, Features, Stories, Users, Increments) with full CRUD operations, rendering to DrawIO XML format, and synchronizing from DrawIO files back to JSON. Designed following Domain-Driven Design principles with comprehensive BDD test coverage.
+Story IO provides a complete domain model for representing story maps (Epics, Sub-Epics, Stories, Users, Increments) with full CRUD operations, rendering to DrawIO XML format, and synchronizing from DrawIO files back to JSON. Designed following Domain-Driven Design principles with comprehensive BDD test coverage.
 
 **Key Capabilities:**
 - Render story graphs to DrawIO diagrams (outline or increments)
@@ -132,7 +132,7 @@ story_io/
 #       "epics": [
 #         {
 #           "name": "User Management",
-#           "features": [
+#           "sub_epics": [
 #             {
 #               "name": "User Registration",
 #               "stories": [...]
@@ -186,7 +186,7 @@ story = diagram.add_user_to_story(
     story_name="Receive Power Characteristics",
     user_name="GM",
     epic_name="Epic Name",      # Optional: narrow search
-    feature_name="Feature Name" # Optional: narrow search
+    sub_epic_name="Sub-Epic Name" # Optional: narrow search
 )
 
 # Merge synchronized with original
@@ -345,7 +345,7 @@ python -m story_io.story_io_mcp_server
 
 ### Rendering
 
-**Render Outline (Epics → Features → Stories):**
+**Render Outline (Epics → Sub-Epics → Stories):**
 
 ```python
 # Method 1: Static method
@@ -381,7 +381,7 @@ result = StoryIODiagram.render_increments_from_graph(
 #       "epics": [
 #         {
 #           "name": "User Management",
-#           "features": [
+#           "sub_epics": [
 #             {
 #               "name": "User Registration",
 #               "stories": [...]
@@ -431,7 +431,7 @@ result = diagram.render_exploration(output_path="exploration.drawio")
 
 **Increments Structure:**
 
-Increments represent marketable releases. They reference epics, features, and stories that are part of that release:
+Increments represent marketable releases. They reference epics, sub-epics, and stories that are part of that release:
 
 ```json
 {
@@ -512,7 +512,7 @@ Increments represent marketable releases. They reference epics, features, and st
 ```
 
 **Key Points:**
-- Increments reference epics/features/stories by name (they must exist in the `epics` array)
+- Increments reference epics/sub-epics/stories by name (they must exist in the `epics` array)
 - Each increment defines which stories are included in that release
 - Increments are rendered as separate lanes with story counts displayed in top-right of epic/feature boxes
 - Priority determines ordering (1 = first, 2 = second, etc.)
@@ -589,7 +589,7 @@ results = diagram.search_for_any("Power")
 
 # Search specific types
 epics = diagram.search_for_epics("Create")
-features = diagram.search_for_features("Identity")
+sub_epics = diagram.search_for_features("Identity")  # Returns Feature objects representing sub-epics
 stories = diagram.search_for_stories("User enters")
 
 # Search returns list of component objects
@@ -606,7 +606,7 @@ story = diagram.add_user_to_story(
     story_name="Receive Power",
     user_name="GM",
     epic_name="Power Management",      # Optional: narrow search
-    feature_name="Load Powers"         # Optional: narrow search
+    sub_epic_name="Load Powers"         # Optional: narrow search
 )
 ```
 
@@ -616,8 +616,8 @@ story = diagram.add_user_to_story(
 # Move story before another story
 story.move_before(target_story)
 
-# Change parent (e.g., feature to new epic)
-feature.change_parent(new_epic, target_feature)  # Optional: insert before target
+# Change parent (e.g., sub-epic to new epic)
+sub_epic.change_parent(new_epic, target_sub_epic)  # Optional: insert before target
 
 # Reorder siblings
 epic.move_before(target_epic)
@@ -632,14 +632,14 @@ epic.move_before(target_epic)
 ```
 StoryIODiagram
 ├── Epic
-│   ├── Feature
+│   ├── Sub-Epic (Feature class)
 │   │   ├── Story
 │   │   │   └── User (bidirectional relationship)
 │   │   └── Story...
-│   └── Feature...
+│   └── Sub-Epic (Feature class)...
 └── Increment
     ├── Epic (references)
-    ├── Feature (references)
+    ├── Sub-Epic (references)
     └── Story (references by name)
 ```
 
@@ -652,15 +652,15 @@ StoryIODiagram
 
 **StoryIODiagram**
 - Main orchestrator for entire story map
-- Manages epics, features, stories, increments
+- Manages epics, sub-epics, stories, increments
 - Provides rendering and synchronization entry points
 - Methods: `render_outline()`, `render_increments()`, `synchronize_outline()`, `synchronize_increments()`, `search_for_*()`, `add_user_to_story()`, `merge_story_graphs()`
 
 **Epic**
-- Contains features and stories
-- Methods: `add_feature()`, `remove_feature()`, `features`, `stories`
+- Contains sub-epics and stories
+- Methods: `add_sub_epic()`, `remove_sub_epic()`, `sub_epics`, `stories`
 
-**Feature**
+**Feature** (represents Sub-Epic)
 - Contains stories
 - Tracks `story_count`
 - Methods: `stories`
@@ -677,7 +677,7 @@ StoryIODiagram
 
 **Increment**
 - Represents marketable release
-- Contains references to epics, features, stories
+- Contains references to epics, sub-epics, stories
 - Properties: `priority` (can be "NOW", "LATER", "SOON" or int), `story_names` (list of story names), `relative_size`, `approach`, `focus`
 - Stories stored by name reference (not objects)
 
@@ -691,8 +691,8 @@ StoryIODiagram
 | Component | Key Properties | Key Methods |
 |-----------|---------------|-------------|
 | **StoryIODiagram** | `epics`, `increments` | `render_outline()`, `sync_from_drawio()`, `search_for_*()` |
-| **Epic** | `features`, `stories` | `add_feature()`, `remove_feature()` |
-| **Feature** | `stories`, `story_count` | - |
+| **Epic** | `features` (sub-epics), `stories` | `add_feature()`, `remove_feature()` |
+| **Feature** (Sub-Epic) | `stories`, `story_count` | - |
 | **Story** | `users`, `steps`, `vertical_order` | `add_user()`, `remove_user()` |
 | **User** | `stories` | `add_story()`, `remove_story()` |
 | **Increment** | `priority`, `story_names` | - |
@@ -732,8 +732,8 @@ with description("StoryIOComponent"):
 **Test Files:**
 - `test_story_io_component.py` - Base component (hierarchy, search, position)
 - `test_story_io_position.py` - Position/Boundary math
-- `test_story_io_epic.py` - Epic operations (add/remove features)
-- `test_story_io_feature.py` - Feature operations
+- `test_story_io_epic.py` - Epic operations (add/remove sub-epics)
+- `test_story_io_feature.py` - Sub-epic operations (Feature class)
 - `test_story_io_story.py` - Story operations (users, steps)
 - `test_story_io_user.py` - User-story relationships
 - `test_story_io_increment.py` - Increment (priority, story references)
@@ -755,7 +755,7 @@ with description("Epic"):
     with context("when adding a feature"):
         with it("should add feature to children"):
             epic = Epic("Test Epic")
-            feature = Feature("Test Feature")
+            feature = Feature("Test Sub-Epic")  # Feature class represents sub-epic
             epic.add_feature(feature)
             expect(len(epic.features)).to(equal(1))
             expect(feature.parent).to(equal(epic))
@@ -779,8 +779,8 @@ python test_acceptance.py
 
 **Test Scenarios:**
 - `simple/` - Minimal story graph (one epic, one feature, one story)
-- `complex/` - Multiple epics, features, stories
-- `single_epic/` - Single epic with multiple features
+- `complex/` - Multiple epics, sub-epics, stories
+- `single_epic/` - Single epic with multiple sub-epics
 - `multiple_users/` - Stories with multiple users
 - `with_increments/` - Story graph with increment definitions
 
@@ -801,7 +801,7 @@ Rendering to: outputs/simple/rendered.drawio
 Syncing from: outputs/simple/rendered.drawio
 Comparison:
   Epics: 1 → 1 (match)
-  Features: 1 → 1 (match)
+  Sub-Epics: 1 → 1 (match)
   Stories: 1 → 1 (match)
 [PASS] All components match
 ```

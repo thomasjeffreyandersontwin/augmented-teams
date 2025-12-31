@@ -78,10 +78,9 @@ class BuildKnowledgeAction(Action):
         # Replace content with file references
         self._replace_content_with_file_references(instructions)
     
-    def _do_submit(self, context: ScopeActionContext) -> Dict[str, Any]:
-        """Build actions don't have a submit step - AI does the work directly."""
+    def _do_confirm(self, context: ScopeActionContext) -> Dict[str, Any]:
+        """Build actions - AI does the work directly."""
         return {
-            'status': 'submitted',
             'message': 'Build instructions provided to AI - knowledge graph will be built by AI'
         }
     
@@ -115,6 +114,7 @@ class BuildKnowledgeAction(Action):
         
         template = self.knowledge_graph_template
         description_lines_list = []
+        schema_explanation_lines = []
         
         if template and template.exists:
             template_path = template.template_path
@@ -140,6 +140,18 @@ class BuildKnowledgeAction(Action):
                 # No template path available
                 template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/knowledge_graph/template.json"
             
+            # Extract schema explanation from template's _explanation field
+            template_content = template.template_content
+            if isinstance(template_content, dict) and '_explanation' in template_content:
+                explanation = template_content['_explanation']
+                if isinstance(explanation, dict):
+                    # Format explanation as schema description
+                    for key, value in explanation.items():
+                        if isinstance(value, str):
+                            schema_explanation_lines.append(f"{key}: {value}")
+                        else:
+                            schema_explanation_lines.append(f"{key}: {str(value)}")
+            
             # Get output filename and path
             output_filename = self.knowledge_graph_spec.output_filename if self.knowledge_graph_spec else 'knowledge-graph.json'
             output_path = str(self.knowledge_graph_spec.knowledge_graph.path.parent) if self.knowledge_graph_spec else ''
@@ -156,8 +168,13 @@ class BuildKnowledgeAction(Action):
         for line in base_instructions:
             if isinstance(line, str):
                 if '{{schema}}' in line:
-                    # Skip schema placeholder - not needed
-                    pass
+                    # Replace schema placeholder with schema explanation
+                    if schema_explanation_lines:
+                        # Replace the line with schema explanation
+                        new_instructions.extend(schema_explanation_lines)
+                    else:
+                        # If no schema explanation, remove the placeholder line
+                        pass
                 elif '{{description}}' in line:
                     if description_lines_list:
                         # Add each description line as a separate instruction

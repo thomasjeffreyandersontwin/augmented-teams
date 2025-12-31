@@ -52,7 +52,64 @@ class ActiveLanguageScanner(StoryScanner):
             first_word = words[1].lower()
             actor_index = 1
         
-        # Check if first word is an actor/role using NLTK
+        # CRITICAL FIX: Check if first word is a verb BEFORE checking if it's an actor
+        # If it's a verb, it's part of verb-noun format, not an actor prefix
+        tags = VocabularyHelper.get_pos_tags(name)
+        if tags:
+            first_tag = tags[actor_index][1] if len(tags) > actor_index else None
+            # If NLTK tags it as a verb, it's not an actor
+            if first_tag and VocabularyHelper.is_verb_tag(first_tag):
+                return None
+        
+        # Also check WordNet - if word can be a verb, don't flag as actor
+        if VocabularyHelper.is_verb(first_word):
+            return None
+        
+        # Check common verb abbreviations and action verbs
+        common_verbs = {
+            'init', 'load', 'save', 'run', 'get', 'set', 'add', 'del', 'rm', 'mv',
+            'cp', 'mk', 'rmv', 'upd', 'gen', 'inv', 'exec', 'proc', 'build', 'render',
+            'validate', 'check', 'verify', 'test', 'deploy', 'install', 'configure',
+            'setup', 'start', 'stop', 'restart', 'close', 'open', 'read', 'write',
+            'edit', 'modify', 'change', 'replace', 'insert', 'append', 'prepend',
+            'merge', 'split', 'join', 'combine', 'separate', 'filter', 'sort',
+            'search', 'find', 'locate', 'discover', 'detect', 'identify', 'recognize',
+            'parse', 'analyze', 'evaluate', 'assess', 'measure', 'calculate', 'compute',
+            'transform', 'convert', 'translate', 'map', 'route', 'forward', 'redirect',
+            'send', 'receive', 'transmit', 'deliver', 'dispatch', 'submit', 'publish',
+            'broadcast', 'notify', 'alert', 'warn', 'inform', 'report', 'log', 'record',
+            'track', 'monitor', 'observe', 'watch', 'listen', 'collect', 'gather',
+            'accumulate', 'aggregate', 'summarize', 'extract', 'retrieve', 'fetch',
+            'pull', 'push', 'sync', 'synchronize', 'refresh', 'reload', 'restore',
+            'recover', 'backup', 'export', 'import', 'upload', 'download', 'transfer',
+            'migrate', 'upgrade', 'downgrade', 'uninstall', 'rollback', 'revert',
+            'undo', 'redo', 'cancel', 'abort', 'terminate', 'kill', 'destroy', 'remove',
+            'delete', 'clear', 'reset', 'initialize', 'prepare', 'arrange', 'organize',
+            'structure', 'format', 'style', 'design', 'plan', 'schedule', 'queue',
+            'prioritize', 'order', 'rank', 'group', 'categorize', 'classify', 'tag',
+            'label', 'mark', 'flag', 'assign', 'allocate', 'distribute', 'share',
+            'grant', 'revoke', 'permit', 'deny', 'allow', 'block', 'restrict', 'limit',
+            'constrain', 'enforce', 'apply', 'implement', 'execute', 'perform',
+            'complete', 'finish', 'end', 'conclude', 'finalize', 'close', 'abandon',
+            'drop', 'discard', 'ignore', 'skip', 'omit', 'exclude', 'include', 'attach',
+            'link', 'connect', 'join', 'merge', 'combine', 'unite', 'unify', 'integrate',
+            'incorporate', 'embed', 'nest', 'wrap', 'unwrap', 'isolate', 'divide',
+            'partition', 'segment', 'slice', 'chunk', 'batch', 'cluster', 'assemble',
+            'compile', 'construct', 'create', 'generate', 'produce', 'manufacture',
+            'fabricate', 'make', 'form', 'shape', 'mold', 'sculpt', 'carve', 'cut',
+            'trim', 'prune', 'shave', 'polish', 'refine', 'improve', 'enhance',
+            'optimize', 'tune', 'adjust', 'alter', 'transpose', 'rotate', 'flip',
+            'reverse', 'invert', 'mirror', 'reflect', 'project', 'cast', 'throw',
+            'emit', 'store', 'bootstrap', 'handle', 'resume', 'launch', 'display',
+            'exit', 'advance', 'show', 'view', 'request', 'add', 'monitor', 'surface',
+            'gather', 'access', 'update', 'filter', 'get', 'input', 'guards', 'stores',
+            'load', 'forward', 'track', 'find', 'close', 'process', 'return', 'set',
+            'clear', 'pass', 'document', 'save'
+        }
+        if first_word in common_verbs:
+            return None
+        
+        # Only check if it's an actor if it's NOT a verb
         if VocabularyHelper.is_actor_or_role(first_word):
             actor = words[actor_index]
             location = node.map_location()

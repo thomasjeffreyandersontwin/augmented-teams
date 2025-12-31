@@ -50,9 +50,14 @@ class StoryIODiagram(StoryIOComponent):
         return [child for child in self.children if isinstance(child, Epic)]
     
     @property
-    def features(self) -> List[Feature]:
-        """Get all features directly in this diagram (not through epics)."""
+    def sub_epics(self) -> List[Feature]:
+        """Get all sub-epics directly in this diagram (not through epics)."""
         return [child for child in self.children if isinstance(child, Feature)]
+    
+    @property
+    def features(self) -> List[Feature]:
+        """Deprecated: Use sub_epics instead."""
+        return self.sub_epics
     
     @property
     def stories(self) -> List[Story]:
@@ -73,10 +78,14 @@ class StoryIODiagram(StoryIOComponent):
         results = self.search_for_any(query)
         return [r for r in results if isinstance(r, Epic)]
     
-    def search_for_features(self, query: str) -> List[Feature]:
-        """Search for features matching the query."""
+    def search_for_sub_epics(self, query: str) -> List[Feature]:
+        """Search for sub-epics matching the query."""
         results = self.search_for_any(query)
         return [r for r in results if isinstance(r, Feature)]
+    
+    def search_for_features(self, query: str) -> List[Feature]:
+        """Deprecated: Use search_for_sub_epics instead."""
+        return self.search_for_sub_epics(query)
     
     def search_for_stories(self, query: str) -> List[Story]:
         """Search for stories matching the query."""
@@ -85,7 +94,7 @@ class StoryIODiagram(StoryIOComponent):
     
     def add_user_to_story(self, story_name: str, user_name: str,
                           epic_name: Optional[str] = None,
-                          feature_name: Optional[str] = None) -> Story:
+                          sub_epic_name: Optional[str] = None) -> Story:
         """
         Find a story by name and add a user to it.
         
@@ -93,7 +102,7 @@ class StoryIODiagram(StoryIOComponent):
             story_name: Name of the story to find
             user_name: Name of the user to add
             epic_name: Optional epic name to narrow search
-            feature_name: Optional feature name to narrow search
+            sub_epic_name: Optional sub-epic name to narrow search
         
         Returns:
             The Story object that was modified
@@ -103,13 +112,13 @@ class StoryIODiagram(StoryIOComponent):
         """
         story = None
         
-        # Try to find story by epic/feature context if provided
-        if epic_name and feature_name:
+        # Try to find story by epic/sub-epic context if provided
+        if epic_name and sub_epic_name:
             for epic in self.epics:
                 if epic.name == epic_name:
-                    for feature in epic.features:
-                        if feature.name == feature_name:
-                            for s in feature.stories:
+                    for sub_epic in epic.sub_epics:
+                        if sub_epic.name == sub_epic_name:
+                            for s in sub_epic.stories:
                                 if s.name == story_name:
                                     story = s
                                     break
@@ -132,15 +141,15 @@ class StoryIODiagram(StoryIOComponent):
         
         if not story:
             raise ValueError(f"Story '{story_name}' not found" + 
-                           (f" in Epic '{epic_name}', Feature '{feature_name}'" 
-                            if epic_name and feature_name else ""))
+                           (f" in Epic '{epic_name}', Sub-Epic '{sub_epic_name}'" 
+                            if epic_name and sub_epic_name else ""))
         
         story.add_user(user_name)
         return story
     
     def remove_user_from_story(self, story_name: str, user_name: str,
                                epic_name: Optional[str] = None,
-                               feature_name: Optional[str] = None) -> Story:
+                               sub_epic_name: Optional[str] = None) -> Story:
         """
         Find a story by name and remove a user from it.
         
@@ -148,7 +157,7 @@ class StoryIODiagram(StoryIOComponent):
             story_name: Name of the story to find
             user_name: Name of the user to remove
             epic_name: Optional epic name to narrow search
-            feature_name: Optional feature name to narrow search
+            sub_epic_name: Optional sub-epic name to narrow search
         
         Returns:
             The Story object that was modified
@@ -158,13 +167,13 @@ class StoryIODiagram(StoryIOComponent):
         """
         story = None
         
-        # Try to find story by epic/feature context if provided
-        if epic_name and feature_name:
+        # Try to find story by epic/sub-epic context if provided
+        if epic_name and sub_epic_name:
             for epic in self.epics:
                 if epic.name == epic_name:
-                    for feature in epic.features:
-                        if feature.name == feature_name:
-                            for s in feature.stories:
+                    for sub_epic in epic.sub_epics:
+                        if sub_epic.name == sub_epic_name:
+                            for s in sub_epic.stories:
                                 if s.name == story_name:
                                     story = s
                                     break
@@ -180,8 +189,8 @@ class StoryIODiagram(StoryIOComponent):
         
         if not story:
             raise ValueError(f"Story '{story_name}' not found" + 
-                           (f" in Epic '{epic_name}', Feature '{feature_name}'" 
-                            if epic_name and feature_name else ""))
+                           (f" in Epic '{epic_name}', Sub-Epic '{sub_epic_name}'" 
+                            if epic_name and sub_epic_name else ""))
         
         story.remove_user(user_name)
         return story
@@ -212,17 +221,17 @@ class StoryIODiagram(StoryIOComponent):
         
         return epic
     
-    def create_feature(self, feature_name: str, epic_name: str,
+    def create_sub_epic(self, sub_epic_name: str, epic_name: str,
                       sequential_order: Optional[float] = None,
-                      target_feature_name: Optional[str] = None) -> 'Feature':
+                      target_sub_epic_name: Optional[str] = None) -> 'Feature':
         """
-        Create a new feature in an epic.
+        Create a new sub-epic in an epic.
         
         Args:
-            feature_name: Name of the new feature
-            epic_name: Name of the epic to add feature to
+            sub_epic_name: Name of the new sub-epic
+            epic_name: Name of the epic to add sub-epic to
             sequential_order: Optional sequential order (defaults to end)
-            target_feature_name: Optional feature name to insert before
+            target_sub_epic_name: Optional sub-epic name to insert before
         
         Returns:
             The created Feature object
@@ -234,28 +243,28 @@ class StoryIODiagram(StoryIOComponent):
         if not epic:
             raise ValueError(f"Epic '{epic_name}' not found")
         
-        feature = Feature(name=feature_name, sequential_order=sequential_order)
+        feature = Feature(name=sub_epic_name, sequential_order=sequential_order)
         
-        if target_feature_name:
-            target = next((f for f in epic.features if f.name == target_feature_name), None)
-            epic.add_feature(feature, target)
+        if target_sub_epic_name:
+            target = next((f for f in epic.sub_epics if f.name == target_sub_epic_name), None)
+            epic.add_sub_epic(feature, target)
         else:
-            epic.add_feature(feature)
+            epic.add_sub_epic(feature)
         
         return feature
     
-    def create_story(self, story_name: str, epic_name: str, feature_name: str,
+    def create_story(self, story_name: str, epic_name: str, sub_epic_name: str,
                     sequential_order: Optional[float] = None,
                     users: Optional[List[str]] = None,
                     story_type: Optional[str] = None,
                     target_story_name: Optional[str] = None) -> 'Story':
         """
-        Create a new story in a feature.
+        Create a new story in a sub-epic.
         
         Args:
             story_name: Name of the new story
-            epic_name: Name of the epic containing the feature
-            feature_name: Name of the feature to add story to
+            epic_name: Name of the epic containing the sub-epic
+            sub_epic_name: Name of the sub-epic to add story to
             sequential_order: Optional sequential order (defaults to end)
             users: Optional list of user names
             story_type: Optional story type ('user', 'system', 'technical')
@@ -265,24 +274,24 @@ class StoryIODiagram(StoryIOComponent):
             The created Story object
         
         Raises:
-            ValueError: If epic or feature is not found
+            ValueError: If epic or sub-epic is not found
         """
         epic = next((e for e in self.epics if e.name == epic_name), None)
         if not epic:
             raise ValueError(f"Epic '{epic_name}' not found")
         
-        feature = next((f for f in epic.features if f.name == feature_name), None)
-        if not feature:
-            raise ValueError(f"Feature '{feature_name}' not found in epic '{epic_name}'")
+        sub_epic = next((f for f in epic.sub_epics if f.name == sub_epic_name), None)
+        if not sub_epic:
+            raise ValueError(f"Sub-epic '{sub_epic_name}' not found in epic '{epic_name}'")
         
         story = Story(name=story_name, sequential_order=sequential_order,
                      users=users, story_type=story_type)
         
         if target_story_name:
-            target = next((s for s in feature.stories if s.name == target_story_name), None)
-            story.change_parent(feature, target)
+            target = next((s for s in sub_epic.stories if s.name == target_story_name), None)
+            story.change_parent(sub_epic, target)
         else:
-            story.change_parent(feature)
+            story.change_parent(sub_epic)
         
         return story
     
@@ -290,17 +299,17 @@ class StoryIODiagram(StoryIOComponent):
                         new_name: Optional[str] = None,
                         sequential_order: Optional[float] = None,
                         epic_name: Optional[str] = None,
-                        feature_name: Optional[str] = None) -> 'StoryIOComponent':
+                        sub_epic_name: Optional[str] = None) -> 'StoryIOComponent':
         """
         Update a component's name or sequential order.
         
         Args:
             component_name: Name of the component to update
-            component_type: Type of component ('epic', 'feature', 'story')
+            component_type: Type of component ('epic', 'sub_epic', 'story')
             new_name: Optional new name for the component
             sequential_order: Optional new sequential order
-            epic_name: Optional epic name for feature/story search
-            feature_name: Optional feature name for story search
+            epic_name: Optional epic name for sub-epic/story search
+            sub_epic_name: Optional sub-epic name for story search
         
         Returns:
             The updated component
@@ -316,19 +325,19 @@ class StoryIODiagram(StoryIOComponent):
             if epic_name:
                 epic = next((e for e in self.epics if e.name == epic_name), None)
                 if epic:
-                    component = next((f for f in epic.features if f.name == component_name), None)
+                    component = next((f for f in epic.sub_epics if f.name == component_name), None)
             if not component:
                 for epic in self.epics:
-                    component = next((f for f in epic.features if f.name == component_name), None)
+                    component = next((f for f in epic.sub_epics if f.name == component_name), None)
                     if component:
                         break
         elif component_type == "story":
-            if epic_name and feature_name:
+            if epic_name and sub_epic_name:
                 epic = next((e for e in self.epics if e.name == epic_name), None)
                 if epic:
-                    feature = next((f for f in epic.features if f.name == feature_name), None)
-                    if feature:
-                        component = next((s for s in feature.stories if s.name == component_name), None)
+                    sub_epic = next((f for f in epic.sub_epics if f.name == sub_epic_name), None)
+                    if sub_epic:
+                        component = next((s for s in sub_epic.stories if s.name == component_name), None)
             if not component:
                 stories = self.search_for_stories(component_name)
                 component = next((s for s in stories if s.name == component_name), None)
@@ -348,15 +357,15 @@ class StoryIODiagram(StoryIOComponent):
     
     def remove_component(self, component_name: str, component_type: str,
                         epic_name: Optional[str] = None,
-                        feature_name: Optional[str] = None) -> 'StoryIOComponent':
+                        sub_epic_name: Optional[str] = None) -> 'StoryIOComponent':
         """
         Remove a component from the diagram.
         
         Args:
             component_name: Name of the component to remove
-            component_type: Type of component ('epic', 'feature', 'story')
-            epic_name: Optional epic name for feature/story search
-            feature_name: Optional feature name for story search
+            component_type: Type of component ('epic', 'sub_epic', 'story')
+            epic_name: Optional epic name for sub-epic/story search
+            sub_epic_name: Optional sub-epic name for story search
         
         Returns:
             The removed component
@@ -374,22 +383,22 @@ class StoryIODiagram(StoryIOComponent):
             if epic_name:
                 epic = next((e for e in self.epics if e.name == epic_name), None)
                 if epic:
-                    component = next((f for f in epic.features if f.name == component_name), None)
+                    component = next((f for f in epic.sub_epics if f.name == component_name), None)
                     if component:
-                        epic.remove_feature(component)
+                        epic.remove_sub_epic(component)
             if not component:
                 for epic in self.epics:
-                    component = next((f for f in epic.features if f.name == component_name), None)
+                    component = next((f for f in epic.sub_epics if f.name == component_name), None)
                     if component:
-                        epic.remove_feature(component)
+                        epic.remove_sub_epic(component)
                         break
         elif component_type == "story":
-            if epic_name and feature_name:
+            if epic_name and sub_epic_name:
                 epic = next((e for e in self.epics if e.name == epic_name), None)
                 if epic:
-                    feature = next((f for f in epic.features if f.name == feature_name), None)
-                    if feature:
-                        component = next((s for s in feature.stories if s.name == component_name), None)
+                    sub_epic = next((f for f in epic.sub_epics if f.name == sub_epic_name), None)
+                    if sub_epic:
+                        component = next((s for s in sub_epic.stories if s.name == component_name), None)
                         if component:
                             feature._remove_child(component)
             if not component:
@@ -406,16 +415,16 @@ class StoryIODiagram(StoryIOComponent):
     def reorder_component(self, component_name: str, component_type: str,
                          target_component_name: str,
                          epic_name: Optional[str] = None,
-                         feature_name: Optional[str] = None) -> 'StoryIOComponent':
+                         sub_epic_name: Optional[str] = None) -> 'StoryIOComponent':
         """
         Move a component before another component (reorder).
         
         Args:
             component_name: Name of the component to move
-            component_type: Type of component ('epic', 'feature', 'story')
+            component_type: Type of component ('epic', 'sub_epic', 'story')
             target_component_name: Name of the component to move before
-            epic_name: Optional epic name for feature/story search
-            feature_name: Optional feature name for story search
+            epic_name: Optional epic name for sub-epic/story search
+            sub_epic_name: Optional sub-epic name for story search
         
         Returns:
             The moved component
@@ -433,16 +442,16 @@ class StoryIODiagram(StoryIOComponent):
             if epic_name:
                 epic = next((e for e in self.epics if e.name == epic_name), None)
                 if epic:
-                    component = next((f for f in epic.features if f.name == component_name), None)
+                    component = next((f for f in epic.sub_epics if f.name == component_name), None)
                     target = next((f for f in epic.features if f.name == target_component_name), None)
         elif component_type == "story":
-            if epic_name and feature_name:
+            if epic_name and sub_epic_name:
                 epic = next((e for e in self.epics if e.name == epic_name), None)
                 if epic:
-                    feature = next((f for f in epic.features if f.name == feature_name), None)
-                    if feature:
-                        component = next((s for s in feature.stories if s.name == component_name), None)
-                        target = next((s for s in feature.stories if s.name == target_component_name), None)
+                    sub_epic = next((f for f in epic.sub_epics if f.name == sub_epic_name), None)
+                    if sub_epic:
+                        component = next((s for s in sub_epic.stories if s.name == component_name), None)
+                        target = next((s for s in sub_epic.stories if s.name == target_component_name), None)
         
         if not component:
             raise ValueError(f"{component_type.capitalize()} '{component_name}' not found")
@@ -769,7 +778,7 @@ class StoryIODiagram(StoryIOComponent):
         if generate_report:
             before_state = {
                 'epics_count': len(self.epics),
-                'features_count': len(self.features),
+                'sub_epics_count': len(self.sub_epics),
                 'stories_count': len(self.stories)
             }
         
@@ -827,7 +836,7 @@ class StoryIODiagram(StoryIOComponent):
         if generate_report:
             before_state = {
                 'epics_count': len(self.epics),
-                'features_count': len(self.features),
+                'sub_epics_count': len(self.sub_epics),
                 'stories_count': len(self.stories),
                 'increments_count': len(self.increments)
             }
@@ -894,24 +903,10 @@ class StoryIODiagram(StoryIOComponent):
             estimated_stories=data.get('estimated_stories')
         )
         
-        # Support both old format (features) and new format (sub_epics)
-        # New format: sub_epics can contain nested sub_epics or stories
-        # Old format: features contain stories
-        
-        # Handle new format: sub_epics (recursive)
+        # Handle sub_epics (recursive)
         for sub_epic_data in data.get('sub_epics', []):
-            feature = self._create_feature_from_sub_epic_data(sub_epic_data, epic)
-            feature.change_parent(epic)
-        
-        # Handle old format: features (for backward compatibility)
-        for feat_data in data.get('features', []):
-            feature = self._create_feature_from_data(feat_data)
-            feature.change_parent(epic)
-            
-            # Add stories
-            for story_data in feat_data.get('stories', []):
-                story = self._create_story_from_data(story_data)
-                story.change_parent(feature)
+            sub_epic = self._create_feature_from_sub_epic_data(sub_epic_data, epic)
+            sub_epic.change_parent(epic)
         
         # Add direct stories (new format allows stories directly under epic)
         for story_data in data.get('stories', []):
@@ -947,7 +942,7 @@ class StoryIODiagram(StoryIOComponent):
                     story = self._create_story_from_data(story_data)
                     story.change_parent(feature)
         else:
-            # Handle stories in sub_epic (legacy format, for backward compatibility)
+            # Handle stories in sub_epic (only if no story_groups)
             for story_data in data.get('stories', []):
                 story = self._create_story_from_data(story_data)
                 story.change_parent(feature)
@@ -1060,7 +1055,7 @@ class StoryIODiagram(StoryIOComponent):
         return {
             'diagram': self.name,
             'epics_count': len(self.epics),
-            'features_count': len(self.features),
+            'sub_epics_count': len(self.sub_epics),
             'stories_count': len(self.stories),
             'increments_count': len(self.increments),
             'status': 'ready'
@@ -1095,12 +1090,12 @@ class StoryIODiagram(StoryIOComponent):
         if before_state:
             report['changes'] = {
                 'epics_count_delta': current_report['epics_count'] - before_state.get('epics_count', 0),
-                'features_count_delta': current_report['features_count'] - before_state.get('features_count', 0),
+                'sub_epics_count_delta': current_report['sub_epics_count'] - before_state.get('sub_epics_count', 0),
                 'stories_count_delta': current_report['stories_count'] - before_state.get('stories_count', 0),
                 'before': before_state,
                 'after': {
                     'epics_count': current_report['epics_count'],
-                    'features_count': current_report['features_count'],
+                    'sub_epics_count': current_report['sub_epics_count'],
                     'stories_count': current_report['stories_count']
                 }
             }

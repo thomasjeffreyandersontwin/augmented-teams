@@ -14,9 +14,10 @@
       {
         "name": "build",
         "order": 3,
-        "next_action": "render",
+        "next_action": "validate",
         "instructions": [
-          "specification_tests: add test_file, test_class, and test_method fields to story-graph.json based on the test file updates / creations you are going to make",
+          "specification_tests: write test files (.py, .js, etc.) with executable test code from scenarios/examples that validate story behavior",
+          "After writing test files, update story-graph.json with test_file, test_class, and test_method mappings:",
           "",
           "1. **test_file field** - Add to sub-epic level:",
           "   - Format: \"test_file\": \"test_<sub_epic_name>.py\"",
@@ -33,16 +34,8 @@
           "   - Format: \"test_method\": \"test_<scenario_name_snake_case>\"",
           "   - Example: \"test_method\": \"test_generator_creates_bot_tool_for_test_bot\"",
           "   - Maps to the exact scenario name that the test method validates",
+          "",
           "Refine domain model concepts, relationships, and responsibilities based on test file implementation patterns and requirements"
-        ]
-      },
-      {
-        "name": "render",
-        "order": 4,
-        "next_action": "validate",
-        "instructions": [
-          "specification_tests: write test files (.py, .js, etc.) with executable test code based on the entries you have made within the @story-graph.json file",
-          "After writing test files, update story-graph.json with further test_file, test_class, and test_method mapping changes you have made"
         ]
       },
       {

@@ -640,7 +640,7 @@ class TestSurfaceBlockReason:
         then_cli_shows_log_file_path_for_details(report)
     
     def test_display_block_reason_with_context(self, workspace_directory):
-        # Given: headless session has blocked during submit operation
+        # Given: headless session has blocked during confirm operation
         log_file = given_headless_session_has_blocked(workspace_directory)
         
         # And: session log contains block reason Missing required parameter --data
@@ -649,8 +649,8 @@ class TestSurfaceBlockReason:
         # When: CLI prepares blocked report
         report = when_cli_prepares_blocked_report(workspace_directory)
         
-        # Then: CLI displays operation context submit operation
-        then_cli_displays_operation_context(report, 'submit operation')
+        # Then: CLI displays operation context confirm operation
+        then_cli_displays_operation_context(report, 'confirm operation')
         
         # And: CLI displays block reason Missing required parameter --data
         then_cli_displays_block_reason_to_console(report, 'Missing required parameter --data')

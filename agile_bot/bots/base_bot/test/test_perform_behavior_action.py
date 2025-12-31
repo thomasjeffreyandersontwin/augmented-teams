@@ -717,10 +717,10 @@ class TestCloseCurrentAction:
 
         # Then action is saved to completed_actions
         then_action_completed(state_file, bot_name, behavior, 'strategy')
-        # And workflow transitions to next action
-        then_bot_current_action_is(bot, 'build')
+        # And workflow transitions to next action (default workflow goes from strategy to validate, skipping build)
+        then_bot_current_action_is(bot, 'validate')
         then_completed_count_is(state_file, 2)
-        then_current_action_is(state_file, bot_name, behavior, 'build')
+        then_current_action_is(state_file, bot_name, behavior, 'validate')
 
 
     def test_close_action_at_final_action_stays_at_final(self, bot_directory, workspace_directory):
@@ -1298,6 +1298,72 @@ def then_behavior_transitions_match(behavior_instance, expected_transitions=None
 # Exception handling helpers removed
 
 
+def create_test_behavior_action_state(bot_directory: Path, workspace_directory: Path, bot_name: str, behavior: str, current_action: str, completed: list, return_state_file: bool = True):
+    """Create test behavior action state with bot instance.
+    
+    Sets up complete test environment:
+    1. Bootstrap environment
+    2. Create base instructions
+    3. Create bot config
+    4. Create behavior workflow
+    5. Create minimal guardrails files
+    6. Create knowledge graph configs if needed (for build action)
+    7. Create behavior action state file
+    8. Create bot instance
+    
+    Args:
+        bot_directory: Bot directory path
+        workspace_directory: Workspace directory path
+        bot_name: Bot name
+        behavior: Behavior name
+        current_action: Current action name (can be empty string)
+        completed: List of completed action entries
+        return_state_file: If True, returns (bot, state_file), else returns bot only
+    
+    Returns:
+        Bot instance, or (Bot, Path) tuple if return_state_file=True
+    """
+    # Bootstrap environment
+    bootstrap_env(bot_directory, workspace_directory)
+    
+    # Create base instructions
+    create_base_instructions(bot_directory)
+    
+    # Create bot config
+    bot_config = create_bot_config_file(bot_directory, bot_name, [behavior])
+    
+    # Create behavior workflow
+    create_actions_workflow_json(bot_directory, behavior)
+    
+    # Create minimal guardrails files (required by Guardrails class initialization)
+    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+    create_minimal_guardrails_files(bot_directory, behavior, bot_name)
+    
+    # If behavior has 'build' action, create knowledge graph configs
+    behavior_file = bot_directory / 'behaviors' / behavior / 'behavior.json'
+    if behavior_file.exists():
+        behavior_config = json.loads(behavior_file.read_text(encoding='utf-8'))
+        actions = behavior_config.get('actions_workflow', {}).get('actions', [])
+        if any(action.get('name') == 'build' for action in actions):
+            from agile_bot.bots.base_bot.test.test_build_knowledge import (
+                given_knowledge_graph_directory_structure_created,
+                given_knowledge_graph_config_and_template_created
+            )
+            kg_dir = given_knowledge_graph_directory_structure_created(bot_directory, behavior=behavior)
+            given_knowledge_graph_config_and_template_created(kg_dir)
+    
+    # Create behavior action state file
+    state_file = create_behavior_action_state_file(workspace_directory, bot_name, behavior, current_action, completed)
+    
+    # Create bot instance
+    bot = given_bot_instance_created(bot_name, bot_directory, bot_config)
+    
+    if return_state_file:
+        return bot, state_file
+    else:
+        return bot
+
+
 def when_create_behavior_action_state_with_current_action(bot_directory: Path, workspace_directory: Path, bot_name: str, behavior: str, current_action: str, completed: list):
     """When: Create behavior action state with current action."""
     bot = create_test_behavior_action_state(bot_directory, workspace_directory, bot_name, behavior, current_action, completed, return_state_file=False)
@@ -1775,6 +1841,90 @@ def given_workflow_state_created_for_execute_behavior(workspace_directory: Path,
         'completed_actions': completed_actions or []
     }), encoding='utf-8')
     return state_file
+
+
+def create_test_behavior_action_state(bot_directory: Path, workspace_directory: Path, bot_name: str, behavior: str, current_action: str, completed: list, return_state_file: bool = True):
+    """Create test behavior action state.
+    
+    Sets up environment, creates bot config, behavior workflow, workflow state, and bot instance.
+    
+    Args:
+        bot_directory: Bot directory path
+        workspace_directory: Workspace directory path
+        bot_name: Bot name
+        behavior: Behavior name
+        current_action: Current action name
+        completed: List of completed actions
+        return_state_file: If True, returns (bot, state_file). If False, returns bot only.
+    
+    Returns:
+        If return_state_file is True: (bot, state_file)
+        If return_state_file is False: bot
+    """
+    bootstrap_env(bot_directory, workspace_directory)
+    create_base_instructions(bot_directory)
+    bot_config = given_bot_config_created_for_execute_behavior(bot_directory, bot_name, [behavior])
+    # Create workflow that includes all actions (including 'build' if needed)
+    from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
+    # Check if 'build' is needed (in current_action or completed actions)
+    needs_build = current_action == 'build' or (completed and any(
+        isinstance(c, dict) and c.get('action_state', '').endswith('.build') or 
+        isinstance(c, str) and c.endswith('.build') or
+        (isinstance(c, str) and '.build' in c)
+        for c in completed
+    ))
+    # If 'build' is needed, ensure 'build' is in the workflow
+    if needs_build:
+        create_actions_workflow_json(bot_directory, behavior, actions=[
+            {
+                "name": "clarify",
+                "order": 1,
+                "next_action": "strategy",
+                "instructions": [f"Test instructions for clarify in {behavior}"]
+            },
+            {
+                "name": "strategy",
+                "order": 2,
+                "next_action": "build",
+                "instructions": [f"Test instructions for strategy in {behavior}"]
+            },
+            {
+                "name": "build",
+                "order": 3,
+                "next_action": "validate",
+                "instructions": [f"Test instructions for build in {behavior}"]
+            },
+            {
+                "name": "validate",
+                "order": 4,
+                "next_action": "render",
+                "instructions": [f"Test instructions for validate in {behavior}"]
+            },
+            {
+                "name": "render",
+                "order": 5,
+                "instructions": [f"Test instructions for render in {behavior}"]
+            }
+        ])
+        # Create minimal guardrails files and knowledge graph configs for build action
+        create_minimal_guardrails_files(bot_directory, behavior, bot_name)
+        # Create knowledge graph configs if needed
+        from agile_bot.bots.base_bot.test.test_build_knowledge import (
+            given_knowledge_graph_directory_structure_created,
+            given_knowledge_graph_config_and_template_created
+        )
+        kg_dir = given_knowledge_graph_directory_structure_created(bot_directory, behavior)
+        given_knowledge_graph_config_and_template_created(kg_dir)
+    else:
+        given_behavior_workflow_created_for_execute_behavior(bot_directory, behavior)
+    state_file = given_workflow_state_created_for_execute_behavior(workspace_directory, bot_name, behavior, current_action, completed)
+    bot = given_bot_instance_created(bot_name, bot_directory, bot_config)
+    
+    if return_state_file:
+        return bot, state_file
+    else:
+        return bot
 
 
 def given_bot_setup_with_action(bot_directory: Path, workspace_directory: Path, bot_name: str, behaviors: list, behavior: str, action: str) -> tuple[Bot, Path]:
@@ -4272,8 +4422,9 @@ def given_story_graph_with_epics_and_increments():
                 'epics': [
                     {
                         'name': 'Epic A',
-                        'features': [
+                        'sub_epics': [
                             {
+                                'name': 'Sub-epic A1',
                                 'stories': [
                                     {'name': 'Story A1'},
                                     {'name': 'Story A2'}
@@ -4289,8 +4440,9 @@ def given_story_graph_with_epics_and_increments():
                 'epics': [
                     {
                         'name': 'Epic B',
-                        'features': [
+                        'sub_epics': [
                             {
+                                'name': 'Sub-epic B1',
                                 'stories': [
                                     {'name': 'Story B1'},
                                     {'name': 'Story B2'}

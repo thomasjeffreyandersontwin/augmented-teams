@@ -100,7 +100,7 @@ class MCPServerGenerator:
 
     def _check_behavior_artifacts(self, stories_dir: Path, behavior: str) -> list:
         artifacts = []
-        patterns = {'shape': ['*story_map*', '*epic*', '*feature*'], 'prioritization': ['*increment*', '*priority*', '*backlog*'], 'arrange': ['*arrangement*', '*execution_order*'], 'discovery': ['*discovery*', '*flow*', '*rules*'], 'exploration': ['*exploration*', '*criteria*'], 'scenarios': ['*.feature', '*scenario*'], 'tests': ['*test*.py', '*_test.py', 'test_*.py']}
+        patterns = {'shape': ['*story_map*', '*epic*', '*sub_epic*', '*feature*'], 'prioritization': ['*increment*', '*priority*', '*backlog*'], 'arrange': ['*arrangement*', '*execution_order*'], 'discovery': ['*discovery*', '*flow*', '*rules*'], 'exploration': ['*exploration*', '*criteria*'], 'scenarios': ['*.feature', '*scenario*'], 'tests': ['*test*.py', '*_test.py', 'test_*.py']}
         behavior_patterns = patterns.get(behavior, [])
         for pattern in behavior_patterns:
             matches = list(stories_dir.rglob(pattern))

@@ -176,9 +176,7 @@
 - And CLI displays log file path
 - And CLI exits with failure status code
 
-### Scenario: Recover from AI stuck in planning mode
-
-**Steps:**
+### Scenario: Recover from AI stuck in planning mode**Steps:**
 - Given headless session is running
 - And AI indicates stuck in planning mode (reached MAX_LOOPS limit of 50)
 - And RecoverableError indicates AI stuck in planning
@@ -212,9 +210,7 @@
 - And CLI displays log file path for full details
 - And CLI exits with failure status code
 
-### Scenario: Report non-recoverable failure with partial results
-
-**Steps:**
+### Scenario: Report non-recoverable failure with partial results**Steps:**
 - Given headless session was executing shape behavior
 - And clarify action completed successfully
 - And strategy action failed with validation error

@@ -87,9 +87,9 @@ class ActionHelp:
             "Hierarchy: behavior → action → stage",
             "",
             "Usage:",
-            f"  {self.action_name} [instructions|submit|confirm]",
+            f"  {self.action_name} [instructions|confirm]",
             "",
-            "Action Stages (three steps):",
+            "Action Stages (two steps):",
             "",
         ]
         
@@ -98,7 +98,7 @@ class ActionHelp:
         lines.extend(stage_collection.format_as_lines())
         
         lines.extend([
-            "Note: Calling action name without stage cycles through: instructions → submit → confirm",
+            "Note: Calling action name without stage cycles through: instructions → confirm",
             "",
         ])
         
@@ -119,16 +119,9 @@ class ActionHelp:
                 "",
             ],
             [
-                "  2. submit",
-                "     Request: Submit answers and evidence",
-                "     Response: Shows acknowledgment of submission",
-                f"     Example: {self.action_name} submit  (or call {self.action_name} again to cycle)",
-                "",
-            ],
-            [
-                "  3. confirm",
-                "     Request: Confirm action complete and advance to next",
-                "     Response: Auto-executes next action and shows its instructions",
+                "  2. confirm",
+                "     Request: Process work, mark complete and advance to next action",
+                "     Response: Saves any data, then auto-executes next action and shows its instructions",
                 f"     Example: {self.action_name} confirm  (or call {self.action_name} again to cycle)",
                 "",
             ],
@@ -197,7 +190,7 @@ class HeadlessModeHelp:
                 "      headless \"text\"                    Execute pass-through instruction",
                 "      headless shape                      Execute entire behavior",
                 "      headless shape.build                Execute single action",
-                "      headless shape.build.submit         Execute single operation",
+                "      headless shape.build.confirm        Execute single operation",
                 "      headless shape.build \"message\"      Execute action with context message",
                 "",
                 "    Options:",
@@ -252,9 +245,9 @@ class REPLHelp:
             CommandExample("echo '.' | python repl_main.py", "Execute current behavior.action.operation"),
             CommandExample("echo 'shape' | python repl_main.py", "Jump to behavior and execute first action.operation"),
             CommandExample("echo 'build' | python repl_main.py", "Jump to action and execute first operation"),
-            CommandExample("echo 'submit scope=\"s1\"' | python repl_main.py", "Jump to operation with params and execute"),
+            CommandExample("echo 'confirm scope=\"s1\"' | python repl_main.py", "Jump to operation with params and execute"),
             CommandExample("echo 'shape.build' | python repl_main.py", "Jump to behavior.action and execute first operation"),
-            CommandExample("echo 'shape.build.submit' | python repl_main.py", "Jump to behavior.action.operation and execute"),
+            CommandExample("echo 'shape.build.confirm' | python repl_main.py", "Jump to behavior.action.operation and execute"),
             CommandExample("python repl_main.py headless shape", "Execute behavior in headless mode (unattended)"),
         ]
     
@@ -296,14 +289,14 @@ class REPLHelp:
                 action_desc = next((a.description for a in self.action_descriptions if a.name == action_name), "")
                 
                 instructions_hint = self.session._get_instructions_params_hint(action)
-                submit_hint = self.session._get_submit_params_hint(action)
+                confirm_hint = self.session._get_confirm_params_hint(action)
                 
                 # Combine hints
                 hints = []
                 if instructions_hint:
                     hints.append(instructions_hint)
-                if submit_hint:
-                    hints.append(submit_hint)
+                if confirm_hint:
+                    hints.append(confirm_hint)
                 
                 params_line = " | ".join(hints) if hints else ""
                 
@@ -322,23 +315,20 @@ class REPLHelp:
         if self.session and self.session.has_current_action:
             action_obj = self.session.current_action
             instructions_hint = self.session._get_instructions_params_hint(action_obj)
-            submit_hint = self.session._get_submit_params_hint(action_obj)
+            confirm_hint = self.session._get_confirm_params_hint(action_obj)
             
             if instructions_hint:
                 lines.append(f"      instructions  {instructions_hint}")
             else:
                 lines.append(f"      instructions")
             
-            if submit_hint:
-                lines.append(f"      submit        {submit_hint}")
+            if confirm_hint:
+                lines.append(f"      confirm       {confirm_hint}")
             else:
-                lines.append(f"      submit")
-            
-            lines.append(f"      confirm")
+                lines.append(f"      confirm")
         else:
             lines.append(f"      instructions  [context, scope, or action-specific params]")
-            lines.append(f"      submit        [scope, decisions, assumptions, or action-specific params]")
-            lines.append(f"      confirm")
+            lines.append(f"      confirm       [scope, decisions, assumptions, or action-specific params]")
         
         lines.extend([
             "",

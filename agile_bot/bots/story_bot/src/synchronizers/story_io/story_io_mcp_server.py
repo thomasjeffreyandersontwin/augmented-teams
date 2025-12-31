@@ -336,25 +336,25 @@ if mcp:
     
     
     @mcp.tool()
-    def create_feature(
-        feature_name: str,
+    def create_sub_epic(
+        sub_epic_name: str,
         epic_name: str,
         story_graph_path: Optional[str] = None,
         drawio_path: Optional[str] = None,
         sequential_order: Optional[float] = None,
-        target_feature_name: Optional[str] = None,
+        target_sub_epic_name: Optional[str] = None,
         output_path: Optional[str] = None
     ) -> str:
         """
-        Create a new feature in an epic.
+        Create a new sub-epic in an epic.
         
         Args:
-            feature_name: Name of the new feature
-            epic_name: Name of the epic to add feature to
+            sub_epic_name: Name of the new sub-epic
+            epic_name: Name of the epic to add sub-epic to
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             sequential_order: Optional sequential order (defaults to end)
-            target_feature_name: Optional feature name to insert before
+            target_sub_epic_name: Optional sub-epic name to insert before
             output_path: Optional path to save modified file (defaults to input file)
         
         Returns:
@@ -365,14 +365,14 @@ if mcp:
                 raise ValueError("Must provide either drawio_path or story_graph_path")
             
             diagram = _load_diagram_from_path(story_graph_path, drawio_path)
-            feature = diagram.create_feature(feature_name, epic_name, sequential_order, target_feature_name)
+            sub_epic = diagram.create_sub_epic(sub_epic_name, epic_name, sequential_order, target_sub_epic_name)
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
             
             return json.dumps({
                 "success": True,
-                "feature_name": feature_name,
+                "sub_epic_name": sub_epic_name,
                 "epic_name": epic_name,
-                "features_count": len(feature.parent.features),
+                "sub_epics_count": len(sub_epic.parent.sub_epics),
                 "output_path": saved_path
             }, indent=2)
         except Exception as e:
@@ -386,7 +386,7 @@ if mcp:
     def create_story(
         story_name: str,
         epic_name: str,
-        feature_name: str,
+        sub_epic_name: str,
         story_graph_path: Optional[str] = None,
         drawio_path: Optional[str] = None,
         sequential_order: Optional[float] = None,
@@ -396,12 +396,12 @@ if mcp:
         output_path: Optional[str] = None
     ) -> str:
         """
-        Create a new story in a feature.
+        Create a new story in a sub-epic.
         
         Args:
             story_name: Name of the new story
-            epic_name: Name of the epic containing the feature
-            feature_name: Name of the feature to add story to
+            epic_name: Name of the epic containing the sub-epic
+            sub_epic_name: Name of the sub-epic to add story to
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             sequential_order: Optional sequential order (defaults to end)
@@ -418,13 +418,13 @@ if mcp:
                 raise ValueError("Must provide either drawio_path or story_graph_path")
             
             diagram = _load_diagram_from_path(story_graph_path, drawio_path)
-            story = diagram.create_story(story_name, epic_name, feature_name, sequential_order, users, story_type, target_story_name)
+            story = diagram.create_story(story_name, epic_name, sub_epic_name, sequential_order, users, story_type, target_story_name)
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
             
             return json.dumps({
                 "success": True,
                 "story_name": story_name,
-                "feature_name": feature_name,
+                "sub_epic_name": sub_epic_name,
                 "epic_name": epic_name,
                 "stories_count": len(story.parent.stories),
                 "output_path": saved_path
@@ -445,7 +445,7 @@ if mcp:
         new_name: Optional[str] = None,
         sequential_order: Optional[float] = None,
         epic_name: Optional[str] = None,
-        feature_name: Optional[str] = None,
+        sub_epic_name: Optional[str] = None,
         output_path: Optional[str] = None
     ) -> str:
         """
@@ -453,13 +453,13 @@ if mcp:
         
         Args:
             component_name: Name of the component to update
-            component_type: Type of component ('epic', 'feature', 'story')
+            component_type: Type of component ('epic', 'sub_epic', 'story')
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             new_name: Optional new name for the component
             sequential_order: Optional new sequential order
             epic_name: Optional epic name for feature/story search
-            feature_name: Optional feature name for story search
+            sub_epic_name: Optional sub-epic name for story search
             output_path: Optional path to save modified file (defaults to input file)
         
         Returns:
@@ -470,7 +470,7 @@ if mcp:
                 raise ValueError("Must provide either drawio_path or story_graph_path")
             
             diagram = _load_diagram_from_path(story_graph_path, drawio_path)
-            component = diagram.update_component(component_name, component_type, new_name, sequential_order, epic_name, feature_name)
+            component = diagram.update_component(component_name, component_type, new_name, sequential_order, epic_name, sub_epic_name)
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
             
             return json.dumps({
@@ -495,7 +495,7 @@ if mcp:
         story_graph_path: Optional[str] = None,
         drawio_path: Optional[str] = None,
         epic_name: Optional[str] = None,
-        feature_name: Optional[str] = None,
+        sub_epic_name: Optional[str] = None,
         output_path: Optional[str] = None
     ) -> str:
         """
@@ -503,11 +503,11 @@ if mcp:
         
         Args:
             component_name: Name of the component to remove
-            component_type: Type of component ('epic', 'feature', 'story')
+            component_type: Type of component ('epic', 'sub_epic', 'story')
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             epic_name: Optional epic name for feature/story search
-            feature_name: Optional feature name for story search
+            sub_epic_name: Optional sub-epic name for story search
             output_path: Optional path to save modified file (defaults to input file)
         
         Returns:
@@ -518,7 +518,7 @@ if mcp:
                 raise ValueError("Must provide either drawio_path or story_graph_path")
             
             diagram = _load_diagram_from_path(story_graph_path, drawio_path)
-            diagram.remove_component(component_name, component_type, epic_name, feature_name)
+            diagram.remove_component(component_name, component_type, epic_name, sub_epic_name)
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
             
             return json.dumps({
@@ -541,7 +541,7 @@ if mcp:
         story_graph_path: Optional[str] = None,
         drawio_path: Optional[str] = None,
         epic_name: Optional[str] = None,
-        feature_name: Optional[str] = None,
+        sub_epic_name: Optional[str] = None,
         output_path: Optional[str] = None
     ) -> str:
         """
@@ -553,7 +553,7 @@ if mcp:
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             epic_name: Optional epic name to narrow search
-            feature_name: Optional feature name to narrow search
+            sub_epic_name: Optional sub-epic name to narrow search
             output_path: Optional path to save modified file (defaults to input file)
         
         Returns:
@@ -569,7 +569,7 @@ if mcp:
                 story_name=story_name,
                 user_name=user_name,
                 epic_name=epic_name,
-                feature_name=feature_name
+                sub_epic_name=sub_epic_name
             )
             
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
@@ -595,7 +595,7 @@ if mcp:
         story_graph_path: Optional[str] = None,
         drawio_path: Optional[str] = None,
         epic_name: Optional[str] = None,
-        feature_name: Optional[str] = None,
+        sub_epic_name: Optional[str] = None,
         output_path: Optional[str] = None
     ) -> str:
         """
@@ -607,7 +607,7 @@ if mcp:
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             epic_name: Optional epic name to narrow search
-            feature_name: Optional feature name to narrow search
+            sub_epic_name: Optional sub-epic name to narrow search
             output_path: Optional path to save modified file (defaults to input file)
         
         Returns:
@@ -618,7 +618,7 @@ if mcp:
                 raise ValueError("Must provide either drawio_path or story_graph_path")
             
             diagram = _load_diagram_from_path(story_graph_path, drawio_path)
-            story = diagram.remove_user_from_story(story_name, user_name, epic_name, feature_name)
+            story = diagram.remove_user_from_story(story_name, user_name, epic_name, sub_epic_name)
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
             
             return json.dumps({
@@ -643,7 +643,7 @@ if mcp:
         story_graph_path: Optional[str] = None,
         drawio_path: Optional[str] = None,
         epic_name: Optional[str] = None,
-        feature_name: Optional[str] = None,
+        sub_epic_name: Optional[str] = None,
         output_path: Optional[str] = None
     ) -> str:
         """
@@ -651,12 +651,12 @@ if mcp:
         
         Args:
             component_name: Name of the component to move
-            component_type: Type of component ('epic', 'feature', 'story')
+            component_type: Type of component ('epic', 'sub_epic', 'story')
             target_component_name: Name of the component to move before
             story_graph_path: Optional path to story graph JSON file
             drawio_path: Optional path to DrawIO diagram file (takes precedence)
             epic_name: Optional epic name for feature/story search
-            feature_name: Optional feature name for story search
+            sub_epic_name: Optional sub-epic name for story search
             output_path: Optional path to save modified file (defaults to input file)
         
         Returns:
@@ -667,7 +667,7 @@ if mcp:
                 raise ValueError("Must provide either drawio_path or story_graph_path")
             
             diagram = _load_diagram_from_path(story_graph_path, drawio_path)
-            component = diagram.reorder_component(component_name, component_type, target_component_name, epic_name, feature_name)
+            component = diagram.reorder_component(component_name, component_type, target_component_name, epic_name, sub_epic_name)
             saved_path = _save_diagram(diagram, story_graph_path, drawio_path, output_path)
             
             return json.dumps({

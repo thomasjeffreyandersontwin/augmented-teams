@@ -33,7 +33,7 @@ Provide Story Scope Context For Instructions functionality for the mob minion sy
 **Steps:**
 ```gherkin
 Given story graph contains epic "Run Interactive REPL" with stories: Navigate To Behavior, Navigate To Action, Request Help, Request Status
-And story graph contains epic "Execute Behavior Actions" with stories: Submit Action, Confirm Action, Advance To Next
+And story graph contains epic "Execute Behavior Actions" with stories: Confirm Action, Advance To Next
 And REPLSession is active with Bot at behavior "shape" action "build"
 And user enters command: "instructions --scope '{"type": "<scope_type>", "value": ["<scope_value>"]}'"
 When REPLSession processes the command with scope
@@ -49,7 +49,7 @@ And Action receives ActionContext with <matched_count> stories in scope
 | story | Navigate To Behavior | 1 | Navigate To Behavior |
 | story | Request Help | 1 | Request Help |
 | epic | Run Interactive REPL | 4 | Navigate To Behavior, Navigate To Action, Request Help, Request Status |
-| epic | Execute Behavior Actions | 3 | Submit Action, Confirm Action, Advance To Next |
+| epic | Execute Behavior Actions | 2 | Confirm Action, Advance To Next |
 
 
 ### Scenario: Scope filters by increment returns stories with matching priority (happy_path)

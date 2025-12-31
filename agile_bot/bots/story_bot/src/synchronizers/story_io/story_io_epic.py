@@ -12,7 +12,7 @@ from .story_io_story import Story
 
 
 class Epic(StoryIOComponent):
-    """Represents an epic containing features and stories."""
+    """Represents an epic containing sub-epics and stories."""
     
     def __init__(self, name: str, sequential_order: Optional[float] = None,
                  position: Optional[Any] = None, boundary: Optional[Any] = None,
@@ -22,9 +22,14 @@ class Epic(StoryIOComponent):
         self._estimated_stories = estimated_stories
     
     @property
-    def features(self) -> List[Feature]:
-        """Get all features in this epic."""
+    def sub_epics(self) -> List[Feature]:
+        """Get all sub-epics in this epic."""
         return [child for child in self.children if isinstance(child, Feature)]
+    
+    @property
+    def features(self) -> List[Feature]:
+        """Deprecated: Use sub_epics instead."""
+        return self.sub_epics
     
     @property
     def stories(self) -> List[Story]:
@@ -40,39 +45,47 @@ class Epic(StoryIOComponent):
     def total_stories(self) -> int:
         """Get total stories: actual stories + estimated stories from features."""
         actual_stories = len(self.stories)
-        # Sum actual stories from all features
-        feature_stories = sum(len(feature.stories) for feature in self.features)
-        # Sum estimated stories from features (that don't have actual stories)
-        estimated_from_features = sum(
-            (feature.estimated_stories or 0) if feature.estimated_stories and len(feature.stories) == 0 
+        # Sum actual stories from all sub-epics
+        sub_epic_stories = sum(len(sub_epic.stories) for sub_epic in self.sub_epics)
+        # Sum estimated stories from sub-epics (that don't have actual stories)
+        estimated_from_sub_epics = sum(
+            (sub_epic.estimated_stories or 0) if sub_epic.estimated_stories and len(sub_epic.stories) == 0 
             else 0 
-            for feature in self.features
+            for sub_epic in self.sub_epics
         )
-        # Epic-level estimated stories (if no features exist or features are incomplete)
+        # Epic-level estimated stories (if no sub-epics exist or sub-epics are incomplete)
         epic_estimated = self._estimated_stories or 0
-        # Use epic estimate if it exists and no features have stories yet
-        if epic_estimated > 0 and feature_stories == 0 and estimated_from_features == 0:
+        # Use epic estimate if it exists and no sub-epics have stories yet
+        if epic_estimated > 0 and sub_epic_stories == 0 and estimated_from_sub_epics == 0:
             return actual_stories + epic_estimated
-        return actual_stories + feature_stories + estimated_from_features
+        return actual_stories + sub_epic_stories + estimated_from_sub_epics
+    
+    def add_sub_epic(self, sub_epic: Feature, target: Optional[Feature] = None) -> None:
+        """Add a sub-epic to this epic."""
+        if target:
+            sub_epic.change_parent(self, target)
+        else:
+            sub_epic.change_parent(self)
+    
+    def remove_sub_epic(self, sub_epic: Feature) -> None:
+        """Remove a sub-epic from this epic."""
+        if sub_epic in self.sub_epics:
+            self._remove_child(sub_epic)
     
     def add_feature(self, feature: Feature, target: Optional[Feature] = None) -> None:
-        """Add a feature to this epic."""
-        if target:
-            feature.change_parent(self, target)
-        else:
-            feature.change_parent(self)
+        """Deprecated: Use add_sub_epic instead."""
+        self.add_sub_epic(feature, target)
     
     def remove_feature(self, feature: Feature) -> None:
-        """Remove a feature from this epic."""
-        if feature in self.features:
-            self._remove_child(feature)
+        """Deprecated: Use remove_sub_epic instead."""
+        self.remove_sub_epic(feature)
     
     def synchronize(self) -> Dict[str, Any]:
         """Synchronize epic from external source (new format: sub_epics)."""
         result = {
             'name': self.name,
             'sequential_order': self.sequential_order,
-            'sub_epics': [f.synchronize_as_sub_epic() for f in self.features],
+            'sub_epics': [f.synchronize_as_sub_epic() for f in self.sub_epics],
             'stories': [s.synchronize() for s in self.stories]
         }
         if self._estimated_stories is not None:
@@ -83,7 +96,7 @@ class Epic(StoryIOComponent):
         """Generate synchronization report for this epic."""
         return {
             'epic': self.name,
-            'features_count': len(self.features),
+            'sub_epics_count': len(self.sub_epics),
             'stories_count': len(self.stories),
             'estimated_stories': self._estimated_stories,
             'total_stories': self.total_stories,
@@ -100,7 +113,7 @@ class Epic(StoryIOComponent):
             'match': self.name == other.name,
             'name_match': self.name == other.name,
             'sequential_order_match': self.sequential_order == other.sequential_order,
-            'features_count_match': len(self.features) == len(other.features),
+            'sub_epics_count_match': len(self.sub_epics) == len(other.sub_epics),
             'stories_count_match': len(self.stories) == len(other.stories)
         }
     
@@ -109,7 +122,7 @@ class Epic(StoryIOComponent):
         result = {
             'name': self.name,
             'sequential_order': self.sequential_order,
-            'sub_epics': [f.render_as_sub_epic() for f in self.features],
+            'sub_epics': [f.render_as_sub_epic() for f in self.sub_epics],
         }
         # Only include stories if there are any (epics typically don't have direct stories)
         if self.stories:
@@ -122,7 +135,7 @@ class Epic(StoryIOComponent):
         """Convert epic to dictionary."""
         result = super().to_dict()
         result['type'] = 'epic'
-        result['features'] = [f.to_dict() for f in self.features]
+        result['sub_epics'] = [f.to_dict() for f in self.sub_epics]
         if self._estimated_stories is not None:
             result['estimated_stories'] = self._estimated_stories
         return result

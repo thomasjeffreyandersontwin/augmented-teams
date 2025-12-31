@@ -9,7 +9,7 @@ alwaysApply: false
 
 ## Overview
 
-A story graph is a hierarchical JSON structure containing epics, sub-epics (features), and stories. The story map visualizes this hierarchy as a horizontal flow diagram with vertical nesting for optional and alternative paths.
+A story graph is a hierarchical JSON structure containing epics, sub-epics, and stories. The story map visualizes this hierarchy as a horizontal flow diagram with vertical nesting for optional and alternative paths.
 
 ---
 
@@ -17,7 +17,7 @@ A story graph is a hierarchical JSON structure containing epics, sub-epics (feat
 
 The story graph follows this hierarchy:
 - **Epics** (top level) → contain `sub_epics`
-- **Sub-Epics** (also called "features") → contain `story_groups` (can have multiple levels - a sub-epic can contain sub-epics)
+- **Sub-Epics** → contain `story_groups` (can have multiple levels - a sub-epic can contain sub-epics)
 - **Story Groups** → contain `stories` and have `type` (and/or) and `connector` (and/or/opt/null)
 - **Stories** → contain `acceptance_criteria` (optional) - **NO nested stories**
 
@@ -116,7 +116,7 @@ The story graph follows this hierarchy:
 - **Height**: 60px
 - **Position**: Top row (y=130)
 
-### 3.2 Sub-Epics (Features)
+### 3.2 Sub-Epics
 - **Style**: `rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;`
 - **Color**: Green (#d5e8d4)
 - **Shape**: Rounded rectangle

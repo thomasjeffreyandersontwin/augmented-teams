@@ -21,6 +21,13 @@ class ScopeType(Enum):
     FILES = 'files'
 
 
+class ValidationType(Enum):
+    """Type of content a behavior validates by default."""
+    STORY_GRAPH = 'story_graph'  # Validates story graph only
+    FILES = 'files'  # Validates files only
+    BOTH = 'both'  # Validates both story graph and files
+
+
 @dataclass
 class KnowledgeGraphFilter:
     """Filters content by knowledge graph nodes (stories, epics, increments).
@@ -426,7 +433,7 @@ class Scope:
         if node_type == 'story':
             return lines
         
-        # Add sub_epics (features)
+        # Add sub_epics
         for sub_epic in node.get('sub_epics', []):
             lines.extend(self._format_node_with_children(sub_epic, 'sub epic', indent + 1))
         

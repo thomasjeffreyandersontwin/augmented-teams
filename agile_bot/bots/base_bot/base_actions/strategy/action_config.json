@@ -1,4 +1,4 @@
-{"name": "decide_strategy", "description": "decide approach by capturing assumptions and decision criteria", "workflow": true, "order": 3, "next_action": "build_knowledge", 
+{"name": "decide_strategy", "description": "decide approach by capturing assumptions and decision criteria", "workflow": true, "order": 3, "auto_confirm": false, "next_action": "build_knowledge", 
     "instructions": [
       "Review context then:",
       "- For each assumption, state whether you accept it or propose a modification. Provide justification based on the context.",

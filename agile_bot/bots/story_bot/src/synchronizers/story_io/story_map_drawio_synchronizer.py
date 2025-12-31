@@ -174,17 +174,17 @@ def get_increments_and_boundaries(drawio_path: Path) -> List[Dict[str, Any]]:
 
 def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
     """
-    Get all epics and sub_epics (features) with their boundaries (x, y, width, height).
+    Get all epics and sub_epics with their boundaries (x, y, width, height).
     
     Returns:
-        Dictionary with 'epics' and 'features' lists (features will become sub_epics)
+        Dictionary with 'epics' and 'sub_epics' lists
     """
     tree = ET.parse(drawio_path)
     root = tree.getroot()
     cells = root.findall('.//mxCell')
     
     epics = []
-    features = []
+    sub_epics = []
     
     # First pass: collect all cells and build parent-child relationships
     cell_map = {}  # id -> cell
@@ -264,10 +264,10 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                 epic_data['total_stories'] = estimated_stories  # Also set total_stories
             epics.append(epic_data)
         
-        # Features: green boxes (fillColor=#d5e8d4)
-        # NEVER match by ID - extract all features by position/containment only
+        # Sub-epics: green boxes (fillColor=#d5e8d4)
+        # NEVER match by ID - extract all sub-epics by position/containment only
         elif 'fillColor=#d5e8d4' in style:
-            # If feature is in a group, use group's absolute position + feature's relative position
+            # If sub-epic is in a group, use group's absolute position + sub-epic's relative position
             parent_id = parent_map.get(cell_id)
             absolute_x = geom['x']
             absolute_y = geom['y']
@@ -276,11 +276,11 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                 if parent_cell is not None:
                     parent_geom = extract_geometry(parent_cell)
                     if parent_geom:
-                        # Feature's x/y are relative to group, add group's absolute position
+                        # Sub-epic's x/y are relative to group, add group's absolute position
                         absolute_x = parent_geom['x'] + geom['x']
                         absolute_y = parent_geom['y'] + geom['y']
             
-            feature_data = {
+            sub_epic_data = {
                 'id': cell_id,
                 'name': value,
                 'epic_num': None,  # Will assign by position/containment
@@ -313,10 +313,10 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                             break
             
             if estimated_stories:
-                feature_data['estimated_stories'] = estimated_stories
-                feature_data['story_count'] = estimated_stories  # Legacy field
-                feature_data['total_stories'] = estimated_stories  # Also set total_stories
-            features.append(feature_data)
+                sub_epic_data['estimated_stories'] = estimated_stories
+                sub_epic_data['story_count'] = estimated_stories  # Legacy field
+                sub_epic_data['total_stories'] = estimated_stories  # Also set total_stories
+            sub_epics.append(sub_epic_data)
     
     # Assign epic_num to epics by position/order (left to right, top to bottom)
     epics.sort(key=lambda x: (x['x'], x['y']))
@@ -326,14 +326,14 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
     
     # Assign epic_num to features by position/containment
     # Epics may be in a group with different coordinate space, so we need to be more flexible
-    for feature in features:
-        if feature['epic_num'] is None:
-            feature_x = feature['x']
-            feature_y = feature['y']
+    for sub_epic in sub_epics:
+        if sub_epic['epic_num'] is None:
+            sub_epic_x = sub_epic['x']
+            sub_epic_y = sub_epic['y']
             
-            # Try multiple strategies to assign feature to epic:
-            # 1. Check if feature is within epic's horizontal bounds (X coordinate)
-            # 2. Check if feature is within epic's vertical bounds (Y coordinate) 
+            # Try multiple strategies to assign sub-epic to epic:
+            # 1. Check if sub-epic is within epic's horizontal bounds (X coordinate)
+            # 2. Check if sub-epic is within epic's vertical bounds (Y coordinate) 
             # 3. Use closest epic by distance
             best_epic = None
             best_score = float('inf')
@@ -347,16 +347,16 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                 epic_bottom = epic_y + epic_height
                 
                 # Check horizontal containment (primary)
-                x_contained = epic_x <= feature_x <= epic_right
-                # Check vertical proximity (features are usually below epics)
-                y_proximity = feature_y > epic_y and feature_y < epic_bottom + 1000  # Features can be well below epics
+                x_contained = epic_x <= sub_epic_x <= epic_right
+                # Check vertical proximity (sub-epics are usually below epics)
+                y_proximity = sub_epic_y > epic_y and sub_epic_y < epic_bottom + 1000  # Sub-epics can be well below epics
                 
                 # Calculate distance score (lower is better)
-                distance = ((epic_x - feature_x) ** 2 + (epic_y - feature_y) ** 2) ** 0.5
+                distance = ((epic_x - sub_epic_x) ** 2 + (epic_y - sub_epic_y) ** 2) ** 0.5
                 
-                # Prefer epics that contain the feature horizontally
+                # Prefer epics that contain the sub-epic horizontally
                 if x_contained:
-                    score = distance * 0.1  # Much lower score for contained features
+                    score = distance * 0.1  # Much lower score for contained sub-epics
                 elif y_proximity:
                     score = distance * 0.5  # Medium score for vertical proximity
                 else:
@@ -367,74 +367,74 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                     best_epic = epic
             
             if best_epic:
-                feature['epic_num'] = best_epic['epic_num']
+                sub_epic['epic_num'] = best_epic['epic_num']
             # Fallback: assign to closest epic by X position
             elif epics:
-                closest_epic = min(epics, key=lambda e: abs(e['x'] - feature['x']))
-                feature['epic_num'] = closest_epic['epic_num']
+                closest_epic = min(epics, key=lambda e: abs(e['x'] - sub_epic['x']))
+                sub_epic['epic_num'] = closest_epic['epic_num']
     
-    # Assign feat_num to features by position/order within each epic (left to right)
-    # Also detect nested features (features inside other features) for N-level nesting
+    # Assign feat_num to sub-epics by position/order within each epic (left to right)
+    # Also detect nested sub-epics (sub-epics inside other sub-epics) for N-level nesting
     for epic in epics:
-        epic_features = [f for f in features if f['epic_num'] == epic['epic_num']]
+        epic_sub_epics = [f for f in sub_epics if f['epic_num'] == epic['epic_num']]
         # Sort by X position to get order
-        epic_features.sort(key=lambda f: f['x'])
+        epic_sub_epics.sort(key=lambda f: f['x'])
         # Assign feat_num based on order (starting from 1)
-        for idx, feature in enumerate(epic_features, 1):
-            if feature.get('feat_num') is None:
-                feature['feat_num'] = idx
+        for idx, sub_epic in enumerate(epic_sub_epics, 1):
+            if sub_epic.get('feat_num') is None:
+                sub_epic['feat_num'] = idx
     
-    # Detect nested features (features inside other features) for N-level nesting
-    # A feature is nested if it's contained within another feature's bounds
-    for feature in features:
-        feature['parent_feat_num'] = None  # Track parent feature for nesting
-        feature['parent_epic_num'] = feature.get('epic_num')  # Track which epic it belongs to
+    # Detect nested sub-epics (sub-epics inside other sub-epics) for N-level nesting
+    # A sub-epic is nested if it's contained within another sub-epic's bounds
+    for sub_epic in sub_epics:
+        sub_epic['parent_feat_num'] = None  # Track parent sub-epic for nesting
+        sub_epic['parent_epic_num'] = sub_epic.get('epic_num')  # Track which epic it belongs to
         
-        feature_x = feature['x']
-        feature_y = feature['y']
-        feature_width = feature.get('width', 0)
-        feature_height = feature.get('height', 0)
-        feature_right = feature_x + feature_width
-        feature_bottom = feature_y + feature_height
+        sub_epic_x = sub_epic['x']
+        sub_epic_y = sub_epic['y']
+        sub_epic_width = sub_epic.get('width', 0)
+        sub_epic_height = sub_epic.get('height', 0)
+        sub_epic_right = sub_epic_x + sub_epic_width
+        sub_epic_bottom = sub_epic_y + sub_epic_height
         
-        # Check if this feature is nested inside another feature
-        # Look for features in the same epic that contain this feature
-        same_epic_features = [f for f in features 
-                             if f.get('epic_num') == feature.get('epic_num') 
-                             and f.get('id') != feature.get('id')]
+        # Check if this sub-epic is nested inside another sub-epic
+        # Look for sub-epics in the same epic that contain this sub-epic
+        same_epic_sub_epics = [f for f in sub_epics 
+                             if f.get('epic_num') == sub_epic.get('epic_num') 
+                             and f.get('id') != sub_epic.get('id')]
         
         best_parent = None
         best_score = float('inf')
         
-        for parent_feature in same_epic_features:
-            parent_x = parent_feature['x']
-            parent_y = parent_feature['y']
-            parent_width = parent_feature.get('width', 0)
-            parent_height = parent_feature.get('height', 0)
+        for parent_sub_epic in same_epic_sub_epics:
+            parent_x = parent_sub_epic['x']
+            parent_y = parent_sub_epic['y']
+            parent_width = parent_sub_epic.get('width', 0)
+            parent_height = parent_sub_epic.get('height', 0)
             parent_right = parent_x + parent_width
             parent_bottom = parent_y + parent_height
             
-            # Check if this feature is nested below parent feature
-            # Nested features are positioned BELOW the parent and horizontally aligned/overlapping
+            # Check if this sub-epic is nested below parent sub-epic
+            # Nested sub-epics are positioned BELOW the parent and horizontally aligned/overlapping
             # They don't need to be completely inside - they're typically below the parent
             tolerance = 10  # Allow small overlap/offset
             parent_bottom = parent_y + parent_height
             
             # Check horizontal alignment/overlap
             horizontal_overlap = (
-                (parent_x - tolerance <= feature_x <= parent_right + tolerance) or
-                (parent_x - tolerance <= feature_right <= parent_right + tolerance) or
-                (feature_x <= parent_x and feature_right >= parent_right)  # Feature spans parent
+                (parent_x - tolerance <= sub_epic_x <= parent_right + tolerance) or
+                (parent_x - tolerance <= sub_epic_right <= parent_right + tolerance) or
+                (sub_epic_x <= parent_x and sub_epic_right >= parent_right)  # Sub-epic spans parent
             )
             
-            # Check if feature is below parent (not above)
-            is_below = feature_y >= parent_bottom - tolerance
+            # Check if sub-epic is below parent (not above)
+            is_below = sub_epic_y >= parent_bottom - tolerance
             
-            # Check if feature is not too far below (within reasonable distance, max 200px)
+            # Check if sub-epic is not too far below (within reasonable distance, max 200px)
             max_distance_below = parent_bottom + 200
-            is_within_range = feature_y < max_distance_below
+            is_within_range = sub_epic_y < max_distance_below
             
-            # Feature is nested if it's horizontally aligned and below parent
+            # Sub-epic is nested if it's horizontally aligned and below parent
             is_contained = horizontal_overlap and is_below and is_within_range
             
             if is_contained:
@@ -444,40 +444,40 @@ def get_epics_features_and_boundaries(drawio_path: Path) -> Dict[str, Any]:
                 
                 if score < best_score:
                     best_score = score
-                    best_parent = parent_feature
+                    best_parent = parent_sub_epic
         
         if best_parent:
-            feature['parent_feat_num'] = best_parent.get('feat_num')
-            feature['parent_epic_num'] = best_parent.get('epic_num')
+            sub_epic['parent_feat_num'] = best_parent.get('feat_num')
+            sub_epic['parent_epic_num'] = best_parent.get('epic_num')
     
-    # Sort features by epic_num, then parent_feat_num (None first), then feat_num, then x
-    features.sort(key=lambda x: (
+    # Sort sub-epics by epic_num, then parent_feat_num (None first), then feat_num, then x
+    sub_epics.sort(key=lambda x: (
         x['epic_num'] if x['epic_num'] is not None else 999, 
-        x['parent_feat_num'] if x['parent_feat_num'] is not None else 0,  # Features without parents come first
+        x['parent_feat_num'] if x['parent_feat_num'] is not None else 0,  # Sub-epics without parents come first
         x['feat_num'] if x['feat_num'] is not None else 999, 
         x['x']
     ))
     
     return {
         'epics': epics,
-        'features': features
+        'sub_epics': sub_epics
     }
 
 
-def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], features: List[Dict], 
+def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], sub_epics: List[Dict], 
                                      return_layout: bool = False) -> Dict[str, Any]:
     """
-    Go through each epic and feature, and build all stories.
+    Go through each epic and sub-epic, and build all stories.
     Preserves layout and spacing from DrawIO.
     
     Args:
         drawio_path: Path to DrawIO file
         epics: List of epic dictionaries
-        features: List of feature dictionaries
+        sub_epics: List of sub-epic dictionaries
         return_layout: If True, also return layout data (X/Y coordinates) for stories
     
     Returns:
-        Dictionary with epics containing features containing stories.
+        Dictionary with epics containing sub-epics containing stories.
         If return_layout=True, also includes 'layout' key with story coordinates.
     """
     tree = ET.parse(drawio_path)
@@ -602,51 +602,51 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 closest_epic = min(epics, key=lambda e: abs(e['x'] - story_x))
                 story['epic_num'] = closest_epic['epic_num']
         
-        # Assign feature by name matching (fuzzy) AND position/containment
+        # Assign sub-epic by name matching (fuzzy) AND position/containment
         if story['epic_num'] is not None:
-            epic_features = [f for f in features if f['epic_num'] == story['epic_num']]
-            if epic_features:
+            epic_sub_epics = [f for f in sub_epics if f['epic_num'] == story['epic_num']]
+            if epic_sub_epics:
                 # First, try to match by name (fuzzy matching)
                 best_match = None
                 best_similarity = 0.0
                 
-                for feature in epic_features:
-                    feature_name = feature['name'].lower()
-                    # Check if story name contains feature name or vice versa (exact match)
-                    if feature_name in story_name or story_name in feature_name:
+                for sub_epic in epic_sub_epics:
+                    sub_epic_name = sub_epic['name'].lower()
+                    # Check if story name contains sub-epic name or vice versa (exact match)
+                    if sub_epic_name in story_name or story_name in sub_epic_name:
                         similarity = 1.0
                     else:
                         # Fuzzy match using SequenceMatcher
-                        similarity = difflib.SequenceMatcher(None, story_name, feature_name).ratio()
+                        similarity = difflib.SequenceMatcher(None, story_name, sub_epic_name).ratio()
                     
                     if similarity > best_similarity:
                         best_similarity = similarity
-                        best_match = feature
+                        best_match = sub_epic
                 
                 # If fuzzy match found (similarity > 0.3), verify by position/containment
                 if best_match and best_similarity > 0.3:
-                    feature_x = best_match['x']
-                    feature_width = best_match.get('width', 200)
-                    feature_right = feature_x + feature_width
-                    # Verify story is within feature's horizontal bounds
-                    if feature_x <= story_x <= feature_right:
+                    sub_epic_x = best_match['x']
+                    sub_epic_width = best_match.get('width', 200)
+                    sub_epic_right = sub_epic_x + sub_epic_width
+                    # Verify story is within sub-epic's horizontal bounds
+                    if sub_epic_x <= story_x <= sub_epic_right:
                         story['feat_num'] = best_match.get('feat_num', 0)
                 
                 # If no fuzzy match or position doesn't match, assign by position/containment only
                 if story['feat_num'] is None:
-                    for feature in sorted(epic_features, key=lambda f: f['x']):
-                        feature_x = feature['x']
-                        feature_width = feature.get('width', 200)
-                        feature_right = feature_x + feature_width
-                        # Story belongs to feature if it's within feature's horizontal bounds
-                        if feature_x <= story_x <= feature_right:
-                            story['feat_num'] = feature.get('feat_num', 0)
+                    for sub_epic in sorted(epic_sub_epics, key=lambda f: f['x']):
+                        sub_epic_x = sub_epic['x']
+                        sub_epic_width = sub_epic.get('width', 200)
+                        sub_epic_right = sub_epic_x + sub_epic_width
+                        # Story belongs to sub-epic if it's within sub-epic's horizontal bounds
+                        if sub_epic_x <= story_x <= sub_epic_right:
+                            story['feat_num'] = sub_epic.get('feat_num', 0)
                             break
                     
-                    # If still None, assign to closest feature by X position
+                    # If still None, assign to closest sub-epic by X position
                     if story['feat_num'] is None:
-                        closest_feature = min(epic_features, key=lambda f: abs(f['x'] - story_x))
-                        story['feat_num'] = closest_feature.get('feat_num', 0)
+                        closest_sub_epic = min(epic_sub_epics, key=lambda f: abs(f['x'] - story_x))
+                        story['feat_num'] = closest_sub_epic.get('feat_num', 0)
     
     # After initial assignment, reassign stories to the deepest nested feature that contains them
     # This ensures stories belong to child features, not parent features
@@ -658,38 +658,38 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
         story_y = story['y']
         story_center_x = story_x + story.get('width', 50) / 2
         
-        # Find all features in the same epic that contain this story
+        # Find all sub-epics in the same epic that contain this story
         epic_num = story['epic_num']
-        containing_features = []
+        containing_sub_epics = []
         
-        for feature in features:
-            if feature.get('epic_num') != epic_num:
+        for sub_epic in sub_epics:
+            if sub_epic.get('epic_num') != epic_num:
                 continue
             
-            feature_x = feature['x']
-            feature_y = feature['y']
-            feature_width = feature.get('width', 0)
-            feature_height = feature.get('height', 0)
-            feature_right = feature_x + feature_width
-            feature_bottom = feature_y + feature_height
+            sub_epic_x = sub_epic['x']
+            sub_epic_y = sub_epic['y']
+            sub_epic_width = sub_epic.get('width', 0)
+            sub_epic_height = sub_epic.get('height', 0)
+            sub_epic_right = sub_epic_x + sub_epic_width
+            sub_epic_bottom = sub_epic_y + sub_epic_height
             
-            # Check if story is contained within this feature (horizontal containment)
-            # Allow some vertical tolerance for stories below features
+            # Check if story is contained within this sub-epic (horizontal containment)
+            # Allow some vertical tolerance for stories below sub-epics
             tolerance = 50
-            if (feature_x <= story_center_x <= feature_right and 
-                feature_y - tolerance <= story_y <= feature_bottom + 200):
-                containing_features.append(feature)
+            if (sub_epic_x <= story_center_x <= sub_epic_right and 
+                sub_epic_y - tolerance <= story_y <= sub_epic_bottom + 200):
+                containing_sub_epics.append(sub_epic)
         
-        # If multiple features contain this story, prefer the deepest nested one (child over parent)
-        if containing_features:
-            # Sort by depth: features with parent_feat_num (nested) come first
-            # Among nested features, prefer the one with the smallest area (most specific)
-            containing_features.sort(key=lambda f: (
+        # If multiple sub-epics contain this story, prefer the deepest nested one (child over parent)
+        if containing_sub_epics:
+            # Sort by depth: sub-epics with parent_feat_num (nested) come first
+            # Among nested sub-epics, prefer the one with the smallest area (most specific)
+            containing_sub_epics.sort(key=lambda f: (
                 0 if f.get('parent_feat_num') is not None else 1,  # Nested first
                 f.get('width', 0) * f.get('height', 0)  # Smaller area = more specific
             ))
-            best_feature = containing_features[0]
-            story['feat_num'] = best_feature.get('feat_num')
+            best_sub_epic = containing_sub_epics[0]
+            story['feat_num'] = best_sub_epic.get('feat_num')
     
     # Match users to stories based on cell ID pattern (user_e{epic}f{feat}s{story}_{user})
     # Fallback to position-based matching: match each user to the CLOSEST story below it
@@ -853,12 +853,12 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
     for idx, epic in enumerate(sorted_epics, 1):
         epic['sequential_order'] = idx
     
-    # Assign sequential order to features (left to right within each epic)
+    # Assign sequential order to sub-epics (left to right within each epic)
     for epic in sorted_epics:
-        epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
+        epic_sub_epics = sorted([f for f in sub_epics if f['epic_num'] == epic['epic_num']], 
                                key=lambda x: (x['x'], x.get('feat_num', 0)))
-        for idx, feature in enumerate(epic_features, 1):
-            feature['sequential_order'] = idx
+        for idx, sub_epic in enumerate(epic_sub_epics, 1):
+            sub_epic['sequential_order'] = idx
     
     # Build epic/feature/story hierarchy
     result = {'epics': []}
@@ -868,15 +868,15 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
     # Track which acceptance criteria boxes have been assigned to prevent duplicates
     assigned_ac_ids = set()
     
-    def build_sub_epic_recursive(feature, parent_epic_num, all_features, all_stories, background_rectangles, 
+    def build_sub_epic_recursive(sub_epic_dict, parent_epic_num, all_sub_epics, all_stories, background_rectangles, 
                                   stories_with_users, acceptance_criteria_cells, assigned_story_ids, assigned_ac_ids):
         """
         Recursively build a sub_epic and its nested sub_epics.
         
         Args:
-            feature: Feature dictionary to build sub_epic from
-            parent_epic_num: Epic number this feature belongs to
-            all_features: List of all features
+            sub_epic_dict: Sub-epic dictionary to build sub_epic from
+            parent_epic_num: Epic number this sub-epic belongs to
+            all_sub_epics: List of all sub-epics
             all_stories: List of all stories
             background_rectangles: List of background rectangles
             stories_with_users: Dictionary mapping story IDs to users
@@ -888,77 +888,77 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
             Dictionary representing the sub_epic with nested sub_epics
         """
         sub_epic_data = {
-            'name': feature['name'],
-            'sequential_order': feature['sequential_order'],
-            'estimated_stories': feature.get('estimated_stories'),  # Include even if null
+            'name': sub_epic_dict['name'],
+            'sequential_order': sub_epic_dict['sequential_order'],
+            'estimated_stories': sub_epic_dict.get('estimated_stories'),  # Include even if null
             'sub_epics': [],
             'story_groups': []
         }
         
-        # Get child features (nested sub_epics) - features that have this feature as parent
-        child_features = [f for f in all_features 
-                         if f.get('parent_feat_num') == feature.get('feat_num') 
+        # Get child sub-epics (nested sub_epics) - sub-epics that have this sub-epic as parent
+        child_sub_epics = [f for f in all_sub_epics 
+                         if f.get('parent_feat_num') == sub_epic_dict.get('feat_num') 
                          and f.get('epic_num') == parent_epic_num]
-        child_features.sort(key=lambda x: (x['x'], x.get('feat_num', 0)))
+        child_sub_epics.sort(key=lambda x: (x['x'], x.get('feat_num', 0)))
         
         # Recursively build nested sub_epics
-        for child_feature in child_features:
+        for child_sub_epic in child_sub_epics:
             nested_sub_epic = build_sub_epic_recursive(
-                child_feature, parent_epic_num, all_features, all_stories, 
+                child_sub_epic, parent_epic_num, all_sub_epics, all_stories, 
                 background_rectangles, stories_with_users, acceptance_criteria_cells,
                 assigned_story_ids, assigned_ac_ids
             )
             sub_epic_data['sub_epics'].append(nested_sub_epic)
         
-        # If this feature has nested sub_epics (child features), it should NOT have any stories
+        # If this sub-epic has nested sub_epics (child sub-epics), it should NOT have any stories
         # All stories should belong to the nested sub_epics
-        if child_features:
+        if child_sub_epics:
             return sub_epic_data  # Return without processing stories
         
-        # Get stories for this sub_epic - only stories that belong to this feature
-        # and are NOT contained within any child feature
+        # Get stories for this sub_epic - only stories that belong to this sub-epic
+        # and are NOT contained within any child sub-epic
         epic_stories = [s for s in all_stories if s['epic_num'] == parent_epic_num]
-        feat_stories = [s for s in epic_stories 
-                       if s.get('feat_num') == feature.get('feat_num')]
+        sub_epic_stories = [s for s in epic_stories 
+                       if s.get('feat_num') == sub_epic_dict.get('feat_num')]
         
-        # Filter out stories that belong to child features (nested sub_epics)
-        # A story belongs to a child feature if it's contained within that feature's bounds
-        feature_x = feature['x']
-        feature_y = feature['y']
-        feature_width = feature.get('width', 0)
-        feature_height = feature.get('height', 0)
-        feature_right = feature_x + feature_width
-        feature_bottom = feature_y + feature_height
+        # Filter out stories that belong to child sub-epics (nested sub_epics)
+        # A story belongs to a child sub-epic if it's contained within that sub-epic's bounds
+        sub_epic_x = sub_epic_dict['x']
+        sub_epic_y = sub_epic_dict['y']
+        sub_epic_width = sub_epic_dict.get('width', 0)
+        sub_epic_height = sub_epic_dict.get('height', 0)
+        sub_epic_right = sub_epic_x + sub_epic_width
+        sub_epic_bottom = sub_epic_y + sub_epic_height
         
-        stories_for_this_feature = []
-        for story in feat_stories:
+        stories_for_this_sub_epic = []
+        for story in sub_epic_stories:
             story_x = story['x']
             story_y = story['y']
             story_center_x = story_x + story.get('width', 50) / 2
             story_center_y = story_y + story.get('height', 50) / 2
             
-            # Check if story is contained within any child feature
+            # Check if story is contained within any child sub-epic
             belongs_to_child = False
-            for child_feature in child_features:
-                child_x = child_feature['x']
-                child_y = child_feature['y']
-                child_width = child_feature.get('width', 0)
-                child_height = child_feature.get('height', 0)
+            for child_sub_epic in child_sub_epics:
+                child_x = child_sub_epic['x']
+                child_y = child_sub_epic['y']
+                child_width = child_sub_epic.get('width', 0)
+                child_height = child_sub_epic.get('height', 0)
                 child_right = child_x + child_width
                 child_bottom = child_y + child_height
                 
-                # Check if story is contained within child feature
+                # Check if story is contained within child sub-epic
                 if (child_x <= story_center_x <= child_right and
                     child_y <= story_center_y <= child_bottom):
                     belongs_to_child = True
                     break
             
-            # Only add story if it doesn't belong to a child feature
+            # Only add story if it doesn't belong to a child sub-epic
             if not belongs_to_child:
-                stories_for_this_feature.append(story)
+                stories_for_this_sub_epic.append(story)
         
         # Get stories for this sub_epic, sorted by sequential_order
-        feat_stories = stories_for_this_feature
+        feat_stories = stories_for_this_sub_epic
         feat_stories.sort(key=lambda s: (
             s.get('sequential_order', 999) if isinstance(s.get('sequential_order'), (int, float)) else 999,
             s['x']
@@ -969,10 +969,10 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
         story_groups = {}  # Maps group_id -> list of stories
         group_rectangles = {}  # Maps group_id -> rectangle info
         
-        # Filter background rectangles that belong to this feature (horizontally aligned)
-        feature_left = feature['x']
-        feature_right = feature['x'] + feature.get('width', 0)
-        feature_bottom = feature['y'] + feature.get('height', 0)
+        # Filter background rectangles that belong to this sub-epic (horizontally aligned)
+        sub_epic_left = sub_epic_dict['x']
+        sub_epic_right = sub_epic_dict['x'] + sub_epic_dict.get('width', 0)
+        sub_epic_bottom = sub_epic_dict['y'] + sub_epic_dict.get('height', 0)
         
         for bg_rect in background_rectangles:
                 bg_x = bg_rect['x']
@@ -982,9 +982,9 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 bg_right = bg_x + bg_width
                 bg_bottom = bg_y + bg_height
                 
-                # Check if rectangle is below feature and horizontally overlaps
-                if (bg_y >= feature_bottom - 50 and  # Below or slightly overlapping feature
-                    bg_x < feature_right and bg_right > feature_left):  # Horizontally overlaps
+                # Check if rectangle is below sub-epic and horizontally overlaps
+                if (bg_y >= sub_epic_bottom - 50 and  # Below or slightly overlapping sub-epic
+                    bg_x < sub_epic_right and bg_right > sub_epic_left):  # Horizontally overlaps
                     
                     group_id = bg_rect['id']
                     story_groups[group_id] = []
@@ -1390,16 +1390,16 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
             'stories': []
         }
         
-        # Get top-level features for this epic (features without a parent feature)
-        epic_features = sorted([f for f in features 
+        # Get top-level sub-epics for this epic (sub-epics without a parent sub-epic)
+        epic_sub_epics = sorted([f for f in sub_epics 
                                if f['epic_num'] == epic['epic_num'] 
                                and f.get('parent_feat_num') is None], 
                                key=lambda x: (x['x'], x.get('feat_num', 0)))
         
-        # Build each top-level feature recursively (which will include nested sub_epics)
-        for feature in epic_features:
+        # Build each top-level sub-epic recursively (which will include nested sub_epics)
+        for sub_epic_dict in epic_sub_epics:
             sub_epic_data = build_sub_epic_recursive(
-                feature, epic['epic_num'], features, all_stories, 
+                sub_epic_dict, epic['epic_num'], sub_epics, all_stories, 
                 background_rectangles, stories_with_users, acceptance_criteria_cells,
                 assigned_story_ids, assigned_ac_ids
             )
@@ -1423,28 +1423,28 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 'height': epic.get('height', 0)
             }
         
-        # Store feature coordinates and dimensions
-        for feature in features:
-            epic = next((e for e in sorted_epics if e['epic_num'] == feature['epic_num']), None)
+        # Store sub-epic coordinates and dimensions
+        for sub_epic in sub_epics:
+            epic = next((e for e in sorted_epics if e['epic_num'] == sub_epic['epic_num']), None)
             if epic:
-                feature_key = f"FEATURE|{epic['name']}|{feature['name']}"
-                layout_data[feature_key] = {
-                    'x': feature['x'],
-                    'y': feature['y'],
-                    'width': feature.get('width', 0),
-                    'height': feature.get('height', 0)
+                sub_epic_key = f"SUB_EPIC|{epic['name']}|{sub_epic['name']}"
+                layout_data[sub_epic_key] = {
+                    'x': sub_epic['x'],
+                    'y': sub_epic['y'],
+                    'width': sub_epic.get('width', 0),
+                    'height': sub_epic.get('height', 0)
                 }
         
         # Store story coordinates
         for story in all_stories:
-            # Create key: epic_name|feature_name|story_name
+            # Create key: epic_name|sub_epic_name|story_name
             epic = next((e for e in sorted_epics if e['epic_num'] == story['epic_num']), None)
             if epic:
-                epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
+                epic_sub_epics = sorted([f for f in sub_epics if f['epic_num'] == epic['epic_num']], 
                                       key=lambda x: (x['x'], x.get('feat_num', 0)))
-                feature = next((f for f in epic_features if f.get('feat_num') == story.get('feat_num')), None)
-                if feature:
-                    key = f"{epic['name']}|{feature['name']}|{story['name']}"
+                sub_epic = next((f for f in epic_sub_epics if f.get('feat_num') == story.get('feat_num')), None)
+                if sub_epic:
+                    key = f"{epic['name']}|{sub_epic['name']}|{story['name']}"
                     layout_data[key] = {
                         'x': story['x'],
                         'y': story['y']
@@ -1471,12 +1471,12 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                 if abs(user_x - story_x) <= tolerance and user_y < story_y:
                     epic = next((e for e in sorted_epics if e['epic_num'] == story['epic_num']), None)
                     if epic:
-                        epic_features = sorted([f for f in features if f['epic_num'] == epic['epic_num']], 
+                        epic_sub_epics = sorted([f for f in sub_epics if f['epic_num'] == epic['epic_num']], 
                                               key=lambda x: (x['x'], x.get('feat_num', 0)))
-                        feature = next((f for f in epic_features if f.get('feat_num') == story.get('feat_num')), None)
-                        if feature:
-                            # Story-level user: epic_name|feature_name|story_name|user_name
-                            story_key = f"{epic['name']}|{feature['name']}|{story['name']}"
+                        sub_epic = next((f for f in epic_sub_epics if f.get('feat_num') == story.get('feat_num')), None)
+                        if sub_epic:
+                            # Story-level user: epic_name|sub_epic_name|story_name|user_name
+                            story_key = f"{epic['name']}|{sub_epic['name']}|{story['name']}"
                             user_key = f"{story_key}|{user_name}"
                             layout_data[user_key] = {
                                 'x': user_x,
@@ -1499,14 +1499,14 @@ def build_stories_for_epics_features(drawio_path: Path, epics: List[Dict], featu
                         matched = True
                         break
                 
-                # Check feature level (users above feature Y position)
+                # Check sub-epic level (users above sub-epic Y position)
                 if not matched:
-                    for feature in features:
-                        if abs(user_x - feature['x']) <= 100 and user_y < feature['y'] + 100:
-                            epic = next((e for e in sorted_epics if e['epic_num'] == feature['epic_num']), None)
+                    for sub_epic in sub_epics:
+                        if abs(user_x - sub_epic['x']) <= 100 and user_y < sub_epic['y'] + 100:
+                            epic = next((e for e in sorted_epics if e['epic_num'] == sub_epic['epic_num']), None)
                             if epic:
-                                # Feature-level user: epic_name|feature_name|user_name
-                                user_key = f"{epic['name']}|{feature['name']}|{user_name}"
+                                # Sub-epic-level user: epic_name|sub_epic_name|user_name
+                                user_key = f"{epic['name']}|{sub_epic['name']}|{user_name}"
                                 layout_data[user_key] = {
                                     'x': user_x,
                                     'y': user_y
@@ -1739,13 +1739,13 @@ def _detect_large_deletions(
         'sub_epics_with_many_missing_stories': []
     }
     
-    # Build maps for comparison (support both old format 'features' and new format 'sub_epics')
+    # Build maps for comparison
     original_epics = {epic['name']: epic for epic in original_data.get('epics', [])}
     extracted_epics = {epic['name']: epic for epic in extracted_data.get('epics', [])}
     
-    # Helper to get sub_epics (supports both formats)
+    # Helper to get sub_epics
     def get_sub_epics(epic):
-        return epic.get('sub_epics', []) or epic.get('features', [])
+        return epic.get('sub_epics', [])
     
     # Find missing epics
     for epic_name, epic in original_epics.items():
@@ -1836,14 +1836,14 @@ def _display_large_deletions(deletions: Dict[str, Any]) -> None:
             print(f"    - This may be an accidental deletion!")
         print("!"*80)
     
-    if deletions.get('missing_features'):
+    if deletions.get('missing_sub_epics'):
         has_warnings = True
         print("\n" + "!"*80)
-        print("WARNING: ENTIRE FEATURES MISSING FROM DRAWIO")
+        print("WARNING: ENTIRE SUB-EPICS MISSING FROM DRAWIO")
         print("!"*80)
-        for feature in deletions['missing_features']:
-            print(f"  MISSING FEATURE: {feature['epic']} > {feature['name']}")
-            print(f"    - {feature['story_count']} stories")
+        for sub_epic in deletions['missing_sub_epics']:
+            print(f"  MISSING SUB-EPIC: {sub_epic['epic']} > {sub_epic['name']}")
+            print(f"    - {sub_epic['story_count']} stories")
             print(f"    - This may be an accidental deletion!")
         print("!"*80)
     
@@ -1859,16 +1859,16 @@ def _display_large_deletions(deletions: Dict[str, Any]) -> None:
             print(f"    - Missing: {epic['missing_count']} stories ({epic['missing_ratio']:.1%})")
         print("-"*80)
     
-    if deletions.get('features_with_many_missing_stories'):
+    if deletions.get('sub_epics_with_many_missing_stories'):
         has_warnings = True
         print("\n" + "-"*80)
-        print("WARNING: FEATURES WITH MANY MISSING STORIES (>50%)")
+        print("WARNING: SUB-EPICS WITH MANY MISSING STORIES (>50%)")
         print("-"*80)
-        for feature in deletions['features_with_many_missing_stories']:
-            print(f"  FEATURE: {feature['epic']} > {feature['name']}")
-            print(f"    - Original: {feature['original_count']} stories")
-            print(f"    - Extracted: {feature['extracted_count']} stories")
-            print(f"    - Missing: {feature['missing_count']} stories ({feature['missing_ratio']:.1%})")
+        for sub_epic in deletions['sub_epics_with_many_missing_stories']:
+            print(f"  SUB-EPIC: {sub_epic['epic']} > {sub_epic['name']}")
+            print(f"    - Original: {sub_epic['original_count']} stories")
+            print(f"    - Extracted: {sub_epic['extracted_count']} stories")
+            print(f"    - Missing: {sub_epic['missing_count']} stories ({sub_epic['missing_ratio']:.1%})")
         print("-"*80)
     
     if has_warnings:
@@ -1949,9 +1949,8 @@ def _fuzzy_match_story(extracted_story: Dict[str, Any], original_stories: List[D
         context_bonus = 0.0
         if extracted_story.get('epic_name') == orig_story.get('epic_name'):
             context_bonus += 0.1
-        # Support both old and new format
-        ext_sub_epic = extracted_story.get('sub_epic_name') or extracted_story.get('feature_name', '')
-        orig_sub_epic = orig_story.get('sub_epic_name') or orig_story.get('feature_name', '')
+        ext_sub_epic = extracted_story.get('sub_epic_name', '')
+        orig_sub_epic = orig_story.get('sub_epic_name', '')
         if ext_sub_epic == orig_sub_epic:
             context_bonus += 0.1
         
@@ -2116,7 +2115,6 @@ def merge_story_graphs(
     for match in report.get('exact_matches', []):
         ext_story = match['extracted']
         orig_story = match['original']
-        # Only use sub_epic_name (no legacy feature_name support)
         sub_epic_name = ext_story.get('sub_epic_name', '')
         key = f"{ext_story['epic_name']}|{sub_epic_name}|{ext_story['name']}"
         extracted_story_map[key] = ext_story
@@ -2125,7 +2123,6 @@ def merge_story_graphs(
     for match in report.get('fuzzy_matches', []):
         ext_story = match['extracted']
         orig_story = match['original']
-        # Only use sub_epic_name (no legacy feature_name support)
         sub_epic_name = ext_story.get('sub_epic_name', '')
         key = f"{ext_story['epic_name']}|{sub_epic_name}|{ext_story['name']}"
         extracted_story_map[key] = ext_story
@@ -2274,11 +2271,10 @@ def display_merge_report(report: Dict[str, Any]) -> None:
         print("-"*80)
         for match in report['fuzzy_matches']:
             print(f"\nExtracted: {match['extracted']['name']}")
-            # Support both old and new format
-            sub_epic_name = match['extracted'].get('sub_epic_name') or match['extracted'].get('feature_name', '')
+            sub_epic_name = match['extracted'].get('sub_epic_name', '')
             print(f"  Epic: {match['extracted']['epic_name']} | Sub-Epic: {sub_epic_name}")
             print(f"Original: {match['original']['name']}")
-            orig_sub_epic_name = match['original'].get('sub_epic_name') or match['original'].get('feature_name', '')
+            orig_sub_epic_name = match['original'].get('sub_epic_name', '')
             print(f"  Epic: {match['original']['epic_name']} | Sub-Epic: {orig_sub_epic_name}")
             print(f"Confidence: {match['confidence']:.2%}")
             print(f"Has Steps: {'Yes' if match['original'].get('Steps') else 'No'}")
@@ -2289,8 +2285,7 @@ def display_merge_report(report: Dict[str, Any]) -> None:
         print("NEW STORIES (No match in original)")
         print("-"*80)
         for story in report['new_stories'][:10]:  # Show first 10
-            # Support both old and new format
-            sub_epic_name = story.get('sub_epic_name') or story.get('feature_name', '')
+            sub_epic_name = story.get('sub_epic_name', '')
             print(f"  - {story['name']} ({story['epic_name']} > {sub_epic_name})")
         if len(report['new_stories']) > 10:
             print(f"  ... and {len(report['new_stories']) - 10} more")
@@ -2300,8 +2295,7 @@ def display_merge_report(report: Dict[str, Any]) -> None:
         print("REMOVED STORIES (In original but not in extracted)")
         print("-"*80)
         for story in report['removed_stories'][:10]:  # Show first 10
-            # Support both old and new format
-            sub_epic_name = story.get('sub_epic_name') or story.get('feature_name', '')
+            sub_epic_name = story.get('sub_epic_name', '')
             print(f"  - {story['name']} ({story['epic_name']} > {sub_epic_name})")
         if len(report['removed_stories']) > 10:
             print(f"  ... and {len(report['removed_stories']) - 10} more")
@@ -2368,13 +2362,13 @@ def generate_extract_report(data: Dict[str, Any], output_path: Optional[Path] = 
     total_stories = 0
     
     for epic in epics:
-        for feature in epic.get('sub_epics', []):
-            for story_group in feature.get('story_groups', []):
+        for sub_epic in epic.get('sub_epics', []):
+            for story_group in sub_epic.get('story_groups', []):
                 total_stories += len(story_group.get('stories', []))
     
     lines.append("SUMMARY")
     lines.append(f"  Epics: {len(epics)}")
-    lines.append(f"  Features: {total_features}")
+    lines.append(f"  Sub-Epics: {total_features}")
     lines.append(f"  Stories: {total_stories}")
     lines.append("")
     lines.append("=" * 80)
@@ -2388,18 +2382,18 @@ def generate_extract_report(data: Dict[str, Any], output_path: Optional[Path] = 
         lines.append("-" * 80)
         
         if not features:
-            lines.append("  No features found in this epic.")
+            lines.append("  No sub-epics found in this epic.")
             lines.append("")
             continue
         
-        for feature_idx, feature in enumerate(features, 1):
-            feature_name = feature.get('name', 'Unnamed Feature')
-            story_groups = feature.get('story_groups', [])
+        for sub_epic_idx, sub_epic in enumerate(features, 1):
+            sub_epic_name = sub_epic.get('name', 'Unnamed Sub-Epic')
+            story_groups = sub_epic.get('story_groups', [])
             
-            lines.append(f"  Feature {feature_idx}: {feature_name}")
+            lines.append(f"  Sub-Epic {sub_epic_idx}: {sub_epic_name}")
             
             if not story_groups:
-                lines.append("    No stories found in this feature.")
+                lines.append("    No stories found in this sub-epic.")
                 lines.append("")
                 continue
             
@@ -2450,14 +2444,14 @@ def synchronize_story_graph_from_drawio_outline(
     Returns:
         Dictionary with extracted story graph structure (epics only, no increments)
     """
-    # Step 1: Get epics and features
-    epics_features = get_epics_features_and_boundaries(drawio_path)
-    epics = epics_features['epics']
-    features = epics_features['features']
+    # Step 1: Get epics and sub_epics
+    epics_sub_epics = get_epics_features_and_boundaries(drawio_path)
+    epics = epics_sub_epics['epics']
+    sub_epics = epics_sub_epics['sub_epics']
     
-    # Step 2: Build stories for epics/features (preserves layout)
+    # Step 2: Build stories for epics/sub_epics (preserves layout)
     # AC extraction is based on position and shape (wider boxes below stories), works for both regular and exploration mode
-    epics_with_stories = build_stories_for_epics_features(drawio_path, epics, features, return_layout=True)
+    epics_with_stories = build_stories_for_epics_features(drawio_path, epics, sub_epics, return_layout=True)
     
     result = {
         'epics': epics_with_stories['epics']
@@ -2554,13 +2548,13 @@ def synchronize_story_graph_from_drawio_increments(
     # Step 1: Get increments
     increments = get_increments_and_boundaries(drawio_path)
     
-    # Step 2: Get epics and features
-    epics_features = get_epics_features_and_boundaries(drawio_path)
-    epics = epics_features['epics']
-    features = epics_features['features']
+    # Step 2: Get epics and sub-epics
+    epics_sub_epics = get_epics_features_and_boundaries(drawio_path)
+    epics = epics_sub_epics['epics']
+    sub_epics = epics_sub_epics['sub_epics']
     
-    # Step 3: Build stories for epics/features
-    epics_with_stories = build_stories_for_epics_features(drawio_path, epics, features)
+    # Step 3: Build stories for epics/sub_epics
+    epics_with_stories = build_stories_for_epics_features(drawio_path, epics, sub_epics)
     
     # Step 4: Build stories for increments (use already-extracted epics with story_groups)
     increments_with_stories = build_increments_from_extracted_epics(drawio_path, increments, epics_with_stories['epics'])

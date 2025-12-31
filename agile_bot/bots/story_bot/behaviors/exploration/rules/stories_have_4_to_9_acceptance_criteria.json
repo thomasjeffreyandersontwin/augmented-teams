@@ -47,5 +47,5 @@
                                   }
                               ]
              },
-    "scanner":  "agile_bot.bots.base_bot.src.scanners.acceptance_criteria_count_scanner.AcceptanceCriteriaCountScanner"
+    "scanner":  "agile_bot.bots.base_bot.src.scanners.story_sizing_scanner.StorySizingScanner"
 }

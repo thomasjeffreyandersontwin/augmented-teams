@@ -338,7 +338,7 @@ def when_action_executes_with_clarification_parameters(action: ClarifyContextAct
     from agile_bot.bots.base_bot.src.actions.action_context import ClarifyActionContext
     
     context = ClarifyActionContext(
-        key_questions_answered=parameters.get('key_questions_answered'),
+        answers=parameters.get('key_questions_answered'),
         evidence_provided=parameters.get('evidence_provided')
     )
     action.do_execute(context)

@@ -180,7 +180,7 @@ def build_folder_path_from_graph(epic_name, sub_epic_name, story_graph_data):
     """
     Build folder path dynamically from story graph structure.
     Traverses the graph to find the actual epic and sub_epic names.
-    Uses emoji monikers: 🎯 for Epic, ⚙️ for Feature.
+    Uses emoji monikers: 🎯 for Epic, ⚙️ for Sub-Epic.
     """
     # Find the epic in the graph
     for epic in story_graph_data.get('epics', []):
@@ -195,7 +195,7 @@ def build_folder_path_from_graph(epic_name, sub_epic_name, story_graph_data):
             def find_sub_epic(sub_epics, target_name):
                 for sub_epic in sub_epics:
                     if sub_epic['name'] == target_name:
-                        return f"⚙️ {target_name}"  # Use emoji moniker
+                        return f"⚙️ {target_name}"  # Use emoji moniker for sub-epic
                     # Recursively check nested sub_epics
                     if 'sub_epics' in sub_epic:
                         result = find_sub_epic(sub_epic['sub_epics'], target_name)
@@ -217,6 +217,7 @@ def build_folder_path_from_graph(epic_name, sub_epic_name, story_graph_data):
 
 
 def create_story_content(story, epic_name, sub_epic_name):
+    """Create markdown content for a story. sub_epic_name is the sub-epic name."""
     """Create markdown content for a story"""
     story_name = story['name']
     users = story.get('users', [])
@@ -273,11 +274,11 @@ Then action completes successfully
     
     sub_epic_line = ""
     if sub_epic_name != epic_name:
-        sub_epic_line = f"**Feature:** {sub_epic_name}\n"
+        sub_epic_line = f"**Sub-Epic:** {sub_epic_name}\n"
     
     content = f"""# 📝 {story_name}
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Sub-Epic Overview](../../../../README.md)
 
 **Epic:** {epic_name}
 {sub_epic_line}**User:** {user_str}
@@ -301,31 +302,31 @@ Then action completes successfully
     return content
 
 
-def extract_stories_from_graph(epic, epic_path="", feature_path="", parent_is_epic=True):
+def extract_stories_from_graph(epic, epic_path="", sub_epic_path="", parent_is_epic=True):
     """
     Extract all stories from story graph recursively.
     Dynamically builds folder structure from the graph itself.
     """
     stories = []
     current_epic_path = epic['name'] if not epic_path else f"{epic_path}/{epic['name']}"
-    current_is_epic = parent_is_epic and not feature_path
+    current_is_epic = parent_is_epic and not sub_epic_path
     
     # Get stories from story_groups (include all stories; no user-type filtering)
     for group in epic.get('story_groups', []):
         for story in group.get('stories', []):
             story['epic_path'] = current_epic_path
-            story['feature_path'] = feature_path if feature_path else epic['name']
+            story['sub_epic_path'] = sub_epic_path if sub_epic_path else epic['name']
             story['epic_name'] = current_epic_path.split('/')[0] if '/' in current_epic_path else current_epic_path
-            story['feature_name'] = feature_path if feature_path else epic['name']
+            story['sub_epic_name'] = sub_epic_path if sub_epic_path else epic['name']
             story['is_epic'] = current_is_epic
-            story['is_feature'] = not current_is_epic
+            story['is_sub_epic'] = not current_is_epic
             stories.append(story)
     
-    # Get stories from sub_epics (these become features)
+    # Get stories from sub_epics
     for sub_epic in epic.get('sub_epics', []):
-        current_feature_path = sub_epic['name']
-        # When we go into sub_epics, we're now in feature territory
-        stories.extend(extract_stories_from_graph(sub_epic, current_epic_path, current_feature_path, parent_is_epic=False))
+        current_sub_epic_path = sub_epic['name']
+        # When we go into sub_epics, we're now in sub-epic territory
+        stories.extend(extract_stories_from_graph(sub_epic, current_epic_path, current_sub_epic_path, parent_is_epic=False))
     
     return stories
 
@@ -389,14 +390,14 @@ class StoryScenariosSynchronizer:
         for story in all_stories:
             story_name = story['name']
             # Build folder path dynamically from story graph structure
-            epic_folder, feature_folder = build_folder_path_from_graph(
+            epic_folder, sub_epic_folder = build_folder_path_from_graph(
                 story['epic_name'], 
-                story['feature_name'],
+                story.get('sub_epic_name', story['epic_name']),
                 data
             )
             
             # Create directory structure using names from the graph
-            story_dir = base_dir / epic_folder / feature_folder
+            story_dir = base_dir / epic_folder / sub_epic_folder
             story_dir.mkdir(parents=True, exist_ok=True)
             
             # Create file (use 📝 emoji prefix)
@@ -404,7 +405,7 @@ class StoryScenariosSynchronizer:
             rendered_file_paths.add(story_file)  # Track this as a valid file location
             
             # Generate content
-            content = create_story_content(story, story['epic_name'], story['feature_name'])
+            content = create_story_content(story, story['epic_name'], story.get('sub_epic_name', story['epic_name']))
             
             # Check if file exists
             if story_file.exists():

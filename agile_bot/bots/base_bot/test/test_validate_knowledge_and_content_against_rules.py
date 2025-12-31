@@ -1347,9 +1347,10 @@ def given_bot_setup(bot_directory: Path, workspace_directory: Path, rules: dict 
         if rule_file_path and rule_file_content:
             setup_test_rules(repo_root, [rule_file_path], [rule_file_content])
         test_bot_dir = given_test_bot_directory_created(repo_root)
-        # Create story graph in the workspace directory
+        # Create story graph in the workspace directory using centralized function
         test_workspace_directory = test_bot_dir.parent / 'workspace'
-        kg_file = given_file_created(test_workspace_directory / 'docs' / 'stories', 'story-graph.json', knowledge_graph)
+        from agile_bot.bots.base_bot.test.test_helpers import given_story_graph
+        kg_file = given_story_graph(test_workspace_directory, knowledge_graph)
         return kg_file, test_bot_dir
     else:
         # Test bot setup with rules only
@@ -5359,6 +5360,262 @@ class TestValidationWithAllParameterCombinations:
         
         assert context.all_files is False
         assert context.skip_cross_file is False
+    
+    def test_shape_behavior_returns_empty_files_by_default(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Shape behavior validates story graph only, not files
+        GIVEN: A shape behavior
+        WHEN: ValidationContext is created with no files scope
+        THEN: files dict is empty (no files discovered)
+        
+        This test ensures that story-graph-only behaviors don't validate files by default.
+        """
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'shape')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {}  # No scope, no files parameter
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        # THEN: files dict is empty for story-graph-only behavior
+        assert context.files == {}, f"Shape behavior should return empty files dict, got {context.files}"
+    
+    def test_discovery_behavior_returns_empty_files_by_default(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Discovery behavior validates story graph only, not files
+        GIVEN: A discovery behavior
+        WHEN: ValidationContext is created with no files scope
+        THEN: files dict is empty (no files discovered)
+        """
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'discovery')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {}  # No scope, no files parameter
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        # THEN: files dict is empty for story-graph-only behavior
+        assert context.files == {}, f"Discovery behavior should return empty files dict, got {context.files}"
+    
+    def test_code_behavior_returns_files_by_default(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Code behavior validates files by default
+        GIVEN: A code behavior
+        WHEN: ValidationContext is created with no scope
+        THEN: files dict contains discovered files (may be empty if no files exist, but structure is correct)
+        """
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        bot_name, behavior = given_bot_name_and_behavior_setup('story_bot', 'code')
+        given_environment_bootstrapped_with_story_graph(bot_directory, workspace_directory)
+        given_validation_rules_exist(bot_directory, behavior)
+        create_actions_workflow_json(bot_directory, behavior)  # Create behavior.json
+        
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        
+        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+        parameters = {}  # No scope
+        context = ValidationContext.from_parameters(parameters, behavior, bot_paths)
+        
+        # THEN: files dict exists (structure is correct, may be empty if no src files exist)
+        assert isinstance(context.files, dict), f"Code behavior should return files dict, got {type(context.files)}"
+        # Code behavior should discover 'src' files by default
+        # Files dict may be empty if no src files exist, but it should be a dict, not None
+    
+    def test_shape_behavior_validates_story_graph_not_files(self, repo_root, bot_directory, workspace_directory):
+        """
+        SCENARIO: Shape behavior validates story graph only, not files
+        GIVEN: A shape behavior
+        AND: Story graph with violation (epic name "Invoice Processing" violates verb-noun format - noun-gerund)
+        AND: Test files that would have violations if scanned
+        WHEN: Validation is executed
+        THEN: Story graph violation is detected
+        AND: Files are NOT scanned (no file violations found)
+        AND: ValidationContext.files is empty
+        
+        This test ensures that story-graph-only behaviors actually validate the story graph
+        and do not scan files, even when files with violations exist.
+        """
+        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
+        
+        # GIVEN: Story graph with violation (epic name violates verb-noun format)
+        # Use "Sales Management" - clearly noun-only, should be detected as violation
+        knowledge_graph = {
+            'epics': [
+                {
+                    'name': 'Sales Management'  # Violation: noun-only, should be verb-noun like "Manage Sales"
+                }
+            ]
+        }
+        
+        # AND: Rule file for verb-noun scanner
+        rule_file_path = 'agile_bot/bots/test_story_bot/rules/use_verb_noun_format_for_story_elements.json'
+        rule_file_content = {
+            'scanner': 'agile_bot.bots.base_bot.src.scanners.verb_noun_scanner.VerbNounScanner',
+            'description': 'Use verb-noun format',
+            'do': {}
+        }
+        
+        # Bootstrap environment with story graph and rule
+        kg_file, test_bot_dir = given_bot_setup(
+            bot_directory, workspace_directory,
+            rules={'repo_root': repo_root, 'rule_file_path': rule_file_path, 'rule_file_content': rule_file_content},
+            knowledge_graph=knowledge_graph
+        )
+        
+        # Verify story graph file exists and contains our epic
+        assert kg_file.exists(), f"Story graph file should exist at {kg_file}"
+        import json
+        story_graph_data = json.loads(kg_file.read_text(encoding='utf-8'))
+        assert 'epics' in story_graph_data, f"Story graph file should contain 'epics' key"
+        epic_names = [epic.get('name') for epic in story_graph_data.get('epics', [])]
+        assert 'Sales Management' in epic_names, (
+            f"Story graph file should contain 'Sales Management' epic. Found epics: {epic_names}. "
+            f"File content: {story_graph_data}"
+        )
+        
+        # AND: Create test files that would have violations if scanned
+        # given_bot_setup creates workspace at test_bot_dir.parent / 'workspace'
+        test_workspace_directory = test_bot_dir.parent / 'workspace'
+        test_dir = test_workspace_directory / 'test'
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_file = test_dir / 'test_bad_code.py'
+        # Create a test file with violations that would be detected by code scanners
+        test_file.write_text('''
+def test_bad_function():
+    # Bad: function name doesn't follow naming conventions
+    x = 1
+    y = 2
+    z = x + y  # Bad: unused variable
+    return True
+''', encoding='utf-8')
+        
+        # AND: Create behavior.json for shape
+        create_actions_workflow_json(test_bot_dir, 'shape')
+        
+        # WHEN: Validation is executed
+        # Pass workspace_directory so action loads story graph from correct location
+        # Pass create_story_graph=False since we already created the story graph file
+        test_workspace_directory = test_bot_dir.parent / 'workspace'
+        action = given_action_initialized('validate', test_bot_dir, 'test_story_bot', 'shape', workspace_directory=test_workspace_directory, create_story_graph=False)
+        
+        # Verify ValidationContext loads the story graph correctly BEFORE validation runs
+        # This ensures the scanner will receive the correct story graph
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        context = ValidateActionContext(scope=None)
+        validation_context = ValidationContext.from_action_context(action.behavior, context)
+        
+        # THEN: Story graph IS loaded in ValidationContext (this is what gets passed to scanner)
+        assert isinstance(validation_context.knowledge_graph, dict), (
+            f"ValidationContext.knowledge_graph should be a dict. Got: {type(validation_context.knowledge_graph)}"
+        )
+        assert 'epics' in validation_context.knowledge_graph, (
+            f"ValidationContext.knowledge_graph should contain 'epics' key. Got keys: {list(validation_context.knowledge_graph.keys())}"
+        )
+        assert len(validation_context.knowledge_graph.get('epics', [])) > 0, (
+            f"ValidationContext.knowledge_graph should contain epics. Got: {validation_context.knowledge_graph}"
+        )
+        epic_names_in_context = [epic.get('name') for epic in validation_context.knowledge_graph.get('epics', [])]
+        assert 'Sales Management' in epic_names_in_context, (
+            f"ValidationContext.knowledge_graph should contain 'Sales Management' epic. Found epics: {epic_names_in_context}. "
+            f"Full knowledge_graph: {validation_context.knowledge_graph}"
+        )
+        
+        # Now run validation - the scanner will receive validation_context.knowledge_graph
+        result = when_action_executes_and_returns_result(action)
+        
+        # THEN: Extract validation rules to verify scanner ran
+        instructions = then_result_contains_instructions_with_content_to_validate(result)
+        from agile_bot.bots.base_bot.test.test_helpers import then_instructions_contain
+        validation_rules = then_instructions_contain(instructions, 'validation_rules')
+        
+        # THEN: Story graph WAS scanned (scanner ran - evidenced by validation_rules existing)
+        assert len(validation_rules) > 0, "Story graph should be scanned - validation_rules should exist"
+        scanner_ran = any('scanner_results' in rule for rule in validation_rules)
+        assert scanner_ran, "Story graph scanner should have run - scanner_results should exist in validation_rules"
+        
+        # AND: Violations ARE detected in story graph (epic "Sales Management" violates verb-noun format - noun-only)
+        all_violations = when_extract_violations_from_validation_rules(validation_rules)
+        assert len(all_violations) > 0, (
+            f"Expected violations for epic 'Sales Management' (noun-only violates verb-noun format). "
+            f"Found {len(all_violations)} violations: {all_violations}. "
+            f"Validation rules: {validation_rules}"
+        )
+        # Verify violation mentions the epic name or verb-noun format
+        violation_messages = [v.get('violation_message', '') for v in all_violations]
+        assert any('Sales Management' in msg or 'verb' in msg.lower() or 'noun' in msg.lower() or 'noun-only' in msg.lower() for msg in violation_messages), (
+            f"Expected violation for 'Sales Management' epic. Violation messages: {violation_messages}"
+        )
+        
+        # AND: Files are NOT scanned (no file violations found)
+        file_violations = [
+            v for v in all_violations
+            if v.get('file_path') and test_file.name in str(v.get('file_path'))
+        ]
+        assert len(file_violations) == 0, (
+            f"Shape behavior should NOT scan files. Found file violations: {file_violations}"
+        )
+        
+        # AND: Verify ValidationContext contains story graph and empty files
+        # Use the action's behavior which has the correct bot_paths set up
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        
+        # Create ValidationContext the same way the action does
+        behavior = action.behavior
+        context = ValidateActionContext(scope=None)
+        validation_context = ValidationContext.from_action_context(behavior, context)
+        
+        # THEN: Story graph structure exists in ValidationContext.knowledge_graph
+        # (The content may vary, but the structure should be there)
+        assert isinstance(validation_context.knowledge_graph, dict), (
+            f"Story graph should be a dict in ValidationContext.knowledge_graph. "
+            f"Got type: {type(validation_context.knowledge_graph)}"
+        )
+        
+        # AND: Files dict is empty (files are NOT discovered) - THIS IS THE KEY TEST
+        assert validation_context.files == {}, (
+            f"Shape behavior should return empty files dict, got {validation_context.files}"
+        )
+        
+        # AND: Verify validation actually runs and scanner receives story graph (not files)
+        # Pass the workspace directory where the story graph was created
+        # IMPORTANT: Set create_story_graph=False to prevent overwriting our test story graph file
+        action = given_action_initialized('validate', test_bot_dir, 'test_story_bot', 'shape', workspace_directory=test_workspace_directory, create_story_graph=False)
+        result = when_action_executes_and_returns_result(action)
+        
+        # Extract validation rules to verify scanner ran
+        instructions = then_result_contains_instructions_with_content_to_validate(result)
+        from agile_bot.bots.base_bot.test.test_helpers import then_instructions_contain
+        validation_rules = then_instructions_contain(instructions, 'validation_rules')
+        
+        # Verify scanner ran (scanner_results exist)
+        assert len(validation_rules) > 0, "Story graph should be scanned - validation_rules should exist"
+        scanner_ran = any('scanner_results' in rule for rule in validation_rules)
+        assert scanner_ran, "Story graph scanner should have run - scanner_results should exist in validation_rules"
+        
+        # Verify no file violations (files weren't scanned)
+        all_violations = when_extract_violations_from_validation_rules(validation_rules)
+        file_violations = [
+            v for v in all_violations
+            if v.get('file_path') and test_file.name in str(v.get('file_path'))
+        ]
+        assert len(file_violations) == 0, (
+            f"Shape behavior should NOT scan files. Found file violations: {file_violations}"
+        )
 
 
 # ============================================================================

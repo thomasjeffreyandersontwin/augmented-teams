@@ -1,7 +1,7 @@
 """
-Feature Domain Component
+Sub-Epic Domain Component
 
-Represents a feature in the story map hierarchy.
+Represents a sub-epic in the story map hierarchy.
 """
 
 from typing import List, Dict, Any, Optional, TYPE_CHECKING
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class Feature(StoryIOComponent):
-    """Represents a feature containing stories."""
+    """Represents a sub-epic containing stories."""
     
     def __init__(self, name: str, sequential_order: Optional[float] = None,
                  position: Optional[Any] = None, boundary: Optional[Any] = None,
@@ -24,7 +24,7 @@ class Feature(StoryIOComponent):
     
     @property
     def stories(self) -> List[Story]:
-        """Get all stories in this feature."""
+        """Get all stories in this sub-epic."""
         return [child for child in self.children if isinstance(child, Story)]
     
     @property
@@ -48,7 +48,7 @@ class Feature(StoryIOComponent):
         return estimated
     
     def synchronize(self) -> Dict[str, Any]:
-        """Synchronize feature from external source (old format: features)."""
+        """Synchronize sub-epic from external source."""
         result = {
             'name': self.name,
             'sequential_order': self.sequential_order,
@@ -60,11 +60,11 @@ class Feature(StoryIOComponent):
         return result
     
     def synchronize_as_sub_epic(self) -> Dict[str, Any]:
-        """Synchronize feature as sub_epic (new format: supports nested sub_epics)."""
+        """Synchronize sub-epic as sub_epic (new format: supports nested sub_epics)."""
         result = {
             'name': self.name,
             'sequential_order': self.sequential_order,
-            'sub_epics': [f.synchronize_as_sub_epic() for f in self.features],
+            'sub_epics': [f.synchronize_as_sub_epic() for f in self.sub_epics],
             'stories': [s.synchronize() for s in self.stories]
         }
         if self._story_count is not None:
@@ -72,9 +72,9 @@ class Feature(StoryIOComponent):
         return result
     
     def synchronize_report(self) -> Dict[str, Any]:
-        """Generate synchronization report for this feature."""
+        """Generate synchronization report for this sub-epic."""
         return {
-            'feature': self.name,
+            'sub_epic': self.name,
             'stories_count': len(self.stories),
             'estimated_stories': self._story_count,
             'total_stories': self.total_stories,
@@ -82,7 +82,7 @@ class Feature(StoryIOComponent):
         }
     
     def compare(self, other: 'StoryIOComponent') -> Dict[str, Any]:
-        """Compare this feature with another component."""
+        """Compare this sub-epic with another component."""
         if not isinstance(other, Feature):
             return {'match': False, 'reason': 'Type mismatch'}
         
@@ -94,11 +94,11 @@ class Feature(StoryIOComponent):
         }
     
     def render(self) -> Dict[str, Any]:
-        """Render feature to JSON representation (old format: features)."""
+        """Render sub-epic to JSON representation."""
         result = {
             'name': self.name,
             'sequential_order': self.sequential_order,
-            'users': [],  # Feature-level users from first story
+            'users': [],  # Sub-epic-level users from first story
         }
         # Only include stories if there are any (never empty array)
         if self.stories:
@@ -109,22 +109,22 @@ class Feature(StoryIOComponent):
         return result
     
     def render_as_sub_epic(self) -> Dict[str, Any]:
-        """Render feature as sub_epic (new format: supports nested sub_epics)."""
+        """Render sub-epic as sub_epic (new format: supports nested sub_epics)."""
         result = {
             'name': self.name,
             'sequential_order': self.sequential_order,
         }
         
         # Sub_epics have EITHER sub_epics OR story_groups, never both, never stories
-        nested_features = [f.render_as_sub_epic() for f in self.features]
+        nested_sub_epics = [f.render_as_sub_epic() for f in self.sub_epics]
         
         # Priority: story_groups > nested sub_epics
         if hasattr(self, '_story_groups_data') and self._story_groups_data:
             # Has story_groups - don't include sub_epics
             result['story_groups'] = self._story_groups_data
-        elif nested_features:
+        elif nested_sub_epics:
             # Has nested sub_epics - don't include story_groups
-            result['sub_epics'] = nested_features
+            result['sub_epics'] = nested_sub_epics
         # If no story_groups and no sub_epics, don't include any field
         
         if self._story_count is not None:
@@ -132,14 +132,19 @@ class Feature(StoryIOComponent):
         return result
     
     @property
-    def features(self) -> List['Feature']:
-        """Get nested features (for sub_epic support)."""
+    def sub_epics(self) -> List['Feature']:
+        """Get nested sub-epics."""
         return [child for child in self.children if isinstance(child, Feature)]
     
+    @property
+    def features(self) -> List['Feature']:
+        """Deprecated: Use sub_epics instead."""
+        return self.sub_epics
+    
     def to_dict(self) -> Dict[str, Any]:
-        """Convert feature to dictionary."""
+        """Convert sub-epic to dictionary."""
         result = super().to_dict()
-        result['type'] = 'feature'
+        result['type'] = 'sub_epic'
         result['stories'] = [s.to_dict() for s in self.stories]
         if self._story_count is not None:
             result['story_count'] = self._story_count
