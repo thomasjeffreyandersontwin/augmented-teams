@@ -735,8 +735,8 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
                     kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior_name)
                     given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
         
-        # Create story graph file (uses consolidated given_file_created)
-        given_file_created(workspace_dir / 'docs' / 'stories', 'story-graph.json', {
+        # Create story graph file using centralized given_story_graph function
+        given_story_graph(workspace_dir, {
             'epics': [],
             'solution': {'name': 'Test Solution'}
         })
@@ -1121,6 +1121,29 @@ def given_config_dict(config_type: str, **config_data) -> dict:
         raise ValueError(f"Unknown config_type: {config_type}")
 
 
+def given_story_graph(workspace_directory: Path, story_graph: dict = None, docs_path: str = 'docs/stories', filename: str = 'story-graph.json') -> Path:
+    """Given: Story graph created.
+    
+    Centralized function for creating story graph files in tests.
+    This is the ONLY function that should create story graph files.
+    All other functions should use this instead of creating story graphs directly.
+    
+    Args:
+        workspace_directory: Workspace directory path
+        story_graph: Story graph dict (default: {'epics': []})
+        docs_path: Relative path from workspace to docs directory (default: 'docs/stories')
+        filename: Story graph filename (default: 'story-graph.json')
+    
+    Returns:
+        Path to created story graph file
+    """
+    if story_graph is None:
+        story_graph = {'epics': []}
+    
+    docs_dir = workspace_directory / docs_path
+    return given_file_created(docs_dir, filename, story_graph)
+
+
 def given_action_initialized(action_type, bot_directory, bot_name='story_bot', behavior='exploration', **kwargs):
     """Given: Action initialized.
     
@@ -1137,8 +1160,11 @@ def given_action_initialized(action_type, bot_directory, bot_name='story_bot', b
         bot_name: Bot name (default: 'story_bot')
         behavior: Behavior name (default: 'exploration')
         **kwargs: Additional parameters:
-            - create_story_graph: If True, create story graph (default: True for validate)
+            - create_story_graph: If True, create story graph using given_story_graph (default: True for validate)
             - workspace_directory: Workspace directory (if None, uses bot_directory.parent / 'workspace')
+    
+    Note: Story graph creation is now handled by given_story_graph. If create_story_graph=True,
+    it will call given_story_graph to create the file. This ensures consistency.
     """
     from pathlib import Path
     from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
@@ -1157,29 +1183,27 @@ def given_action_initialized(action_type, bot_directory, bot_name='story_bot', b
     given_base_actions_setup(bot_directory)
     create_minimal_guardrails_files(bot_directory, behavior, bot_name)
     
+    # Always create BotPaths with workspace_directory to ensure consistency
+    bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
+    
     if action_type == 'validate':
         create_story_graph = kwargs.get('create_story_graph', True)
         if create_story_graph:
-            docs_stories_dir = workspace_directory / 'docs' / 'stories'
-            docs_stories_dir.mkdir(parents=True, exist_ok=True)
-            story_graph_path = docs_stories_dir / 'story-graph.json'
-            story_graph_path.write_text(json.dumps({'epics': []}), encoding='utf-8')
+            # Use centralized given_story_graph function
+            given_story_graph(workspace_directory)
         
         from agile_bot.bots.base_bot.src.actions.validate.validate_action import ValidateRulesAction
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-        bot_paths = BotPaths(bot_directory=bot_directory)
         behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
         return ValidateRulesAction(behavior=behavior_obj, action_config=None)
     elif action_type == 'gather_context':
         from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
         behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
         return ClarifyContextAction(behavior=behavior_obj, action_config=None)
     elif action_type == 'strategy':
         from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
-        bot_paths = BotPaths(workspace_path=workspace_directory, bot_directory=bot_directory)
         behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
         return StrategyAction(behavior=behavior_obj, action_config=None)
     else:
@@ -1825,7 +1849,8 @@ def then_template_variables_replaced(instructions_text, type=None):
         # Check all build knowledge template variables
         assert '{{rules}}' not in instructions_text
         assert 'verb-noun format' in instructions_text or 'verb-noun-format' in instructions_text
-        assert 'epics' in instructions_text or 'Top-level features' in instructions_text
+        instructions_lower = instructions_text.lower()
+        assert 'epics' in instructions_lower or 'top-level epics' in instructions_lower
         assert '{{instructions}}' not in instructions_text
         assert 'Use verb-noun format' in instructions_text or 'Follow INVEST principles' in instructions_text
     

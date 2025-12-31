@@ -10,9 +10,42 @@ from .recoverable_error import RecoverableError
 from .non_recoverable_error import NonRecoverableError
 from .error_recovery import ErrorRecovery
 from .cursor_api import CursorHeadlessAPI, APIResponse
+from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
+from agile_bot.bots.base_bot.src.utils import read_json_file
 
 
 MAX_LOOPS = 50
+
+
+def get_action_auto_confirm(action_name: str) -> bool:
+    """Get auto_confirm setting for an action from its config file.
+    
+    Args:
+        action_name: The action name (e.g., 'build', 'validate', 'clarify')
+    
+    Returns:
+        True if action should auto-confirm, False otherwise (default)
+    """
+    # Normalize action names to their base directory names
+    normalization_map = {
+        'gather_context': 'clarify',
+        'clarify_context': 'clarify', 
+        'decide_strategy': 'strategy',
+        'build_knowledge': 'build',
+        'validate_rules': 'validate',
+        'render_output': 'render'
+    }
+    normalized = normalization_map.get(action_name, action_name)
+    
+    config_path = get_base_actions_directory() / normalized / 'action_config.json'
+    if not config_path.exists():
+        return False
+    
+    try:
+        config = read_json_file(config_path)
+        return config.get('auto_confirm', False)
+    except Exception:
+        return False
 
 
 class HeadlessSession:
@@ -105,7 +138,7 @@ class HeadlessSession:
         action: str,
         context_file: Optional[Path] = None
     ) -> ExecutionResult:
-        operations = ['instructions', 'submit', 'confirm']
+        operations = ['instructions', 'confirm']
         # Ensure context_loaded is set correctly (invokes sets it, but preserve it explicitly)
         context_loaded = context_file is not None and context_file.exists()
         

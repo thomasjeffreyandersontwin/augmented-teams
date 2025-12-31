@@ -12,19 +12,23 @@
   "actions_workflow": {
     "actions": [
       {
-        "name": "strategy",
+        "name": "build",
         "order": 1,
-        "next_action": "render",
-        "instructions": [
-          "code: render code required to implement all tests that have been recently built or updated"
-        ]
-      },
-      {
-        "name": "render",
-        "order": 2,
         "next_action": "validate",
         "instructions": [
-          "code: build clean code"
+          "code: write production source code files (.py, .js, etc.) that implement story behavior and make tests pass",
+          "",
+          "After writing code files, update domain_concepts at the epic level with code class mappings:",
+          "",
+          "**code_class field** - Add to domain_concepts entries (at epic level only):",
+          "   - Format: \"code_class\": \"<ClassName>\"",
+          "   - Example: \"code_class\": \"REPLSession\"",
+          "   - Only add at the class level - do NOT map individual functions/methods",
+          "   - Maps the domain concept to the implementing class",
+          "   - Update the 'module' field with the actual module path if it differs",
+          "",
+          "Refine domain model concepts, relationships, and responsibilities based on code implementation patterns and requirements",
+          "Do NOT add code mappings to story level or scenario level - only update domain_concepts at epic level"
         ]
       },
       {
@@ -32,7 +36,7 @@
         "order": 3,
         "instructions": [
           "code: validate source code quality AND domain model refinements",
-          "Validate that all source files, classes, and functions are properly mapped to story-graph.json",
+          "Validate that domain concepts are properly mapped to code classes in story-graph.json",
           "MANDATORY: Discover and pass code_files parameter - CodeScanner requires explicit file paths to scan for violations"
         ]
       },

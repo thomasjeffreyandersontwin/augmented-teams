@@ -1,48 +1,53 @@
 {
     "priority":  4,
-    "description":  "Behavioral AC belongs at story level in story-graph.json. Use When/Then format (NO Given - save for scenarios). Each AC is a SINGLE string with one WHEN/THEN pair. Example: \"WHEN user enters name THEN system saves to character sheet\"",
+    "description":  "Behavioral AC belongs at story level in story-graph.json. Use When/Then format (NO Given - save for scenarios). AC should describe behavioral outcomes, not technical implementation. Example: \"WHEN user enters name THEN system saves to character sheet\"",
     "do":  {
-               "description":  "Each AC is single string with WHEN/THEN together. Example: \"WHEN action completes THEN system saves state AND system shows success\"",
+               "description":  "Use behavioral language describing user actions and system responses. Example: \"WHEN action completes THEN system saves state AND system shows success\"",
                "guidance":  [
                                 {
-                                    "description":  "Each acceptance criteria is a single string with WHEN/THEN",
+                                    "description":  "Use behavioral terms that describe what happens, not how it's implemented",
                                     "example":  [
-                                                    "acceptance_criteria: [\"WHEN user enters name THEN system saves to character sheet\"]"
+                                                    "\"WHEN user enters name THEN system saves character information\" (behavioral)",
+                                                    "\"WHEN user submits form THEN system validates data AND system displays confirmation\" (behavioral)"
                                                 ]
                                 },
                                 {
-                                    "description":  "THEN and its AND belong together in same acceptance criteria",
+                                    "description":  "Focus on user-observable outcomes and system responses",
                                     "example":  [
-                                                    "acceptance_criteria: [\"WHEN action completes THEN system saves state AND system shows success message\"]"
+                                                    "\"WHEN user clicks save THEN system persists changes AND system shows success message\"",
+                                                    "\"WHEN user loads page THEN system displays saved data\""
                                                 ]
                                 },
                                 {
-                                    "description":  "Each WHEN condition starts a new acceptance criteria",
+                                    "description":  "WHEN/THEN/AND can be on separate lines in the array - this is acceptable",
                                     "example":  [
-                                                    "\"WHEN GM selects tokens THEN system highlights tokens\", \"WHEN GM selects zero tokens THEN system shows error\""
+                                                    "[\"WHEN user enters name\", \"THEN system saves\", \"AND system displays confirmation\"] - This format is OK"
                                                 ]
                                 }
                             ]
            },
     "dont":  {
-                 "description":  "Don\u0027t split WHEN/THEN across multiple strings. Example: [\"WHEN user enters name\", \"THEN system saves\"] (wrong - should be one string)",
+                 "description":  "Don\u0027t use technical implementation terms like config, json, api, sql, class, method. Example: \"WHEN system parses JSON config\" (technical - use behavioral language instead)",
                  "guidance":  [
                                   {
-                                      "description":  "Don\u0027t split WHEN/THEN across multiple strings",
+                                      "description":  "Don\u0027t use technical file format terms",
                                       "example":  [
-                                                      "[\"WHEN user enters name\", \"THEN system saves\"] - WRONG: should be one string"
+                                                      "\"THEN system saves to JSON file\" - WRONG: use \"system saves configuration data\"",
+                                                      "\"THEN system parses XML\" - WRONG: use \"system processes data\""
                                                   ]
                                   },
                                   {
-                                      "description":  "Don\u0027t separate THEN and its AND into different strings",
+                                      "description":  "Don\u0027t use programming terms",
                                       "example":  [
-                                                      "[\"THEN system saves state\", \"AND system shows success\"] - WRONG: THEN and AND should be together"
+                                                      "\"THEN system calls method\" - WRONG: use \"system performs action\"",
+                                                      "\"THEN class instantiates\" - WRONG: use \"system creates instance\""
                                                   ]
                                   },
                                   {
-                                      "description":  "Don\u0027t combine different WHEN conditions in one AC",
+                                      "description":  "Don\u0027t use database or API terminology",
                                       "example":  [
-                                                      "\"WHEN GM selects tokens THEN highlights WHEN GM selects zero THEN error\" - WRONG: each WHEN needs own AC"
+                                                      "\"THEN system executes SQL query\" - WRONG: use \"system retrieves data\"",
+                                                      "\"THEN API endpoint returns\" - WRONG: use \"system responds with data\""
                                                   ]
                                   }
                               ]

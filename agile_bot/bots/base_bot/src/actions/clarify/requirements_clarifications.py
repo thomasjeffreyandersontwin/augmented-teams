@@ -23,8 +23,14 @@ class RequirementsClarifications(JsonPersistent):
         
         # Merge answers (new answers override existing)
         merged_answers = {**existing_answers, **self.key_questions_answered}
-        # Merge evidence (new evidence overrides existing) - only provided evidence, flat dict structure
-        merged_evidence = {**existing_evidence, **self.evidence_provided}
+        
+        # Get required evidence from guardrails
+        required_evidence = self.required_context.evidence.evidence_list if self.required_context else []
+        
+        # Merge provided evidence (new evidence overrides existing)
+        existing_provided = existing_evidence.get('provided', {}) if isinstance(existing_evidence, dict) else {}
+        merged_provided = {**existing_provided, **self.evidence_provided}
+        
         # Merge context - append new items to existing list
         final_context = existing_context or []
         if self.context is not None:
@@ -37,12 +43,15 @@ class RequirementsClarifications(JsonPersistent):
                 final_context = final_context if isinstance(final_context, list) else []
                 final_context.append(self.context)
         
-        # New structure: only save answers (questions are keys), only save provided evidence as flat dict, include context
+        # New structure: evidence has 'required' and 'provided'
         new_data = {
             'key_questions': {
                 'answers': merged_answers
             },
-            'evidence': merged_evidence,
+            'evidence': {
+                'required': required_evidence,
+                'provided': merged_provided
+            },
             'context': final_context
         }
         merged_data = self.merge(existing_data, new_data, self.behavior_name)

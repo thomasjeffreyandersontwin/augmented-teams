@@ -208,7 +208,7 @@ def synchronize_command(args):
             if report:
                 print("\nSynchronization Report:")
                 print(f"  Epics: {report.get('epics_count', 0)}")
-                print(f"  Features: {report.get('features_count', 0)}")
+                print(f"  Sub-Epics: {report.get('sub_epics_count', 0)}")
                 print(f"  Stories: {report.get('stories_count', 0)}")
     
     return 0
@@ -229,8 +229,8 @@ def search_command(args):
         results = diagram.search_for_any(args.query)
     elif args.type == 'epic':
         results = diagram.search_for_epics(args.query)
-    elif args.type == 'feature':
-        results = diagram.search_for_features(args.query)
+    elif args.type == 'sub_epic':
+        results = diagram.search_for_sub_epics(args.query)
     elif args.type == 'story':
         results = diagram.search_for_stories(args.query)
     
@@ -261,7 +261,7 @@ def add_user_command(args):
                 story_name=args.story_name,
                 user_name=args.user_name,
                 epic_name=args.epic_name,
-                feature_name=args.feature_name
+                sub_epic_name=args.sub_epic_name
             )
             print(f"Added user '{args.user_name}' to story: {story.name}")
             print(f"Story users: {story.users}")
@@ -272,8 +272,8 @@ def add_user_command(args):
         # Add to all stories
         stories_modified = []
         for epic in diagram.epics:
-            for feature in epic.features:
-                for story in feature.stories:
+            for sub_epic in epic.sub_epics:
+                for story in sub_epic.stories:
                     if args.user_name not in story.users:
                         story.add_user(args.user_name)
                         stories_modified.append(story.name)
@@ -487,7 +487,7 @@ def main():
     search_parser.add_argument('--story-graph', type=Path, help='Story graph JSON file')
     search_parser.add_argument('--json', type=Path, help='Story graph JSON file (alias)')
     search_parser.add_argument('query', help='Search query')
-    search_parser.add_argument('--type', choices=['any', 'epic', 'feature', 'story'], 
+    search_parser.add_argument('--type', choices=['any', 'epic', 'sub_epic', 'story'], 
                               help='Component type to search for')
     
     # Add user command
@@ -497,7 +497,7 @@ def main():
     add_user_parser.add_argument('--story-graph', type=Path, help='Story graph JSON file')
     add_user_parser.add_argument('--drawio-file', type=Path, help='DrawIO file to load from')
     add_user_parser.add_argument('--epic-name', help='Epic name (optional - to narrow story search)')
-    add_user_parser.add_argument('--feature-name', help='Feature name (optional - to narrow story search)')
+    add_user_parser.add_argument('--sub-epic-name', help='Sub-epic name (optional - to narrow story search)')
     add_user_parser.add_argument('--output', type=Path, help='Output DrawIO file (optional - renders result)')
     
     # Merge command

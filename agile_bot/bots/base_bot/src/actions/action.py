@@ -56,12 +56,27 @@ class Action:
         self._base_config['custom_class'] = action_config.get('action_class') or action_config.get('custom_class')
         if 'next_action' in action_config:
             self._base_config['next_action'] = action_config['next_action']
+        if 'auto_confirm' in action_config:
+            self._base_config['auto_confirm'] = action_config['auto_confirm']
+        if 'skip_confirm' in action_config:
+            self._base_config['skip_confirm'] = action_config['skip_confirm']
+        if 'skip_confirm' in action_config:
+            self._base_config['skip_confirm'] = action_config['skip_confirm']
 
     def _initialize_properties(self) -> None:
         self.order = self._base_config.get('order', 0)
         self.next_action = self._base_config.get('next_action')
         self.action_class = self._base_config.get('action_class') or self._base_config.get('custom_class')
         self.workflow = self._base_config.get('workflow', True)
+        # auto_confirm: if True, confirm step should be automatic (no human input needed)
+        # Default to False for safety - require explicit opt-in for auto-confirm
+        self.auto_confirm = self._base_config.get('auto_confirm', False)
+        # skip_confirm: if True, skip the confirm step entirely when advancing
+        # Used for actions like 'build' where the work IS the confirmation
+        self.skip_confirm = self._base_config.get('skip_confirm', False)
+        # skip_confirm: if True, when advancing just skip the confirm step entirely
+        # Useful for actions like 'build' where the work itself is the confirmation
+        self.skip_confirm = self._base_config.get('skip_confirm', False)
 
     def _derive_action_name_from_class(self) -> str:
         class_name = self.__class__.__name__
@@ -302,8 +317,7 @@ class Action:
         
         This is the first phase of the three-phase action pattern:
         1. get_instructions() - Build instructions (no side effects)
-        2. submit() - Process work (may save files)
-        3. confirm() - Mark complete and advance
+        2. confirm() - Process work (may save files), mark complete and advance
         
         This is a template method. Subclasses override _prepare_instructions() to customize.
         Loading/reading files is allowed. Writing files is NOT allowed.
@@ -403,36 +417,20 @@ class Action:
         return "\n".join(output_lines)
     
     
-    def submit(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Process submitted work - saves files and performs side effects.
-        
-        This is the second phase of the three-phase action pattern.
-        This is a template method. Subclasses override _do_submit() to customize.
-        """
-        if context is None:
-            context = self.context_class()
-        
-        # Call template method for subclass customization
-        result = self._do_submit(context)
-        
-        return result
-    
-    def _do_submit(self, context: ActionContext) -> Dict[str, Any]:
-        """Template method: Perform action-specific submit logic.
-        
-        Override in subclasses to save files, update state, etc.
-        Should return a dict with 'status' and 'message' keys.
-        """
-        return {'status': 'submitted', 'message': 'Work submitted successfully'}
-    
     def confirm(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Mark action complete and advance to next action.
+        """Process work and mark action complete.
         
-        This is the third phase of the three-phase action pattern.
-        Updates workflow state and returns next action info.
+        This is the second phase of the two-phase action pattern:
+        1. get_instructions() - Build instructions (no side effects)
+        2. confirm() - Process work (may save files), mark complete and advance
+        
+        This is a template method. Subclasses override _do_confirm() to customize.
         """
         if context is None:
             context = self.context_class()
+        
+        # Call template method for subclass customization (save files, etc.)
+        result = self._do_confirm(context)
         
         self.track_activity_on_completion()
         
@@ -440,8 +438,17 @@ class Action:
         return {
             'status': 'confirmed',
             'action_completed': self.action_name,
-            'next_action': next_action_name
+            'next_action': next_action_name,
+            **result  # Include any additional data from _do_confirm
         }
+    
+    def _do_confirm(self, context: ActionContext) -> Dict[str, Any]:
+        """Template method: Perform action-specific confirm logic.
+        
+        Override in subclasses to save files, update state, etc.
+        Should return a dict with any additional data to include in confirm result.
+        """
+        return {'message': 'Work confirmed successfully'}
 
     def do_execute(self, context: ActionContext) -> Dict[str, Any]:
         raise NotImplementedError('Subclasses must implement do_execute()')

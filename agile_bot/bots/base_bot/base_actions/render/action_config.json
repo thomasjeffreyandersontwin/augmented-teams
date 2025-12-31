@@ -3,6 +3,7 @@
   "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
   "workflow": true,
   "order": 6,
+  "auto_confirm": true,
   "instructions": [
     "Please follow the instructions below in order to manually render output documents using templates",
     "",

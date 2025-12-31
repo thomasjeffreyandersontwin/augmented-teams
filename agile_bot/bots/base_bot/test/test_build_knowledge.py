@@ -622,8 +622,8 @@ def given_template_variables_test_setup(bot_directory: Path, workspace_directory
     given_setup('config_and_template', bot_directory, kg_dir=kg_dir)
     given_file_created(kg_dir, 'story-graph-outline.json', {
         '_explanation': {
-            'epics': 'Top-level features',
-            'sub_epics': 'Feature breakdowns'
+            'epics': 'Top-level epics',
+            'sub_epics': 'Sub-epic breakdowns'
         },
         'epics': []
     })
@@ -1373,8 +1373,9 @@ def given_story_graph_with_epics_and_increments():
                 'epics': [
                     {
                         'name': 'Epic A',
-                        'features': [
+                        'sub_epics': [
                             {
+                                'name': 'Sub-epic A1',
                                 'stories': [
                                     {'name': 'Story A1'},
                                     {'name': 'Story A2'}
@@ -1390,8 +1391,9 @@ def given_story_graph_with_epics_and_increments():
                 'epics': [
                     {
                         'name': 'Epic B',
-                        'features': [
+                        'sub_epics': [
                             {
+                                'name': 'Sub-epic B1',
                                 'stories': [
                                     {'name': 'Story B1'},
                                     {'name': 'Story B2'}

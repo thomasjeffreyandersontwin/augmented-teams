@@ -53,21 +53,11 @@ class CLIAction:
         except Exception as e:
             return f"Error getting instructions: {str(e)}"
     
-    def submit(self, args: str) -> str:
-        try:
-            # Update phase to 'submitting' to indicate we're at the submit operation
-            self._session.set_action_phase('submitting')
-            context = self._parse_args_to_context(args)
-            result = self._action.submit(context)
-            return self._format_result(result)
-        except Exception as e:
-            return f"Error submitting: {str(e)}"
-    
-    def confirm(self) -> str:
+    def confirm(self, args: str = "") -> str:
         try:
             # Update phase to 'confirming' to indicate we're at the confirm operation
             self._session.set_action_phase('confirming')
-            context = self._action.context_class()
+            context = self._parse_args_to_context(args) if args else self._action.context_class()
             result = self._action.confirm(context)
             return self._format_result(result)
         except Exception as e:
@@ -89,7 +79,7 @@ class CLIAction:
             # First check for formatted_output (from get_instructions)
             if 'formatted_output' in action_result:
                 return action_result['formatted_output']
-            # Then check for output (from submit/confirm)
+            # Then check for output (from confirm)
             if 'output' in action_result:
                 output = action_result['output']
                 if isinstance(output, str):

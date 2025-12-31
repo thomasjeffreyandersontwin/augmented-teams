@@ -178,7 +178,7 @@ class ValidateRulesAction(Action):
         
         return '\n'.join(lines)
     
-    def _do_submit(self, context: ValidateActionContext) -> Dict[str, Any]:
+    def _do_confirm(self, context: ValidateActionContext) -> Dict[str, Any]:
         """Run validation scanners and generate reports."""
         logger.info('=== Starting validation ===')
         logger.info(f'Behavior: {self.behavior.name}')
@@ -187,7 +187,6 @@ class ValidateRulesAction(Action):
         result = self._executor.execute_synchronous(context)
         
         return {
-            'status': 'submitted',
             'message': 'Validation completed',
             'validation_result': result
         }

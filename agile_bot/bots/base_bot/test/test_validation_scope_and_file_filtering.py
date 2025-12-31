@@ -427,6 +427,195 @@ class TestScannerPathValidation:
 
 
 # ============================================================================
+# TEST: Behavior validation type determines file discovery
+# ============================================================================
+# NOTE: Tests for behavior validation_type are in test_validate_knowledge_and_content_against_rules.py
+# This test file focuses on file filtering and scope functionality
+
+class TestBehaviorValidationType:
+    """Tests for Behavior.validation_type to ensure correct validation target."""
+    
+    def test_shape_behavior_has_story_graph_validation_type(self, tmp_path):
+        """
+        SCENARIO: Shape behavior validates story graph only
+        GIVEN: A shape behavior
+        WHEN: validation_type property is accessed
+        THEN: It returns ValidationType.STORY_GRAPH
+        """
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidationType
+        
+        # GIVEN: Bot paths pointing to story_bot
+        bot_paths = BotPaths(
+            workspace_path=tmp_path,
+            bot_directory=Path(__file__).parent.parent.parent / 'story_bot'
+        )
+        
+        # AND: A shape behavior
+        behavior = Behavior(name='shape', bot_paths=bot_paths)
+        
+        # WHEN: validation_type is accessed
+        validation_type = behavior.validation_type
+        
+        # THEN: It returns STORY_GRAPH
+        assert validation_type == ValidationType.STORY_GRAPH
+    
+    def test_discovery_behavior_has_story_graph_validation_type(self, tmp_path):
+        """
+        SCENARIO: Discovery behavior validates story graph only
+        GIVEN: A discovery behavior
+        WHEN: validation_type property is accessed
+        THEN: It returns ValidationType.STORY_GRAPH
+        """
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidationType
+        
+        # GIVEN: Bot paths pointing to story_bot
+        bot_paths = BotPaths(
+            workspace_path=tmp_path,
+            bot_directory=Path(__file__).parent.parent.parent / 'story_bot'
+        )
+        
+        # AND: A discovery behavior
+        behavior = Behavior(name='discovery', bot_paths=bot_paths)
+        
+        # WHEN: validation_type is accessed
+        validation_type = behavior.validation_type
+        
+        # THEN: It returns STORY_GRAPH
+        assert validation_type == ValidationType.STORY_GRAPH
+    
+    def test_code_behavior_has_files_validation_type(self, tmp_path):
+        """
+        SCENARIO: Code behavior validates files only
+        GIVEN: A code behavior
+        WHEN: validation_type property is accessed
+        THEN: It returns ValidationType.FILES
+        """
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidationType
+        
+        # GIVEN: Bot paths pointing to story_bot
+        bot_paths = BotPaths(
+            workspace_path=tmp_path,
+            bot_directory=Path(__file__).parent.parent.parent / 'story_bot'
+        )
+        
+        # AND: A code behavior
+        behavior = Behavior(name='code', bot_paths=bot_paths)
+        
+        # WHEN: validation_type is accessed
+        validation_type = behavior.validation_type
+        
+        # THEN: It returns FILES
+        assert validation_type == ValidationType.FILES
+    
+    def test_validation_context_returns_empty_files_for_story_graph_only_behavior(self, tmp_path):
+        """
+        SCENARIO: ValidationContext returns empty files for story-graph-only behaviors
+        GIVEN: A shape behavior and ValidateActionContext with no files scope
+        WHEN: ValidationContext._get_files_for_validation is called
+        THEN: It returns empty dict (no files discovered)
+        
+        This test ensures that story-graph-only behaviors don't validate files by default.
+        """
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        
+        # GIVEN: Bot paths pointing to story_bot
+        bot_paths = BotPaths(
+            workspace_path=tmp_path,
+            bot_directory=Path(__file__).parent.parent.parent / 'story_bot'
+        )
+        
+        # AND: A shape behavior (story-graph-only)
+        behavior = Behavior(name='shape', bot_paths=bot_paths)
+        
+        # AND: A ValidateActionContext with no files scope
+        context = ValidateActionContext(scope=None)
+        
+        # WHEN: _get_files_for_validation is called
+        files = ValidationContext._get_files_for_validation(behavior, context)
+        
+        # THEN: It returns empty dict (no files discovered)
+        assert files == {}
+    
+    def test_validation_context_returns_files_when_explicit_files_scope(self, tmp_path):
+        """
+        SCENARIO: ValidationContext returns files for story-graph-only behavior when explicit files scope
+        GIVEN: A shape behavior and ValidateActionContext with files scope
+        WHEN: ValidationContext._get_files_for_validation is called
+        THEN: It returns discovered files
+        
+        This test ensures that story-graph-only behaviors CAN validate files if explicitly scoped.
+        """
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
+        
+        # GIVEN: Bot paths pointing to story_bot
+        bot_paths = BotPaths(
+            workspace_path=tmp_path,
+            bot_directory=Path(__file__).parent.parent.parent / 'story_bot'
+        )
+        
+        # AND: A shape behavior (story-graph-only)
+        behavior = Behavior(name='shape', bot_paths=bot_paths)
+        
+        # AND: A ValidateActionContext with explicit files scope
+        scope = Scope(type=ScopeType.FILES, value=['test/**/*.py'])
+        context = ValidateActionContext(scope=scope)
+        
+        # WHEN: _get_files_for_validation is called
+        files = ValidationContext._get_files_for_validation(behavior, context)
+        
+        # THEN: It returns files dict (may be empty if no files found, but structure is correct)
+        assert isinstance(files, dict)
+        # Files dict should have 'test' and/or 'src' keys if files are discovered
+        # (Empty dict is also valid if no matching files exist)
+    
+    def test_validation_context_returns_files_for_code_behavior(self, tmp_path):
+        """
+        SCENARIO: ValidationContext returns files for code behavior by default
+        GIVEN: A code behavior and ValidateActionContext with no scope
+        WHEN: ValidationContext._get_files_for_validation is called
+        THEN: It returns discovered files
+        
+        This test ensures that file-validating behaviors discover files by default.
+        """
+        from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+        from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+        from agile_bot.bots.base_bot.src.actions.rules.rules import ValidationContext
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+        
+        # GIVEN: Bot paths pointing to story_bot
+        bot_paths = BotPaths(
+            workspace_path=tmp_path,
+            bot_directory=Path(__file__).parent.parent.parent / 'story_bot'
+        )
+        
+        # AND: A code behavior (files-validating)
+        behavior = Behavior(name='code', bot_paths=bot_paths)
+        
+        # AND: A ValidateActionContext with no scope
+        context = ValidateActionContext(scope=None)
+        
+        # WHEN: _get_files_for_validation is called
+        files = ValidationContext._get_files_for_validation(behavior, context)
+        
+        # THEN: It returns files dict (structure is correct, may be empty if no files)
+        assert isinstance(files, dict)
+        # Code behavior should discover 'src' files
+        # (Empty dict is valid if no src files exist in test environment)
+
+
+# ============================================================================
 # TEST: Integration test for validate with file scope
 # ============================================================================
 

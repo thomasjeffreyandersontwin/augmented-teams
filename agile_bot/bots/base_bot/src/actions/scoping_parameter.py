@@ -201,25 +201,45 @@ class ScopingParameter:
         return filtered
 
     def _filter_increment_epic_by_story_names(self, epic: Dict[str, Any], story_name_set: Set[str]) -> Optional[Dict[str, Any]]:
-        epic['features'] = self._filter_increment_features_by_story_names(
-            epic.get('features', []), story_name_set)
-        if epic.get('features'):
+        """Filter increment epic by story names.
+        
+        Only supports sub_epics format: epics[].sub_epics[].stories[]
+        """
+        # Handle sub_epics format
+        epic['sub_epics'] = self._filter_increment_sub_epics_by_story_names(
+            epic.get('sub_epics', []), story_name_set)
+        
+        if epic.get('sub_epics'):
             return epic
         return None
 
-    def _filter_increment_features_by_story_names(self, features: List[Dict[str, Any]], story_name_set: Set[str]) -> List[Dict[str, Any]]:
+    def _filter_increment_sub_epics_by_story_names(self, sub_epics: List[Dict[str, Any]], story_name_set: Set[str]) -> List[Dict[str, Any]]:
+        """Filter sub_epics in increment by story names.
+        
+        Handles both direct stories and story_groups formats.
+        """
         filtered = []
-        for feature in features:
-            filtered_feature = self._filter_increment_feature_by_story_names(feature, story_name_set)
-            if filtered_feature:
-                filtered.append(filtered_feature)
+        for sub_epic in sub_epics:
+            filtered_sub_epic = self._filter_increment_sub_epic_by_story_names(sub_epic, story_name_set)
+            if filtered_sub_epic:
+                filtered.append(filtered_sub_epic)
         return filtered
-
-    def _filter_increment_feature_by_story_names(self, feature: Dict[str, Any], story_name_set: Set[str]) -> Optional[Dict[str, Any]]:
-        feature['stories'] = self._filter_stories_by_names(
-            feature.get('stories', []), story_name_set)
-        if feature.get('stories'):
-            return feature
+    
+    def _filter_increment_sub_epic_by_story_names(self, sub_epic: Dict[str, Any], story_name_set: Set[str]) -> Optional[Dict[str, Any]]:
+        """Filter a single sub_epic in increment by story names.
+        
+        Handles both direct stories array and story_groups format.
+        """
+        # Filter direct stories array
+        sub_epic['stories'] = self._filter_stories_by_names(
+            sub_epic.get('stories', []), story_name_set)
+        
+        # Filter story_groups format
+        sub_epic['story_groups'] = self._filter_story_groups_by_names(
+            sub_epic.get('story_groups', []), story_name_set)
+        
+        if sub_epic.get('stories') or sub_epic.get('story_groups'):
+            return sub_epic
         return None
 
     def _increment_has_content(self, increment: Dict[str, Any]) -> bool:
@@ -244,26 +264,58 @@ class ScopingParameter:
     def _extract_stories_from_matching_increments(
         self, increments: List[Dict[str, Any]], match_set: Set[Any]) -> Set[str]:
         story_names = set()
+        # Determine if we're matching by priority (int) or name (str)
+        # Check first element without consuming it
+        is_priority_match = False
+        if match_set:
+            first_elem = next(iter(match_set))
+            is_priority_match = isinstance(first_elem, int)
+        
         for increment in increments:
-            if self._matches_priority(increment, match_set) if isinstance(next(iter(match_set), None), int) else self._matches_name(increment, match_set):
-                story_names.update(self._extract_story_names_from_increment(increment))
+            if is_priority_match:
+                if self._matches_priority(increment, match_set):
+                    story_names.update(self._extract_story_names_from_increment(increment))
+            else:
+                if self._matches_name(increment, match_set):
+                    story_names.update(self._extract_story_names_from_increment(increment))
         return story_names
 
     def _extract_story_names_from_increment(self, increment: Dict[str, Any]) -> Set[str]:
+        """Extract story names from increment.
+        
+        Increments can have:
+        1. Direct stories array: increment.stories[]
+        2. Epics with sub_epics: increment.epics[].sub_epics[].stories[] or story_groups[].stories[]
+        """
         story_names = set()
+        # First, check for direct stories array
         self._add_direct_stories(increment, story_names)
+        # Then, check for stories in epics -> sub_epics
         self._add_epic_stories(increment, story_names)
         return story_names
     
     def _add_direct_stories(self, increment: Dict[str, Any], story_names: Set[str]) -> None:
+        """Add story names from increment's direct stories array."""
         for story in increment.get('stories', []):
             self._add_story_name(story, story_names)
     
     def _add_epic_stories(self, increment: Dict[str, Any], story_names: Set[str]) -> None:
+        """Extract story names from increment epics.
+        
+        Only supports sub_epics format: epics[].sub_epics[].stories[] or story_groups[].stories[]
+        Does NOT support features format.
+        """
         for epic in increment.get('epics', []):
-            for feature in epic.get('features', []):
-                for story in feature.get('stories', []):
+            # Handle sub_epics format (story map structure)
+            for sub_epic in epic.get('sub_epics', []):
+                # Check for direct stories array
+                for story in sub_epic.get('stories', []):
                     self._add_story_name(story, story_names)
+                
+                # Check for story_groups format (epics section structure)
+                for story_group in sub_epic.get('story_groups', []):
+                    for story in story_group.get('stories', []):
+                        self._add_story_name(story, story_names)
     
     def _add_story_name(self, story: Any, story_names: Set[str]) -> None:
         if isinstance(story, dict):

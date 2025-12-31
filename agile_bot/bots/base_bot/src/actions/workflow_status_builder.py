@@ -105,7 +105,7 @@ class BehaviorActionStatusBuilder:
         return lines
 
     def _build_next_step_row(self, behaviors) -> str:
-        next_step_cmd = behaviors.next_step_command
+        next_step_cmd = behaviors.next_step_command()
         if next_step_cmd:
             return f'| **Next step** | `{next_step_cmd}` |'
         return ''

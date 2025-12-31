@@ -16,20 +16,20 @@ class DrawIORenderer:
     """
     Renderer for converting story diagrams to DrawIO XML format.
     
-    Handles both outline mode (epics/features/stories) and increments mode.
+    Handles both outline mode (epics/sub-epics/stories) and increments mode.
     """
     
     STORY_WIDTH = 50
     STORY_HEIGHT = 50
     STORY_SPACING_X = 60
     STORY_SPACING_Y = 55
-    FEATURE_HEIGHT = 60
+    FEATURE_HEIGHT = 60  # Sub-epic height
     FEATURE_SPACING_X = 10
-    FEATURE_SPACING_Y = 10  # Vertical spacing between features when stacking
+    FEATURE_SPACING_Y = 10  # Vertical spacing between sub-epics when stacking
     EPIC_Y = 120
-    FEATURE_Y = 200
+    FEATURE_Y = 200  # Sub-epic Y position
     STORY_START_Y = 350  # Legacy constant (not used for relative positioning)
-    STORY_OFFSET_FROM_FEATURE = 90  # Vertical spacing from feature bottom to stories
+    STORY_OFFSET_FROM_FEATURE = 90  # Vertical spacing from sub-epic bottom to stories
     USER_LABEL_OFFSET = 60  # Distance above element (accounts for 50px label height)
     USER_LABEL_X_OFFSET = 5  # Offset to the right from element x position
     SUB_EPIC_VERTICAL_SHIFT = 15  # Downward shift for sub-epics
@@ -70,9 +70,9 @@ class DrawIORenderer:
         Calculate total stories for an epic within an increment scope.
         Counts only stories in story_groups within sub_epics (no direct stories on epics or sub_epics).
         """
-        # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
+        # Helper to get sub_epics
         def get_sub_epics(epic):
-            return epic.get('sub_epics', []) or epic.get('features', [])
+            return epic.get('sub_epics', [])
         
         total = 0
         for sub_epic in get_sub_epics(epic):
@@ -92,8 +92,8 @@ class DrawIORenderer:
     @staticmethod
     def _calculate_total_stories_for_feature_in_increment(feature: Dict[str, Any]) -> int:
         """
-        Calculate total stories for a feature (sub_epic) within an increment scope.
-        Counts only stories in story_groups (no direct stories on features).
+        Calculate total stories for a sub-epic within an increment scope.
+        Counts only stories in story_groups (no direct stories on sub-epics).
         """
         story_groups = feature.get('story_groups', [])
         if story_groups:
@@ -112,7 +112,7 @@ class DrawIORenderer:
         Returns (epic_name, sub_epic_name) or (None, None) if not found.
         """
         def get_sub_epics(epic):
-            return epic.get('sub_epics', []) or epic.get('features', [])
+            return epic.get('sub_epics', [])
         
         for epic in epics:
             epic_name = epic.get('name', '')
@@ -264,7 +264,7 @@ class DrawIORenderer:
         Render story graph as outline (no increments) to DrawIO XML.
         
         Args:
-            story_graph: Story graph dictionary with epics/features/stories
+            story_graph: Story graph dictionary with epics/sub-epics/stories
             output_path: Output path for DrawIO file
             layout_data: Optional layout data to preserve positions
             force_outline: If True, force outline mode (disable auto-exploration mode)
@@ -276,9 +276,9 @@ class DrawIORenderer:
         if layout_data is None:
             layout_data = {}
         
-        # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
+        # Helper to get sub_epics
         def get_sub_epics(epic):
-            return epic.get('sub_epics', []) or epic.get('features', [])
+            return epic.get('sub_epics', [])
         
         # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -326,7 +326,7 @@ class DrawIORenderer:
         Acceptance criteria are rendered as wider boxes below stories.
         
         Args:
-            story_graph: Story graph dictionary with epics/features/stories/increments
+            story_graph: Story graph dictionary with epics/sub-epics/stories/increments
             output_path: Output path for DrawIO file
             layout_data: Optional layout data to preserve positions
             scope: Optional increment name for filtering stories (e.g., "Code Scanner")
@@ -424,10 +424,10 @@ class DrawIORenderer:
                          layout_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Render story graph with increments to DrawIO XML.
-        For increments, epics and features show story counts in top right.
+        For increments, epics and sub-epics show story counts in top right.
         
         Args:
-            story_graph: Story graph dictionary with epics/features/stories/increments
+            story_graph: Story graph dictionary with epics/sub-epics/stories/increments
             output_path: Output path for DrawIO file
             layout_data: Optional layout data to preserve positions
         
@@ -466,7 +466,7 @@ class DrawIORenderer:
         Similar to render_increments but filters to specific increments by name.
         
         Args:
-            story_graph: Story graph dictionary with epics/features/stories/increments
+            story_graph: Story graph dictionary with epics/sub-epics/stories/increments
             output_path: Output path for DrawIO file
             layout_data: Optional layout data to preserve positions
             increment_names: Optional list of increment names to filter to (if None, renders all)
@@ -612,9 +612,9 @@ class DrawIORenderer:
         Returns:
             XML string for the DrawIO file
         """
-        # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
+        # Helper to get sub_epics
         def get_sub_epics(epic):
-            return epic.get('sub_epics', []) or epic.get('features', [])
+            return epic.get('sub_epics', [])
         
         # Helper to check if a story has acceptance criteria
         # Support both 'Steps' (legacy) and 'acceptance_criteria' (new format)
@@ -981,8 +981,8 @@ class DrawIORenderer:
         
         Args:
             story_graph: Story graph JSON data
-            layout_data: Optional layout data with story coordinates (key: "epic_name|feature_name|story_name")
-            is_increments: If True, render in increments mode (story counts in top right for epics/features)
+            layout_data: Optional layout data with story coordinates (key: "epic_name|sub_epic_name|story_name")
+            is_increments: If True, render in increments mode (story counts in top right for epics/sub-epics)
             is_exploration: If True, render in exploration mode (acceptance criteria below stories)
         """
         if layout_data is None:
@@ -1013,9 +1013,9 @@ class DrawIORenderer:
         epic_group_geom = ET.SubElement(epic_group, 'mxGeometry', x='0', y='0', width='1', height='1')
         epic_group_geom.set('as', 'geometry')
         
-        # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
+        # Helper to get sub_epics
         def get_sub_epics(epic):
-            return epic.get('sub_epics', []) or epic.get('features', [])
+            return epic.get('sub_epics', [])
         
         # Helper to normalize story_groups (supports legacy 'stories' format)
         def normalize_story_groups(feature_or_sub_epic):
@@ -1035,7 +1035,7 @@ class DrawIORenderer:
         shown_users = set()  # Track which users have been shown
         
         for epic_idx, epic in enumerate(story_graph.get('epics', []), 1):
-            features = get_sub_epics(epic)  # Get sub_epics (or features for backwards compatibility)
+            features = get_sub_epics(epic)
             
             # In exploration mode: filter epics/sub-epics to only those with stories that have AC
             if is_exploration:
@@ -1306,7 +1306,7 @@ class DrawIORenderer:
             if epic_width == 0:
                 epic_width = 100  # Minimum epic width (will be expanded based on actual content)
             
-            # Track actual bounds for shrinking epics/features after layout
+            # Track actual bounds for shrinking epics/sub-epics after layout
             # Initialize epic_min_x to epic_x (first feature aligns to epic, so epic_min_x should start at epic_x)
             epic_min_x = epic_x
             epic_max_x = -float('inf')
@@ -2632,11 +2632,11 @@ class DrawIORenderer:
             # Calculate increment lane positions
             increments = story_graph.get('increments', [])
             increment_lane_height = 100
-            # Find bottom of outline content (epics/features/stories) to place increment lanes right after
+            # Find bottom of outline content (epics/sub-epics/stories) to place increment lanes right after
             max_y = 0
             for cell in root_elem.findall('mxCell'):
                 cell_id = cell.get('id', '')
-                # Only count outline content (epics, features, stories), not increment lanes
+                # Only count outline content (epics, sub-epics, stories), not increment lanes
                 if cell_id and (cell_id.startswith('epic') or cell_id.startswith('e') or cell_id.startswith('user_')):
                     geom = cell.find('mxGeometry')
                     if geom is not None:
@@ -3278,9 +3278,9 @@ class DrawIORenderer:
         all_background_rectangles = []
         epic_estimate_geoms = {}
         
-        # Helper to get sub_epics (supports both old 'features' and new 'sub_epics' format)
+        # Helper to get sub_epics
         def get_sub_epics(epic):
-            return epic.get('sub_epics', []) or epic.get('features', [])
+            return epic.get('sub_epics', [])
         
         # Helper to normalize story_groups (supports legacy 'stories' format)
         def normalize_story_groups(feature_or_sub_epic):
@@ -3300,7 +3300,7 @@ class DrawIORenderer:
         shown_users = set()  # Track which users have been shown
         
         for epic_idx, epic in enumerate(story_graph.get('epics', []), 1):
-            features = get_sub_epics(epic)  # Get sub_epics (or features for backwards compatibility)
+            features = get_sub_epics(epic)
             
             # In exploration mode: filter epics/sub-epics to only those with stories that have AC
             if is_exploration:
@@ -3571,7 +3571,7 @@ class DrawIORenderer:
             if epic_width == 0:
                 epic_width = 100  # Minimum epic width (will be expanded based on actual content)
             
-            # Track actual bounds for shrinking epics/features after layout
+            # Track actual bounds for shrinking epics/sub-epics after layout
             # Initialize epic_min_x to epic_x (first feature aligns to epic, so epic_min_x should start at epic_x)
             epic_min_x = epic_x
             epic_max_x = -float('inf')

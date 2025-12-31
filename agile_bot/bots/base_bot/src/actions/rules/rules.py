@@ -67,10 +67,45 @@ class ValidationContext:
     
     @classmethod
     def _get_files_for_validation(cls, behavior, context: 'ValidateActionContext') -> Dict[str, List[Path]]:
-        """Get files to validate based on behavior and scope."""
+        """Get files to validate based on behavior validation type and scope."""
         from agile_bot.bots.base_bot.src.actions.validate.file_discovery import FileDiscovery
+        from agile_bot.bots.base_bot.src.actions.action_context import ScopeType, ValidationType
         
-        # Discover all files for the behavior
+        # If scope type is FILES, use the file paths directly from scope.value
+        if context.scope and context.scope.type == ScopeType.FILES:
+            files_dict = {}
+            for file_path_str in context.scope.value:
+                file_path = Path(file_path_str)
+                # Determine file type based on path or behavior
+                if 'test' in str(file_path).lower() or behavior.name in ('tests', 'test'):
+                    if 'test' not in files_dict:
+                        files_dict['test'] = []
+                    files_dict['test'].append(file_path)
+                else:
+                    if 'src' not in files_dict:
+                        files_dict['src'] = []
+                    files_dict['src'].append(file_path)
+            
+            # Apply file filter if present
+            if context.scope.file_filter:
+                filtered_files = {}
+                for key, file_list in files_dict.items():
+                    filtered = context.scope.filters_files(file_list)
+                    if filtered:
+                        filtered_files[key] = filtered
+                return filtered_files
+            
+            return files_dict
+        
+        # Get validation type from behavior
+        validation_type = behavior.validation_type
+        
+        # If behavior validates story graph only, return empty files unless explicit files scope
+        if validation_type == ValidationType.STORY_GRAPH:
+            # No files scope - return empty dict for story-graph-only behaviors
+            return {}
+        
+        # For behaviors that validate files (or both), discover files
         file_discovery = FileDiscovery(behavior.bot_paths, behavior.name, [])
         
         # Determine which file types to discover based on behavior
@@ -98,7 +133,7 @@ class ValidationContext:
     
     @classmethod
     def from_parameters(cls, parameters: Dict[str, Any], behavior, bot_paths, callbacks: Optional[ValidationCallbacks] = None) -> 'ValidationContext':
-        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
+        from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType, FileFilter
         from agile_bot.bots.base_bot.src.bot.behavior import Behavior
         
         if isinstance(behavior, str):
@@ -115,6 +150,29 @@ class ValidationContext:
                     value=scope_dict.get('value', []),
                     exclude=scope_dict.get('exclude', []),
                     skiprule=scope_dict.get('skiprule', [])
+                )
+        elif 'test' in parameters or 'src' in parameters:
+            # Convert test/src parameters to files scope
+            file_paths = []
+            if 'test' in parameters:
+                test_files = parameters['test']
+                if isinstance(test_files, str):
+                    file_paths.append(test_files)
+                elif isinstance(test_files, list):
+                    file_paths.extend(test_files)
+            if 'src' in parameters:
+                src_files = parameters['src']
+                if isinstance(src_files, str):
+                    file_paths.append(src_files)
+                elif isinstance(src_files, list):
+                    file_paths.extend(src_files)
+            
+            if file_paths:
+                scope = Scope(
+                    type=ScopeType.FILES,
+                    value=file_paths,
+                    exclude=[],
+                    skiprule=[]
                 )
         
         all_files = parameters.get('all_files', False) or parameters.get('force_full', False)

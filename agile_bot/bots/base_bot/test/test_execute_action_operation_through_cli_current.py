@@ -97,15 +97,15 @@ class TestGetActionInstructionsThroughCLI:
         assert isinstance(cli_response.output, str)
 
 
-class TestSubmitWorkThroughCLIWithStringParameters:
-    """Story: Submit Work Through CLI - CURRENT behavior"""
+class TestConfirmWorkThroughCLI:
+    """Story: Confirm Work Through CLI - 2-phase model"""
     
-    def test_user_submits_build_work(self, bot_directory, workspace_directory, monkeypatch):
+    def test_user_confirms_build_work(self, bot_directory, workspace_directory, monkeypatch):
         """
-        SCENARIO: User submits build work
+        SCENARIO: User confirms build work (2-phase model)
         GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'submit'
-        THEN: CLI processes submit operation
+        WHEN: user enters 'confirm'
+        THEN: CLI processes work and advances to next action
         """
         from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
         from agile_bot.bots.base_bot.src.bot.bot import Bot
@@ -115,37 +115,37 @@ class TestSubmitWorkThroughCLIWithStringParameters:
         create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build'])
         create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
         
-        # WHEN: user enters 'submit'
+        # WHEN: user enters 'confirm'
         bot = Bot(
             bot_name='story_bot',
             bot_directory=bot_directory,
             config_path=bot_directory / 'bot_config.json'
         )
         repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        cli_response = repl_session.read_and_execute_command('submit')
+        cli_response = repl_session.read_and_execute_command('confirm')
         
-        # THEN: CLI processes submit
+        # THEN: CLI processes confirm
         assert cli_response is not None
         assert isinstance(cli_response.output, str)
 
 
 class TestConfirmActionCompletionThroughCLI:
-    """Story: Confirm Action Completion - CURRENT behavior"""
+    """Story: Confirm Action Completion - 2-phase model"""
     
     def test_user_confirms_build_action_completion(self, bot_directory, workspace_directory, monkeypatch):
         """
         SCENARIO: User confirms build action completion
-        GIVEN: CLI is at shape.build.submit
+        GIVEN: CLI is at shape.build.instructions
         WHEN: user enters 'confirm'
-        THEN: CLI processes confirmation
+        THEN: CLI processes confirmation and advances
         """
         from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
         from agile_bot.bots.base_bot.src.bot.bot import Bot
         
-        # GIVEN: CLI is at shape.build.submit
+        # GIVEN: CLI is at shape.build.instructions
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
         create_behavior(bot_directory, 'shape', ['clarify', 'strategy', 'build'])
-        create_behavior_action_state(workspace_directory, 'shape', 'build', 'submit')
+        create_behavior_action_state(workspace_directory, 'shape', 'build', 'instructions')
         
         # WHEN: user enters 'confirm'
         bot = Bot(

@@ -4,7 +4,7 @@
   "description": "Create a complete list of stories with a well defined story flow for one increment",
   "goal": "Align on problem solution illustrated through user-system interactions that can be developed and tested in small iterations",
   "inputs": "story-graph.json (with increments), integration contracts, UX flows",
-  "outputs": "story-graph.json (with story details), story-map-discovery.drawio, feature/story detail documents",
+  "outputs": "story-graph.json (with story details), story-map-discovery.drawio, sub-epic/story detail documents",
   "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
   "instructions": [
     "Create a complete list of stories with a well defined story flow for specified increments"

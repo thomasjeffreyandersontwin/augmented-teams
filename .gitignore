@@ -16,6 +16,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.venv/
+venv/
 
 behaviors/.azure/commands/2025-10-27.00-50-52.containerapp_revision_list.7840.log
 behaviors/.azure/commands/2025-10-27.00-50-56.containerapp_revision_list.48388.log

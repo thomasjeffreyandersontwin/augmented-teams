@@ -58,7 +58,7 @@ class HierarchyTreeDisplay:
             
             if is_current and behavior.actions:
                 current_action = behavior.actions.current
-                actions = behavior.actions.all
+                actions = behavior.actions.names
                 
                 for action_name in actions:
                     action = behavior.actions.get_action(action_name)

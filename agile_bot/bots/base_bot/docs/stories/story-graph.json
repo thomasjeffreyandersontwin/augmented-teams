@@ -2261,7 +2261,7 @@
                     "AND CLI extracts current_behavior and current_action from workflow state",
                     "AND CLI routes to bot and invokes current behavior and current action (same as main bot MCP tool)",
                     "AND Bot executes action",
-                    "AND CLI submits bot action output to AI Chat",
+                    "AND CLI sends bot action output to AI Chat",
                     "AND Bot updates workflow state after action execution (if workflow action)",
                     "AND If workflow_state.json doesn't exist, CLI defaults to first behavior's first action"
                   ],
@@ -2301,7 +2301,7 @@
                     "AND CLI extracts current_action from workflow state for that behavior",
                     "AND CLI routes to current action in specified behavior (same as behavior MCP tool)",
                     "AND Bot executes action",
-                    "AND CLI submits bot action output to AI Chat",
+                    "AND CLI sends bot action output to AI Chat",
                     "AND Bot updates workflow state after action execution (if workflow action)",
                     "AND If workflow_state.json doesn't exist or behavior not in state, CLI defaults to first action of specified behavior"
                   ],
@@ -2339,7 +2339,7 @@
                     "AND CLI loads workflow state if it exists",
                     "AND CLI routes to bot and specified behavior action (same as specific action MCP tool)",
                     "AND Bot executes action",
-                    "AND CLI submits bot action output to AI Chat",
+                    "AND CLI sends bot action output to AI Chat",
                     "AND Bot updates workflow state after action execution (if workflow action)",
                     "AND CLI supports passing additional parameters/arguments to bot actions",
                     "AND CLI provides error messages for invalid bot/behavior/action combinations"
@@ -2487,11 +2487,17 @@
                 },
                 {
                   "name": "Gets action by name",
-                  "collaborators": ["Action", "String"]
+                  "collaborators": [
+                    "Action",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Gets actions in sequence",
-                  "collaborators": ["List", "Action"]
+                  "collaborators": [
+                    "List",
+                    "Action"
+                  ]
                 }
               ]
             },
@@ -3426,7 +3432,7 @@
                   "acceptance_criteria": [
                     "WHEN BotLangActionNode executes in autonomous mode",
                     "THEN BotLangActionNode calls run_autonomous() method",
-                    "AND run_autonomous() submits instructions to AI via API client",
+                    "AND run_autonomous() sends instructions to AI via API client",
                     "AND BotLangActionNode waits for AI response"
                   ],
                   "scenarios": [
@@ -3467,7 +3473,7 @@
                     "AND SqliteSaver saves checkpoint with BotLangState at the pause point with thread_id",
                     "AND Human can review AI response and provide confirmation or feedback before flow resumes",
                     "WHEN Human reviews the prompt and confirms or provides feedback",
-                    "THEN Confirmation/feedback is submitted back to the bot, which is processed by LangGraph and the same BotLangActionNode"
+                    "THEN Confirmation/feedback is sent back to the bot, which is processed by LangGraph and the same BotLangActionNode"
                   ],
                   "scenarios": [
                     {
@@ -3577,7 +3583,7 @@
                   "story_type": "system",
                   "acceptance_criteria": [
                     "WHEN BotLangActionNode executes and BotLangState.mode is 'autonomous'",
-                    "THEN BotLangActionNode calls run_autonomous() which submits to AI and continues without pausing",
+                    "THEN BotLangActionNode calls run_autonomous() which sends to AI and continues without pausing",
                     "WHEN BotLangActionNode executes and BotLangState.mode is 'interactive'",
                     "THEN BotLangActionNode calls run_interactive() which returns prompt and pauses BotLangFlow",
                     "AND run_interactive() returns dict with 'prompt' and 'needs_confirmation' flag",
@@ -3916,7 +3922,15 @@
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "acceptance_criteria": [
+                        "WHEN CLI initializes\nTHEN CLI loads bot from configured bot directory",
+                        "WHEN bot directory is specified\nTHEN CLI loads bot configuration from bot_config.json",
+                        "WHEN bot config is missing\nTHEN CLI displays error message AND exits gracefully",
+                        "WHEN bot is loaded\nTHEN CLI makes bot available for use"
+                      ],
+                      "optional": false,
+                      "priority": 1
                     }
                   ]
                 }
@@ -3937,7 +3951,31 @@
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
+                      "test_class": "TestNavigateUsingCLIDotNotation",
+                      "scenarios": [
+                        {
+                          "name": "User navigates with behavior only (no dots)",
+                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'discovery'\nTHEN: CLI navigates to discovery.clarify (first action)",
+                          "test_method": "test_user_navigates_with_behavior_only"
+                        },
+                        {
+                          "name": "User navigates with behavior.action (one dot)",
+                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'discovery.build'\nTHEN: CLI navigates to discovery.build.instructions",
+                          "test_method": "test_user_navigates_with_behavior_dot_action"
+                        },
+                        {
+                          "name": "User navigates with behavior.action.operation (two dots)",
+                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'discovery.build.instructions'\nTHEN: CLI executes discovery.build.instructions",
+                          "test_method": "test_user_navigates_with_full_dot_notation"
+                        },
+                        {
+                          "name": "User enters invalid behavior in dot notation",
+                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'invalid_behavior.build.instructions'\nTHEN: CLI displays error message",
+                          "test_method": "test_user_enters_invalid_behavior_in_dot_notation"
+                        }
+                      ]
                     },
                     {
                       "name": "Navigate Sequentially Using CLI Commands",
@@ -3946,7 +3984,21 @@
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
+                      "test_class": "TestNavigateSequentiallyUsingCLICommands",
+                      "scenarios": [
+                        {
+                          "name": "User navigates with next command",
+                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'next'\nTHEN: CLI navigates to shape.strategy",
+                          "test_method": "test_user_navigates_with_next_command"
+                        },
+                        {
+                          "name": "User navigates with back command",
+                          "steps": "GIVEN: CLI is at shape.strategy.instructions\nWHEN: user enters 'back'\nTHEN: CLI navigates to shape.clarify",
+                          "test_method": "test_user_navigates_with_back_command"
+                        }
+                      ]
                     },
                     {
                       "name": "Exit CLI REPL",
@@ -3955,7 +4007,16 @@
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
+                      "test_class": "TestExitCLIREPL",
+                      "scenarios": [
+                        {
+                          "name": "User exits REPL with exit command",
+                          "steps": "GIVEN: CLI is running\nWHEN: user enters 'exit'\nTHEN: CLI terminates REPL loop",
+                          "test_method": "test_user_exits_repl_with_exit_command"
+                        }
+                      ]
                     },
                     {
                       "name": "Navigate to Bot using CLI Dot Notation",
@@ -4024,28 +4085,52 @@
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN user navigates to behavior.action.instructions\nTHEN CLI displays formatted instructions for that action",
+                        "WHEN user enters action name only as shortcut\nTHEN CLI executes instructions on current behavior's action",
+                        "WHEN user provides scope parameter with instructions\nTHEN CLI displays filtered instructions for specified scope",
+                        "WHEN user requests clarify action instructions\nTHEN CLI displays key questions and required evidence from guardrails"
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
-                      "name": "Submit Work Through CLI with String Parameters",
+                      "name": "Auto-Run Instructions On Navigate",
                       "sequential_order": 2,
                       "connector": "and",
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN user navigates to behavior.action\nTHEN CLI automatically runs instructions for that action",
+                        "WHEN user navigates to behavior only\nTHEN CLI navigates to first action AND automatically runs instructions",
+                        "WHEN user re-navigates to same action\nTHEN CLI re-runs instructions automatically",
+                        "WHEN auto-run completes\nTHEN CLI displays formatted instructions AND waits for user input"
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
-                      "name": "Confirm Action Completion Through CLI",
+                      "name": "Confirm Work Through CLI with String Parameters",
                       "sequential_order": 3,
                       "connector": "and",
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN user confirms build action\nTHEN CLI processes work AND advances to next action",
+                        "WHEN user confirms clarify with answers parameter\nTHEN CLI saves clarification data AND advances to next action",
+                        "WHEN user confirms clarify with evidence parameter\nTHEN CLI saves evidence AND advances to next action",
+                        "WHEN user confirms from instructions phase\nTHEN CLI advances to next action using 2-phase model"
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
-                      "name": "Re-execute Current Operation Using CLI",
+                      "name": "Confirm Action Completion Through CLI",
                       "sequential_order": 4,
                       "connector": "and",
                       "users": [
@@ -4054,8 +4139,34 @@
                       "story_type": "user"
                     },
                     {
-                      "name": "Handle Operation Errors and Validation in CLI",
+                      "name": "Auto-Confirm Action After Instructions Complete",
                       "sequential_order": 5,
+                      "connector": "and",
+                      "users": [
+                        "CLI"
+                      ],
+                      "story_type": "system",
+                      "acceptance_criteria": [
+                        "WHEN action has auto-confirm enabled\nTHEN CLI automatically runs confirm after displaying instructions",
+                        "WHEN auto-confirm triggers\nTHEN CLI displays instructions AND confirm output without user prompt",
+                        "WHEN action does not have auto-confirm\nTHEN CLI waits for manual confirm command",
+                        "WHEN auto-confirm completes\nTHEN CLI displays confirmation output AND waits for user input"
+                      ],
+                      "optional": false,
+                      "priority": 2
+                    },
+                    {
+                      "name": "Re-execute Current Operation Using CLI",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user"
+                    },
+                    {
+                      "name": "Handle Operation Errors and Validation in CLI",
+                      "sequential_order": 7,
                       "connector": "and",
                       "users": [
                         "CLI"
@@ -4064,12 +4175,20 @@
                     },
                     {
                       "name": "Invoke Specific Bot Behavior Command through CLI",
-                      "sequential_order": 6,
+                      "sequential_order": 8,
                       "connector": "and",
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN user navigates to behavior using dot notation\nTHEN CLI routes command to current bot's behavior",
+                        "WHEN user enters behavior name only\nTHEN CLI navigates to first action of that behavior",
+                        "WHEN behavior does not exist\nTHEN CLI displays error message with available behaviors",
+                        "WHEN behavior is invoked\nTHEN CLI navigates to behavior AND runs instructions for first action"
+                      ],
+                      "optional": false,
+                      "priority": 2
                     }
                   ]
                 }
@@ -4093,8 +4212,73 @@
                       "story_type": "user"
                     },
                     {
-                      "name": "View Current Scope in CLI",
+                      "name": "Filter Work Using Knowledge Graph Scope in CLI",
                       "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_manage_bot_scope_through_cli_current.py",
+                      "test_class": "TestFilterWorkUsingScopeInCLI",
+                      "acceptance_criteria": [
+                        "WHEN user sets epic scope filter\nTHEN CLI displays active scope filters",
+                        "WHEN user sets story scope filter\nTHEN CLI displays active scope filters",
+                        "WHEN user executes build with active knowledge graph scope\nTHEN CLI displays instructions filtered to specified stories",
+                        "WHEN user clears scope\nTHEN CLI removes all scope filters AND displays unfiltered content"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "User sets scope filter",
+                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'scope story=\"Story1\"'\nTHEN: CLI stores scope filter",
+                          "test_method": "test_user_sets_scope_filter"
+                        },
+                        {
+                          "name": "User views current scope",
+                          "steps": "GIVEN: Scope filter is set\nWHEN: user enters 'scope'\nTHEN: CLI displays current scope",
+                          "test_method": "test_user_views_current_scope"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
+                    },
+                    {
+                      "name": "Filter Work Using Files Scope in CLI",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN user sets files scope filter\nTHEN CLI displays active scope filters",
+                        "WHEN user executes validate with active files scope\nTHEN CLI displays validation filtered to matched files",
+                        "WHEN user provides glob pattern for files\nTHEN CLI matches files using glob pattern",
+                        "WHEN user clears files scope\nTHEN CLI removes files filter AND displays unfiltered content"
+                      ],
+                      "optional": false,
+                      "priority": 1
+                    },
+                    {
+                      "name": "Enforce Mutually Exclusive Scope Types",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": [
+                        "CLI"
+                      ],
+                      "story_type": "system",
+                      "acceptance_criteria": [
+                        "WHEN user sets file scope while story scope is active\nTHEN CLI replaces story scope with file scope",
+                        "WHEN user sets story scope while file scope is active\nTHEN CLI replaces file scope with story scope",
+                        "WHEN checking stored scope\nTHEN only one filter type is active",
+                        "WHEN user clears scope\nTHEN CLI removes all scope filters"
+                      ],
+                      "optional": false,
+                      "priority": 2
+                    },
+                    {
+                      "name": "View Current Scope in CLI",
+                      "sequential_order": 5,
                       "connector": "and",
                       "users": [
                         "User"
@@ -4103,16 +4287,25 @@
                     },
                     {
                       "name": "Clear Scope Through CLI",
-                      "sequential_order": 3,
+                      "sequential_order": 6,
                       "connector": "and",
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "test_file": "test_manage_bot_scope_through_cli_current.py",
+                      "test_class": "TestClearScopeFiltersInCLI",
+                      "scenarios": [
+                        {
+                          "name": "User clears all scope filters",
+                          "steps": "GIVEN: Scope filter is set\nWHEN: user enters 'scope clear'\nTHEN: CLI clears scope filter",
+                          "test_method": "test_user_clears_all_scope_filters"
+                        }
+                      ]
                     },
                     {
                       "name": "Pass Scope Parameters When Executing Actions Through CLI",
-                      "sequential_order": 4,
+                      "sequential_order": 7,
                       "connector": "and",
                       "users": [
                         "User"
@@ -4121,12 +4314,20 @@
                     },
                     {
                       "name": "Validate Scope Against Story Graph in CLI",
-                      "sequential_order": 5,
+                      "sequential_order": 8,
                       "connector": "and",
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "acceptance_criteria": [
+                        "WHEN user sets scope with story name\nTHEN CLI stores scope filter without validation",
+                        "WHEN user sets scope with epic name\nTHEN CLI stores scope filter without validation",
+                        "WHEN scope is set\nTHEN CLI accepts scope AND stores it in state file",
+                        "WHEN scope is applied to action\nTHEN action validates scope against story graph during execution"
+                      ],
+                      "optional": false,
+                      "priority": 2
                     }
                   ]
                 }
@@ -4147,7 +4348,73 @@
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayCLIHeader",
+                      "acceptance_criteria": [
+                        "WHEN CLI displays status\nTHEN CLI shows header with bot name AND workspace path",
+                        "WHEN displaying header in terminal mode\nTHEN CLI uses plain text formatting",
+                        "WHEN displaying header in piped mode\nTHEN CLI uses markdown formatting",
+                        "WHEN header is displayed\nTHEN CLI includes separator line after header"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays CLI STATUS section header when status command is run",
+                          "steps": "Given: CLI is initialized\nWhen: user enters 'status' command\nThen: CLI displays CLI STATUS section header\nAND: CLI shows section separator line\nAND: CLI shows '*** CLI STATUS section ***' header text\nAND: CLI shows description text explaining what the section contains\nAND: CLI shows warning text: 'You MUST DISPLAY this entire section in your response to the user exactly as you see it'\nAND: CLI shows subsection separator\nAND: CLI shows section separator after header",
+                          "test_method": "test_cli_displays_cli_status_section_header_when_status_command_is_run",
+                          "notes": "Based on implementation in repl_session.py _handle_status_command() lines 397-406 and screen example from repl-cli-display-refactoring.md lines 27-33"
+                        },
+                        {
+                          "name": "CLI displays bot name with robot emoji in header",
+                          "steps": "Given CLI is initialized with story_bot\nAnd CLI is in piped mode\nWhen CLI renders the dashboard header\nThen output contains heading with robot emoji and bot name\nAnd output shows Bot: story_bot",
+                          "test_method": "test_cli_displays_bot_name_with_robot_emoji_in_header",
+                          "notes": "Test method referenced but not found in test files - may need to be implemented"
+                        },
+                        {
+                          "name": "CLI displays bot path in code block",
+                          "steps": "Given CLI is initialized with story_bot at path C:/dev/augmented-teams/agile_bot/bots/story_bot\nWhen CLI renders the dashboard header\nThen output contains '**Bot Path:**' label\nAnd output shows code block with three backticks\nAnd output shows the full bot directory path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot'\nAnd output closes code block with three backticks",
+                          "test_method": "test_cli_displays_bot_path_in_code_block",
+                          "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 35-36 and implementation in repl_session.py display_current_state() lines 169-172"
+                        },
+                        {
+                          "name": "CLI displays workspace name and path",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '📂 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "test_method": "test_cli_displays_workspace_name_and_path",
+                          "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
+                        },
+                        {
+                          "name": "CLI displays path change instructions",
+                          "steps": "Given CLI is in piped mode\nWhen CLI renders the dashboard header\nThen output contains 'To change path:' label\nAnd output shows code block with three backticks\nAnd output shows path command example: 'path demo/mob_minion              # Change to specific project'\nAnd output shows path command example: 'path ../another_bot               # Change to relative path'\nAnd output closes code block with three backticks",
+                          "test_method": "test_cli_displays_path_change_instructions",
+                          "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 41-43 and implementation in repl_session.py display_current_state() lines 181-182"
+                        },
+                        {
+                          "name": "CLI applies separator after header section",
+                          "steps": "Given CLI is in piped mode\nWhen CLI renders the dashboard header\nThen output ends with horizontal separator line (subsection separator)",
+                          "test_method": "test_cli_applies_separator_after_header_section",
+                          "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example line 44"
+                        },
+                        {
+                          "name": "CLI displays headless mode section when configured",
+                          "steps": "Given: Headless mode is configured with API key\nWhen: CLI renders status display\nThen: CLI displays 'Headless Mode:' label\nAND: CLI shows 'Status: Available (configured)'\nAND: CLI shows API key prefix\nAND: CLI shows Usage section with headless command format\nAND: CLI shows Examples section with headless command examples\nAND: CLI applies subsection separator after headless section",
+                          "test_method": "test_cli_displays_headless_mode_section_when_configured",
+                          "notes": "Based on implementation in repl_session.py display_current_state() lines 184-188 and HeadlessModeStatusDisplay.render() lines 120-148, screen example lines 45-60"
+                        },
+                        {
+                          "name": "CLI displays active headless session when running",
+                          "steps": "Given: Headless mode is configured\nAND: Active headless session is running\nWhen: CLI renders status display\nThen: CLI displays 'Active Session:' section\nAND: CLI shows Session ID\nAND: CLI shows session Status (running)\nAND: CLI shows Log file path",
+                          "test_method": "test_cli_displays_active_headless_session_when_running",
+                          "notes": "Based on HeadlessModeStatusDisplay.render() lines 135-140 and screen example lines 57-60"
+                        },
+                        {
+                          "name": "CLI displays headless mode unavailable when not configured",
+                          "steps": "Given: Headless mode is not configured\nWhen: CLI renders status display\nThen: CLI displays 'Headless Mode:' label\nAND: CLI shows 'Status: Unavailable (not configured)'\nAND: CLI shows configuration instructions",
+                          "test_method": "test_cli_displays_headless_mode_unavailable_when_not_configured",
+                          "notes": "Based on HeadlessModeStatusDisplay.render() lines 141-146"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
                       "name": "Display Bot Hierarchy Tree with Progress Indicators",
@@ -4156,34 +4423,338 @@
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayBotHierarchyTreeInCLI",
+                      "acceptance_criteria": [
+                        "WHEN user views status\nTHEN CLI displays bot hierarchy tree with behaviors and actions",
+                        "WHEN displaying hierarchy\nTHEN CLI shows progress indicators for each action",
+                        "WHEN action is completed\nTHEN CLI displays action with completed marker",
+                        "WHEN action is current\nTHEN CLI displays action with current marker",
+                        "WHEN action is pending\nTHEN CLI displays action with pending marker"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "User views bot hierarchy with status command",
+                          "steps": "GIVEN: CLI is at discovery.build.instructions\nWHEN: user enters 'status'\nTHEN: CLI displays bot hierarchy tree\nAND: CLI displays bot hierarchy tree with [x], [*], [ ] indicators\nAND: CLI shows discovery behavior marked with [*]\nAND: CLI shows build action under discovery",
+                          "test_method": "test_user_views_bot_hierarchy_with_status_command"
+                        },
+                        {
+                          "name": "CLI shows completed actions with completed marker",
+                          "steps": "GIVEN: CLI is at discovery.build.instructions\nAND: discovery.clarify action is completed\nWHEN: user views status\nTHEN: StatusDisplay marks completed actions with completed marker\nAND: CLI displays clarify action with completed marker",
+                          "test_method": "test_cli_shows_completed_actions_with_x_indicator"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
-                      "name": "Display CLI Navigation Menu Footer",
+                      "name": "Display Current Position in CLI",
                       "sequential_order": 3,
                       "connector": "and",
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayCurrentPositionInCLI",
+                      "acceptance_criteria": [
+                        "WHEN user views status\nTHEN CLI displays current behavior, action, and operation",
+                        "WHEN user navigates to different action\nTHEN CLI updates current position display",
+                        "WHEN displaying position\nTHEN CLI shows behavior.action.operation format",
+                        "WHEN position is at first action\nTHEN CLI indicates start of workflow"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays progress section with current position",
+                          "steps": "Given: CLI is at shape.clarify.instructions\nWhen: user enters 'status'\nThen: CLI displays Progress section header with position icon\nAND: CLI shows 'Current Position:' label\nAND: CLI shows current position in code block format: 'shape.clarify.instructions'\nAND: CLI displays hierarchical status tree with behaviors and actions\nAND: CLI shows current behavior marked with current marker (➤)\nAND: CLI shows current action marked with current marker (➤)\nAND: CLI shows current operation marked with current marker (➤)\nAND: CLI shows completed actions with completed marker (☑)\nAND: CLI shows pending actions with pending marker (☐)\nAND: CLI shows behavior descriptions for current behavior and action\nAND: CLI shows operations (instructions, submit, confirm) under current action\nAND: CLI shows 'Run:' section with command examples\nAND: CLI shows 'Args:' section with parameter examples\nAND: CLI applies subsection separator after progress section",
+                          "test_method": "test_user_views_current_position_in_status",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 297-327 and implementation in repl_status.py hierarchical_status property"
+                        },
+                        {
+                          "name": "Current position updates after navigation",
+                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user navigates to discovery behavior\nAND: user views status\nTHEN: REPLSession updates behavior action state\nAND: CLI updates current position display to show 'discovery' behavior\nAND: CLI updates progress tree to highlight discovery behavior as current",
+                          "test_method": "test_current_position_updates_after_navigation"
+                        },
+                        {
+                          "name": "CLI displays Progress section with current position",
+                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders status display\nThen: CLI displays '## 📍 **Progress**' section header\nAND: CLI shows '**Current Position:**' label\nAND: CLI shows current position in code block: 'exploration.validate.instructions'\nAND: CLI displays hierarchical status tree with behaviors and actions",
+                          "test_method": "test_cli_displays_progress_section_with_current_position",
+                          "notes": "Based on implementation in repl_session.py display_current_state() lines 210-217 and screen example lines 70-88"
+                        },
+                        {
+                          "name": "CLI displays hierarchical status tree with progress indicators",
+                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders hierarchical status\nThen: CLI displays behaviors with status markers (☑ completed, ➤ current, ☐ pending)\nAND: CLI displays current behavior 'exploration' with ➤ marker\nAND: CLI displays completed behaviors (shape, prioritization, discovery) with ☑ marker\nAND: CLI displays pending behaviors (scenarios, tests, code) with ☐ marker\nAND: CLI displays actions under current behavior with proper indentation\nAND: CLI displays operations (instructions, confirm) under current action\nAND: CLI shows current operation 'instructions' with ➤ marker",
+                          "test_method": "test_cli_displays_hierarchical_status_tree_with_progress_indicators",
+                          "notes": "Based on REPLStatus.hierarchical_status property and screen example lines 74-88"
+                        },
+                        {
+                          "name": "CLI displays Run instructions and Args sections",
+                          "steps": "Given: CLI is at exploration.validate.instructions\nWhen: CLI renders hierarchical status\nThen: CLI displays 'Run:' section\nAND: CLI shows command examples: 'echo 'behavior.action' | python repl_main.py'\nAND: CLI shows '**Args:**' section\nAND: CLI shows scope parameter examples\nAND: CLI shows headless parameter example\nAND: CLI shows action-specific parameters (e.g., validate-specific: --skip-cross-file, --max-cross-file-comparisons, --all-files, --background)",
+                          "test_method": "test_cli_displays_run_instructions_and_args_sections",
+                          "notes": "Based on REPLStatus.hierarchical_status property lines 126-147 and screen example lines 90-97"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
-                      "name": "Display Available Bot in Tree Hierarchy",
+                      "name": "Display Active Scope in CLI Status",
                       "sequential_order": 4,
                       "connector": "and",
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayActiveScopeInCLIStatus",
+                      "acceptance_criteria": [
+                        "WHEN user views status with active scope\nTHEN CLI displays active scope section",
+                        "WHEN no scope is active\nTHEN CLI displays no active scope filters message",
+                        "WHEN multiple scope filters are active\nTHEN CLI displays all active filters",
+                        "WHEN scope is cleared\nTHEN CLI updates status to show no active scope"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays all scope when no filter is set",
+                          "steps": "Given: CLI is at shape.build.instructions\nAnd: no scope filters are active\nWhen: user enters 'status'\nThen: CLI displays scope section with scope icon\nAND: CLI shows 'Current Scope: all (entire project)'\nAND: CLI shows scope change instructions with three options\nAND: CLI shows 'scope all' command example\nAND: CLI shows 'scope \"Story Name\"' command example\nAND: CLI shows 'scope \"file:C:/path/to/**/*.py\"' command example",
+                          "test_method": "test_status_shows_no_active_scope_when_cleared",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 241-250"
+                        },
+                        {
+                          "name": "CLI displays story scope with story names listed",
+                          "steps": "Given: CLI is at shape.build.instructions\nAnd: active scope filter is story scope with stories 'Generate Bot Tools' and 'Generate BOT CLI code'\nWhen: user enters 'status'\nThen: CLI displays scope section with scope icon and 'Scope' header\nAND: CLI shows 'Filter:' label followed by story names\nAND: CLI lists each story with story emoji and story name\nAND: CLI shows warning text: 'Work ONLY on this scope'\nAND: CLI shows warning text: 'DO NOT work on all files or the entire story graph'\nAND: CLI shows warning text: 'Focus EXCLUSIVELY on the items listed above'\nAND: CLI shows scope change instructions",
+                          "test_method": "test_user_views_active_scope_in_status",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 252-268"
+                        },
+                        {
+                          "name": "CLI displays file scope with file paths",
+                          "steps": "Given: CLI is at code.validate.instructions\nAnd: active scope filter is file scope with path 'agile_bot/bots/base_bot/src/repl_cli/**/*.py'\nWhen: user enters 'status'\nThen: CLI displays scope section with scope icon and 'Scope' header\nAND: CLI shows 'Filter:' label followed by file path pattern\nAND: CLI shows '(no files found)' if no files match\nAND: CLI shows warning text: 'Work ONLY on this scope'\nAND: CLI shows warning text: 'DO NOT work on all files or the entire story graph'\nAND: CLI shows warning text: 'Focus EXCLUSIVELY on the items listed above'\nAND: CLI shows scope change instructions",
+                          "test_method": "test_status_shows_combined_scope_filters",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 270-285. Note: Implementation may not support combined scope filters - this scenario may need adjustment"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
-                      "name": "Display CLI Bot Command in Navigation Menu Footer",
+                      "name": "Display CLI Navigation Menu Footer",
                       "sequential_order": 5,
                       "connector": "and",
                       "users": [
                         "CLI"
                       ],
-                      "story_type": "system"
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayCLINavigationMenuFooter",
+                      "acceptance_criteria": [
+                        "WHEN CLI displays status\nTHEN CLI shows footer with available commands",
+                        "WHEN displaying footer\nTHEN CLI lists navigation commands AND action commands",
+                        "WHEN in terminal mode\nTHEN CLI uses plain text formatting for footer",
+                        "WHEN in piped mode\nTHEN CLI uses markdown formatting for footer"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays commands menu footer",
+                          "steps": "Given: CLI displays status\nWhen: CLI renders commands menu footer\nThen: CLI displays Commands section header\nAND: CLI shows command list: status | back | current | next | path [dir] | scope [filter] | headless \"msg\" | help | exit\nAND: CLI shows command usage example with echo syntax\nAND: CLI shows behaviors list: shape | prioritization | discovery | exploration | scenarios | tests | code\nAND: CLI shows actions list: clarify | strategy | build | validate | render\nAND: CLI applies section separator after footer",
+                          "test_method": "test_cli_displays_commands_menu_footer",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 338-350"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
+                    },
+                    {
+                      "name": "Display Headless Mode Status in CLI",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": [
+                        "CLI"
+                      ],
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayHeadlessModeStatusInCLI",
+                      "acceptance_criteria": [
+                        "WHEN CLI displays status\nTHEN CLI shows headless mode section",
+                        "WHEN headless mode is configured\nTHEN CLI shows headless mode status as Available\nAND: CLI shows configured API key prefix\nAND: CLI shows usage examples\nAND: CLI shows command examples",
+                        "WHEN headless mode is not configured\nTHEN CLI shows headless mode status as unavailable",
+                        "WHEN active headless session exists\nTHEN CLI shows active session section\nAND: CLI shows session ID\nAND: CLI shows session status\nAND: CLI shows log file path"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays headless mode section when configured",
+                          "steps": "Given: CLI is initialized\nAnd: headless mode is configured with API key\nWhen: user enters 'status'\nThen: CLI displays headless mode section\nAND: CLI shows 'Headless Mode:' label\nAND: CLI shows 'Status: Available (configured)'\nAND: CLI shows 'API Key: key_2780b8...' (masked)\nAND: CLI shows 'Usage:' section with headless command format\nAND: CLI shows 'Examples:' section with example commands\nAND: CLI shows subsection separator after headless mode section",
+                          "test_method": "test_cli_displays_headless_mode_section_when_configured",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 212-228 and implementation in repl_session.py display_current_state() lines 184-188"
+                        },
+                        {
+                          "name": "CLI displays active headless session when running",
+                          "steps": "Given: CLI is initialized\nAnd: headless mode is configured\nAnd: active headless session is running\nWhen: user enters 'status'\nThen: CLI displays 'Active Session:' section\nAND: CLI shows 'Session ID: 2025-12-30-01-31-17'\nAND: CLI shows 'Status: running'\nAND: CLI shows 'Log:' with log file path",
+                          "test_method": "test_cli_displays_active_headless_session_when_running",
+                          "notes": "Based on screen example from repl-cli-display-refactoring.md lines 224-227"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 2
+                    },
+                    {
+                      "name": "Display Available Bot in Tree Hierarchy",
+                      "sequential_order": 7,
+                      "connector": "and",
+                      "users": [
+                        "CLI"
+                      ],
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayAvailableBotInTreeHierarchy",
+                      "acceptance_criteria": [
+                        "WHEN CLI displays status\nTHEN CLI shows current bot name in header",
+                        "WHEN displaying bot hierarchy\nTHEN CLI shows bot name AND available behaviors",
+                        "WHEN displaying hierarchy\nTHEN CLI shows behaviors with actions in tree structure",
+                        "WHEN displaying hierarchy\nTHEN CLI uses indentation to show structure"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays bot name in header",
+                          "steps": "Given: CLI displays status\nWhen: CLI renders bot hierarchy\nThen: CLI shows current bot name in header",
+                          "test_method": "test_cli_displays_bot_name_in_header"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 2
+                    },
+                    {
+                      "name": "Display CLI Bot Command in Navigation Menu Footer",
+                      "sequential_order": 8,
+                      "connector": "and",
+                      "users": [
+                        "CLI"
+                      ],
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli_current.py",
+                      "test_class": "TestDisplayCLIBotCommandInNavigationMenuFooter",
+                      "acceptance_criteria": [
+                        "WHEN CLI displays footer\nTHEN CLI shows available navigation commands",
+                        "WHEN displaying footer\nTHEN CLI shows command syntax for navigation and actions",
+                        "WHEN displaying footer\nTHEN CLI includes examples of dot notation commands",
+                        "WHEN displaying commands\nTHEN CLI shows behavior.action.operation format examples"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "CLI displays bot command in footer",
+                          "steps": "Given: CLI displays footer\nWhen: CLI renders footer\nThen: CLI shows available navigation commands",
+                          "test_method": "test_cli_displays_bot_command_in_footer"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 2
+                    },
+                    {
+                      "name": "Format Output For AI",
+                      "sequential_order": 9,
+                      "connector": "and",
+                      "users": [
+                        "CLI"
+                      ],
+                      "story_type": "system",
+                      "test_file": "test_display_bot_state_using_cli.py",
+                      "test_class": "TestFormatOutputForAI",
+                      "acceptance_criteria": [
+                        "WHEN CLI detects TTY mode\nTHEN CLI uses plain text formatting for output",
+                        "WHEN CLI detects piped mode\nTHEN CLI uses markdown formatting for output",
+                        "WHEN formatting separators in terminal mode\nTHEN CLI uses plain text separators",
+                        "WHEN formatting separators in piped mode\nTHEN CLI uses markdown separators",
+                        "WHEN formatting status markers\nTHEN CLI uses appropriate format for current mode"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Terminal mode uses plain text formatting for separator",
+                          "steps": "Given: Terminal formatter is created\nWhen: Separator is formatted\nThen: Separator uses equals signs for visibility",
+                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_separator"
+                        },
+                        {
+                          "name": "Terminal mode uses plain text formatting for completed marker",
+                          "steps": "Given: Terminal formatter is created\nWhen: Completed status marker is formatted\nThen: Marker is plain text [OK]",
+                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_completed_marker"
+                        },
+                        {
+                          "name": "Terminal mode uses plain text formatting for current marker",
+                          "steps": "Given: Terminal formatter is created\nWhen: Current status marker is formatted\nThen: Marker is plain text [*]",
+                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_current_marker"
+                        },
+                        {
+                          "name": "Terminal mode uses plain text formatting for pending marker",
+                          "steps": "Given: Terminal formatter is created\nWhen: Pending status marker is formatted\nThen: Marker is plain text [ ]",
+                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_pending_marker"
+                        },
+                        {
+                          "name": "Terminal mode uses space indentation for list items",
+                          "steps": "Given: Terminal formatter is created\nWhen: List item is formatted with indent level 2\nThen: Item uses space indentation",
+                          "test_method": "test_terminal_mode_uses_space_indentation_for_list_items"
+                        },
+                        {
+                          "name": "Terminal mode returns text as-is for highlight",
+                          "steps": "Given: Terminal formatter is created\nWhen: Text is highlighted\nThen: Text is returned as-is",
+                          "test_method": "test_terminal_mode_returns_text_as_is_for_highlight"
+                        },
+                        {
+                          "name": "Piped mode uses markdown formatting for separator",
+                          "steps": "Given: Markdown formatter is created\nWhen: Separator is formatted\nThen: Separator uses heavy line for visibility",
+                          "test_method": "test_piped_mode_uses_markdown_formatting_for_separator"
+                        },
+                        {
+                          "name": "Piped mode uses markdown formatting for completed checkbox",
+                          "steps": "Given: Markdown formatter is created\nWhen: Completed status marker is formatted\nThen: Marker uses markdown bullet with checkbox emoji",
+                          "test_method": "test_piped_mode_uses_markdown_formatting_for_completed_checkbox"
+                        },
+                        {
+                          "name": "Piped mode uses markdown formatting for current checkbox",
+                          "steps": "Given: Markdown formatter is created\nWhen: Current status marker is formatted\nThen: Marker uses markdown bullet with emoji",
+                          "test_method": "test_piped_mode_uses_markdown_formatting_for_current_checkbox"
+                        },
+                        {
+                          "name": "Piped mode uses markdown formatting for pending checkbox",
+                          "steps": "Given: Markdown formatter is created\nWhen: Pending status marker is formatted\nThen: Marker uses markdown bullet with empty checkbox emoji",
+                          "test_method": "test_piped_mode_uses_markdown_formatting_for_pending_checkbox"
+                        },
+                        {
+                          "name": "Piped mode uses markdown lists for list items",
+                          "steps": "Given: Markdown formatter is created\nWhen: List item is formatted with no indent\nThen: Item uses markdown list syntax",
+                          "test_method": "test_piped_mode_uses_markdown_lists_for_list_items"
+                        },
+                        {
+                          "name": "Piped mode indents markdown list items",
+                          "steps": "Given: Markdown formatter is created\nWhen: List item is formatted with indent level 1\nThen: Item uses indented markdown list",
+                          "test_method": "test_piped_mode_indents_markdown_list_items"
+                        },
+                        {
+                          "name": "Piped mode uses bold for highlight",
+                          "steps": "Given: Markdown formatter is created\nWhen: Text is highlighted\nThen: Text uses markdown bold",
+                          "test_method": "test_piped_mode_uses_bold_for_highlight"
+                        },
+                        {
+                          "name": "Formatter created at session initialization for TTY",
+                          "steps": "Given: REPL session is starting\nWhen: Factory creates formatter for TTY mode\nThen: Factory creates terminal formatter",
+                          "test_method": "test_formatter_created_at_session_initialization_for_tty"
+                        },
+                        {
+                          "name": "Formatter created for piped mode",
+                          "steps": "Given: REPL session is starting\nWhen: Factory creates formatter for piped mode\nThen: Factory creates markdown formatter",
+                          "test_method": "test_formatter_created_for_piped_mode"
+                        },
+                        {
+                          "name": "Factory creates terminal formatter when requested",
+                          "steps": "Given: Factory is available\nWhen: Terminal formatter is explicitly requested\nThen: Factory creates terminal formatter",
+                          "test_method": "test_factory_creates_terminal_formatter_when_requested"
+                        },
+                        {
+                          "name": "Factory creates markdown formatter when requested",
+                          "steps": "Given: Factory is available\nWhen: Markdown formatter is explicitly requested\nThen: Factory creates markdown formatter",
+                          "test_method": "test_factory_creates_markdown_formatter_when_requested"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 2
                     }
                   ]
                 }
@@ -4204,7 +4775,24 @@
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "test_file": "test_get_help_using_cli_current.py",
+                      "test_class": "TestViewAvailableCommandsUsingCLIHelp",
+                      "acceptance_criteria": [
+                        "WHEN user enters help command\nTHEN CLI displays available commands AND their descriptions",
+                        "WHEN user requests help for specific action\nTHEN CLI displays detailed help for that action",
+                        "WHEN displaying help\nTHEN CLI shows command syntax AND parameter descriptions",
+                        "WHEN help is requested for non-existent command\nTHEN CLI displays error message with available commands"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "User views all available commands",
+                          "steps": "GIVEN: CLI is running\nWHEN: user enters 'help'\nTHEN: CLI displays help menu with commands",
+                          "test_method": "test_user_views_all_available_commands"
+                        }
+                      ],
+                      "optional": false,
+                      "priority": 1
                     },
                     {
                       "name": "View Parameter Documentation in CLI",
@@ -4241,19 +4829,38 @@
               "responsibilities": [
                 {
                   "name": "Invokes with message and context file",
-                  "collaborators": ["Message", "ContextFile", "ExecutionResult"]
+                  "collaborators": [
+                    "Message",
+                    "ContextFile",
+                    "ExecutionResult"
+                  ]
                 },
                 {
                   "name": "Invokes operation with behavior, action, operation, and context file",
-                  "collaborators": ["ExecutionResult", "Behavior", "Action", "Operation", "ContextFile"]
+                  "collaborators": [
+                    "ExecutionResult",
+                    "Behavior",
+                    "Action",
+                    "Operation",
+                    "ContextFile"
+                  ]
                 },
                 {
                   "name": "Invokes complete action with behavior, action, and context file",
-                  "collaborators": ["ExecutionResult", "Behavior", "Action", "ContextFile"]
+                  "collaborators": [
+                    "ExecutionResult",
+                    "Behavior",
+                    "Action",
+                    "ContextFile"
+                  ]
                 },
                 {
                   "name": "Invokes complete behavior with behavior name and context file",
-                  "collaborators": ["ExecutionResult", "Behavior", "ContextFile"]
+                  "collaborators": [
+                    "ExecutionResult",
+                    "Behavior",
+                    "ContextFile"
+                  ]
                 }
               ],
               "realization": [
@@ -4381,19 +4988,27 @@
               "responsibilities": [
                 {
                   "name": "Loads from context file",
-                  "collaborators": ["Path"]
+                  "collaborators": [
+                    "Path"
+                  ]
                 },
                 {
                   "name": "Get user message",
-                  "collaborators": ["UserMessage"]
+                  "collaborators": [
+                    "UserMessage"
+                  ]
                 },
                 {
                   "name": "Get chat history",
-                  "collaborators": ["ChatHistory"]
+                  "collaborators": [
+                    "ChatHistory"
+                  ]
                 },
                 {
                   "name": "Get file references",
-                  "collaborators": ["FileReference"]
+                  "collaborators": [
+                    "FileReference"
+                  ]
                 }
               ]
             },
@@ -4403,11 +5018,15 @@
               "responsibilities": [
                 {
                   "name": "Creates with timestamped path",
-                  "collaborators": ["Path"]
+                  "collaborators": [
+                    "Path"
+                  ]
                 },
                 {
                   "name": "Appends response",
-                  "collaborators": ["Response"]
+                  "collaborators": [
+                    "Response"
+                  ]
                 },
                 {
                   "name": "Appends total loops",
@@ -4425,7 +5044,9 @@
               "responsibilities": [
                 {
                   "name": "Includes headless mode documentation",
-                  "collaborators": ["HeadlessConfig"]
+                  "collaborators": [
+                    "HeadlessConfig"
+                  ]
                 },
                 {
                   "name": "Shows headless command examples",
@@ -4439,11 +5060,15 @@
               "responsibilities": [
                 {
                   "name": "Shows headless availability",
-                  "collaborators": ["HeadlessConfig"]
+                  "collaborators": [
+                    "HeadlessConfig"
+                  ]
                 },
                 {
                   "name": "Shows active session status",
-                  "collaborators": ["HeadlessSession"]
+                  "collaborators": [
+                    "HeadlessSession"
+                  ]
                 }
               ]
             },
@@ -4453,7 +5078,10 @@
               "responsibilities": [
                 {
                   "name": "Gets instructions for operation",
-                  "collaborators": ["String", "Operation"]
+                  "collaborators": [
+                    "String",
+                    "Operation"
+                  ]
                 }
               ]
             },
@@ -4463,11 +5091,18 @@
               "responsibilities": [
                 {
                   "name": "Aggregates operation results",
-                  "collaborators": ["ActionSummary", "List", "OperationResult"]
+                  "collaborators": [
+                    "ActionSummary",
+                    "List",
+                    "OperationResult"
+                  ]
                 },
                 {
                   "name": "Reports action completion",
-                  "collaborators": ["String", "ActionSummary"]
+                  "collaborators": [
+                    "String",
+                    "ActionSummary"
+                  ]
                 }
               ]
             },
@@ -4477,11 +5112,18 @@
               "responsibilities": [
                 {
                   "name": "Aggregates action results",
-                  "collaborators": ["BehaviorSummary", "List", "ActionResult"]
+                  "collaborators": [
+                    "BehaviorSummary",
+                    "List",
+                    "ActionResult"
+                  ]
                 },
                 {
                   "name": "Reports behavior completion",
-                  "collaborators": ["String", "BehaviorSummary"]
+                  "collaborators": [
+                    "String",
+                    "BehaviorSummary"
+                  ]
                 }
               ]
             },
@@ -4517,7 +5159,9 @@
                 },
                 {
                   "name": "Indicates max recovery attempts exceeded",
-                  "collaborators": ["RecoveryAttemptCount"]
+                  "collaborators": [
+                    "RecoveryAttemptCount"
+                  ]
                 },
                 {
                   "name": "Cannot be retried",
@@ -4531,23 +5175,34 @@
               "responsibilities": [
                 {
                   "name": "Tracks recovery attempt count",
-                  "collaborators": ["RecoveryAttemptCount"]
+                  "collaborators": [
+                    "RecoveryAttemptCount"
+                  ]
                 },
                 {
                   "name": "Waits before retry",
-                  "collaborators": ["Duration"]
+                  "collaborators": [
+                    "Duration"
+                  ]
                 },
                 {
                   "name": "Restarts session",
-                  "collaborators": ["HeadlessSession"]
+                  "collaborators": [
+                    "HeadlessSession"
+                  ]
                 },
                 {
                   "name": "Determines if error is recoverable",
-                  "collaborators": ["RecoverableError", "NonRecoverableError"]
+                  "collaborators": [
+                    "RecoverableError",
+                    "NonRecoverableError"
+                  ]
                 },
                 {
                   "name": "Enforces max retry limit",
-                  "collaborators": ["RecoveryAttemptCount"]
+                  "collaborators": [
+                    "RecoveryAttemptCount"
+                  ]
                 }
               ]
             }
@@ -4569,7 +5224,9 @@
                       "name": "Add Headless Mode To Help",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["REPL"],
+                      "users": [
+                        "REPL"
+                      ],
                       "story_type": "system",
                       "test_class": "TestAddHeadlessModeToHelp",
                       "acceptance_criteria": [
@@ -4610,7 +5267,9 @@
                       "name": "Add Headless Mode To Status",
                       "sequential_order": 2,
                       "connector": "and",
-                      "users": ["REPL"],
+                      "users": [
+                        "REPL"
+                      ],
                       "story_type": "system",
                       "test_class": "TestAddHeadlessModeToStatus",
                       "acceptance_criteria": [
@@ -4675,11 +5334,13 @@
                   "sequential_order": 1,
                   "stories": [
                     {
-                    
                       "name": "Execute Direct Instructions",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["Human", "CLI"],
+                      "users": [
+                        "Human",
+                        "CLI"
+                      ],
                       "story_type": "user",
                       "test_class": "TestExecuteDirectInstructions",
                       "acceptance_criteria": [
@@ -4778,7 +5439,10 @@
                       "name": "Execute Single Operation",
                       "sequential_order": 2,
                       "connector": null,
-                      "users": ["Human", "CLI"],
+                      "users": [
+                        "Human",
+                        "CLI"
+                      ],
                       "story_type": "user",
                       "test_class": "TestExecuteSingleOperation",
                       "acceptance_criteria": [
@@ -4811,28 +5475,6 @@
                             "And CLI detects AI completion signal",
                             "And CLI stops looping",
                             "And CLI reports operation completion with log path"
-                          ]
-                        },
-                        {
-                          "name": "Execute submit operation in headless mode",
-                          "test_method": "test_execute_submit_operation_in_headless_mode",
-                          "steps": [
-                            "Given AI has written headless-context.md with submission data",
-                            "And headless mode is configured",
-                            "And user is at shape.build action",
-                            "When human invokes CLI with --headless flag for submit operation",
-                            "Then CLI retrieves submit instructions for shape.build.submit",
-                            "And CLI includes submission parameters from context",
-                            "And CLI wraps with Keep doing this until 100% done or blocked directive",
-                            "And CLI sends to Cursor Headless API",
-                            "And AI executes submit and indicates not done",
-                            "And CLI appends AI response to log file",
-                            "And CLI loops instruction again with persistence directive",
-                            "And AI completes submission and indicates done",
-                            "And CLI appends AI response to log file",
-                            "And CLI detects AI completion signal",
-                            "And CLI stops looping",
-                            "And CLI reports data saved successfully"
                           ]
                         },
                         {
@@ -4878,14 +5520,16 @@
                       "name": "Execute Complete Action",
                       "sequential_order": 3,
                       "connector": null,
-                      "users": ["Human", "CLI"],
+                      "users": [
+                        "Human",
+                        "CLI"
+                      ],
                       "story_type": "user",
                       "test_class": "TestExecuteCompleteAction",
                       "acceptance_criteria": [
                         "WHEN Human executes CLI with behavior.action and --headless flag\nTHEN CLI enables headless execution mode AND CLI reads headless-context.md",
                         "WHEN CLI executes instructions operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.instructions\" AND CLI wraps operation with \"Keep doing this until 100% done or blocked:\" and \"If blocked, report reason clearly.\" AND CLI sends to Cursor Headless API and loops until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects instructions completion (done=true) or blocked state",
-                        "WHEN CLI executes submit operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.submit\" AND CLI wraps submit with persistence directive and loops until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects submit completion (done=true) or blocked state",
-                        "WHEN CLI executes confirm operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.confirm\" AND CLI wraps confirm with persistence directive and loops until AI indicates done AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects confirm completion (done=true) and marks action_completed=true AND CLI reports entire action completed successfully",
+                        "WHEN CLI executes confirm operation\nTHEN CLI constructs \"Execute operation: {behavior}.{action}.confirm\" AND CLI wraps confirm with persistence directive and loops until AI indicates done AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI processes work (saves files if needed) AND CLI detects confirm completion (done=true) and marks action_completed=true AND CLI reports entire action completed successfully",
                         "WHEN CLI detects blocked state (blocked=true) during any operation\nTHEN CLI stops action workflow execution when blocked AND CLI sets blocked_operation to indicate which operation blocked AND CLI sets operations_status to show completed vs blocked operations AND CLI reports which operation blocked AND CLI displays block reason from API response AND CLI preserves completed operation results in operations_executed list AND CLI exits with blocked status code (exit_code=2)",
                         "WHEN ErrorRecovery detects recoverable errors (AI stuck/hung, max loops reached) at operation level\nTHEN ErrorRecovery waits before retry for 2 seconds AND ErrorRecovery terminates current headless session AND ErrorRecovery restarts session for the stuck operation AND ErrorRecovery sends to new Cursor Headless API session AND ErrorRecovery tracks recovery attempt count incremented (allows up to 3 attempts) AND ErrorRecovery logs recovery attempt to log file AND AI executes operation with fresh context AND CLI continues with remaining operations in the action after recovery completes"
                       ],
@@ -4901,9 +5545,6 @@
                             "Then CLI executes instructions operation with persistence directive",
                             "And AI loops until instructions operation indicates done",
                             "And CLI detects instructions completion",
-                            "And CLI executes submit operation with persistence directive",
-                            "And AI loops until submit operation indicates done",
-                            "And CLI detects submit completion",
                             "And CLI executes confirm operation with persistence directive",
                             "And AI completes confirmation and indicates done",
                             "And CLI detects confirm completion",
@@ -4918,8 +5559,8 @@
                             "And headless mode is configured",
                             "And user is at shape.build action",
                             "When human invokes CLI with --headless for complete action",
-                            "And submit operation blocks waiting for clarification",
-                            "Then CLI detects blocked state during submit",
+                            "And confirm operation blocks waiting for clarification",
+                            "Then CLI detects blocked state during confirm",
                             "And CLI stops action workflow execution",
                             "And CLI reports which operation blocked",
                             "And CLI displays block reason",
@@ -4951,16 +5592,19 @@
                       "name": "Execute Complete Behavior",
                       "sequential_order": 4,
                       "connector": null,
-                      "users": ["Human", "CLI"],
+                      "users": [
+                        "Human",
+                        "CLI"
+                      ],
                       "story_type": "user",
                       "test_class": "TestExecuteCompleteBehavior",
                       "acceptance_criteria": [
                         "WHEN Human executes CLI with behavior and --headless flag\nTHEN CLI enables headless execution mode AND CLI reads headless-context.md",
-                        "WHEN CLI executes clarify action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI wraps each operation with \"Keep doing this until 100% done or blocked:\" and \"If blocked, report reason clearly.\" AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects clarify completion (action_completed=true) or blocked state",
-                        "WHEN CLI executes strategy action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects strategy completion (action_completed=true) or blocked state",
-                        "WHEN CLI executes build action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects build completion (action_completed=true) or blocked state",
-                        "WHEN CLI executes validate action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects validate completion (action_completed=true) or blocked state",
-                        "WHEN CLI executes render action\nTHEN CLI runs operations ['instructions', 'submit', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects render completion (action_completed=true) or blocked state AND CLI marks behavior_completed=true when all actions complete AND CLI reports entire behavior completed successfully",
+                        "WHEN CLI executes clarify action\nTHEN CLI runs operations ['instructions', 'confirm'] in sequence AND CLI wraps each operation with \"Keep doing this until 100% done or blocked:\" and \"If blocked, report reason clearly.\" AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects clarify completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes strategy action\nTHEN CLI runs operations ['instructions', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects strategy completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes build action\nTHEN CLI runs operations ['instructions', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects build completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes validate action\nTHEN CLI runs operations ['instructions', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects validate completion (action_completed=true) or blocked state",
+                        "WHEN CLI executes render action\nTHEN CLI runs operations ['instructions', 'confirm'] in sequence AND CLI loops each operation until AI indicates done or blocked AND CLI enforces MAX_LOOPS limit of 50 iterations per operation AND CLI detects render completion (action_completed=true) or blocked state AND CLI marks behavior_completed=true when all actions complete AND CLI reports entire behavior completed successfully",
                         "WHEN CLI detects blocked state (blocked=true) during any action\nTHEN CLI stops behavior workflow execution when blocked AND CLI sets blocked_action to indicate which action blocked AND CLI sets actions_status to show completed vs blocked actions AND CLI reports which action blocked AND CLI displays block reason from API response AND CLI preserves completed action results in actions_executed list AND CLI exits with blocked status code (exit_code=2)",
                         "WHEN ErrorRecovery detects recoverable errors (AI stuck/hung, max loops reached) at operation level\nTHEN ErrorRecovery waits before retry for 2 seconds AND ErrorRecovery terminates current headless session AND ErrorRecovery restarts session for the stuck operation AND ErrorRecovery sends to new Cursor Headless API session AND ErrorRecovery tracks recovery attempt count incremented (allows up to 3 attempts) AND ErrorRecovery logs recovery attempt to log file AND AI executes action with fresh context AND CLI continues with remaining actions after recovery completes"
                       ],
@@ -5048,7 +5692,9 @@
                       "name": "Monitor Execution",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["CLI"],
+                      "users": [
+                        "CLI"
+                      ],
                       "story_type": "system",
                       "test_class": "TestMonitorExecution",
                       "acceptance_criteria": [
@@ -5130,7 +5776,10 @@
                       "name": "Surface Block Reason",
                       "sequential_order": 2,
                       "connector": null,
-                      "users": ["CLI", "Human"],
+                      "users": [
+                        "CLI",
+                        "Human"
+                      ],
                       "story_type": "user",
                       "test_class": "TestSurfaceBlockReason",
                       "acceptance_criteria": [
@@ -5154,10 +5803,10 @@
                           "name": "Display block reason with context",
                           "test_method": "test_display_block_reason_with_context",
                           "steps": [
-                            "Given headless session has blocked during submit operation",
+                            "Given headless session has blocked during confirm operation",
                             "And session log contains block reason Missing required parameter --data",
                             "When CLI prepares blocked report",
-                            "Then CLI displays operation context submit operation",
+                            "Then CLI displays operation context confirm operation",
                             "And CLI displays block reason Missing required parameter --data",
                             "And CLI suggests resolution Check --data parameter",
                             "And CLI shows log file path"
@@ -5176,7 +5825,10 @@
                       "name": "Report Completion",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["CLI", "Human"],
+                      "users": [
+                        "CLI",
+                        "Human"
+                      ],
                       "story_type": "user",
                       "test_class": "TestReportCompletion",
                       "acceptance_criteria": [
@@ -5216,7 +5868,10 @@
                       "name": "Recover and Report Failures",
                       "sequential_order": 2,
                       "connector": "or",
-                      "users": ["CLI", "Human"],
+                      "users": [
+                        "CLI",
+                        "Human"
+                      ],
                       "story_type": "user",
                       "test_class": "TestRecoverAndReportFailures",
                       "acceptance_criteria": [
@@ -5997,7 +6652,7 @@
                   "acceptance_criteria": [
                     "WHEN BuildKnowledgeAction completes execution",
                     "THEN BuildKnowledgeAction saves Workflow State (per \"Saves Behavior State\" story)",
-                    "AND BuildKnowledgeAction submits content for saving",
+                    "AND BuildKnowledgeAction processes content for saving",
                     "AND Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)"
                   ]
                 },
@@ -6225,7 +6880,7 @@
                     "WHEN RenderOutputAction completes execution",
                     "WHEN Human says action is done",
                     "THEN RenderOutputAction saves Workflow State (per \"Saves Behavior State\" story)",
-                    "AND RenderOutputAction submits content for saving",
+                    "AND RenderOutputAction processes content for saving",
                     "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
                     "AND Workflow proceeds to validate_rules"
                   ]
@@ -7015,9 +7670,9 @@
         "Confirm Advances Across Behaviors",
         "Request Help",
         "Request Status",
-        "Enter Action",
-        "Display Confirm and Continue Prompt",
-        "Enter Confirm Results",
+        "Auto-Run Instructions On Navigate",
+        "Confirm Action Completion Through CLI",
+        "Auto-Confirm Action After Instructions Complete",
         "Advance To Next Action",
         "Loop Back To Display State",
         "Exit REPL",
@@ -7025,9 +7680,6 @@
         "Provide Story Scope Context For Instructions",
         "Provide File Scope Context For Instructions",
         "Store Scope Context",
-        "Get Instructions and Display",
-        "Submit Action and Display Results",
-        "Confirm Action and Display Results",
         "Show Current Behavior Action Help",
         "Generate REPL Command Definitions",
         "Generate CLI Entry Point",

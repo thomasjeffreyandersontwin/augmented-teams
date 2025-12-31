@@ -53,7 +53,7 @@ class TestTerminalFormatter:
     
     def test_returns_dashes_for_section_separator(self):
         formatter = given_terminal_formatter()
-        then_separator_equals(formatter, "-" * 60)
+        then_separator_equals(formatter, "=" * 60)
     
     def test_returns_completed_status_marker(self):
         formatter = given_terminal_formatter()
@@ -80,11 +80,11 @@ class TestMarkdownFormatter:
     
     def test_returns_markdown_separator(self):
         formatter = given_markdown_formatter()
-        then_separator_equals(formatter, "---")
+        then_separator_equals(formatter, "━" * 90)
     
     def test_returns_markdown_completed_checkbox(self):
         formatter = given_markdown_formatter()
-        then_status_marker_equals(formatter, is_current=False, is_completed=True, expected_marker="- ●")
+        then_status_marker_equals(formatter, is_current=False, is_completed=True, expected_marker="- ☑")
     
     def test_returns_markdown_current_checkbox(self):
         formatter = given_markdown_formatter()
@@ -92,7 +92,7 @@ class TestMarkdownFormatter:
     
     def test_returns_markdown_pending_checkbox(self):
         formatter = given_markdown_formatter()
-        then_status_marker_equals(formatter, is_current=False, is_completed=False, expected_marker="- ○")
+        then_status_marker_equals(formatter, is_current=False, is_completed=False, expected_marker="- ☐")
     
     def test_creates_markdown_list_items(self):
         formatter = given_markdown_formatter()
@@ -132,28 +132,42 @@ class TestStatusDisplayFormatterUsage:
     def given_mock_bot_with_behaviors(self):
         """Create a mock bot with behaviors and actions"""
         mock_action = Mock()
+        mock_action.action_name = "test_action"
         mock_action.name = "test_action"
         mock_action.description = "Test action"
+        
+        mock_actions = Mock()
+        mock_actions.__iter__ = lambda self: iter([mock_action])
+        mock_actions.is_action_completed = Mock(return_value=False)
         
         mock_behavior = Mock()
         mock_behavior.name = "test_behavior"
         mock_behavior.description = "Test behavior"
-        mock_behavior.actions = [mock_action]
+        mock_behavior.actions = mock_actions
+        mock_behavior.is_completed = False
         
         mock_bot = Mock()
         mock_bot.behaviors = [mock_behavior]
+        mock_bot.domain_bot = mock_bot
         return mock_bot
     
     def given_mock_state_provider(self):
         """Create a mock state provider"""
         # Create mock action
         mock_action = Mock()
+        mock_action.action_name = "test_action"
         mock_action.name = "test_action"
+        
+        # Create mock actions collection
+        mock_actions = Mock()
+        mock_actions.__iter__ = lambda self: iter([mock_action])
+        mock_actions.is_action_completed = Mock(return_value=False)
         
         # Create mock behavior with actions
         mock_behavior = Mock()
         mock_behavior.name = "test_behavior"
-        mock_behavior.actions = [mock_action]
+        mock_behavior.actions = mock_actions
+        mock_behavior.is_completed = False
         
         mock_state = Mock()
         mock_state.progress_path = "test_behavior.test_action"

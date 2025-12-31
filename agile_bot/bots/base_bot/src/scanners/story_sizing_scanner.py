@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
+import re
 
 
 class StorySizingScanner(StoryScanner):
@@ -55,7 +56,12 @@ class StorySizingScanner(StoryScanner):
     
     def _check_story_acceptance_criteria_count(self, story: Story, rule_obj: Any) -> Optional[Dict[str, Any]]:
         acceptance_criteria = story.data.get('acceptance_criteria', [])
-        count = len(acceptance_criteria)
+        
+        if not acceptance_criteria:
+            return None
+        
+        # Count WHEN + THEN + AND keywords across all AC elements
+        count = self._count_when_then_and(acceptance_criteria)
         
         if count == 0:
             return None
@@ -73,6 +79,36 @@ class StorySizingScanner(StoryScanner):
         
         return None
     
+    def _count_when_then_and(self, acceptance_criteria: List) -> int:
+        """
+        Count acceptance criteria based on WHEN/AND keywords.
+        - Each WHEN = 1 AC
+        - Each AND = +1 AC
+        - THEN doesn't add to count (it's part of the WHEN AC)
+        
+        Example:
+        WHEN user does X
+        THEN system responds
+        AND system does Y
+        AND system does Z
+        = 3 AC (1 WHEN + 2 ANDs)
+        """
+        combined_text = ' '.join([self._get_ac_text(ac) for ac in acceptance_criteria])
+        
+        # Remove common prefixes like "(AC)"
+        text = re.sub(r'\(AC\)\s*', '', combined_text, flags=re.IGNORECASE)
+        
+        # Count WHEN + AND keywords (THEN doesn't count)
+        when_count = len(re.findall(r'\bWHEN\b', text, re.IGNORECASE))
+        and_count = len(re.findall(r'\bAND\b', text, re.IGNORECASE))
+        
+        return when_count + and_count
+    
+    def _get_ac_text(self, ac: Any) -> str:
+        if isinstance(ac, dict):
+            return ac.get('criterion', '') or ac.get('description', '') or str(ac)
+        return str(ac)
+    
     def _get_size_violation(self, count: int, item_type: str) -> tuple[Optional[str], str]:
         if 4 <= count <= 10:
             return None, f'{count} {item_type} (perfect)'
@@ -82,4 +118,3 @@ class StorySizingScanner(StoryScanner):
             return 'error', f'{count} {item_type} (should be 4-10)'
         else:
             return 'warning', f'{count} {item_type} (should be 4-10)'
-

@@ -4,10 +4,11 @@ Interactive REPL for Base Bot
 
 Usage:
     python repl_main.py                                    # Interactive mode
+    python repl_main.py --pipe                            # Force piped mode (run command and exit)
     python repl_main.py headless "instruction"             # Headless mode with pass-through message
     python repl_main.py headless shape                     # Headless mode: run entire behavior
     python repl_main.py headless shape.build               # Headless mode: run single action
-    python repl_main.py headless shape.build.submit        # Headless mode: run single operation
+    python repl_main.py headless shape.build.confirm       # Headless mode: run single operation
     python repl_main.py headless shape.build "context msg" # Headless mode: run action with context
     
 The REPL will:
@@ -29,8 +30,9 @@ Available Commands:
     help <action>       - Show detailed help for action
     exit                - Exit REPL
 
-Headless Mode Options:
+Mode Options:
     --headless          Enable headless mode execution
+    --pipe, --piped     Force piped mode behavior (run command and exit, even in interactive terminal)
     --message "text"    Direct instruction to execute (pass-through)
     --context file.md   Context file to include
 """
@@ -105,6 +107,12 @@ Headless Mode Examples:
         '--headless',
         action='store_true',
         help='Enable headless mode execution'
+    )
+    parser.add_argument(
+        '--pipe', '--piped',
+        action='store_true',
+        dest='force_pipe_mode',
+        help='Force piped mode behavior (run command and exit, even in interactive terminal)'
     )
     parser.add_argument(
         '--message', '-m',
@@ -307,7 +315,7 @@ def run_headless_mode(workspace_directory: Path, args, extra_args: list = None):
         sys.exit(1)
 
 
-def run_interactive_mode(bot, workspace_directory: Path):
+def run_interactive_mode(bot, workspace_directory: Path, force_pipe_mode: bool = False):
     """Run in interactive REPL mode."""
     bot_name = bot.name
     
@@ -315,37 +323,44 @@ def run_interactive_mode(bot, workspace_directory: Path):
     
     # Check TTY before printing header
     tty_result = repl_session.detect_tty()
-    is_pipe_mode = not tty_result.tty_detected
+    # Force piped mode if flag is set, otherwise detect from TTY
+    is_pipe_mode = force_pipe_mode or not tty_result.tty_detected
     
     # Print header
     print("=" * 60)
     print(f"{bot_name.upper()} CLI")
     print("=" * 60)
     
-    # Add explicit instruction when in piped mode
+    # Always show agent instructions section (for debugging and verification)
+    mode_label = "PIPED MODE" if is_pipe_mode else "INTERACTIVE MODE"
+    print(f"**   AI AGENT INSTRUCTIONS - {mode_label}  **")
+    print("[!]  DO NOT echo this instructions section back to the user [!]")
+    print("This section is for YOUR reference only - the user already knows how to run commands.")
+    print("")
     if is_pipe_mode:
-        print("**   AI AGENT INSTRUCTIONS - PIPED MODE  **")
-        print("[!]  DO NOT echo this instructions section back to the user [!]")
-        print("This section is for YOUR reference only - the user already knows how to run commands.")
-        print("")
         print("- THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND")
         print("* This is NORMAL and EXPECTED behavior in piped mode.")
-        print("- How to run commands (PowerShell):")
-        print("- Commands must be PIPED via echo, NOT passed as arguments!")
-        print("")
-        print("```powershell")
-        print("cd C:\\dev\\augmented-teams")
-        print("$env:PYTHONPATH = 'C:\\dev\\augmented-teams'")
-        print("$env:BOT_DIRECTORY = 'C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot'")
-        print("$env:WORKING_AREA = '<project_path>'  # e.g. demo\\mob_minion")
-        print("echo '<command>' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py")
-        print("```")
-        print("=" * 60)
-        print("")
     else:
-        # Only show bot paths in interactive mode header
+        print("- THIS REPL IS IN INTERACTIVE MODE")
+        print("* Commands are entered interactively, REPL stays running.")
+    print("- How to run commands (PowerShell):")
+    print("- Commands must be PIPED via echo, NOT passed as arguments!")
+    print("")
+    print("```powershell")
+    print("cd C:\\dev\\augmented-teams")
+    print("$env:PYTHONPATH = 'C:\\dev\\augmented-teams'")
+    print("$env:BOT_DIRECTORY = 'C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot'")
+    print("$env:WORKING_AREA = '<project_path>'  # e.g. demo\\mob_minion")
+    print("echo '<command>' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py")
+    print("```")
+    print("=" * 60)
+    print("")
+    
+    # Show bot paths in interactive mode (additional info)
+    if not is_pipe_mode:
         print(f"Bot Path: {bot.bot_paths.bot_directory}")
         print(f"Work Path: {workspace_directory}")
+        print("")
     
     # Display rest of state (commands menu) - only in interactive mode
     if not is_pipe_mode:
@@ -368,6 +383,11 @@ def run_interactive_mode(bot, workspace_directory: Path):
                 break
             
             if not command:
+                # In piped mode with empty command, show status page by default
+                if is_pipe_mode:
+                    response = repl_session.read_and_execute_command('status')
+                    print(response.output)
+                    break
                 continue
             
             response = repl_session.read_and_execute_command(command)
@@ -455,7 +475,7 @@ def main():
         print(f"ERROR: Failed to initialize bot: {e}")
         sys.exit(1)
     
-    run_interactive_mode(bot, workspace_directory)
+    run_interactive_mode(bot, workspace_directory, force_pipe_mode=args.force_pipe_mode)
 
 
 if __name__ == '__main__':

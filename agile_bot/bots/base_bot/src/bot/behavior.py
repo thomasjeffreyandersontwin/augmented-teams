@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Any
 from agile_bot.bots.base_bot.src.utils import read_json_file
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from agile_bot.bots.base_bot.src.actions.action_context import ValidationType
 if TYPE_CHECKING:
     from agile_bot.bots.base_bot.src.bot.bot import BotResult
 
@@ -132,3 +133,24 @@ class Behavior:
             from agile_bot.bots.base_bot.src.ext.trigger_words import TriggerWords
             self._trigger_words_obj = TriggerWords(self)
         return self._trigger_words_obj
+
+    @property
+    def validation_type(self) -> ValidationType:
+        """Determine what this behavior validates by default.
+        
+        Returns:
+            ValidationType.STORY_GRAPH: For behaviors that validate story graph only (shape, discovery, exploration, etc.)
+            ValidationType.FILES: For behaviors that validate files only (code, tests)
+            ValidationType.BOTH: For behaviors that validate both (default fallback)
+        """
+        # Behaviors that validate story graph only
+        story_graph_only = {'shape', 'prioritization', 'discovery', 'exploration', 'scenarios'}
+        # Behaviors that validate files only
+        files_only = {'code', 'tests', 'test'}
+        
+        if self.name in story_graph_only:
+            return ValidationType.STORY_GRAPH
+        elif self.name in files_only:
+            return ValidationType.FILES
+        else:
+            return ValidationType.BOTH

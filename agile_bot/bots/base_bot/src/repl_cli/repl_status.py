@@ -104,7 +104,7 @@ class REPLStatus:
                     else:
                         lines.append(f"  {a_marker} {a_name}")
                     
-                    # Show operations for current action
+                    # Show operations for current action (2-phase model: instructions -> confirm)
                     if is_current_action:
                         # Instructions
                         if stage == 'instructions' or stage == 'not_started':
@@ -113,19 +113,10 @@ class REPLStatus:
                             instr_marker = self.formatter.status_marker(is_current=False, is_completed=True)
                         lines.append(f"    {instr_marker} instructions")
                         
-                        # Submit
-                        if stage == 'submitting':
-                            submit_marker = self.formatter.status_marker(is_current=True, is_completed=False)
-                        elif stage in ('instructions', 'not_started'):
-                            submit_marker = self.formatter.status_marker(is_current=False, is_completed=False)
-                        else:
-                            submit_marker = self.formatter.status_marker(is_current=False, is_completed=True)
-                        lines.append(f"    {submit_marker} submit")
-                        
                         # Confirm
                         if stage == 'confirming':
                             confirm_marker = self.formatter.status_marker(is_current=True, is_completed=False)
-                        elif stage in ('instructions', 'not_started', 'submitting'):
+                        elif stage in ('instructions', 'not_started'):
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=False)
                         else:
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=True)
@@ -197,7 +188,7 @@ class REPLStatus:
                 pass
         return ''
     
-    def _get_submit_params(self, action) -> str:
+    def _get_confirm_params(self, action) -> str:
         params = []
         if hasattr(action, 'context_class') and action.context_class:
             try:
@@ -290,9 +281,9 @@ class REPLStatus:
         completed_marker = self.formatter.status_marker(is_current=False, is_completed=True)
         
         if stage == 'instructions':
-            return [f"instructions {current_marker}", f"submit {pending_marker}", f"confirm {pending_marker}"]
-        elif stage == 'submitted':
-            return [f"instructions {completed_marker}", f"submit {current_marker}", f"confirm {pending_marker}"]
+            return [f"instructions {current_marker}", f"confirm {pending_marker}"]
+        elif stage == 'confirming':
+            return [f"instructions {completed_marker}", f"confirm {current_marker}"]
         return []
     
     def _format_item(self, name: str, is_current: bool, is_completed: bool, current_marker: str = None) -> str:

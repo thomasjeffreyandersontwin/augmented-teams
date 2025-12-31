@@ -280,7 +280,7 @@ class REPLSession:
                     status='error'
                 )
             # Navigation succeeded - auto-execute instructions for new position
-            return self._handle_current_command()
+            return self._handle_current_command(auto_execute_instructions=True)
         
         # Default: just return the message
         return REPLCommandResponse(
@@ -329,10 +329,8 @@ class REPLSession:
         # Workflow commands
         if command_verb == 'instructions':
             return self._handle_instructions_command(command_args)
-        if command_verb == 'submit':
-            return self._handle_submit_command(command_args)
         if command_verb == 'confirm':
-            return self._handle_confirm_command()
+            return self._handle_confirm_command(command_args)
         
         # State commands
         if command_verb == 'path':
@@ -403,8 +401,7 @@ class REPLSession:
             "This section contains current scope filter (if set), current progress in workflow, and available commands",
             "Review the CLI STATUS section below to understand both current state and available commands.",
             "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
-            formatter.subsection_separator(),
-            formatter.section_separator()
+            formatter.subsection_separator()
         ])
         output = cli_status_header + "\n" + state_display.output
         
@@ -414,7 +411,7 @@ class REPLSession:
             status="success"
         )
     
-    def _handle_current_command(self) -> REPLCommandResponse:
+    def _handle_current_command(self, auto_execute_instructions=False) -> REPLCommandResponse:
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action",
@@ -422,25 +419,32 @@ class REPLSession:
                 status="error"
             )
         
-        # Extract operation from progress (behavior.action.operation)
-        progress = self.get_progress_line()
-        if '.' in progress and 'Progress: ' in progress:
-            parts = progress.replace('Progress: ', '').split('.')
-            if len(parts) >= 3:
-                operation = parts[2]
-                if operation == 'instructions':
-                    return self._handle_instructions_command("")
-                elif operation == 'submit':
-                    return self._handle_submit_command("")
-                elif operation == 'confirm':
-                    return REPLCommandResponse(
-                        output="Cannot re-execute 'confirm'. Use 'next' or 'back' to navigate.",
-                        response="Cannot re-execute confirm",
-                        status="error"
-                    )
+        # If called from navigation, auto-execute instructions
+        if auto_execute_instructions:
+            # Extract operation from progress (behavior.action.operation)
+            progress = self.get_progress_line()
+            if '.' in progress and 'Progress: ' in progress:
+                parts = progress.replace('Progress: ', '').split('.')
+                if len(parts) >= 3:
+                    operation = parts[2]
+                    if operation == 'instructions':
+                        return self._handle_instructions_command("")
+                    elif operation == 'confirm':
+                        return REPLCommandResponse(
+                            output="Cannot re-execute 'confirm'. Use 'next' or 'back' to navigate.",
+                            response="Cannot re-execute confirm",
+                            status="error"
+                        )
+            # Default: show instructions
+            return self._handle_instructions_command("")
         
-        # Default: show instructions
-        return self._handle_instructions_command("")
+        # Otherwise, just show status without executing
+        state_display = self.display_current_state()
+        return REPLCommandResponse(
+            output=state_display.output,
+            response="Current position displayed",
+            status="success"
+        )
     
     def _handle_next_command(self) -> REPLCommandResponse:
         error_response = self._validate_current_action_and_behavior()
@@ -458,8 +462,8 @@ class REPLSession:
         # At last action - try next behavior
         next_behavior = self.cli_bot.behaviors.next
         if next_behavior:
-            if next_behavior.actions.all:
-                self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.all[0])
+            if next_behavior.actions.names:
+                self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.names[0])
             return self._wrap_navigation_with_instructions()
         
         return REPLCommandResponse(
@@ -493,8 +497,8 @@ class REPLSession:
         if current_idx is not None and current_idx > 0:
             prev_behavior_domain = behaviors_list[current_idx - 1]
             prev_behavior = self.cli_bot.behaviors.get_behavior(prev_behavior_domain.name)
-            if prev_behavior and prev_behavior.actions.all:
-                last_action_name = prev_behavior.actions.all[-1]
+            if prev_behavior and prev_behavior.actions.names:
+                last_action_name = prev_behavior.actions.names[-1]
                 self.navigate_to_behavior_action(prev_behavior.name, last_action_name)
                 return self._wrap_navigation_with_instructions()
         
@@ -518,30 +522,32 @@ class REPLSession:
         context = None
         if args and args.strip().startswith('--'):
             cli_args = self._tokenize_cli_args(args)
-            try:
-                from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
-                builder = CliContextBuilder()
-                # Get the underlying action if this is a CLI wrapper
-                underlying_action = action._action if hasattr(action, '_action') else action
-                context = builder.build_context(underlying_action, cli_args)
-                
-                # Store scope if present in context - Scope manages its own persistence
-                if context and hasattr(context, 'scope') and context.scope:
-                    context.scope.apply_to_bot(self.workspace_directory)
-            except ValueError as e:
-                error_msg = str(e)
-                # Invalid scope type is a real validation error
-                if "Invalid scope type" in error_msg or "invalid_type" in error_msg:
-                    return REPLCommandResponse(
-                        output=f"ERROR: {error_msg}",
-                        response=f"ERROR: {error_msg}",
-                        status="error"
-                    )
-                # Other errors like unknown parameters - just proceed without context
-                context = None
-            except Exception:
-                # Any other parsing errors - proceed without context
-                context = None
+            
+            if cli_args:
+                try:
+                    from agile_bot.bots.base_bot.src.cli.cli_context_builder import CliContextBuilder
+                    builder = CliContextBuilder()
+                    # Get the underlying action if this is a CLI wrapper
+                    underlying_action = action._action if hasattr(action, '_action') else action
+                    context = builder.build_context(underlying_action, cli_args)
+                    
+                    # Store scope if present in context - Scope manages its own persistence
+                    if context and hasattr(context, 'scope') and context.scope:
+                        context.scope.apply_to_bot(self.workspace_directory)
+                except ValueError as e:
+                    error_msg = str(e)
+                    # Invalid scope type is a real validation error
+                    if "Invalid scope type" in error_msg or "invalid_type" in error_msg:
+                        return REPLCommandResponse(
+                            output=f"ERROR: {error_msg}",
+                            response=f"ERROR: {error_msg}",
+                            status="error"
+                        )
+                    # Other errors like unknown parameters - just proceed without context
+                    context = None
+                except Exception:
+                    # Any other parsing errors - proceed without context
+                    context = None
         
         try:
             # Call with context if we have one, otherwise pass args as string
@@ -549,6 +555,24 @@ class REPLSession:
                 output = action.instructions(args="", context=context)
             else:
                 output = action.instructions(args)
+            
+            # Check if this action has auto_confirm
+            underlying_action = action._action if hasattr(action, '_action') else action
+            if hasattr(underlying_action, 'domain_action'):
+                underlying_action = underlying_action.domain_action
+            auto_confirm = getattr(underlying_action, 'auto_confirm', False)
+            
+            if auto_confirm:
+                # Auto-confirm: show instructions then immediately run confirm
+                instructions_response = self._wrap_with_context_header(output, "Instructions displayed (auto-confirm)")
+                confirm_response = self._handle_confirm_command("")
+                return REPLCommandResponse(
+                    output=instructions_response.output + "\n\n[Auto-confirmed]\n\n" + confirm_response.output,
+                    response="Instructions displayed and auto-confirmed",
+                    status=confirm_response.status
+                )
+            
+            # No auto-confirm: show instructions and wait for human to run confirm
             return self._wrap_with_context_header(output, "Instructions displayed")
         except Exception as e:
             return REPLCommandResponse(
@@ -557,27 +581,7 @@ class REPLSession:
                 status="error"
             )
     
-    def _handle_submit_command(self, args: str = "") -> REPLCommandResponse:
-        if not self.has_current_action:
-            return REPLCommandResponse(
-                output="ERROR: No current action to submit for",
-                response="ERROR: No current action",
-                status="error"
-            )
-        
-        action = self.current_action
-        try:
-            output = action.submit(args)
-            # Wrap with context header to show full dashboard just like instructions
-            return self._wrap_with_context_header(output, "Submission processed")
-        except Exception as e:
-            return REPLCommandResponse(
-                output=f"ERROR submitting: {str(e)}",
-                response=f"ERROR submitting: {str(e)}",
-                status="error"
-            )
-    
-    def _handle_confirm_command(self) -> REPLCommandResponse:
+    def _handle_confirm_command(self, args: str = "") -> REPLCommandResponse:
         if not self.has_current_action:
             return REPLCommandResponse(
                 output="ERROR: No current action to confirm",
@@ -591,19 +595,32 @@ class REPLSession:
         current_action_name = action.name
         
         try:
-            # Call confirm on the action
-            result_output = action.confirm()
+            # Check if this action has skip_confirm
+            underlying_action = action._action if hasattr(action, '_action') else action
+            if hasattr(underlying_action, 'domain_action'):
+                underlying_action = underlying_action.domain_action
+            skip_confirm = getattr(underlying_action, 'skip_confirm', False)
+            
+            # Call confirm on the action with any args (unless skip_confirm is set)
+            if skip_confirm:
+                result_output = f"[skip_confirm] Advancing without confirm for {current_action_name}"
+            else:
+                result_output = action.confirm(args)
             
             # Check if at last action BEFORE closing
-            action_names = behavior.actions.all
+            action_names = behavior.actions.names
             is_last_action = (current_action_name == action_names[-1] if action_names else False)
             
             # Mark current action as complete and advance
             behavior.actions.domain_actions.close_current()
             
-            # If not at last action, advance to next action and auto-execute instructions
+            # If not at last action, advance to next action (user will run commands explicitly)
             if not is_last_action:
-                return self._handle_instructions_command()
+                return REPLCommandResponse(
+                    output=output + "\n\n[Action confirmed. Use 'next' or run commands explicitly to continue.]",
+                    response="Action confirmed",
+                    status="success"
+                )
             
             # At last action - behavior is complete
             self._mark_behavior_complete(current_behavior_name)
@@ -611,12 +628,15 @@ class REPLSession:
             # Check for next behavior
             next_behavior = self.cli_bot.behaviors.next
             if next_behavior:
-                # Advance to next behavior
+                # Advance to next behavior (user will run commands explicitly)
                 self.cli_bot.behaviors.domain_behaviors.close_current()
-                # Navigate to next behavior's first action and auto-execute instructions
-                if next_behavior.actions.all:
-                    self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.all[0])
-                    return self._handle_instructions_command()
+                if next_behavior.actions.names:
+                    self.navigate_to_behavior_action(next_behavior.name, next_behavior.actions.names[0])
+                    return REPLCommandResponse(
+                        output=output + f"\n\n[Behavior complete. Advanced to {next_behavior.name}. Use 'next' or run commands explicitly to continue.]",
+                        response="Behavior complete, advanced to next",
+                        status="success"
+                    )
             
             # No more behaviors - all complete
             return REPLCommandResponse(
@@ -1020,13 +1040,11 @@ class REPLSession:
             operation = path_parts[1] if len(path_parts) > 1 else ""
             if operation == 'instructions':
                 return self._handle_instructions_command(args)
-            elif operation == 'submit':
-                return self._handle_submit_command(args)
             elif operation == 'confirm':
-                return self._handle_confirm_command()
+                return self._handle_confirm_command(args)
             else:
                 return REPLCommandResponse(
-                    output=f"ERROR: Unknown operation '{operation}'\nUse: instructions, submit, or confirm",
+                    output=f"ERROR: Unknown operation '{operation}'\nUse: instructions or confirm",
                     response=f"ERROR: Unknown operation '{operation}'",
                     status="error"
                 )
@@ -1037,9 +1055,9 @@ class REPLSession:
             behavior_name, action_name, operation = path_parts
             
             # Validate operation first before navigating (to avoid state changes on error)
-            if operation not in ('instructions', 'submit', 'confirm'):
+            if operation not in ('instructions', 'confirm'):
                 return REPLCommandResponse(
-                    output=f"ERROR: Unknown operation '{operation}'\nUse: instructions, submit, or confirm",
+                    output=f"ERROR: Unknown operation '{operation}'\nUse: instructions or confirm",
                     response=f"ERROR: Unknown operation '{operation}'",
                     status="error"
                 )
@@ -1055,10 +1073,8 @@ class REPLSession:
             
             if operation == 'instructions':
                 return self._handle_instructions_command(args)
-            elif operation == 'submit':
-                return self._handle_submit_command(args)
             elif operation == 'confirm':
-                return self._handle_confirm_command()
+                return self._handle_confirm_command(args)
         elif len(path_parts) == 2:
             # behavior.action or action.operation
             first, second = path_parts
@@ -1105,10 +1121,8 @@ class REPLSession:
                         )
                     if operation == 'instructions':
                         return self._handle_instructions_command(args)
-                    elif operation == 'submit':
-                        return self._handle_submit_command(args)
                     elif operation == 'confirm':
-                        return self._handle_confirm_command()
+                        return self._handle_confirm_command(args)
                     else:
                         return REPLCommandResponse(
                             output=f"ERROR: Unknown operation '{operation}'",
@@ -1147,14 +1161,14 @@ class REPLSession:
                     cli_args = self._tokenize_cli_args(parts[1])
         
         if not subcommand:
-            phase_map = {'not_started': 'instructions', 'instructions_given': 'submit', 'submitted': 'confirm'}
+            phase_map = {'not_started': 'instructions', 'instructions_given': 'confirm'}
             subcommand = phase_map.get(self.action_phase, 'instructions')
         
         if subcommand in ("instructions", "run", "execute") or cli_args:
             operation = "instructions" if subcommand == "instructions" else None
             return self._execute_action_with_args(action_name, cli_args, operation=operation)
         
-        if subcommand in ("submit", "confirm"):
+        if subcommand == "confirm":
             if not self.has_current_behavior:
                 return REPLCommandResponse(
                     output="ERROR: No current behavior set. Please select a behavior first.",
@@ -1180,13 +1194,10 @@ class REPLSession:
                     response=f"ERROR: Action '{action_name}' not found in behavior '{behavior.name}'",
                     status="error"
                 )
-            if subcommand == "submit":
-                return self._handle_submit_command("")
-            else:  # confirm
-                return self._handle_confirm_command()
+            return self._handle_confirm_command("")
         
         return REPLCommandResponse(
-            output=f"ERROR: Unknown subcommand '{subcommand}'. Use 'instructions', 'submit', or 'confirm'.",
+            output=f"ERROR: Unknown subcommand '{subcommand}'. Use 'instructions' or 'confirm'.",
             response=f"ERROR: Unknown subcommand '{subcommand}'",
             status="error"
         )

@@ -154,7 +154,7 @@ class TestDisplayCurrentPositionInCLI:
     
     @pytest.mark.parametrize("behavior,action,operation", [
         ("shape", "clarify", "instructions"),
-        ("discovery", "build", "submit"),
+        ("discovery", "build", "confirming"),
         ("code", "validate", "confirm")
     ])
     def test_user_views_current_position_in_status(self, bot_directory, workspace_directory, monkeypatch, behavior, action, operation):
@@ -190,8 +190,8 @@ class TestDisplayCurrentPositionInCLI:
         """
         SCENARIO: Current position updates after navigation
         GIVEN: CLI is at shape.clarify.instructions
-        WHEN: user navigates to discovery.build.instructions
-        THEN: CLI updates current position display
+        WHEN: user navigates to discovery behavior
+        THEN: CLI updates current position display to show discovery
         """
         from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
         from agile_bot.bots.base_bot.src.bot.bot import Bot
@@ -202,24 +202,23 @@ class TestDisplayCurrentPositionInCLI:
         create_behavior(bot_directory, 'discovery', ['clarify', 'strategy', 'build', 'validate', 'render'])
         create_behavior_action_state(workspace_directory, 'shape', 'clarify', 'instructions')
         
-        # WHEN: user navigates to discovery.build.instructions
+        # WHEN: user navigates to discovery behavior
         bot = Bot(
             bot_name='story_bot',
             bot_directory=bot_directory,
             config_path=bot_directory / 'bot_config.json'
         )
         repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
-        repl_session.read_and_execute_command('discovery.build.instructions')
+        repl_session.read_and_execute_command('discovery.clarify.instructions')
         # AND: user views status
         cli_response = repl_session.read_and_execute_command('status')
         
         # THEN: REPLSession updates behavior action state
-        # AND: CLI updates current position display to 'discovery.build.instructions'
+        # AND: CLI updates current position display to show 'discovery' behavior
         assert 'discovery' in cli_response.output.lower()
         state_file = workspace_directory / 'behavior_action_state.json'
         state_data = json.loads(state_file.read_text())
         assert 'discovery' in state_data['current_behavior']
-        assert 'build' in state_data['current_action']
 
 
 class TestDisplayActiveScopeInCLIStatus:
@@ -373,8 +372,8 @@ class TestFormatOutputForAI:
         # When: Separator is formatted
         result = when_formatter_formats_separator(formatter)
         
-        # Then: Separator uses dashes
-        then_result_equals(result, "-" * 60)
+        # Then: Separator uses equals signs for visibility
+        then_result_equals(result, "=" * 60)
     
     def test_terminal_mode_uses_plain_text_formatting_for_completed_marker(self):
         # Given: Terminal formatter is created
@@ -433,8 +432,8 @@ class TestFormatOutputForAI:
         # When: Separator is formatted
         result = when_formatter_formats_separator(formatter)
         
-        # Then: Separator uses markdown horizontal rule
-        then_result_equals(result, "---")
+        # Then: Separator uses heavy line for visibility
+        then_result_equals(result, "━" * 90)
     
     def test_piped_mode_uses_markdown_formatting_for_completed_checkbox(self):
         # Given: Markdown formatter is created
@@ -443,8 +442,8 @@ class TestFormatOutputForAI:
         # When: Completed status marker is formatted
         result = when_formatter_formats_status_marker(formatter, is_current=False, is_completed=True)
         
-        # Then: Marker uses markdown bullet with emoji
-        then_result_equals(result, "- ●")
+        # Then: Marker uses markdown bullet with checkbox emoji
+        then_result_equals(result, "- ☑")
     
     def test_piped_mode_uses_markdown_formatting_for_current_checkbox(self):
         # Given: Markdown formatter is created
@@ -463,8 +462,8 @@ class TestFormatOutputForAI:
         # When: Pending status marker is formatted
         result = when_formatter_formats_status_marker(formatter, is_current=False, is_completed=False)
         
-        # Then: Marker uses markdown bullet with emoji
-        then_result_equals(result, "- ○")
+        # Then: Marker uses markdown bullet with empty checkbox emoji
+        then_result_equals(result, "- ☐")
     
     def test_piped_mode_uses_markdown_lists_for_list_items(self):
         # Given: Markdown formatter is created

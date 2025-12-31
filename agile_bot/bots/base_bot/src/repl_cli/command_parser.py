@@ -31,7 +31,7 @@ class CommandParser:
     
     WORKFLOW_COMMANDS = ['next', 'back', 'first', 'last']
     META_COMMANDS = ['status', 'help', 'exit', 'quit', 'scope']
-    OPERATIONS = ['instructions', 'submit', 'confirm']
+    OPERATIONS = ['instructions', 'confirm']
     
     def parse_command(self, input_line: str) -> ParsedCommand:
         if not input_line or input_line.strip() == "":

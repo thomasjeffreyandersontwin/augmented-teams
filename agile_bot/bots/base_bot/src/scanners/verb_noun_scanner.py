@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Optional, Tuple
+import logging
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
@@ -7,6 +8,8 @@ from .vocabulary_helper import VocabularyHelper
 import nltk
 from nltk import pos_tag, word_tokenize
 from nltk.corpus import wordnet as wn
+
+logger = logging.getLogger(__name__)
 
 # Download required NLTK data if not already present
 try:
@@ -291,8 +294,27 @@ class VerbNounScanner(StoryScanner):
             if first_word_lower in common_verb_abbreviations:
                 return None
             
+            # Check if first word is an adverb - adverb-verb combinations are ENCOURAGED and valid
+            # Common adverbs that might precede verbs
+            adverbs = {
+                'proactively', 'automatically', 'manually', 'immediately', 'quickly', 
+                'slowly', 'carefully', 'properly', 'correctly', 'incorrectly',
+                'efficiently', 'effectively', 'accurately', 'precisely', 'thoroughly',
+                'completely', 'partially', 'fully', 'entirely', 'directly', 'indirectly',
+                'explicitly', 'implicitly', 'actively', 'passively', 'dynamically',
+                'statically', 'sequentially', 'concurrently', 'synchronously', 'asynchronously',
+                'conditionally', 'unconditionally', 'selectively', 'globally', 'locally',
+                'temporarily', 'permanently', 'securely', 'safely', 'reliably',
+                'consistently', 'inconsistently', 'systematically', 'randomly', 'intelligently',
+                'intuitively', 'transparently', 'opaque', 'verbosely', 'concisely',
+                'gracefully', 'elegantly', 'robustly', 'resiliently', 'adaptively'
+            }
+            if first_word_lower in adverbs and self._is_verb(second_tag):
+                # Adverb-verb pattern is valid - don't flag
+                return None
+            
             # Flag if first word is NOUN/PROPN and second is VERB (noun-verb pattern)
-            # Only flag if first is definitely NOT a verb
+            # Only flag if first is definitely NOT a verb and NOT an adverb
             if (self._is_noun(first_tag) or self._is_proper_noun(first_tag)) and self._is_verb(second_tag):
                 location = node.map_location()
                 return Violation(
@@ -315,8 +337,66 @@ class VerbNounScanner(StoryScanner):
         if not words:
             return None
         
-        # Check if first word is an actor/role using NLTK
-        if VocabularyHelper.is_actor_or_role(words[0]):
+        first_word = words[0]
+        
+        # CRITICAL FIX: Check if first word is a verb BEFORE checking if it's an actor
+        # If it's a verb, it's part of verb-noun format, not an actor prefix
+        tokens, tags = self._get_tokens_and_tags(name)
+        if tags:
+            first_tag = tags[0][1]
+            # If NLTK tags it as a verb, it's not an actor
+            if self._is_verb(first_tag):
+                return None
+        
+        # Also check WordNet - if word can be a verb, don't flag as actor
+        if self._can_be_verb(first_word):
+            return None
+        
+        # Check common verb abbreviations
+        common_verb_abbreviations = {
+            'init', 'load', 'save', 'run', 'get', 'set', 'add', 'del', 'rm', 'mv',
+            'cp', 'mk', 'rmv', 'upd', 'gen', 'inv', 'exec', 'proc', 'build', 'render',
+            'validate', 'check', 'verify', 'test', 'deploy', 'install', 'configure',
+            'setup', 'start', 'stop', 'restart', 'close', 'open', 'read', 'write',
+            'edit', 'modify', 'change', 'replace', 'insert', 'append', 'prepend',
+            'merge', 'split', 'join', 'combine', 'separate', 'filter', 'sort',
+            'search', 'find', 'locate', 'discover', 'detect', 'identify', 'recognize',
+            'parse', 'analyze', 'evaluate', 'assess', 'measure', 'calculate', 'compute',
+            'transform', 'convert', 'translate', 'map', 'route', 'forward', 'redirect',
+            'send', 'receive', 'transmit', 'deliver', 'dispatch', 'submit', 'publish',
+            'broadcast', 'notify', 'alert', 'warn', 'inform', 'report', 'log', 'record',
+            'track', 'monitor', 'observe', 'watch', 'listen', 'collect', 'gather',
+            'accumulate', 'aggregate', 'summarize', 'extract', 'retrieve', 'fetch',
+            'pull', 'push', 'sync', 'synchronize', 'refresh', 'reload', 'restore',
+            'recover', 'backup', 'export', 'import', 'upload', 'download', 'transfer',
+            'migrate', 'upgrade', 'downgrade', 'uninstall', 'rollback', 'revert',
+            'undo', 'redo', 'cancel', 'abort', 'terminate', 'kill', 'destroy', 'remove',
+            'delete', 'clear', 'reset', 'initialize', 'prepare', 'arrange', 'organize',
+            'structure', 'format', 'style', 'design', 'plan', 'schedule', 'queue',
+            'prioritize', 'order', 'rank', 'group', 'categorize', 'classify', 'tag',
+            'label', 'mark', 'flag', 'assign', 'allocate', 'distribute', 'share',
+            'grant', 'revoke', 'permit', 'deny', 'allow', 'block', 'restrict', 'limit',
+            'constrain', 'enforce', 'apply', 'implement', 'execute', 'perform',
+            'complete', 'finish', 'end', 'conclude', 'finalize', 'close', 'abandon',
+            'drop', 'discard', 'ignore', 'skip', 'omit', 'exclude', 'include', 'attach',
+            'link', 'connect', 'join', 'merge', 'combine', 'unite', 'unify', 'integrate',
+            'incorporate', 'embed', 'nest', 'wrap', 'unwrap', 'isolate', 'divide',
+            'partition', 'segment', 'slice', 'chunk', 'batch', 'cluster', 'assemble',
+            'compile', 'construct', 'create', 'generate', 'produce', 'manufacture',
+            'fabricate', 'make', 'form', 'shape', 'mold', 'sculpt', 'carve', 'cut',
+            'trim', 'prune', 'shave', 'polish', 'refine', 'improve', 'enhance',
+            'optimize', 'tune', 'adjust', 'alter', 'transpose', 'rotate', 'flip',
+            'reverse', 'invert', 'mirror', 'reflect', 'project', 'cast', 'throw',
+            'emit', 'store', 'bootstrap', 'handle', 'resume', 'launch', 'display',
+            'exit', 'advance', 'show', 'auto-run', 'auto-confirm', 're-execute',
+            'view', 'request', 'add', 'monitor', 'surface', 'report', 'gather',
+            'access', 'update', 'filter', 'get'
+        }
+        if first_word in common_verb_abbreviations:
+            return None
+        
+        # Only check if it's an actor if it's NOT a verb
+        if VocabularyHelper.is_actor_or_role(first_word):
             location = node.map_location()
             return Violation(
                 rule=rule_obj,
@@ -335,6 +415,61 @@ class VerbNounScanner(StoryScanner):
                 return None
             
             has_verb = any(self._is_verb(tag[1]) for tag in tags)
+            
+            # Handle hyphenated verbs (e.g., "Auto-Run", "Re-execute", "Auto-Confirm")
+            # When a noun is in front of a verb with a dash, we should accept it as valid
+            if not has_verb and tokens:
+                first_token = tokens[0]
+                # Check if first token contains a hyphen
+                if '-' in first_token:
+                    # Split on hyphen and check each part
+                    parts = first_token.split('-')
+                    # Check if any part (especially after the first) is a verb
+                    # This handles noun-verb patterns like "Auto-Run" where "Run" is the verb
+                    for part in parts:
+                        part_clean = ''.join(c for c in part if c.isalnum())
+                        part_lower = part_clean.lower()
+                        # If this part is a verb (or can be a verb), accept it
+                        if self._can_be_verb(part_lower) or part_lower in ['run', 'confirm', 'execute', 'auto', 're']:
+                            has_verb = True
+                            break
+                    # Also check if the full hyphenated word (without hyphen) could be a verb
+                    if not has_verb:
+                        full_word = ''.join(parts).lower()
+                        if self._can_be_verb(full_word):
+                            has_verb = True
+            
+            # Handle adverb-verb combinations (e.g., "proactively Validate")
+            # Adverb-verb combinations are ENCOURAGED and valid verb-noun format
+            if not has_verb and len(tokens) > 1:
+                # Comprehensive list of common adverbs that might precede verbs
+                adverbs = {
+                    'proactively', 'automatically', 'manually', 'immediately', 'quickly', 
+                    'slowly', 'carefully', 'properly', 'correctly', 'incorrectly',
+                    'efficiently', 'effectively', 'accurately', 'precisely', 'thoroughly',
+                    'completely', 'partially', 'fully', 'entirely', 'directly', 'indirectly',
+                    'explicitly', 'implicitly', 'actively', 'passively', 'dynamically',
+                    'statically', 'sequentially', 'concurrently', 'synchronously', 'asynchronously',
+                    'conditionally', 'unconditionally', 'selectively', 'globally', 'locally',
+                    'temporarily', 'permanently', 'securely', 'safely', 'reliably',
+                    'consistently', 'inconsistently', 'systematically', 'randomly', 'intelligently',
+                    'intuitively', 'transparently', 'opaque', 'verbosely', 'concisely',
+                    'gracefully', 'elegantly', 'robustly', 'resiliently', 'adaptively'
+                }
+                first_word_lower = tokens[0].lower()
+                if first_word_lower in adverbs:
+                    # Check the second word as a verb - if it's a verb, this is valid adverb-verb pattern
+                    second_word_clean = ''.join(c for c in tokens[1] if c.isalnum())
+                    second_word_lower = second_word_clean.lower()
+                    # Check WordNet and common verbs - if second word is a verb, accept it
+                    if self._can_be_verb(second_word_lower):
+                        has_verb = True
+                    # Also check against comprehensive verb list
+                    elif second_word_lower in ['validate', 'check', 'verify', 'run', 'execute', 
+                                                'process', 'generate', 'create', 'build', 'render',
+                                                'load', 'save', 'store', 'update', 'delete',
+                                                'track', 'monitor', 'report', 'display', 'show']:
+                        has_verb = True
             
             # If NLTK didn't find a verb, check if first word can be a verb using WordNet
             # (NLTK often tags capitalized verbs as proper nouns NNP)

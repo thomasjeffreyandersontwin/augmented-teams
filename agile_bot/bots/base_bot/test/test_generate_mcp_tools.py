@@ -78,8 +78,7 @@ def given_bot_config_file_with_working_dir_and_behaviors(
     return create_bot_config_file(
         workspace_root / 'agile_bot' / 'bots' / bot_name,
         bot_name,
-        behaviors,
-        workspace_root=workspace_root
+        behaviors
     )
 
 
