@@ -1,10 +1,9 @@
 # 📝 Inject Strategy Into Instructions
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Decide Planning Criteria Action
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Decide Planning Criteria Action](.)  
 **Sequential Order:** 5
 **Story Type:** user
 

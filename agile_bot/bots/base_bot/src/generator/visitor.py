@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from agile_bot.bots.base_bot.src.generator.help_context import BehaviorHelpContext, ActionHelpContext
+from .help_context import BehaviorHelpContext, ActionHelpContext
 
 class Visitor(ABC):
     

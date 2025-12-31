@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.actions.clarify.key_questions import KeyQuestions
-from agile_bot.bots.base_bot.src.actions.clarify.evidence import Evidence
+from .key_questions import KeyQuestions
+from .evidence import Evidence
 
 class RequiredContext:
 

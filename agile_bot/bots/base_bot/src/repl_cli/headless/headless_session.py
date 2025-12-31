@@ -10,8 +10,8 @@ from .recoverable_error import RecoverableError
 from .non_recoverable_error import NonRecoverableError
 from .error_recovery import ErrorRecovery
 from .cursor_api import CursorHeadlessAPI, APIResponse
-from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ...bot.workspace import get_base_actions_directory
+from ...utils import read_json_file
 
 
 MAX_LOOPS = 50

@@ -10,7 +10,6 @@ be placed in test_<sub_epic_name>_helpers.py files.
 
 For sub-epic-specific helpers, see:
 - test_generate_mcp_tools.py (Generate MCP Tools sub-epic - helpers merged into main file)
-- test_generate_cli.py (Generate CLI sub-epic - helpers merged into main file)
 - test_perform_behavior_action.py (Perform Behavior Action sub-epic - helpers merged into main file)
 """
 import json
@@ -855,27 +854,6 @@ def given_environment_bootstrapped_and_activity_log_initialized(bot_directory: P
 
 
 # These are specific to Perform Behavior Action sub-epic
-
-# ============================================================================
-# CLI/ROUTER HELPERS - Consolidates duplicates from test_invoke_bot_cli.py
-# and test_invoke_cli.py
-# ============================================================================
-
-def then_route_matches_expected(route, expected_bot: str, expected_behavior: str, expected_action: str, expected_type: str):
-    """Then: Route matches expected values."""
-    assert route is not None, "Route should not be None"
-    assert route['bot_name'] == expected_bot
-    assert route['behavior_name'] == expected_behavior
-    assert route['action_name'] == expected_action
-    assert route['match_type'] == expected_type
-
-
-def then_cli_result_matches_expected(result, expected_behavior: str, expected_action: str):
-    """Then: CLI result matches expected values."""
-    assert result['status'] == 'success'
-    assert result['behavior'] == expected_behavior
-    assert result['action'] == expected_action
-
 
 def then_file_exists(file_path):
     """Then: File exists at path.

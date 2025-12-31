@@ -1,10 +1,9 @@
 # 📝 Generate CLI Entry Point
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Build Agile Bots
-**Feature:** Generate REPL CLI
 **User:** Generator
+**Path:** [🎯 Build Agile Bots](../..) / [⚙️ Generate REPL CLI](.)  
 **Sequential Order:** 2
 **Story Type:** user
 
@@ -16,13 +15,16 @@ Generate CLI Entry Point functionality for the mob minion system.
 
 ### Behavioral Acceptance Criteria
 
-- **When** generator updates base_bot_cli.py,
-  **then** it adds REPL mode with stdio_mode parameter
+- **When** generator creates PowerShell script,
+  **then** it generates bot-specific CLI launcher (e.g., story_cli.ps1)
 
-- **When** REPL mode is added,
-  **then** it integrates with existing CliCommandRouter for routing logic
+- **When** PowerShell script is generated,
+  **then** it sets BOT_DIRECTORY and PYTHONPATH environment variables
 
-- **When** REPL loop is generated,
+- **When** script is generated,
+  **then** it launches repl_main.py for the specific bot
+
+- **When** REPL is launched,
   **then** it includes TTY detection, state display, command parsing, and execution
 
 ## Scenarios

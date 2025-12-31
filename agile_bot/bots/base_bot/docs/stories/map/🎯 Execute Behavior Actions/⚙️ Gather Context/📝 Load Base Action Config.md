@@ -1,10 +1,9 @@
 # 📝 Load Base Action Config
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L888)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Gather Context
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
 **Sequential Order:** 5
 **Story Type:** user
 

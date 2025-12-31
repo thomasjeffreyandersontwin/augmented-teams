@@ -1,10 +1,9 @@
 # 📝 Track Activity for Validate Rules Action
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Validate Knowledge & Content Against Rules
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Validate Knowledge & Content Against Rules](.)  
 **Sequential Order:** 2
 **Story Type:** user
 

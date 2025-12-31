@@ -1,10 +1,9 @@
 # 📝 Invoke Complete Validation Workflow
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2366)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Validate Knowledge & Content Against Rules
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Validate Knowledge & Content Against Rules](.)  
 **Sequential Order:** 3
 **Story Type:** user
 
@@ -60,7 +59,7 @@ Then No next action instructions injected
 ```
 
 
-### Scenario: Workflow state shows all actions completed (happy_path)
+### Scenario: Workflow state shows all actions completed (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2405)
 
 **Steps:**
 ```gherkin
@@ -70,7 +69,7 @@ Then Activity log records the completion
 ```
 
 
-### Scenario: Activity log records full workflow completion (happy_path)
+### Scenario: Activity log records full workflow completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2426)
 
 **Steps:**
 ```gherkin

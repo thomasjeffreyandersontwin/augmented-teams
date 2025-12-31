@@ -1,1 +1,0 @@
-python agile_bot/bots/crc_bot/src/crc_bot_cli.py --close

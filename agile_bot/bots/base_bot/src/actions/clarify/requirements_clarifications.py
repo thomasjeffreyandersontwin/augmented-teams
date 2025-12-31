@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional, List, Union
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.strategy.json_persistent import JsonPersistent
-from agile_bot.bots.base_bot.src.actions.clarify.required_context import RequiredContext
+from ...bot.bot_paths import BotPaths
+from ..strategy.json_persistent import JsonPersistent
+from .required_context import RequiredContext
 
 class RequirementsClarifications(JsonPersistent):
 

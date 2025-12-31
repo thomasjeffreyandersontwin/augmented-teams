@@ -1,12 +1,12 @@
 import importlib
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.actions.action import Action as BaseAction
-from agile_bot.bots.base_bot.src.bot.workspace import get_base_actions_directory
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from .action import Action as BaseAction
+from ..bot.workspace import get_base_actions_directory
+from ..utils import read_json_file
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action import Action
-    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+    from .action import Action
+    from ..bot.behavior import Behavior
 
 class ActionFactory:
 

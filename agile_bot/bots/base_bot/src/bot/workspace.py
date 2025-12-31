@@ -17,8 +17,11 @@ def get_workspace_directory() -> Path:
     return Path(workspace.strip())
 
 def get_base_actions_directory(bot_directory: Path=None) -> Path:
-    repo_root = get_python_workspace_root()
-    return repo_root / 'agile_bot' / 'bots' / 'base_bot' / 'base_actions'
+    # Calculate relative to this file's location
+    # workspace.py is at: base_bot/src/bot/workspace.py
+    # Go up: bot -> src -> base_bot -> base_actions
+    base_bot_dir = Path(__file__).parent.parent.parent
+    return base_bot_dir / 'base_actions'
 
 def get_behavior_folder(bot_name: str, behavior: str) -> Path:
     bot_directory = get_bot_directory()

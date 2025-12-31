@@ -1,10 +1,9 @@
 # 📝 Process Behavor Action Instructions Through AI Chat
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Orchestrate BotLangFlow
 **User:** BotLangActionNode
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Orchestrate BotLangFlow](.)  
 **Sequential Order:** 12
 **Story Type:** system
 
@@ -30,7 +29,7 @@ Process Behavor Action Instructions Through AI Chat functionality for the mob mi
 
 - **When** Human reviews the prompt and confirms or provides feedback
 
-  **then** Confirmation/feedback is submitted back to the bot, which is processed by LangGraph and the same BotLangActionNode
+  **then** Confirmation/feedback is sent back to the bot, which is processed by LangGraph and the same BotLangActionNode
 
 ## Scenarios
 

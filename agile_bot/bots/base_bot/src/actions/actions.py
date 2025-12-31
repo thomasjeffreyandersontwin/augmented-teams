@@ -4,10 +4,10 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Iterator, Dict, Any, TYPE_CHECKING
 from datetime import datetime
-from agile_bot.bots.base_bot.src.actions.action_state_manager import ActionStateManager
-from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
+from .action_state_manager import ActionStateManager
+from .action_factory import ActionFactory
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action import Action
+    from .action import Action
     from agile_bot.bots.base_bot.src.bot.behavior import Behavior
 
 class Actions:

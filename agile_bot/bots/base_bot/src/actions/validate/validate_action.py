@@ -1,11 +1,11 @@
 from typing import Dict, Any, List, Type
 import logging
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, ValidateActionContext
-from agile_bot.bots.base_bot.src.actions.rules.rules import Rules
-from agile_bot.bots.base_bot.src.actions.validate.validation_executor import ValidationExecutor
-from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.scanners.scanner_execution_error import ScannerExecutionError
+from ..action import Action
+from ..action_context import ActionContext, ValidateActionContext
+from ..rules.rules import Rules
+from .validation_executor import ValidationExecutor
+from ...utils import read_json_file
+from ...scanners.scanner_execution_error import ScannerExecutionError
 
 logger = logging.getLogger(__name__)
 

@@ -2,10 +2,10 @@ from __future__ import annotations
 from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.behaviors import Behaviors
-    from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+    from ...bot.behaviors import Behaviors
+    from ..repl_session import REPLSession
 
-from agile_bot.bots.base_bot.src.repl_cli.cli_bot.cli_behavior import CLIBehavior
+from .cli_behavior import CLIBehavior
 
 
 class CLIBehaviors:

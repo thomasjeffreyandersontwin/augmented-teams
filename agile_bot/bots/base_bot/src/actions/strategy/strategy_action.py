@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Any, Type
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, StrategyActionContext
-from agile_bot.bots.base_bot.src.actions.strategy.strategy import Strategy
-from agile_bot.bots.base_bot.src.actions.strategy.strategy_decision import StrategyDecision
+from ..action import Action
+from ..action_context import ActionContext, StrategyActionContext
+from .strategy import Strategy
+from .strategy_decision import StrategyDecision
 
 class StrategyAction(Action):
     context_class: Type[ActionContext] = StrategyActionContext

@@ -1,10 +1,9 @@
 # 📝 Load Story Graph Into Memory
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L955)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Build Knowledge
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
 **Sequential Order:** 1
 **Story Type:** user
 

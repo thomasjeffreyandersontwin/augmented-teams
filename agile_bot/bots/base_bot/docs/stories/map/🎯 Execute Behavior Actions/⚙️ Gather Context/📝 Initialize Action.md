@@ -1,10 +1,9 @@
 # 📝 Initialize Action
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L1182)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Gather Context
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
 **Sequential Order:** 7
 **Story Type:** user
 

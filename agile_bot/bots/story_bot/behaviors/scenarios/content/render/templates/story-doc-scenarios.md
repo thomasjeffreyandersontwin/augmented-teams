@@ -1,6 +1,6 @@
 # 📝 {story_name}
 
-**Navigation:** [📋 Story Map]({story_map_filename}) | [⚙️ Feature Overview]({feature_overview_filename})
+**Navigation:** [📋 Story Map]({story_map_filename}) | [⚙️ Feature Overview]({feature_overview_filename}){test_file_link}
 
 **Epic:** {epic_name}
 **Feature:** {feature_name}
@@ -44,7 +44,7 @@ And Cursor chat window is open
 
 ## Scenarios
 
-### Scenario: {scenario_name}
+### Scenario: {scenario_name}{scenario_test_link}
 
 **Steps:**
 ```gherkin
@@ -64,7 +64,7 @@ Then Project loads agent configuration from agent.json
 And Project creates Workflow instance
 ```
 
-### Scenario Outline: {scenario_outline_name} ({type})
+### Scenario Outline: {scenario_outline_name} ({type}){scenario_outline_test_link}
 
 **Note:** Scenario Outlines with Examples tables are included ONLY when decision criteria chooses Scenario Outline (formulas/calculations need multiple data points OR domain has named entities OR parameter variations exist).
 
@@ -97,6 +97,21 @@ Then user receives error "<expected_error_message>"
 | build story map | server_not_running    | "MCP Server is not available. Please check server status." |
 | plan project    | connection_timeout    | "Connection to MCP Server timed out. Please retry." |
 | shape domain    | server_error          | "MCP Server encountered an error. Please check logs." |
+
+## Test Implementation
+
+**Story Test Class:** Test class should be at story level, testing the overall story behavior  
+**Format:** ` | [Test]({test_file}#L{test_line})`  
+**Example:** ` | [Test](agile_bot/bots/base_bot/test/test_init_project.py#L368)`
+
+**Scenario Test Methods:** Each scenario should have a corresponding test method  
+**Format:** ` | [Test]({test_file}#L{test_line})`  
+**Example:** ` | [Test](agile_bot/bots/base_bot/test/test_init_project.py#L425)`
+
+**Test Method Naming:** Test methods should match scenario names using snake_case  
+**Example:** 
+- Scenario: "Successful project initialization" → `test_successful_project_initialization()`
+- Scenario Outline: "Process request with error handling" → `test_process_request_with_error_handling()`
 
 ## Generated Artifacts
 

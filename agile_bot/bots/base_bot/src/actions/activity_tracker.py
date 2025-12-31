@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from ..bot.bot_paths import BotPaths
 
 try:
     from tinydb import TinyDB

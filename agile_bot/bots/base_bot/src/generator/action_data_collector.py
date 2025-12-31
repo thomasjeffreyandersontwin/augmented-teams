@@ -1,10 +1,10 @@
 """Action Data Collector - shared data gathering logic for help and command generation."""
 import dataclasses
 from typing import List, Dict
-from agile_bot.bots.base_bot.src.cli.description_extractor import DescriptionExtractor
-from agile_bot.bots.base_bot.src.actions.help_action import TypeHintConverter
-from agile_bot.bots.base_bot.src.actions.action_factory import ActionFactory
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ..repl_cli.description_extractor import DescriptionExtractor
+from ..actions.help_action import TypeHintConverter
+from ..actions.action_factory import ActionFactory
+from ..utils import read_json_file
 
 class ActionDataCollector:
     """Collects action and behavior data for rendering."""

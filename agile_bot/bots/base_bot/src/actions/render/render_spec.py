@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Dict, Any, Optional
 import importlib
-from agile_bot.bots.base_bot.src.actions.render.template import Template
-from agile_bot.bots.base_bot.src.actions.render.synchronizer import Synchronizer
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from .template import Template
+from .synchronizer import Synchronizer
+from ...bot.bot_paths import BotPaths
+from ...utils import read_json_file
 
 class RenderSpec:
 

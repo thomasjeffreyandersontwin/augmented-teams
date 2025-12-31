@@ -1,10 +1,9 @@
 # 📝 Load And Merge Behavior Action Instructions
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Invoke MCP
 **User:** Bot Behavior
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Invoke MCP](.)  
 **Sequential Order:** 2
 **Story Type:** user
 

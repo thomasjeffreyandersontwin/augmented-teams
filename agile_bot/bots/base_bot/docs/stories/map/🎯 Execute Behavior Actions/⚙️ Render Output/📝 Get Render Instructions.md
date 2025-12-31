@@ -1,10 +1,9 @@
 # 📝 Get Render Instructions
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L591)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Render Output
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  
 **Sequential Order:** 7
 **Story Type:** user
 

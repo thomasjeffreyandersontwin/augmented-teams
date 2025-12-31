@@ -1,10 +1,9 @@
 # 📝 Generate Cursor Commands
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Build Agile Bots
-**Feature:** Generate REPL CLI
 **User:** Generator
+**Path:** [🎯 Build Agile Bots](../..) / [⚙️ Generate REPL CLI](.)  
 **Sequential Order:** 3
 **Story Type:** user
 

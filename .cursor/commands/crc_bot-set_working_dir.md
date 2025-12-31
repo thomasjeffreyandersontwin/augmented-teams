@@ -1,1 +1,0 @@
-python agile_bot/bots/crc_bot/src/crc_bot_cli.py --action set_working_dir ${1:/path/to/workspace}${2:+ }${2:persist=true|false}

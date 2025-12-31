@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_spec import KnowledgeGraphSpec
+from .knowledge_graph_spec import KnowledgeGraphSpec
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.bots.base_bot.src.bot.behavior import Behavior
+    from ...bot.bot_paths import BotPaths
+    from ...bot.behavior import Behavior
 
 class Knowledge:
 

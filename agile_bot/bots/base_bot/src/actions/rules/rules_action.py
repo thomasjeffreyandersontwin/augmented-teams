@@ -1,8 +1,8 @@
 from typing import Dict, Any, Type
-from agile_bot.bots.base_bot.src.actions.action import Action
-from agile_bot.bots.base_bot.src.actions.action_context import ActionContext, RulesActionContext
-from agile_bot.bots.base_bot.src.actions.rules.rules import Rules
-from agile_bot.bots.base_bot.src.actions.rules.rules_digest_guidance import RulesDigestGuidance
+from ..action import Action
+from ..action_context import ActionContext, RulesActionContext
+from .rules import Rules
+from .rules_digest_guidance import RulesDigestGuidance
 
 
 class RulesAction(Action):

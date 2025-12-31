@@ -2,13 +2,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.bot import Bot
-    from agile_bot.bots.base_bot.src.repl_cli.repl_session import REPLSession
+    from ...bot.bot import Bot
+    from ..repl_session import REPLSession
 
-from agile_bot.bots.base_bot.src.repl_cli.cli_bot.cli_behaviors import CLIBehaviors
-from agile_bot.bots.base_bot.src.repl_cli.repl_help import REPLHelp
-from agile_bot.bots.base_bot.src.repl_cli.repl_status import REPLStatus
-from agile_bot.bots.base_bot.src.cli.cli_command_router import CliCommandRouter
+from .cli_behaviors import CLIBehaviors
+from ..repl_help import REPLHelp
+from ..repl_status import REPLStatus
+from ..cli_command_router import CliCommandRouter
 from typing import Dict, Any, List, Optional
 
 

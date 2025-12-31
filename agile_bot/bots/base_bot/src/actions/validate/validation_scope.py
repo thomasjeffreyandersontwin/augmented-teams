@@ -2,13 +2,13 @@ import os
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.action_scope import ActionScope
-from agile_bot.bots.base_bot.src.actions.validate.file_discovery import FileDiscovery
-from agile_bot.bots.base_bot.src.actions.validate.path_resolver import PathResolver
+from ...bot.bot_paths import BotPaths
+from ..action_scope import ActionScope
+from .file_discovery import FileDiscovery
+from .path_resolver import PathResolver
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+    from ..action_context import ValidateActionContext
 
 class ValidationScope(ActionScope):
     EXCLUDED_FILES = {'__init__.py'}

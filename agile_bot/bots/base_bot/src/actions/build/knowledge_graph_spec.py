@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.actions.build.knowledge_graph_template import KnowledgeGraphTemplate
-from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from .knowledge_graph_template import KnowledgeGraphTemplate
+from ..validate.story_graph import StoryGraph
+from ...utils import read_json_file
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+    from ...bot.bot_paths import BotPaths
 
 class KnowledgeGraphSpec:
 

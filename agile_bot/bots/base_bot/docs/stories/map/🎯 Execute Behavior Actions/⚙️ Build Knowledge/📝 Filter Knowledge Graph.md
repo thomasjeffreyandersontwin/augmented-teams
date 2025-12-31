@@ -1,10 +1,9 @@
 # 📝 Filter Knowledge Graph
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1460)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Build Knowledge
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
 **Sequential Order:** 8
 **Story Type:** user
 

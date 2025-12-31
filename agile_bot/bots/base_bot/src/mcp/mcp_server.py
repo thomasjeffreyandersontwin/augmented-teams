@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.bot.bot import Bot
+from ..bot.bot import Bot
 
 class MCPServer:
 

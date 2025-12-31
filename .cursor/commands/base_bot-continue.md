@@ -1,1 +1,0 @@
-python agile_bot/bots/base_bot/src/base_bot_cli.py --close

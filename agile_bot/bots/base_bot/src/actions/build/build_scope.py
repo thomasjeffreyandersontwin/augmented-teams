@@ -1,9 +1,9 @@
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.action_scope import ActionScope
+from ...bot.bot_paths import BotPaths
+from ..action_scope import ActionScope
 
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action_context import ScopeActionContext
+    from ..action_context import ScopeActionContext
 
 class BuildScope(ActionScope):
 

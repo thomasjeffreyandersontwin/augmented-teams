@@ -1,10 +1,9 @@
 # 📝 Discovers Scanners
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2547)
 
-**Epic:** Execute Behavior Actions
-**Feature:** Validate Knowledge & Content Against Rules
 **User:** Bot Behavior
+**Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Validate Knowledge & Content Against Rules](.)  
 **Sequential Order:** 1
 **Story Type:** user
 
@@ -39,7 +38,7 @@ Discovers Scanners functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Scanner discovery extracts metadata and registers scanners (happy_path)
+### Scenario: Scanner discovery extracts metadata and registers scanners (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2584)
 
 **Steps:**
 ```gherkin

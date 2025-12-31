@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
-from agile_bot.bots.base_bot.src.actions.strategy.strategy_criterias import StrategyCriterias
-from agile_bot.bots.base_bot.src.actions.strategy.assumptions import Assumptions
+from .strategy_criterias import StrategyCriterias
+from .assumptions import Assumptions
 
 class Strategy:
 

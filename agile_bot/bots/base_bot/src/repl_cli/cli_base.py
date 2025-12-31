@@ -1,5 +1,5 @@
 """Base class for CLI domain wrapper objects."""
-from agile_bot.bots.base_bot.src.repl_cli.formatters.output_formatter import OutputFormatter
+from .formatters.output_formatter import OutputFormatter
 
 
 class CLIBase:

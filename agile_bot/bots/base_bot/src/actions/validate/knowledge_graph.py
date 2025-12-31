@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, Optional
-from agile_bot.bots.base_bot.src.utils import read_json_file
+from ...utils import read_json_file
 
 class KnowledgeGraph:
 

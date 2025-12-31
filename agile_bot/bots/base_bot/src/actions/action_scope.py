@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Set
-from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
-from agile_bot.bots.base_bot.src.actions.scoping_parameter import ScopingParameter
-from agile_bot.bots.base_bot.src.story_graph.nodes import StoryMap, Story
+from ..bot.bot_paths import BotPaths
+from .scoping_parameter import ScopingParameter
+from ..story_graph.nodes import StoryMap, Story
 
 class ActionScope:
 

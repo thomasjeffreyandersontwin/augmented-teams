@@ -1,10 +1,9 @@
 # 📝 Close Current Action
 
-**Navigation:** [📋 Story Map](../../../story-map-outline.drawio) | [⚙️ Feature Overview](../../../../README.md)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
-**Epic:** Invoke Bot
-**Feature:** Perform Behavior Action
 **User:** Bot Behavior
+**Path:** [🎯 Invoke Bot](../..) / [⚙️ Perform Behavior Action](.)  
 **Sequential Order:** 5
 **Story Type:** user
 

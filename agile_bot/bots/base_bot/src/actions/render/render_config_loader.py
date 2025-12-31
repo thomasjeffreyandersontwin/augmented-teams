@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any, List
-from agile_bot.bots.base_bot.src.utils import read_json_file
-from agile_bot.bots.base_bot.src.actions.render.render_spec import RenderSpec
+from ...utils import read_json_file
+from .render_spec import RenderSpec
 import importlib
 
 class RenderConfigLoader:

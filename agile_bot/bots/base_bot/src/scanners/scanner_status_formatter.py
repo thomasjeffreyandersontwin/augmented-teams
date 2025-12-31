@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, List
-from agile_bot.bots.base_bot.src.actions.validate.validation_stats import ValidationStats
+from ..actions.validate.validation_stats import ValidationStats
 
 MAX_VIOLATION_DENSITY_FOR_GOOD_STATUS = 200
 MAX_RULES_WITH_ERRORS_FOR_GOOD_STATUS = 5

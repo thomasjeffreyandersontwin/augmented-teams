@@ -5,14 +5,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Iterator, Dict, Any, TYPE_CHECKING, Callable
 from pathlib import Path
-from agile_bot.bots.base_bot.src.actions.rules.rule import Rule
-from agile_bot.bots.base_bot.src.actions.rules.rule_loader import RuleLoader
-from agile_bot.bots.base_bot.src.actions.rules.rule_filter import RuleFilter
-from agile_bot.bots.base_bot.src.actions.build.knowledge import Knowledge
-from agile_bot.bots.base_bot.src.actions.validate.story_graph import StoryGraph
-from agile_bot.bots.base_bot.src.actions.validate.validation_scope import ValidationScope
+from .rule import Rule
+from .rule_loader import RuleLoader
+from .rule_filter import RuleFilter
+from ..build.knowledge import Knowledge
+from ..validate.story_graph import StoryGraph
+from ..validate.validation_scope import ValidationScope
 if TYPE_CHECKING:
-    from agile_bot.bots.base_bot.src.actions.action_context import ValidateActionContext
+    from ..action_context import ValidateActionContext
 
 @dataclass
 class ValidationCallbacks:
