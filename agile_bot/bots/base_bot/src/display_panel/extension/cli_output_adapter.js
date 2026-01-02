@@ -5,6 +5,7 @@ class CLIOutputAdapter {
       behaviors: this._extractBehaviorsHierarchy(rawOutput),
       session: this._extractSessionState(rawOutput),
       scope: this._extractScopeSection(rawOutput),
+      instructions: this._extractInstructions(rawOutput),
       parameters: this._extractParameters(rawOutput),
       runExamples: this._extractRunExamples(rawOutput),
       commands: this._extractCommands(rawOutput)
@@ -293,6 +294,25 @@ class CLIOutputAdapter {
       links.push({ text: match[1], url: match[2] });
     }
     return links;
+  }
+
+  _extractInstructions(rawOutput) {
+    console.log('[INSTRUCTIONS DEBUG] Attempting to extract instructions...');
+    console.log('[INSTRUCTIONS DEBUG] Raw output length:', rawOutput.length);
+    console.log('[INSTRUCTIONS DEBUG] Has INSTRUCTIONS SECTION:', rawOutput.includes('**INSTRUCTIONS SECTION:**'));
+    console.log('[INSTRUCTIONS DEBUG] Has CLI STATUS section:', rawOutput.includes('CLI STATUS section'));
+    
+    // Extract the INSTRUCTIONS SECTION content (between INSTRUCTIONS SECTION and CLI STATUS section)
+    // Supports both markdown (━─) and terminal (=-) separator styles
+    const instructionsMatch = /\*\*INSTRUCTIONS SECTION:\*\*[\s\S]*?[━─-]{50,}\s*\n([\s\S]+?)\n\s*[━═=]{50,}\s*\n\s*\*\*\*\s+CLI STATUS section/m.exec(rawOutput);
+    if (instructionsMatch) {
+      console.log('[INSTRUCTIONS DEBUG] Match found! Length:', instructionsMatch[1].length);
+      console.log('[INSTRUCTIONS DEBUG] First 200 chars:', instructionsMatch[1].substring(0, 200));
+      return instructionsMatch[1].trim();
+    }
+    console.log('[INSTRUCTIONS DEBUG] No match found!');
+    // Fallback: if no INSTRUCTIONS SECTION found, return empty
+    return '';
   }
 
   _extractParameters(rawOutput) {

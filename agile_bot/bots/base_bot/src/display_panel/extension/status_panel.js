@@ -21,6 +21,8 @@ class StatusPanel {
     this._workspaceRoot = workspaceRoot;
     this._extensionUri = extensionUri;
     this._disposables = [];
+    this._lastPromptContent = ''; // Store last prompt to survive re-renders
+    this._expansionState = {}; // Track which behaviors/actions are expanded: { 'behavior-0': true, 'action-0-1': false }
     
     // Initialize logger
     const logPath = path.join(workspaceRoot, "agile_bot", "bots", "base_bot", "logs", "panel-debug.log");
@@ -142,6 +144,32 @@ class StatusPanel {
                 });
             }
             return;
+          case "navigateAndExecute":
+            if (message.fullCommand) {
+              this._logger.log(`Navigating and executing: ${message.fullCommand}`);
+              this._dataProvider.executeCommand(message.fullCommand)
+                .then((output) => {
+                  this._logger.log('Command executed successfully');
+                  // Extract and store prompt content from output
+                  this._lastPromptContent = this._extractPromptContent(output);
+                  // Refresh the panel - prompt will be included in render
+                  this._update();
+                })
+                .catch((error) => {
+                  this._logger.error('Failed to execute operation', error);
+                  vscode.window.showErrorMessage(`Failed to execute: ${error.message}`);
+                  this._lastPromptContent = `Error: ${error.message}`;
+                  this._update();
+                });
+            }
+            return;
+          case "updateExpansionState":
+            if (message.expansionState) {
+              this._logger.log('Updating expansion state:', message.expansionState);
+              // Merge new expansion state with existing
+              this._expansionState = { ...this._expansionState, ...message.expansionState };
+            }
+            return;
         }
       },
       null,
@@ -187,6 +215,31 @@ class StatusPanel {
     }
   }
 
+  _extractPromptContent(output) {
+    // Try to extract content between markdown code blocks
+    const codeBlockMatch = /```(?:markdown|md|text)?\s*\n([\s\S]+?)\n```/i.exec(output);
+    if (codeBlockMatch) {
+      return codeBlockMatch[1].trim();
+    }
+    
+    // Try to extract after "Generated Prompt:" or similar headers
+    const headerPatterns = [
+      /Generated Prompt:?\s*\n([\s\S]+?)(?=\n\n##|\n\n─|$)/i,
+      /## Generated Prompt\s*\n([\s\S]+?)(?=\n\n##|\n\n─|$)/i,
+      /Prompt:\s*\n([\s\S]+?)(?=\n\n##|\n\n─|$)/i
+    ];
+    
+    for (const pattern of headerPatterns) {
+      const match = pattern.exec(output);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+    
+    // If no pattern matches, return the full output
+    return output;
+  }
+
   async _update() {
     const webview = this._panel.webview;
     this._panel.title = "Bot Status Dashboard";
@@ -215,6 +268,12 @@ class StatusPanel {
       // Add bot selector data
       structuredData.availableBots = this._dataProvider.getAvailableBots();
       structuredData.currentBot = this._dataProvider.getCurrentBot();
+      
+      // Use instructions from adapter if available, otherwise fallback to last prompt content
+      structuredData.promptContent = structuredData.instructions || this._lastPromptContent;
+      
+      // Add expansion state so user's open/close choices survive re-render
+      structuredData.expansionState = this._expansionState;
       
       this._logger.log("Adapted data", structuredData);
 
