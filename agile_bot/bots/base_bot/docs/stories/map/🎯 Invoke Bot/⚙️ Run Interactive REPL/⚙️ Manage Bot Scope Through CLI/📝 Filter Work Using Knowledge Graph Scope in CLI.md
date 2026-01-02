@@ -1,6 +1,6 @@
 # 📝 Filter Work Using Knowledge Graph Scope in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli_current.py#L69)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L72)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Manage Bot Scope Through CLI](.)  
@@ -30,22 +30,24 @@ Filter Work Using Knowledge Graph Scope in CLI functionality for the mob minion 
 
 ## Scenarios
 
-### Scenario: User sets scope filter (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli_current.py#L72)
+### Scenario: User sets knowledge graph scope filter (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L80)
 
 **Steps:**
 ```gherkin
 GIVEN: CLI is at shape.build.instructions
-WHEN: user enters 'scope story="Story1"'
-THEN: CLI stores scope filter
+WHEN: user enters 'scope <filter>'
+THEN: CLI displays active scope filters
 ```
 
 
-### Scenario: User views current scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli_current.py#L101)
+### Scenario: User executes build with active knowledge graph scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L109)
 
 **Steps:**
 ```gherkin
-GIVEN: Scope filter is set
-WHEN: user enters 'scope'
-THEN: CLI displays current scope
+GIVEN: CLI is at shape.build.instructions
+AND: active scope filter is story="Story1"
+WHEN: user enters 'shape.build.instructions'
+THEN: CLIAction passes scope filter to action.get_instructions()
+AND: CLI displays instructions filtered to Story1
 ```
 

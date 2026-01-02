@@ -1,6 +1,6 @@
 # 📝 Detect and Configure TTY/Non-TTY Input for CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L263)
 
 **User:** TTYDetector
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Initialize REPL Session](.)  
@@ -19,11 +19,22 @@ Detect and Configure TTY/Non-TTY Input for CLI functionality for the mob minion 
 
 ## Scenarios
 
-### Scenario: Detect and Configure TTY/Non-TTY Input for CLI (happy_path)
+### Scenario: TTYDetector identifies interactive terminal (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L266)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: stdin is connected to a TTY terminal
+WHEN: TTYDetector.is_interactive() is called
+THEN: TTYDetector returns True
 ```
+
+
+### Scenario: TTYDetector identifies piped input (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L294)
+
+**Steps:**
+```gherkin
+GIVEN: stdin is piped from another process
+WHEN: TTYDetector.is_interactive() is called
+THEN: TTYDetector returns False
+```
+

@@ -178,7 +178,6 @@ class TestStatusDisplayFormatterUsage:
         mock_state.completed_behaviors = []
         mock_state.completed_action_names = []
         mock_state.has_current_action = True
-        mock_state._get_scope_display_lines = Mock(return_value=[])
         return mock_state
     
     def test_status_uses_terminal_formatter_markers(self):

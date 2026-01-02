@@ -21,11 +21,28 @@ Track Activity For Workspace functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Track Activity For Workspace (happy_path)
+### Scenario: Activity logged to workspace_area not bot area (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L872)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+Given WORKING_AREA environment variable specifies workspace_area
+And action 'gather_context' executes
+When Activity logger creates entry
+Then Activity log file is at: workspace_area/activity_log.json
+And Activity log is NOT at: agile_bot/bots/story_bot/activity_log.json
+And Activity log location matches workspace_area from WORKING_AREA environment variable
 ```
+
+
+### Scenario: Activity log contains correct entry (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L899)
+
+**Steps:**
+```gherkin
+Given action 'gather_context' executes in behavior 'discovery'
+When Activity logger creates entry
+Then Activity log entry includes:
+- action_state='test_bot.discovery.gather_context'
+- timestamp
+- Full path includes bot_name.behavior.action
+```
+

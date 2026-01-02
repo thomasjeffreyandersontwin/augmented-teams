@@ -1,6 +1,6 @@
 # 📝 Proceed To Validate Rules
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L423)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  

@@ -1,6 +1,6 @@
 # 📝 Store Strategy Data
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py#L382)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Decide Planning Criteria Action](.)  

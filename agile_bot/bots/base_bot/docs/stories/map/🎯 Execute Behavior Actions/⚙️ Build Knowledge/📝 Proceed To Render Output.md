@@ -1,6 +1,6 @@
 # 📝 Proceed To Render Output
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L255)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  

@@ -142,10 +142,10 @@ class REPLSession:
         first_behavior.actions.navigate_to(first_behavior.actions.names[0])
         return True
     
-    def display_current_state(self, full=False, auto_initialize=True) -> REPLStateDisplay:
+    def display_current_state(self, full=False, auto_initialize=True, format='text') -> REPLStateDisplay:
         if not self.has_current_action:
             if auto_initialize and self._initialize_to_first_behavior_action():
-                return self.display_current_state(full=full, auto_initialize=False)
+                return self.display_current_state(full=full, auto_initialize=False, format=format)
             # No current action and either auto_initialize=False or initialization failed
             return REPLStateDisplay(
                 output="No current position set\n\n  help          - Show detailed help\n  exit          - Exit REPL",
@@ -190,7 +190,7 @@ class REPLSession:
         # Scope section (thin line separator)
         lines.append(formatter.subsection_separator())
         
-        scope_display = self.cli_bot.get_scope_display()
+        scope_display = self.cli_bot.get_scope_display(format=format)
         if scope_display:
             lines.append(scope_display)
         else:
@@ -312,7 +312,15 @@ class REPLSession:
         if command_verb == 'help':
             return self._handle_help_command(command_args)
         if command_verb == 'status':
-            return self._handle_status_command()
+            # Parse --format argument
+            format_arg = 'text'
+            if command_args:
+                args_list = command_args.split()
+                for i, arg in enumerate(args_list):
+                    if arg == '--format' and i + 1 < len(args_list):
+                        format_arg = args_list[i + 1]
+                        break
+            return self._handle_status_command(format=format_arg)
         if command_verb == 'exit':
             return REPLCommandResponse(output="Goodbye!", response="Goodbye!", status="success", repl_terminated=True)
         if command_verb == 'current':
@@ -390,8 +398,8 @@ class REPLSession:
         full_output = f"{output}\n{header}"
         return REPLCommandResponse(output=full_output, response=output, status="success")
     
-    def _handle_status_command(self) -> REPLCommandResponse:
-        state_display = self.display_current_state(full=True)
+    def _handle_status_command(self, format='text') -> REPLCommandResponse:
+        state_display = self.display_current_state(full=True, format=format)
         
         # Add CLI STATUS section header (for both TTY and piped mode)
         formatter = self.formatter

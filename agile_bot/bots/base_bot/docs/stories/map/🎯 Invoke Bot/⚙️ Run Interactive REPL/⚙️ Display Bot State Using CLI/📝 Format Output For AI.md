@@ -36,9 +36,9 @@ Format Output For AI functionality for the mob minion system.
 
 **Steps:**
 ```gherkin
-Given: Terminal formatter is created
-When: Separator is formatted
-Then: Separator uses equals signs for visibility
+GIVEN: Terminal formatter is created
+WHEN: Separator is formatted
+THEN: Separator uses equals signs for visibility
 ```
 
 
@@ -46,9 +46,9 @@ Then: Separator uses equals signs for visibility
 
 **Steps:**
 ```gherkin
-Given: Terminal formatter is created
-When: Completed status marker is formatted
-Then: Marker is plain text [OK]
+GIVEN: Terminal formatter is created
+WHEN: Completed status marker is formatted
+THEN: Marker is plain text [OK]
 ```
 
 
@@ -56,9 +56,9 @@ Then: Marker is plain text [OK]
 
 **Steps:**
 ```gherkin
-Given: Terminal formatter is created
-When: Current status marker is formatted
-Then: Marker is plain text [*]
+GIVEN: Terminal formatter is created
+WHEN: Current status marker is formatted
+THEN: Marker is plain text [*]
 ```
 
 
@@ -66,9 +66,9 @@ Then: Marker is plain text [*]
 
 **Steps:**
 ```gherkin
-Given: Terminal formatter is created
-When: Pending status marker is formatted
-Then: Marker is plain text [ ]
+GIVEN: Terminal formatter is created
+WHEN: Pending status marker is formatted
+THEN: Marker is plain text [ ]
 ```
 
 
@@ -76,19 +76,19 @@ Then: Marker is plain text [ ]
 
 **Steps:**
 ```gherkin
-Given: Terminal formatter is created
-When: List item is formatted with indent level 2
-Then: Item uses space indentation
+GIVEN: Terminal formatter is created
+WHEN: List item is formatted with indent level 2
+THEN: Item uses space indentation
 ```
 
 
-### Scenario: Terminal mode returns text as-is for highlight (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L418)
+### Scenario: Terminal mode returns text as is for highlight (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L418)
 
 **Steps:**
 ```gherkin
-Given: Terminal formatter is created
-When: Text is highlighted
-Then: Text is returned as-is
+GIVEN: Terminal formatter is created
+WHEN: Text is highlighted
+THEN: Text is returned as-is
 ```
 
 
@@ -96,9 +96,9 @@ Then: Text is returned as-is
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: Separator is formatted
-Then: Separator uses heavy line for visibility
+GIVEN: Markdown formatter is created
+WHEN: Separator is formatted
+THEN: Separator uses heavy line for visibility
 ```
 
 
@@ -106,9 +106,9 @@ Then: Separator uses heavy line for visibility
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: Completed status marker is formatted
-Then: Marker uses markdown bullet with checkbox emoji
+GIVEN: Markdown formatter is created
+WHEN: Completed status marker is formatted
+THEN: Marker uses markdown bullet with checkbox emoji
 ```
 
 
@@ -116,9 +116,9 @@ Then: Marker uses markdown bullet with checkbox emoji
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: Current status marker is formatted
-Then: Marker uses markdown bullet with emoji
+GIVEN: Markdown formatter is created
+WHEN: Current status marker is formatted
+THEN: Marker uses markdown bullet with emoji
 ```
 
 
@@ -126,9 +126,9 @@ Then: Marker uses markdown bullet with emoji
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: Pending status marker is formatted
-Then: Marker uses markdown bullet with empty checkbox emoji
+GIVEN: Markdown formatter is created
+WHEN: Pending status marker is formatted
+THEN: Marker uses markdown bullet with empty checkbox emoji
 ```
 
 
@@ -136,9 +136,9 @@ Then: Marker uses markdown bullet with empty checkbox emoji
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: List item is formatted with no indent
-Then: Item uses markdown list syntax
+GIVEN: Markdown formatter is created
+WHEN: List item is formatted with no indent
+THEN: Item uses markdown list syntax
 ```
 
 
@@ -146,9 +146,9 @@ Then: Item uses markdown list syntax
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: List item is formatted with indent level 1
-Then: Item uses indented markdown list
+GIVEN: Markdown formatter is created
+WHEN: List item is formatted with indent level 1
+THEN: Item uses indented markdown list
 ```
 
 
@@ -156,19 +156,19 @@ Then: Item uses indented markdown list
 
 **Steps:**
 ```gherkin
-Given: Markdown formatter is created
-When: Text is highlighted
-Then: Text uses markdown bold
+GIVEN: Markdown formatter is created
+WHEN: Text is highlighted
+THEN: Text uses markdown bold
 ```
 
 
-### Scenario: Formatter created at session initialization for TTY (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L498)
+### Scenario: Formatter created at session initialization for tty (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L498)
 
 **Steps:**
 ```gherkin
-Given: REPL session is starting
-When: Factory creates formatter for TTY mode
-Then: Factory creates terminal formatter
+GIVEN: REPL session is starting
+WHEN: Factory creates formatter for TTY mode
+THEN: Factory creates terminal formatter
 ```
 
 
@@ -176,9 +176,9 @@ Then: Factory creates terminal formatter
 
 **Steps:**
 ```gherkin
-Given: REPL session is starting
-When: Factory creates formatter for piped mode
-Then: Factory creates markdown formatter
+GIVEN: REPL session is starting
+WHEN: Factory creates formatter for piped mode
+THEN: Factory creates markdown formatter
 ```
 
 
@@ -186,9 +186,9 @@ Then: Factory creates markdown formatter
 
 **Steps:**
 ```gherkin
-Given: Factory is available
-When: Terminal formatter is explicitly requested
-Then: Factory creates terminal formatter
+GIVEN: Factory is available
+WHEN: Terminal formatter is explicitly requested
+THEN: Factory creates terminal formatter
 ```
 
 
@@ -196,8 +196,8 @@ Then: Factory creates terminal formatter
 
 **Steps:**
 ```gherkin
-Given: Factory is available
-When: Markdown formatter is explicitly requested
-Then: Factory creates markdown formatter
+GIVEN: Factory is available
+WHEN: Markdown formatter is explicitly requested
+THEN: Factory creates markdown formatter
 ```
 
