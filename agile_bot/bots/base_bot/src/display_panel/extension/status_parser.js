@@ -2,7 +2,7 @@
  * Status Parser
  * 
  * Parses raw CLI status text output into structured data object.
- * Handles behavior hierarchy, scope, headless mode, and commands.
+ * Handles behavior hierarchy, scope, and commands.
  */
 
 class StatusParser {
@@ -24,10 +24,6 @@ class StatusParser {
       scope: {
         filter: "",
         links: [],
-      },
-      headless: {
-        status: "",
-        lines: [],
       },
       commands: "",
     };
@@ -135,18 +131,6 @@ class StatusParser {
         continue;
       }
 
-      // Parse headless section
-      if (trimmed.startsWith("Headless Mode:")) {
-        currentSection = "headless";
-        continue;
-      }
-      if (currentSection === "headless" && trimmed.startsWith("Status:")) {
-        result.headless.status = trimmed.replace("Status:", "").trim();
-        continue;
-      }
-      if (currentSection === "headless" && trimmed.length > 0) {
-        result.headless.lines.push(trimmed);
-      }
 
       // Parse commands footer
       if (trimmed.startsWith("## 💻") || trimmed.startsWith("Commands:")) {

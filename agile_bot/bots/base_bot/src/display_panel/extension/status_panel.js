@@ -125,6 +125,23 @@ class StatusPanel {
               this._update();
             }
             return;
+          case "executeCommand":
+            if (message.commandText) {
+              this._logger.log(`Executing command: ${message.commandText}`);
+              this._dataProvider.executeCommand(message.commandText)
+                .then((result) => {
+                  this._logger.log('Command executed successfully');
+                  // Show result in output channel or notification
+                  vscode.window.showInformationMessage(`Command executed: ${message.commandText}`);
+                  // Refresh the panel to show any state changes
+                  this._update();
+                })
+                .catch((error) => {
+                  this._logger.error('Failed to execute command', error);
+                  vscode.window.showErrorMessage(`Failed to execute command: ${error.message}`);
+                });
+            }
+            return;
         }
       },
       null,

@@ -87,23 +87,12 @@ class StatusDataProvider {
       this.logger.log("Spawning Python process", {
         replMainPath,
         cwd: this.workspaceRoot,
-        currentBot: this.currentBot,
-        getBotDirectory_result: this._getBotDirectory(),
         env: {
           PYTHONPATH: env.PYTHONPATH,
           BOT_DIRECTORY: env.BOT_DIRECTORY,
           WORKING_AREA: env.WORKING_AREA
         }
       });
-      
-      // DEBUG: Also log to console for immediate visibility
-      console.log("[STATUS_PROVIDER DEBUG] About to spawn Python:");
-      console.log(`  replMainPath: ${replMainPath}`);
-      console.log(`  cwd: ${this.workspaceRoot}`);
-      console.log(`  this.currentBot: ${this.currentBot}`);
-      console.log(`  _getBotDirectory(): ${this._getBotDirectory()}`);
-      console.log(`  BOT_DIRECTORY: ${env.BOT_DIRECTORY}`);
-      console.log(`  WORKING_AREA: ${env.WORKING_AREA}`);
 
       // Spawn Python process with environment
       const pythonProcess = cp.spawn("python", [replMainPath], {
@@ -404,6 +393,106 @@ class StatusDataProvider {
         
         this.logger.log("Workspace path updated successfully", { newPath: workspacePath });
         resolve(stdout || "Workspace path updated");
+      });
+    });
+  }
+
+  /**
+   * Execute a command through the REPL CLI
+   * @param {string} commandText - The command to execute
+   * @returns {Promise<string>} Result output from CLI
+   */
+  async executeCommand(commandText) {
+    this.logger.log("executeCommand() called", { commandText });
+    
+    return new Promise((resolve, reject) => {
+      const replMainPath = path.join(
+        this.workspaceRoot,
+        "agile_bot",
+        "bots",
+        "base_bot",
+        "src",
+        "repl_cli",
+        "repl_main.py"
+      );
+
+      // Set up environment variables for CLI
+      const env = Object.assign({}, process.env, {
+        PYTHONPATH: this.workspaceRoot,
+        BOT_DIRECTORY: this._getBotDirectory(),
+        WORKING_AREA: this.currentWorkingArea
+      });
+
+      this.logger.log("Executing command via REPL", { commandText });
+
+      // Spawn Python process with environment
+      const pythonProcess = cp.spawn("python", [replMainPath], {
+        cwd: this.workspaceRoot,
+        timeout: this.timeout,
+        env: env
+      });
+
+      let stdout = "";
+      let stderr = "";
+      let timedOut = false;
+
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        pythonProcess.kill();
+        reject(new Error("Command execution timed out after 10 seconds"));
+      }, this.timeout);
+
+      // Send command via stdin
+      try {
+        pythonProcess.stdin.write(commandText + "\n");
+        pythonProcess.stdin.end();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        this.logger.error("Failed to write command to stdin", err);
+        reject(new Error(`Failed to send command: ${err.message}`));
+        return;
+      }
+
+      // Collect stdout
+      pythonProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      // Collect stderr
+      pythonProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      // Handle process error
+      pythonProcess.on("error", (err) => {
+        clearTimeout(timeoutId);
+        this.logger.error("Python process error during command execution", err);
+        reject(new Error(`Failed to execute command: ${err.message}`));
+      });
+
+      // Handle process exit
+      pythonProcess.on("close", (code) => {
+        clearTimeout(timeoutId);
+
+        this.logger.log("Command execution completed", {
+          exitCode: code,
+          stdoutLength: stdout.length,
+          stderrLength: stderr.length
+        });
+
+        if (stderr) {
+          this.logger.log("STDERR output:", stderr);
+        }
+
+        if (code !== 0 && stderr) {
+          this.logger.error("Command execution failed", new Error(`Exit ${code}: ${stderr}`));
+          reject(new Error(`Command failed (exit ${code}): ${stderr}`));
+          return;
+        }
+
+        this.logger.log("Command executed successfully");
+        resolve(stdout || "Command executed");
       });
     });
   }

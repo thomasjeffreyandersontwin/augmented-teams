@@ -32,8 +32,7 @@ class HtmlRenderer {
     ${this.renderBehaviors(statusData.behaviors)}
     ${this.renderScope(statusData.scope)}
     ${this.renderParameters(statusData.parameters)}
-    ${this.renderRunExamples(statusData.runExamples)}
-    ${this.renderHeadless(statusData.headless)}
+    ${this.renderCommandInput()}
     ${this.renderCommands(statusData.commands)}
     ${this.renderScripts()}
 </body>
@@ -55,7 +54,7 @@ class HtmlRenderer {
             font-size: 12px;
         }
         .header {
-            border-bottom: 1px solid var(--vscode-panel-border);
+            border-bottom: 2px solid #ff8c00;
             padding-bottom: 6px;
             margin-bottom: 10px;
         }
@@ -94,6 +93,11 @@ class HtmlRenderer {
         }
         .section {
             margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ff8c00;
+        }
+        .section:last-of-type {
+            border-bottom: none;
         }
         .section-title {
             font-weight: 600;
@@ -173,17 +177,47 @@ class HtmlRenderer {
             text-decoration: underline;
             color: var(--vscode-textLink-activeForeground);
         }
-        .headless-info {
-            background-color: var(--vscode-editor-lineHighlightBackground);
-            padding: 10px;
+        .command-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .command-textarea {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            min-height: 60px;
+        }
+        .command-textarea:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            border-color: var(--vscode-focusBorder);
+        }
+        .execute-button {
+            align-self: flex-start;
+            background-color: #ff8c00;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            cursor: pointer;
             border-radius: 2px;
             font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
         }
-        .headless-info .section-title {
-            margin-bottom: 4px;
+        .execute-button:hover {
+            background-color: #ff7700;
+        }
+        .execute-button:active {
+            background-color: #ee7700;
         }
         .commands-footer {
-            border-top: 1px solid var(--vscode-panel-border);
+            border-top: 2px solid #ff8c00;
             padding-top: 8px;
             margin-top: 10px;
             font-size: 12px;
@@ -207,6 +241,8 @@ class HtmlRenderer {
             display: inline-block;
             font-size: 10px;
             min-width: 12px;
+            color: #ff8c00;
+            font-weight: bold;
         }
         /* Style tree icons */
         .tree-icon {
@@ -218,7 +254,7 @@ class HtmlRenderer {
         .bot-selector {
             padding: 6px 0;
             margin-bottom: 10px;
-            border-bottom: 1px solid var(--vscode-panel-border);
+            border-bottom: 2px solid #ff8c00;
         }
         .bot-selector-title {
             font-size: 12px;
@@ -559,45 +595,15 @@ class HtmlRenderer {
   }
 
   /**
-   * Render run examples
+   * Render command input text area
    */
-  renderRunExamples(examples) {
-    if (!examples || examples.length === 0) return '';
-    
-    const examplesHtml = examples.map(ex => `
-      <div style="margin: 6px 0; padding: 6px; background-color: var(--vscode-textCodeBlock-background); border-radius: 2px; font-family: monospace; font-size: 12px;">
-        ${this.escapeHtml(ex.command)}
-        ${ex.description ? `<div style="color: var(--vscode-descriptionForeground); margin-top: 3px;"># ${this.escapeHtml(ex.description)}</div>` : ''}
-      </div>
-    `).join('');
-
+  renderCommandInput() {
     return `
     <div class="section">
-        <div class="section-title">Run Examples</div>
-        ${examplesHtml}
-    </div>`;
-  }
-
-  /**
-   * Render headless mode section
-   */
-  renderHeadless(headless) {
-    let activeSessionHtml = '';
-    if (headless.activeSession) {
-      activeSessionHtml = `
-        <div style="margin-top: 5px;"><strong>Active Session:</strong></div>
-        <div style="margin-left: 10px; margin-top: 3px;">Session ID: ${this.escapeHtml(headless.activeSession.sessionId)}</div>
-        <div style="margin-left: 10px; margin-top: 2px;">Log: ${this.escapeHtml(headless.activeSession.logPath)}</div>
-      `;
-    }
-
-    return `
-    <div class="section">
-        <div class="headless-info">
-            <div class="section-title">Headless Mode</div>
-            <div><strong>Status:</strong> ${this.escapeHtml(headless.status || 'Unknown')}</div>
-            ${headless.apiKey ? `<div><strong>API Key:</strong> ${this.escapeHtml(headless.apiKey)}</div>` : ''}
-            ${activeSessionHtml}
+        <div class="section-title">💻 Execute Command</div>
+        <div class="command-input-container">
+            <textarea id="commandInput" class="command-textarea" placeholder="Enter command (e.g., behavior.action, status, scope &quot;Story Name&quot;)" rows="3"></textarea>
+            <button class="execute-button" onclick="executeCommand()">▶ Execute</button>
         </div>
     </div>`;
   }
@@ -679,6 +685,32 @@ class HtmlRenderer {
                 botName: botName
             });
         }
+
+        function executeCommand() {
+            const textarea = document.getElementById('commandInput');
+            const command = textarea.value.trim();
+            if (command) {
+                vscode.postMessage({ 
+                    command: 'executeCommand',
+                    commandText: command
+                });
+                // Optionally clear the textarea after execution
+                // textarea.value = '';
+            }
+        }
+
+        // Allow Enter key to execute (Ctrl+Enter for newline)
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('commandInput');
+            if (textarea) {
+                textarea.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+                        e.preventDefault();
+                        executeCommand();
+                    }
+                });
+            }
+        });
     </script>`;
   }
 

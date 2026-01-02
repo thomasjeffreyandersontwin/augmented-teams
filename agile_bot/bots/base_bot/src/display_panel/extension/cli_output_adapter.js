@@ -7,7 +7,6 @@ class CLIOutputAdapter {
       scope: this._extractScopeSection(rawOutput),
       parameters: this._extractParameters(rawOutput),
       runExamples: this._extractRunExamples(rawOutput),
-      headless: this._extractHeadless(rawOutput),
       commands: this._extractCommands(rawOutput)
     };
   }
@@ -324,22 +323,6 @@ class CLIOutputAdapter {
     return examples;
   }
 
-  _extractHeadless(rawOutput) {
-    const headlessSection = this._extractSection(rawOutput, 'Headless Mode:', '────');
-    if (!headlessSection) return { status: 'unavailable' };
-    const statusMatch = /Status: (.+)/m.exec(headlessSection);
-    const apiKeyMatch = /API Key: (.+)/m.exec(headlessSection);
-    const sessionIdMatch = /Session ID: (.+)/m.exec(headlessSection);
-    const logMatch = /Log: (.+)/m.exec(headlessSection);
-    const result = {
-      status: statusMatch ? statusMatch[1].trim() : 'unavailable',
-      apiKey: apiKeyMatch ? apiKeyMatch[1].trim() : ''
-    };
-    if (sessionIdMatch) {
-      result.activeSession = { sessionId: sessionIdMatch[1].trim(), logPath: logMatch ? logMatch[1].trim() : '' };
-    }
-    return result;
-  }
 
   _extractCommands(rawOutput) {
     const commandMatch = /Commands[^\n]*\*\*(.+?)\*\*/s.exec(rawOutput);
