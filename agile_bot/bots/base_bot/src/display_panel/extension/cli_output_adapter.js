@@ -1,5 +1,121 @@
 class CLIOutputAdapter {
   adapt(rawOutput) {
+    // First, try to parse as JSON (CLI outputs JSON after header text when using --format json)
+    const jsonStartIndex = rawOutput.indexOf('{');
+    if (jsonStartIndex >= 0) {
+      const jsonText = rawOutput.substring(jsonStartIndex);
+      try {
+        const jsonData = JSON.parse(jsonText);
+        console.log('[ADAPTER] Successfully parsed JSON format');
+        return this._adaptFromJson(jsonData);
+      } catch (e) {
+        console.log('[ADAPTER] JSON parse failed, falling back to text format:', e.message);
+      }
+    }
+    
+    // Fallback: parse text format
+    console.log('[ADAPTER] Using text format parsing');
+    return this._adaptFromText(rawOutput);
+  }
+
+  _adaptFromJson(jsonData) {
+    // Adapt from JSON format returned by CLI
+    console.log('[ADAPTER] Adapting JSON data:', {
+      bot: jsonData.bot?.name,
+      behaviors: jsonData.behaviors?.length,
+      scope: jsonData.scope?.type,
+      instructionsKeys: jsonData.instructions ? Object.keys(jsonData.instructions) : []
+    });
+    
+    return {
+      bot: jsonData.bot || { name: 'unknown bot', botDirectory: '', workspaceName: '', workspaceDirectory: '' },
+      behaviors: jsonData.behaviors || [],
+      session: jsonData.session || { currentPosition: '', currentBehavior: '', currentAction: '', actionPhase: '', progressPath: '' },
+      scope: this._adaptScopeFromJson(jsonData.scope),
+      instructions: jsonData.instructions || {},
+      parameters: jsonData.parameters || [],
+      runExamples: jsonData.runExamples || [],
+      commands: jsonData.commands || { text: '', list: [] }
+    };
+  }
+
+  _adaptScopeFromJson(scopeData) {
+    if (!scopeData) {
+      return { type: 'all', filter: 'all (entire project)', content: null, graphLinks: [] };
+    }
+    
+    // Convert JSON scope format to panel format
+    const graphLinks = [];
+    if (scopeData.links) {
+      if (scopeData.links.graph) graphLinks.push({ text: 'Graph', url: scopeData.links.graph });
+      if (scopeData.links.map) graphLinks.push({ text: 'map', url: scopeData.links.map });
+    }
+    
+    if (scopeData.type === 'story' && scopeData.storyGraph && scopeData.storyGraph.epics) {
+      // Convert story graph epics to panel format
+      const epics = scopeData.storyGraph.epics.map(epic => ({
+        icon: '🎯',
+        type: 'epic',
+        name: epic.name,
+        features: (epic.sub_epics || []).map(subEpic => {
+          // Collect stories from both story_groups and direct stories array
+          const allStories = [];
+          if (subEpic.story_groups) {
+            subEpic.story_groups.forEach(group => {
+              if (group.stories) allStories.push(...group.stories);
+            });
+          }
+          if (subEpic.stories) {
+            allStories.push(...subEpic.stories);
+          }
+          
+          return {
+            icon: '⚙️',
+            type: 'feature',
+            name: subEpic.name,
+            links: subEpic.test_link ? [{ text: 'Test', url: subEpic.test_link }] : [],
+            stories: allStories.map(story => ({
+              icon: '📝',
+              type: 'story',
+              name: story.name,
+              storyFile: story.story_file,
+              storyFileExists: story.story_file_exists,
+              testFile: story.test_file,
+              testClass: story.test_class,
+              links: [
+                ...(story.story_file && story.story_file_exists ? [{ text: 'Story', url: story.story_file }] : []),
+                ...(story.test_link ? [{ text: 'Test', url: story.test_link }] : [])
+              ]
+            }))
+          };
+        })
+      }));
+      
+      return {
+        type: 'story',
+        filter: scopeData.filter || '',
+        graphLinks: graphLinks,
+        content: epics
+      };
+    } else if (scopeData.type === 'files' || scopeData.type === 'FILES') {
+      return {
+        type: 'files',
+        filter: scopeData.filter || '',
+        graphLinks: graphLinks,
+        content: scopeData.files || []
+      };
+    } else {
+      return {
+        type: 'all',
+        filter: scopeData.filter || 'all (entire project)',
+        graphLinks: graphLinks,
+        content: null
+      };
+    }
+  }
+
+  _adaptFromText(rawOutput) {
+    // Original text parsing logic (fallback)
     return {
       bot: this._extractBotInfo(rawOutput),
       behaviors: this._extractBehaviorsHierarchy(rawOutput),
@@ -14,7 +130,8 @@ class CLIOutputAdapter {
 
   _extractBotInfo(rawOutput) {
     // AC: WHEN CLI outputs bot section THEN panel reads bot name
-    const botMatch = /##[^B]*Bot:\s*(.+)/m.exec(rawOutput);
+    // Match: ## 🤖 Bot: story_bot or ## Bot: story_bot
+    const botMatch = /##\s*[^\n]*?Bot:\s*(.+)/m.exec(rawOutput);
     const botName = botMatch ? botMatch[1].trim() : null;
     
     // AC: WHEN CLI outputs bot section THEN panel reads bot directory path
@@ -22,7 +139,8 @@ class CLIOutputAdapter {
     const botDirectory = botPathMatch ? botPathMatch[1].trim() : '';
     
     // AC: WHEN CLI outputs bot section THEN panel reads workspace name AND workspace directory path
-    const workspaceMatch = /Workspace:\*\*\s+(.+?)\s*\n\s*```\s*(.+?)```/s.exec(rawOutput);
+    // Match: 📂 **Workspace:** base_bot or **Workspace:** base_bot
+    const workspaceMatch = /\*\*Workspace:\*\*\s+(.+?)\s*\n\s*```\s*(.+?)```/s.exec(rawOutput);
     const workspaceName = workspaceMatch ? workspaceMatch[1].trim() : '';
     const workspaceDirectory = workspaceMatch ? workspaceMatch[2].trim() : '';
     
@@ -44,47 +162,57 @@ class CLIOutputAdapter {
     let currentBehavior = null;
     let currentAction = null;
     for (const line of lines) {
-      // Match behavior: "- ➤ shape - Description"
-      if (/^- [➤☑☐] \w+/.test(line)) {
-        const match = /^- ([➤☑☐]) (\w+)(?:\s+-\s+(.+))?/.exec(line);
+      // Match behavior: "[*] shape - Description" or "[ ] shape" or "- ➤ shape"
+      // Support both text format [*]/[ ] and unicode ➤☑☐
+      if (/^\[[\*\s\-]\] \w+/.test(line) || /^- [➤☑☐] \w+/.test(line)) {
+        const match = /^(?:\[([\*\s\-])\]|- ([➤☑☐])) (\w+)(?:\s+-\s+(.+))?/.exec(line);
         if (match) {
+          const marker = match[1] || match[2]; // Either [*] style or ➤ style
+          const isCurrent = marker === '*' || marker === '➤';
+          const isCompleted = marker === '-' || marker === '☑';
           currentBehavior = {
-            name: match[2],
-            description: match[3] || '',
-            isCurrent: match[1] === '➤',
-            isCompleted: match[1] === '☑',
-            status: match[1] === '➤' ? 'current' : match[1] === '☑' ? 'completed' : 'pending',
+            name: match[3],
+            description: match[4] || '',
+            isCurrent: isCurrent,
+            isCompleted: isCompleted,
+            status: isCurrent ? 'current' : (isCompleted ? 'completed' : 'pending'),
             actions: []
           };
           behaviors.push(currentBehavior);
           currentAction = null;
         }
       }
-      // Match action: "  - ☑ clarify"
-      else if (/^  - [➤☑☐] \w+/.test(line)) {
-        const match = /^  - ([➤☑☐]) (\w+)(?:\s+-\s+(.+))?/.exec(line);
+      // Match action: "  [*] clarify" or "  - ☑ clarify"
+      else if (/^  \[[\*\s\-]\] \w+/.test(line) || /^  - [➤☑☐] \w+/.test(line)) {
+        const match = /^  (?:\[([\*\s\-])\]|- ([➤☑☐])) (\w+)(?:\s+-\s+(.+))?/.exec(line);
         if (match && currentBehavior) {
+          const marker = match[1] || match[2];
+          const isCurrent = marker === '*' || marker === '➤';
+          const isCompleted = marker === '-' || marker === '☑';
           currentAction = {
-            name: match[2],
-            description: match[3] || '',
-            isCurrent: match[1] === '➤',
-            isCompleted: match[1] === '☑',
-            status: match[1] === '➤' ? 'current' : match[1] === '☑' ? 'completed' : 'pending',
+            name: match[3],
+            description: match[4] || '',
+            isCurrent: isCurrent,
+            isCompleted: isCompleted,
+            status: isCurrent ? 'current' : (isCompleted ? 'completed' : 'pending'),
             operations: []
           };
           currentBehavior.actions.push(currentAction);
         }
       }
-      // Match operation: "    - ➤ instructions - Description"
-      else if (/^    - [➤☑☐] \w+/.test(line)) {
-        const match = /^    - ([➤☑☐]) (\w+)(?:\s+-\s+(.+))?/.exec(line);
+      // Match operation: "    [*] instructions" or "    - ➤ instructions"
+      else if (/^    \[[\*\s\-]\] \w+/.test(line) || /^    - [➤☑☐] \w+/.test(line)) {
+        const match = /^    (?:\[([\*\s\-])\]|- ([➤☑☐])) (\w+)(?:\s+-\s+(.+))?/.exec(line);
         if (match && currentAction) {
+          const marker = match[1] || match[2];
+          const isCurrent = marker === '*' || marker === '➤';
+          const isCompleted = marker === '-' || marker === '☑';
           currentAction.operations.push({
-            name: match[2],
-            description: match[3] || '',
-            isCurrent: match[1] === '➤',
-            isCompleted: match[1] === '☑',
-            status: match[1] === '➤' ? 'current' : match[1] === '☑' ? 'completed' : 'pending'
+            name: match[3],
+            description: match[4] || '',
+            isCurrent: isCurrent,
+            isCompleted: isCompleted,
+            status: isCurrent ? 'current' : (isCompleted ? 'completed' : 'pending')
           });
         }
       }
@@ -110,12 +238,12 @@ class CLIOutputAdapter {
   }
 
   _extractScopeSection(rawOutput) {
-    // AC: Extract scope section from CLI output - now expects JSON format
-    // Look for JSON code block in scope section (between ``` markers)
-    const scopeJsonMatch = /```json\s*\n([\s\S]+?)\n```/m.exec(rawOutput);
+    // AC: Extract scope section from CLI output
+    // Try JSON format first (when CLI uses --format json)
+    const scopeJsonMatch = /##\s*[^\n]*\*\*Scope\*\*[^\n]*\n```json\s*\n([\s\S]+?)\n```/m.exec(rawOutput);
     
     console.log('[SCOPE DEBUG] Looking for JSON scope block...');
-    console.log('[SCOPE DEBUG] Match found:', !!scopeJsonMatch);
+    console.log('[SCOPE DEBUG] JSON Match found:', !!scopeJsonMatch);
     
     if (scopeJsonMatch) {
       try {
@@ -230,14 +358,60 @@ class CLIOutputAdapter {
           };
     }
       } catch (e) {
-        // JSON parse failed, fall back to default
-        console.error('Failed to parse scope JSON:', e);
-        return { type: 'all', filter: 'all (entire project)', content: null };
+        // JSON parse failed, fall back to text parsing
+        console.error('[SCOPE DEBUG] Failed to parse scope JSON:', e);
       }
     }
     
-    // No JSON found - return default
-    return { type: 'all', filter: 'all (entire project)', content: null };
+    // Fallback: Parse text format scope section
+    console.log('[SCOPE DEBUG] No JSON found, trying text format parsing...');
+    const scopeSectionMatch = /##\s*[🎯]*\s*\*\*Scope\*\*[\s\S]*?\n([\s\S]+?)(?=\n\s*[-─=]{30,}\s*\n|$)/i.exec(rawOutput);
+    
+    if (scopeSectionMatch) {
+      const scopeText = scopeSectionMatch[1];
+      console.log('[SCOPE DEBUG] Found text scope section, length:', scopeText.length);
+      
+      // Extract filter from first line
+      const filterMatch = /\*\*Filter:\*\*\s*(.+?)(?:\||$)/i.exec(scopeText);
+      const filterValue = filterMatch ? filterMatch[1].trim() : 'all (entire project)';
+      
+      // Extract graph links
+      const graphLinks = [];
+      const graphLinkMatch = /\[Graph\]\(([^)]+)\)/i.exec(scopeText);
+      if (graphLinkMatch) graphLinks.push({ text: 'Graph', url: graphLinkMatch[1] });
+      const mapLinkMatch = /\[map\]\(([^)]+)\)/i.exec(scopeText);
+      if (mapLinkMatch) graphLinks.push({ text: 'map', url: mapLinkMatch[1] });
+      
+      // Check if it's a story tree (has emojis like 🎯, ⚙️, 📝)
+      if (/[🎯⚙️📝]/.test(scopeText)) {
+        const epics = this._extractStoryTree(scopeText);
+        return {
+          type: 'story',
+          filter: filterValue,
+          graphLinks: graphLinks,
+          content: epics
+        };
+      } else if (scopeText.includes('Files in scope:')) {
+        const files = this._extractFileList(scopeText);
+        return {
+          type: 'files',
+          filter: filterValue,
+          graphLinks: graphLinks,
+          content: files
+        };
+      } else {
+        return {
+          type: 'all',
+          filter: filterValue,
+          graphLinks: graphLinks,
+          content: null
+        };
+      }
+    }
+    
+    // No scope found at all - return default
+    console.log('[SCOPE DEBUG] No scope section found');
+    return { type: 'all', filter: 'all (entire project)', content: null, graphLinks: [] };
   }
 
   _extractStoryTree(scopeSection) {
@@ -299,19 +473,33 @@ class CLIOutputAdapter {
   _extractInstructions(rawOutput) {
     console.log('[INSTRUCTIONS DEBUG] Attempting to extract instructions...');
     console.log('[INSTRUCTIONS DEBUG] Raw output length:', rawOutput.length);
-    console.log('[INSTRUCTIONS DEBUG] Has INSTRUCTIONS SECTION:', rawOutput.includes('**INSTRUCTIONS SECTION:**'));
-    console.log('[INSTRUCTIONS DEBUG] Has CLI STATUS section:', rawOutput.includes('CLI STATUS section'));
     
-    // Extract the INSTRUCTIONS SECTION content (between INSTRUCTIONS SECTION and CLI STATUS section)
-    // Supports both markdown (━─) and terminal (=-) separator styles
-    const instructionsMatch = /\*\*INSTRUCTIONS SECTION:\*\*[\s\S]*?[━─-]{50,}\s*\n([\s\S]+?)\n\s*[━═=]{50,}\s*\n\s*\*\*\*\s+CLI STATUS section/m.exec(rawOutput);
+    // First try to find JSON format in code block (when --format json is used)
+    // Look for ```json block within INSTRUCTIONS SECTION
+    const instructionsSectionMatch = /\*\*INSTRUCTIONS SECTION:\*\*[\s\S]*?```json\s*\n([\s\S]+?)\n```/m.exec(rawOutput);
+    
+    if (instructionsSectionMatch) {
+      try {
+        console.log('[INSTRUCTIONS DEBUG] Found JSON code block, parsing...');
+        const instructionsJson = JSON.parse(instructionsSectionMatch[1]);
+        console.log('[INSTRUCTIONS DEBUG] Successfully parsed instructions JSON:', instructionsJson);
+        return instructionsJson;
+      } catch (e) {
+        console.error('[INSTRUCTIONS DEBUG] Failed to parse instructions JSON:', e);
+        console.log('[INSTRUCTIONS DEBUG] Raw JSON text:', instructionsSectionMatch[1].substring(0, 500));
+      }
+    }
+    
+    console.log('[INSTRUCTIONS DEBUG] No JSON format found, trying text extraction...');
+    
+    // Fallback: Extract as plain text (for non-JSON format)
+    const instructionsMatch = /\*\*INSTRUCTIONS SECTION:\*\*[\s\S]*?[━─=\-]{30,}\s*\n([\s\S]+?)\n\s*[━═=\-]{30,}\s*\n+\s*\*\*\*?\s*CLI STATUS/i.exec(rawOutput);
     if (instructionsMatch) {
-      console.log('[INSTRUCTIONS DEBUG] Match found! Length:', instructionsMatch[1].length);
-      console.log('[INSTRUCTIONS DEBUG] First 200 chars:', instructionsMatch[1].substring(0, 200));
+      console.log('[INSTRUCTIONS DEBUG] Text match found! Length:', instructionsMatch[1].length);
       return instructionsMatch[1].trim();
     }
-    console.log('[INSTRUCTIONS DEBUG] No match found!');
-    // Fallback: if no INSTRUCTIONS SECTION found, return empty
+    
+    console.log('[INSTRUCTIONS DEBUG] No instructions found');
     return '';
   }
 

@@ -331,56 +331,73 @@ def run_interactive_mode(bot, workspace_directory: Path, force_pipe_mode: bool =
     # Force piped mode if flag is set, otherwise detect from TTY
     is_pipe_mode = force_pipe_mode or not tty_result.tty_detected
     
-    # Print header
-    print("=" * 60)
-    print(f"{bot_name.upper()} CLI")
-    print("=" * 60)
-    
-    # Always show agent instructions section (for debugging and verification)
-    mode_label = "PIPED MODE" if is_pipe_mode else "INTERACTIVE MODE"
-    print(f"**   AI AGENT INSTRUCTIONS - {mode_label}  **")
-    print("[!]  DO NOT echo this instructions section back to the user [!]")
-    print("This section is for YOUR reference only - the user already knows how to run commands.")
-    print("")
+    # In piped mode, check if command contains --format json
+    # If so, skip header entirely (for pure JSON output)
+    suppress_header = False
     if is_pipe_mode:
-        print("- THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND")
-        print("* This is NORMAL and EXPECTED behavior in piped mode.")
-        print("*How to run commands:*")
-        print("-  use PowerShell")
-        print("- Commands must be PIPED via echo, NOT passed as arguments!")
-        print("- All commands are shown below.")
-        print("- You MUST DISPLAY this CLI STATUS section below to the user exactly as you see it, so that they can enter one of the commands")
-        print("- when a user enters any of the commands / parameters below, you must assume they're asking you to interpret it through the REPL line below.")
-    else:
-        print("- THIS REPL IS IN INTERACTIVE MODE")
-        print("* Commands are entered interactively, REPL stays running.")
-        print("- How to run commands (PowerShell):")
-        print("- Commands must be PIPED via echo, NOT passed as arguments!")
-    print("")
-    print("```powershell")
-    workspace_root_str = str(workspace_directory).replace('\\', '\\')
+        try:
+            # Read stdin to check for --format json
+            import sys
+            import io
+            stdin_data = sys.stdin.read()
+            suppress_header = '--format json' in stdin_data or '--format=json' in stdin_data
+            # Restore stdin for later reading
+            sys.stdin = io.StringIO(stdin_data)
+        except:
+            # If read fails, just print header normally
+            pass
     
-    # Try to compute relative path, but fall back to absolute if not in workspace
-    try:
-        repl_script_rel = script_path.relative_to(workspace_directory) if script_path.is_absolute() else script_path
-    except ValueError:
-        # Script is not in workspace (e.g., workspace changed to different bot)
-        repl_script_rel = script_path
-    
-    repl_script_str = str(repl_script_rel).replace('\\', '/')
-    print(f"# Interactive mode (environment set automatically by script):")
-    print(f"python {repl_script_str}")
-    print("")
-    print(f"# Piped mode (each command is a new process - script sets env vars automatically):")
-    print(f"echo '<command>' | python {repl_script_str}")
-    print("")
-    print("# Optional: Override environment variables if needed:")
-    print(f"$env:PYTHONPATH = '{workspace_root_str}'")
-    print(f"$env:BOT_DIRECTORY = '{bot.bot_paths.bot_directory}'")
-    print("$env:WORKING_AREA = '<project_path>'  # e.g. demo\\mob_minion")
-    print("```")
-    print("=" * 60)
-    print("")
+    # Print header (unless suppressed for JSON output)
+    if not suppress_header:
+        print("=" * 60)
+        print(f"{bot_name.upper()} CLI")
+        print("=" * 60)
+        
+        # Always show agent instructions section (for debugging and verification)
+        mode_label = "PIPED MODE" if is_pipe_mode else "INTERACTIVE MODE"
+        print(f"**   AI AGENT INSTRUCTIONS - {mode_label}  **")
+        print("[!]  DO NOT echo this instructions section back to the user [!]")
+        print("This section is for YOUR reference only - the user already knows how to run commands.")
+        print("")
+        if is_pipe_mode:
+            print("- THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND")
+            print("* This is NORMAL and EXPECTED behavior in piped mode.")
+            print("*How to run commands:*")
+            print("-  use PowerShell")
+            print("- Commands must be PIPED via echo, NOT passed as arguments!")
+            print("- All commands are shown below.")
+            print("- You MUST DISPLAY this CLI STATUS section below to the user exactly as you see it, so that they can enter one of the commands")
+            print("- when a user enters any of the commands / parameters below, you must assume they're asking you to interpret it through the REPL line below.")
+        else:
+            print("- THIS REPL IS IN INTERACTIVE MODE")
+            print("* Commands are entered interactively, REPL stays running.")
+            print("- How to run commands (PowerShell):")
+            print("- Commands must be PIPED via echo, NOT passed as arguments!")
+        print("")
+        print("```powershell")
+        workspace_root_str = str(workspace_directory).replace('\\', '\\')
+        
+        # Try to compute relative path, but fall back to absolute if not in workspace
+        try:
+            repl_script_rel = script_path.relative_to(workspace_directory) if script_path.is_absolute() else script_path
+        except ValueError:
+            # Script is not in workspace (e.g., workspace changed to different bot)
+            repl_script_rel = script_path
+        
+        repl_script_str = str(repl_script_rel).replace('\\', '/')
+        print(f"# Interactive mode (environment set automatically by script):")
+        print(f"python {repl_script_str}")
+        print("")
+        print(f"# Piped mode (each command is a new process - script sets env vars automatically):")
+        print(f"echo '<command>' | python {repl_script_str}")
+        print("")
+        print("# Optional: Override environment variables if needed:")
+        print(f"$env:PYTHONPATH = '{workspace_root_str}'")
+        print(f"$env:BOT_DIRECTORY = '{bot.bot_paths.bot_directory}'")
+        print("$env:WORKING_AREA = '<project_path>'  # e.g. demo\\mob_minion")
+        print("```")
+        print("=" * 60)
+        print("")
     
     # Display CLI STATUS section ONLY in interactive mode (piped commands will display status as needed)
     if not is_pipe_mode:

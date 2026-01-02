@@ -308,11 +308,6 @@ classDiagram
             +determine_next_action()
             +track_state()
         }
-        class Project {
-            +move_project_to_working_area()
-            +save_project_in_context()
-            +update_project_area()
-        }
         class Specific Bot {
             +provide_behavior_config()
             +provide_mcp_config()
@@ -497,7 +492,6 @@ classDiagram
     Base Bot --> Action : uses
     Base Bot --> Router : uses
     Base Bot --> Content : uses
-    Base Bot --> Project : uses
     Specific Bot --> Behavior : uses
     BotLangActionNode --> Action : uses
     BotLangActionNode --> BotMode : uses
@@ -537,8 +531,6 @@ classDiagram
     BotLangState --> Action : uses
     Behavior Action State --> Action : uses
     Behavior Action State --> Behavior : uses
-    Project --> Workflow State : uses
-    Project --> Content : uses
     Behavior --> Rule : uses
     Behavior --> Content : uses
     Behavior --> Action : uses

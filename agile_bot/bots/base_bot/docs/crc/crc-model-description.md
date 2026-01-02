@@ -383,13 +383,6 @@ Domain model for Base Bot
 - **Determine next Action**: This responsibility involves collaboration with Behavior, Action, State.
 - **Track state**: This responsibility involves collaboration with Behavior, Action, State.
 
-#### Project
-
-**Key Responsibilities:**
-- **Move project to working area**: This responsibility involves collaboration with Working Directory.
-- **Save project in context**: This responsibility involves collaboration with Working Directory, Workflow State.
-- **Update project area**: This responsibility involves collaboration with Working Directory, Content.
-
 #### Specific Bot
 
 **Key Responsibilities:**

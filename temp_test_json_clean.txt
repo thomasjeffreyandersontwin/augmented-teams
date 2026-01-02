@@ -1,0 +1,2699 @@
+﻿{
+  "bot": {
+    "name": "story_bot",
+    "botDirectory": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot",
+    "workspaceName": "base_bot",
+    "workspaceDirectory": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot"
+  },
+  "behaviors": [
+    {
+      "name": "shape",
+      "description": "Outline a story map made up of epics, sub-epics, and stories",
+      "isCurrent": false,
+      "isCompleted": true,
+      "status": "completed",
+      "actions": [
+        {
+          "name": "clarify",
+          "description": "Gather context by asking required questions and collecting evidence in order to increase understanding",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "strategy",
+          "description": "decide approach by capturing assumptions and decision criteria",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "render",
+          "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prioritization",
+      "description": "Organize stories into delivery increments based on business value, dependencies, and risk",
+      "isCurrent": true,
+      "isCompleted": false,
+      "status": "current",
+      "actions": [
+        {
+          "name": "clarify",
+          "description": "Gather context by asking required questions and collecting evidence in order to increase understanding",
+          "isCurrent": false,
+          "isCompleted": true,
+          "status": "completed",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "completed"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "completed"
+            }
+          ]
+        },
+        {
+          "name": "strategy",
+          "description": "decide approach by capturing assumptions and decision criteria",
+          "isCurrent": false,
+          "isCompleted": true,
+          "status": "completed",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "completed"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "completed"
+            }
+          ]
+        },
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": true,
+          "status": "completed",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "completed"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "completed"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": true,
+          "isCompleted": false,
+          "status": "current",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": true,
+              "isCompleted": false,
+              "status": "current"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "render",
+          "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "discovery",
+      "description": "Create a complete list of stories with a well defined story flow for one increment",
+      "isCurrent": false,
+      "isCompleted": false,
+      "status": "pending",
+      "actions": [
+        {
+          "name": "clarify",
+          "description": "Gather context by asking required questions and collecting evidence in order to increase understanding",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "strategy",
+          "description": "decide approach by capturing assumptions and decision criteria",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "render",
+          "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "exploration",
+      "description": "Define acceptance criteria (When/Then) for stories to establish clear success criteria",
+      "isCurrent": false,
+      "isCompleted": false,
+      "status": "pending",
+      "actions": [
+        {
+          "name": "clarify",
+          "description": "Gather context by asking required questions and collecting evidence in order to increase understanding",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "strategy",
+          "description": "decide approach by capturing assumptions and decision criteria",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "render",
+          "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "scenarios",
+      "description": "Write detailed plain-English scenarios (Given/When/Then) that specify exact behavior for each story",
+      "isCurrent": false,
+      "isCompleted": false,
+      "status": "pending",
+      "actions": [
+        {
+          "name": "clarify",
+          "description": "Gather context by asking required questions and collecting evidence in order to increase understanding",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "strategy",
+          "description": "decide approach by capturing assumptions and decision criteria",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "render",
+          "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tests",
+      "description": "Write test files (.py, .js, etc.) with executable test code from scenarios/examples that validate story behavior",
+      "isCurrent": false,
+      "isCompleted": false,
+      "status": "pending",
+      "actions": [
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "code",
+      "description": "Generate production source code from domain model and story specifications",
+      "isCurrent": false,
+      "isCompleted": false,
+      "status": "pending",
+      "actions": [
+        {
+          "name": "build",
+          "description": "Build knowledge graph from context and apply behavior-specific rules",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+          "isCurrent": false,
+          "isCompleted": false,
+          "status": "pending",
+          "operations": [
+            {
+              "name": "instructions",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            },
+            {
+              "name": "confirm",
+              "description": "",
+              "isCurrent": false,
+              "isCompleted": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "session": {
+    "currentPosition": "prioritization.validate.instructions",
+    "currentBehavior": "prioritization",
+    "currentAction": "validate",
+    "actionPhase": "instructions",
+    "progressPath": "prioritization.validate"
+  },
+  "scope": {
+    "filter": "Build",
+    "type": "story",
+    "links": {
+      "graph": "agile_bot/bots/base_bot/docs/stories/story-graph.json",
+      "map": "agile_bot/bots/base_bot/docs/stories/story-map.drawio"
+    },
+    "storyGraph": {
+      "epics": [
+        {
+          "name": "Build Agile Bots",
+          "sequential_order": 1.0,
+          "domain_concepts": [
+            {
+              "name": "Base Bot",
+              "module": "bot",
+              "responsibilities": [
+                {
+                  "name": "Executes Actions",
+                  "collaborators": [
+                    "Workflow",
+                    "Behavior",
+                    "Action"
+                  ]
+                },
+                {
+                  "name": "Track activity",
+                  "collaborators": [
+                    "Behavior",
+                    "Action"
+                  ]
+                },
+                {
+                  "name": "Route to behaviors and actions",
+                  "collaborators": [
+                    "Router",
+                    "Trigger Words"
+                  ]
+                },
+                {
+                  "name": "Persist content",
+                  "collaborators": [
+                    "Content"
+                  ]
+                },
+                {
+                  "name": "Manage Project State",
+                  "collaborators": [
+                    "Project"
+                  ]
+                },
+                {
+                  "name": "Render",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Specific Bot",
+              "module": "bot",
+              "responsibilities": [
+                {
+                  "name": "Provide Behavior config",
+                  "collaborators": [
+                    "Bot Config",
+                    "Behavior"
+                  ]
+                },
+                {
+                  "name": "Provide MCP config",
+                  "collaborators": [
+                    "MCP Config"
+                  ]
+                },
+                {
+                  "name": "Provide Renderers",
+                  "collaborators": []
+                },
+                {
+                  "name": "Provide Extractors",
+                  "collaborators": []
+                },
+                {
+                  "name": "Provide Synchronizer",
+                  "collaborators": []
+                },
+                {
+                  "name": "Provide Trigger Words",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "BotLangActionNode",
+              "module": "workflow",
+              "responsibilities": [
+                {
+                  "name": "Wrap action.execute(context) method",
+                  "collaborators": [
+                    "Action",
+                    "LangGraph"
+                  ]
+                },
+                {
+                  "name": "Implement two-pass pattern",
+                  "collaborators": [
+                    "Action",
+                    "AI"
+                  ]
+                },
+                {
+                  "name": "Support execution modes",
+                  "collaborators": [
+                    "BotMode"
+                  ]
+                },
+                {
+                  "name": "Provide LangGraph entry point",
+                  "collaborators": [
+                    "LangGraph"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "BehaviorGraphBuilder",
+              "module": "workflow",
+              "responsibilities": [
+                {
+                  "name": "Read behavior workflow definitions",
+                  "collaborators": [
+                    "Behavior",
+                    "Behavior Config"
+                  ]
+                },
+                {
+                  "name": "Create LangGraph StateGraph",
+                  "collaborators": [
+                    "LangGraph",
+                    "BotLangState"
+                  ]
+                },
+                {
+                  "name": "Build node instances from actions",
+                  "collaborators": [
+                    "BotLangActionNode",
+                    "Action"
+                  ]
+                },
+                {
+                  "name": "Connect nodes based on workflow order",
+                  "collaborators": [
+                    "LangGraph",
+                    "BotLangActionNode"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "BotLangFlowRunner",
+              "module": "workflow",
+              "responsibilities": [
+                {
+                  "name": "Load BotLangFlow Python files",
+                  "collaborators": [
+                    "BotLangFlow",
+                    "File System"
+                  ]
+                },
+                {
+                  "name": "Compile graph with checkpointer",
+                  "collaborators": [
+                    "LangGraph",
+                    "SqliteSaver",
+                    "Checkpoint"
+                  ]
+                },
+                {
+                  "name": "Execute workflow graph",
+                  "collaborators": [
+                    "LangGraph",
+                    "BotLangActionNode",
+                    "BotLangState"
+                  ]
+                },
+                {
+                  "name": "Resume from checkpoint",
+                  "collaborators": [
+                    "Checkpoint",
+                    "BotLangState"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryBotMCPServer",
+              "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+              "responsibilities": [
+                {
+                  "name": "Bootstraps environment",
+                  "collaborators": [
+                    "BOT_DIRECTORY",
+                    "WORKING_AREA",
+                    "Bot Config"
+                  ]
+                },
+                {
+                  "name": "Creates Bot instance",
+                  "collaborators": [
+                    "Bot",
+                    "Bot Config",
+                    "Bot Directory"
+                  ]
+                },
+                {
+                  "name": "Creates FastMCP server",
+                  "collaborators": [
+                    "FastMCP",
+                    "Server Name"
+                  ]
+                },
+                {
+                  "name": "Registers bot tool",
+                  "collaborators": [
+                    "Bot",
+                    "Current Behavior",
+                    "Current Action"
+                  ]
+                },
+                {
+                  "name": "Registers behavior tools",
+                  "collaborators": [
+                    "Bot",
+                    "Behavior",
+                    "Action",
+                    "Tool Generator"
+                  ]
+                },
+                {
+                  "name": "Registers utility tools",
+                  "collaborators": [
+                    "Working Directory Manager",
+                    "Action State Manager",
+                    "Server Restart Manager"
+                  ]
+                },
+                {
+                  "name": "Delegates to Bot",
+                  "collaborators": [
+                    "Bot",
+                    "Behavior",
+                    "Action"
+                  ]
+                },
+                {
+                  "name": "Runs MCP server",
+                  "collaborators": [
+                    "FastMCP",
+                    "Event Loop"
+                  ]
+                },
+                {
+                  "name": "Get bot_directory",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get workspace_directory",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get bot",
+                  "collaborators": [
+                    "Bot"
+                  ]
+                },
+                {
+                  "name": "Get server",
+                  "collaborators": [
+                    "FastMCP"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryBotCLI",
+              "module": "agile_bot.bots.story_bot.src.story_bot_cli",
+              "responsibilities": [
+                {
+                  "name": "Bootstraps environment",
+                  "collaborators": [
+                    "BOT_DIRECTORY",
+                    "WORKING_AREA",
+                    "Bot Config"
+                  ]
+                },
+                {
+                  "name": "Delegates to BaseBotCli",
+                  "collaborators": [
+                    "Base Bot CLI",
+                    "Bot Name",
+                    "Bot Config Path"
+                  ]
+                },
+                {
+                  "name": "Executes CLI",
+                  "collaborators": [
+                    "Base Bot CLI",
+                    "Command Arguments"
+                  ]
+                },
+                {
+                  "name": "Get bot_directory",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get workspace_directory",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get bot_name",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get bot_config_path",
+                  "collaborators": [
+                    "Path"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "BehaviorToolGenerator",
+              "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+              "responsibilities": [
+                {
+                  "name": "Generates behavior tool function",
+                  "collaborators": [
+                    "Behavior",
+                    "Trigger Patterns"
+                  ]
+                },
+                {
+                  "name": "Routes to behavior",
+                  "collaborators": [
+                    "Bot",
+                    "Behavior Name"
+                  ]
+                },
+                {
+                  "name": "Routes to action",
+                  "collaborators": [
+                    "Behavior",
+                    "Action Name"
+                  ]
+                },
+                {
+                  "name": "Executes action",
+                  "collaborators": [
+                    "Action",
+                    "Parameters"
+                  ]
+                },
+                {
+                  "name": "Returns result",
+                  "collaborators": [
+                    "Bot Result",
+                    "Status",
+                    "Data"
+                  ]
+                },
+                {
+                  "name": "Handles missing action",
+                  "collaborators": [
+                    "Current Action",
+                    "State"
+                  ]
+                },
+                {
+                  "name": "Loads action state",
+                  "collaborators": [
+                    "Behavior",
+                    "Action State"
+                  ]
+                },
+                {
+                  "name": "Get tool_name",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get tool_description",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get trigger_patterns",
+                  "collaborators": [
+                    "List"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "WorkingDirectoryManager",
+              "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+              "responsibilities": [
+                {
+                  "name": "Gets working directory",
+                  "collaborators": [
+                    "Workspace Directory",
+                    "WORKING_AREA"
+                  ]
+                },
+                {
+                  "name": "Sets working directory",
+                  "collaborators": [
+                    "New Path",
+                    "Persist Flag"
+                  ]
+                },
+                {
+                  "name": "Validates path",
+                  "collaborators": [
+                    "Path",
+                    "Validation Rules"
+                  ]
+                },
+                {
+                  "name": "Updates environment",
+                  "collaborators": [
+                    "WORKING_AREA",
+                    "Environment Variables"
+                  ]
+                },
+                {
+                  "name": "Updates bot config",
+                  "collaborators": [
+                    "Bot Config",
+                    "Working Area",
+                    "Persist Flag"
+                  ]
+                },
+                {
+                  "name": "Persists to config",
+                  "collaborators": [
+                    "Bot Config File",
+                    "JSON"
+                  ]
+                },
+                {
+                  "name": "Returns previous directory",
+                  "collaborators": [
+                    "Previous Path",
+                    "Workspace Directory"
+                  ]
+                },
+                {
+                  "name": "Get working_directory",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get previous_directory",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get persisted",
+                  "collaborators": [
+                    "Boolean"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "ActionStateManager",
+              "module": "agile_bot.bots.story_bot.src.story_bot_mcp_server",
+              "responsibilities": [
+                {
+                  "name": "Closes current action",
+                  "collaborators": [
+                    "Current Action",
+                    "Behavior",
+                    "State File"
+                  ]
+                },
+                {
+                  "name": "Loads action state",
+                  "collaborators": [
+                    "Behavior",
+                    "Action State",
+                    "State File"
+                  ]
+                },
+                {
+                  "name": "Determines next action",
+                  "collaborators": [
+                    "Behavior",
+                    "Action Names",
+                    "Current Index"
+                  ]
+                },
+                {
+                  "name": "Transitions to next action",
+                  "collaborators": [
+                    "Behavior",
+                    "Current Action",
+                    "Next Action"
+                  ]
+                },
+                {
+                  "name": "Detects behavior completion",
+                  "collaborators": [
+                    "Current Action",
+                    "Final Action",
+                    "Behavior"
+                  ]
+                },
+                {
+                  "name": "Transitions to next behavior",
+                  "collaborators": [
+                    "Bot",
+                    "Next Behavior",
+                    "First Action"
+                  ]
+                },
+                {
+                  "name": "Returns transition result",
+                  "collaborators": [
+                    "Status",
+                    "Completed Action",
+                    "Next Action"
+                  ]
+                },
+                {
+                  "name": "Handles out-of-order confirmation",
+                  "collaborators": [
+                    "Behavior",
+                    "Confirmation",
+                    "State File"
+                  ]
+                },
+                {
+                  "name": "Validates human confirmation",
+                  "collaborators": [
+                    "Confirmed By",
+                    "Timestamp"
+                  ]
+                },
+                {
+                  "name": "Persists confirmation",
+                  "collaborators": [
+                    "State File",
+                    "Confirmation Data",
+                    "JSON"
+                  ]
+                },
+                {
+                  "name": "Get state_file",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get current_action",
+                  "collaborators": [
+                    "Action"
+                  ]
+                },
+                {
+                  "name": "Get next_action",
+                  "collaborators": [
+                    "Action"
+                  ]
+                },
+                {
+                  "name": "Get behavior_complete",
+                  "collaborators": [
+                    "Boolean"
+                  ]
+                },
+                {
+                  "name": "Get out_of_order_confirmations",
+                  "collaborators": [
+                    "Dict"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Synchronizer",
+              "module": "agile_bot.bots.base_bot.src.synchronizers",
+              "responsibilities": [
+                {
+                  "name": "Synchronizes formats",
+                  "collaborators": [
+                    "Source Format",
+                    "Target Format"
+                  ]
+                },
+                {
+                  "name": "Extracts from source",
+                  "collaborators": [
+                    "Extractor",
+                    "Source File"
+                  ]
+                },
+                {
+                  "name": "Renders to target",
+                  "collaborators": [
+                    "Renderer",
+                    "Target File"
+                  ]
+                },
+                {
+                  "name": "Validates sync",
+                  "collaborators": [
+                    "Source",
+                    "Target",
+                    "Rules"
+                  ]
+                },
+                {
+                  "name": "Get source_format",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get target_format",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get extractor",
+                  "collaborators": [
+                    "Extractor"
+                  ]
+                },
+                {
+                  "name": "Get renderer",
+                  "collaborators": [
+                    "Renderer"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryIOSynchronizer : Synchronizer",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_synchronizer",
+              "responsibilities": [
+                {
+                  "name": "Syncs story graph with drawio",
+                  "collaborators": [
+                    "Story Graph",
+                    "Drawio File"
+                  ]
+                },
+                {
+                  "name": "Extracts stories from drawio",
+                  "collaborators": [
+                    "Drawio Parser",
+                    "Story Components"
+                  ]
+                },
+                {
+                  "name": "Renders stories to drawio",
+                  "collaborators": [
+                    "Story Renderer",
+                    "Drawio Generator"
+                  ]
+                },
+                {
+                  "name": "Manages story positions",
+                  "collaborators": [
+                    "Position Manager",
+                    "Story Layout"
+                  ]
+                },
+                {
+                  "name": "Updates increments",
+                  "collaborators": [
+                    "Increment Manager",
+                    "Priority Data"
+                  ]
+                },
+                {
+                  "name": "Validates story structure",
+                  "collaborators": [
+                    "Structure Validator",
+                    "Story Rules"
+                  ]
+                },
+                {
+                  "name": "Get story_graph_path",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get drawio_path",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get increments",
+                  "collaborators": [
+                    "List"
+                  ]
+                },
+                {
+                  "name": "Get epics",
+                  "collaborators": [
+                    "List"
+                  ]
+                },
+                {
+                  "name": "Get stories",
+                  "collaborators": [
+                    "List"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "DomainModelSynchronizer : Synchronizer",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.domain_model.domain_model_synchronizer",
+              "responsibilities": [
+                {
+                  "name": "Syncs CRC text with story graph",
+                  "collaborators": [
+                    "CRC Text",
+                    "Story Graph",
+                    "Domain Concepts"
+                  ]
+                },
+                {
+                  "name": "Extracts domain concepts",
+                  "collaborators": [
+                    "CRC Parser",
+                    "Concept Extractor"
+                  ]
+                },
+                {
+                  "name": "Renders domain concepts",
+                  "collaborators": [
+                    "Concept Renderer",
+                    "CRC Template"
+                  ]
+                },
+                {
+                  "name": "Validates CRC format",
+                  "collaborators": [
+                    "CRC Validator",
+                    "Format Rules"
+                  ]
+                },
+                {
+                  "name": "Preserves module paths",
+                  "collaborators": [
+                    "Module Mapper",
+                    "Code Structure"
+                  ]
+                },
+                {
+                  "name": "Get crc_path",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get story_graph_path",
+                  "collaborators": [
+                    "Path"
+                  ]
+                },
+                {
+                  "name": "Get domain_concepts",
+                  "collaborators": [
+                    "List"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryIOEpic",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_epic",
+              "responsibilities": [
+                {
+                  "name": "Owns features",
+                  "collaborators": [
+                    "Feature List",
+                    "Epic Context"
+                  ]
+                },
+                {
+                  "name": "Calculates total stories",
+                  "collaborators": [
+                    "Feature",
+                    "Story Count"
+                  ]
+                },
+                {
+                  "name": "Renders epic section",
+                  "collaborators": [
+                    "Epic Renderer",
+                    "Template"
+                  ]
+                },
+                {
+                  "name": "Validates epic structure",
+                  "collaborators": [
+                    "Epic Validator",
+                    "Rules"
+                  ]
+                },
+                {
+                  "name": "Get name",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get description",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get features",
+                  "collaborators": [
+                    "List"
+                  ]
+                },
+                {
+                  "name": "Get total_stories",
+                  "collaborators": [
+                    "Integer"
+                  ]
+                },
+                {
+                  "name": "Get sequential_order",
+                  "collaborators": [
+                    "Float"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryIOFeature",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_feature",
+              "responsibilities": [
+                {
+                  "name": "Owns stories",
+                  "collaborators": [
+                    "Story List",
+                    "Feature Context"
+                  ]
+                },
+                {
+                  "name": "Calculates story count",
+                  "collaborators": [
+                    "Story",
+                    "Count"
+                  ]
+                },
+                {
+                  "name": "Renders feature section",
+                  "collaborators": [
+                    "Feature Renderer",
+                    "Template"
+                  ]
+                },
+                {
+                  "name": "Validates feature structure",
+                  "collaborators": [
+                    "Feature Validator",
+                    "Rules"
+                  ]
+                },
+                {
+                  "name": "Get name",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get description",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get stories",
+                  "collaborators": [
+                    "List"
+                  ]
+                },
+                {
+                  "name": "Get story_count",
+                  "collaborators": [
+                    "Integer"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryIOStory",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_story",
+              "responsibilities": [
+                {
+                  "name": "Owns acceptance criteria",
+                  "collaborators": [
+                    "Criteria List",
+                    "Story Context"
+                  ]
+                },
+                {
+                  "name": "Owns increment assignment",
+                  "collaborators": [
+                    "Increment",
+                    "Priority"
+                  ]
+                },
+                {
+                  "name": "Renders story card",
+                  "collaborators": [
+                    "Story Renderer",
+                    "Template"
+                  ]
+                },
+                {
+                  "name": "Validates story format",
+                  "collaborators": [
+                    "Story Validator",
+                    "Rules"
+                  ]
+                },
+                {
+                  "name": "Calculates position",
+                  "collaborators": [
+                    "Position Manager",
+                    "Layout"
+                  ]
+                },
+                {
+                  "name": "Get name",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get description",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get acceptance_criteria",
+                  "collaborators": [
+                    "List"
+                  ]
+                },
+                {
+                  "name": "Get increment",
+                  "collaborators": [
+                    "Integer"
+                  ]
+                },
+                {
+                  "name": "Get priority",
+                  "collaborators": [
+                    "Integer"
+                  ]
+                },
+                {
+                  "name": "Get position",
+                  "collaborators": [
+                    "Position"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryIOIncrement",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_increment",
+              "responsibilities": [
+                {
+                  "name": "Owns story assignments",
+                  "collaborators": [
+                    "Story List",
+                    "Increment Context"
+                  ]
+                },
+                {
+                  "name": "Manages priorities",
+                  "collaborators": [
+                    "Priority Order",
+                    "Story Sequence"
+                  ]
+                },
+                {
+                  "name": "Calculates capacity",
+                  "collaborators": [
+                    "Story Count",
+                    "Capacity Limit"
+                  ]
+                },
+                {
+                  "name": "Renders increment view",
+                  "collaborators": [
+                    "Increment Renderer",
+                    "Template"
+                  ]
+                },
+                {
+                  "name": "Validates increment structure",
+                  "collaborators": [
+                    "Increment Validator",
+                    "Rules"
+                  ]
+                },
+                {
+                  "name": "Get number",
+                  "collaborators": [
+                    "Integer"
+                  ]
+                },
+                {
+                  "name": "Get name",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get stories",
+                  "collaborators": [
+                    "List"
+                  ]
+                },
+                {
+                  "name": "Get capacity",
+                  "collaborators": [
+                    "Integer"
+                  ]
+                },
+                {
+                  "name": "Get priority_order",
+                  "collaborators": [
+                    "List"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "StoryIORenderer",
+              "module": "agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_renderer",
+              "responsibilities": [
+                {
+                  "name": "Renders epic cells",
+                  "collaborators": [
+                    "Epic",
+                    "Cell Generator",
+                    "XML"
+                  ]
+                },
+                {
+                  "name": "Renders feature cells",
+                  "collaborators": [
+                    "Feature",
+                    "Cell Generator",
+                    "XML"
+                  ]
+                },
+                {
+                  "name": "Renders story cells",
+                  "collaborators": [
+                    "Story",
+                    "Cell Generator",
+                    "XML"
+                  ]
+                },
+                {
+                  "name": "Renders increment lanes",
+                  "collaborators": [
+                    "Increment",
+                    "Lane Generator",
+                    "XML"
+                  ]
+                },
+                {
+                  "name": "Calculates layout",
+                  "collaborators": [
+                    "Layout Manager",
+                    "Position Calculator"
+                  ]
+                },
+                {
+                  "name": "Formats XML",
+                  "collaborators": [
+                    "XML Formatter",
+                    "Pretty Print"
+                  ]
+                },
+                {
+                  "name": "Get cell_style",
+                  "collaborators": [
+                    "String"
+                  ]
+                },
+                {
+                  "name": "Get layout_config",
+                  "collaborators": [
+                    "Dict"
+                  ]
+                },
+                {
+                  "name": "Get xml_formatter",
+                  "collaborators": [
+                    "XMLFormatter"
+                  ]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [
+            {
+              "name": "Generate MCP Tools",
+              "sequential_order": 1.0,
+              "test_file": "test_generate_mcp_tools.py",
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": "or",
+                  "stories": [
+                    {
+                      "name": "Generate Bot Tools",
+                      "sequential_order": 0.5,
+                      "connector": "and",
+                      "users": [
+                        "MCP Server Generator"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_generate_bot_server_and_tools.py",
+                      "test_class": "TestGenerateBotTools",
+                      "acceptance_criteria": [
+                        "WHEN Generator processes Bot Config",
+                        "THEN Generator creates 1 bot tool instance"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Generator creates bot tool for test_bot",
+                          "steps": "Given A bot configuration file with a working directory and behaviors\nAnd A bot that has been initialized with that config file\nWhen Generator processes Bot Config\nThen Generator creates 1 bot tool instance",
+                          "test_method": "test_generator_creates_bot_tool_for_test_bot"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate MCP Tools/≡ƒô¥ Generate Bot Tools.md"
+                    },
+                    {
+                      "name": "Generate Behavior Tools",
+                      "sequential_order": 0.6,
+                      "connector": "and",
+                      "users": [
+                        "MCP Server Generator"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_generate_bot_server_and_tools.py",
+                      "test_class": "TestGenerateBehaviorTools",
+                      "acceptance_criteria": [
+                        "WHEN Generator processes Bot Config",
+                        "THEN Generator creates behavior tool instances for each behavior"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Generator creates behavior tools for test_bot with 4 behaviors",
+                          "steps": "Given A bot configuration file with a working directory and behaviors\nAnd A bot that has been initialized with that config file\nWhen Generator processes Bot Config\nThen Generator creates 4 behavior tool instances",
+                          "test_method": "test_generator_creates_behavior_tools_for_test_bot_with_4_behaviors"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate MCP Tools/≡ƒô¥ Generate Behavior Tools.md"
+                    },
+                    {
+                      "name": "Generate MCP Bot Server",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "MCP Server Generator"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_generate_bot_server_and_tools.py",
+                      "test_class": "TestGenerateMCPBotServer",
+                      "acceptance_criteria": [
+                        "WHEN MCP Server Generator receives Bot Config",
+                        "THEN Generator generates unique MCP Server instance with Unique server name from bot name",
+                        "AND Generated server includes Bot Config reference",
+                        "AND Generated server leverages Specific Bot instantiation code"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Generator creates MCP server for test_bot",
+                          "steps": "Given A bot configuration file with a working directory and behaviors\nAnd A bot that has been initialized with that config file\nWhen MCP Server Generator receives Bot Config\nThen Generator creates MCP Server instance with unique server name",
+                          "test_method": "test_generator_creates_mcp_server_for_test_bot"
+                        },
+                        {
+                          "name": "Generator fails when Bot Config is missing",
+                          "steps": "Given A bot directory exists\nAnd Bot Config does NOT exist\nWhen MCP Server Generator attempts to receive Bot Config\nThen Generator raises FileNotFoundError and does not create MCP Server instance",
+                          "test_method": "test_generator_fails_when_bot_config_missing"
+                        },
+                        {
+                          "name": "Generator fails when Bot Config is malformed",
+                          "steps": "Given A bot directory exists\nAnd Bot Config file exists with invalid JSON syntax\nWhen MCP Server Generator attempts to receive Bot Config\nThen Generator raises JSONDecodeError and does not create MCP Server instance",
+                          "test_method": "test_generator_fails_when_bot_config_malformed"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate MCP Tools/≡ƒô¥ Generate MCP Bot Server.md"
+                    },
+                    {
+                      "name": "Generate Behavior Action Tools",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "MCP Server Generator"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_generate_bot_server_and_tools.py",
+                      "test_class": "TestGenerateBehaviorActionTools",
+                      "acceptance_criteria": [
+                        "WHEN Generator processes Bot Config",
+                        "THEN Generator creates tool code for each (behavior, action) pair",
+                        "AND Enumerates all behaviors and actions from Bot Config",
+                        "AND For each pair, generates tool code with unique name, trigger words, forwarding logic",
+                        "AND Tool catalog prepared with all generated tool instances"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Tools generated for each behavior action",
+                          "steps": "GIVEN: Bot with behaviors and actions\nWHEN: Tool generation is triggered\nTHEN: MCP tools are created for each action",
+                          "test_method": "test_tools_generated_for_each_behavior_action"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate MCP Tools/≡ƒô¥ Generate Behavior Action Tools.md"
+                    },
+                    {
+                      "name": "Deploy MCP BOT Server",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [],
+                      "story_type": "user",
+                      "test_file": "test_generate_bot_server_and_tools.py",
+                      "test_class": "TestDeployMCPBotServer",
+                      "acceptance_criteria": [
+                        "WHEN Generation Complete",
+                        "THEN Generator deploys/starts generated MCP Server",
+                        "AND Server initializes in separate thread",
+                        "AND Server registers with MCP Protocol Handler using unique server name",
+                        "AND Server publishes tool catalog to AI Chat",
+                        "AND Each tool entry includes name, description, trigger patterns, parameters"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "MCP server deployed with tools",
+                          "steps": "GIVEN: Bot tools are generated\nWHEN: Server deployment is triggered\nTHEN: MCP server is running with tools",
+                          "test_method": "test_mcp_server_deployed_with_tools"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate MCP Tools/≡ƒô¥ Deploy MCP BOT Server.md"
+                    },
+                    {
+                      "name": "Restart MCP Server To Load Code Changes",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": [
+                        "MCP Server Generator"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_restart_mcp_server.py",
+                      "test_class": "TestRestartMCPServerToLoadCodeChanges",
+                      "acceptance_criteria": [
+                        "WHEN Bot code changes are detected",
+                        "THEN MCP Server clears Python bytecode cache (__pycache__)",
+                        "AND MCP Server restarts to load new code",
+                        "AND Server restarts gracefully without losing state",
+                        "AND Server re-registers with MCP Protocol Handler after restart"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Clear Python bytecode cache",
+                          "steps": "Given __pycache__ directories exist with .pyc files\nWhen clear_python_cache is called\nThen All __pycache__ directories are removed\nAnd All .pyc files are deleted\nAnd Cache is cleared before server restart",
+                          "test_method": "test_clear_python_bytecode_cache"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate MCP Tools/≡ƒô¥ Restart MCP Server To Load Code Changes.md"
+                    }
+                  ]
+                }
+              ],
+              "test_link": "agile_bot/bots/base_bot/test/test_generate_mcp_tools.py"
+            },
+            {
+              "name": "Generate REPL CLI",
+              "sequential_order": 3.0,
+              "test_file": "test_generate_repl_cli.py",
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Generate REPL Command Definitions",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": [
+                        "Generator"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN generator runs, THEN Orchestrator walks all bot behaviors",
+                        "WHEN behaviors are walked, THEN ActionDataCollector gathers action metadata for each behavior",
+                        "WHEN actions are gathered, THEN generator extracts parameters from each action's context_class",
+                        "WHEN metadata is collected, THEN ReplCommandVisitor generates navigate commands for all behaviors and actions",
+                        "WHEN commands are generated, THEN scope commands are created for scope.type, scope.value, scope.exclude",
+                        "WHEN all commands are defined, THEN generator outputs command definition file"
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate REPL CLI/≡ƒô¥ Generate REPL Command Definitions.md"
+                    },
+                    {
+                      "name": "Generate CLI Entry Point",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Generator"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN generator creates PowerShell script, THEN it generates bot-specific CLI launcher (e.g., story_cli.ps1)",
+                        "WHEN PowerShell script is generated, THEN it sets BOT_DIRECTORY and PYTHONPATH environment variables",
+                        "WHEN script is generated, THEN it launches repl_main.py for the specific bot",
+                        "WHEN REPL is launched, THEN it includes TTY detection, state display, command parsing, and execution"
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate REPL CLI/≡ƒô¥ Generate CLI Entry Point.md"
+                    },
+                    {
+                      "name": "Generate Cursor Commands",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Generator"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN generator creates CursorReplVisitor, THEN it follows existing visitor pattern",
+                        "WHEN visitor generates shortcuts, THEN it creates navigate shortcuts for behaviors",
+                        "WHEN visitor generates action shortcuts, THEN it creates shortcuts for behavior-action combinations",
+                        "WHEN visitor generates help shortcuts, THEN it creates help and status commands"
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate REPL CLI/≡ƒô¥ Generate Cursor Commands.md"
+                    },
+                    {
+                      "name": "Generate Help Documentation",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": [
+                        "Generator"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN generator creates HelpReplVisitor, THEN it generates command reference with all REPL commands",
+                        "WHEN help is generated, THEN it includes parameter reference with descriptions for all action parameters",
+                        "WHEN examples are generated, THEN it includes scope examples with dot-notation syntax",
+                        "WHEN documentation is output, THEN it creates Markdown help files in .cursor/commands/ and terminal help"
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Build Agile Bots/ΓÜÖ∩╕Å Generate REPL CLI/≡ƒô¥ Generate Help Documentation.md"
+                    }
+                  ]
+                }
+              ],
+              "test_link": "agile_bot/bots/base_bot/test/test_generate_repl_cli.py"
+            }
+          ]
+        },
+        {
+          "name": "Execute Behavior Actions",
+          "sequential_order": 3.0,
+          "domain_concepts": [
+            {
+              "name": "Behavior Workflow",
+              "module": "bot",
+              "responsibilities": [
+                {
+                  "name": "Determine next Action",
+                  "collaborators": [
+                    "Behavior",
+                    "Action",
+                    "State"
+                  ]
+                },
+                {
+                  "name": "Track state",
+                  "collaborators": [
+                    "Behavior",
+                    "Action",
+                    "State"
+                  ]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [
+            {
+              "name": "Decide Planning Criteria Action",
+              "sequential_order": 2.0,
+              "domain_concepts": [
+                {
+                  "name": "PlanningAction",
+                  "module": "actions.strategy",
+                  "responsibilities": [
+                    {
+                      "name": "Inject planning instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Guardrails",
+                        "Planning"
+                      ]
+                    },
+                    {
+                      "name": "Inject decision criteria and assumptions",
+                      "collaborators": [
+                        "Behavior",
+                        "Guardrails",
+                        "Decision Criteria",
+                        "Assumptions",
+                        "Recommended Human Activity"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Guardrails",
+                  "module": "actions",
+                  "responsibilities": [
+                    {
+                      "name": "Provide required context",
+                      "collaborators": [
+                        "Key Questions",
+                        "Evidence"
+                      ]
+                    },
+                    {
+                      "name": "Guide planning decisions",
+                      "collaborators": [
+                        "Decision Criteria",
+                        "Assumptions"
+                      ]
+                    },
+                    {
+                      "name": "Define recommended human activity",
+                      "collaborators": [
+                        "Human",
+                        "Instructions"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "test_file": "test_decide_strategy_criteria_action.py",
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": "or",
+                  "stories": [
+                    {
+                      "name": "Proceed To Build Knowledge",
+                      "sequential_order": 4,
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN PlanningAction completes execution",
+                        "WHEN Human says action is done",
+                        "THEN PlanningAction saves Workflow State (per \"Saves Behavior State\" story)",
+                        "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
+                        "AND Workflow proceeds to build_knowledge"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Seamless transition from planning to build_knowledge",
+                          "steps": "Given behavior is 'discovery'\nAnd decide_planning_criteria action is complete\nAnd Human confirms \"done\" or \"proceed\"\nWhen decide_planning_criteria action finalizes\nThen Action saves Workflow State with:\n  - current_behavior='story_bot.discovery'\n  - current_action='story_bot.discovery.decide_planning_criteria'\n  - timestamp=[completion time]\nAnd Action loads decide_planning_criteria/action configuration\nAnd Action reads next_action='build_knowledge'\nAnd Action injects AI instructions: \"When done, proceed to build_knowledge\"\nAnd AI invokes build_knowledge tool\nAnd Workflow transitions seamlessly to next action",
+                          "test_method": "test_seamless_transition_from_planning_to_build_knowledge"
+                        },
+                        {
+                          "name": "User must confirm before transition",
+                          "steps": "Given decide_planning_criteria action is complete\nAnd Human has NOT yet confirmed completion\nWhen decide_planning_criteria action waits for human feedback\nThen Action does NOT save workflow state as completed\nAnd Action does NOT inject next action instructions\nAnd Action does NOT proceed to build_knowledge\nAnd AI waits for human to say \"done\" before transitioning"
+                        },
+                        {
+                          "name": "Workflow state captures planning completion",
+                          "steps": "Given decide_planning_criteria action completes at timestamp='2025-12-03T10:25:00Z'\nAnd Human confirms \"done\"\nWhen Action saves workflow state\nThen workflow state is updated with:\n  - current_action='story_bot.exploration.decide_planning_criteria'\n  - timestamp='2025-12-03T10:25:00Z'\nAnd completed_actions list includes: {action_state: 'story_bot.exploration.decide_planning_criteria', timestamp: '2025-12-03T10:25:00Z'}\nAnd State persists to project_area/workflow state\nAnd If workflow is interrupted after this point, planning is marked as completed",
+                          "test_method": "test_workflow_state_captures_planning_completion"
+                        }
+                      ],
+                      "test_file": "test_decide_strategy_criteria_action.py",
+                      "test_class": "TestProceedToBuildKnowledge",
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Decide Planning Criteria Action/≡ƒô¥ Proceed To Build Knowledge.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py#L339"
+                    }
+                  ]
+                }
+              ],
+              "test_link": "agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py"
+            },
+            {
+              "name": "Build Knowledge",
+              "sequential_order": 3.0,
+              "domain_concepts": [
+                {
+                  "name": "BuildKnowledgeAction",
+                  "module": "actions.build",
+                  "responsibilities": [
+                    {
+                      "name": "Inject knowledge graph template",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Knowledge Graph Spec",
+                        "Knowledge Graph"
+                      ]
+                    },
+                    {
+                      "name": "Inject builder instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Build Instructions"
+                      ]
+                    },
+                    {
+                      "name": "Save Knowledge graph",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Knowledge Graph"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Content",
+                  "module": "actions",
+                  "responsibilities": [
+                    {
+                      "name": "Render outputs",
+                      "collaborators": [
+                        "Template",
+                        "Renderer",
+                        "Render Spec"
+                      ]
+                    },
+                    {
+                      "name": "Synchronize formats",
+                      "collaborators": [
+                        "Synchronizer",
+                        "Extractor",
+                        "Synchronizer Spec"
+                      ]
+                    },
+                    {
+                      "name": "Save knowledge graph",
+                      "collaborators": [
+                        "Knowledge Graph"
+                      ]
+                    },
+                    {
+                      "name": "Load rendered content",
+                      "collaborators": [
+                        "na"
+                      ]
+                    },
+                    {
+                      "name": "Present rendered content",
+                      "collaborators": [
+                        "na"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "test_file": "test_build_knowledge.py",
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Load Story Graph Into Memory",
+                      "sequential_order": 1,
+                      "connector": "opt",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestLoadStoryGraphIntoMemory",
+                      "acceptance_criteria": [
+                        "WHEN Story graph file exists",
+                        "THEN StoryMap loads epics, sub_epics, story_groups, stories, and scenarios",
+                        "AND StoryMap provides walk method to traverse all nodes",
+                        "WHEN Story graph file does not exist",
+                        "THEN StoryMap raises FileNotFoundError"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Story map loads epics",
+                          "steps": "GIVEN: Story graph JSON with epics\nWHEN: StoryMap is loaded\nTHEN: Epics are accessible",
+                          "test_method": "test_story_map_loads_epics"
+                        },
+                        {
+                          "name": "Epic has sub epics",
+                          "steps": "GIVEN: Epic with sub-epics in story graph\nWHEN: Epic is accessed\nTHEN: Sub-epics are available",
+                          "test_method": "test_epic_has_sub_epics"
+                        },
+                        {
+                          "name": "Sub epic has story groups",
+                          "steps": "GIVEN: Sub-epic with story groups\nWHEN: Sub-epic is accessed\nTHEN: Story groups are available",
+                          "test_method": "test_sub_epic_has_story_groups"
+                        },
+                        {
+                          "name": "Story group has stories",
+                          "steps": "GIVEN: Story group with stories\nWHEN: Story group is accessed\nTHEN: Stories are available",
+                          "test_method": "test_story_group_has_stories"
+                        },
+                        {
+                          "name": "Story has properties",
+                          "steps": "GIVEN: Story with properties (name, description, etc.)\nWHEN: Story is accessed\nTHEN: Properties are available",
+                          "test_method": "test_story_has_properties"
+                        },
+                        {
+                          "name": "Story has scenarios",
+                          "steps": "GIVEN: Story with scenarios\nWHEN: Story is accessed\nTHEN: Scenarios are available",
+                          "test_method": "test_story_has_scenarios"
+                        },
+                        {
+                          "name": "Story map walk traverses all nodes",
+                          "steps": "GIVEN: Story map with epics, sub-epics, stories\nWHEN: walk() is called\nTHEN: All nodes are traversed",
+                          "test_method": "test_story_map_walk_traverses_all_nodes"
+                        },
+                        {
+                          "name": "From bot loads story graph",
+                          "steps": "GIVEN: Bot with story-graph.json in workspace\nWHEN: StoryMap.from_bot() is called\nTHEN: Story graph is loaded",
+                          "test_method": "test_from_bot_loads_story_graph"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Load Story Graph Into Memory.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L955"
+                    },
+                    {
+                      "name": "Inject Knowledge Graph Template and Builder Instructions",
+                      "sequential_order": 2,
+                      "connector": "opt",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN Build Knowledge Action executes",
+                        "THEN Action loads knowledge graph template from behavior/content/knowledge_graph/",
+                        "AND Action injects knowledge graph template path into instructions",
+                        "AND knowledge_graph_template field is present in instructions",
+                        "AND template file path exists and is accessible",
+                        "WHEN knowledge graph template does not exist",
+                        "THEN Action raises FileNotFoundError with appropriate error message"
+                      ],
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestInjectKnowledgeGraphTemplateForBuildKnowledge",
+                      "scenarios": [
+                        {
+                          "name": "Action injects knowledge graph template",
+                          "steps": "GIVEN: Knowledge graph config and template exist\nWHEN: Action executes\nTHEN: Template path is injected into instructions",
+                          "test_method": "test_action_injects_knowledge_graph_template"
+                        },
+                        {
+                          "name": "Action loads and merges instructions",
+                          "steps": "GIVEN: Base and behavior-specific instructions exist\nWHEN: Action method is invoked\nTHEN: Instructions are loaded from both locations and merged",
+                          "test_method": "test_action_loads_and_merges_instructions"
+                        },
+                        {
+                          "name": "All template variables are replaced in instructions",
+                          "steps": "GIVEN: Base instructions with {{rules}}, {{schema}}, {{description}}, {{instructions}} placeholders\nWHEN: Action loads and merges instructions with all injections\nTHEN: All template variables are replaced with actual content",
+                          "test_method": "test_all_template_variables_are_replaced_in_instructions"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Inject Knowledge Graph Template and Builder Instructions.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L852"
+                    },
+                    {
+                      "name": "Track Activity for Build Knowledge Action",
+                      "sequential_order": 3,
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN BuildKnowledgeAction executes",
+                        "THEN Action creates activity entry with timestamp, action name, behavior name",
+                        "AND Activity entry appended to {project_area}/activity_log.json"
+                      ],
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestTrackActivityForBuildKnowledgeAction",
+                      "scenarios": [
+                        {
+                          "name": "Track activity when build action starts",
+                          "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Build knowledge action starts\nTHEN: Activity is tracked",
+                          "test_method": "test_track_activity_when_build_action_starts"
+                        },
+                        {
+                          "name": "Track activity when build action completes",
+                          "steps": "GIVEN: Build knowledge outputs and duration\nWHEN: Build knowledge action completes\nTHEN: Activity is tracked with outputs and duration",
+                          "test_method": "test_track_activity_when_build_action_completes"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Track Activity for Build Knowledge Action.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L233"
+                    },
+                    {
+                      "name": "Update Existing Knowledge Graph",
+                      "sequential_order": 4,
+                      "connector": "opt",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestUpdateExistingKnowledgeGraph",
+                      "acceptance_criteria": [
+                        "WHEN Build Knowledge Action updates existing story graph",
+                        "THEN Action updates existing story-graph.json file",
+                        "AND Action adds increments array to existing file",
+                        "AND Existing epics and data are preserved"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Behavior updates existing story graph JSON",
+                          "steps": "GIVEN: Existing story-graph.json file exists\nWHEN: Build Knowledge Action executes for behavior\nTHEN: Action updates existing story-graph.json\nAND: Action adds increments array\nAND: Existing epics are preserved",
+                          "test_method": "test_behavior_updates_existing_story_graph_json"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Update Existing Knowledge Graph.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L916"
+                    },
+                    {
+                      "name": "Proceed To Render Output",
+                      "sequential_order": 5,
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN BuildKnowledgeAction completes execution",
+                        "THEN BuildKnowledgeAction saves Workflow State (per \"Saves Behavior State\" story)",
+                        "AND BuildKnowledgeAction processes content for saving",
+                        "AND Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)"
+                      ],
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestProceedToRenderOutput",
+                      "scenarios": [
+                        {
+                          "name": "Seamless transition from build knowledge to validate rules",
+                          "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Build knowledge action completes\nTHEN: Workflow transitions to validate",
+                          "test_method": "test_seamless_transition_from_build_to_validate"
+                        },
+                        {
+                          "name": "Workflow state captures build knowledge completion",
+                          "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Build knowledge action completes\nTHEN: Workflow state captures completion",
+                          "test_method": "test_workflow_state_captures_build_completion"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Proceed To Render Output.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L255"
+                    },
+                    {
+                      "name": "proactively Validate knowledge against rules",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN BuildKnowledgeAction it's the initial pass of building the knowledge graphTHEN Build Knowledge Action invokes the Validate Rules action to understand if what is generated violates any rules\n(see Validate Knowledge & Content Against Rules)",
+                        "WHEN Validate Rules action is finsihed generateing the validation report THEN the BuildKnowledgeAction goes through all of the violations to determine if any corrective action needs to be taken AND the system updates the knowledge graph based on the recommendations.",
+                        "WHEN BuildKnowledgeAction Is finished making corrections.\nTHEN BuildKnowledgeAction tells AI to notify the user of what corrections it made as part of presenting the fact that it's done building knowledge."
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Build knowledge forwards to validate action bot and receives enhanced instructions",
+                          "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating knowledge graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Action is 'build_knowledge'\nAnd Knowledge graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd Behavior has validation rules '{validation_rules}'\nAnd Validation rules have code scanners '{code_scanners}'\nAnd Code scanners are stubbed to return '{code_scanner_output}'\nWhen Build knowledge action forwards to validate_action_bot with knowledge graph at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nThen Validate action bot runs stubbed code scanners '{code_scanners}' against knowledge graph\nAnd Stubbed scanners return '{code_scanner_output}'\nAnd Validation report is generated with '{code_scanner_output}'\nAnd Enhanced instructions are returned to build_knowledge action\nAnd Enhanced instructions contain '{enhanced_instructions}'",
+                          "test_method": "test_build_knowledge_forwards_to_validate_action_bot_and_receives_enhanced_instructions"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ proactively Validate knowledge against rules.md"
+                    },
+                    {
+                      "name": "Create Build Scope",
+                      "sequential_order": 7,
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestCreateBuildScope",
+                      "acceptance_criteria": [
+                        "WHEN Build knowledge action needs scope",
+                        "THEN Action creates build scope from parameters",
+                        "AND Scope defines what to build"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Build scope created with different parameter combinations",
+                          "steps": "GIVEN: Different scope parameters (story, epic, increment)\nWHEN: BuildScope is created\nTHEN: Scope contains expected filters",
+                          "test_method": "test_build_scope_created_with_different_parameter_combinations"
+                        },
+                        {
+                          "name": "Build scope defaults to all when no parameters",
+                          "steps": "GIVEN: No scope parameters provided\nWHEN: BuildScope is created\nTHEN: Scope type is ALL",
+                          "test_method": "test_build_scope_defaults_to_all_when_no_parameters"
+                        },
+                        {
+                          "name": "Action uses build scope to define build scope",
+                          "steps": "GIVEN: Action with scope parameters\nWHEN: Action executes\nTHEN: Build scope is created and applied",
+                          "test_method": "test_action_uses_build_scope_to_define_build_scope"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Create Build Scope.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L1243"
+                    },
+                    {
+                      "name": "Filter Knowledge Graph",
+                      "sequential_order": 8,
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_file": "test_build_knowledge.py",
+                      "test_class": "TestFilterKnowledgeGraph",
+                      "acceptance_criteria": [
+                        "WHEN Knowledge graph needs filtering",
+                        "THEN Action filters knowledge graph by scope",
+                        "AND Filtered graph contains only relevant content"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Filter returns all when scope is all",
+                          "steps": "GIVEN: Scope type is ALL\nWHEN: Knowledge graph is filtered\nTHEN: All content is returned",
+                          "test_method": "test_filter_returns_all_when_scope_is_all"
+                        },
+                        {
+                          "name": "Filter by story names returns matching stories",
+                          "steps": "GIVEN: Scope with story names\nWHEN: Knowledge graph is filtered\nTHEN: Only matching stories are returned",
+                          "test_method": "test_filter_by_story_names_returns_matching_stories"
+                        },
+                        {
+                          "name": "Filter by epic names returns matching epics",
+                          "steps": "GIVEN: Scope with epic names\nWHEN: Knowledge graph is filtered\nTHEN: Only matching epics are returned",
+                          "test_method": "test_filter_by_epic_names_returns_matching_epics"
+                        },
+                        {
+                          "name": "Filter by increment priorities returns matching increments",
+                          "steps": "GIVEN: Scope with increment priorities\nWHEN: Knowledge graph is filtered\nTHEN: Only matching increments are returned",
+                          "test_method": "test_filter_by_increment_priorities_returns_matching_increments"
+                        }
+                      ],
+                      "story_file_exists": true,
+                      "story_file": "agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Build Knowledge/≡ƒô¥ Filter Knowledge Graph.md",
+                      "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py#L1460"
+                    }
+                  ]
+                }
+              ],
+              "test_link": "agile_bot/bots/base_bot/test/test_build_knowledge.py"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "instructions": {
+    "text": "",
+    "scope": null
+  },
+  "parameters": [],
+  "runExamples": [
+    {
+      "command": "echo 'behavior.action' | python repl_main.py",
+      "description": "Defaults to 'instructions' operation"
+    },
+    {
+      "command": "echo 'behavior.action.operation' | python repl_main.py",
+      "description": "Runs operation"
+    }
+  ],
+  "commands": {
+    "text": "status | back | current | next | path [dir] | scope [filter] | headless \"msg\" | help | exit",
+    "list": [
+      "status",
+      "back",
+      "current",
+      "next",
+      "path",
+      "scope",
+      "headless",
+      "help",
+      "exit"
+    ]
+  }
+}

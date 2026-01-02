@@ -308,11 +308,6 @@ Behavior Workflow
     Determine next Action: Behavior,Action,State
     Track state: Behavior,Action,State
 
-Project
-    Move project to working area: Working Directory
-    Save project in context: Working Directory,Workflow State
-    Update project area: Working Directory,Content
-
 Specific Bot
     Provide Behavior config: Bot Config,Behavior
     Provide MCP config: MCP Config
