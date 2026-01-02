@@ -29,10 +29,11 @@ class HtmlRenderer {
 <body>
     ${this.renderBotSelector(statusData.availableBots || [], statusData.currentBot || 'story_bot')}
     ${this.renderHeader(statusData.bot, statusData.session)}
-    ${this.renderBehaviors(statusData.behaviors)}
+    ${this.renderBehaviors(statusData.behaviors, statusData.expansionState || {})}
     ${this.renderScope(statusData.scope)}
     ${this.renderParameters(statusData.parameters)}
     ${this.renderCommandInput()}
+    ${this.renderPromptDisplay(statusData.promptContent || '')}
     ${this.renderCommands(statusData.commands)}
     ${this.renderScripts()}
 </body>
@@ -216,6 +217,36 @@ class HtmlRenderer {
         .execute-button:active {
             background-color: #ee7700;
         }
+        .prompt-display-container {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: var(--vscode-editor-background);
+            border: 1px solid #ff8c00;
+            border-radius: 3px;
+        }
+        .prompt-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ff8c00;
+            margin-bottom: 6px;
+        }
+        .prompt-textarea {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            resize: vertical;
+            min-height: 120px;
+            max-height: 300px;
+        }
+        .prompt-textarea:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            border-color: var(--vscode-focusBorder);
+        }
         .commands-footer {
             border-top: 2px solid #ff8c00;
             padding-top: 8px;
@@ -393,7 +424,7 @@ class HtmlRenderer {
   /**
    * Render behaviors hierarchy
    */
-  renderBehaviors(behaviors) {
+  renderBehaviors(behaviors, expansionState) {
     if (!behaviors || behaviors.length === 0) {
       return `
     <div class="section">
@@ -412,13 +443,14 @@ class HtmlRenderer {
       const behaviorTooltip = behavior.description ? this.escapeHtml(behavior.description) : '';
       const behaviorId = `behavior-${bIdx}`;
       
-      // Collapse non-current behaviors by default
-      const behaviorExpanded = behavior.isCurrent;
+      // Use saved expansion state if available, otherwise default to current behavior being expanded
+      const hasExpansionState = expansionState && (behaviorId in expansionState);
+      const behaviorExpanded = hasExpansionState ? expansionState[behaviorId] : behavior.isCurrent;
       const behaviorIcon = behaviorExpanded ? '➖' : '➕';
       const behaviorIconClass = behaviorExpanded ? 'expanded' : '';
       const behaviorDisplay = behaviorExpanded ? 'block' : 'none';
       
-      let html = `<div class="collapsible-header" onclick="toggleCollapse('${behaviorId}')" style="cursor: pointer;" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; font-size: 10px; min-width: 12px;">${behaviorIcon}</span> ${behaviorMarker}${this.escapeHtml(behavior.name)}</div>`;
+      let html = `<div class="collapsible-header" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; font-size: 10px; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')">${behaviorIcon}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${this.escapeHtml(behavior.name)}')">${behaviorMarker}${this.escapeHtml(behavior.name)}</span></div>`;
       
       // Always create collapsible content, even if empty
       const hasActions = behavior.actions && behavior.actions.length > 0;
@@ -431,14 +463,16 @@ class HtmlRenderer {
           
         const actionTooltip = action.description ? this.escapeHtml(action.description) : '';
         const actionId = `action-${bIdx}-${aIdx}`;
+        const behaviorName = behavior.name;
         
-        // Collapse non-current actions by default
-        const actionExpanded = action.isCurrent;
+        // Use saved expansion state if available, otherwise default to current action being expanded
+        const hasActionExpansionState = expansionState && (actionId in expansionState);
+        const actionExpanded = hasActionExpansionState ? expansionState[actionId] : action.isCurrent;
         const actionIcon = actionExpanded ? '➖' : '➕';
         const actionIconClass = actionExpanded ? 'expanded' : '';
         const actionDisplay = actionExpanded ? 'block' : 'none';
         
-        let actionHtml = `<div class="collapsible-header action-item" onclick="toggleCollapse('${actionId}')" style="cursor: pointer;" title="${actionTooltip}"><span id="${actionId}-icon" class="${actionIconClass}" style="display: inline-block; font-size: 10px; min-width: 12px;">${actionIcon}</span> ${actionMarker}${this.escapeHtml(action.name)}</div>`;
+        let actionHtml = `<div class="collapsible-header action-item" title="${actionTooltip}"><span id="${actionId}-icon" class="${actionIconClass}" style="display: inline-block; font-size: 10px; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${actionId}')">${actionIcon}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToAction('${this.escapeHtml(behaviorName)}', '${this.escapeHtml(action.name)}')">${actionMarker}${this.escapeHtml(action.name)}</span></div>`;
           
         // Always create collapsible content, even if empty
         const hasOperations = action.operations && action.operations.length > 0;
@@ -449,7 +483,9 @@ class HtmlRenderer {
             ? '<span class="status-marker marker-completed">☑</span>'
             : '<span class="status-marker marker-pending">☐</span>';
           const opTooltip = op.description ? this.escapeHtml(op.description) : '';
-          return `<div class="operation-item" title="${opTooltip}">${opMarker}${this.escapeHtml(op.name)}</div>`;
+          // Make all operations clickable
+          const clickHandler = ` onclick="navigateAndExecute('${this.escapeHtml(behaviorName)}', '${this.escapeHtml(action.name)}', '${this.escapeHtml(op.name)}')" style="cursor: pointer; text-decoration: underline;"`;
+          return `<div class="operation-item" title="${opTooltip}"${clickHandler}>${opMarker}${this.escapeHtml(op.name)}</div>`;
         }).join('') : '';
         
         actionHtml += `<div id="${actionId}" class="collapsible-content" style="display: ${actionDisplay};">${operationsHtml}</div>`;
@@ -609,6 +645,18 @@ class HtmlRenderer {
   }
 
   /**
+   * Render prompt display area
+   */
+  renderPromptDisplay(promptContent) {
+    const escapedContent = this.escapeHtml(promptContent);
+    return `
+        <div class="prompt-display-container">
+            <div class="prompt-label">Generated Prompt:</div>
+            <textarea id="promptDisplay" class="prompt-textarea" readonly placeholder="Click on any operation in the hierarchy to see the generated prompt...">${escapedContent}</textarea>
+        </div>`;
+  }
+
+  /**
    * Render commands footer
    */
   renderCommands(commands) {
@@ -649,19 +697,30 @@ class HtmlRenderer {
             const content = document.getElementById(elementId);
             const icon = document.getElementById(elementId + '-icon');
             
+            let isExpanded = false;
             if (content && content.style.display === 'none') {
                 content.style.display = 'block';
+                isExpanded = true;
                 if (icon) {
                     icon.textContent = '➖';
                     icon.classList.add('expanded');
                 }
             } else if (content) {
                 content.style.display = 'none';
+                isExpanded = false;
                 if (icon) {
                     icon.textContent = '➕';
                     icon.classList.remove('expanded');
                 }
             }
+            
+            // Send expansion state to extension
+            const expansionState = {};
+            expansionState[elementId] = isExpanded;
+            vscode.postMessage({ 
+                command: 'updateExpansionState',
+                expansionState: expansionState
+            });
         }
 
         function updateFilter(filterValue) {
@@ -697,6 +756,35 @@ class HtmlRenderer {
                 // Optionally clear the textarea after execution
                 // textarea.value = '';
             }
+        }
+
+        function navigateToBehavior(behaviorName) {
+            vscode.postMessage({ 
+                command: 'navigateAndExecute',
+                fullCommand: behaviorName
+            });
+        }
+
+        function navigateToAction(behaviorName, actionName) {
+            const fullCommand = behaviorName + '.' + actionName;
+            
+            vscode.postMessage({ 
+                command: 'navigateAndExecute',
+                fullCommand: fullCommand
+            });
+        }
+
+        function navigateAndExecute(behaviorName, actionName, operationName) {
+            // Construct full command path
+            const fullCommand = behaviorName + '.' + actionName + '.' + operationName;
+            
+            vscode.postMessage({ 
+                command: 'navigateAndExecute',
+                behaviorName: behaviorName,
+                actionName: actionName,
+                operationName: operationName,
+                fullCommand: fullCommand
+            });
         }
 
         // Allow Enter key to execute (Ctrl+Enter for newline)
