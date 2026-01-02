@@ -21,61 +21,42 @@
       "timestamp": "2025-12-31T03:07:48.406866"
     },
     {
-      "action_state": "story_bot.prioritization.clarify",
-      "timestamp": "2026-01-02T10:16:59.016737"
+      "action_state": "crc_bot.domain.render",
+      "timestamp": "2026-01-02T10:41:07.862014"
     },
     {
-      "action_state": "story_bot.prioritization.strategy",
-      "timestamp": "2026-01-02T10:16:59.016771"
+      "action_state": "crc_bot.domain.clarify",
+      "timestamp": "2026-01-02T10:41:07.897486"
     },
     {
-      "action_state": "story_bot.prioritization.build",
-      "timestamp": "2026-01-02T10:16:59.016774"
+      "action_state": "crc_bot.domain.strategy",
+      "timestamp": "2026-01-02T10:41:07.897486"
     },
     {
-      "action_state": "story_bot.prioritization.validate",
-      "timestamp": "2026-01-02T10:16:59.016777"
+      "action_state": "crc_bot.domain.build",
+      "timestamp": "2026-01-02T10:41:07.897486"
     },
     {
-      "action_state": "story_bot.prioritization.render",
-      "timestamp": "2026-01-02T10:16:59.016780"
-    },
-    {
-      "action_state": "story_bot.discovery.clarify",
-      "timestamp": "2026-01-02T10:16:59.021565"
-    },
-    {
-      "action_state": "story_bot.discovery.strategy",
-      "timestamp": "2026-01-02T10:16:59.021579"
-    },
-    {
-      "action_state": "story_bot.discovery.build",
-      "timestamp": "2026-01-02T10:16:59.021585"
-    },
-    {
-      "action_state": "story_bot.discovery.validate",
-      "timestamp": "2026-01-02T10:16:59.021591"
-    },
-    {
-      "action_state": "story_bot.discovery.render",
-      "timestamp": "2026-01-02T10:16:59.021597"
+      "action_state": "crc_bot.domain.validate",
+      "timestamp": "2026-01-02T10:41:07.897486"
     }
   ],
-  "current_behavior": "story_bot.exploration",
-  "timestamp": "2026-01-02T10:16:59.057111",
-  "current_action": "story_bot.exploration.build",
+  "current_behavior": "story_bot.shape",
+  "timestamp": "2026-01-02T12:19:03.665285",
+  "current_action": "story_bot.shape.clarify",
   "action_phase": "instructions",
   "completed_behaviors": [
     "scenarios",
     "shape",
     "prioritization",
-    "discovery"
+    "discovery",
+    "domain"
   ],
-  "working_directory": "\"C:\\dev\\augmented-teams\\demo\\mob_minion\"",
+  "working_directory": "\"C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot\"",
   "scope": {
     "type": "story",
     "value": [
-      "Build Agile Bot"
+      "Build"
     ],
     "exclude": [],
     "skiprule": []

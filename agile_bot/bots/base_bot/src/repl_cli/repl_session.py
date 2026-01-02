@@ -402,6 +402,9 @@ class REPLSession:
         return REPLCommandResponse(output=full_output, response=output, status="success")
     
     def _handle_status_command(self, format='text') -> REPLCommandResponse:
+        if format == 'json':
+            return self._handle_status_command_json()
+        
         state_display = self.display_current_state(full=True, format=format)
         
         # Add CLI STATUS section header (for both TTY and piped mode)
@@ -420,6 +423,35 @@ class REPLSession:
         return REPLCommandResponse(
             output=output,
             response=output,
+            status="success"
+        )
+    
+    def _handle_status_command_json(self) -> REPLCommandResponse:
+        """Handle status command with JSON output format."""
+        import json
+        from agile_bot.bots.base_bot.src.repl_cli.formatters import FormatterFactory
+        
+        # Create JSON formatter
+        json_formatter = FormatterFactory.create_json_formatter()
+        
+        # Build JSON status structure
+        status_data = {
+            "bot": self._get_bot_info_json(),
+            "behaviors": self._get_behaviors_json(json_formatter),
+            "session": self._get_session_json(),
+            "scope": self._get_scope_json(),
+            "instructions": self._get_instructions_json(),
+            "parameters": [],  # TODO: Extract parameters if needed
+            "runExamples": self._get_run_examples_json(),
+            "commands": self._get_commands_json()
+        }
+        
+        # Output as JSON string
+        json_output = json.dumps(status_data, indent=2, ensure_ascii=False)
+        
+        return REPLCommandResponse(
+            output=json_output,
+            response=json_output,
             status="success"
         )
     
@@ -1456,3 +1488,185 @@ class REPLSession:
     
     def _get_state_file_path(self) -> Path:
         return self.workspace_directory / 'behavior_action_state.json'
+    
+    # JSON output helper methods
+    def _get_bot_info_json(self) -> dict:
+        """Get bot information as JSON."""
+        bot_name = self.bot.bot_paths.bot_directory.name if self.bot and hasattr(self.bot, 'bot_paths') else 'UNKNOWN'
+        bot_path = str(self.bot.bot_paths.bot_directory) if self.bot and hasattr(self.bot, 'bot_paths') else ''
+        workspace_name = self.workspace_directory.name if hasattr(self.workspace_directory, 'name') else 'base_bot'
+        workspace_path = str(self.workspace_directory)
+        
+        return {
+            "name": bot_name,
+            "botDirectory": bot_path,
+            "workspaceName": workspace_name,
+            "workspaceDirectory": workspace_path
+        }
+    
+    def _get_behaviors_json(self, formatter) -> list:
+        """Get behaviors hierarchy as JSON."""
+        if not self.bot or not self.bot.behaviors:
+            return []
+        
+        behaviors = []
+        current_behavior_name = self.current_behavior_name
+        current_action_name = self.current_action_name
+        stage = self.stage_name
+        
+        domain_bot = self.bot.domain_bot if hasattr(self.bot, 'domain_bot') else self.bot
+        for behavior in domain_bot.behaviors:
+            b_name = behavior.name
+            is_current_behavior = b_name == current_behavior_name
+            is_completed_behavior = behavior.is_completed
+            
+            behavior_data = {
+                "name": b_name,
+                "description": getattr(behavior, 'description', '') or '',
+                "isCurrent": is_current_behavior,
+                "isCompleted": is_completed_behavior,
+                "status": "current" if is_current_behavior else ("completed" if is_completed_behavior else "pending"),
+                "actions": []
+            }
+            
+            if behavior.actions:
+                for action in behavior.actions:
+                    a_name = action.action_name
+                    is_current_action = (is_current_behavior and a_name == current_action_name)
+                    is_completed_action = behavior.actions.is_action_completed(a_name)
+                    
+                    action_data = {
+                        "name": a_name,
+                        "description": getattr(action, 'description', '') or '',
+                        "isCurrent": is_current_action,
+                        "isCompleted": is_completed_action,
+                        "status": "current" if is_current_action else ("completed" if is_completed_action else "pending"),
+                        "operations": []
+                    }
+                    
+                    # Add operations (instructions and confirm)
+                    if is_current_action and (stage == 'instructions' or stage == 'not_started'):
+                        instr_status = "current"
+                    elif is_current_action:
+                        instr_status = "completed"
+                    else:
+                        instr_status = "completed" if is_completed_action else "pending"
+                    
+                    action_data["operations"].append({
+                        "name": "instructions",
+                        "description": "",
+                        "isCurrent": is_current_action and (stage == 'instructions' or stage == 'not_started'),
+                        "isCompleted": is_current_action and stage not in ('instructions', 'not_started'),
+                        "status": instr_status
+                    })
+                    
+                    if is_current_action and stage == 'confirming':
+                        confirm_status = "current"
+                    elif is_current_action and stage in ('instructions', 'not_started'):
+                        confirm_status = "pending"
+                    elif is_current_action:
+                        confirm_status = "completed"
+                    else:
+                        confirm_status = "completed" if is_completed_action else "pending"
+                    
+                    action_data["operations"].append({
+                        "name": "confirm",
+                        "description": "",
+                        "isCurrent": is_current_action and stage == 'confirming',
+                        "isCompleted": is_current_action and stage not in ('instructions', 'not_started', 'confirming'),
+                        "status": confirm_status
+                    })
+                    
+                    behavior_data["actions"].append(action_data)
+            
+            behaviors.append(behavior_data)
+        
+        return behaviors
+    
+    def _get_session_json(self) -> dict:
+        """Get session state as JSON."""
+        position = f"{self.progress_path}.{self.stage_name}"
+        parts = position.split('.')
+        
+        return {
+            "currentPosition": position,
+            "currentBehavior": parts[0] if len(parts) > 0 else '',
+            "currentAction": parts[1] if len(parts) > 1 else '',
+            "actionPhase": parts[2] if len(parts) > 2 else '',
+            "progressPath": self.progress_path
+        }
+    
+    def _get_scope_json(self) -> dict:
+        """Get scope as JSON."""
+        scope_data = self.get_stored_scope()
+        if scope_data:
+            try:
+                from agile_bot.bots.base_bot.src.actions.action_context import Scope
+                from agile_bot.bots.base_bot.src.repl_cli.cli_scope import CLIScope
+                scope = Scope.from_dict(scope_data)
+                cli_scope = CLIScope(scope, self.workspace_directory, self.formatter)
+                # Get JSON representation from CLIScope
+                return cli_scope.to_json_dict()
+            except Exception as e:
+                return {"type": "all", "filter": f"Error: {str(e)}", "content": None}
+        
+        return {"type": "all", "filter": "all (entire project)", "content": None}
+    
+    def _get_instructions_json(self) -> dict:
+        """Get current action instructions as JSON.
+        
+        Returns the full instructions structure with all properties:
+        - base_instructions: array of instruction lines
+        - display_content: array of display lines
+        - scope: scope data if present
+        - Plus any custom properties (strategy_criteria, assumptions, etc.)
+        """
+        if not self.has_current_action:
+            return {}
+        
+        try:
+            # Get current action
+            behavior = self.current_behavior
+            if not behavior:
+                return {}
+            
+            action = behavior.actions.current
+            if not action:
+                return {}
+            
+            # Get the underlying action if this is a CLIAction wrapper
+            underlying_action = action._action if hasattr(action, '_action') else action
+            
+            # Get the instructions object (property, not method)
+            instructions_obj = underlying_action.instructions
+            if not instructions_obj:
+                return {}
+            
+            # Convert to dict to get full structure
+            instructions_dict = instructions_obj.to_dict()
+            
+            # Add scope as JSON if present
+            if instructions_obj.scope:
+                from agile_bot.bots.base_bot.src.repl_cli.cli_scope import CLIScope
+                cli_scope = CLIScope(instructions_obj.scope, self.workspace_directory, self.formatter)
+                instructions_dict['scope'] = cli_scope.to_json_dict()
+            else:
+                instructions_dict['scope'] = None
+            
+            return instructions_dict
+        except Exception as e:
+            return {"error": f"Error getting instructions: {str(e)}"}
+    
+    def _get_run_examples_json(self) -> list:
+        """Get run examples as JSON."""
+        return [
+            {"command": "echo 'behavior.action' | python repl_main.py", "description": "Defaults to 'instructions' operation"},
+            {"command": "echo 'behavior.action.operation' | python repl_main.py", "description": "Runs operation"}
+        ]
+    
+    def _get_commands_json(self) -> dict:
+        """Get available commands as JSON."""
+        return {
+            "text": "status | back | current | next | path [dir] | scope [filter] | headless \"msg\" | help | exit",
+            "list": ["status", "back", "current", "next", "path", "scope", "headless", "help", "exit"]
+        }

@@ -31,6 +31,7 @@ class HtmlRenderer {
     ${this.renderHeader(statusData.bot, statusData.session)}
     ${this.renderBehaviors(statusData.behaviors, statusData.expansionState || {})}
     ${this.renderScope(statusData.scope)}
+    ${this.renderInstructions(statusData.instructions)}
     ${this.renderParameters(statusData.parameters)}
     ${this.renderCommandInput()}
     ${this.renderPromptDisplay(statusData.promptContent || '')}
@@ -141,6 +142,24 @@ class HtmlRenderer {
             margin-left: 54px;
             font-size: 12px;
             color: var(--vscode-descriptionForeground);
+        }
+        .collapsible-section {
+            margin-bottom: 8px;
+        }
+        .collapsible-section .collapsible-header:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+        .collapsible-section .expand-icon {
+            transition: transform 0.2s ease;
+            display: inline-block;
+            transform: rotate(0deg);
+        }
+        .collapsible-section.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
         }
         .status-marker {
             font-family: 'Courier New', monospace;
@@ -601,6 +620,141 @@ class HtmlRenderer {
   }
 
   /**
+   * Render instructions section
+   * Displays the instructions extracted from CLI output
+   */
+  renderInstructions(instructions) {
+    if (!instructions || Object.keys(instructions).length === 0) {
+      return '';
+    }
+
+    // Define colors and display order/names for known properties
+    const propertyConfig = {
+      'base_instructions': { name: 'Base Instructions', color: '#ff8c00', icon: '📝', defaultExpanded: true },
+      'display_content': { name: 'Display Content', color: '#4ec9b0', icon: '🖥️', defaultExpanded: false },
+      'clarification': { name: 'Clarification Data', color: '#569cd6', icon: '❓', defaultExpanded: false },
+      'strategy': { name: 'Strategy Data', color: '#c586c0', icon: '🎯', defaultExpanded: false },
+      'scope': { name: 'Scope', color: '#4fc1ff', icon: '🔍', defaultExpanded: false }
+    };
+
+    // Get all properties, ordered by config first, then others
+    const allKeys = Object.keys(instructions);
+    const orderedKeys = [
+      ...Object.keys(propertyConfig).filter(k => allKeys.includes(k)),
+      ...allKeys.filter(k => !Object.keys(propertyConfig).includes(k))
+    ];
+
+    // Filter out empty/null values
+    const validKeys = orderedKeys.filter(key => {
+      const value = instructions[key];
+      if (value === null || value === undefined) return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      if (typeof value === 'object' && Object.keys(value).length === 0) return false;
+      return true;
+    });
+
+    if (validKeys.length === 0) {
+      return '';
+    }
+
+    // Generate collapsible sections for each property
+    const sections = validKeys.map((key, index) => {
+      const value = instructions[key];
+      const config = propertyConfig[key] || { 
+        name: this._formatPropertyName(key), 
+        color: '#858585', 
+        icon: '📄',
+        defaultExpanded: false 
+      };
+      
+      const sectionId = `instr-section-${index}`;
+      const expanded = config.defaultExpanded ? 'true' : 'false';
+      const expandedClass = config.defaultExpanded ? 'expanded' : '';
+      
+      // Format the content based on type
+      let contentHtml = this._formatInstructionValue(value, config.color);
+      
+      return `
+        <div class="collapsible-section ${expandedClass}" style="margin-bottom: 8px;">
+          <div class="collapsible-header" onclick="toggleSection('${sectionId}')" style="
+            cursor: pointer;
+            padding: 8px 10px;
+            background-color: var(--vscode-editor-lineHighlightBackground);
+            border-left: 3px solid ${config.color};
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            user-select: none;
+          ">
+            <span class="expand-icon" style="margin-right: 8px; font-size: 10px; transition: transform 0.2s;">▶</span>
+            <span style="font-weight: bold; color: ${config.color};">${config.icon} ${config.name}</span>
+            <span style="margin-left: auto; font-size: 10px; color: var(--vscode-descriptionForeground);">
+              ${this._getValueSummary(value)}
+            </span>
+          </div>
+          <div id="${sectionId}" class="collapsible-content" style="
+            max-height: ${config.defaultExpanded ? '2000px' : '0'};
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+          ">
+            <div style="padding: 10px; background-color: var(--vscode-editor-background); border-left: 3px solid ${config.color}; margin-top: 2px;">
+              ${contentHtml}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+    <div class="section">
+        <div class="section-title">📋 Instructions</div>
+        <div style="padding: 5px 0;">
+            ${sections}
+        </div>
+    </div>`;
+  }
+
+  _formatPropertyName(key) {
+    // Convert snake_case or camelCase to Title Case
+    return key
+      .replace(/_/g, ' ')
+      .replace(/([A-Z])/g, ' $1')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+      .trim();
+  }
+
+  _getValueSummary(value) {
+    if (Array.isArray(value)) {
+      return `${value.length} items`;
+    } else if (typeof value === 'object' && value !== null) {
+      const keys = Object.keys(value);
+      return `${keys.length} properties`;
+    } else if (typeof value === 'string') {
+      return `${value.length} chars`;
+    }
+    return '';
+  }
+
+  _formatInstructionValue(value, borderColor) {
+    if (Array.isArray(value)) {
+      // Array: join with newlines and format
+      const text = value.join('\n');
+      return this.escapeHtml(text)
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    } else if (typeof value === 'object' && value !== null) {
+      // Object: pretty print JSON
+      return `<pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 11px; line-height: 1.4;">${this.escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
+    } else {
+      // String or other: escape and format
+      return this.escapeHtml(String(value))
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+  }
+
+  /**
    * Render parameters table
    */
   renderParameters(parameters) {
@@ -721,6 +875,24 @@ class HtmlRenderer {
                 command: 'updateExpansionState',
                 expansionState: expansionState
             });
+        }
+
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const section = content.closest('.collapsible-section');
+            const icon = section.querySelector('.expand-icon');
+            
+            if (section.classList.contains('expanded')) {
+                // Collapse
+                section.classList.remove('expanded');
+                content.style.maxHeight = '0';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                // Expand
+                section.classList.add('expanded');
+                content.style.maxHeight = '2000px';
+                icon.style.transform = 'rotate(90deg)';
+            }
         }
 
         function updateFilter(filterValue) {

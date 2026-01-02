@@ -215,6 +215,83 @@ class CLIScope(CLIBase):
         
         return "\n".join(lines)
     
+    def to_json_dict(self) -> dict:
+        """Return scope data as a dictionary (without markdown formatting).
+        
+        Returns dict with:
+        - filter: scope filter string
+        - type: scope type (story, epic, files, etc.)
+        - links: map/graph file links
+        - storyGraph: filtered story graph data (for story/epic scopes)
+        - files: list of files (for file scopes)
+        """
+        import json as json_module
+        from agile_bot.bots.base_bot.src.actions.action_context import ScopeType
+        
+        # Build filter display value
+        filter_value = ', '.join(self._scope.value) if isinstance(self._scope.value, list) else str(self._scope.value) if self._scope.value else "all"
+        
+        # Build links to graph/map files
+        story_graph_path = self._workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+        story_map_path = self._workspace_directory / 'docs' / 'stories' / 'story-map.drawio'
+        
+        workspace_root = None
+        if story_graph_path.exists() or story_map_path.exists():
+            try:
+                workspace_root = get_python_workspace_root()
+            except (ValueError, AttributeError):
+                pass
+        
+        links = {}
+        if story_graph_path.exists() and workspace_root:
+            try:
+                rel_path = story_graph_path.relative_to(workspace_root)
+                links['graph'] = str(rel_path).replace('\\', '/')
+            except (ValueError, AttributeError):
+                pass
+        
+        if story_map_path.exists() and workspace_root:
+            try:
+                rel_path = story_map_path.relative_to(workspace_root)
+                links['map'] = str(rel_path).replace('\\', '/')
+            except (ValueError, AttributeError):
+                pass
+        
+        result = {
+            "filter": filter_value,
+            "type": self._scope.type.value if hasattr(self._scope.type, 'value') else str(self._scope.type),
+            "links": links
+        }
+        
+        # Get filtered story graph data directly by loading and filtering story-graph.json
+        if self._scope.type in (ScopeType.STORY, ScopeType.EPIC, ScopeType.SHOW_ALL):
+            story_graph_path = self._workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+            if story_graph_path.exists():
+                try:
+                    full_graph = json_module.loads(story_graph_path.read_text(encoding='utf-8'))
+                    # Use the scope's filter method to get filtered graph
+                    filtered_graph = self._scope.filters_knowledge_graph(full_graph)
+                    
+                    # Enhance filtered graph with story file paths
+                    self._add_story_file_paths_to_graph(filtered_graph, workspace_root)
+                    
+                    result["storyGraph"] = filtered_graph
+                except Exception:
+                    pass
+        elif self._scope.type == ScopeType.FILES:
+            # Get expanded file list
+            scope_lines = self._scope.to_display_lines(self._workspace_directory)
+            files = []
+            for line in scope_lines:
+                if line.startswith("Scope Filter:"):
+                    continue
+                path_str = line.strip().lstrip('- ').strip()
+                if path_str and not path_str.endswith("(no files found)"):
+                    files.append(path_str)
+            result["files"] = files
+        
+        return result
+    
     def _build_file_tree_with_hyperlinks(self, scope_lines: list) -> list:
         """Build a hierarchical directory tree from file paths with hyperlinks."""
         from pathlib import Path
