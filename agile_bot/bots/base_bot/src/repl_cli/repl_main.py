@@ -359,7 +359,14 @@ def run_interactive_mode(bot, workspace_directory: Path, force_pipe_mode: bool =
     print("")
     print("```powershell")
     workspace_root_str = str(workspace_directory).replace('\\', '\\')
-    repl_script_rel = script_path.relative_to(workspace_directory) if script_path.is_absolute() else script_path
+    
+    # Try to compute relative path, but fall back to absolute if not in workspace
+    try:
+        repl_script_rel = script_path.relative_to(workspace_directory) if script_path.is_absolute() else script_path
+    except ValueError:
+        # Script is not in workspace (e.g., workspace changed to different bot)
+        repl_script_rel = script_path
+    
     repl_script_str = str(repl_script_rel).replace('\\', '/')
     print(f"# Interactive mode (environment set automatically by script):")
     print(f"python {repl_script_str}")

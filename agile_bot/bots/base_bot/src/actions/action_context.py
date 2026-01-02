@@ -65,8 +65,8 @@ class KnowledgeGraphFilter:
         all_filter_names = list(self.stories) + list(self.epics)
         
         def name_matches(name: str) -> bool:
-            """Check if a name matches any filter value (case-insensitive)."""
-            return any(name.lower() == filter_name.lower() for filter_name in all_filter_names)
+            """Check if a name matches any filter value (case-insensitive partial match)."""
+            return any(filter_name.lower() in name.lower() for filter_name in all_filter_names)
         
         filtered_graph = {'epics': []}
         epics = knowledge_graph.get('epics', [])

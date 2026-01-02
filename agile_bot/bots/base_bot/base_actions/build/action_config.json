@@ -1,5 +1,6 @@
 {
   "name": "build",
+  "description": "Build knowledge graph from context and apply behavior-specific rules",
   "order": 1,
   "instructions": [
     "Build knowledge graph for build",

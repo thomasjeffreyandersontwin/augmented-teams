@@ -28,10 +28,11 @@
   "completed_behaviors": [
     "scenarios"
   ],
+  "working_directory": "\"C:\\dev\\augmented-teams\\demo\\mob_minion\"",
   "scope": {
     "type": "story",
     "value": [
-      "Build Agile Bots"
+      "Build"
     ],
     "exclude": [],
     "skiprule": []

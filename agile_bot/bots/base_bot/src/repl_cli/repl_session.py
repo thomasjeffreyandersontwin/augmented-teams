@@ -210,12 +210,15 @@ class REPLSession:
         
         # Progress section
         lines.append(f"## {formatter.position_icon()} **Progress**")
-        lines.append("**Current Position:**")
         lines.extend(self._format_code_block(f"{self.progress_path}.{self.stage_name}"))
         lines.append("")
         
         # Show hierarchical status (Behaviors, Actions tree)
-        lines.append(self.cli_bot.status.hierarchical_status)
+        # Use full tree for JSON format (extension panel), current branch for text format (terminal)
+        if format == 'json':
+            lines.append(self.cli_bot.status.full_hierarchical_status)
+        else:
+            lines.append(self.cli_bot.status.hierarchical_status)
         
         # Legacy compact summary for tests and quick glance
         behavior_names = self.behavior_names
