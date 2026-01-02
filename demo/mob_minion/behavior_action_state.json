@@ -124,14 +124,6 @@
   "current_behavior": "story_bot.scenarios",
   "current_action": "story_bot.scenarios.build",
   "timestamp": "2025-12-30T19:11:44.959079",
-  "working_directory": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot",
-  "action_phase": "instructions",
-  "scope": {
-    "type": "files",
-    "value": [
-      "demo/mob_minion/docs/context/repl-cli-display-refactoring.md"
-    ],
-    "exclude": [],
-    "skiprule": []
-  }
+  "working_directory": "\"C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot\"",
+  "action_phase": "instructions"
 }

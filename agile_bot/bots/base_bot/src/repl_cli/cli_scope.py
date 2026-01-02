@@ -625,6 +625,17 @@ class CLIScope(CLIBase):
             for sub_epic in epic['sub_epics']:
                 sub_epic_name = sub_epic.get('name')
                 
+                # Add test link for sub-epic (feature) if test_file exists
+                test_file = sub_epic.get('test_file')
+                if test_file:
+                    test_link = self._build_test_file_link(test_file)
+                    if test_link:
+                        # Extract URL from markdown link: " | [Test](url)"
+                        import re
+                        match = re.search(r'\[Test\]\(([^)]+)\)', test_link)
+                        if match:
+                            sub_epic['test_link'] = match.group(1)
+                
                 # Process stories in story_groups
                 if 'story_groups' in sub_epic:
                     for story_group in sub_epic['story_groups']:
@@ -660,6 +671,27 @@ class CLIScope(CLIBase):
                 story['story_file'] = str(story_file_path).replace('\\', '/')
         else:
             story['story_file_exists'] = False
+        
+        # Use existing test link builder to get validated markdown link
+        # Format: " | [Test](path)" or "" if file doesn't exist
+        test_file = story.get('test_file')
+        test_class = story.get('test_class')
+        if test_file and test_class:
+            test_link = self._build_test_class_link(test_file, test_class)
+            if test_link:
+                # Extract URL from markdown link: " | [Test](url)"
+                import re
+                match = re.search(r'\[Test\]\(([^)]+)\)', test_link)
+                if match:
+                    story['test_link'] = match.group(1)
+        elif test_file:
+            test_link = self._build_test_file_link(test_file)
+            if test_link:
+                # Extract URL from markdown link: " | [Test](url)"
+                import re
+                match = re.search(r'\[Test\]\(([^)]+)\)', test_link)
+                if match:
+                    story['test_link'] = match.group(1)
     
     @property
     def domain_scope(self) -> Scope:

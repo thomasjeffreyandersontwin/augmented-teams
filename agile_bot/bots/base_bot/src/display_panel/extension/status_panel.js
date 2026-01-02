@@ -52,24 +52,77 @@ class StatusPanel {
     // Handle messages from the webview
     this._panel.webview.onDidReceiveMessage(
       (message) => {
+        this._logger.log('Received message from webview:', message);
         switch (message.command) {
           case "refresh":
             this._update();
             return;
           case "openScope":
             if (message.filePath) {
-              // Resolve relative path to absolute path from workspace root
-              const absolutePath = path.join(this._workspaceRoot, message.filePath);
+              // Strip line number fragment if present (e.g., #L233)
+              const cleanPath = message.filePath.split('#')[0];
+              const lineNumber = message.filePath.includes('#L') 
+                ? parseInt(message.filePath.split('#L')[1]) 
+                : null;
+              
+              // If path is already absolute, use it; otherwise resolve from workspace root
+              const absolutePath = path.isAbsolute(cleanPath) 
+                ? cleanPath 
+                : path.join(this._workspaceRoot, cleanPath);
               const fileUri = vscode.Uri.file(absolutePath);
               
               vscode.workspace.openTextDocument(fileUri).then(
                 (doc) => {
-                  vscode.window.showTextDocument(doc);
+                  const options = lineNumber 
+                    ? { 
+                        selection: new vscode.Range(lineNumber - 1, 0, lineNumber - 1, 0),
+                        viewColumn: vscode.ViewColumn.One
+                      }
+                    : { viewColumn: vscode.ViewColumn.One };
+                  vscode.window.showTextDocument(doc, options);
                 },
                 (error) => {
                   vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
                 }
               );
+            }
+            return;
+          case "updateFilter":
+            if (message.filter) {
+              this._logger.log(`Updating scope filter to: ${message.filter}`);
+              // Execute scope command via CLI
+              this._dataProvider.updateScope(message.filter)
+                .then(() => {
+                  // Refresh panel after scope change
+                  this._update();
+                })
+                .catch((error) => {
+                  this._logger.error('Failed to update scope filter', error);
+                  vscode.window.showErrorMessage(`Failed to update scope: ${error.message}`);
+                });
+            }
+            return;
+          case "updateWorkspace":
+            if (message.workspacePath) {
+              this._logger.log(`Updating workspace path to: ${message.workspacePath}`);
+              // Execute path command via CLI
+              this._dataProvider.updateWorkspace(message.workspacePath)
+                .then(() => {
+                  // Update workspace root and refresh
+                  this._workspaceRoot = message.workspacePath;
+                  this._update();
+                })
+                .catch((error) => {
+                  this._logger.error('Failed to update workspace path', error);
+                  vscode.window.showErrorMessage(`Failed to update workspace: ${error.message}`);
+                });
+            }
+            return;
+          case "switchBot":
+            if (message.botName) {
+              this._logger.log(`Switching bot to: ${message.botName}`);
+              this._dataProvider.currentBot = message.botName;
+              this._update();
             }
             return;
         }
@@ -141,6 +194,11 @@ class StatusPanel {
       
       // Adapt CLI output to structured JSON
       const structuredData = this._adapter.adapt(rawStatus);
+      
+      // Add bot selector data
+      structuredData.availableBots = this._dataProvider.getAvailableBots();
+      structuredData.currentBot = this._dataProvider.getCurrentBot();
+      
       this._logger.log("Adapted data", structuredData);
 
       // Render HTML

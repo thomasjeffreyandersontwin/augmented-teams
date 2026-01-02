@@ -41,6 +41,15 @@ class REPLStatus:
     
     @property
     def hierarchical_status(self) -> str:
+        """Show hierarchical status - current behavior branch only (for terminal display)."""
+        return self._hierarchical_status_internal(full_tree=False)
+    
+    @property
+    def full_hierarchical_status(self) -> str:
+        """Show full hierarchical status - all behaviors with all actions (for JSON/panel display)."""
+        return self._hierarchical_status_internal(full_tree=True)
+    
+    def _hierarchical_status_internal(self, full_tree: bool = False) -> str:
         lines = []
         
         if not self.bot or not self.bot.behaviors:
@@ -70,17 +79,17 @@ class REPLStatus:
                 is_completed=is_completed_behavior
             )
             
-            # Show behavior line - only show description for current behavior
-            if is_current_behavior and b_desc:
+            # Show behavior line - show description for current or all (if full_tree)
+            if b_desc and (is_current_behavior or full_tree):
                 lines.append(f"{marker} {b_name} - {b_desc}")
             else:
                 lines.append(f"{marker} {b_name}")
             
-            # Only show actions for current behavior
-            if is_current_behavior and behavior.actions:
+            # Show actions for current behavior OR all behaviors (if full_tree)
+            if behavior.actions and (is_current_behavior or full_tree):
                 for action in behavior.actions:
                     a_name = action.action_name
-                    is_current_action = a_name == current_action_name
+                    is_current_action = (is_current_behavior and a_name == current_action_name)
                     # Use domain logic to determine completion
                     is_completed_action = behavior.actions.is_action_completed(a_name)
                     
@@ -93,28 +102,34 @@ class REPLStatus:
                         is_completed=is_completed_action
                     )
                     
-                    # Show action line with proper indentation
-                    if is_current_action and a_desc:
+                    # Show action line with proper indentation - show description for current or all (if full_tree)
+                    if a_desc and (is_current_action or full_tree):
                         lines.append(f"  {a_marker} {a_name} - {a_desc}")
                     else:
                         lines.append(f"  {a_marker} {a_name}")
                     
-                    # Show operations for current action (2-phase model: instructions -> confirm)
-                    if is_current_action:
+                    # Show operations for current action OR all actions (if full_tree) (2-phase model: instructions -> confirm)
+                    if is_current_action or full_tree:
                         # Instructions
-                        if stage == 'instructions' or stage == 'not_started':
+                        if is_current_action and (stage == 'instructions' or stage == 'not_started'):
                             instr_marker = self.formatter.status_marker(is_current=True, is_completed=False)
-                        else:
+                        elif is_current_action:
                             instr_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+                        else:
+                            # For non-current actions, mark as pending if action not completed, completed if action is completed
+                            instr_marker = self.formatter.status_marker(is_current=False, is_completed=is_completed_action)
                         lines.append(f"    {instr_marker} instructions")
                         
                         # Confirm
-                        if stage == 'confirming':
+                        if is_current_action and stage == 'confirming':
                             confirm_marker = self.formatter.status_marker(is_current=True, is_completed=False)
-                        elif stage in ('instructions', 'not_started'):
+                        elif is_current_action and stage in ('instructions', 'not_started'):
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=False)
-                        else:
+                        elif is_current_action:
                             confirm_marker = self.formatter.status_marker(is_current=False, is_completed=True)
+                        else:
+                            # For non-current actions, mark as pending if action not completed, completed if action is completed
+                            confirm_marker = self.formatter.status_marker(is_current=False, is_completed=is_completed_action)
                         lines.append(f"    {confirm_marker} confirm")
         
         lines.append("")

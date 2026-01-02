@@ -7,6 +7,7 @@
 
 const cp = require("child_process");
 const path = require("path");
+const fs = require("fs");
 const Logger = require("./logger.js");
 
 class StatusDataProvider {
@@ -14,10 +15,48 @@ class StatusDataProvider {
     this.workspaceRoot = workspaceRoot;
     this.timeout = 10000; // 10 second timeout
     
+    // Track current workspace path (defaults to base_bot)
+    this.currentWorkingArea = path.join(workspaceRoot, "agile_bot", "bots", "base_bot");
+    
+    // Track current bot (defaults to story_bot)
+    this.currentBot = "story_bot";
+    
+    // Load bot registry
+    this.botRegistry = this._loadBotRegistry();
+    
     // Setup logger
     const logPath = path.join(workspaceRoot, "agile_bot", "bots", "base_bot", "logs", "panel-debug.log");
     this.logger = new Logger(logPath);
-    this.logger.log("StatusDataProvider initialized", { workspaceRoot });
+    this.logger.log("StatusDataProvider initialized", { workspaceRoot, botRegistry: this.botRegistry });
+  }
+
+  /**
+   * Load bot registry from registry.json
+   * @returns {Object} Bot registry mapping bot names to their configuration
+   */
+  _loadBotRegistry() {
+    try {
+      const registryPath = path.join(this.workspaceRoot, "agile_bot", "bots", "registry.json");
+      const registryContent = fs.readFileSync(registryPath, "utf-8");
+      return JSON.parse(registryContent);
+    } catch (error) {
+      console.error("Failed to load bot registry:", error);
+      // Fallback to story_bot only
+      return {
+        story_bot: {
+          cli_path: "agile_bot/bots/story_bot/src/story_bot_cli.py",
+          repl_path: "agile_bot/bots/base_bot/src/repl_cli/repl_main.py"
+        }
+      };
+    }
+  }
+
+  /**
+   * Get current bot directory path
+   * @returns {string} Path to current bot directory
+   */
+  _getBotDirectory() {
+    return path.join(this.workspaceRoot, "agile_bot", "bots", this.currentBot);
   }
 
   /**
@@ -41,19 +80,30 @@ class StatusDataProvider {
       // Set up environment variables for CLI
       const env = Object.assign({}, process.env, {
         PYTHONPATH: this.workspaceRoot,
-        BOT_DIRECTORY: path.join(this.workspaceRoot, "agile_bot", "bots", "story_bot"),
-        WORKING_AREA: path.join(this.workspaceRoot, "agile_bot", "bots", "base_bot")
+        BOT_DIRECTORY: this._getBotDirectory(),
+        WORKING_AREA: this.currentWorkingArea
       });
 
       this.logger.log("Spawning Python process", {
         replMainPath,
         cwd: this.workspaceRoot,
+        currentBot: this.currentBot,
+        getBotDirectory_result: this._getBotDirectory(),
         env: {
           PYTHONPATH: env.PYTHONPATH,
           BOT_DIRECTORY: env.BOT_DIRECTORY,
           WORKING_AREA: env.WORKING_AREA
         }
       });
+      
+      // DEBUG: Also log to console for immediate visibility
+      console.log("[STATUS_PROVIDER DEBUG] About to spawn Python:");
+      console.log(`  replMainPath: ${replMainPath}`);
+      console.log(`  cwd: ${this.workspaceRoot}`);
+      console.log(`  this.currentBot: ${this.currentBot}`);
+      console.log(`  _getBotDirectory(): ${this._getBotDirectory()}`);
+      console.log(`  BOT_DIRECTORY: ${env.BOT_DIRECTORY}`);
+      console.log(`  WORKING_AREA: ${env.WORKING_AREA}`);
 
       // Spawn Python process with environment
       const pythonProcess = cp.spawn("python", [replMainPath], {
@@ -136,6 +186,258 @@ class StatusDataProvider {
         resolve(stdout);
       });
     });
+  }
+
+  /**
+   * Update scope filter by calling REPL CLI
+   * @param {string} filterValue - The filter value (epic or story names)
+   * @returns {Promise<string>} Result message from CLI
+   */
+  async updateScope(filterValue) {
+    this.logger.log("updateScope() called", { filterValue });
+    
+    return new Promise((resolve, reject) => {
+      const replMainPath = path.join(
+        this.workspaceRoot,
+        "agile_bot",
+        "bots",
+        "base_bot",
+        "src",
+        "repl_cli",
+        "repl_main.py"
+      );
+
+      // Set up environment variables for CLI
+      const env = Object.assign({}, process.env, {
+        PYTHONPATH: this.workspaceRoot,
+        BOT_DIRECTORY: this._getBotDirectory(),
+        WORKING_AREA: this.currentWorkingArea
+      });
+
+      // Build scope command with filter
+      // CLI expects: scope "Filter Value" (NOT scope --filter "Filter Value")
+      const scopeCmd = filterValue && filterValue.trim() 
+        ? `scope "${filterValue.replace(/"/g, '\\"')}"\n`
+        : `scope all\n`;
+
+      this.logger.log("Executing scope command", { scopeCmd });
+
+      // Spawn Python process with environment
+      const pythonProcess = cp.spawn("python", [replMainPath], {
+        cwd: this.workspaceRoot,
+        timeout: this.timeout,
+        env: env
+      });
+
+      let stdout = "";
+      let stderr = "";
+      let timedOut = false;
+
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        pythonProcess.kill();
+        reject(new Error("Python process timed out after 10 seconds"));
+      }, this.timeout);
+
+      // Send scope command via stdin
+      try {
+        pythonProcess.stdin.write(scopeCmd);
+        pythonProcess.stdin.end();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        this.logger.error("Failed to write to Python stdin", err);
+        reject(new Error(`Failed to communicate with Python process: ${err.message}`));
+        return;
+      }
+
+      // Collect stdout
+      pythonProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      // Collect stderr
+      pythonProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      // Handle process error
+      pythonProcess.on("error", (err) => {
+        clearTimeout(timeoutId);
+        this.logger.error("Python process error", err);
+        reject(new Error(`Python process error: ${err.message}`));
+      });
+
+      // Handle process completion
+      pythonProcess.on("close", (code) => {
+        clearTimeout(timeoutId);
+        
+        if (timedOut) {
+          return; // Already rejected
+        }
+
+        this.logger.log("Python process closed", {
+          exitCode: code,
+          stdoutLength: stdout.length,
+          stderrLength: stderr.length
+        });
+
+        if (stderr) {
+          this.logger.log("STDERR output:", stderr);
+        }
+
+        if (code !== 0 && stderr) {
+          this.logger.error("Scope update failed", new Error(`Exit ${code}: ${stderr}`));
+          reject(new Error(`Scope update failed (exit ${code}): ${stderr}`));
+          return;
+        }
+
+        this.logger.log("Scope filter updated successfully");
+        resolve(stdout || "Scope filter updated");
+      });
+    });
+  }
+
+  /**
+   * Update workspace path by calling REPL CLI
+   * @param {string} workspacePath - The new workspace path
+   * @returns {Promise<string>} Result message from CLI
+   */
+  async updateWorkspace(workspacePath) {
+    this.logger.log("updateWorkspace() called", { workspacePath });
+    
+    return new Promise((resolve, reject) => {
+      const replMainPath = path.join(
+        this.workspaceRoot,
+        "agile_bot",
+        "bots",
+        "base_bot",
+        "src",
+        "repl_cli",
+        "repl_main.py"
+      );
+
+      // Set up environment variables for CLI
+      const env = Object.assign({}, process.env, {
+        PYTHONPATH: this.workspaceRoot,
+        BOT_DIRECTORY: this._getBotDirectory(),
+        WORKING_AREA: this.currentWorkingArea
+      });
+
+      // Build path command
+      const pathCmd = `path "${workspacePath.replace(/"/g, '\\"')}"\n`;
+
+      this.logger.log("Executing path command", { pathCmd });
+
+      // Spawn Python process with environment
+      const pythonProcess = cp.spawn("python", [replMainPath], {
+        cwd: this.workspaceRoot,
+        timeout: this.timeout,
+        env: env
+      });
+
+      let stdout = "";
+      let stderr = "";
+      let timedOut = false;
+
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        pythonProcess.kill();
+        reject(new Error("Python process timed out after 10 seconds"));
+      }, this.timeout);
+
+      // Send path command via stdin
+      try {
+        pythonProcess.stdin.write(pathCmd);
+        pythonProcess.stdin.end();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        this.logger.error("Failed to write to Python stdin", err);
+        reject(new Error(`Failed to communicate with Python process: ${err.message}`));
+        return;
+      }
+
+      // Collect stdout
+      pythonProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      // Collect stderr
+      pythonProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      // Handle process error
+      pythonProcess.on("error", (err) => {
+        clearTimeout(timeoutId);
+        this.logger.error("Python process error", err);
+        reject(new Error(`Python process error: ${err.message}`));
+      });
+
+      // Handle process completion
+      pythonProcess.on("close", (code) => {
+        clearTimeout(timeoutId);
+        
+        if (timedOut) {
+          return; // Already rejected
+        }
+
+        this.logger.log("Python process closed", {
+          exitCode: code,
+          stdoutLength: stdout.length,
+          stderrLength: stderr.length
+        });
+
+        if (stderr) {
+          this.logger.log("STDERR output:", stderr);
+        }
+
+        if (code !== 0 && stderr) {
+          this.logger.error("Workspace update failed", new Error(`Exit ${code}: ${stderr}`));
+          reject(new Error(`Workspace update failed (exit ${code}): ${stderr}`));
+          return;
+        }
+
+        // Save the new workspace path for future CLI calls
+        this.currentWorkingArea = workspacePath;
+        
+        this.logger.log("Workspace path updated successfully", { newPath: workspacePath });
+        resolve(stdout || "Workspace path updated");
+      });
+    });
+  }
+
+  /**
+   * Switch to a different bot
+   * @param {string} botName - Name of the bot to switch to
+   * @returns {boolean} True if successful
+   */
+  switchBot(botName) {
+    if (!this.botRegistry[botName]) {
+      this.logger.error(`Bot not found in registry: ${botName}`);
+      return false;
+    }
+    
+    this.currentBot = botName;
+    this.logger.log(`Switched to bot: ${botName}`);
+    return true;
+  }
+
+  /**
+   * Get available bots from registry
+   * @returns {Array<string>} Array of bot names
+   */
+  getAvailableBots() {
+    return Object.keys(this.botRegistry);
+  }
+
+  /**
+   * Get current bot name
+   * @returns {string} Current bot name
+   */
+  getCurrentBot() {
+    return this.currentBot;
   }
 
   /**

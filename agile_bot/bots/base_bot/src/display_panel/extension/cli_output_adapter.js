@@ -75,12 +75,13 @@ class CLIOutputAdapter {
           currentBehavior.actions.push(currentAction);
         }
       }
-      // Match operation: "    - ➤ instructions"
+      // Match operation: "    - ➤ instructions - Description"
       else if (/^    - [➤☑☐] \w+/.test(line)) {
-        const match = /^    - ([➤☑☐]) (\w+)/.exec(line);
+        const match = /^    - ([➤☑☐]) (\w+)(?:\s+-\s+(.+))?/.exec(line);
         if (match && currentAction) {
           currentAction.operations.push({
             name: match[2],
+            description: match[3] || '',
             isCurrent: match[1] === '➤',
             isCompleted: match[1] === '☑',
             status: match[1] === '➤' ? 'current' : match[1] === '☑' ? 'completed' : 'pending'
@@ -92,7 +93,8 @@ class CLIOutputAdapter {
   }
 
   _extractSessionState(rawOutput) {
-    const positionMatch = /Current Position[^\n]*```\s*(.+?)\s*```/s.exec(rawOutput);
+    // Match the code block after the Progress header (without "Current Position:" label)
+    const positionMatch = /##\s+[^\n]*\*\*Progress\*\*[^\n]*\n+```\s*(.+?)\s*```/s.exec(rawOutput);
     if (!positionMatch) {
       return { currentPosition: '', currentBehavior: '', currentAction: '', actionPhase: '', progressPath: '' };
     }
@@ -112,9 +114,20 @@ class CLIOutputAdapter {
     // Look for JSON code block in scope section (between ``` markers)
     const scopeJsonMatch = /```json\s*\n([\s\S]+?)\n```/m.exec(rawOutput);
     
+    console.log('[SCOPE DEBUG] Looking for JSON scope block...');
+    console.log('[SCOPE DEBUG] Match found:', !!scopeJsonMatch);
+    
     if (scopeJsonMatch) {
       try {
+        console.log('[SCOPE DEBUG] Parsing JSON:', scopeJsonMatch[1].substring(0, 200));
         const scopeData = JSON.parse(scopeJsonMatch[1]);
+        console.log('[SCOPE DEBUG] Parsed scope data:', scopeData);
+    
+        // Clean up filter value - remove --filter flag and quotes if present
+        let filterValue = scopeData.filter || '';
+        filterValue = filterValue.replace(/^--filter\s+/, '');  // Remove --filter prefix
+        filterValue = filterValue.replace(/^["'](.*)["']$/, '$1');  // Remove surrounding quotes
+        filterValue = filterValue.trim();
     
         // Convert JSON format to existing panel format
         const graphLinks = [];
@@ -131,7 +144,7 @@ class CLIOutputAdapter {
         if (scopeData.type === 'files' || scopeData.type === 'FILES') {
           return {
             type: 'files',
-            filter: scopeData.filter,
+            filter: filterValue,
             graphLinks: graphLinks,
             content: scopeData.files || []
           };
@@ -161,9 +174,9 @@ class CLIOutputAdapter {
               
               return {
                 icon: '⚙️',
-                type: 'feature',
-                name: subEpic.name,
-                links: subEpic.test_file ? [{ text: 'Test', url: subEpic.test_file }] : [],
+              type: 'feature',
+              name: subEpic.name,
+              links: subEpic.test_link ? [{ text: 'Test', url: subEpic.test_link }] : [],
                 stories: allStories.map(story => {
                   const storyLinks = [];
                   
@@ -176,10 +189,10 @@ class CLIOutputAdapter {
                     storyLinks.push({ text: 'Story', url: story.story_file });
                   }
                   
-                  // Add test file link if available
-                  if (story.test_file) {
-                    storyLinks.push({ text: 'Test', url: story.test_file });
-                  }
+                // Add test link if available (validated by CLI)
+                if (story.test_link) {
+                  storyLinks.push({ text: 'Test', url: story.test_link });
+                }
                   
                   console.log(`Story ${story.name} final links:`, storyLinks);
                   
@@ -198,17 +211,20 @@ class CLIOutputAdapter {
             })
           }));
           
-          return {
+          const result = {
             type: 'story',
-            filter: scopeData.filter,
+            filter: filterValue,
             graphLinks: graphLinks,
             content: epics
           };
+          console.log('[SCOPE DEBUG] Returning story scope with', epics.length, 'epics');
+          console.log('[SCOPE DEBUG] First epic:', epics[0]);
+          return result;
         } else {
           // Type is 'all' or unknown
           return {
             type: 'all',
-            filter: scopeData.filter || 'all (entire project)',
+            filter: filterValue || 'all (entire project)',
             graphLinks: graphLinks,
             content: null
           };

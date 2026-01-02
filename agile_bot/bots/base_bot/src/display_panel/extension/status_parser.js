@@ -108,7 +108,15 @@ class StatusParser {
         // Extract filter and links
         const linkMatch = filterText.match(/^(.+?)(\s+\|.+)?$/);
         if (linkMatch) {
-          result.scope.filter = linkMatch[1].trim();
+          let filterValue = linkMatch[1].trim();
+          
+          // Strip out "--filter" flag if present
+          filterValue = filterValue.replace(/^--filter\s+/, "");
+          
+          // Remove quotes if present
+          filterValue = filterValue.replace(/^["'](.+)["']$/, "$1");
+          
+          result.scope.filter = filterValue;
           
           // Parse links if present
           if (linkMatch[2]) {
