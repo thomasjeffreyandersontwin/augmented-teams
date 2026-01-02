@@ -1,6 +1,6 @@
 # 📝 Load and Display Workspace Context in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L323)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Initialize REPL Session](.)  
@@ -19,11 +19,13 @@ Load and Display Workspace Context in CLI functionality for the mob minion syste
 
 ## Scenarios
 
-### Scenario: Load and Display Workspace Context in CLI (happy_path)
+### Scenario: CLI loads and displays workspace context (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L326)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Bot has workspace path
+AND: workspace contains story-graph.json
+WHEN: REPLSession initializes CLIBot
+THEN: CLIBot loads workspace context from bot paths
 ```
+

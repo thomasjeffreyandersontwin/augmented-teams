@@ -375,22 +375,23 @@ def run_interactive_mode(bot, workspace_directory: Path, force_pipe_mode: bool =
     print("=" * 60)
     print("")
     
-    # Display CLI STATUS section (shown in all modes)
-    state_display = repl_session.display_current_state()
-    
-    # Add CLI STATUS section header (for consistency with status command)
-    formatter = repl_session.formatter
-    cli_status_header = "\n".join([
-        "",
-        formatter.section_separator(),
-        "***                    CLI STATUS section                    ***",
-        "This section contains current scope filter (if set), current progress in workflow, and available commands",
-        "Review the CLI STATUS section below to understand both current state and available commands.",
-        "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
-        formatter.subsection_separator()
-    ])
-    print(cli_status_header)
-    print(state_display.output)
+    # Display CLI STATUS section ONLY in interactive mode (piped commands will display status as needed)
+    if not is_pipe_mode:
+        state_display = repl_session.display_current_state()
+        
+        # Add CLI STATUS section header (for consistency with status command)
+        formatter = repl_session.formatter
+        cli_status_header = "\n".join([
+            "",
+            formatter.section_separator(),
+            "***                    CLI STATUS section                    ***",
+            "This section contains current scope filter (if set), current progress in workflow, and available commands",
+            "Review the CLI STATUS section below to understand both current state and available commands.",
+            "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
+            formatter.subsection_separator()
+        ])
+        print(cli_status_header)
+        print(state_display.output)
     
     # Show bot paths in interactive mode (additional info)
     if not is_pipe_mode:

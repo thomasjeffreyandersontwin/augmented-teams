@@ -1,0 +1,494 @@
+Story-Test Mapping Report
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+Total test classes found: 144
+New mappings suggested: 2
+Unmapped stories: 16
+
+
+SUGGESTED MAPPINGS
+--------------------------------------------------------------------------------
+
+Epic: Execute Behavior Actions
+Sub-Epic: Decide Planning Criteria Action
+Story: Inject Strategy Criteria Into Instructions
+  → Test Class: TestInjectStrategyIntoInstructions
+  → Test File: test_decide_strategy_criteria_action.py
+  → Line: 359
+  → Confidence: 80.00%
+
+Epic: Invoke Bot
+Sub-Epic: Perform Behavior Action
+Story: Load And Merge Behavior Action Instructions
+  → Test Class: TestLoadAndMergeBehaviorActionInstructions
+  → Test File: test_invoke_mcp.py
+  → Line: 560
+  → Confidence: 100.00%
+
+
+UNMAPPED STORIES (Need Test Implementation)
+--------------------------------------------------------------------------------
+
+Epic: Build Agile Bots
+Sub-Epic: Generate REPL CLI
+Story: Generate CLI Entry Point
+  Expected test file: test_generate_repl_cli.py
+
+Epic: Build Agile Bots
+Sub-Epic: Generate REPL CLI
+Story: Generate Cursor Commands
+  Expected test file: test_generate_repl_cli.py
+
+Epic: Build Agile Bots
+Sub-Epic: Generate REPL CLI
+Story: Generate Help Documentation
+  Expected test file: test_generate_repl_cli.py
+
+Epic: Build Agile Bots
+Sub-Epic: Generate REPL CLI
+Story: Generate REPL Command Definitions
+  Expected test file: test_generate_repl_cli.py
+
+Epic: Execute Behavior Actions
+Sub-Epic: Build Knowledge
+Story: proactively Validate knowledge against rules
+  Expected test file: test_build_knowledge.py
+
+Epic: Execute Behavior Actions
+Sub-Epic: Validate Knowledge & Content Against Rules
+Story: Report Validation and Error Handling
+  Expected test file: test_validate_knowledge_and_content_against_rules.py
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Confirm Behavor Action Instruction Response
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Handle Execution Modes
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Invoke BotLangActionNode
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Prepare Action Instructions
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Process Behavor Action Instructions Through AI Chat
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Process Bot Behavor Action Instructions Automatically
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Resume BotLangFlow from Checkpoint
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Return to chat and pause for human-in-the-loop Node
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Route to BotLangFlow
+
+Epic: Invoke Bot
+Sub-Epic: Orchestrate BotLangFlow
+Story: Route to Default Behavior Action
+
+
+UNMAPPED TEST CLASSES (No Story Found)
+--------------------------------------------------------------------------------
+
+Test Class: TestAccessBotPaths
+  File: test_perform_behavior_action.py
+  Line: 3735
+
+Test Class: TestAddHeadlessModeToHelp
+  File: test_document_headless_mode_requirements.py
+  Line: 120
+
+Test Class: TestAddHeadlessModeToStatus
+  File: test_document_headless_mode_requirements.py
+  Line: 164
+
+Test Class: TestAnotherStory
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 3701
+
+Test Class: TestBehaviorValidationType
+  File: test_validation_scope_and_file_filtering.py
+  Line: 435
+
+Test Class: TestBlockExtractorHelper
+  File: test_resources.py
+  Line: 427
+
+Test Class: TestBlockResource
+  File: test_resources.py
+  Line: 208
+
+Test Class: TestCLIArgumentParsing
+  File: test_execute_in_headless_mode.py
+  Line: 998
+
+Test Class: TestClearScopeFiltersInCLI
+  File: test_manage_bot_scope_through_cli_current.py
+  Line: 133
+
+Test Class: TestConfirmActionCompletionThroughCLI
+  File: test_execute_action_operation_through_cli_current.py
+  Line: 132
+
+Test Class: TestConfirmWorkThroughCLI
+  File: test_execute_action_operation_through_cli_current.py
+  Line: 100
+
+Test Class: TestConfirmWorkThroughCLIWithStringParameters
+  File: test_execute_action_operation_through_cli.py
+  Line: 237
+
+Test Class: TestCreateValidationScope
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4589
+
+Test Class: TestDetectAndConfigureTTYNonTTYInputForCLI
+  File: test_initialize_repl_session_current.py
+  Line: 192
+
+Test Class: TestDisplayActiveScopeInCLIStatus
+  File: test_display_bot_state_using_cli_current.py
+  Line: 226
+
+Test Class: TestDisplayAvailableBotInTreeHierarchy
+  File: test_display_bot_state_using_cli_current.py
+  Line: 648
+
+Test Class: TestDisplayBotHierarchyTreeInCLI
+  File: test_display_bot_state_using_cli_current.py
+  Line: 69
+
+Test Class: TestDisplayCLIBotCommandInNavigationMenuFooter
+  File: test_display_bot_state_using_cli_current.py
+  Line: 681
+
+Test Class: TestDisplayCLIHeader
+  File: test_display_bot_state_using_cli_current.py
+  Line: 261
+
+Test Class: TestDisplayCLINavigationMenuFooter
+  File: test_display_bot_state_using_cli_current.py
+  Line: 542
+
+Test Class: TestDisplayCurrentPositionInCLI
+  File: test_display_bot_state_using_cli_current.py
+  Line: 104
+
+Test Class: TestDisplayHeadlessModeStatusInCLI
+  File: test_display_bot_state_using_cli_current.py
+  Line: 575
+
+Test Class: TestDisplayPipedModeInstructionsForAIAgents
+  File: test_initialize_repl_session_current.py
+  Line: 160
+
+Test Class: TestErrorRecovery
+  File: test_execute_in_headless_mode.py
+  Line: 861
+
+Test Class: TestExampleStory
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 3750
+
+Test Class: TestExecuteCompleteAction
+  File: test_execute_in_headless_mode.py
+  Line: 613
+
+Test Class: TestExecuteCompleteBehavior
+  File: test_execute_in_headless_mode.py
+  Line: 724
+
+Test Class: TestExecuteDirectInstructions
+  File: test_execute_in_headless_mode.py
+  Line: 323
+
+Test Class: TestExecuteSingleOperation
+  File: test_execute_in_headless_mode.py
+  Line: 517
+
+Test Class: TestExecutionContext
+  File: test_execute_in_headless_mode.py
+  Line: 925
+
+Test Class: TestExitCLIREPL
+  File: test_navigate_bot_behaviors_and_actions_with_cli_current.py
+  Line: 247
+
+Test Class: TestFileFilterGlobPatternMatching
+  File: test_validation_scope_and_file_filtering.py
+  Line: 29
+
+Test Class: TestFileResource
+  File: test_resources.py
+  Line: 127
+
+Test Class: TestFilterActionBasedOnScope
+  File: test_perform_behavior_action.py
+  Line: 4529
+
+Test Class: TestFilterWorkUsingFilesScopeInCLI
+  File: test_manage_bot_scope_through_cli.py
+  Line: 142
+
+Test Class: TestFilterWorkUsingKnowledgeGraphScopeInCLI
+  File: test_manage_bot_scope_through_cli.py
+  Line: 72
+
+Test Class: TestFilterWorkUsingScopeInCLI
+  File: test_manage_bot_scope_through_cli_current.py
+  Line: 69
+
+Test Class: TestFindRuleByName
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4310
+
+Test Class: TestFormatOutputForAI
+  File: test_generate_repl_cli.py
+  Line: 62
+
+Test Class: TestFormatterFactory
+  File: test_formatters.py
+  Line: 110
+
+Test Class: TestGetActionInstructionsThroughCLI
+  File: test_execute_action_operation_through_cli_current.py
+  Line: 68
+
+Test Class: TestGetBaseInstructions
+  File: test_perform_behavior_action.py
+  Line: 3998
+
+Test Class: TestGetRuleProperties
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4565
+
+Test Class: TestHandleOperationErrorsAndValidationInCLI
+  File: test_execute_action_operation_through_cli_current.py
+  Line: 196
+
+Test Class: TestHandleValidateRulesExceptions
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 2680
+
+Test Class: TestHeadlessConfig
+  File: test_execute_in_headless_mode.py
+  Line: 896
+
+Test Class: TestInjectRulesIntoAIChatMessage
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 5626
+
+Test Class: TestInjectStatusUpdateBreadcrumbsIntoInstructions
+  File: test_perform_behavior_action.py
+  Line: 2316
+
+Test Class: TestInsertContextIntoInstructions
+  File: test_perform_behavior_action.py
+  Line: 2170
+
+Test Class: TestInvokeBehaviorInActionOrder
+  File: test_perform_behavior_action.py
+  Line: 1593
+
+Test Class: TestIterateRules
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4387
+
+Test Class: TestLaunchCLIInInteractiveMode
+  File: test_initialize_repl_session_current.py
+  Line: 71
+
+Test Class: TestLaunchCLIInPipeMode
+  File: test_initialize_repl_session_current.py
+  Line: 131
+
+Test Class: TestLineResource
+  File: test_resources.py
+  Line: 61
+
+Test Class: TestLoadActions
+  File: test_perform_behavior_action.py
+  Line: 3272
+
+Test Class: TestLoadAndDisplayWorkspaceContextInCLI
+  File: test_initialize_repl_session_current.py
+  Line: 244
+
+Test Class: TestLoadBaseActionConfiguration
+  File: test_perform_behavior_action.py
+  Line: 3634
+
+Test Class: TestLoadBehaviorConfig
+  File: test_perform_behavior_action.py
+  Line: 4030
+
+Test Class: TestLoadBehaviorConfiguration
+  File: test_perform_behavior_action.py
+  Line: 2817
+
+Test Class: TestLoadBotBehaviors
+  File: test_perform_behavior_action.py
+  Line: 2981
+
+Test Class: TestLoadBotConfiguration
+  File: test_perform_behavior_action.py
+  Line: 2721
+
+Test Class: TestLoadExistingBehaviorActionState
+  File: test_current_initialize_repl_session.py
+  Line: 246
+
+Test Class: TestLoadRuleFromFile
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4460
+
+Test Class: TestLoadRulesCollection
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4277
+
+Test Class: TestLoadScannerClass
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4619
+
+Test Class: TestLoadScannerClasses
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4768
+
+Test Class: TestLoadScannerForRule
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4535
+
+Test Class: TestMCPGeneratorExceptions
+  File: test_generate_mcp_tools.py
+  Line: 1565
+
+Test Class: TestManageBehaviorsCollection
+  File: test_perform_behavior_action.py
+  Line: 4089
+
+Test Class: TestMarkdownFormatter
+  File: test_formatters.py
+  Line: 79
+
+Test Class: TestMonitorExecution
+  File: test_monitor_session.py
+  Line: 483
+
+Test Class: TestNavigateSequentiallyUsingCLICommands
+  File: test_navigate_bot_behaviors_and_actions_with_cli_current.py
+  Line: 187
+
+Test Class: TestNavigateUsingCLIDotNotation
+  File: test_navigate_bot_behaviors_and_actions_with_cli_current.py
+  Line: 68
+
+Test Class: TestPerformIncrementalValidation
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 4829
+
+Test Class: TestREPLInstructionsCommandCLIArgs
+  File: test_validation_scope_and_file_filtering.py
+  Line: 246
+
+Test Class: TestReExecuteCurrentOperationUsingCLI
+  File: test_execute_action_operation_through_cli_current.py
+  Line: 164
+
+Test Class: TestRecoverAndReportFailures
+  File: test_monitor_session.py
+  Line: 715
+
+Test Class: TestReportCompletion
+  File: test_monitor_session.py
+  Line: 665
+
+Test Class: TestResolveBotPaths
+  File: test_perform_behavior_action.py
+  Line: 4292
+
+Test Class: TestRunAllScanners
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 3461
+
+Test Class: TestRunScannersAgainstCode
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 3767
+
+Test Class: TestRunScannersAgainstTestCode
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 3683
+
+Test Class: TestScanResource
+  File: test_resources.py
+  Line: 319
+
+Test Class: TestScannerPathValidation
+  File: test_validation_scope_and_file_filtering.py
+  Line: 314
+
+Test Class: TestScopeBasedParameterHandling
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 5073
+
+Test Class: TestScopeResource
+  File: test_resources.py
+  Line: 275
+
+Test Class: TestScopeTypesMutuallyExclusive
+  File: test_manage_bot_scope_through_cli.py
+  Line: 207
+
+Test Class: TestSessionLog
+  File: test_execute_in_headless_mode.py
+  Line: 956
+
+Test Class: TestStatusDisplayFormatterUsage
+  File: test_formatters.py
+  Line: 129
+
+Test Class: TestSurfaceBlockReason
+  File: test_monitor_session.py
+  Line: 618
+
+Test Class: TestTerminalFormatter
+  File: test_formatters.py
+  Line: 52
+
+Test Class: TestValidateWithFileScopeIntegration
+  File: test_validation_scope_and_file_filtering.py
+  Line: 622
+
+Test Class: TestValidationContextFileDiscovery
+  File: test_validation_scope_and_file_filtering.py
+  Line: 178
+
+Test Class: TestValidationWithAllParameterCombinations
+  File: test_validate_knowledge_and_content_against_rules.py
+  Line: 5173
+
+Test Class: TestViewAvailableCommandsUsingCLIHelp
+  File: test_get_help_using_cli_current.py
+  Line: 69
+
+Test Class: TestViewCommandExamplesUsingCLIHelp
+  File: test_get_help_using_cli_current.py
+  Line: 104
+
+Test Class: TestViolationResource
+  File: test_resources.py
+  Line: 366

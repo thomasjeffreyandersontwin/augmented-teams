@@ -93,6 +93,29 @@ class REPLCursorCommandVisitor(Visitor):
             self.commands_dir / f'{self.bot_name}.md',
             base_command_content
         )
+        
+        # Generate separate status command
+        status_command_content = self._build_status_command()
+        self.commands[f'{self.bot_name}_status'] = self._write_command_file(
+            self.commands_dir / f'{self.bot_name}_status.md',
+            status_command_content
+        )
+    
+    def _build_status_command(self) -> str:
+        """Build a dedicated status command for quick access."""
+        script_path_str = str(self.repl_script_path.relative_to(self.workspace_root) if self.repl_script_path.is_absolute() else self.repl_script_path).replace('\\', '/')
+        bot_dir_str = str(self.bot_directory).replace('\\', '\\')
+        workspace_str = str(self.workspace_root).replace('\\', '\\')
+        
+        lines = [
+            f"# {self.bot_name}_status - Display Current Bot Status",
+            "",
+            "Display current position in workflow, active scope, and available commands.",
+            "",
+            "## Show Status",
+            f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo 'status' | python {script_path_str}",
+        ]
+        return "\n".join(lines)
     
     def _build_base_repl_command(self) -> str:
         script_path_str = str(self.repl_script_path.relative_to(self.workspace_root) if self.repl_script_path.is_absolute() else self.repl_script_path).replace('\\', '/')

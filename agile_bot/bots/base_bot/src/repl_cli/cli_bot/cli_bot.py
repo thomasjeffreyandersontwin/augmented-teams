@@ -97,8 +97,12 @@ class CLIBot:
             'message': 'Scope filter cleared'
         }
     
-    def get_scope_display(self) -> str:
-        """Get the current scope display formatted by CLIScope."""
+    def get_scope_display(self, format='text') -> str:
+        """Get the current scope display formatted by CLIScope.
+        
+        Args:
+            format: 'text' for formatted display, 'json' for JSON output
+        """
         scope_data = self._session.get_stored_scope()
         if scope_data:
             try:
@@ -106,7 +110,11 @@ class CLIBot:
                 from agile_bot.bots.base_bot.src.repl_cli.cli_scope import CLIScope
                 scope = Scope.from_dict(scope_data)
                 cli_scope = CLIScope(scope, self._session.workspace_directory, self._session.formatter)
-                return cli_scope.to_formatted_display()
+                
+                if format == 'json':
+                    return cli_scope.to_json_display()
+                else:
+                    return cli_scope.to_formatted_display()
             except Exception as e:
                 # Return formatted error with details for debugging
                 return f"{self._session.formatter.scope_icon()} **Scope**\n{self._session.formatter.scope_icon()} Error loading scope: {str(e)}"

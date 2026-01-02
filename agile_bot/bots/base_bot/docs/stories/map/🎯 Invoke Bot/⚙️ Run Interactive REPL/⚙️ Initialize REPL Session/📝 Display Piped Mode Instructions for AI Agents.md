@@ -1,6 +1,6 @@
 # 📝 Display Piped Mode Instructions for AI Agents
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L202)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Initialize REPL Session](.)  
@@ -19,11 +19,22 @@ Display Piped Mode Instructions for AI Agents functionality for the mob minion s
 
 ## Scenarios
 
-### Scenario: Display Piped Mode Instructions for AI Agents (happy_path)
+### Scenario: CLI displays piped mode instructions in pipe mode (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L205)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: REPLSession detects piped input
+WHEN: CLI initializes
+THEN: CLI displays piped mode instructions header
 ```
+
+
+### Scenario: CLI omits piped mode instructions in interactive mode (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L232)
+
+**Steps:**
+```gherkin
+GIVEN: REPLSession detects interactive TTY
+WHEN: CLI initializes
+THEN: CLI does not display piped mode instructions
+```
+

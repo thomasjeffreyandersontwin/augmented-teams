@@ -1,6 +1,6 @@
 # 📝 Navigate To First Behavior Action
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py)
 
 **User:** System
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Navigate Bot Behaviors and Actions Via Domain Model](.)  
@@ -19,11 +19,13 @@ Navigate To First Behavior Action functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Navigate To First Behavior Action (happy_path)
+### Scenario: Navigate sets current behavior and first action (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py#L40)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Bot has behaviors configured
+WHEN: bot.behaviors.navigate_to('shape') is called
+THEN: bot.behaviors.current.name == 'shape'
+AND: bot.behaviors.current.actions.current_action_name == 'clarify'
 ```
+

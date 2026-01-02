@@ -39,11 +39,6 @@ class REPLStatus:
         output_lines.append(f"{current_marker} current  {completed_marker} done  {pending_marker} not started")
         return output_lines
     
-    def _get_scope_display(self) -> List[str]:
-        if hasattr(self.state, '_get_scope_display_lines'):
-            return self.state._get_scope_display_lines()
-        return []
-    
     @property
     def hierarchical_status(self) -> str:
         lines = []

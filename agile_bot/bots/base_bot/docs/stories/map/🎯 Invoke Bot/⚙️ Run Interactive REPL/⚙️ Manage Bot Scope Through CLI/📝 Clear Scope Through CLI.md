@@ -1,6 +1,6 @@
 # 📝 Clear Scope Through CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli_current.py#L133)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L315)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Manage Bot Scope Through CLI](.)  
@@ -19,12 +19,27 @@ Clear Scope Through CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User clears all scope filters (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli_current.py#L136)
+### Scenario: User clears all scope filters (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L318)
 
 **Steps:**
 ```gherkin
-GIVEN: Scope filter is set
+GIVEN: CLI is at shape.build.instructions
+AND: active scope filters are story="Story1" AND files="docs/**/*.md"
 WHEN: user enters 'scope clear'
-THEN: CLI clears scope filter
+THEN: REPLSession clears all scope filters from context
+AND: CLI displays 'All scope filters cleared'
+AND: StatusDisplay shows no active scope
+```
+
+
+### Scenario: User executes build after clearing scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L351)
+
+**Steps:**
+```gherkin
+GIVEN: CLI is at shape.build.instructions
+AND: user has cleared all scope filters
+WHEN: user enters 'shape.build.instructions'
+THEN: CLIAction passes no scope filters to action
+AND: CLI displays unfiltered instructions
 ```
 

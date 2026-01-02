@@ -1,6 +1,6 @@
 # 📝 Display Bot Hierarchy Tree with Progress Indicators
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L69)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L86)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -32,27 +32,22 @@ Display Bot Hierarchy Tree with Progress Indicators functionality for the mob mi
 
 ## Scenarios
 
-### Scenario: User views bot hierarchy with status command (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L72)
+### Scenario: User views bot hierarchy with status command (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L89)
 
 **Steps:**
 ```gherkin
 GIVEN: CLI is at discovery.build.instructions
 WHEN: user enters 'status'
 THEN: CLI displays bot hierarchy tree
-AND: CLI displays bot hierarchy tree with [x], [*], [ ] indicators
-AND: CLI shows discovery behavior marked with [*]
-AND: CLI shows build action under discovery
 ```
 
 
-### Scenario: CLI shows completed actions with completed marker (happy_path)
+### Scenario: CLI shows completed actions with [x] indicator (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L121)
 
 **Steps:**
 ```gherkin
 GIVEN: CLI is at discovery.build.instructions
-AND: discovery.clarify action is completed
 WHEN: user views status
-THEN: StatusDisplay marks completed actions with completed marker
-AND: CLI displays clarify action with completed marker
+THEN: CLI displays clarify action with [x] indicator
 ```
 

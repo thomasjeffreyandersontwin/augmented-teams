@@ -52,12 +52,78 @@ class KnowledgeGraphFilter:
         return epic_name in self.epics
     
     def filter_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter knowledge graph to only nodes matching this filter."""
-        # For now, return full graph if no filters specified
+        """Filter knowledge graph to only nodes matching this filter.
+        
+        Searches ALL levels (epics, sub-epics, stories) regardless of filter type,
+        matching the behavior of the text display output.
+        """
+        # Return full graph if no filters specified
         if not self.stories and not self.epics and not self.increments:
             return knowledge_graph
-        # TODO: Implement actual filtering logic in Phase 3
-        return knowledge_graph
+        
+        # Collect all filter names (stories + epics) into one list for flexible matching
+        all_filter_names = list(self.stories) + list(self.epics)
+        
+        def name_matches(name: str) -> bool:
+            """Check if a name matches any filter value (case-insensitive)."""
+            return any(name.lower() == filter_name.lower() for filter_name in all_filter_names)
+        
+        filtered_graph = {'epics': []}
+        epics = knowledge_graph.get('epics', [])
+        
+        for epic in epics:
+            epic_name = epic.get('name', '')
+            
+            # Check if this epic matches - if so, include entire epic
+            if name_matches(epic_name):
+                filtered_graph['epics'].append(epic)
+                continue
+            
+            # Check sub-epics and stories
+            filtered_sub_epics = []
+            for sub_epic in epic.get('sub_epics', []):
+                sub_epic_name = sub_epic.get('name', '')
+                
+                # Check if sub-epic matches - if so, include entire sub-epic
+                if name_matches(sub_epic_name):
+                    filtered_sub_epics.append(sub_epic)
+                    continue
+                
+                # Check if any story matches
+                matching_story_groups = []
+                for story_group in sub_epic.get('story_groups', []):
+                    matching_stories = []
+                    for story in story_group.get('stories', []):
+                        if name_matches(story.get('name', '')):
+                            matching_stories.append(story)
+                    
+                    if matching_stories:
+                        matching_story_groups.append({
+                            **story_group,
+                            'stories': matching_stories
+                        })
+                
+                # Also check stories at sub-epic level
+                matching_direct_stories = []
+                for story in sub_epic.get('stories', []):
+                    if name_matches(story.get('name', '')):
+                        matching_direct_stories.append(story)
+                
+                # Include sub-epic if we found matching stories
+                if matching_story_groups or matching_direct_stories:
+                    filtered_sub_epic = {**sub_epic}
+                    if matching_story_groups:
+                        filtered_sub_epic['story_groups'] = matching_story_groups
+                    if matching_direct_stories:
+                        filtered_sub_epic['stories'] = matching_direct_stories
+                    filtered_sub_epics.append(filtered_sub_epic)
+            
+            # Include epic if we found matching sub-epics or stories
+            if filtered_sub_epics:
+                filtered_epic = {**epic, 'sub_epics': filtered_sub_epics}
+                filtered_graph['epics'].append(filtered_epic)
+        
+        return filtered_graph
 
 
 @dataclass
@@ -293,13 +359,17 @@ class Scope:
                         lines.extend(epic_lines)
                 except Exception:
                     lines.append("  - (error loading story graph)")
-        elif self.type == ScopeType.STORY:
+        elif self.type == ScopeType.STORY or self.type == ScopeType.EPIC:
             story_graph_path = workspace_directory / 'docs' / 'stories' / 'story-graph.json'
             if story_graph_path.exists():
                 try:
                     graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
-                    matched_items = self._find_scope_matches_in_graph(graph_data, self.value, workspace_directory)
-                    lines.extend(matched_items)
+                    # Use the SAME filtering as JSON output
+                    filtered_graph = self.filters_knowledge_graph(graph_data)
+                    # Format the filtered graph for display
+                    for epic in filtered_graph.get('epics', []):
+                        epic_lines = self._format_node_with_children(epic, 'epic', 0, workspace_directory, filtered_graph, epic.get('name', ''), epic.get('name', ''))
+                        lines.extend(epic_lines)
                 except Exception:
                     # Fallback to simple list
                     for item in (self.value if isinstance(self.value, list) else [self.value]):

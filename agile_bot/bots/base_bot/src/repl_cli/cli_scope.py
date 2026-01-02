@@ -127,6 +127,94 @@ class CLIScope(CLIBase):
         
         return "\n".join(lines)
     
+    def to_json_display(self) -> str:
+        """Render scope as JSON for programmatic consumption.
+        
+        Returns JSON with:
+        - filter: scope filter string
+        - type: scope type (story, epic, files, etc.)
+        - links: map/graph file links
+        - storyGraph: filtered story graph data (for story/epic scopes)
+        - files: list of files (for file scopes)
+        """
+        import json
+        from agile_bot.bots.base_bot.src.actions.action_context import ScopeType
+        
+        # Build filter display value
+        filter_value = ', '.join(self._scope.value) if isinstance(self._scope.value, list) else str(self._scope.value) if self._scope.value else "all"
+        
+        # Build links to graph/map files
+        story_graph_path = self._workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+        story_map_path = self._workspace_directory / 'docs' / 'stories' / 'story-map.drawio'
+        
+        workspace_root = None
+        if story_graph_path.exists() or story_map_path.exists():
+            try:
+                workspace_root = get_python_workspace_root()
+            except (ValueError, AttributeError):
+                pass
+        
+        links = {}
+        if story_graph_path.exists() and workspace_root:
+            try:
+                rel_path = story_graph_path.relative_to(workspace_root)
+                links['graph'] = str(rel_path).replace('\\', '/')
+            except (ValueError, AttributeError):
+                pass
+        
+        if story_map_path.exists() and workspace_root:
+            try:
+                rel_path = story_map_path.relative_to(workspace_root)
+                links['map'] = str(rel_path).replace('\\', '/')
+            except (ValueError, AttributeError):
+                pass
+        
+        result = {
+            "filter": filter_value,
+            "type": self._scope.type.value if hasattr(self._scope.type, 'value') else str(self._scope.type),
+            "links": links
+        }
+        
+        # Get filtered story graph data directly by loading and filtering story-graph.json
+        if self._scope.type in (ScopeType.STORY, ScopeType.EPIC, ScopeType.SHOW_ALL):
+            story_graph_path = self._workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+            if story_graph_path.exists():
+                try:
+                    import json as json_module
+                    full_graph = json_module.loads(story_graph_path.read_text(encoding='utf-8'))
+                    # Use the scope's filter method to get filtered graph
+                    filtered_graph = self._scope.filters_knowledge_graph(full_graph)
+                    
+                    # Enhance filtered graph with story file paths
+                    self._add_story_file_paths_to_graph(filtered_graph, workspace_root)
+                    
+                    result["storyGraph"] = filtered_graph
+                except Exception:
+                    pass
+        elif self._scope.type == ScopeType.FILES:
+            # Get expanded file list
+            scope_lines = self._scope.to_display_lines(self._workspace_directory)
+            files = []
+            for line in scope_lines:
+                if line.startswith("Scope Filter:"):
+                    continue
+                path_str = line.strip().lstrip('- ').strip()
+                if path_str and not path_str.endswith("(no files found)"):
+                    files.append(path_str)
+            result["files"] = files
+        
+        # Wrap JSON in markdown section for display
+        scope_icon = self.formatter.scope_icon()
+        json_str = json.dumps(result, indent=2)
+        
+        lines = []
+        lines.append(f"## {scope_icon} **Scope**")
+        lines.append("```json")
+        lines.append(json_str)
+        lines.append("```")
+        
+        return "\n".join(lines)
+    
     def _build_file_tree_with_hyperlinks(self, scope_lines: list) -> list:
         """Build a hierarchical directory tree from file paths with hyperlinks."""
         from pathlib import Path
@@ -444,6 +532,55 @@ class CLIScope(CLIBase):
         
         return enhanced_lines
     
+    def _add_story_file_paths_to_graph(self, graph_data: dict, workspace_root: Optional[Path]) -> None:
+        """Enhance story graph with story_file paths for each story node."""
+        if not graph_data or not workspace_root:
+            return
+        
+        epics = graph_data.get('epics', [])
+        for epic in epics:
+            epic_name = epic.get('name')
+            if not epic_name:
+                continue
+            
+            sub_epics = epic.get('sub_epics', [])
+            for sub_epic in sub_epics:
+                sub_epic_name = sub_epic.get('name')
+                
+                # Process stories in story_groups
+                story_groups = sub_epic.get('story_groups', [])
+                for story_group in story_groups:
+                    stories = story_group.get('stories', [])
+                    for story in stories:
+                        self._add_story_file_to_node(story, epic_name, sub_epic_name, workspace_root)
+                
+                # Process stories directly in sub_epic
+                direct_stories = sub_epic.get('stories', [])
+                for story in direct_stories:
+                    self._add_story_file_to_node(story, epic_name, sub_epic_name, workspace_root)
+    
+    def _add_story_file_to_node(self, story_node: dict, epic_name: str, sub_epic_name: str, workspace_root: Path) -> None:
+        """Add story_file path to a single story node."""
+        story_name = story_node.get('name')
+        if not story_name:
+            return
+        
+        # Build story file path
+        story_file_path = self._build_story_file_path(epic_name, sub_epic_name, story_name)
+        
+        if story_file_path and story_file_path.exists():
+            try:
+                # Get relative path from workspace root
+                rel_path = story_file_path.relative_to(workspace_root)
+                story_node['story_file'] = str(rel_path).replace('\\', '/')
+                story_node['story_file_exists'] = True
+            except (ValueError, AttributeError):
+                # If relative path fails, store absolute path
+                story_node['story_file'] = str(story_file_path).replace('\\', '/')
+                story_node['story_file_exists'] = True
+        else:
+            story_node['story_file_exists'] = False
+    
     def _build_story_file_path(self, epic_name: Optional[str], sub_epic_name: Optional[str], story_name: str) -> Optional[Path]:
         """Build the file path for a story based on epic/sub-epic/story names."""
         if not epic_name:
@@ -474,6 +611,55 @@ class CLIScope(CLIBase):
     def _build_test_class_link(self, test_file: str, test_class: str) -> str:
         """Build link to test class with line number."""
         return build_test_class_link(test_file, test_class, self._workspace_directory)
+    
+    def _add_story_file_paths_to_graph(self, filtered_graph: dict, workspace_root: Path) -> None:
+        """Add story_file paths to each story in the filtered graph for panel consumption."""
+        if 'epics' not in filtered_graph:
+            return
+        
+        for epic in filtered_graph['epics']:
+            epic_name = epic.get('name')
+            if not epic_name or 'sub_epics' not in epic:
+                continue
+            
+            for sub_epic in epic['sub_epics']:
+                sub_epic_name = sub_epic.get('name')
+                
+                # Process stories in story_groups
+                if 'story_groups' in sub_epic:
+                    for story_group in sub_epic['story_groups']:
+                        if 'stories' in story_group:
+                            for story in story_group['stories']:
+                                self._add_story_file_to_story_obj(story, epic_name, sub_epic_name, workspace_root)
+                
+                # Process stories directly at sub_epic level
+                if 'stories' in sub_epic:
+                    for story in sub_epic['stories']:
+                        self._add_story_file_to_story_obj(story, epic_name, sub_epic_name, workspace_root)
+    
+    def _add_story_file_to_story_obj(self, story: dict, epic_name: str, sub_epic_name: str, workspace_root: Path) -> None:
+        """Add story_file path to a single story object."""
+        story_name = story.get('name')
+        if not story_name:
+            return
+        
+        # Build the story file path
+        story_file_path = self._build_story_file_path(epic_name, sub_epic_name, story_name)
+        
+        if story_file_path and story_file_path.exists():
+            story['story_file_exists'] = True
+            try:
+                # Convert to relative path from workspace root
+                if workspace_root:
+                    rel_path = story_file_path.relative_to(workspace_root)
+                    story['story_file'] = str(rel_path).replace('\\', '/')
+                else:
+                    story['story_file'] = str(story_file_path).replace('\\', '/')
+            except (ValueError, AttributeError):
+                # If relative path fails, use absolute path
+                story['story_file'] = str(story_file_path).replace('\\', '/')
+        else:
+            story['story_file_exists'] = False
     
     @property
     def domain_scope(self) -> Scope:

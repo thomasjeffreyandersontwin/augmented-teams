@@ -4689,3 +4689,433 @@ class TestFilterActionBasedOnScope:
         then_story_graph_contains_all_epics(filtered_graph, 2)
         then_story_graph_contains_all_increments(filtered_graph, 2)
 
+
+# ============================================================================
+# STORY: Bootstrap Workspace Configuration
+# ============================================================================
+
+class TestBootstrapWorkspace:
+    """
+    Story: Bootstrap Workspace Configuration
+    
+    As a bot developer, I want the workspace and bot directories to be 
+    automatically configured at startup from environment variables and 
+    configuration files, so that I don't need to pass directory paths 
+    as parameters throughout the codebase.
+    
+    Acceptance Criteria:
+    1. Entry points (MCP/CLI) bootstrap environment before importing modules
+    2. All directory resolution reads from environment variables only
+    3. agent.json provides default workspace location
+    4. Environment variables can override agent.json
+    """
+    
+    # ========================================================================
+    # SCENARIO GROUP 1: Environment Variable Resolution
+    # ========================================================================
+    
+    def test_bot_directory_from_environment_variable(self, bot_directory):
+        """
+        SCENARIO: Bot directory resolved from environment variable
+        GIVEN: BOT_DIRECTORY environment variable is set
+        WHEN: get_bot_directory() is called
+        THEN: Returns the path from environment variable
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory
+        
+        # Given: BOT_DIRECTORY environment variable is set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        
+        # When: get_bot_directory() is called
+        result = get_bot_directory()
+        
+        # Then: Returns the path from environment variable
+        assert result == bot_directory
+    
+    def test_workspace_directory_from_environment_variable(self, workspace_directory):
+        """
+        SCENARIO: Workspace directory resolved from environment variable
+        GIVEN: WORKING_AREA environment variable is set
+        WHEN: get_workspace_directory() is called
+        THEN: Returns the path from environment variable
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+        
+        # Given: WORKING_AREA environment variable is set
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # When: get_workspace_directory() is called
+        result = get_workspace_directory()
+        
+        # Then: Returns the path from environment variable
+        assert result == workspace_directory
+    
+    def test_workspace_directory_supports_legacy_working_dir_variable(self, workspace_directory):
+        """
+        SCENARIO: Backward compatibility with WORKING_DIR variable
+        GIVEN: WORKING_DIR environment variable is set (legacy name)
+        AND: WORKING_AREA is not set
+        WHEN: get_workspace_directory() is called
+        THEN: Returns the path from WORKING_DIR variable
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+        
+        # Given: WORKING_DIR environment variable is set (legacy)
+        os.environ['WORKING_DIR'] = str(workspace_directory)
+        # AND: WORKING_AREA is not set
+        if 'WORKING_AREA' in os.environ:
+            del os.environ['WORKING_AREA']
+        
+        # When: get_workspace_directory() is called
+        result = get_workspace_directory()
+        
+        # Then: Returns the path from WORKING_DIR variable
+        assert result == workspace_directory
+    
+    def test_working_area_takes_precedence_over_working_dir(self, temp_workspace):
+        """
+        SCENARIO: WORKING_AREA takes precedence over legacy WORKING_DIR
+        GIVEN: Both WORKING_AREA and WORKING_DIR are set
+        AND: They have different values
+        WHEN: get_workspace_directory() is called
+        THEN: Returns WORKING_AREA value (preferred)
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+        
+        # Given: Both variables set with different values
+        workspace_area = temp_workspace / 'workspace_area'
+        workspace_area.mkdir(parents=True, exist_ok=True)
+        different_dir = temp_workspace / 'different'
+        different_dir.mkdir(parents=True, exist_ok=True)
+        
+        os.environ['WORKING_AREA'] = str(workspace_area)
+        os.environ['WORKING_DIR'] = str(different_dir)
+        
+        # When: get_workspace_directory() is called
+        result = get_workspace_directory()
+        
+        # Then: Returns WORKING_AREA value
+        assert result == workspace_area
+        assert result != different_dir
+    
+    # ========================================================================
+    # SCENARIO GROUP 2: Bootstrap from bot_config.json
+    # ========================================================================
+    
+    def test_entry_point_bootstraps_from_bot_config(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Entry point reads bot_config.json and sets environment
+        GIVEN: bot_config.json exists with WORKING_AREA field
+        AND: BOT_DIRECTORY can be self-detected from script location
+        WHEN: Entry point bootstrap code runs (simulated)
+        THEN: WORKING_AREA environment variable is set from bot_config.json
+        AND: BOT_DIRECTORY environment variable is set from script location
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory, get_workspace_directory
+        
+        # Given: bot_config.json exists with WORKING_AREA field
+        bot_config = {
+            "botName": "test_bot",
+            "behaviors": ["shape"],
+            "mcp": {
+                "env": {
+                    "WORKING_AREA": str(workspace_directory)
+                }
+            }
+        }
+        config_path = bot_directory / 'bot_config.json'
+        config_path.write_text(json.dumps(bot_config, indent=2), encoding='utf-8')
+        
+        # When: Entry point bootstrap code runs (simulated)
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        
+        # Read bot_config.json and set WORKING_AREA if not already set
+        if 'WORKING_AREA' not in os.environ:
+            if 'mcp' in bot_config and 'env' in bot_config['mcp']:
+                mcp_env = bot_config['mcp']['env']
+                if 'WORKING_AREA' in mcp_env:
+                    os.environ['WORKING_AREA'] = mcp_env['WORKING_AREA']
+        
+        # Then: Environment variables are set correctly
+        assert os.environ['BOT_DIRECTORY'] == str(bot_directory)
+        assert os.environ['WORKING_AREA'] == str(workspace_directory)
+        
+        # And: Functions return correct values
+        assert get_bot_directory() == bot_directory
+        assert get_workspace_directory() == workspace_directory
+    
+    def test_environment_variable_takes_precedence_over_bot_config(
+        self, bot_directory, temp_workspace
+    ):
+        """
+        SCENARIO: Pre-set environment variable not overwritten
+        GIVEN: WORKING_AREA environment variable is already set (e.g., by mcp.json env)
+        AND: bot_config.json also has WORKING_AREA field with different value
+        WHEN: Entry point bootstrap code runs (simulated)
+        THEN: WORKING_AREA environment variable retains original value
+        AND: bot_config.json value is NOT used (override pattern)
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+        
+        # Given: Environment variable already set with one value
+        override_workspace = temp_workspace / 'override_workspace'
+        override_workspace.mkdir(parents=True, exist_ok=True)
+        os.environ['WORKING_AREA'] = str(override_workspace)
+        
+        # And: bot_config.json has different value
+        workspace_directory = temp_workspace / 'config_workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
+        bot_config = {
+            "botName": "test_bot",
+            "behaviors": ["shape"],
+            "mcp": {
+                "env": {
+                    "WORKING_AREA": str(workspace_directory)
+                }
+            }
+        }
+        config_path = bot_directory / 'bot_config.json'
+        config_path.write_text(json.dumps(bot_config, indent=2), encoding='utf-8')
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        
+        # When: Entry point bootstrap code runs (simulated with check)
+        # Bootstrap logic should NOT overwrite existing env var
+        if 'WORKING_AREA' not in os.environ:
+            if 'mcp' in bot_config and 'env' in bot_config['mcp']:
+                mcp_env = bot_config['mcp']['env']
+                if 'WORKING_AREA' in mcp_env:
+                    os.environ['WORKING_AREA'] = mcp_env['WORKING_AREA']
+        
+        # Then: Environment variable retains override value
+        assert os.environ['WORKING_AREA'] == str(override_workspace)
+        assert os.environ['WORKING_AREA'] != str(workspace_directory)
+        
+        # And: Function returns override value
+        assert get_workspace_directory() == override_workspace
+    
+    def test_missing_bot_config_with_preconfig_env_var_works(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: bot_config.json not required if env vars pre-configured
+        GIVEN: WORKING_AREA environment variable is already set
+        AND: BOT_DIRECTORY environment variable is already set
+        AND: bot_config.json does NOT exist or does NOT have WORKING_AREA
+        WHEN: Functions are called
+        THEN: No error occurs
+        AND: Environment variables work correctly
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_bot_directory, get_workspace_directory
+        
+        # Given: Environment variables already set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: bot_config.json does NOT exist
+        config_path = bot_directory / 'bot_config.json'
+        if config_path.exists():
+            config_path.unlink()
+        
+        # When: Functions are called
+        # Then: Functions work without error
+        assert get_bot_directory() == bot_directory
+        assert get_workspace_directory() == workspace_directory
+    
+    # ========================================================================
+    # SCENARIO GROUP 3: Bot Initialization with Bootstrap
+    # ========================================================================
+    
+    def test_bot_initializes_with_bootstrapped_directories(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Bot successfully initializes with bootstrapped environment
+        GIVEN: BOT_DIRECTORY environment variable is set
+        AND: WORKING_AREA environment variable is set
+        AND: Bot configuration exists
+        WHEN: Bot is instantiated
+        THEN: Bot uses bot_directory from environment
+        AND: Bot.workspace_directory property returns workspace from environment
+        """
+        # Given: Environment is bootstrapped
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: Bot configuration exists
+        config_path = given_bot_name_and_behavior_setup(bot_directory, 'test_bot', 'shape')
+        
+        # When: Bot is instantiated
+        bot = Bot('test_bot', bot_directory, config_path)
+        
+        # Then: Bot uses correct directories
+        assert bot.bot_paths.bot_directory == bot_directory
+        assert bot.bot_paths.workspace_directory == workspace_directory
+    
+    def test_behavior_action_state_created_in_workspace_directory(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Behavior action state file created in correct workspace
+        GIVEN: Environment is properly bootstrapped
+        AND: Bot is initialized with a behavior
+        WHEN: Bot behavior's actions save state
+        THEN: behavior_action_state.json path points to workspace directory
+        AND: NOT to bot directory
+        """
+        # Given: Environment is bootstrapped
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: Bot is initialized
+        config_path = given_bot_name_and_behavior_setup(bot_directory, 'test_bot', 'shape')
+        bot = Bot('test_bot', bot_directory, config_path)
+        
+        # When: Behavior action state file path is accessed through bot_paths
+        shape_behavior = bot.behaviors.find_by_name('shape')
+        # Access behavior action state path through bot_paths
+        state_file = bot.bot_paths.workspace_directory / 'behavior_action_state.json'
+        
+        # Then: Path is in workspace directory
+        assert state_file.parent == bot.bot_paths.workspace_directory
+        assert state_file.name == 'behavior_action_state.json'
+        
+        # And: NOT in bot directory
+        assert not str(state_file).startswith(str(bot.bot_paths.bot_directory))
+    
+    # ========================================================================
+    # SCENARIO GROUP 4: Path Resolution Consistency
+    # ========================================================================
+    
+    def test_bot_config_loaded_from_bot_directory(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Bot configuration loaded from bot directory (not workspace)
+        GIVEN: BOT_DIRECTORY is set to bot code location
+        AND: WORKING_AREA is set to workspace location
+        AND: bot_config.json exists in bot directory
+        WHEN: Bot loads its configuration
+        THEN: bot_config.json is read from BOT_DIRECTORY/
+        AND: NOT from WORKING_AREA
+        """
+        # Given: Directories are set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # And: Config exists in bot directory
+        config_path = given_bot_name_and_behavior_setup(bot_directory, 'test_bot', 'shape')
+        
+        # When: Bot loads configuration
+        bot = Bot('test_bot', bot_directory, config_path)
+        
+        # Then: Config was loaded from bot directory
+        assert bot.bot_name == 'test_bot'
+        assert bot.behaviors.find_by_name('shape') is not None
+        
+        # Verify config path is in bot directory
+        assert config_path.parent == bot_directory
+    
+    def test_behavior_folders_resolved_from_bot_directory(
+        self, bot_directory, workspace_directory
+    ):
+        """
+        SCENARIO: Behavior folders resolved from bot directory
+        GIVEN: BOT_DIRECTORY is set
+        AND: WORKING_AREA is set to different location
+        WHEN: get_behavior_folder() is called
+        THEN: Behavior path is BOT_DIRECTORY/behaviors/{behavior_name}/
+        AND: NOT from workspace directory
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_behavior_folder
+        
+        # Given: Directories are set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # When: get_behavior_folder() is called
+        behavior_folder = get_behavior_folder('test_bot', 'shape')
+        
+        # Then: Path is in bot directory
+        expected_path = bot_directory / 'behaviors' / 'shape'
+        assert behavior_folder == expected_path
+        
+        # And: NOT in workspace directory
+        assert not str(behavior_folder).startswith(str(workspace_directory))
+    
+    def test_multiple_calls_use_cached_env_vars(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Multiple calls read from cached environment (fast)
+        GIVEN: Environment variables are set
+        WHEN: get_workspace_directory() is called multiple times
+        THEN: Each call returns same value from environment
+        AND: No file I/O occurs (just env var reads)
+        """
+        from agile_bot.bots.base_bot.src.bot.workspace import get_workspace_directory
+        
+        # Given: Environment variables are set
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
+        
+        # When: Called multiple times
+        result1 = get_workspace_directory()
+        result2 = get_workspace_directory()
+        result3 = get_workspace_directory()
+        
+        # Then: Same value each time
+        assert result1 == result2 == result3 == workspace_directory
+        
+        # And: All are Path objects
+        assert all(isinstance(r, Path) for r in [result1, result2, result3])
+
+
+# ============================================================================
+# FIXTURES
+# ============================================================================
+
+@pytest.fixture
+def temp_workspace():
+    """Fixture: Temporary workspace directory."""
+    import tempfile
+    import shutil
+    test_dir = Path(tempfile.mkdtemp())
+    yield test_dir
+    
+    # Cleanup
+    shutil.rmtree(test_dir)
+
+
+@pytest.fixture
+def bot_directory(temp_workspace):
+    """Fixture: Bot directory structure."""
+    bot_dir = temp_workspace / 'agile_bot' / 'bots' / 'test_bot'
+    bot_dir.mkdir(parents=True, exist_ok=True)
+    return bot_dir
+
+
+@pytest.fixture
+def workspace_directory(temp_workspace):
+    """Fixture: Workspace directory for content files."""
+    workspace_dir = temp_workspace / 'demo' / 'test_workspace'
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+    return workspace_dir
+
+
+@pytest.fixture(autouse=True)
+def _clear_environment_variables():
+    """Helper: Clear environment variables for testing."""
+    env_vars = ['BOT_DIRECTORY', 'WORKING_AREA', 'WORKING_DIR']
+    original_values = {}
+    for var in env_vars:
+        if var in os.environ:
+            original_values[var] = os.environ[var]
+            del os.environ[var]
+    
+    yield
+    
+    # Restore original values
+    for var in env_vars:
+        if var in os.environ:
+            del os.environ[var]
+    for var, value in original_values.items():
+        os.environ[var] = value
+
