@@ -31,11 +31,32 @@ Inject Knowledge Graph Template and Builder Instructions functionality for the m
 
 ## Scenarios
 
-### Scenario: Inject Knowledge Graph Template and Builder Instructions (happy_path)
+### Scenario: Action injects knowledge graph template (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L855)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Knowledge graph config and template exist
+WHEN: Action executes
+THEN: Template path is injected into instructions
 ```
+
+
+### Scenario: Action loads and merges instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L875)
+
+**Steps:**
+```gherkin
+GIVEN: Base and behavior-specific instructions exist
+WHEN: Action method is invoked
+THEN: Instructions are loaded from both locations and merged
+```
+
+
+### Scenario: All template variables are replaced in instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L892)
+
+**Steps:**
+```gherkin
+GIVEN: Base instructions with {{rules}}, {{schema}}, {{description}}, {{instructions}} placeholders
+WHEN: Action loads and merges instructions with all injections
+THEN: All template variables are replaced with actual content
+```
+

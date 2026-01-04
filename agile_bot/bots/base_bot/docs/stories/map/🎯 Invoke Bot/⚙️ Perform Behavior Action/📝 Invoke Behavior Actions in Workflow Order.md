@@ -45,9 +45,9 @@ Invoke Behavior Actions in Workflow Order functionality for the mob minion syste
 ```gherkin
 Flow:
 1. Start at initialize_project
-2. Confirm â†’ Saves to completed_actions
+2. Confirm Ã¢â€ â€™ Saves to completed_actions
 3. Forward to gather_context
-4. Close gather_context â†’ Transitions to decide_planning_criteria
+4. Close gather_context Ã¢â€ â€™ Transitions to decide_planning_criteria
 5. Jump to discovery.gather_context (out of order)
 6. Verify state shows discovery.gather_context (not initialize_project)
 7. Close and verify proper transition

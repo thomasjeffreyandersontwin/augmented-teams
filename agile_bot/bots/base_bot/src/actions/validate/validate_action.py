@@ -70,6 +70,36 @@ class ValidateRulesAction(Action):
             new_instructions.append(line)
         
         instructions._data['base_instructions'] = new_instructions
+        
+        # Add knowledge graph config and template paths for reference (same as build action)
+        kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'knowledge_graph'
+        
+        # Find config file
+        config_files = list(kg_dir.glob('*.json')) if kg_dir.exists() else []
+        config_file = next((f for f in config_files if 'config' in f.name.lower() or f.name.endswith('-outline.json')), None)
+        if config_file:
+            instructions._data['config_path'] = str(config_file.resolve())
+        
+        # Find template file  
+        template_files = list(kg_dir.glob('*template*.json')) if kg_dir.exists() else []
+        template_file = template_files[0] if template_files else None
+        if template_file:
+            instructions._data['template_path'] = str(template_file.resolve())
+        
+        # Add structured rules data for display panel (same format as build action)
+        rules_data = self.inject_behavior_specific_rules()
+        all_rules = rules_data.get('validation_rules', [])
+        if all_rules:
+            # Convert to absolute file paths (same format as build action)
+            rule_files = []
+            bots_dir = self.behavior.bot_paths.python_workspace_root / 'agile_bot' / 'bots'
+            for rule in all_rules:
+                rule_file = rule.get('rule_file', '')
+                if rule_file:
+                    # Convert relative path to absolute
+                    rule_path = str(bots_dir / rule_file)
+                    rule_files.append(rule_path)
+            instructions._data['rules'] = rule_files
 
     def _run_scanners_and_format_results(self, context: ValidateActionContext) -> str:
         """Run validation scanners and format results for display in instructions."""

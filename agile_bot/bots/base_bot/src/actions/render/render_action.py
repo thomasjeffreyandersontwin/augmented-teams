@@ -69,6 +69,43 @@ class RenderOutputAction(Action):
             instructions.set('workspace_path', merged_instructions['workspace_path'])
         instructions.set('executed_specs', [spec.config_data for spec in executed_specs])
         instructions.set('template_specs', [spec.config_data for spec in template_specs])
+        
+        # Add render config file paths for display panel (similar to build action's config/template paths)
+        render_config_paths = []
+        render_template_paths = []
+        render_output_paths = []
+        
+        bot_dir = self.behavior.bot_paths.bot_directory
+        workspace_dir = self.behavior.bot_paths.workspace_directory
+        
+        for spec in render_specs:
+            # Add the render config file path (stored as relative path in config_data['file'])
+            if 'file' in spec.config_data:
+                config_file_rel = spec.config_data['file']
+                config_file_abs = bot_dir / config_file_rel
+                if config_file_abs.exists():
+                    render_config_paths.append(str(config_file_abs.resolve()))
+            
+            # Add template file path if using template
+            if spec.template and hasattr(spec.template, 'template_path'):
+                template_path = spec.template.template_path
+                if template_path:
+                    render_template_paths.append(str(template_path.resolve()))
+            
+            # Add output file path (drawio, md, txt, etc.)
+            if spec.output:
+                # Get the path prefix
+                path_prefix = spec.config_data.get('path', 'docs/stories')
+                output_file_abs = workspace_dir / path_prefix / spec.output
+                render_output_paths.append(str(output_file_abs.resolve()))
+        
+        # Store as separate arrays like build action does
+        if render_config_paths:
+            instructions._data['render_config_paths'] = render_config_paths
+        if render_template_paths:
+            instructions._data['render_template_paths'] = render_template_paths
+        if render_output_paths:
+            instructions._data['render_output_paths'] = render_output_paths
     
     def _do_confirm(self, context: ScopeActionContext) -> Dict[str, Any]:
         """Render actions execute synchronizers during preparation."""

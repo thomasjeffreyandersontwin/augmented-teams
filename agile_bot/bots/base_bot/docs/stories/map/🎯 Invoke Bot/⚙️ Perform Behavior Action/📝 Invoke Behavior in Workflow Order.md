@@ -23,11 +23,12 @@ Invoke Behavior in Workflow Order functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Invoke Behavior in Workflow Order (happy_path)
+### Scenario: Actions execute in workflow order (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Behavior with workflow order defined
+WHEN: Behavior is executed
+THEN: Actions run in configured sequence
 ```
+

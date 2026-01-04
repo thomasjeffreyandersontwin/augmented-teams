@@ -332,8 +332,14 @@ class Action:
         # Get base instructions
         instructions = self.instructions.copy()
         
+        # Load behavior-level guardrails (key questions and evidence) if available
+        self._load_behavior_guardrails(instructions)
+        
         # Call template method for subclass customization
         self._prepare_instructions(instructions, context)
+        
+        # Add behavior and action metadata for JSON output
+        self._add_behavior_action_metadata(instructions)
         
         # Format for display
         formatted_output = self._format_instructions_for_display(instructions)
@@ -342,6 +348,62 @@ class Action:
             'instructions': instructions.to_dict(),
             'formatted_output': formatted_output
         }
+    
+    def _load_behavior_guardrails(self, instructions):
+        """Load behavior-level guardrails (key questions and evidence) if available."""
+        try:
+            # Check if behavior has guardrails
+            if not self.behavior or not hasattr(self.behavior, 'guardrails'):
+                return
+            
+            # Get required_context from behavior's guardrails
+            guardrails_obj = self.behavior.guardrails
+            if hasattr(guardrails_obj, 'required_context'):
+                required_context = guardrails_obj.required_context
+                if hasattr(required_context, 'instructions') and required_context.instructions:
+                    # Set guardrails in instructions
+                    instructions.set('guardrails', {'required_context': required_context.instructions})
+        except Exception:
+            # Silently skip if guardrails can't be loaded
+            pass
+    
+    def _add_behavior_action_metadata(self, instructions):
+        """Add behavior and action metadata as separate properties for JSON output."""
+        # Add behavior metadata
+        if self.behavior:
+            behavior_data = {
+                'name': self.behavior.name if hasattr(self.behavior, 'name') else 'unknown',
+                'description': self.behavior.description if hasattr(self.behavior, 'description') else '',
+                'instructions': []
+            }
+            
+            # Add behavior-level instructions if present
+            if hasattr(self.behavior, 'instructions') and self.behavior.instructions:
+                behavior_instructions = self.behavior.instructions
+                if isinstance(behavior_instructions, list):
+                    behavior_data['instructions'] = list(behavior_instructions)
+                elif isinstance(behavior_instructions, str):
+                    behavior_data['instructions'] = [behavior_instructions]
+            
+            instructions.set('behavior_instructions', behavior_data)
+        
+        # Add action metadata
+        action_data = {
+            'name': self.action_name if hasattr(self, 'action_name') else 'unknown',
+            'description': self.description if hasattr(self, 'description') else '',
+            'instructions': []
+        }
+        
+        # Add behavior-specific action instructions if present
+        if self.action_config and 'instructions' in self.action_config:
+            behavior_action_instructions = self.action_config.get('instructions', [])
+            if behavior_action_instructions:
+                if isinstance(behavior_action_instructions, list):
+                    action_data['instructions'] = list(behavior_action_instructions)
+                elif isinstance(behavior_action_instructions, str):
+                    action_data['instructions'] = [behavior_action_instructions]
+        
+        instructions.set('action_instructions', action_data)
     
     def _prepare_instructions(self, instructions, context: ActionContext):
         """Template method: Prepare action-specific instructions data.
@@ -362,19 +424,45 @@ class Action:
         
         # Note: Scope display with CLI formatting is handled by CLI layer
         
-        # 1. Add behavior description at the very top if present
-        if self.behavior and hasattr(self.behavior, 'description') and self.behavior.description:
-            output_lines.append(self.behavior.description)
+        # BEHAVIOR INSTRUCTIONS SECTION
+        if self.behavior:
+            behavior_name = self.behavior.name if hasattr(self.behavior, 'name') else 'unknown'
+            output_lines.append(f"**Behavior Instructions - {behavior_name}**")
+            
+            # Add behavior description
+            if hasattr(self.behavior, 'description') and self.behavior.description:
+                output_lines.append(f"The purpose of this behavior is to {self.behavior.description.lower()}")
+                output_lines.append("")
+            
+            # Add behavior-level instructions if present
+            if hasattr(self.behavior, 'instructions') and self.behavior.instructions:
+                behavior_instructions = self.behavior.instructions
+                if isinstance(behavior_instructions, list):
+                    output_lines.extend(behavior_instructions)
+                elif isinstance(behavior_instructions, str):
+                    output_lines.append(behavior_instructions)
+                output_lines.append("")
+        
+        # ACTION INSTRUCTIONS SECTION
+        action_name = self.action_name if hasattr(self, 'action_name') else 'unknown'
+        output_lines.append(f"**Action Instructions - {action_name}**")
+        
+        # Add action description if available
+        if hasattr(self, 'description') and self.description:
+            output_lines.append(f"The purpose of this action is to {self.description.lower()}")
             output_lines.append("")
         
-        # 2. Add behavior-specific action instructions if present
+        # Add behavior-specific action instructions if present
         if self.action_config and 'instructions' in self.action_config:
             behavior_action_instructions = self.action_config.get('instructions', [])
             if behavior_action_instructions:
                 output_lines.extend(behavior_action_instructions)
                 output_lines.append("")
         
-        # 3. Add base instructions (context sources + base action instructions)
+        output_lines.append("---")
+        output_lines.append("")
+        
+        # Add base instructions (context sources + base action instructions)
         base_instructions = instructions_dict.get('base_instructions', [])
         output_lines.extend(base_instructions)
         

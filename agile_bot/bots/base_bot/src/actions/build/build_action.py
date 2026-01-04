@@ -55,14 +55,26 @@ class BuildKnowledgeAction(Action):
         
         # Add knowledge_graph_template and knowledge_graph_config for test compatibility
         if self.knowledge_graph_template:
+            # Ensure template_path is always absolute - construct from bot directory + behavior path
+            if self.knowledge_graph_template.template_path:
+                template_path_value = str(self.knowledge_graph_template.template_path.resolve())
+            elif self.knowledge_graph_spec.template_filename:
+                # Fallback: construct absolute path from bot_directory/behaviors/{behavior}/content/knowledge_graph/{template}
+                kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'knowledge_graph'
+                template_path_value = str((kg_dir / self.knowledge_graph_spec.template_filename).resolve())
+            else:
+                template_path_value = None
+            
             instructions.set('knowledge_graph_template', {
-                'template_path': str(self.knowledge_graph_template.template_path) if self.knowledge_graph_template.template_path else None,
+                'template_path': template_path_value,
                 'exists': self.knowledge_graph_template.exists
             })
         if self.knowledge_graph_spec.config_data:
+            # Use absolute path for the output file
+            output_file_path = self.knowledge_graph_spec.knowledge_graph.path
             instructions.set('knowledge_graph_config', {
                 'output': self.knowledge_graph_spec.output_filename,
-                'path': self.knowledge_graph_spec.output_path,
+                'path': str(output_file_path.parent),  # Absolute path to directory
                 'template': self.knowledge_graph_spec.template_filename
             })
         
@@ -253,30 +265,41 @@ class BuildKnowledgeAction(Action):
         """Replace full content (templates, configs, rules) with file path references."""
         bot_dir = self.behavior.bot_paths.bot_directory
         
-        # Convert template path to relative reference
-        template_path = instructions.get('template_path')
-        if template_path:
-            template_reference = self._convert_path_to_reference(template_path, bot_dir)
-            instructions._data['template_path'] = template_reference
+        # NOTE: Keep template_path and config_path as absolute paths for clickable links in frontend
+        # Do NOT convert to relative references anymore
+        # template_path = instructions.get('template_path')
+        # if template_path:
+        #     template_reference = self._convert_path_to_reference(template_path, bot_dir)
+        #     instructions._data['template_path'] = template_reference
         
-        # Convert config path to relative reference
-        config_path = instructions.get('config_path')
-        if config_path:
-            config_reference = self._convert_path_to_reference(config_path, bot_dir)
-            instructions._data['config_path'] = config_reference
+        # config_path = instructions.get('config_path')
+        # if config_path:
+        #     config_reference = self._convert_path_to_reference(config_path, bot_dir)
+        #     instructions._data['config_path'] = config_reference
         
         # Replace full rules data with file path references
         if 'rules' in instructions._data and instructions._data['rules']:
             all_rules = instructions._data['rules']
             rule_files = []
+            # Get the bots directory using python_workspace_root
+            bots_dir = self.behavior.bot_paths.python_workspace_root / 'agile_bot' / 'bots'
+            
             for rule in all_rules:
+                rule_path = None
                 if isinstance(rule, dict):
                     rule_file = rule.get('rule_file', '')
                     if rule_file:
-                        rule_files.append(rule_file)
+                        # Convert bot-relative path to absolute path
+                        # rule_file format: "story_bot/behaviors/discovery/rules/file.json"
+                        rule_path = str(bots_dir / rule_file)
                 elif isinstance(rule, str):
-                    rule_files.append(rule)
-            # Replace full rules with just file references
+                    # If it's already a string path, convert it to absolute
+                    rule_path = str(bots_dir / rule)
+                
+                if rule_path:
+                    rule_files.append(rule_path)
+            
+            # Replace full rules with absolute file paths
             instructions._data['rules'] = rule_files
             # Keep rules content as-is, no need to add file references
             # Rules are already formatted nicely from inject_rules method

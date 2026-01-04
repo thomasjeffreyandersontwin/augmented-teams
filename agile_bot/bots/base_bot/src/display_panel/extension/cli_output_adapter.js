@@ -1,5 +1,9 @@
 class CLIOutputAdapter {
   adapt(rawOutput) {
+    const fs = require('fs'); // #region agent log
+    // #region agent log
+    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:2',message:'adapt() called',data:{outputLength:rawOutput.length,hasJSON:rawOutput.indexOf('{')>=0,firstChars:rawOutput.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H,I'})+'\n');
+    // #endregion
     // First, try to parse as JSON (CLI outputs JSON after header text when using --format json)
     const jsonStartIndex = rawOutput.indexOf('{');
     if (jsonStartIndex >= 0) {
@@ -7,14 +11,23 @@ class CLIOutputAdapter {
       try {
         const jsonData = JSON.parse(jsonText);
         console.log('[ADAPTER] Successfully parsed JSON format');
+        // #region agent log
+        fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:13',message:'Parsed JSON successfully',data:{hasBehaviors:!!(jsonData.behaviors),behaviorsCount:jsonData.behaviors?jsonData.behaviors.length:0,botName:jsonData.bot?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I'})+'\n');
+        // #endregion
         return this._adaptFromJson(jsonData);
       } catch (e) {
         console.log('[ADAPTER] JSON parse failed, falling back to text format:', e.message);
+        // #region agent log
+        fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:20',message:'JSON parse failed',data:{error:e.message,jsonStart:jsonText.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})+'\n');
+        // #endregion
       }
     }
     
     // Fallback: parse text format
     console.log('[ADAPTER] Using text format parsing');
+    // #region agent log
+    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:28',message:'Using text format parsing',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})+'\n');
+    // #endregion
     return this._adaptFromText(rawOutput);
   }
 
@@ -54,7 +67,7 @@ class CLIOutputAdapter {
     if (scopeData.type === 'story' && scopeData.storyGraph && scopeData.storyGraph.epics) {
       // Convert story graph epics to panel format
       const epics = scopeData.storyGraph.epics.map(epic => ({
-        icon: '🎯',
+        icon: '💡',
         type: 'epic',
         name: epic.name,
         features: (epic.sub_epics || []).map(subEpic => {
@@ -279,7 +292,7 @@ class CLIOutputAdapter {
         } else if (scopeData.storyGraph && scopeData.storyGraph.epics) {
           // Convert story graph epics to panel format
           const epics = (scopeData.storyGraph.epics || []).map(epic => ({
-            icon: '🎯',
+            icon: 'lightbulb',
             type: 'epic',
             name: epic.name,
             features: (epic.sub_epics || []).map(subEpic => {
@@ -422,7 +435,7 @@ class CLIOutputAdapter {
     for (const line of lines) {
       if (/🎯/.test(line) && !line.includes('Current Scope:')) {
         const name = line.replace(/^[^🎯]*🎯 /, '').trim();
-        currentEpic = { icon: '🎯', type: 'epic', name: name, features: [] };
+        currentEpic = { icon: 'lightbulb', type: 'epic', name: name, features: [] };
         epics.push(currentEpic);
         currentFeature = null;
       }
@@ -495,11 +508,17 @@ class CLIOutputAdapter {
     // Fallback: Extract as plain text (for non-JSON format)
     const instructionsMatch = /\*\*INSTRUCTIONS SECTION:\*\*[\s\S]*?[━─=\-]{30,}\s*\n([\s\S]+?)\n\s*[━═=\-]{30,}\s*\n+\s*\*\*\*?\s*CLI STATUS/i.exec(rawOutput);
     if (instructionsMatch) {
-      console.log('[INSTRUCTIONS DEBUG] Text match found! Length:', instructionsMatch[1].length);
-      return instructionsMatch[1].trim();
+      const extracted = instructionsMatch[1].trim();
+      console.log('[INSTRUCTIONS DEBUG] Text match found! Length:', extracted.length);
+      console.log('[INSTRUCTIONS DEBUG] First 500 chars:', extracted.substring(0, 500));
+      console.log('[INSTRUCTIONS DEBUG] Contains "Behavior Instructions"?', extracted.includes('Behavior Instructions'));
+      console.log('[INSTRUCTIONS DEBUG] Contains "Action Instructions"?', extracted.includes('Action Instructions'));
+      return extracted;
     }
     
-    console.log('[INSTRUCTIONS DEBUG] No instructions found');
+    console.log('[INSTRUCTIONS DEBUG] No instructions found - regex did not match');
+    console.log('[INSTRUCTIONS DEBUG] Looking for INSTRUCTIONS SECTION header:', rawOutput.includes('INSTRUCTIONS SECTION'));
+    console.log('[INSTRUCTIONS DEBUG] Looking for CLI STATUS:', rawOutput.includes('CLI STATUS'));
     return '';
   }
 

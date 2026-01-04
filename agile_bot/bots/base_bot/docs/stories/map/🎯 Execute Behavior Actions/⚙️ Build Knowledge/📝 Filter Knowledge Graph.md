@@ -23,11 +23,42 @@ Filter Knowledge Graph functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Filter Knowledge Graph (happy_path)
+### Scenario: Filter returns all when scope is all (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1463)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Scope type is ALL
+WHEN: Knowledge graph is filtered
+THEN: All content is returned
 ```
+
+
+### Scenario: Filter by story names returns matching stories (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1480)
+
+**Steps:**
+```gherkin
+GIVEN: Scope with story names
+WHEN: Knowledge graph is filtered
+THEN: Only matching stories are returned
+```
+
+
+### Scenario: Filter by epic names returns matching epics (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1498)
+
+**Steps:**
+```gherkin
+GIVEN: Scope with epic names
+WHEN: Knowledge graph is filtered
+THEN: Only matching epics are returned
+```
+
+
+### Scenario: Filter by increment priorities returns matching increments (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1516)
+
+**Steps:**
+```gherkin
+GIVEN: Scope with increment priorities
+WHEN: Knowledge graph is filtered
+THEN: Only matching increments are returned
+```
+

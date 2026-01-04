@@ -23,11 +23,12 @@ Initialize Action functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Initialize Action (happy_path)
+### Scenario: Action initialized with behavior and config (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Behavior and action config
+WHEN: Action is created
+THEN: Action is properly initialized
 ```
+

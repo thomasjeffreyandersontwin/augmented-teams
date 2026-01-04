@@ -23,11 +23,32 @@ Create Build Scope functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Create Build Scope (happy_path)
+### Scenario: Build scope created with different parameter combinations (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1266)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Different scope parameters (story, epic, increment)
+WHEN: BuildScope is created
+THEN: Scope contains expected filters
 ```
+
+
+### Scenario: Build scope defaults to all when no parameters (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1280)
+
+**Steps:**
+```gherkin
+GIVEN: No scope parameters provided
+WHEN: BuildScope is created
+THEN: Scope type is ALL
+```
+
+
+### Scenario: Action uses build scope to define build scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1296)
+
+**Steps:**
+```gherkin
+GIVEN: Action with scope parameters
+WHEN: Action executes
+THEN: Build scope is created and applied
+```
+

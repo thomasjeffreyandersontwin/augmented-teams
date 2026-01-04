@@ -142,7 +142,7 @@ class REPLSession:
         first_behavior.actions.navigate_to(first_behavior.actions.names[0])
         return True
     
-    def display_current_state(self, full=False, auto_initialize=True, format='text') -> REPLStateDisplay:
+    def display_current_state(self, full=False, auto_initialize=True, format='text', skip_scope=False) -> REPLStateDisplay:
         if not self.has_current_action:
             if auto_initialize and self._initialize_to_first_behavior_action():
                 return self.display_current_state(full=full, auto_initialize=False, format=format)
@@ -187,26 +187,31 @@ class REPLSession:
         headless_display = HeadlessModeStatusDisplay(workspace_directory=self.workspace_directory)
         lines.append(headless_display.render())
         
-        # Scope section (thin line separator)
-        lines.append(formatter.subsection_separator())
+        # Scope section (thin line separator) - skip if scope is displayed elsewhere (e.g., in instructions)
+        if not skip_scope:
+            lines.append(formatter.subsection_separator())
+            
+            scope_display = self.cli_bot.get_scope_display(format=format)
+            if scope_display:
+                lines.append(scope_display)
+            else:
+                # No scope set - show brief message
+                lines.append(f"{formatter.scope_icon()} Scope")
+                lines.append(f"{formatter.scope_icon()} Current Scope: all (entire project)")
+                lines.append("")
+                lines.append("To change scope (pick ONE - setting a new scope replaces the previous):")
+                lines.append("```powershell")
+                lines.append("scope all                            # Clear scope, work on entire project")
+                lines.append("scope showAll                        # Show entire story graph (no filtering)")
+                lines.append('scope "Story Name"                   # Filter by story (replaces any file scope)')
+                lines.append('scope "file:C:/path/to/**/*.py"      # Filter by files (replaces any story scope)')
+                lines.append("```")
         
-        scope_display = self.cli_bot.get_scope_display(format=format)
-        if scope_display:
-            lines.append(scope_display)
+        if not skip_scope:
+            lines.append(formatter.subsection_separator())
         else:
-            # No scope set - show brief message
-            lines.append(f"{formatter.scope_icon()} Scope")
-            lines.append(f"{formatter.scope_icon()} Current Scope: all (entire project)")
-            lines.append("")
-            lines.append("To change scope (pick ONE - setting a new scope replaces the previous):")
-            lines.append("```powershell")
-            lines.append("scope all                            # Clear scope, work on entire project")
-            lines.append("scope showAll                        # Show entire story graph (no filtering)")
-            lines.append('scope "Story Name"                   # Filter by story (replaces any file scope)')
-            lines.append('scope "file:C:/path/to/**/*.py"      # Filter by files (replaces any story scope)')
-            lines.append("```")
-        
-        lines.append(formatter.subsection_separator())
+            # Still need a separator before progress section
+            lines.append(formatter.subsection_separator())
         
         # Progress section
         lines.append(f"## {formatter.position_icon()} **Progress**")
@@ -240,8 +245,8 @@ class REPLSession:
             breadcrumbs=self.cli_bot.status.breadcrumbs
         )
     
-    def get_context_header_for_ai(self) -> str:
-        state_display = self.display_current_state()
+    def get_context_header_for_ai(self, skip_scope=False) -> str:
+        state_display = self.display_current_state(skip_scope=skip_scope)
         return state_display.output
     
     def _convert_domain_result_to_repl_response(self, result: Dict[str, Any], command: str) -> REPLCommandResponse:
@@ -600,21 +605,22 @@ class REPLSession:
             else:
                 output = action.instructions(args)
             
-            # Check if this action has auto_confirm
-            underlying_action = action._action if hasattr(action, '_action') else action
-            if hasattr(underlying_action, 'domain_action'):
-                underlying_action = underlying_action.domain_action
-            auto_confirm = getattr(underlying_action, 'auto_confirm', False)
-            
-            if auto_confirm:
-                # Auto-confirm: show instructions then immediately run confirm
-                instructions_response = self._wrap_with_context_header(output, "Instructions displayed (auto-confirm)")
-                confirm_response = self._handle_confirm_command("")
-                return REPLCommandResponse(
-                    output=instructions_response.output + "\n\n[Auto-confirmed]\n\n" + confirm_response.output,
-                    response="Instructions displayed and auto-confirmed",
-                    status=confirm_response.status
-                )
+            # TEMPORARILY DISABLED: Auto-confirm behavior (for testing render instructions)
+            # # Check if this action has auto_confirm
+            # underlying_action = action._action if hasattr(action, '_action') else action
+            # if hasattr(underlying_action, 'domain_action'):
+            #     underlying_action = underlying_action.domain_action
+            # auto_confirm = getattr(underlying_action, 'auto_confirm', False)
+            # 
+            # if auto_confirm:
+            #     # Auto-confirm: show instructions then immediately run confirm
+            #     instructions_response = self._wrap_with_context_header(output, "Instructions displayed (auto-confirm)")
+            #     confirm_response = self._handle_confirm_command("")
+            #     return REPLCommandResponse(
+            #         output=instructions_response.output + "\n\n[Auto-confirmed]\n\n" + confirm_response.output,
+            #         response="Instructions displayed and auto-confirmed",
+            #         status=confirm_response.status
+            #     )
             
             # No auto-confirm: show instructions and wait for human to run confirm
             return self._wrap_with_context_header(output, "Instructions displayed")
@@ -1028,7 +1034,9 @@ class REPLSession:
     
     def _wrap_with_context_header(self, content: str, response_msg: str) -> REPLCommandResponse:
         formatter = self.formatter
-        header = self.get_context_header_for_ai()
+        # Skip scope in status header if we're in instructions phase (scope already shown at top of instructions)
+        skip_scope = (self.action_phase == 'instructions')
+        header = self.get_context_header_for_ai(skip_scope=skip_scope)
         
         # Instructions section header (thick line)
         instructions_header = "\n".join([
@@ -1559,7 +1567,7 @@ class REPLSession:
                         "isCompleted": is_current_action and stage not in ('instructions', 'not_started'),
                         "status": instr_status
                     })
-                    
+
                     if is_current_action and stage == 'confirming':
                         confirm_status = "current"
                     elif is_current_action and stage in ('instructions', 'not_started'):
@@ -1568,7 +1576,7 @@ class REPLSession:
                         confirm_status = "completed"
                     else:
                         confirm_status = "completed" if is_completed_action else "pending"
-                    
+
                     action_data["operations"].append({
                         "name": "confirm",
                         "description": "",
@@ -1616,6 +1624,8 @@ class REPLSession:
         """Get current action instructions as JSON.
         
         Returns the full instructions structure with all properties:
+        - behavior_instructions: behavior metadata and instructions
+        - action_instructions: action metadata and instructions
         - base_instructions: array of instruction lines
         - display_content: array of display lines
         - scope: scope data if present
@@ -1637,20 +1647,21 @@ class REPLSession:
             # Get the underlying action if this is a CLIAction wrapper
             underlying_action = action._action if hasattr(action, '_action') else action
             
-            # Get the instructions object (property, not method)
-            instructions_obj = underlying_action.instructions
-            if not instructions_obj:
+            # Call get_instructions() method to get full instructions with metadata
+            # This triggers _add_behavior_action_metadata() which adds behavior_instructions and action_instructions
+            result = underlying_action.get_instructions()
+            if not result or 'instructions' not in result:
                 return {}
             
-            # Convert to dict to get full structure
-            instructions_dict = instructions_obj.to_dict()
+            instructions_dict = result['instructions']
             
-            # Add scope as JSON if present
-            if instructions_obj.scope:
+            # Add scope as JSON if present (check both in dict and in instructions_obj)
+            instructions_obj = underlying_action.instructions
+            if instructions_obj and instructions_obj.scope:
                 from agile_bot.bots.base_bot.src.repl_cli.cli_scope import CLIScope
                 cli_scope = CLIScope(instructions_obj.scope, self.workspace_directory, self.formatter)
                 instructions_dict['scope'] = cli_scope.to_json_dict()
-            else:
+            elif 'scope' not in instructions_dict:
                 instructions_dict['scope'] = None
             
             return instructions_dict
