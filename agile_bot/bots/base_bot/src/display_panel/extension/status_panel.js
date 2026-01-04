@@ -215,6 +215,49 @@ class StatusPanel {
               this._expansionState = { ...this._expansionState, ...message.expansionState };
             }
             return;
+          case "sendToChat":
+            this._logger.log('sendToChat - calling bot submit command');
+            
+            // Call the bot's submit command (Python handles everything)
+            this._dataProvider.executeCommand('submit')
+              .then((output) => {
+                this._logger.log('Bot submit command output:', output);
+                
+                // Check for success
+                if (output.includes('SUCCESS:') || output.includes('submitted to Cursor chat successfully')) {
+                  vscode.window.showInformationMessage('Instructions submitted to chat!');
+                }
+                // Check for errors
+                else if (output.includes('ERROR:') || output.includes('FAILED:')) {
+                  const errorMatch = output.match(/ERROR:|FAILED:\s*(.+)/);
+                  const errorMsg = errorMatch ? errorMatch[1] : 'Unknown error';
+                  vscode.window.showErrorMessage(`Submit failed: ${errorMsg}`);
+                }
+                // Unknown result
+                else {
+                  vscode.window.showWarningMessage('Submit completed with unknown result');
+                  console.log('[PANEL] Submit output:', output);
+                }
+              })
+              .catch((error) => {
+                this._logger.error('Submit command failed:', error);
+                vscode.window.showErrorMessage(`Submit command failed: ${error.message}`);
+              });
+            return;
+          case "testVSCodeCommand":
+            if (message.vsCodeCommand) {
+              this._logger.log('Testing VS Code command:', message.vsCodeCommand);
+              vscode.commands.executeCommand(message.vsCodeCommand)
+                .then(() => {
+                  this._logger.log('Command executed successfully:', message.vsCodeCommand);
+                  vscode.window.showInformationMessage(`SUCCESS: ${message.vsCodeCommand}`);
+                })
+                .catch((error) => {
+                  this._logger.error('Command failed:', message.vsCodeCommand, error);
+                  vscode.window.showErrorMessage(`FAILED: ${message.vsCodeCommand} - ${error.message}`);
+                });
+            }
+            return;
         }
       },
       null,
@@ -278,6 +321,55 @@ class StatusPanel {
     return output;
   }
 
+  _buildPromptFromInstructions(instructions) {
+    // Build formatted prompt content from instructions object
+    if (!instructions) return '';
+    
+    const lines = [];
+    
+    // Helper to safely add array content
+    const addLines = (arr) => {
+      if (Array.isArray(arr)) {
+        arr.forEach(item => lines.push(item));
+      } else if (typeof arr === 'string') {
+        lines.push(arr);
+      }
+    };
+    
+    // Add base instructions
+    if (instructions.base_instructions) {
+      addLines(instructions.base_instructions);
+    }
+    
+    // Add behavior instructions
+    if (instructions.behavior_instructions) {
+      lines.push('');
+      lines.push('## Behavior Context:');
+      addLines(instructions.behavior_instructions);
+    }
+    
+    // Add action instructions
+    if (instructions.action_instructions) {
+      lines.push('');
+      lines.push('## Action Instructions:');
+      addLines(instructions.action_instructions);
+    }
+    
+    // Add scope if present
+    if (instructions.scope) {
+      lines.push('');
+      lines.push('## Scope:');
+      if (typeof instructions.scope === 'string') {
+        lines.push(instructions.scope);
+      } else {
+        lines.push(JSON.stringify(instructions.scope, null, 2));
+      }
+    }
+    
+    return lines.join('\n');
+  }
+
+
   async _update() {
     const fs = require('fs'); // #region agent log
     const webview = this._panel.webview;
@@ -320,8 +412,13 @@ class StatusPanel {
       structuredData.availableBots = this._dataProvider.getAvailableBots();
       structuredData.currentBot = this._dataProvider.getCurrentBot();
       
-      // Use instructions from adapter if available, otherwise fallback to last prompt content
-      structuredData.promptContent = structuredData.instructions || this._lastPromptContent;
+      // Extract prompt content from instructions if not already set
+      if (!this._lastPromptContent && structuredData.instructions) {
+        this._lastPromptContent = this._buildPromptFromInstructions(structuredData.instructions);
+      }
+      
+      // Use last prompt content (the formatted string), NOT the instructions object
+      structuredData.promptContent = this._lastPromptContent;
       
       // Add expansion state so user's open/close choices survive re-render
       structuredData.expansionState = this._expansionState;

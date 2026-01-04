@@ -348,6 +348,8 @@ class REPLSession:
             return self._handle_instructions_command(command_args)
         if command_verb == 'confirm':
             return self._handle_confirm_command(command_args)
+        if command_verb == 'submit':
+            return self._handle_submit_command(command_args)
         
         # State commands
         if command_verb == 'path':
@@ -698,6 +700,71 @@ class REPLSession:
             return REPLCommandResponse(
                 output=f"ERROR confirming: {str(e)}",
                 response=f"ERROR confirming: {str(e)}",
+                status="error"
+            )
+    
+    def _handle_submit_command(self, args: str = "") -> REPLCommandResponse:
+        """Get full instructions from bot and submit to Cursor chat using keyboard automation."""
+        import traceback
+        
+        # Get full instructions from bot (not clipboard)
+        instructions_response = self._handle_instructions_command(args)
+        
+        if instructions_response.status == "error":
+            return REPLCommandResponse(
+                output=f"ERROR: Cannot get instructions\n{instructions_response.output}",
+                response="No instructions available",
+                status="error"
+            )
+        
+        # Get the FULL instructions output (includes headers and CLI status)
+        instructions_text = instructions_response.output
+        
+        if not instructions_text or len(instructions_text.strip()) == 0:
+            return REPLCommandResponse(
+                output="ERROR: Instructions are empty",
+                response="Empty instructions",
+                status="error"
+            )
+        
+        # Copy full instructions to clipboard then automate
+        try:
+            import pyperclip
+            import pyautogui
+            import time
+            
+            # Copy to clipboard
+            pyperclip.copy(instructions_text)
+            time.sleep(0.2)
+            
+            # Ctrl+L to open chat
+            pyautogui.hotkey('ctrl', 'l')
+            time.sleep(0.3)
+            
+            # Ctrl+V to paste
+            pyautogui.hotkey('ctrl', 'v')
+            time.sleep(0.2)
+            
+            # Enter to submit
+            pyautogui.press('enter')
+            
+            return REPLCommandResponse(
+                output=f"SUCCESS: Full instructions submitted to Cursor chat!\n\nContent length: {len(instructions_text)} characters",
+                response="Instructions submitted to Cursor chat successfully",
+                status="success",
+                action=self.current_action.name if self.has_current_action else None
+            )
+        except ImportError:
+            return REPLCommandResponse(
+                output="ERROR: pyautogui/pyperclip not installed. Run: pip install pyautogui pyperclip",
+                response="Missing required packages",
+                status="error"
+            )
+        except Exception as e:
+            error_detail = traceback.format_exc()
+            return REPLCommandResponse(
+                output=f"ERROR: Automation failed\n{str(e)}\n\n{error_detail}",
+                response=f"Error: {str(e)}",
                 status="error"
             )
     

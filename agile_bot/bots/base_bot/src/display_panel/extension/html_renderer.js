@@ -35,7 +35,7 @@ class HtmlRenderer {
     ${this.renderHeader(statusData.bot, statusData.session, statusData.availableBots || [], statusData.currentBot || 'story_bot', webview, extensionUri)}
     ${this.renderBehaviors(statusData.behaviors, statusData.expansionState || {}, webview, extensionUri)}
     ${this.renderScope(statusData.scope, webview, extensionUri)}
-    ${this.renderInstructions(statusData.instructions, webview, extensionUri)}
+    ${this.renderInstructions(statusData.instructions, statusData.promptContent, webview, extensionUri)}
     ${this.renderScripts()}
 </body>
 </html>`;
@@ -588,6 +588,20 @@ class HtmlRenderer {
         .bot-link:not(.active):hover {
             opacity: 0.8;
         }
+        .command-suggestion {
+            background: rgba(255, 140, 0, 0.1);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            color: var(--accent-color);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .command-suggestion:hover {
+            background: rgba(255, 140, 0, 0.2);
+            border-color: var(--accent-color);
+        }
     `;
   }
 
@@ -696,7 +710,7 @@ class HtmlRenderer {
     <div class="section card-primary" style="border-top: none; padding-top: 0;">
         <div class="main-header">
             ${imagePath ? `<img src="${imagePath}" class="main-header-icon" alt="Company Icon" onerror="console.error('Failed to load icon:', this.src); this.style.border='1px solid red';" />` : ''}
-            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.24</span></span>
+            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.54</span></span>
             <button class="main-header-refresh" onclick="refreshStatus()" title="Refresh">
                 ${refreshIconPath ? `<img src="${refreshIconPath}" style="width: 36px; height: 36px; object-fit: contain; filter: saturate(1.3) brightness(0.95) hue-rotate(-5deg);" alt="Refresh" />` : '🔄'}
             </button>
@@ -1186,7 +1200,7 @@ class HtmlRenderer {
    * Render instructions section
    * Displays the instructions extracted from CLI output
    */
-  renderInstructions(instructions, webview = null, extensionUri = null) {
+  renderInstructions(instructions, promptContent = '', webview = null, extensionUri = null) {
     if (!instructions || Object.keys(instructions).length === 0) {
       return '';
     }
@@ -1218,6 +1232,7 @@ class HtmlRenderer {
     let lightbulbHeadIconPath = '';
     let bullseyeIconPath = '';
     let storyIconPath = '';
+    let botSubmitIconPath = '';
     if (webview && extensionUri) {
       try {
         const clipboardUri = vscode.Uri.joinPath(extensionUri, 'img', 'clipboard.png');
@@ -1237,6 +1252,9 @@ class HtmlRenderer {
         
         const storyUri = vscode.Uri.joinPath(extensionUri, 'img', 'story.png');
         storyIconPath = webview.asWebviewUri(storyUri).toString();
+        
+        const botSubmitUri = vscode.Uri.joinPath(extensionUri, 'img', 'bot submit.png');
+        botSubmitIconPath = webview.asWebviewUri(botSubmitUri).toString();
       } catch (err) {
         console.error('Failed to create icon URIs:', err);
       }
@@ -1473,10 +1491,14 @@ class HtmlRenderer {
         </div>`;
     }).join('');
 
+    // Escape prompt content for safe embedding in HTML attribute
+    const promptContentStr = typeof promptContent === 'string' ? promptContent : (promptContent ? String(promptContent) : '');
+    const escapedPromptContent = promptContentStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+    
     return `
     <div class="section card-primary">
         <div class="collapsible-section expanded">
-            <div class="collapsible-header" onclick="toggleSection('instructions-content')" style="
+            <div class="collapsible-header" style="
                 cursor: pointer;
                 padding: 8px 10px;
                 background-color: transparent;
@@ -1487,17 +1509,93 @@ class HtmlRenderer {
                 justify-content: space-between;
                 user-select: none;
             ">
-                <div style="display: flex; align-items: center;">
+                <div style="display: flex; align-items: center;" onclick="toggleSection('instructions-content')">
                     <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
                     ${clipboardIconPath ? `<img src="${clipboardIconPath}" style="margin-right: 8px; width: 28px; height: 28px; object-fit: contain;" alt="Instructions Icon" />` : '<span style="margin-right: 8px; font-size: 20px;">📋</span>'}
                     <span style="font-weight: 600; font-size: 20px;">Instructions</span>
                 </div>
+                <button id="submit-to-chat-btn" onclick="sendInstructionsToChat(event)" style="
+                    background: transparent;
+                    border: 1px solid var(--accent-color);
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    transition: all 0.15s ease;
+                    ${!promptContentStr ? 'opacity: 0.5; cursor: not-allowed;' : ''}
+                " 
+                onmouseover="this.style.backgroundColor='rgba(255, 140, 0, 0.1)'" 
+                onmouseout="this.style.backgroundColor='transparent'"
+                title="${promptContentStr ? 'Submit instructions to chat' : 'Run instructions command first'}">
+                    ${botSubmitIconPath ? `<img src="${botSubmitIconPath}" style="width: 24px; height: 24px; object-fit: contain;" alt="Submit to Chat" />` : '<span style="font-size: 18px;">🤖</span>'}
+                </button>
+                <script>
+                    window._promptContent = ${JSON.stringify(promptContentStr)};
+                </script>
             </div>
-            <div id="instructions-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
+            <div id="instructions-content" class="collapsible-content" style="max-height: 600px; overflow-y: auto; overflow-x: hidden; transition: max-height 0.3s ease;">
                 <div class="card-secondary" style="padding: 5px 10px;">
                     ${sections}
                 </div>
             </div>
+        </div>
+        
+        <!-- Test Command Box -->
+        <div class="card" style="margin-top: 16px; padding: 16px;">
+            <div style="margin-bottom: 12px; font-weight: 600; font-size: 16px; color: var(--accent-color);">
+                Test VS Code Commands
+            </div>
+            <div style="margin-bottom: 8px; font-size: 12px; color: rgba(255,255,255,0.7);">
+                Try different commands to see which ones work:
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input 
+                    id="test-command-input" 
+                    type="text" 
+                    placeholder="workbench.view.chat" 
+                    style="
+                        flex: 1;
+                        background: var(--input-bg);
+                        border: var(--input-border-width) solid var(--input-border);
+                        border-radius: var(--input-border-radius);
+                        padding: var(--input-padding);
+                        color: var(--vscode-foreground);
+                        font-family: var(--vscode-font-family);
+                        font-size: var(--font-size-base);
+                        transition: var(--input-transition);
+                    "
+                    onfocus="this.style.background='var(--input-bg-focus)'; this.style.borderColor='var(--input-border-focus)'; this.style.borderWidth='var(--input-border-width-focus)';"
+                    onblur="this.style.background='var(--input-bg)'; this.style.borderColor='var(--input-border)'; this.style.borderWidth='var(--input-border-width)';"
+                />
+                <button 
+                    onclick="testCommand()" 
+                    style="
+                        background: var(--accent-color);
+                        border: none;
+                        border-radius: 4px;
+                        padding: 8px 16px;
+                        color: #000;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: opacity 0.15s ease;
+                    "
+                    onmouseover="this.style.opacity='0.8'"
+                    onmouseout="this.style.opacity='1'"
+                >
+                    Test
+                </button>
+            </div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">
+                Suggested commands:
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                <button onclick="document.getElementById('test-command-input').value='workbench.view.chat'; testCommand();" class="command-suggestion">workbench.view.chat</button>
+                <button onclick="document.getElementById('test-command-input').value='workbench.action.chat.open'; testCommand();" class="command-suggestion">workbench.action.chat.open</button>
+                <button onclick="document.getElementById('test-command-input').value='workbench.action.quickchat.toggle'; testCommand();" class="command-suggestion">workbench.action.quickchat.toggle</button>
+                <button onclick="document.getElementById('test-command-input').value='editor.action.inlineChat.start'; testCommand();" class="command-suggestion">editor.action.inlineChat.start</button>
+            </div>
+            <div id="test-result" style="margin-top: 12px; padding: 8px; border-radius: 4px; display: none;"></div>
         </div>
     </div>`;
   }
@@ -2360,6 +2458,26 @@ class HtmlRenderer {
             });
         }
 
+        function sendInstructionsToChat(event) {
+            console.log('[HTML] sendInstructionsToChat called');
+            event.stopPropagation(); // Prevent toggling the section
+            
+            const promptContent = window._promptContent || '';
+            console.log('[HTML] promptContent length:', promptContent.length);
+            
+            if (!promptContent || promptContent.trim() === '') {
+                console.log('[HTML] No content to submit - ignored');
+                alert('No content available. Please run an instructions command first.');
+                return;
+            }
+            console.log('[HTML] Sending message to extension');
+            vscode.postMessage({
+                command: 'sendToChat',
+                promptContent: promptContent
+            });
+            console.log('[HTML] Message sent');
+        }
+
         function updateWorkspace(workspacePath) {
             vscode.postMessage({
                 command: 'updateWorkspace',
@@ -2509,6 +2627,30 @@ class HtmlRenderer {
                 });
             }
         });
+
+        function testCommand() {
+            const input = document.getElementById('test-command-input');
+            const resultDiv = document.getElementById('test-result');
+            const command = input.value.trim();
+            
+            if (!command) {
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = 'rgba(255, 140, 0, 0.1)';
+                resultDiv.style.color = '#ff8c00';
+                resultDiv.textContent = 'Please enter a command';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = 'rgba(100, 100, 100, 0.2)';
+            resultDiv.style.color = 'rgba(255, 255, 255, 0.7)';
+            resultDiv.textContent = 'Testing: ' + command + '...';
+            
+            vscode.postMessage({
+                command: 'testVSCodeCommand',
+                vsCodeCommand: command
+            });
+        }
     </script>`;
   }
 

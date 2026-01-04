@@ -87,7 +87,7 @@ class ActionHelp:
             "Hierarchy: behavior → action → stage",
             "",
             "Usage:",
-            f"  {self.action_name} [instructions|confirm]",
+            f"  {self.action_name} [instructions|confirm|submit]",
             "",
             "Action Stages (two steps):",
             "",
@@ -99,6 +99,7 @@ class ActionHelp:
         
         lines.extend([
             "Note: Calling action name without stage cycles through: instructions → confirm",
+            "      Use 'submit' to send instructions directly to Cursor chat (Windows only)",
             "",
         ])
         
@@ -330,6 +331,7 @@ class REPLHelp:
         else:
             lines.append(f"      instructions  [context, scope, or action-specific params]")
             lines.append(f"      confirm       [scope, decisions, assumptions, or action-specific params]")
+            lines.append(f"      submit        Submit instructions directly to Cursor chat (Windows only)")
         
         lines.extend([
             "",
