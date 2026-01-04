@@ -213,8 +213,7 @@ class Behaviors:
                 self._current_index = i
                 break
         
-        # When navigating to a behavior: mark all actions in previous behaviors as complete,
-        # clear all actions in future behaviors
+        # When navigating to a behavior: clear completed actions from future behaviors
         if target_index is not None and self.bot_paths:
             workspace_dir = self.bot_paths.workspace_directory
             state_file = workspace_dir / 'behavior_action_state.json'
@@ -226,20 +225,6 @@ class Behaviors:
                 state_data = {}
             
             completed_actions = state_data.get('completed_actions', [])
-            
-            # Mark all actions in previous behaviors as complete
-            for i in range(target_index):
-                past_behavior = self._behaviors[i]
-                for action_name in past_behavior.actions.names:
-                    action_state = f"{self.bot_name}.{past_behavior.name}.{action_name}"
-                    # Check if already completed
-                    is_completed = any(a.get('action_state') == action_state for a in completed_actions if isinstance(a, dict))
-                    if not is_completed:
-                        from datetime import datetime
-                        completed_actions.append({
-                            'action_state': action_state,
-                            'timestamp': datetime.now().isoformat()
-                        })
             
             # Remove completed actions from future behaviors
             actions_to_remove = set()

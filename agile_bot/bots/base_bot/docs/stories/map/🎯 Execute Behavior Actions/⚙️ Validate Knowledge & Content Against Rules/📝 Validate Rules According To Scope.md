@@ -23,11 +23,12 @@ Validate Rules According To Scope functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Validate Rules According To Scope (happy_path)
+### Scenario: Validation applies scope filters (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Scope with specific stories or epics
+WHEN: Validate action executes
+THEN: Only scoped content is validated
 ```
+

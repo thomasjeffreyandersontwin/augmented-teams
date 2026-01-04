@@ -61,27 +61,12 @@ class Behavior:
 
     @property
     def is_completed(self) -> bool:
-        """Check if this behavior is completed using positional logic.
+        """Check if this behavior is completed.
         
-        A behavior is completed if the current behavior (from bot.behaviors.current) 
-        is past this behavior in the workflow order.
+        Note: Completion should be explicitly tracked, not inferred from position.
+        Returning False until we implement explicit completion tracking.
         """
-        if not self.bot:
-            return False
-        
-        current_behavior = self.bot.behaviors.current
-        if not current_behavior:
-            return False
-        
-        behavior_names = self.bot.behaviors.names
-        if self.name not in behavior_names or current_behavior.name not in behavior_names:
-            return False
-        
-        my_index = behavior_names.index(self.name)
-        current_index = behavior_names.index(current_behavior.name)
-        
-        # This behavior is completed if current behavior is past it
-        return my_index < current_index
+        return False
 
     def matches_trigger(self, text: str) -> bool:
         return self.trigger_words.matches(text)

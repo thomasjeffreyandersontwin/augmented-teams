@@ -29,11 +29,12 @@ Deploy MCP BOT Server functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Deploy MCP BOT Server (happy_path)
+### Scenario: MCP server deployed with tools (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Bot tools are generated
+WHEN: Server deployment is triggered
+THEN: MCP server is running with tools
 ```
+

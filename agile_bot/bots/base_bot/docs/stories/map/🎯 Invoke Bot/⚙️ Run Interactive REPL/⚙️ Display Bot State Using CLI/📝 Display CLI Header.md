@@ -78,7 +78,7 @@ And output closes code block with three backticks
 Given CLI is initialized with workspace base_bot
 And workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot
 When CLI renders the dashboard header
-Then output contains 'ðŸ“‚ **Workspace:** base_bot' with folder emoji
+Then output contains 'Ã°Å¸â€œâ€š **Workspace:** base_bot' with folder emoji
 And output shows code block with three backticks
 And output shows full workspace path: 'C:\dev\augmented-teams\agile_bot\bots\base_bot'
 And output closes code block with three backticks

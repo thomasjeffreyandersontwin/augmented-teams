@@ -23,11 +23,12 @@ Inject Strategy Into Instructions functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Inject Strategy Into Instructions (happy_path)
+### Scenario: Action injects decision criteria and assumptions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py#L362)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Environment is bootstrapped with strategy guardrails
+WHEN: Action injects strategy criteria and assumptions
+THEN: Instructions contain strategy criteria and assumptions
 ```
+

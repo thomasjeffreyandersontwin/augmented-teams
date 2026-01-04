@@ -23,11 +23,12 @@ Load Guardrails functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Load Guardrails (happy_path)
+### Scenario: Guardrails loaded from behavior directory (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Guardrails files exist for action
+WHEN: Action loads guardrails
+THEN: Guardrails data is available
 ```
+

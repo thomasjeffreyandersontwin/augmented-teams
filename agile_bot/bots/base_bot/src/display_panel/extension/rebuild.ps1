@@ -41,13 +41,19 @@ $vsixFile = Get-ChildItem -Filter "*.vsix" | Select-Object -First 1
 if ($vsixFile) {
     Write-Host "Extension packaged successfully: $($vsixFile.Name)" -ForegroundColor Green
     Write-Host ""
-    Write-Host "To install, run:" -ForegroundColor Cyan
+    Write-Host "To install in CURSOR, run:" -ForegroundColor Cyan
+    Write-Host "  cursor --install-extension $($vsixFile.Name)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "To install in VS Code, run:" -ForegroundColor Cyan
     Write-Host "  code --install-extension $($vsixFile.Name)" -ForegroundColor White
     Write-Host ""
-    Write-Host "Or in VS Code:" -ForegroundColor Cyan
+    Write-Host "Or via UI:" -ForegroundColor Cyan
     Write-Host "  1. Press Ctrl+Shift+P" -ForegroundColor White
     Write-Host "  2. Type 'Extensions: Install from VSIX'" -ForegroundColor White
     Write-Host "  3. Select: $($vsixFile.Name)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "After installation, reload the window:" -ForegroundColor Yellow
+    Write-Host "  Ctrl+Shift+P -> 'Developer: Reload Window'" -ForegroundColor White
 } else {
     Write-Host "No .vsix file found after build." -ForegroundColor Red
     exit 1

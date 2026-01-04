@@ -23,11 +23,12 @@ Load Base Action Config functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Load Base Action Config (happy_path)
+### Scenario: Base action config loaded from file (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Base action config file exists
+WHEN: Action is initialized
+THEN: Config is loaded
 ```
+

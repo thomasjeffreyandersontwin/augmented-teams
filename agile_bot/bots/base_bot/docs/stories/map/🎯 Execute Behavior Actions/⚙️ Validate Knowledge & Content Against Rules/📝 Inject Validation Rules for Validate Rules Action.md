@@ -25,11 +25,12 @@ Inject Validation Rules for Validate Rules Action functionality for the mob mini
 
 ## Scenarios
 
-### Scenario: Inject Validation Rules for Validate Rules Action (happy_path)
+### Scenario: Validation rules injected into instructions (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Validation rules exist in guardrails
+WHEN: Validate action loads instructions
+THEN: Rules are injected into instructions
 ```
+

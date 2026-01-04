@@ -73,20 +73,37 @@ class StatusPanel {
                 : path.join(this._workspaceRoot, cleanPath);
               const fileUri = vscode.Uri.file(absolutePath);
               
-              vscode.workspace.openTextDocument(fileUri).then(
-                (doc) => {
-                  const options = lineNumber 
-                    ? { 
-                        selection: new vscode.Range(lineNumber - 1, 0, lineNumber - 1, 0),
-                        viewColumn: vscode.ViewColumn.One
-                      }
-                    : { viewColumn: vscode.ViewColumn.One };
-                  vscode.window.showTextDocument(doc, options);
-                },
-                (error) => {
-                  vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
-                }
-              );
+              // Check if this is a special file type that needs custom handling
+              const fileExtension = cleanPath.split('.').pop().toLowerCase();
+              const binaryOrSpecialExtensions = ['drawio', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'svg'];
+              
+              if (binaryOrSpecialExtensions.includes(fileExtension)) {
+                // For DrawIO and other binary/special files, use vscode.open to respect file associations
+                vscode.commands.executeCommand('vscode.open', fileUri).then(
+                  () => {
+                    // Success - file opened with appropriate viewer
+                  },
+                  (error) => {
+                    vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
+                  }
+                );
+              } else {
+                // For text files, use openTextDocument to support line numbers
+                vscode.workspace.openTextDocument(fileUri).then(
+                  (doc) => {
+                    const options = lineNumber 
+                      ? { 
+                          selection: new vscode.Range(lineNumber - 1, 0, lineNumber - 1, 0),
+                          viewColumn: vscode.ViewColumn.One
+                        }
+                      : { viewColumn: vscode.ViewColumn.One };
+                    vscode.window.showTextDocument(doc, options);
+                  },
+                  (error) => {
+                    vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
+                  }
+                );
+              }
             }
             return;
           case "updateFilter":
@@ -117,6 +134,21 @@ class StatusPanel {
                 .catch((error) => {
                   this._logger.error('Failed to update workspace path', error);
                   vscode.window.showErrorMessage(`Failed to update workspace: ${error.message}`);
+                });
+            }
+            return;
+          case "updateQuestionAnswer":
+            if (message.question && message.answer !== undefined) {
+              this._logger.log(`Updating question answer: "${message.question}" = "${message.answer}"`);
+              // Update question/answer via CLI (saves to clarification.json)
+              this._dataProvider.updateQuestionAnswer(message.question, message.answer)
+                .then(() => {
+                  // Refresh panel after update
+                  this._update();
+                })
+                .catch((error) => {
+                  this._logger.error('Failed to update question answer', error);
+                  vscode.window.showErrorMessage(`Failed to update answer: ${error.message}`);
                 });
             }
             return;
@@ -152,6 +184,19 @@ class StatusPanel {
                   this._logger.log('Command executed successfully');
                   // Extract and store prompt content from output
                   this._lastPromptContent = this._extractPromptContent(output);
+                  console.log('[PANEL] Extracted instructions length:', this._lastPromptContent ? this._lastPromptContent.length : 0);
+                  
+                  // Copy to clipboard using VS Code API (more reliable than webview clipboard)
+                  if (this._lastPromptContent) {
+                    vscode.env.clipboard.writeText(this._lastPromptContent).then(() => {
+                      console.log('[PANEL] ✓ Instructions copied to clipboard successfully');
+                      this._logger.log('Instructions copied to clipboard');
+                    }).catch(err => {
+                      console.error('[PANEL] ✗ Failed to copy to clipboard:', err);
+                      this._logger.error('Clipboard copy failed', err);
+                    });
+                  }
+                  
                   // Refresh the panel - prompt will be included in render
                   this._update();
                 })
@@ -193,8 +238,11 @@ class StatusPanel {
       column,
       {
         enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [extensionUri],
+        retainContextWhenHidden: false,
+        localResourceRoots: [
+          extensionUri,
+          vscode.Uri.file(path.join(workspaceRoot, 'agile_bot', 'bots', 'base_bot', 'img'))
+        ],
       }
     );
 
@@ -216,39 +264,36 @@ class StatusPanel {
   }
 
   _extractPromptContent(output) {
-    // Try to extract content between markdown code blocks
-    const codeBlockMatch = /```(?:markdown|md|text)?\s*\n([\s\S]+?)\n```/i.exec(output);
-    if (codeBlockMatch) {
-      return codeBlockMatch[1].trim();
-    }
+    // Extract the COMPLETE INSTRUCTIONS SECTION (everything between INSTRUCTIONS SECTION and CLI STATUS section)
+    // This includes: base instructions, behavior instructions, scope, and all merged content
+    const instructionsSectionMatch = /\*\*INSTRUCTIONS SECTION:\*\*[\s\S]*?[━─-]{50,}\s*\n([\s\S]+?)\n\s*[━═=]{50,}\s*\n\s*\*\*\*\s+CLI STATUS section/m.exec(output);
     
-    // Try to extract after "Generated Prompt:" or similar headers
-    const headerPatterns = [
-      /Generated Prompt:?\s*\n([\s\S]+?)(?=\n\n##|\n\n─|$)/i,
-      /## Generated Prompt\s*\n([\s\S]+?)(?=\n\n##|\n\n─|$)/i,
-      /Prompt:\s*\n([\s\S]+?)(?=\n\n##|\n\n─|$)/i
-    ];
-    
-    for (const pattern of headerPatterns) {
-      const match = pattern.exec(output);
-      if (match) {
-        return match[1].trim();
+    if (instructionsSectionMatch) {
+      console.log('[PANEL] Extracted INSTRUCTIONS SECTION');
+      return instructionsSectionMatch[1].trim();
       }
-    }
     
-    // If no pattern matches, return the full output
+    console.log('[PANEL] No INSTRUCTIONS SECTION found, returning full output');
+    // Fallback: return the full output
     return output;
   }
 
   async _update() {
+    const fs = require('fs'); // #region agent log
     const webview = this._panel.webview;
     this._panel.title = "Bot Status Dashboard";
     
+    // #region agent log
+    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:243',message:'_update() called',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F,G'})+'\n');
+    // #endregion
     this._logger.log("_update() called");
     
     try {
       // Check availability first
       const isAvailable = await this._dataProvider.checkAvailability();
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:252',message:'Availability checked',data:{isAvailable},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G'})+'\n');
+      // #endregion
       this._logger.log("Availability check", { isAvailable });
       
       if (!isAvailable) {
@@ -260,10 +305,16 @@ class StatusPanel {
 
       // Fetch status data
       const rawStatus = await this._dataProvider.getStatus();
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:262',message:'Got raw status from CLI',data:{rawLength:rawStatus.length,hasJSON:rawStatus.includes('{'),hasBehaviors:rawStatus.includes('Behaviors:')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G,H'})+'\n');
+      // #endregion
       this._logger.log("Got raw status, length:", rawStatus.length);
       
       // Adapt CLI output to structured JSON
       const structuredData = this._adapter.adapt(rawStatus);
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:270',message:'Adapted data',data:{hasBehaviors:!!(structuredData.behaviors && structuredData.behaviors.length),behaviorsCount:structuredData.behaviors?structuredData.behaviors.length:0,hasScope:!!structuredData.scope,botName:structuredData.bot?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H,I'})+'\n');
+      // #endregion
       
       // Add bot selector data
       structuredData.availableBots = this._dataProvider.getAvailableBots();
@@ -277,8 +328,14 @@ class StatusPanel {
       
       this._logger.log("Adapted data", structuredData);
 
-      // Render HTML
-      this._panel.webview.html = this._renderer.render(structuredData);
+      // Render HTML (pass webview and extensionUri so renderer can create proper URIs)
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:311',message:'About to render HTML',data:{hasRenderer:!!this._renderer,hasPanel:!!this._panel,hasWebview:!!this._panel.webview},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I,J'})+'\n');
+      // #endregion
+      this._panel.webview.html = this._renderer.render(structuredData, this._panel.webview, this._extensionUri);
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:316',message:'HTML rendered to webview',data:{htmlLength:this._panel.webview.html.length,htmlStart:this._panel.webview.html.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'J'})+'\n');
+      // #endregion
       this._logger.log("Rendered HTML to webview");
       
     } catch (err) {

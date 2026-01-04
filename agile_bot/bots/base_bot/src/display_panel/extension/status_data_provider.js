@@ -288,6 +288,77 @@ class StatusDataProvider {
   }
 
   /**
+   * Update a question answer in clarification.json
+   * @param {string} question - The question text
+   * @param {string} answer - The answer text
+   * @returns {Promise<string>} Result message
+   */
+  async updateQuestionAnswer(question, answer) {
+    this.logger.log("updateQuestionAnswer() called", { question, answer });
+    
+    return new Promise((resolve, reject) => {
+      const fs = require('fs');
+      const clarificationPath = path.join(
+        this.workspaceRoot,
+        "docs",
+        "stories",
+        "clarification.json"
+      );
+
+      try {
+        // Read current clarification.json
+        let clarificationData = {};
+        if (fs.existsSync(clarificationPath)) {
+          const fileContent = fs.readFileSync(clarificationPath, 'utf8');
+          clarificationData = JSON.parse(fileContent);
+        }
+
+        // Find the appropriate phase and update the answer
+        // Navigate through shape/discovery/exploration phases
+        let updated = false;
+        for (const phase of ['shape', 'discovery', 'exploration']) {
+          if (clarificationData[phase] && 
+              clarificationData[phase].key_questions && 
+              clarificationData[phase].key_questions.answers) {
+            const answers = clarificationData[phase].key_questions.answers;
+            if (answers.hasOwnProperty(question)) {
+              answers[question] = answer;
+              updated = true;
+              this.logger.log(`Updated answer in ${phase} phase`);
+              break;
+            }
+          }
+        }
+
+        if (!updated) {
+          // If question not found in any phase, add to shape phase by default
+          if (!clarificationData.shape) {
+            clarificationData.shape = {};
+          }
+          if (!clarificationData.shape.key_questions) {
+            clarificationData.shape.key_questions = { answers: {} };
+          }
+          if (!clarificationData.shape.key_questions.answers) {
+            clarificationData.shape.key_questions.answers = {};
+          }
+          clarificationData.shape.key_questions.answers[question] = answer;
+          this.logger.log('Added new answer to shape phase');
+        }
+
+        // Write back to file
+        const updatedContent = JSON.stringify(clarificationData, null, 2);
+        fs.writeFileSync(clarificationPath, updatedContent, 'utf8');
+        
+        this.logger.log('Successfully updated clarification.json');
+        resolve('Answer updated successfully');
+      } catch (err) {
+        this.logger.error('Failed to update question answer', err);
+        reject(new Error(`Failed to update clarification.json: ${err.message}`));
+      }
+    });
+  }
+
+  /**
    * Update workspace path by calling REPL CLI
    * @param {string} workspacePath - The new workspace path
    * @returns {Promise<string>} Result message from CLI

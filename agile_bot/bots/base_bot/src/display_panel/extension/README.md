@@ -26,16 +26,29 @@ Visual dashboard for REPL CLI status showing workflow, scope, and commands in a 
    ```
 
 3. Install the generated `.vsix` file:
+
+   **For Cursor:**
    ```powershell
-   code --install-extension repl-status-panel-0.1.0.vsix
+   cursor --install-extension repl-status-panel-0.11.0.vsix
    ```
+
+   **For VS Code:**
+   ```powershell
+   code --install-extension repl-status-panel-0.11.0.vsix
+   ```
+
+4. **Reload the window:**
+   - Press `Ctrl+Shift+P`
+   - Type "Developer: Reload Window"
+   - Press Enter
 
 ### Manual Installation
 
-1. Open VS Code
+1. Open Cursor or VS Code
 2. Press `Ctrl+Shift+P`
 3. Type "Extensions: Install from VSIX"
 4. Select the `.vsix` file
+5. Reload the window (Ctrl+Shift+P → "Developer: Reload Window")
 
 ## Usage
 

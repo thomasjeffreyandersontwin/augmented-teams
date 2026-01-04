@@ -27,11 +27,12 @@ Generate Behavior Action Tools functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Generate Behavior Action Tools (happy_path)
+### Scenario: Tools generated for each behavior action (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Bot with behaviors and actions
+WHEN: Tool generation is triggered
+THEN: MCP tools are created for each action
 ```
+

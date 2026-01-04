@@ -23,11 +23,22 @@ Track Activity for Build Knowledge Action functionality for the mob minion syste
 
 ## Scenarios
 
-### Scenario: Track Activity for Build Knowledge Action (happy_path)
+### Scenario: Track activity when build action starts (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L236)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Bot directory and workspace directory are set up
+WHEN: Build knowledge action starts
+THEN: Activity is tracked
 ```
+
+
+### Scenario: Track activity when build action completes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L242)
+
+**Steps:**
+```gherkin
+GIVEN: Build knowledge outputs and duration
+WHEN: Build knowledge action completes
+THEN: Activity is tracked with outputs and duration
+```
+

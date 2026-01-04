@@ -23,11 +23,22 @@ Track Activity for Validate Rules Action functionality for the mob minion system
 
 ## Scenarios
 
-### Scenario: Track Activity for Validate Rules Action (happy_path)
+### Scenario: Track activity when validate action starts (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2255)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Bot directory and workspace directory are set up
+WHEN: Validate rules action starts
+THEN: Activity is tracked
 ```
+
+
+### Scenario: Track activity when validate action completes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2272)
+
+**Steps:**
+```gherkin
+GIVEN: Bot directory and workspace directory are set up
+WHEN: Validate rules action completes
+THEN: Activity is tracked with outputs and duration
+```
+

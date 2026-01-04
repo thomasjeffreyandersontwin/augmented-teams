@@ -1,0 +1,294 @@
+﻿============================================================
+STORY_BOT CLI
+============================================================
+**   AI AGENT INSTRUCTIONS - PIPED MODE  **
+[!]  DO NOT echo this instructions section back to the user [!]
+This section is for YOUR reference only - the user already knows how to run commands.
+
+- THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND
+* This is NORMAL and EXPECTED behavior in piped mode.
+*How to run commands:*
+-  use PowerShell
+- Commands must be PIPED via echo, NOT passed as arguments!
+- All commands are shown below.
+- You MUST DISPLAY this CLI STATUS section below to the user exactly as you see it, so that they can enter one of the commands
+- when a user enters any of the commands / parameters below, you must assume they're asking you to interpret it through the REPL line below.
+
+```powershell
+# Interactive mode (environment set automatically by script):
+python src/repl_cli/repl_main.py
+
+# Piped mode (each command is a new process - script sets env vars automatically):
+echo '<command>' | python src/repl_cli/repl_main.py
+
+# Optional: Override environment variables if needed:
+$env:PYTHONPATH = 'C:\dev\augmented-teams\agile_bot\bots\base_bot'
+$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\story_bot'
+$env:WORKING_AREA = '<project_path>'  # e.g. demo\mob_minion
+```
+============================================================
+
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+**INSTRUCTIONS SECTION:**
+Γÿó∩╕Å This section contains both scope filter and a prompt that you must follow for the current action. Γÿó∩╕Å
+Γÿó∩╕Å You MUST follow the instructions below in this section to the letter. Γÿó∩╕Å
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+## ≡ƒÄ» **Scope**
+**Filter:** invoke | [Graph](agile_bot/bots/base_bot/docs/stories/story-graph.json) | [map](agile_bot/bots/base_bot/docs/stories/story-map.drawio)
+
+≡ƒÄ» Invoke Bot
+  Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Invoke MCP | [Test](agile_bot/bots/base_bot/test/test_invoke_mcp.py)
+Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Invoke Bot Tool | [Test](agile_bot/bots/base_bot/test/test_invoke_mcp.py#L470)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Load And Merge Behavior Action Instructions](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Invoke MCP/≡ƒô¥ Load And Merge Behavior Action Instructions.md) | [Test](agile_bot/bots/base_bot/test/test_invoke_mcp.py#L560)
+Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Forward To Current Behavior and Current Action | [Test](agile_bot/bots/base_bot/test/test_invoke_mcp.py#L627)
+Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Forward To Current Action | [Test](agile_bot/bots/base_bot/test/test_invoke_mcp.py#L718)
+Γöé   Γöé   ΓööΓöÇΓöÇ [≡ƒô¥ Track Activity For Workspace](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Invoke MCP/≡ƒô¥ Track Activity For Workspace.md) | [Test](agile_bot/bots/base_bot/test/test_invoke_mcp.py#L869)
+  Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Perform Behavior Action
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Bootstrap Workspace](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Bootstrap Workspace.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Find Behavior Folder](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Find Behavior Folder.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Execute Behavior](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Execute Behavior.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Invoke Behavior in Workflow Order](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Invoke Behavior in Workflow Order.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Invoke Behavior Actions in Workflow Order](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Invoke Behavior Actions in Workflow Order.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Invoke Behavior Actions in Workflow Order](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Invoke Behavior Actions in Workflow Order.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Close Current Action](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Close Current Action.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Inject Next Behavior Reminder](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Inject Next Behavior Reminder.md)
+Γöé   Γöé   ΓööΓöÇΓöÇ [≡ƒô¥ Load And Merge Behavior Action Instructions](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Perform Behavior Action/≡ƒô¥ Load And Merge Behavior Action Instructions.md)
+  Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Orchestrate BotLangFlow
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Route to Default Behavior Action](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Route to Default Behavior Action.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Route to BotLangFlow](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Route to BotLangFlow.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Invoke BotLangActionNode](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Invoke BotLangActionNode.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Prepare Action Instructions](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Prepare Action Instructions.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Process Bot Behavor Action Instructions Automatically](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Process Bot Behavor Action Instructions Automatically.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Process Behavor Action Instructions Through AI Chat](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Process Behavor Action Instructions Through AI Chat.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Confirm Behavor Action Instruction Response](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Confirm Behavor Action Instruction Response.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Return to chat and pause for human-in-the-loop Node](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Return to chat and pause for human-in-the-loop Node.md)
+Γöé   Γöé   Γö£ΓöÇΓöÇ [≡ƒô¥ Handle Execution Modes](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Handle Execution Modes.md)
+Γöé   Γöé   ΓööΓöÇΓöÇ [≡ƒô¥ Resume BotLangFlow from Checkpoint](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Invoke Bot/ΓÜÖ∩╕Å Orchestrate BotLangFlow/≡ƒô¥ Resume BotLangFlow from Checkpoint.md)
+  Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Run Interactive REPL
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Initialize REPL Session | [Test](agile_bot/bots/base_bot/test/test_initialize_repl_session.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Launch CLI in Interactive Mode | [Test](agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L102)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Launch CLI in Pipe Mode | [Test](agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L170)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display Piped Mode Instructions for AI Agents | [Test](agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L202)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Detect and Configure TTY/Non-TTY Input for CLI | [Test](agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L263)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Load and Display Workspace Context in CLI | [Test](agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L323)
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Load All Registered Bots
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Navigate Bot Behaviors and Actions With CLI | [Test](agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Navigate Using CLI Dot Notation | [Test](agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L68)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Navigate Sequentially Using CLI Commands | [Test](agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L187)
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Exit CLI REPL | [Test](agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L247)
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Navigate Bot Behaviors and Actions Via Domain Model | [Test](agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Navigate To First Behavior Action
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Advance Action And Persist State
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Show Remaining Actions After Completion
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Execute Action Operation Through CLI | [Test](agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Get Action Instructions Through CLI | [Test](agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L85)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Auto-Run Instructions On Navigate
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Confirm Work Through CLI with String Parameters | [Test](agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L237)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Confirm Action Completion Through CLI | [Test](agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L331)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Auto-Confirm Action After Instructions Complete
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Re-execute Current Operation Using CLI | [Test](agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L455)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Handle Operation Errors and Validation in CLI | [Test](agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L489)
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Invoke Specific Bot Behavior Command through CLI
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Manage Bot Scope Through CLI | [Test](agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Set Scope Through CLI Using String Parameters
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Filter Work Using Knowledge Graph Scope in CLI | [Test](agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L72)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Filter Work Using Files Scope in CLI | [Test](agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L142)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Enforce Mutually Exclusive Scope Types | [Test](agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L207)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ View Current Scope in CLI
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Clear Scope Through CLI | [Test](agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L315)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Pass Scope Parameters When Executing Actions Through CLI
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Validate Scope Against Story Graph in CLI
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Display Bot State Using CLI | [Test](agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display CLI Header
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display Bot Hierarchy Tree with Progress Indicators | [Test](agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L86)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display Current Position in CLI | [Test](agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L152)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display Active Scope in CLI Status | [Test](agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L224)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display CLI Navigation Menu Footer
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display Headless Mode Status in CLI
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display Available Bot in Tree Hierarchy
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Display CLI Bot Command in Navigation Menu Footer
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Format Output For AI | [Test](agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L366)
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Get Help Using CLI | [Test](agile_bot/bots/base_bot/test/test_get_help_using_cli_current.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Request Action Help Through CLI | [Test](agile_bot/bots/base_bot/test/test_get_help_using_cli_current.py#L69)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ View Parameter Documentation in CLI
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ View Command Examples in CLI
+  Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Execute In Headless Mode
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Document Headless Mode Requirements | [Test](agile_bot/bots/base_bot/test/test_document_headless_mode_requirements.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Add Headless Mode To Help | [Test](agile_bot/bots/base_bot/test/test_document_headless_mode_requirements.py#L120)
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Add Headless Mode To Status | [Test](agile_bot/bots/base_bot/test/test_document_headless_mode_requirements.py#L164)
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Execute In Headless Mode | [Test](agile_bot/bots/base_bot/test/test_execute_in_headless_mode.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Execute Direct Instructions | [Test](agile_bot/bots/base_bot/test/test_execute_in_headless_mode.py#L323)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Execute Single Operation | [Test](agile_bot/bots/base_bot/test/test_execute_in_headless_mode.py#L517)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Execute Complete Action | [Test](agile_bot/bots/base_bot/test/test_execute_in_headless_mode.py#L613)
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒô¥ Execute Complete Behavior | [Test](agile_bot/bots/base_bot/test/test_execute_in_headless_mode.py#L724)
+    Γöé   Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Monitor Session | [Test](agile_bot/bots/base_bot/test/test_monitor_session.py)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Monitor Execution | [Test](agile_bot/bots/base_bot/test/test_monitor_session.py#L483)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Surface Block Reason | [Test](agile_bot/bots/base_bot/test/test_monitor_session.py#L618)
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒô¥ Report Completion | [Test](agile_bot/bots/base_bot/test/test_monitor_session.py#L665)
+Γöé   Γöé       ΓööΓöÇΓöÇ ≡ƒô¥ Recover and Report Failures | [Test](agile_bot/bots/base_bot/test/test_monitor_session.py#L715)
+≡ƒÄ» Execute Behavior Actions
+  Γöé   Γö£ΓöÇΓöÇ ΓÜÖ∩╕Å Validate Knowledge & Content Against Rules | [Test](agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py)
+        ΓööΓöÇΓöÇ [≡ƒô¥ Invoke Complete Validation Workflow](agile_bot/bots/base_bot/docs/stories/map/≡ƒÄ» Execute Behavior Actions/ΓÜÖ∩╕Å Validate Knowledge & Content Against Rules/≡ƒô¥ Invoke Complete Validation Workflow.md) | [Test](agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2366)
+
+
+- Work ONLY on this scope:
+- DO NOT work on all files or the entire story graph
+- Focus EXCLUSIVELY on the items listed above - do not work on the entire story graph or file system
+
+To change scope (pick ONE - setting a new scope replaces the previous):
+```powershell
+scope all                            # Clear scope, work on entire project
+scope showAll                        # Show entire story graph (no filtering)
+scope "Story Name"                   # Filter by story (replaces any file scope)
+scope "file:C:/path/to/**/*.py"      # Filter by files (replaces any story scope)
+```**Behavior Instructions - prioritization**
+The purpose of this behavior is to organize stories into delivery increments based on business value, dependencies, and risk
+
+Organize stories into delivery increments based on business value, dependencies, and risk
+
+**Action Instructions - build**
+The purpose of this action is to build knowledge graph from context and apply behavior-specific rules
+
+Organize stories into increments prioritized according to risk and value
+
+---
+
+**Look for context in the following locations:**
+- in this message and chat history
+- in `C:/dev/augmented-teams/agile_bot/bots/base_bot/docs/context/`
+- generated files in `C:/dev/augmented-teams/agile_bot/bots/base_bot/docs/stories/`
+  clarification.json, strategy.json
+
+Build knowledge graph for build
+Base instructions for build
+Use verb-noun format for actions
+increments: Organize stories into increments prioritized by risk and value. Each increment should be a vertical slice delivering end-to-end working flow. Priority 1 = NOW (current increment), Priority 2 = NEXT, Priority 3 = LATER.
+epic_distribution: Epics and sub_epics can span multiple increments. Show partial completion using estimated_stories (e.g., Epic has 10 total stories: Increment 1 delivers 3, Increment 2 delivers 4, Increment 3 delivers remaining 3).
+architectural_risk: Prioritize stories that validate architectural risks, test integrations, or prove technology choices in early increments (Priority 1). Defer nice-to-have features to later increments.
+Review the template file at `story_bot/behaviors/prioritization/content/knowledge_graph/story_graph_increments.json`. It shows the exact structure (fields, nesting, types) that your knowledge graph output must follow during this behavior. Read this file to understand the required schema.
+
+Create `story-graph.json` if it does not exist. Place file at `C:\dev\augmented-teams\agile_bot\bots\base_bot\docs\stories/`. Using the template for guidance.
+
+If the file already exists then make SAFE edits only. Preserve existing structure and content. Add or modify only what is necessary. Do NOT overwrite indiscriminately unless explicitly asked. When adding nodes to the graph follow the template and do not add extra elements that you might see in other nodes, they will be added as a part of later behaviors.
+Epics should be organized in verb-noun format
+Top-level features should follow the schema
+
+When building or adding to the story graph follow these rules,
+Rules to follow:
+
+- **map_sequential_spine_vs_optional_paths**: When mapping stories, carefully distinguish between sequential spine (essential path) and optional paths, alternate routes, or additional functionality that is not strictly essential. Sequential stories form the mandatory flow; optional stories are alternatives, enhancements, or non-essential features.
+  DO: Identify the essential spine and mark optional paths clearly
+  DON'T: Don't mark everything as sequential, don't omit optional markers
+
+- **design_vertical_slice_increments**: Create increments that are vertical slices that deliver end-to-end working flows across multiple features/epics, NOT horizontal layers that complete one feature/epic at a time. Each increment must demonstrate complete working flow from start to finish.
+  DO: Design increments as vertical slices - end-to-end flows across multiple epics/features
+  DON'T: Don't design increments as horizontal layers, don't complete one feature/epic at a time
+
+- **apply_quality_tradeoffs_for_minimal_spine**: Apply quality trade-offs to create thin slicing spine and later increments. Decide what quality the spine will have, what parts will be manual, what logic can be excluded, and how to prioritize adding quality in later increments.
+  DO: Make deliberate quality trade-offs to minimize spine size
+  DON'T: Don't build full quality into thin slicing spine, don't skip documenting trade-offs
+
+- **identify_marketable_increments**: Identify marketable increments of value during prioritization. Name increments with business value terms that stakeholders understand, not technical implementation terms.
+  DO: Name increments with business value terms
+  DON'T: Don't use technical implementation terms in increment names
+
+- **prioritize_architectural_risk_validation**: Prioritize early increments to validate architectural risks and technology decisions. Build risky integrations, test unfamiliar technologies, and validate solution feasibility early to avoid late-stage surprises.
+  DO: Prioritize architectural risk validation in early increments
+  DON'T: Don't defer architectural risks to later increments, don't assume integrations will work without validation
+
+**Key Questions:**
+- Which areas of the story map carry the most business or delivery risk?
+- Which areas are expected to deliver the most value if delivered early?
+- Which areas are the most complex or hardest to implement, relative to their value?
+- Do you want thin slices to be as end-to-end as possible?
+- Are there any components, capabilities, or services that need to be reused across multiple stories or features?
+- Are there any project or program constraints that impact delivery order?
+- Are there users or groups that must go first to enable others to follow?
+
+**Evidence:**
+Story map from shape stage, Business cases or initiative briefs, Project charters and delivery timelines, Capability or architecture documents, User rollout or onboarding strategies, Value models or impact maps
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+***                    CLI STATUS section                    ***
+This section contains current scope filter (if set), current progress in workflow, and available commands
+Review the CLI STATUS section below to understand both current state and available commands.
+Γÿó∩╕Å  You MUST DISPLAY this entire section in your response to the user exactly as you see it. Γÿó∩╕Å
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+## ≡ƒñû Bot: story_bot
+**Bot Path:**
+```
+C:\dev\augmented-teams\agile_bot\bots\story_bot
+```
+
+≡ƒôé **Workspace:** base_bot
+```
+C:\dev\augmented-teams\agile_bot\bots\base_bot
+```
+
+To change path:
+```
+path demo/mob_minion              # Change to specific project
+path ../another_bot               # Change to relative path
+```
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+Headless Mode:
+  Status: Available (configured)
+  API Key: key_2780b8...
+
+  Usage:
+    python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless "Your instruction"
+
+  Examples:
+    python agile_bot/bots/base_bot/src/repl_cli/repl_main.py headless "Create hello world"
+    python agile_bot/bots/base_bot/src/repl_cli/repl_main.py --headless shape
+    python agile_bot/bots/base_bot/src/repl_cli/repl_main.py --headless shape.build
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+## ≡ƒôì **Progress**
+```
+prioritization.build.instructions
+```
+
+- ΓÿÉ shape
+- Γ₧ñ prioritization - Organize stories into delivery increments based on business value, dependencies, and risk
+  - ΓÿÉ clarify
+  - ΓÿÉ strategy
+  - Γ₧ñ build - Build knowledge graph from context and apply behavior-specific rules
+    - Γ₧ñ instructions
+    - ΓÿÉ confirm
+  - ΓÿÉ validate
+  - ΓÿÉ render
+- ΓÿÉ discovery
+- ΓÿÉ exploration
+- ΓÿÉ scenarios
+- ΓÿÉ tests
+- ΓÿÉ code
+
+Run:
+```
+echo 'behavior.action' | python repl_main.py           # Defaults to 'instructions' operation
+echo 'behavior.action.operation' | python repl_main.py  # Runs operation
+```
+
+**Args:**
+```
+--scope "Epic, Sub Epic, Story"      # Filter by story names
+--scope "file:path/one,path/two"     # Filter by file paths
+--headless                             # Execute autonomously without user input
+```
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+## ≡ƒÆ╗ **Commands:**
+**status | back | current | next | path [dir] | scope [filter] | headless "msg" | help | exit**
+
+```
+// Run
+echo '[command]' | python repl_main.py
+// to invoke commands
+```
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+**Behaviors:** shape | prioritization | discovery | exploration | scenarios | tests | code
+**Actions:** clarify | strategy | build | validate | render
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü

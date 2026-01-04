@@ -23,11 +23,12 @@ Access Actions functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Access Actions (happy_path)
+### Scenario: Actions accessible from behavior (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+GIVEN: Behavior with actions configured
+WHEN: Actions are accessed
+THEN: Action list is available
 ```
+

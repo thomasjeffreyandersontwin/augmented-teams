@@ -42,7 +42,6 @@ agile_bot/bots/character/code/logs/
 # Binary and Large Files
 # ============================================================================
 *.pdf
-*.png
 *.jpg
 *.jpeg
 *.gif
