@@ -1,6 +1,6 @@
 # 📝 Track Activity for Build Knowledge Action
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L233)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
@@ -23,7 +23,7 @@ Track Activity for Build Knowledge Action functionality for the mob minion syste
 
 ## Scenarios
 
-### Scenario: Track activity when build action starts (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L236)
+### Scenario: Track activity when build action starts (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +33,7 @@ THEN: Activity is tracked
 ```
 
 
-### Scenario: Track activity when build action completes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L242)
+### Scenario: Track activity when build action completes (happy_path)
 
 **Steps:**
 ```gherkin

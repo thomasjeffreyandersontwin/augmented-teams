@@ -1,6 +1,6 @@
 # 📝 Advance Action And Persist State
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** System
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Navigate Bot Behaviors and Actions Via Domain Model](.)  
@@ -19,7 +19,7 @@ Advance Action And Persist State functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Close current advances and persists state (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py#L54)
+### Scenario: Close current advances and persists state (happy_path)
 
 **Steps:**
 ```gherkin

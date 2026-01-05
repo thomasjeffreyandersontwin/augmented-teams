@@ -1,6 +1,6 @@
 # 📝 Navigate Sequentially Using CLI Commands
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L187)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Navigate Bot Behaviors and Actions With CLI](.)  
@@ -19,7 +19,7 @@ Navigate Sequentially Using CLI Commands functionality for the mob minion system
 
 ## Scenarios
 
-### Scenario: User navigates with next command (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L190)
+### Scenario: User navigates with next command (happy_path)
 
 **Steps:**
 ```gherkin
@@ -29,7 +29,7 @@ THEN: CLI navigates to shape.strategy
 ```
 
 
-### Scenario: User navigates with back command (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L218)
+### Scenario: User navigates with back command (happy_path)
 
 **Steps:**
 ```gherkin

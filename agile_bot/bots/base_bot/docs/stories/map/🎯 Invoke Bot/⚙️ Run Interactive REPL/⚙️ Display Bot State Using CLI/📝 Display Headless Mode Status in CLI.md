@@ -1,6 +1,6 @@
 # 📝 Display Headless Mode Status in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L575)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -35,7 +35,7 @@ Display Headless Mode Status in CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: CLI displays headless mode section when configured (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L447)
+### Scenario: CLI displays headless mode section when configured (happy_path)
 
 **Steps:**
 ```gherkin
@@ -52,7 +52,7 @@ AND: CLI shows subsection separator after headless mode section
 ```
 
 
-### Scenario: CLI displays active headless session when running (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L476)
+### Scenario: CLI displays active headless session when running (happy_path)
 
 **Steps:**
 ```gherkin

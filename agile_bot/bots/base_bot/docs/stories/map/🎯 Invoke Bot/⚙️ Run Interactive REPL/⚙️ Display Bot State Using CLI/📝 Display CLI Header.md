@@ -1,6 +1,6 @@
 # 📝 Display CLI Header
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L261)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -30,7 +30,7 @@ Display CLI Header functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: CLI displays CLI STATUS section header when status command is run (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L264)
+### Scenario: CLI displays CLI STATUS section header when status command is run (happy_path)
 
 **Steps:**
 ```gherkin
@@ -46,7 +46,7 @@ AND: CLI shows section separator after header
 ```
 
 
-### Scenario: CLI displays bot name with robot emoji in header (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L294)
+### Scenario: CLI displays bot name with robot emoji in header (happy_path)
 
 **Steps:**
 ```gherkin
@@ -58,7 +58,7 @@ And output shows Bot: story_bot
 ```
 
 
-### Scenario: CLI displays bot path in code block (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L325)
+### Scenario: CLI displays bot path in code block (happy_path)
 
 **Steps:**
 ```gherkin
@@ -71,7 +71,7 @@ And output closes code block with three backticks
 ```
 
 
-### Scenario: CLI displays workspace name and path (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L355)
+### Scenario: CLI displays workspace name and path (happy_path)
 
 **Steps:**
 ```gherkin
@@ -85,7 +85,7 @@ And output closes code block with three backticks
 ```
 
 
-### Scenario: CLI displays path change instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L388)
+### Scenario: CLI displays path change instructions (happy_path)
 
 **Steps:**
 ```gherkin
@@ -99,7 +99,7 @@ And output closes code block with three backticks
 ```
 
 
-### Scenario: CLI applies separator after header section (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L418)
+### Scenario: CLI applies separator after header section (happy_path)
 
 **Steps:**
 ```gherkin
@@ -109,7 +109,7 @@ Then output ends with horizontal separator line (subsection separator)
 ```
 
 
-### Scenario: CLI displays headless mode section when configured (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L447)
+### Scenario: CLI displays headless mode section when configured (happy_path)
 
 **Steps:**
 ```gherkin
@@ -124,7 +124,7 @@ AND: CLI applies subsection separator after headless section
 ```
 
 
-### Scenario: CLI displays active headless session when running (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L476)
+### Scenario: CLI displays active headless session when running (happy_path)
 
 **Steps:**
 ```gherkin
@@ -138,7 +138,7 @@ AND: CLI shows Log file path
 ```
 
 
-### Scenario: CLI displays headless mode unavailable when not configured (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L512)
+### Scenario: CLI displays headless mode unavailable when not configured (happy_path)
 
 **Steps:**
 ```gherkin

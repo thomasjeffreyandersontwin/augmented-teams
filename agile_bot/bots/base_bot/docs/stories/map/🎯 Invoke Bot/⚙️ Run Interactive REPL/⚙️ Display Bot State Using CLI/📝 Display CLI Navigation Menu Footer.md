@@ -1,6 +1,6 @@
 # 📝 Display CLI Navigation Menu Footer
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L542)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -30,7 +30,7 @@ Display CLI Navigation Menu Footer functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: CLI displays commands menu footer (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L545)
+### Scenario: CLI displays commands menu footer (happy_path)
 
 **Steps:**
 ```gherkin

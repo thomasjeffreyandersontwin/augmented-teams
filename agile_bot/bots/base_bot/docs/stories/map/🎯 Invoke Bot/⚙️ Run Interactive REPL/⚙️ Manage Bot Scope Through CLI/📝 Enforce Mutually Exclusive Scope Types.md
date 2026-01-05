@@ -1,6 +1,6 @@
 # 📝 Enforce Mutually Exclusive Scope Types
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L207)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Manage Bot Scope Through CLI](.)  
@@ -29,7 +29,7 @@ Enforce Mutually Exclusive Scope Types functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Setting file scope replaces existing story scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L214)
+### Scenario: Setting file scope replaces existing story scope (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ THEN: file scope replaces story scope (not combined)
 ```
 
 
-### Scenario: Setting story scope replaces existing file scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L252)
+### Scenario: Setting story scope replaces existing file scope (happy_path)
 
 **Steps:**
 ```gherkin
@@ -49,7 +49,7 @@ THEN: story scope replaces file scope (not combined)
 ```
 
 
-### Scenario: Scope object can only have one type at a time (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L290)
+### Scenario: Scope object can only have one type at a time (happy_path)
 
 **Steps:**
 ```gherkin

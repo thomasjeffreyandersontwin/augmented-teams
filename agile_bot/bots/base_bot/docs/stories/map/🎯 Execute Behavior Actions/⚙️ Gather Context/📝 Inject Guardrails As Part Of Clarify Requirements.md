@@ -1,6 +1,6 @@
 # 📝 Inject Guardrails As Part Of Clarify Requirements
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L557)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
@@ -33,7 +33,7 @@ Inject Guardrails As Part Of Clarify Requirements functionality for the mob mini
 
 ## Scenarios
 
-### Scenario: Gather context injects guardrails from behavior folder (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L560)
+### Scenario: Gather context injects guardrails from behavior folder (happy_path)
 
 **Steps:**
 ```gherkin

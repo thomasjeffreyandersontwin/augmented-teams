@@ -1,6 +1,6 @@
 # 📝 Confirm Action Completion Through CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L331)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Execute Action Operation Through CLI](.)  
@@ -19,7 +19,7 @@ Confirm Action Completion Through CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User confirms build action completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L334)
+### Scenario: User confirms build action completion (happy_path)
 
 **Steps:**
 ```gherkin
@@ -29,7 +29,7 @@ THEN: CLI automatically navigates to shape.validate.instructions
 ```
 
 
-### Scenario: User confirms clarify action completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L362)
+### Scenario: User confirms clarify action completion (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ THEN: CLI automatically navigates to shape.strategy.instructions
 ```
 
 
-### Scenario: User confirms action and advances to next action (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L391)
+### Scenario: User confirms action and advances to next action (happy_path)
 
 **Steps:**
 ```gherkin
@@ -50,7 +50,7 @@ AND: Does not crash with 'object is not callable' error
 ```
 
 
-### Scenario: User confirms from instructions (2-phase model) (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L423)
+### Scenario: User confirms from instructions (2-phase model) (happy_path)
 
 **Steps:**
 ```gherkin

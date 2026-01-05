@@ -710,7 +710,7 @@ class HtmlRenderer {
     <div class="section card-primary" style="border-top: none; padding-top: 0;">
         <div class="main-header">
             ${imagePath ? `<img src="${imagePath}" class="main-header-icon" alt="Company Icon" onerror="console.error('Failed to load icon:', this.src); this.style.border='1px solid red';" />` : ''}
-            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.84</span></span>
+            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.101</span></span>
             <button class="main-header-refresh" onclick="refreshStatus()" title="Refresh">
                 ${refreshIconPath ? `<img src="${refreshIconPath}" style="width: 36px; height: 36px; object-fit: contain; filter: saturate(1.3) brightness(0.95) hue-rotate(-5deg);" alt="Refresh" />` : '🔄'}
             </button>
@@ -1177,8 +1177,10 @@ class HtmlRenderer {
       </div>`;
       
       html += `<div id="${epicId}" class="collapsible-content" style="display: none;">`;
-      epic.features.forEach((feature, featureIndex) => {
-        const featureId = `feature-${epicIndex}-${featureIndex}`;
+      // Helper function to recursively render a feature (can have nested features)
+      const renderFeature = (feature, featureIndex, parentPath, depth = 0) => {
+        console.log(`[RENDER_FEATURE] Called for: ${feature.name}, depth: ${depth}, has ${feature.features?.length || 0} nested features, has ${feature.stories?.length || 0} stories`);
+        const featureId = `${parentPath}-${featureIndex}`;
         const featureIcon = gearIconPath ? `<img src="${gearIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Feature" />` : '⚙️ ';
         const featureLinks = (feature.links && feature.links.length > 0) 
           ? ' ' + feature.links.map(link => 
@@ -1186,72 +1188,87 @@ class HtmlRenderer {
             ).join(' ')
           : '';
         
-        html += `<div style="margin-left: 7px; margin-top: 4px; font-size: 12px;"><span class="collapsible-header" onclick="toggleCollapse('${featureId}')" style="cursor: pointer; user-select: none;"><span id="${featureId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${featureIcon}${this.escapeHtml(feature.name)}${featureLinks}</span></div>`;
+        const marginLeft = 7 + (depth * 7); // Increase margin for nested features
+        
+        html += `<div style="margin-left: ${marginLeft}px; margin-top: 4px; font-size: 12px;"><span class="collapsible-header" onclick="toggleCollapse('${featureId}')" style="cursor: pointer; user-select: none;"><span id="${featureId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${featureIcon}${this.escapeHtml(feature.name)}${featureLinks}</span></div>`;
         
         html += `<div id="${featureId}" class="collapsible-content" style="display: none;">`;
-        feature.stories.forEach((story, storyIndex) => {
-          const storyId = `story-${epicIndex}-${featureIndex}-${storyIndex}`;
-          const storyIcon = pageIconPath ? `<img src="${pageIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Story" />` : '📝 ';
-          
-          // Check if story has scenarios - if so, make it collapsible
-          const hasScenarios = story.scenarios && story.scenarios.length > 0;
-          
-          html += `<div style="margin-left: 14px; margin-top: 2px; font-size: 12px;">`;
-          
-          if (hasScenarios) {
-            // Collapsible story with scenarios
-            html += `<span class="collapsible-header" onclick="toggleCollapse('${storyId}')" style="cursor: pointer; user-select: none;">`;
-            html += `<span id="${storyId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> `;
-          }
-          
-          if (story.links && story.links.length > 0) {
-            // First link is the story file itself
-            const storyLink = story.links[0];
-            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
-            // Remaining links are test files, etc.
-            if (story.links.length > 1) {
-              html += ' ' + story.links.slice(1).map(link => 
-                `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
-              ).join(' ');
+        
+        // Render nested features if they exist
+        if (feature.features && feature.features.length > 0) {
+          console.log(`[DEBUG] Rendering ${feature.features.length} nested features for: ${feature.name} at depth ${depth}`);
+          feature.features.forEach((nestedFeature, nestedIndex) => {
+            console.log(`[DEBUG] - Nested feature: ${nestedFeature.name}`);
+            renderFeature(nestedFeature, nestedIndex, featureId, depth + 1);
+          });
+        } else {
+          console.log(`[DEBUG] No nested features for: ${feature.name} (has features: ${!!feature.features}, length: ${feature.features?.length || 0})`);
+        }
+        
+        // Render stories if they exist
+        if (feature.stories && feature.stories.length > 0) {
+          feature.stories.forEach((story, storyIndex) => {
+            const storyId = `${featureId}-story-${storyIndex}`;
+            const storyIcon = pageIconPath ? `<img src="${pageIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Story" />` : '📝 ';
+            
+            // Check if story has scenarios - if so, make it collapsible
+            const hasScenarios = story.scenarios && story.scenarios.length > 0;
+            
+            html += `<div style="margin-left: ${marginLeft + 7}px; margin-top: 2px; font-size: 12px;">`;
+            
+            if (hasScenarios) {
+              // Collapsible story with scenarios
+              html += `<span class="collapsible-header" onclick="toggleCollapse('${storyId}')" style="cursor: pointer; user-select: none;">`;
+              html += `<span id="${storyId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> `;
             }
-          } else {
-            html += `${storyIcon}${this.escapeHtml(story.name)}`;
-          }
-          
-          if (hasScenarios) {
-            html += `</span>`; // Close collapsible-header span
-          }
-          
-          html += '</div>';
-          
-          // Render scenarios if they exist
-          if (hasScenarios) {
-            html += `<div id="${storyId}" class="collapsible-content" style="display: none;">`;
-            story.scenarios.forEach((scenario, scenarioIndex) => {
-              const testTubeIcon = testTubeIconPath ? `<img src="${testTubeIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Scenario" />` : '🧪 ';
-              html += `<div style="margin-left: 28px; margin-top: 2px; font-size: 12px;">`;
-              
-              // Build link to test file with search hint for test method
-              // Format: path/to/test_file.py#test_method_name
-              // VS Code will open the file; we append # to hint at the method name
-              if (scenario.test_file && scenario.test_method) {
-                const testLink = `${scenario.test_file}#${scenario.test_method}`;
-                html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink)}')">${testTubeIcon}${this.escapeHtml(scenario.name)}</a>`;
-              } else if (story.testFile && scenario.test_method) {
-                // Fall back to story's test file
-                const testLink = `${story.testFile}#${scenario.test_method}`;
-                html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink)}')">${testTubeIcon}${this.escapeHtml(scenario.name)}</a>`;
-              } else {
-                // No link - just display scenario name
-                html += `${testTubeIcon}${this.escapeHtml(scenario.name)}`;
+            
+            if (story.links && story.links.length > 0) {
+              // First link is the story file itself
+              const storyLink = story.links[0];
+              html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
+              // Remaining links are test files, etc.
+              if (story.links.length > 1) {
+                html += ' ' + story.links.slice(1).map(link => 
+                  `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
+                ).join(' ');
               }
-              
-              html += '</div>';
-            });
-            html += '</div>'; // Close scenario collapsible-content
-          }
-        });
+            } else {
+              html += `${storyIcon}${this.escapeHtml(story.name)}`;
+            }
+            
+            if (hasScenarios) {
+              html += `</span>`; // Close collapsible-header span
+            }
+            
+            html += '</div>';
+            
+            // Render scenarios if they exist
+            if (hasScenarios) {
+              html += `<div id="${storyId}" class="collapsible-content" style="display: none;">`;
+              story.scenarios.forEach((scenario, scenarioIndex) => {
+                const testTubeIcon = testTubeIconPath ? `<img src="${testTubeIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Scenario" />` : '🧪 ';
+                html += `<div style="margin-left: ${marginLeft + 21}px; margin-top: 2px; font-size: 12px;">`;
+                
+                // scenario.test_file now contains the complete absolute path with #test_method
+                if (scenario.test_file) {
+                  html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenario.test_file)}')">${testTubeIcon}${this.escapeHtml(scenario.name)}</a>`;
+                } else {
+                  // No link - just display scenario name
+                  html += `${testTubeIcon}${this.escapeHtml(scenario.name)}`;
+                }
+                
+                html += '</div>';
+              });
+              html += '</div>'; // Close scenario collapsible-content
+            }
+          });
+        }
+        
         html += '</div>'; // Close feature collapsible-content
+      };
+      
+      epic.features.forEach((feature, featureIndex) => {
+        renderFeature(feature, featureIndex, `epic-${epicIndex}`, 0);
       });
       html += '</div>'; // Close epic collapsible-content
       

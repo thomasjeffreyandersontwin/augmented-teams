@@ -1,6 +1,6 @@
 # 📝 Display Piped Mode Instructions for AI Agents
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L202)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Initialize REPL Session](.)  
@@ -19,7 +19,7 @@ Display Piped Mode Instructions for AI Agents functionality for the mob minion s
 
 ## Scenarios
 
-### Scenario: CLI displays piped mode instructions in pipe mode (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L205)
+### Scenario: CLI displays piped mode instructions in pipe mode (happy_path)
 
 **Steps:**
 ```gherkin
@@ -29,7 +29,7 @@ THEN: CLI displays piped mode instructions header
 ```
 
 
-### Scenario: CLI omits piped mode instructions in interactive mode (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L232)
+### Scenario: CLI omits piped mode instructions in interactive mode (happy_path)
 
 **Steps:**
 ```gherkin

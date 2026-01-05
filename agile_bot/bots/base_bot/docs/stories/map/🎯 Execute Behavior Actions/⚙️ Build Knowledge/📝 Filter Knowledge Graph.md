@@ -1,6 +1,6 @@
 # 📝 Filter Knowledge Graph
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1460)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
@@ -23,7 +23,7 @@ Filter Knowledge Graph functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Filter returns all when scope is all (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1463)
+### Scenario: Filter returns all when scope is all (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +33,7 @@ THEN: All content is returned
 ```
 
 
-### Scenario: Filter by story names returns matching stories (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1480)
+### Scenario: Filter by story names returns matching stories (happy_path)
 
 **Steps:**
 ```gherkin
@@ -43,7 +43,7 @@ THEN: Only matching stories are returned
 ```
 
 
-### Scenario: Filter by epic names returns matching epics (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1498)
+### Scenario: Filter by epic names returns matching epics (happy_path)
 
 **Steps:**
 ```gherkin
@@ -53,7 +53,7 @@ THEN: Only matching epics are returned
 ```
 
 
-### Scenario: Filter by increment priorities returns matching increments (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1516)
+### Scenario: Filter by increment priorities returns matching increments (happy_path)
 
 **Steps:**
 ```gherkin

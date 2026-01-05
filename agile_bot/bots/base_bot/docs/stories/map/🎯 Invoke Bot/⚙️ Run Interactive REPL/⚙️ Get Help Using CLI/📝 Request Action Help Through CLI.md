@@ -1,6 +1,6 @@
 # 📝 Request Action Help Through CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_get_help_using_cli_current.py#L69)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Get Help Using CLI](.)  
@@ -31,7 +31,7 @@ Request Action Help Through CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User views all available commands (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_get_help_using_cli_current.py#L72)
+### Scenario: User views all available commands (happy_path)
 
 **Steps:**
 ```gherkin

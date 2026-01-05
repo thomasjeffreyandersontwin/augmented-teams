@@ -1,6 +1,6 @@
 # 📝 Show Remaining Actions After Completion
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** System
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Navigate Bot Behaviors and Actions Via Domain Model](.)  
@@ -19,7 +19,7 @@ Show Remaining Actions After Completion functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Remaining actions respects completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli.py#L68)
+### Scenario: Remaining actions respects completion (happy_path)
 
 **Steps:**
 ```gherkin

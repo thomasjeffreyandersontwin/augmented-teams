@@ -1,6 +1,6 @@
 # 📝 Navigate Using CLI Dot Notation
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L68)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Navigate Bot Behaviors and Actions With CLI](.)  
@@ -19,7 +19,7 @@ Navigate Using CLI Dot Notation functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User navigates with behavior only (no dots) (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L71)
+### Scenario: User navigates with behavior only (no dots) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -29,7 +29,7 @@ THEN: CLI navigates to discovery.clarify (first action)
 ```
 
 
-### Scenario: User navigates with behavior.action (one dot) (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L100)
+### Scenario: User navigates with behavior.action (one dot) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ THEN: CLI navigates to discovery.build.instructions
 ```
 
 
-### Scenario: User navigates with behavior.action.operation (two dots) (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L130)
+### Scenario: User navigates with behavior.action.operation (two dots) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -49,7 +49,7 @@ THEN: CLI executes discovery.build.instructions
 ```
 
 
-### Scenario: User enters invalid behavior in dot notation (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L159)
+### Scenario: User enters invalid behavior in dot notation (happy_path)
 
 **Steps:**
 ```gherkin

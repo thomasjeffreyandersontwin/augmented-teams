@@ -1,6 +1,6 @@
 # 📝 Clear Scope Through CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L315)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Manage Bot Scope Through CLI](.)  
@@ -19,7 +19,7 @@ Clear Scope Through CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User clears all scope filters (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L318)
+### Scenario: User clears all scope filters (happy_path)
 
 **Steps:**
 ```gherkin
@@ -32,7 +32,7 @@ AND: StatusDisplay shows no active scope
 ```
 
 
-### Scenario: User executes build after clearing scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L351)
+### Scenario: User executes build after clearing scope (happy_path)
 
 **Steps:**
 ```gherkin

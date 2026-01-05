@@ -1,6 +1,6 @@
 # 📝 Inject Render Instructions And Configs
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L466)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  

@@ -1,6 +1,6 @@
 # 📝 Display CLI Bot Command in Navigation Menu Footer
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L681)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -29,7 +29,7 @@ Display CLI Bot Command in Navigation Menu Footer functionality for the mob mini
 
 ## Scenarios
 
-### Scenario: CLI displays bot command in footer (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli_current.py#L684)
+### Scenario: CLI displays bot command in footer (happy_path)
 
 **Steps:**
 ```gherkin

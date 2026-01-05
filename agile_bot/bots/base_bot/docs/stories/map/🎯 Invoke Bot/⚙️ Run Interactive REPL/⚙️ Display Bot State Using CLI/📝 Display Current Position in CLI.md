@@ -1,6 +1,6 @@
 # 📝 Display Current Position in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L152)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -29,7 +29,7 @@ Display Current Position in CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User views current position in status (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L160)
+### Scenario: User views current position in status (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ THEN: CLI displays current position
 ```
 
 
-### Scenario: Current position updates after navigation (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L189)
+### Scenario: Current position updates after navigation (happy_path)
 
 **Steps:**
 ```gherkin

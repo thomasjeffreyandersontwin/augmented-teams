@@ -1,6 +1,6 @@
 # 📝 Launch CLI in Interactive Mode
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L102)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Initialize REPL Session](.)  
@@ -19,7 +19,7 @@ Launch CLI in Interactive Mode functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: CLI launches in interactive mode (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L105)
+### Scenario: CLI launches in interactive mode (happy_path)
 
 **Steps:**
 ```gherkin
@@ -29,7 +29,7 @@ THEN: REPLSession creates CLIBot wrapping Bot
 ```
 
 
-### Scenario: CLI loads existing behavior action state on launch (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_initialize_repl_session.py#L137)
+### Scenario: CLI loads existing behavior action state on launch (happy_path)
 
 **Steps:**
 ```gherkin

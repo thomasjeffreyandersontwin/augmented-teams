@@ -1,5 +1,7 @@
 class CLIOutputAdapter {
+
   adapt(rawOutput) {
+    console.log('[ADAPTER] adapt() called, rawOutput length:', rawOutput?.length || 0);
     // First, try to parse as JSON (CLI outputs JSON after header text when using --format json)
     const jsonStartIndex = rawOutput.indexOf('{');
     if (jsonStartIndex >= 0) {
@@ -27,8 +29,10 @@ class CLIOutputAdapter {
       instructionsKeys: jsonData.instructions ? Object.keys(jsonData.instructions) : []
     });
     
+    const botInfo = jsonData.bot || { name: 'unknown bot', botDirectory: '', workspaceName: '', workspaceDirectory: '' };
+    
     return {
-      bot: jsonData.bot || { name: 'unknown bot', botDirectory: '', workspaceName: '', workspaceDirectory: '' },
+      bot: botInfo,
       behaviors: jsonData.behaviors || [],
       session: jsonData.session || { currentPosition: '', currentBehavior: '', currentAction: '', actionPhase: '', progressPath: '' },
       scope: this._adaptScopeFromJson(jsonData.scope),
@@ -52,49 +56,105 @@ class CLIOutputAdapter {
     }
     
     if ((scopeData.type === 'story' || scopeData.type === 'showAll') && scopeData.storyGraph && scopeData.storyGraph.epics) {
-      // Convert story graph epics to panel format
-      const epics = scopeData.storyGraph.epics.map(epic => ({
-        icon: '💡',
-        type: 'epic',
-        name: epic.name,
-        features: (epic.sub_epics || []).map(subEpic => {
-          // Collect stories from both story_groups and direct stories array
-          const allStories = [];
-          if (subEpic.story_groups) {
-            subEpic.story_groups.forEach(group => {
-              if (group.stories) allStories.push(...group.stories);
-            });
+      console.log('[ADAPTER] Processing story graph with', scopeData.storyGraph.epics.length, 'epics');
+      // Helper function to process a sub-epic (can be nested)
+      const processSubEpic = (subEpic) => {
+        // Collect stories from both story_groups and direct stories array
+        const allStories = [];
+        if (subEpic.story_groups) {
+          subEpic.story_groups.forEach(group => {
+            if (group.stories) allStories.push(...group.stories);
+          });
+        }
+        if (subEpic.stories) {
+          allStories.push(...subEpic.stories);
+        }
+        
+        // Sub-epic: Use test_link if available (already constructed by backend), 
+        // otherwise build from test_file
+        const subEpicTestFile = subEpic.test_file;
+        let subEpicTestLink = null;
+        if (subEpic.test_link) {
+          // Backend already constructed the full path
+          subEpicTestLink = subEpic.test_link;
+        } else if (subEpicTestFile) {
+          // Check if test_file already contains a path
+          if (subEpicTestFile.startsWith('agile_bot/') || subEpicTestFile.includes('/')) {
+            // Already a full path, use it directly
+            subEpicTestLink = subEpicTestFile;
+          } else {
+            // Just filename, prepend path
+            subEpicTestLink = `agile_bot/bots/base_bot/test/${subEpicTestFile}`;
           }
-          if (subEpic.stories) {
-            allStories.push(...subEpic.stories);
-          }
-          
-          return {
-            icon: '⚙️',
-            type: 'feature',
-            name: subEpic.name,
-            links: subEpic.test_link ? [{ text: 'Test', url: subEpic.test_link }] : [],
-            stories: allStories.map(story => ({
+        }
+        
+        // Process nested sub_epics if they exist
+        const nestedFeatures = (subEpic.sub_epics || []).map(nestedSubEpic => processSubEpic(nestedSubEpic));
+        
+        console.log(`[ADAPTER] Processing sub-epic: ${subEpic.name}, has ${subEpic.sub_epics?.length || 0} nested sub-epics, generated ${nestedFeatures.length} nested features`);
+        
+        return {
+          icon: '⚙️',
+          type: 'feature',
+          name: subEpic.name,
+          links: subEpicTestLink ? [{ text: 'Test', url: subEpicTestLink }] : [],
+          features: nestedFeatures.length > 0 ? nestedFeatures : undefined,
+          stories: allStories.map(story => {
+            // Story: Build test link from sub-epic test link/file + test_class
+            // Stories do NOT have test_file, only test_class
+            let storyTestLink = null;
+            if (story.test_link) {
+              // Backend already constructed the full path
+              storyTestLink = story.test_link;
+            } else if (subEpicTestLink && story.test_class) {
+              // Use sub-epic test link + test_class
+              storyTestLink = `${subEpicTestLink}#${story.test_class}`;
+            }
+            
+            return {
               icon: '📝',
               type: 'story',
               name: story.name,
               storyFile: story.story_file,
               storyFileExists: story.story_file_exists,
-              testFile: story.test_file,
               testClass: story.test_class,
-              links: [
-                ...(story.story_file && story.story_file_exists ? [{ text: 'Story', url: story.story_file }] : []),
-                ...(story.test_file && story.test_class ? [{ text: 'Test', url: `${story.test_file}#${story.test_class}` }] : [])
-              ],
-              scenarios: (story.scenarios || []).map(scenario => ({
-                name: scenario.name,
-                test_method: scenario.test_method,
-                test_file: story.test_file  // Inherit test file from story
-              }))
-            }))
-          };
-        })
-      }));
+            links: [
+              ...(story.story_file && story.story_file_exists ? [{ text: 'Story', url: story.story_file }] : []),
+                ...(storyTestLink ? [{ text: 'Test', url: storyTestLink }] : [])
+            ],
+              scenarios: (story.scenarios || []).map(scenario => {
+                // Scenario: Build test link from sub-epic test link/file + test_method
+                // Scenarios inherit test_file from sub-epic, NOT from story
+                let scenarioTestLink = null;
+                if (scenario.test_file) {
+                  // Backend already constructed the full path with test_method
+                  scenarioTestLink = scenario.test_file;
+                } else if (subEpicTestLink && scenario.test_method) {
+                  // Use sub-epic test link + test_method
+                  scenarioTestLink = `${subEpicTestLink}#${scenario.test_method}`;
+                }
+                
+                return {
+                  name: scenario.name,
+                  test_method: scenario.test_method,
+                  test_file: scenarioTestLink  // Full relative path with #test_method
+                };
+              })
+            };
+          })
+        };
+      };
+      
+      // Convert story graph epics to panel format
+      const epics = scopeData.storyGraph.epics.map(epic => {
+        console.log(`[ADAPTER] Epic: ${epic.name}, has ${epic.sub_epics?.length || 0} sub-epics`);
+        return {
+          icon: '💡',
+          type: 'epic',
+          name: epic.name,
+          features: (epic.sub_epics || []).map(subEpic => processSubEpic(subEpic))
+        };
+      });
       
       return {
         type: scopeData.type,  // Keep original type ('story' or 'showAll')
@@ -121,8 +181,10 @@ class CLIOutputAdapter {
 
   _adaptFromText(rawOutput) {
     // Original text parsing logic (fallback)
+    const botInfo = this._extractBotInfo(rawOutput);
+    
     return {
-      bot: this._extractBotInfo(rawOutput),
+      bot: botInfo,
       behaviors: this._extractBehaviorsHierarchy(rawOutput),
       session: this._extractSessionState(rawOutput),
       scope: this._extractScopeSection(rawOutput),
@@ -282,66 +344,112 @@ class CLIOutputAdapter {
             content: scopeData.files || []
           };
         } else if (scopeData.storyGraph && scopeData.storyGraph.epics) {
+          // Helper function to process a sub-epic (can be nested)
+          const processSubEpic = (subEpic) => {
+            // Collect stories from both story_groups and direct stories array
+            const allStories = [];
+            
+            // Get stories from story_groups
+            if (subEpic.story_groups && Array.isArray(subEpic.story_groups)) {
+              subEpic.story_groups.forEach(group => {
+                if (group.stories && Array.isArray(group.stories)) {
+                  allStories.push(...group.stories);
+                }
+              });
+            }
+            
+            // Get stories directly at sub_epic level
+            if (subEpic.stories && Array.isArray(subEpic.stories)) {
+              allStories.push(...subEpic.stories);
+            }
+            
+            // Sub-epic: Use test_link if available (already constructed by backend), 
+            // otherwise build from test_file
+            const subEpicTestFile = subEpic.test_file;
+            let subEpicTestLink = null;
+            if (subEpic.test_link) {
+              // Backend already constructed the full path
+              subEpicTestLink = subEpic.test_link;
+            } else if (subEpicTestFile) {
+              // Check if test_file already contains a path
+              if (subEpicTestFile.startsWith('agile_bot/') || subEpicTestFile.includes('/')) {
+                // Already a full path, use it directly
+                subEpicTestLink = subEpicTestFile;
+              } else {
+                // Just filename, prepend path
+                subEpicTestLink = `agile_bot/bots/base_bot/test/${subEpicTestFile}`;
+              }
+            }
+            
+            // Process nested sub_epics if they exist
+            const nestedFeatures = (subEpic.sub_epics || []).map(nestedSubEpic => processSubEpic(nestedSubEpic));
+            
+            return {
+              icon: '⚙️',
+              type: 'feature',
+              name: subEpic.name,
+              links: subEpicTestLink ? [{ text: 'Test', url: subEpicTestLink }] : [],
+              features: nestedFeatures.length > 0 ? nestedFeatures : undefined,
+              stories: allStories.map(story => {
+                const storyLinks = [];
+                
+                // Debug: Log story properties
+                console.log(`Story: ${story.name}, has story_file: ${!!story.story_file}, story_file_exists: ${story.story_file_exists}, story_file value: ${story.story_file}`);
+                
+                // Use story_file from JSON if available and exists
+                if (story.story_file && story.story_file_exists) {
+                  console.log(`Adding story link for ${story.name}: ${story.story_file}`);
+                  storyLinks.push({ text: 'Story', url: story.story_file });
+                }
+                
+                // Add test link: Use story.test_link if available, otherwise build from sub-epic + test_class
+                if (story.test_link) {
+                  // Backend already constructed the full path
+                  storyLinks.push({ text: 'Test', url: story.test_link });
+                } else if (subEpicTestLink && story.test_class) {
+                  // Use sub-epic test link + test_class
+                  const storyTestLink = `${subEpicTestLink}#${story.test_class}`;
+                  storyLinks.push({ text: 'Test', url: storyTestLink });
+                }
+                
+                console.log(`Story ${story.name} final links:`, storyLinks);
+                
+                return {
+                  icon: '📝',
+                  type: 'story',
+                  name: story.name,
+                  storyFile: story.story_file,
+                  storyFileExists: story.story_file_exists,
+                  testClass: story.test_class,
+                  links: storyLinks,
+                  scenarios: (story.scenarios || []).map(scenario => {
+                    // Scenario: Use scenario.test_file if available, otherwise build from sub-epic + test_method
+                    let scenarioTestLink = null;
+                    if (scenario.test_file) {
+                      // Backend already constructed the full path with test_method
+                      scenarioTestLink = scenario.test_file;
+                    } else if (subEpicTestLink && scenario.test_method) {
+                      // Use sub-epic test link + test_method
+                      scenarioTestLink = `${subEpicTestLink}#${scenario.test_method}`;
+                    }
+                    
+                    return {
+                      name: scenario.name,
+                      test_method: scenario.test_method,
+                      test_file: scenarioTestLink  // Full relative path with #test_method
+                    };
+                  })
+                };
+              })
+            };
+          };
+          
           // Convert story graph epics to panel format
           const epics = (scopeData.storyGraph.epics || []).map(epic => ({
             icon: 'lightbulb',
             type: 'epic',
             name: epic.name,
-            features: (epic.sub_epics || []).map(subEpic => {
-              // Collect stories from both story_groups and direct stories array
-              const allStories = [];
-              
-              // Get stories from story_groups
-              if (subEpic.story_groups && Array.isArray(subEpic.story_groups)) {
-                subEpic.story_groups.forEach(group => {
-                  if (group.stories && Array.isArray(group.stories)) {
-                    allStories.push(...group.stories);
-                  }
-                });
-              }
-              
-              // Get stories directly at sub_epic level
-              if (subEpic.stories && Array.isArray(subEpic.stories)) {
-                allStories.push(...subEpic.stories);
-              }
-              
-              return {
-                icon: '⚙️',
-              type: 'feature',
-              name: subEpic.name,
-              links: subEpic.test_link ? [{ text: 'Test', url: subEpic.test_link }] : [],
-                stories: allStories.map(story => {
-                  const storyLinks = [];
-                  
-                  // Debug: Log story properties
-                  console.log(`Story: ${story.name}, has story_file: ${!!story.story_file}, story_file_exists: ${story.story_file_exists}, story_file value: ${story.story_file}`);
-                  
-                  // Use story_file from JSON if available and exists
-                  if (story.story_file && story.story_file_exists) {
-                    console.log(`Adding story link for ${story.name}: ${story.story_file}`);
-                    storyLinks.push({ text: 'Story', url: story.story_file });
-                  }
-                  
-                // Add test link if available (constructed from test_file and test_class)
-                if (story.test_file && story.test_class) {
-                  storyLinks.push({ text: 'Test', url: `${story.test_file}#${story.test_class}` });
-                }
-                  
-                  console.log(`Story ${story.name} final links:`, storyLinks);
-                  
-                  return {
-                    icon: '📝',
-                    type: 'story',
-                    name: story.name,
-                    storyFile: story.story_file,
-                    storyFileExists: story.story_file_exists,
-                    testFile: story.test_file,
-                    testClass: story.test_class,
-                    links: storyLinks
-                  };
-                })
-              };
-            })
+            features: (epic.sub_epics || []).map(subEpic => processSubEpic(subEpic))
           }));
           
           const result = {

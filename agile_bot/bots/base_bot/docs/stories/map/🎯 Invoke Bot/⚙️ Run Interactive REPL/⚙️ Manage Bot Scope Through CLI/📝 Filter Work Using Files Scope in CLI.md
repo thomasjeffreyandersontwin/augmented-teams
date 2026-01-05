@@ -1,6 +1,6 @@
 # 📝 Filter Work Using Files Scope in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L142)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Manage Bot Scope Through CLI](.)  
@@ -30,7 +30,7 @@ Filter Work Using Files Scope in CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User sets files scope filter (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L145)
+### Scenario: User sets files scope filter (happy_path)
 
 **Steps:**
 ```gherkin
@@ -42,7 +42,7 @@ AND: CLI displays active scope filters
 ```
 
 
-### Scenario: User executes validate with active files scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L174)
+### Scenario: User executes validate with active files scope (happy_path)
 
 **Steps:**
 ```gherkin

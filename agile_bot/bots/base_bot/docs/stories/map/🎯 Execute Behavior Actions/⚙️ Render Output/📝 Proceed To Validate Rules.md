@@ -1,6 +1,6 @@
 # 📝 Proceed To Validate Rules
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L423)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  
@@ -29,7 +29,7 @@ Proceed To Validate Rules functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Seamless transition from validate rules to render output (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L426)
+### Scenario: Seamless transition from validate rules to render output (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ THEN: Workflow transitions to render_output
 ```
 
 
-### Scenario: Workflow state captures render output completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L435)
+### Scenario: Workflow state captures render output completion (happy_path)
 
 **Steps:**
 ```gherkin
@@ -49,7 +49,7 @@ THEN: Workflow state captures completion
 ```
 
 
-### Scenario: Render output action executes successfully (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L444)
+### Scenario: Render output action executes successfully (happy_path)
 
 **Steps:**
 ```gherkin
