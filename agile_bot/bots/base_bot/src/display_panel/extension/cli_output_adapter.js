@@ -53,6 +53,10 @@ class CLIOutputAdapter {
   }
 
   _adaptScopeFromJson(scopeData) {
+    const fs = require('fs'); // #region agent log
+    // #region agent log
+    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:55',message:'_adaptScopeFromJson called',data:{hasScopeData:!!scopeData,scopeType:scopeData?scopeData.type:'null',hasStoryGraph:scopeData?!!scopeData.storyGraph:false,hasEpics:scopeData&&scopeData.storyGraph?!!scopeData.storyGraph.epics:false,epicsCount:scopeData&&scopeData.storyGraph&&scopeData.storyGraph.epics?scopeData.storyGraph.epics.length:0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C,D,E,H'})+'\n');
+    // #endregion
     if (!scopeData) {
       return { type: 'all', filter: 'all (entire project)', content: null, graphLinks: [] };
     }
@@ -64,7 +68,10 @@ class CLIOutputAdapter {
       if (scopeData.links.map) graphLinks.push({ text: 'map', url: scopeData.links.map });
     }
     
-    if (scopeData.type === 'story' && scopeData.storyGraph && scopeData.storyGraph.epics) {
+    // #region agent log
+    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:67',message:'Checking scope type condition',data:{scopeType:scopeData.type,isStoryOrShowAll:(scopeData.type==='story'||scopeData.type==='showAll'),hasStoryGraph:!!scopeData.storyGraph,hasEpics:scopeData.storyGraph?!!scopeData.storyGraph.epics:false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C,D'})+'\n');
+    // #endregion
+    if ((scopeData.type === 'story' || scopeData.type === 'showAll') && scopeData.storyGraph && scopeData.storyGraph.epics) {
       // Convert story graph epics to panel format
       const epics = scopeData.storyGraph.epics.map(epic => ({
         icon: '💡',
@@ -104,8 +111,11 @@ class CLIOutputAdapter {
         })
       }));
       
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:108',message:'Returning story/showAll scope',data:{type:scopeData.type,epicsCount:epics.length,filter:scopeData.filter||''},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E,F'})+'\n');
+      // #endregion
       return {
-        type: 'story',
+        type: scopeData.type,  // Keep original type ('story' or 'showAll')
         filter: scopeData.filter || '',
         graphLinks: graphLinks,
         content: epics
@@ -118,6 +128,9 @@ class CLIOutputAdapter {
         content: scopeData.files || []
       };
     } else {
+      // #region agent log
+      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:120',message:'Falling through to else - returning null content',data:{scopeType:scopeData.type,filter:scopeData.filter||'all (entire project)'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})+'\n');
+      // #endregion
       return {
         type: 'all',
         filter: scopeData.filter || 'all (entire project)',

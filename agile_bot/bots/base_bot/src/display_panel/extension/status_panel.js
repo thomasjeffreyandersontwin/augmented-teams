@@ -121,6 +121,29 @@ class StatusPanel {
                 });
             }
             return;
+          case "clearFilter":
+            this._logger.log('Clearing scope filter - executing scope showAll');
+            // #region agent log
+            const fs = require('fs');
+            fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:124',message:'Clear filter clicked',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,G'})+'\n');
+            // #endregion
+            // Execute scope showAll command directly
+            this._dataProvider.executeCommand('scope showAll')
+              .then((output) => {
+                // #region agent log
+                fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:128',message:'scope showAll executed',data:{outputLength:output?output.length:0,outputPreview:output?output.substring(0,200):'null'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})+'\n');
+                // #endregion
+                // Refresh panel after scope change
+                this._update();
+              })
+              .catch((error) => {
+                // #region agent log
+                fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:133',message:'scope showAll failed',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})+'\n');
+                // #endregion
+                this._logger.error('Failed to clear scope filter', error);
+                vscode.window.showErrorMessage(`Failed to clear scope: ${error.message}`);
+              });
+            return;
           case "updateWorkspace":
             if (message.workspacePath) {
               this._logger.log(`Updating workspace path to: ${message.workspacePath}`);
@@ -243,20 +266,6 @@ class StatusPanel {
                 this._logger.error('Submit command failed:', error);
                 vscode.window.showErrorMessage(`Submit command failed: ${error.message}`);
               });
-            return;
-          case "testVSCodeCommand":
-            if (message.vsCodeCommand) {
-              this._logger.log('Testing VS Code command:', message.vsCodeCommand);
-              vscode.commands.executeCommand(message.vsCodeCommand)
-                .then(() => {
-                  this._logger.log('Command executed successfully:', message.vsCodeCommand);
-                  vscode.window.showInformationMessage(`SUCCESS: ${message.vsCodeCommand}`);
-                })
-                .catch((error) => {
-                  this._logger.error('Command failed:', message.vsCodeCommand, error);
-                  vscode.window.showErrorMessage(`FAILED: ${message.vsCodeCommand} - ${error.message}`);
-                });
-            }
             return;
         }
       },
@@ -402,6 +411,9 @@ class StatusPanel {
       // #endregion
       this._logger.log("Got raw status, length:", rawStatus.length);
       
+      // Store raw status for raw instructions display
+      this._rawStatusOutput = rawStatus;
+      
       // Adapt CLI output to structured JSON
       const structuredData = this._adapter.adapt(rawStatus);
       // #region agent log
@@ -412,13 +424,21 @@ class StatusPanel {
       structuredData.availableBots = this._dataProvider.getAvailableBots();
       structuredData.currentBot = this._dataProvider.getCurrentBot();
       
-      // Extract prompt content from instructions if not already set
-      if (!this._lastPromptContent && structuredData.instructions) {
-        this._lastPromptContent = this._buildPromptFromInstructions(structuredData.instructions);
+      // Get promptContent from _lastPromptContent (populated when user runs instructions)
+      // If empty, try to get it now by running instructions command
+      if (!this._lastPromptContent) {
+        try {
+          const instructionsOutput = await this._dataProvider.executeCommand('instructions');
+          if (instructionsOutput && instructionsOutput.length > 100) {
+            this._lastPromptContent = instructionsOutput;
+            this._logger.log('Auto-fetched instructions, length:', instructionsOutput.length);
+          }
+        } catch (error) {
+          this._logger.log('Could not auto-fetch instructions:', error.message);
+        }
       }
       
-      // Use last prompt content (the formatted string), NOT the instructions object
-      structuredData.promptContent = this._lastPromptContent;
+      structuredData.promptContent = this._lastPromptContent || '';
       
       // Add expansion state so user's open/close choices survive re-render
       structuredData.expansionState = this._expansionState;

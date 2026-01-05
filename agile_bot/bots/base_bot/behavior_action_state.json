@@ -42,8 +42,8 @@
     }
   ],
   "current_behavior": "story_bot.shape",
-  "timestamp": "2026-01-04T16:56:48.430933",
-  "current_action": "story_bot.shape.strategy",
+  "timestamp": "2026-01-04T19:00:43.739643",
+  "current_action": "story_bot.shape.clarify",
   "action_phase": "instructions",
   "completed_behaviors": [
     "scenarios",
@@ -55,10 +55,8 @@
   ],
   "working_directory": "agile_bot/bots/base_bot",
   "scope": {
-    "type": "story",
-    "value": [
-      "all"
-    ],
+    "type": "showAll",
+    "value": [],
     "exclude": [],
     "skiprule": []
   }
