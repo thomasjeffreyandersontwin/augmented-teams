@@ -125,3 +125,30 @@ class CommunicationVerbScanner(StoryScanner):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

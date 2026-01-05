@@ -16,12 +16,27 @@ logger = logging.getLogger(__name__)
 class Behaviors:
 
     def __init__(self, bot_name: str, bot_paths: BotPaths):
+        # #region agent log
+        import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_path.parent.mkdir(parents=True, exist_ok=True); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:18','message':'Behaviors.__init__ entry','data':{'bot_name':bot_name},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
+        # #endregion
         self.bot_name = bot_name
         self.bot_paths = bot_paths
         self._behaviors: List['Behavior'] = []
+        # #region agent log
+        import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:22','message':'Before _discover_behaviors','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
+        # #endregion
         self._discover_behaviors()
+        # #region agent log
+        import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:22','message':'After _discover_behaviors','data':{'behavior_count':len(self._behaviors)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
+        # #endregion
         self._current_index: Optional[int] = None
+        # #region agent log
+        import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:24','message':'Before load_state','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
+        # #endregion
         self.load_state()
+        # #region agent log
+        import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:24','message':'After load_state - Behaviors.__init__ exit','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
+        # #endregion
 
     def _load_behavior_from_dir(self, item: Path) -> tuple:
         behavior_json_path = item / 'behavior.json'
@@ -213,7 +228,8 @@ class Behaviors:
                 self._current_index = i
                 break
         
-        # When navigating to a behavior: clear completed actions from future behaviors
+        # When navigating to a behavior: mark all actions in previous behaviors as complete,
+        # clear all actions in future behaviors
         if target_index is not None and self.bot_paths:
             workspace_dir = self.bot_paths.workspace_directory
             state_file = workspace_dir / 'behavior_action_state.json'
@@ -225,6 +241,20 @@ class Behaviors:
                 state_data = {}
             
             completed_actions = state_data.get('completed_actions', [])
+            
+            # Mark all actions in previous behaviors as complete
+            for i in range(target_index):
+                past_behavior = self._behaviors[i]
+                for action_name in past_behavior.actions.names:
+                    action_state = f"{self.bot_name}.{past_behavior.name}.{action_name}"
+                    # Check if already completed
+                    is_completed = any(a.get('action_state') == action_state for a in completed_actions if isinstance(a, dict))
+                    if not is_completed:
+                        from datetime import datetime
+                        completed_actions.append({
+                            'action_state': action_state,
+                            'timestamp': datetime.now().isoformat()
+                        })
             
             # Remove completed actions from future behaviors
             actions_to_remove = set()

@@ -1,9 +1,5 @@
 class CLIOutputAdapter {
   adapt(rawOutput) {
-    const fs = require('fs'); // #region agent log
-    // #region agent log
-    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:2',message:'adapt() called',data:{outputLength:rawOutput.length,hasJSON:rawOutput.indexOf('{')>=0,firstChars:rawOutput.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H,I'})+'\n');
-    // #endregion
     // First, try to parse as JSON (CLI outputs JSON after header text when using --format json)
     const jsonStartIndex = rawOutput.indexOf('{');
     if (jsonStartIndex >= 0) {
@@ -11,23 +7,14 @@ class CLIOutputAdapter {
       try {
         const jsonData = JSON.parse(jsonText);
         console.log('[ADAPTER] Successfully parsed JSON format');
-        // #region agent log
-        fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:13',message:'Parsed JSON successfully',data:{hasBehaviors:!!(jsonData.behaviors),behaviorsCount:jsonData.behaviors?jsonData.behaviors.length:0,botName:jsonData.bot?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I'})+'\n');
-        // #endregion
         return this._adaptFromJson(jsonData);
       } catch (e) {
         console.log('[ADAPTER] JSON parse failed, falling back to text format:', e.message);
-        // #region agent log
-        fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:20',message:'JSON parse failed',data:{error:e.message,jsonStart:jsonText.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})+'\n');
-        // #endregion
       }
     }
     
     // Fallback: parse text format
     console.log('[ADAPTER] Using text format parsing');
-    // #region agent log
-    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:28',message:'Using text format parsing',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})+'\n');
-    // #endregion
     return this._adaptFromText(rawOutput);
   }
 
@@ -53,10 +40,6 @@ class CLIOutputAdapter {
   }
 
   _adaptScopeFromJson(scopeData) {
-    const fs = require('fs'); // #region agent log
-    // #region agent log
-    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:55',message:'_adaptScopeFromJson called',data:{hasScopeData:!!scopeData,scopeType:scopeData?scopeData.type:'null',hasStoryGraph:scopeData?!!scopeData.storyGraph:false,hasEpics:scopeData&&scopeData.storyGraph?!!scopeData.storyGraph.epics:false,epicsCount:scopeData&&scopeData.storyGraph&&scopeData.storyGraph.epics?scopeData.storyGraph.epics.length:0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C,D,E,H'})+'\n');
-    // #endregion
     if (!scopeData) {
       return { type: 'all', filter: 'all (entire project)', content: null, graphLinks: [] };
     }
@@ -68,9 +51,6 @@ class CLIOutputAdapter {
       if (scopeData.links.map) graphLinks.push({ text: 'map', url: scopeData.links.map });
     }
     
-    // #region agent log
-    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:67',message:'Checking scope type condition',data:{scopeType:scopeData.type,isStoryOrShowAll:(scopeData.type==='story'||scopeData.type==='showAll'),hasStoryGraph:!!scopeData.storyGraph,hasEpics:scopeData.storyGraph?!!scopeData.storyGraph.epics:false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C,D'})+'\n');
-    // #endregion
     if ((scopeData.type === 'story' || scopeData.type === 'showAll') && scopeData.storyGraph && scopeData.storyGraph.epics) {
       // Convert story graph epics to panel format
       const epics = scopeData.storyGraph.epics.map(epic => ({
@@ -104,16 +84,18 @@ class CLIOutputAdapter {
               testClass: story.test_class,
               links: [
                 ...(story.story_file && story.story_file_exists ? [{ text: 'Story', url: story.story_file }] : []),
-                ...(story.test_link ? [{ text: 'Test', url: story.test_link }] : [])
-              ]
+                ...(story.test_file && story.test_class ? [{ text: 'Test', url: `${story.test_file}#${story.test_class}` }] : [])
+              ],
+              scenarios: (story.scenarios || []).map(scenario => ({
+                name: scenario.name,
+                test_method: scenario.test_method,
+                test_file: story.test_file  // Inherit test file from story
+              }))
             }))
           };
         })
       }));
       
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:108',message:'Returning story/showAll scope',data:{type:scopeData.type,epicsCount:epics.length,filter:scopeData.filter||''},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E,F'})+'\n');
-      // #endregion
       return {
         type: scopeData.type,  // Keep original type ('story' or 'showAll')
         filter: scopeData.filter || '',
@@ -128,9 +110,6 @@ class CLIOutputAdapter {
         content: scopeData.files || []
       };
     } else {
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'cli_output_adapter.js:120',message:'Falling through to else - returning null content',data:{scopeType:scopeData.type,filter:scopeData.filter||'all (entire project)'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})+'\n');
-      // #endregion
       return {
         type: 'all',
         filter: scopeData.filter || 'all (entire project)',
@@ -343,9 +322,9 @@ class CLIOutputAdapter {
                     storyLinks.push({ text: 'Story', url: story.story_file });
                   }
                   
-                // Add test link if available (validated by CLI)
-                if (story.test_link) {
-                  storyLinks.push({ text: 'Test', url: story.test_link });
+                // Add test link if available (constructed from test_file and test_class)
+                if (story.test_file && story.test_class) {
+                  storyLinks.push({ text: 'Test', url: `${story.test_file}#${story.test_class}` });
                 }
                   
                   console.log(`Story ${story.name} final links:`, storyLinks);

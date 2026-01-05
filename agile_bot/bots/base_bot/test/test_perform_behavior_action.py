@@ -5084,6 +5084,63 @@ def temp_workspace():
     shutil.rmtree(test_dir)
 
 
+class TestTrackActivityForWorkspace:
+    """Story: Track Activity For Workspace - Tests that activity is tracked in the correct workspace_area location."""
+
+    def test_activity_logged_to_workspace_area_not_bot_area(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Activity logged to workspace_area not bot area
+        GIVEN: WORKING_AREA environment variable specifies workspace_area
+        AND: action 'gather_context' executes
+        WHEN: Activity logger creates entry
+        THEN: Activity log file is at: workspace_area/activity_log.json
+        AND: Activity log is NOT at: agile_bot/bots/story_bot/activity_log.json
+        AND: Activity log location matches workspace_area from WORKING_AREA environment variable
+        """
+        # Bootstrap
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        # When: Activity tracker tracks activity
+        from agile_bot.bots.base_bot.test.test_helpers import given_activity_tracker
+        tracker = given_activity_tracker(workspace_directory, 'story_bot')
+        from agile_bot.bots.base_bot.test.test_helpers import when_activity_tracks_start
+        when_activity_tracks_start(tracker, 'story_bot.shape.gather_context')
+        
+        # Then: Activity log exists in workspace area (no workspace_area subdirectory)
+        expected_log = workspace_directory / 'activity_log.json'
+        assert expected_log.exists()
+        
+        # And: Activity log does NOT exist in bot's area
+        bot_area_log = bot_directory / 'activity_log.json'
+        assert not bot_area_log.exists()
+
+    def test_activity_log_contains_correct_entry(self, bot_directory, workspace_directory):
+        """
+        SCENARIO: Activity log contains correct entry
+        GIVEN: action 'gather_context' executes in behavior 'discovery'
+        WHEN: Activity logger creates entry
+        THEN: Activity log entry includes:
+          - action_state='test_bot.discovery.gather_context'
+          - timestamp
+          - Full path includes bot_name.behavior.action
+        """
+        # Bootstrap
+        bootstrap_env(bot_directory, workspace_directory)
+        
+        # When: Activity tracker tracks activity
+        from agile_bot.bots.base_bot.test.test_helpers import given_activity_tracker, when_activity_tracks_start
+        tracker = given_activity_tracker(workspace_directory, 'test_bot')
+        when_activity_tracks_start(tracker, 'test_bot.shape.gather_context')
+        
+        # Then: Activity log has entry
+        from agile_bot.bots.base_bot.test.test_helpers import then_activity_log_matches
+        then_activity_log_matches(workspace_directory, expected_action_state='test_bot.shape.gather_context', expected_status='started', expected_count=1)
+
+
+# ============================================================================
+# FIXTURES
+# ============================================================================
+
 @pytest.fixture
 def bot_directory(temp_workspace):
     """Fixture: Bot directory structure."""

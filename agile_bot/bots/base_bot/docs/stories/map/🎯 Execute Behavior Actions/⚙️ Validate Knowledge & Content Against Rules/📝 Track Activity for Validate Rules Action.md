@@ -1,6 +1,6 @@
 # 📝 Track Activity for Validate Rules Action
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2252)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Validate Knowledge & Content Against Rules](.)  
@@ -23,7 +23,7 @@ Track Activity for Validate Rules Action functionality for the mob minion system
 
 ## Scenarios
 
-### Scenario: Track activity when validate action starts (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2255)
+### Scenario: Track activity when validate action starts (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +33,7 @@ THEN: Activity is tracked
 ```
 
 
-### Scenario: Track activity when validate action completes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_validate_knowledge_and_content_against_rules.py#L2272)
+### Scenario: Track activity when validate action completes (happy_path)
 
 **Steps:**
 ```gherkin

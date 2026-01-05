@@ -63,7 +63,7 @@ class HtmlRenderer {
             --input-bg-focus: rgba(255, 255, 255, 0.08);
             --input-border: rgba(255, 255, 255, 0.1);
             --input-border-focus: var(--accent-color);
-            --input-padding: 12px;
+            --input-padding: 6px;
             --input-border-radius: 6px;
             --input-border-width: 1px;
             --input-border-width-focus: 2px;
@@ -78,10 +78,10 @@ class HtmlRenderer {
             --active-border-width: 2px;
             
             /* Spacing */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 12px;
-            --space-lg: 16px;
+            --space-xs: 2px;
+            --space-sm: 4px;
+            --space-md: 6px;
+            --space-lg: 8px;
             
             /* Typography */
             --font-size-base: 13px;
@@ -310,7 +310,7 @@ class HtmlRenderer {
         }
         
         .input-header {
-            padding: 8px var(--input-padding);
+            padding: 4px var(--input-padding);
             background-color: transparent;
             border-bottom: var(--input-header-border-width) solid var(--accent-color);
             font-size: var(--font-size-base);
@@ -340,8 +340,8 @@ class HtmlRenderer {
         .main-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 10px 12px 10px;
+            gap: 6px;
+            padding: 7px 5px 6px 5px;
             border-bottom: 1px solid var(--divider-color);
         }
         .main-header-icon {
@@ -360,7 +360,7 @@ class HtmlRenderer {
             border: none;
             color: var(--vscode-foreground);
             font-size: 18px;
-            padding: 6px;
+            padding: 3px;
             cursor: pointer;
             border-radius: 4px;
             transition: background-color 150ms ease;
@@ -447,7 +447,7 @@ class HtmlRenderer {
             background-color: var(--accent-color);
             color: #000000;
             border: none;
-            padding: 8px 20px;
+            padding: 4px 10px;
             cursor: pointer;
             border-radius: 4px;
             font-size: var(--font-size-base);
@@ -455,7 +455,7 @@ class HtmlRenderer {
             font-family: inherit;
             transition: all 100ms ease;
             display: none;
-            margin-top: 12px;
+            margin-top: 6px;
             align-self: flex-start;
         }
         .command-input-container.expanded .execute-button {
@@ -592,7 +592,7 @@ class HtmlRenderer {
             background: rgba(255, 140, 0, 0.1);
             border: 1px solid rgba(255, 140, 0, 0.3);
             border-radius: 4px;
-            padding: 4px 8px;
+            padding: 2px 4px;
             font-size: 11px;
             color: var(--accent-color);
             cursor: pointer;
@@ -710,7 +710,7 @@ class HtmlRenderer {
     <div class="section card-primary" style="border-top: none; padding-top: 0;">
         <div class="main-header">
             ${imagePath ? `<img src="${imagePath}" class="main-header-icon" alt="Company Icon" onerror="console.error('Failed to load icon:', this.src); this.style.border='1px solid red';" />` : ''}
-            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.78</span></span>
+            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.84</span></span>
             <button class="main-header-refresh" onclick="refreshStatus()" title="Refresh">
                 ${refreshIconPath ? `<img src="${refreshIconPath}" style="width: 36px; height: 36px; object-fit: contain; filter: saturate(1.3) brightness(0.95) hue-rotate(-5deg);" alt="Refresh" />` : '🔄'}
             </button>
@@ -718,7 +718,7 @@ class HtmlRenderer {
         <div class="collapsible-section expanded">
             <div class="collapsible-header" onclick="toggleSection('header-content')" style="
                 cursor: pointer;
-                padding: 8px 10px;
+                padding: 4px 5px;
                 background-color: transparent;
                 border-left: none;
                 border-radius: 2px;
@@ -736,12 +736,12 @@ class HtmlRenderer {
                         : `<span class="bot-icon" style="margin-right: 8px; font-size: 20px;">${this.getBotIcon(currentBot)}</span>`}
                     <span style="font-weight: 600; font-size: 20px;">${safeBotName}</span>
                 </div>
-                <div class="bot-links" onclick="event.stopPropagation();" style="gap: 12px;">
+                <div class="bot-links" onclick="event.stopPropagation();" style="gap: 6px;">
                     ${botLinksHtml}
                 </div>
             </div>
             <div id="header-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
-                <div class="card-secondary" style="padding: 2px 10px 4px 10px;">
+                <div class="card-secondary" style="padding: 1px 5px 2px 5px;">
                     <div class="input-container" style="margin-top: 0;">
                         <div class="input-header">Workspace</div>
                         <input type="text" id="workspacePathInput" 
@@ -836,7 +836,7 @@ class HtmlRenderer {
         <div class="collapsible-section expanded">
             <div class="collapsible-header" onclick="toggleSection('behaviors-content')" style="
                 cursor: pointer;
-                padding: 8px 10px;
+                padding: 4px 5px;
                 background-color: transparent;
                 border-left: none;
                 border-radius: 2px;
@@ -849,14 +849,14 @@ class HtmlRenderer {
                 <span style="font-weight: 600; font-size: 20px;">Behavior Action Status</span>
             </div>
             <div id="behaviors-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
-                <div class="card-secondary" style="padding: 10px;">
+                <div class="card-secondary" style="padding: 5px;">
                     <div class="empty-state">No behaviors available</div>
-                    <div style="margin-top: 15px; padding-top: 10px; border-top: none; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <div style="margin-top: 8px; padding-top: 5px; border-top: none; display: flex; gap: 4px; flex-wrap: wrap;">
                         <button onclick="executeNavigationCommand('back')" title="Back - Go to previous action" style="
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
                             border: none;
-                            padding: 8px 12px;
+                            padding: 4px 6px;
                             cursor: pointer;
                             border-radius: 2px;
                             font-size: 16px;
@@ -870,7 +870,7 @@ class HtmlRenderer {
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
                             border: none;
-                            padding: 8px 12px;
+                            padding: 4px 6px;
                             cursor: pointer;
                             border-radius: 2px;
                             font-size: 16px;
@@ -884,7 +884,7 @@ class HtmlRenderer {
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
                             border: none;
-                            padding: 8px 12px;
+                            padding: 4px 6px;
                             cursor: pointer;
                             border-radius: 2px;
                             font-size: 16px;
@@ -983,7 +983,7 @@ class HtmlRenderer {
         <div class="collapsible-section expanded">
             <div class="collapsible-header" onclick="toggleSection('behaviors-content')" style="
                 cursor: pointer;
-                padding: 8px 10px;
+                padding: 4px 5px;
                 background-color: transparent;
                 border-left: none;
                 border-radius: 2px;
@@ -996,14 +996,14 @@ class HtmlRenderer {
                 <span style="font-weight: 600; font-size: 20px;">Behavior Action Status</span>
             </div>
             <div id="behaviors-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
-                <div class="card-secondary" style="padding: 10px;">
+                <div class="card-secondary" style="padding: 5px;">
                     ${behaviorsHtml}
-                    <div style="margin-top: 15px; padding-top: 10px; border-top: none; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <div style="margin-top: 8px; padding-top: 5px; border-top: none; display: flex; gap: 4px; flex-wrap: wrap;">
                         <button onclick="executeNavigationCommand('back')" title="Back - Go to previous action" style="
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
                             border: none;
-                            padding: 8px 12px;
+                            padding: 4px 6px;
                             cursor: pointer;
                             border-radius: 2px;
                             font-size: 16px;
@@ -1017,7 +1017,7 @@ class HtmlRenderer {
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
                             border: none;
-                            padding: 8px 12px;
+                            padding: 4px 6px;
                             cursor: pointer;
                             border-radius: 2px;
                             font-size: 16px;
@@ -1031,7 +1031,7 @@ class HtmlRenderer {
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
                             border: none;
-                            padding: 8px 12px;
+                            padding: 4px 6px;
                             cursor: pointer;
                             border-radius: 2px;
                             font-size: 16px;
@@ -1059,6 +1059,7 @@ class HtmlRenderer {
     let gearIconPath = '';
     let epicIconPath = '';
     let pageIconPath = '';
+    let testTubeIconPath = '';
     let magnifyingGlassIconPath = '';
     let clearIconPath = '';
     if (webview && extensionUri) {
@@ -1078,6 +1079,9 @@ class HtmlRenderer {
         const pageUri = vscode.Uri.joinPath(extensionUri, 'img', 'page.png');
         pageIconPath = webview.asWebviewUri(pageUri).toString();
         
+        const testTubeUri = vscode.Uri.joinPath(extensionUri, 'img', 'test_tube.png');
+        testTubeIconPath = webview.asWebviewUri(testTubeUri).toString();
+        
         const magnifyingGlassUri = vscode.Uri.joinPath(extensionUri, 'img', 'magnifying_glass.png');
         magnifyingGlassIconPath = webview.asWebviewUri(magnifyingGlassUri).toString();
         
@@ -1089,14 +1093,14 @@ class HtmlRenderer {
     }
     const linksHtml = scope.graphLinks && scope.graphLinks.length > 0
       ? scope.graphLinks.map(link => 
-          `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(link.url)}')" style="color: var(--vscode-foreground); text-decoration: none; margin-left: 12px; font-size: 12px;">${this.escapeHtml(link.text).toLowerCase()}</a>`
+          `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(link.url)}')" style="color: var(--vscode-foreground); text-decoration: none; margin-left: 6px; font-size: 12px;">${this.escapeHtml(link.text).toLowerCase()}</a>`
         ).join('')
       : '';
 
     let contentHtml = '';
     let contentSummary = '';
     if ((scope.type === 'story' || scope.type === 'showAll') && scope.content) {
-      contentHtml = this.renderStoryTree(scope.content, gearIconPath, epicIconPath, pageIconPath);
+      contentHtml = this.renderStoryTree(scope.content, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath);
       contentSummary = `${scope.content.length} epic${scope.content.length !== 1 ? 's' : ''}`;
     } else if (scope.type === 'files' && scope.content) {
       contentHtml = this.renderFileList(scope.content);
@@ -1111,7 +1115,7 @@ class HtmlRenderer {
         <div class="collapsible-section expanded">
             <div class="collapsible-header" onclick="toggleSection('scope-content')" style="
                 cursor: pointer;
-                padding: 8px 10px;
+                padding: 4px 5px;
                 background-color: transparent;
                 border-left: none;
                 border-radius: 2px;
@@ -1129,7 +1133,7 @@ class HtmlRenderer {
                         background: transparent;
                         border: none;
                         padding: 4px 8px;
-                        margin-left: 12px;
+                        margin-left: 6px;
                         cursor: pointer;
                         display: flex;
                         align-items: center;
@@ -1144,8 +1148,8 @@ class HtmlRenderer {
                 ${linksHtml ? `<div onclick="event.stopPropagation();" style="display: flex; align-items: center;">${linksHtml}</div>` : ''}
             </div>
             <div id="scope-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
-                <div class="card-secondary" style="padding: 10px;">
-                    <div class="input-container" style="margin-bottom: 12px;">
+                <div class="card-secondary" style="padding: 5px;">
+                    <div class="input-container" style="margin-bottom: 6px;">
                         <div class="input-header">Filter</div>
                         <input type="text" id="scopeFilterInput" 
                                value="${this.escapeHtml(scope.filter || '')}" 
@@ -1162,7 +1166,7 @@ class HtmlRenderer {
     </div>`;
   }
 
-  renderStoryTree(epics, gearIconPath = '', epicIconPath = '', pageIconPath = '') {
+  renderStoryTree(epics, gearIconPath = '', epicIconPath = '', pageIconPath = '', testTubeIconPath = '') {
     return epics.map((epic, epicIndex) => {
       const epicId = `epic-${epicIndex}`;
       const epicIcon = epicIconPath ? `<img src="${epicIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Epic" />` : '💡 ';
@@ -1178,30 +1182,74 @@ class HtmlRenderer {
         const featureIcon = gearIconPath ? `<img src="${gearIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Feature" />` : '⚙️ ';
         const featureLinks = (feature.links && feature.links.length > 0) 
           ? ' ' + feature.links.map(link => 
-              `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
+              `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
             ).join(' ')
           : '';
         
-        html += `<div style="margin-left: 14px; margin-top: 4px; font-size: 12px;"><span class="collapsible-header" onclick="toggleCollapse('${featureId}')" style="cursor: pointer; user-select: none;"><span id="${featureId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${featureIcon}${this.escapeHtml(feature.name)}</span>${featureLinks}</div>`;
+        html += `<div style="margin-left: 7px; margin-top: 4px; font-size: 12px;"><span class="collapsible-header" onclick="toggleCollapse('${featureId}')" style="cursor: pointer; user-select: none;"><span id="${featureId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${featureIcon}${this.escapeHtml(feature.name)}${featureLinks}</span></div>`;
         
         html += `<div id="${featureId}" class="collapsible-content" style="display: none;">`;
-        feature.stories.forEach(story => {
+        feature.stories.forEach((story, storyIndex) => {
+          const storyId = `story-${epicIndex}-${featureIndex}-${storyIndex}`;
           const storyIcon = pageIconPath ? `<img src="${pageIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Story" />` : '📝 ';
-          html += `<div style="margin-left: 28px; margin-top: 2px; font-size: 12px;">`;
+          
+          // Check if story has scenarios - if so, make it collapsible
+          const hasScenarios = story.scenarios && story.scenarios.length > 0;
+          
+          html += `<div style="margin-left: 14px; margin-top: 2px; font-size: 12px;">`;
+          
+          if (hasScenarios) {
+            // Collapsible story with scenarios
+            html += `<span class="collapsible-header" onclick="toggleCollapse('${storyId}')" style="cursor: pointer; user-select: none;">`;
+            html += `<span id="${storyId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> `;
+          }
+          
           if (story.links && story.links.length > 0) {
             // First link is the story file itself
             const storyLink = story.links[0];
-            html += `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(storyLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
+            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
             // Remaining links are test files, etc.
             if (story.links.length > 1) {
               html += ' ' + story.links.slice(1).map(link => 
-                `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
+                `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
               ).join(' ');
             }
           } else {
             html += `${storyIcon}${this.escapeHtml(story.name)}`;
           }
+          
+          if (hasScenarios) {
+            html += `</span>`; // Close collapsible-header span
+          }
+          
           html += '</div>';
+          
+          // Render scenarios if they exist
+          if (hasScenarios) {
+            html += `<div id="${storyId}" class="collapsible-content" style="display: none;">`;
+            story.scenarios.forEach((scenario, scenarioIndex) => {
+              const testTubeIcon = testTubeIconPath ? `<img src="${testTubeIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Scenario" />` : '🧪 ';
+              html += `<div style="margin-left: 28px; margin-top: 2px; font-size: 12px;">`;
+              
+              // Build link to test file with search hint for test method
+              // Format: path/to/test_file.py#test_method_name
+              // VS Code will open the file; we append # to hint at the method name
+              if (scenario.test_file && scenario.test_method) {
+                const testLink = `${scenario.test_file}#${scenario.test_method}`;
+                html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink)}')">${testTubeIcon}${this.escapeHtml(scenario.name)}</a>`;
+              } else if (story.testFile && scenario.test_method) {
+                // Fall back to story's test file
+                const testLink = `${story.testFile}#${scenario.test_method}`;
+                html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink)}')">${testTubeIcon}${this.escapeHtml(scenario.name)}</a>`;
+              } else {
+                // No link - just display scenario name
+                html += `${testTubeIcon}${this.escapeHtml(scenario.name)}`;
+              }
+              
+              html += '</div>';
+            });
+            html += '</div>'; // Close scenario collapsible-content
+          }
         });
         html += '</div>'; // Close feature collapsible-content
       });
@@ -1213,7 +1261,7 @@ class HtmlRenderer {
 
   renderFileList(files) {
     return '<div style="margin-top: 5px;">' + files.map(file => 
-      `<div style="margin-left: 10px; font-family: monospace; font-size: 12px; margin-top: 2px;">- ${this.escapeHtml(file.path)}</div>`
+      `<div style="margin-left: 5px; font-family: monospace; font-size: 12px; margin-top: 2px;">- ${this.escapeHtml(file.path)}</div>`
     ).join('') + '</div>';
   }
 
@@ -1488,7 +1536,7 @@ class HtmlRenderer {
         <div class="collapsible-section ${expandedClass}" style="margin-bottom: 8px;">
           <div class="collapsible-header" onclick="toggleSection('${sectionId}')" style="
             cursor: pointer;
-            padding: 8px 10px;
+            padding: 4px 5px;
             background-color: transparent;
             border-left: none;
             border-radius: 2px;
@@ -1505,7 +1553,7 @@ class HtmlRenderer {
             overflow: ${config.defaultExpanded ? 'visible' : 'hidden'};
             transition: max-height 0.3s ease;
           ">
-            <div style="padding: 10px; background-color: transparent; margin-top: 2px;">
+            <div style="padding: 5px; background-color: transparent; margin-top: 2px;">
               ${contentHtml}
             </div>
           </div>
@@ -1521,7 +1569,7 @@ class HtmlRenderer {
         <div class="collapsible-section expanded">
             <div class="collapsible-header" style="
                 cursor: pointer;
-                padding: 8px 10px;
+                padding: 4px 5px;
                 background-color: transparent;
                 border-left: none;
                 border-radius: 2px;
@@ -1563,7 +1611,7 @@ class HtmlRenderer {
                     ${sections}
                     
                     <!-- Raw Instructions Subsection -->
-                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <div class="collapsible-section">
                             <div class="collapsible-header" style="
                                 cursor: pointer;
@@ -1581,7 +1629,7 @@ class HtmlRenderer {
                                 <span style="font-weight: 600; font-size: 14px;">Raw Instructions (Test)</span>
                             </div>
                             <div id="raw-instructions-content" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
-                                <div style="padding: 10px 0; margin-top: 8px;">
+                                <div style="padding: 5px 0; margin-top: 8px;">
                                     <pre style="
                                         white-space: pre-wrap;
                                         word-wrap: break-word;
@@ -1590,7 +1638,7 @@ class HtmlRenderer {
                                         line-height: 1.4;
                                         color: rgba(255,255,255,0.8);
                                         background: rgba(0,0,0,0.3);
-                                        padding: 12px;
+                                        padding: 6px;
                                         border-radius: 4px;
                                         margin: 0;
                                         max-height: 400px;
@@ -1677,7 +1725,7 @@ class HtmlRenderer {
 
     // Render Evidence Section
     if (evidence.length > 0) {
-      html += '<div style="margin-top: 16px;">';
+      html += '<div style="margin-top: 8px;">';
       html += '<div class="input-header">Evidence</div>';
       html += '<div style="margin-top: 8px;">';
       evidence.forEach(item => {
@@ -1726,7 +1774,7 @@ class HtmlRenderer {
       criteriaKeys.forEach((criteriaKey, criteriaIdx) => {
         const criteria = strategyCriteriaObj[criteriaKey];
         if (typeof criteria === 'object' && criteria !== null) {
-          html += '<div style="margin-bottom: 20px;">';
+          html += '<div style="margin-bottom: 10px;">';
           
           // Render the question as header
           const question = criteria.question || criteriaKey;
@@ -1764,7 +1812,7 @@ class HtmlRenderer {
     }
 
     // Render Assumptions - editable textarea
-    html += '<div class="input-container" style="margin-top: 12px;">';
+    html += '<div class="input-container" style="margin-top: 6px;">';
     html += '<div class="input-header">Assumptions</div>';
     const assumptionsText = Array.isArray(assumptions) 
       ? assumptions.join('\n') 
@@ -1785,13 +1833,13 @@ class HtmlRenderer {
 
     // Knowledge Graph Section - collapsible
     if (value.schema) {
-      html += '<div style="margin-bottom: 16px;">';
+      html += '<div style="margin-bottom: 8px;">';
       html += '<div style="margin-bottom: 8px; cursor: pointer; display: flex; align-items: center;" onclick="toggleSection(\'build-kg-section\')">';
       html += '<span class="expand-icon" style="margin-right: 8px; font-size: 20px; transition: transform 0.15s;">▸</span>';
       html += '<strong style="font-size: 14px;">Knowledge Graph</strong>';
       html += '</div>';
       html += '<div id="build-kg-section" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">';
-      html += '<div style="padding-left: 28px;">';
+      html += '<div style="padding-left: 14px;">';
       html += this._formatBuildKnowledgeGraph(value.schema);
       html += '</div>';
       html += '</div>';
@@ -1806,7 +1854,7 @@ class HtmlRenderer {
       html += '<strong style="font-size: 14px;">Rules</strong>';
       html += '</div>';
       html += '<div id="build-rules-section" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">';
-      html += '<div style="padding-left: 28px;">';
+      html += '<div style="padding-left: 14px;">';
       html += this._formatBuildRules(value.rules);
       html += '</div>';
       html += '</div>';
@@ -1965,13 +2013,13 @@ class HtmlRenderer {
       const configs = Array.isArray(value.render_config) ? value.render_config : [value.render_config];
       
       configs.forEach((config, idx) => {
-        html += '<div style="margin-bottom: 16px;">';
+        html += '<div style="margin-bottom: 8px;">';
         html += `<div style="margin-bottom: 8px; cursor: pointer; display: flex; align-items: center;" onclick="toggleSection('render-config-section-${idx}')">`;
         html += '<span class="expand-icon" style="margin-right: 8px; font-size: 20px; transition: transform 0.15s;">▸</span>';
         html += `<strong style="font-size: 14px;">Render Config ${configs.length > 1 ? idx + 1 : ''}</strong>`;
         html += '</div>';
         html += `<div id="render-config-section-${idx}" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">`;
-        html += '<div style="padding-left: 28px;">';
+        html += '<div style="padding-left: 14px;">';
         html += this._formatRenderConfig(config);
         html += '</div>';
         html += '</div>';
@@ -2044,7 +2092,7 @@ class HtmlRenderer {
       html += '<strong style="font-size: 14px;">Rules</strong>';
       html += '</div>';
       html += '<div id="validate-rules-section" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">';
-      html += '<div style="padding-left: 28px;">';
+      html += '<div style="padding-left: 14px;">';
       html += this._formatBuildRules(value.rules);
       html += '</div>';
       html += '</div>';
@@ -2108,7 +2156,7 @@ class HtmlRenderer {
       // Phase header
       html += `
         <div style="
-          margin-bottom: 12px;
+          margin-bottom: 6px;
           padding: 8px 0;
           background-color: transparent;
           border-radius: 0;
@@ -2128,7 +2176,7 @@ class HtmlRenderer {
       if (phaseData.evidence && phaseData.evidence.sources && Array.isArray(phaseData.evidence.sources)) {
         html += `
           <div style="
-            margin-top: 12px;
+            margin-top: 6px;
             padding: 8px 0;
             background-color: transparent;
             border-radius: 0;
@@ -2149,7 +2197,7 @@ class HtmlRenderer {
       if (phaseData.context && Array.isArray(phaseData.context)) {
         html += `
           <div style="
-            margin-top: 12px;
+            margin-top: 6px;
             padding: 8px 0;
             background-color: transparent;
             border-radius: 0;
@@ -2168,7 +2216,7 @@ class HtmlRenderer {
 
       // Add spacing between phases
       if (phaseIndex < phases.length - 1) {
-        html += '<div style="margin-bottom: 20px;"></div>';
+        html += '<div style="margin-bottom: 10px;"></div>';
       }
     });
 
@@ -2212,7 +2260,7 @@ class HtmlRenderer {
       if (assumptions.review_status) {
         html += `
           <div style="
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             padding: 8px 0;
             background-color: transparent;
             border-radius: 0;
@@ -2322,7 +2370,7 @@ class HtmlRenderer {
     return `
     <div class="card-primary">
         <div class="section-title">💻 Execute Command</div>
-        <div class="card-secondary command-input-container" style="padding: 10px;">
+        <div class="card-secondary command-input-container" style="padding: 5px;">
             <div class="input-container" style="margin-bottom: 0;">
                 <div class="input-header">Command</div>
                 <textarea id="commandInput" class="command-textarea" 
@@ -2466,8 +2514,6 @@ class HtmlRenderer {
 
         function clearScopeFilter() {
             console.log('[FILTER] Clearing scope filter - sending scope showAll');
-            // Log to file from webview context
-            fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'html_renderer.js:2469',message:'clearScopeFilter called in webview',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'L'})}).catch(()=>{});
             vscode.postMessage({
                 command: 'clearFilter'
             });
@@ -2694,14 +2740,14 @@ class HtmlRenderer {
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
+            padding: 5px;
             color: var(--vscode-errorForeground);
             background-color: var(--vscode-editor-background);
         }
         .error {
             background-color: var(--vscode-inputValidation-errorBackground);
             border: 1px solid var(--vscode-inputValidation-errorBorder);
-            padding: 16px;
+            padding: 8px;
             border-radius: 4px;
         }
         .error h2 {
@@ -2713,7 +2759,7 @@ class HtmlRenderer {
             border: none;
             padding: 8px 16px;
             cursor: pointer;
-            margin-top: 12px;
+            margin-top: 6px;
             border-radius: 2px;
         }
     </style>

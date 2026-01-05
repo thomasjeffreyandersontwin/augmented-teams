@@ -25,11 +25,9 @@ from agile_bot.bots.base_bot.test.test_build_agile_bots import (
 # HELPER FUNCTIONS - Sub-Epic Level (Used across multiple test classes)
 # ============================================================================
 
-
 # ============================================================================
 # GIVEN HELPERS - Test setup
 # ============================================================================
-
 def given_behaviors_list(behaviors=None):
     """
     Consolidated function for creating behaviors list.
@@ -44,7 +42,6 @@ def given_behaviors_list(behaviors=None):
     if behaviors is None:
         return ['shape', 'discovery', 'exploration', 'specification']
     return behaviors
-
 
 def given_trigger_patterns(behavior=None, patterns=None):
     """
@@ -64,7 +61,6 @@ def given_trigger_patterns(behavior=None, patterns=None):
         return []
     return patterns
 
-
 def given_bot_config_file_with_working_dir_and_behaviors(
     workspace_root: Path,
     bot_name: str,
@@ -81,14 +77,12 @@ def given_bot_config_file_with_working_dir_and_behaviors(
         behaviors
     )
 
-
 def given_base_actions_structure_exists(bot_dir: Path):
     """Given: Base actions structure exists.
     
     
     """
     create_base_actions_structure(bot_dir)
-
 
 def given_behavior_workflow_files_exist_for_behaviors(bot_dir: Path, behaviors: list):
     """Given: Behavior workflow files exist for behaviors.
@@ -98,7 +92,6 @@ def given_behavior_workflow_files_exist_for_behaviors(bot_dir: Path, behaviors: 
     from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
     for behavior in behaviors:
         create_actions_workflow_json(bot_dir, behavior)
-
 
 def given_behavior_without_trigger_words(bot_dir: Path, behavior: str):
     """Given: Behavior without trigger words.
@@ -114,7 +107,6 @@ def given_behavior_without_trigger_words(bot_dir: Path, behavior: str):
     behavior_file.write_text(json.dumps(behavior_data, indent=2), encoding='utf-8')
     return behavior_file
 
-
 def given_bot_config_file_with_invalid_json(workspace_root: Path, bot_name: str, invalid_content: str = 'not valid json {'):
     """Given: Bot config file with invalid JSON.
     
@@ -127,7 +119,6 @@ def given_bot_config_file_with_invalid_json(workspace_root: Path, bot_name: str,
     config_file.write_text(invalid_content)
     return config_file
 
-
 def given_bot_config_does_not_exist(workspace_root: Path, bot_name: str):
     """Given: Bot config does not exist.
     
@@ -137,7 +128,6 @@ def given_bot_config_does_not_exist(workspace_root: Path, bot_name: str):
     config_path = workspace_root / 'agile_bot' / 'bots' / bot_name / 'bot_config.json'
     config_path.unlink(missing_ok=True)
     return config_path
-
 
 def given_bot_config_has_goal_and_description(workspace_root: Path, bot_name: str, goal: str, description: str = None):
     """Given: Bot config has goal and description.
@@ -165,7 +155,6 @@ def given_bot_config_has_goal_and_description(workspace_root: Path, bot_name: st
     config_path.write_text(json.dumps(config, indent=2), encoding='utf-8')
     return config_path
 
-
 def given_behaviors_with_descriptions_and_trigger_words(bot_dir: Path, behaviors_config: list):
     """Given: Behaviors with descriptions and trigger words.
     
@@ -187,7 +176,6 @@ def given_behaviors_with_descriptions_and_trigger_words(bot_dir: Path, behaviors
         behavior_file.write_text(json.dumps(behavior_data, indent=2), encoding='utf-8')
     return bot_dir
 
-
 def given_workflow_state_exists(workspace_directory: Path, bot_name: str, behavior: str, action: str, completed_actions: list = None):
     """Given: Workflow state exists.
     
@@ -202,7 +190,6 @@ def given_workflow_state_exists(workspace_directory: Path, bot_name: str, behavi
     workflow_file.write_text(json.dumps(workflow_data), encoding='utf-8')
     return workflow_file
 
-
 def given_bot_goal_and_behavior_descriptions():
     """Given: Bot goal and behavior descriptions.
     
@@ -214,7 +201,6 @@ def given_bot_goal_and_behavior_descriptions():
         'discovery': 'Elaborate stories with user flows and domain rules'
     }
     return goal, descriptions
-
 
 def given_behaviors_config_with_descriptions_and_patterns():
     """Given: Behaviors config with descriptions and patterns.
@@ -234,14 +220,12 @@ def given_behaviors_config_with_descriptions_and_patterns():
         }
     ]
 
-
 def given_test_bot_behavior_and_action():
     """Given: Test bot, behavior and action.
     
     
     """
     return 'test_bot', 'shape', 'clarify'
-
 
 def given_test_bot_name():
     """Given: Test bot name.
@@ -250,14 +234,12 @@ def given_test_bot_name():
     """
     return 'test_bot'
 
-
 def given_bot_directory_path(workspace_root: Path, bot_name: str):
     """Given: Bot directory path.
     
     
     """
     return workspace_root / 'agile_bot' / 'bots' / bot_name
-
 
 def given_trigger_patterns_for_catalog_test():
     """Given: Trigger patterns for catalog test.
@@ -266,14 +248,12 @@ def given_trigger_patterns_for_catalog_test():
     """
     return ['shape.*story', 'start.*mapping']
 
-
 def given_bot_config_for_single_behavior(workspace_root: Path, bot_name: str, behavior: str):
     """Given: Bot config for single behavior.
     
     
     """
     return given_bot_config_file_with_working_dir_and_behaviors(workspace_root, bot_name, [behavior])
-
 
 def given_bot_config_and_dir_for_single_behavior(workspace_root: Path, bot_name: str, behavior: str):
     """Given: Bot config and directory for single behavior.
@@ -283,7 +263,6 @@ def given_bot_config_and_dir_for_single_behavior(workspace_root: Path, bot_name:
     bot_config = given_bot_config_for_single_behavior(workspace_root, bot_name, behavior)
     bot_dir = given_bot_directory_path(workspace_root, bot_name)
     return bot_config, bot_dir
-
 
 def given_path_write_text_mocked_to_raise_permission_error(target_filename: str):
     """Given: Path.write_text is mocked to raise PermissionError for target filename.
@@ -300,14 +279,12 @@ def given_path_write_text_mocked_to_raise_permission_error(target_filename: str)
     
     return patch.object(Path, 'write_text', mock_write_text)
 
-
 def given_expected_awareness_filename():
     """Given: Expected awareness filename.
     
     
     """
     return 'mcp-test-bot-awareness.mdc'
-
 
 # ============================================================================
 # WHEN HELPERS - Actions
@@ -321,7 +298,6 @@ def when_bot_tool_generator_processes_config(bot_name: str, config_path: Path):
     """
     # Tools are now statically generated, so return mock result for backward compatibility
     return {'name': 'tool', 'type': 'bot_tool'}
-
 
 def when_behavior_tool_generator_processes_config(bot_name: str, config_path: Path):
     """When: Behavior tool generator processes config.
@@ -338,7 +314,6 @@ def when_behavior_tool_generator_processes_config(bot_name: str, config_path: Pa
     # Return mock behavior tools (actual tools are generated statically)
     return [{'name': behavior, 'type': 'behavior_tool'} for behavior in behaviors]
 
-
 def when_mcp_server_generator_receives_bot_config(bot_dir: Path, behaviors: list = None):
     """When: MCP server generator receives bot config.
     
@@ -347,7 +322,6 @@ def when_mcp_server_generator_receives_bot_config(bot_dir: Path, behaviors: list
     from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
     generator = MCPServerGenerator(bot_directory=bot_dir)
     return generator.generate_server()
-
 
 def when_generator_generates_awareness_files(bot_dir: Path):
     """When: Generator generates awareness files.
@@ -358,7 +332,6 @@ def when_generator_generates_awareness_files(bot_dir: Path):
     generator = MCPServerGenerator(bot_directory=bot_dir)
     generator.generate_awareness_files()
     return generator
-
 
 def when_server_deployer_deploys(config_path: Path, workspace_root: Path, protocol_handler_url: str = None):
     """When: Server deployer deploys.
@@ -375,7 +348,6 @@ def when_server_deployer_deploys(config_path: Path, workspace_root: Path, protoc
     deployer = ServerDeployer(**deployer_kwargs)
     return deployer.deploy_server()
 
-
 def when_server_deployer_gets_catalog(config_path: Path, workspace_root: Path):
     """When: Server deployer gets catalog.
     
@@ -388,7 +360,6 @@ def when_server_deployer_gets_catalog(config_path: Path, workspace_root: Path):
     )
     return deployer.get_tool_catalog()
 
-
 def when_find_behavior_tool_in_registered_tools(generator, behavior: str):
     """When: Find behavior tool in registered tools.
     
@@ -399,14 +370,12 @@ def when_find_behavior_tool_in_registered_tools(generator, behavior: str):
     assert tool['type'] == 'behavior_tool'
     return tool
 
-
 def when_read_awareness_file_content(rules_file: Path):
     """When: Read awareness file content.
     
     
     """
     return rules_file.read_text(encoding='utf-8')
-
 
 def when_generate_awareness_files_and_read_content(bot_dir: Path, bot_name: str):
     """When: Generate awareness files and read content.
@@ -418,7 +387,6 @@ def when_generate_awareness_files_and_read_content(bot_dir: Path, bot_name: str)
     content = when_read_awareness_file_content(rules_file)
     return gen, rules_file, content
 
-
 def when_deployer_attempts_deployment_with_invalid_url(config_file: Path, workspace_root: Path):
     """When: Deployer attempts deployment with invalid URL.
     
@@ -427,7 +395,6 @@ def when_deployer_attempts_deployment_with_invalid_url(config_file: Path, worksp
     with pytest.raises(ConnectionError) as exc_info:
         when_server_deployer_deploys(config_file, workspace_root, protocol_handler_url='http://localhost:9999')
     assert 'MCP Protocol Handler not accessible' in str(exc_info.value)
-
 
 def when_create_rules_directory_if_needed():
     """When: Create rules directory if needed.
@@ -438,14 +405,12 @@ def when_create_rules_directory_if_needed():
     rules_dir.mkdir(parents=True, exist_ok=True)
     return rules_dir
 
-
 def when_generator_generates_awareness_files_direct(generator):
     """When: Generator generates awareness files directly.
     
     
     """
     generator.generate_awareness_files()
-
 
 @pytest.mark.asyncio
 async def when_invoke_behavior_tool_with_action(mcp_server, tool, action: str):
@@ -457,7 +422,6 @@ async def when_invoke_behavior_tool_with_action(mcp_server, tool, action: str):
         tool_name = tool['name']
         result = await client.call_tool(tool_name, {'action': action})
         return result
-
 
 # ============================================================================
 # THEN HELPERS - Assertions
@@ -474,7 +438,6 @@ def then_generator_creates_behavior_tools_with_names(generator, expected_count: 
     for behavior in expected_behaviors:
         assert behavior in tool_names or any(t.get('behavior') == behavior for t in generator.registered_tools)
 
-
 def then_behavior_tool_registered_with_patterns(generator, behavior: str, patterns: list):
     """Then: Behavior tool registered with trigger patterns.
     
@@ -487,7 +450,6 @@ def then_behavior_tool_registered_with_patterns(generator, behavior: str, patter
         assert pattern in tool['description']
         assert pattern in tool['trigger_patterns']
 
-
 def then_bot_tool_instance_created(bot_tool, expected_count: int = 1):
     """Then: Bot tool instance created.
     
@@ -498,7 +460,6 @@ def then_bot_tool_instance_created(bot_tool, expected_count: int = 1):
     else:
         assert len(bot_tool) == expected_count
 
-
 def then_mcp_server_instance_created(artifacts, bot_name: str):
     """Then: MCP server instance created.
     
@@ -508,7 +469,6 @@ def then_mcp_server_instance_created(artifacts, bot_name: str):
     assert artifacts['server_entry'].name == f'{bot_name}_mcp_server.py'
     assert 'src' in str(artifacts['server_entry'])
     assert bot_name in str(artifacts['server_entry'])
-
 
 def then_server_code_includes_bot_instantiation(artifacts, bot_name: str):
     """Then: Server code includes bot instantiation.
@@ -521,7 +481,6 @@ def then_server_code_includes_bot_instantiation(artifacts, bot_name: str):
     assert '@mcp_server.tool' in server_code
     assert bot_name in server_code
 
-
 def then_generator_raises_file_not_found_error(bot_dir: Path, expected_config_path: Path):
     """Then: Generator raises FileNotFoundError.
     
@@ -533,7 +492,6 @@ def then_generator_raises_file_not_found_error(bot_dir: Path, expected_config_pa
         generator._ensure_bot_initialized()
     assert f'Bot Config not found at {expected_config_path}' in str(exc_info.value)
 
-
 def then_generator_raises_json_decode_error(bot_dir: Path, config_file: Path):
     """Then: Generator raises JSONDecodeError.
     
@@ -544,7 +502,6 @@ def then_generator_raises_json_decode_error(bot_dir: Path, config_file: Path):
     with pytest.raises(json.JSONDecodeError) as exc_info:
         generator._ensure_bot_initialized()
     assert f'Malformed Bot Config at {config_file}' in str(exc_info.value)
-
 
 def then_behavior_tool_execution_succeeds(result, expected_behavior: str, expected_action: str):
     """Then: Behavior tool execution succeeds.
@@ -568,7 +525,6 @@ def then_behavior_tool_execution_succeeds(result, expected_behavior: str, expect
         # For requires_confirmation, just verify we got a response (tool was invoked)
         assert 'status' in result_dict
 
-
 def then_deployment_succeeds(deployment_result, expected_server_name: str, min_tool_count: int = 7):
     """Then: Deployment succeeds.
     
@@ -578,7 +534,6 @@ def then_deployment_succeeds(deployment_result, expected_server_name: str, min_t
     assert deployment_result.server_name == expected_server_name
     assert deployment_result.tool_count >= min_tool_count
     assert deployment_result.catalog_published is True
-
 
 def then_deployment_fails_with_error(deployment_result, expected_error_substring: str):
     """Then: Deployment fails with error.
@@ -593,7 +548,6 @@ def then_deployment_fails_with_error(deployment_result, expected_error_substring
         assert expected_error_substring in deployment_result.error_message
         assert deployment_result.catalog_published is False
 
-
 def then_awareness_file_created_with_bot_specific_filename(bot_name: str):
     """Then: Awareness file created with bot-specific filename.
     
@@ -606,7 +560,6 @@ def then_awareness_file_created_with_bot_specific_filename(bot_name: str):
     generic_file = repo_root / '.cursor' / 'rules' / 'mcp-tool-awareness.mdc'
     assert not generic_file.exists(), "Should use bot-specific filename, not generic"
     return rules_file
-
 
 def then_awareness_file_contains_behavior_sections(content: str, behavior_names: list):
     """Then: Awareness file contains behavior sections.
@@ -624,7 +577,6 @@ def then_awareness_file_contains_behavior_sections(content: str, behavior_names:
         assert numbered_pattern in content or unnumbered_pattern in content, \
             f"Expected behavior section for {behavior_name} not found. Looked for: {numbered_pattern} or {unnumbered_pattern}"
 
-
 def then_awareness_file_contains_tool_patterns(content: str, bot_name: str, behavior_names: list):
     """Then: Awareness file contains tool patterns.
     
@@ -635,7 +587,6 @@ def then_awareness_file_contains_tool_patterns(content: str, bot_name: str, beha
         unnumbered_pattern = f'{bot_name}_{behavior_name.split("_", 1)[-1]}_<action>' if '_' in behavior_name else f'{bot_name}_{behavior_name}_<action>'
         assert numbered_pattern in content or unnumbered_pattern in content, \
             f"Expected tool pattern for {behavior_name} not found"
-
 
 def then_trigger_words_in_behavior_section(content: str, behavior_name: str, trigger_words: list):
     """Then: Trigger words in behavior section.
@@ -665,7 +616,6 @@ def then_trigger_words_in_behavior_section(content: str, behavior_name: str, tri
         for word in trigger_words:
             assert word in behavior_section, f"Trigger word '{word}' not found in {behavior_name} section"
 
-
 def then_rules_directory_exists_and_is_directory():
     """Then: Rules directory exists and is directory.
     
@@ -678,7 +628,6 @@ def then_rules_directory_exists_and_is_directory():
     assert rules_dir.is_dir()
     return rules_dir
 
-
 def then_awareness_file_exists_with_bot_specific_filename(rules_dir: Path, bot_name: str):
     """Then: Awareness file exists with bot-specific filename.
     
@@ -688,7 +637,6 @@ def then_awareness_file_exists_with_bot_specific_filename(rules_dir: Path, bot_n
     assert rules_file.exists()
     return rules_file
 
-
 def then_behavior_tool_registered_without_patterns(generator, behavior: str):
     """Then: Behavior tool registered without patterns.
     
@@ -697,7 +645,6 @@ def then_behavior_tool_registered_without_patterns(generator, behavior: str):
     tool = next((t for t in generator.registered_tools if t.get('behavior') == behavior), None)
     assert tool is not None, f"Behavior tool for {behavior} should be registered"
     assert tool['type'] == 'behavior_tool'
-
 
 def then_catalog_has_tools_for_behavior(catalog, behavior: str, patterns: list):
     """Then: Catalog has behavior tool with matching trigger patterns.
@@ -712,7 +659,6 @@ def then_catalog_has_tools_for_behavior(catalog, behavior: str, patterns: list):
     assert behavior_tool.trigger_patterns == patterns, \
         f"Expected trigger patterns {patterns}, got {behavior_tool.trigger_patterns}"
     assert hasattr(behavior_tool, 'description')
-
 
 def then_awareness_file_shape_section_contains_only_shape_words(content: str):
     """Then: Awareness file shape section contains only shape words.
@@ -784,7 +730,6 @@ def then_awareness_file_shape_section_contains_only_shape_words(content: str):
             assert 'break down stories' in discovery_section
             assert 'enumerate stories' in discovery_section
 
-
 def then_awareness_file_contains_tool_patterns_for_behaviors(content: str, bot_name: str, behaviors: list):
     """Then: Awareness file contains tool patterns for behaviors.
     
@@ -793,7 +738,6 @@ def then_awareness_file_contains_tool_patterns_for_behaviors(content: str, bot_n
     for behavior in behaviors:
         behavior_name = behavior.split('_')[-1] if '_' in behavior else behavior
         assert f'{bot_name}_{behavior}_' in content or f'{bot_name}_{behavior_name}_' in content or f'story_bot_{behavior_name}_' in content
-
 
 def then_awareness_file_contains_behavior_format_sections(content: str, bot_name: str):
     """Then: Awareness file contains behavior format sections.
@@ -806,7 +750,6 @@ def then_awareness_file_contains_behavior_format_sections(content: str, bot_name
     assert '**When user is trying to:** Elaborate stories with user flows' in content
     assert f'**Then check for:** `{bot_name}_discovery_<action>` tool' in content
 
-
 def then_awareness_file_contains_error_handling_section(content: str):
     """Then: Awareness file contains error handling section.
     
@@ -815,7 +758,6 @@ def then_awareness_file_contains_error_handling_section(content: str):
     assert 'If a registered tool is broken or returns an error' in content
     assert 'DO NOT automatically attempt a workaround' in content
     assert 'Inform user of the exact error details' in content
-
 
 def then_awareness_file_contains_required_sections(rules_file: Path, bot_name: str):
     """Then: Awareness file contains required sections.
@@ -828,14 +770,12 @@ def then_awareness_file_contains_required_sections(rules_file: Path, bot_name: s
     assert f'Bot: {bot_name}' in content
     return content
 
-
 def then_generator_creates_sufficient_tools(generator, min_tool_count: int = 7):
     """Then: Generator creates sufficient tools.
     
     
     """
     assert len(generator.registered_tools) >= min_tool_count
-
 
 def then_catalog_has_tools_registered(catalog):
     """Then: Catalog has tools registered.
@@ -844,14 +784,12 @@ def then_catalog_has_tools_registered(catalog):
     """
     assert len(catalog.tools) > 0, "Catalog should have tools registered"
 
-
 def then_awareness_file_contains_bot_name(content: str, bot_name: str):
     """Then: Awareness file contains bot name.
     
     
     """
     assert bot_name in content
-
 
 def then_awareness_file_contains_priority_check_message(content: str, bot_name: str):
     """Then: Awareness file contains priority check message.
@@ -860,14 +798,12 @@ def then_awareness_file_contains_priority_check_message(content: str, bot_name: 
     """
     assert f'ALWAYS check for and use MCP {bot_name} tools FIRST' in content
 
-
 def then_awareness_file_contains_repair_question(content: str):
     """Then: Awareness file contains repair question.
     
     
     """
     assert 'Should I attempt to repair the tool, or proceed manually' in content
-
 
 def then_rules_directory_and_file_exist():
     """Then: Rules directory and file exist.
@@ -878,7 +814,6 @@ def then_rules_directory_and_file_exist():
     rules_file = then_awareness_file_exists_with_bot_specific_filename(rules_dir, 'test_bot')
     return rules_dir, rules_file
 
-
 def then_permission_error_raised_with_bot_specific_path(function, expected_filename: str):
     """Then: PermissionError is raised with bot-specific path in message.
     
@@ -887,7 +822,6 @@ def then_permission_error_raised_with_bot_specific_path(function, expected_filen
     with pytest.raises(PermissionError) as exc_info:
         function()
     assert expected_filename in str(exc_info.value)
-
 
 # ============================================================================
 # HELPER FUNCTIONS - Utilities
@@ -904,7 +838,6 @@ def create_trigger_words_file(workspace: Path, bot_name: str, behavior: str, act
     trigger_file.write_text(json.dumps({'patterns': patterns}), encoding='utf-8')
     return trigger_file
 
-
 def create_base_server_template(workspace: Path) -> Path:
     """Helper: Create base MCP server template.
     
@@ -916,7 +849,6 @@ def create_base_server_template(workspace: Path) -> Path:
     template_file.write_text('# Base MCP Server template')
     return template_file
 
-
 def create_base_bot_class(workspace: Path) -> Path:
     """Helper: Create base bot class.
     
@@ -927,7 +859,6 @@ def create_base_bot_class(workspace: Path) -> Path:
     base_file = base_dir / 'base_bot.py'
     base_file.write_text('# Base Bot class')
     return base_file
-
 
 # Use shared helpers from conftest - call with bot_name='test_bot' when needed
 # given_bot_name_and_behaviors_setup imported from conftest
@@ -1012,9 +943,6 @@ class TestGenerateBotTools:
         assert '@mcp_server.tool(name=\'tool\'' in server_code or '@mcp_server.tool(name="tool"' in server_code, \
             "Server code should include bot tool registration"
 
-
-
-
 class TestGenerateBehaviorTools:
     """Story: Generate Behavior Tools - Tests behavior tool generation via static code generation.
     
@@ -1053,7 +981,6 @@ class TestGenerateBehaviorTools:
             assert f'@mcp_server.tool(name=\'{behavior}\'' in server_code or f'@mcp_server.tool(name="{behavior}"' in server_code, \
                 f"Server code should include behavior tool for {behavior}"
 
-
 class TestGenerateMCPBotServer:
     """Story: Generate MCP Bot Server - Tests MCP server generation using FastMCP."""
 
@@ -1078,7 +1005,6 @@ class TestGenerateMCPBotServer:
         then_mcp_server_instance_created(artifacts, bot_name)
         # And Generated server includes Bot instantiation code
         then_server_code_includes_bot_instantiation(artifacts, bot_name)
-
 
 class TestDeployMCPBotServer:
     """Story: Deploy MCP Bot Server - Tests server deployment."""
@@ -1187,22 +1113,18 @@ def given_bot_directory_created_without_base_actions(tmp_path, bot_name: str):
     bot_directory.mkdir(parents=True, exist_ok=True)
     return bot_directory
 
-
 def given_fake_repo_root_created(tmp_path):
     """Given step: Fake repo root created without base_actions."""
     fake_repo_root = tmp_path / 'agile_bot'
     fake_repo_root.mkdir(parents=True, exist_ok=True)
     return fake_repo_root
 
-
 # Exception handling helper removed
-
 
 class TestMCPGeneratorExceptions:
     """Tests for MCPServerGenerator exception handling - no fallbacks."""
 
     # test_mcp_generator_raises_exception_when_base_actions_not_found removed - exception handling test
-
 
 # ============================================================================
 # RESTART MCP SERVER TESTS
@@ -1232,7 +1154,6 @@ def given_pycache_directories_exist(base_path: Path, cache_paths: list):
         (cache_dir / 'test2.cpython-312.pyc').write_text('bytecode')
     return cache_paths
 
-
 def when_clear_python_cache_is_called(base_path: Path):
     """When step: clear_python_cache is called.
     
@@ -1241,11 +1162,9 @@ def when_clear_python_cache_is_called(base_path: Path):
     from agile_bot.bots.base_bot.src.mcp.server_restart import clear_python_cache
     return clear_python_cache(base_path)
 
-
 def then_all_pycache_directories_removed(cache_dirs: list):
     """Then step: All __pycache__ directories are removed."""
     assert not any(d.exists() for d in cache_dirs)
-
 
 def then_all_pyc_files_deleted(cache_dirs: list):
     """Then step: All .pyc files are deleted."""
@@ -1253,17 +1172,14 @@ def then_all_pyc_files_deleted(cache_dirs: list):
         pyc_files = list(cache_dir.glob('*.pyc'))
         assert len(pyc_files) == 0
 
-
 def then_cache_cleared_count_matches(cached_count: int, expected_count: int):
     """Then step: Cache cleared count matches expected."""
     assert cached_count == expected_count
-
 
 def when_find_mcp_server_processes_is_called(server_name: str):
     """When step: find_mcp_server_processes is called."""
     from agile_bot.bots.base_bot.src.mcp.server_restart import find_mcp_server_processes
     return find_mcp_server_processes(server_name)
-
 
 def then_processes_list_is_valid(processes: list):
     """Then step: Processes list is valid."""
@@ -1271,7 +1187,6 @@ def then_processes_list_is_valid(processes: list):
     for pid in processes:
         assert isinstance(pid, int)
         assert pid > 0
-
 
 class TestRestartMCPServerToLoadCodeChanges:
     """Story: Restart MCP Server To Load Code Changes - Tests automatic restart of MCP server."""
@@ -1316,13 +1231,9 @@ class TestRestartMCPServerToLoadCodeChanges:
         # Then: Processes list is valid (may be empty if no servers running)
         then_processes_list_is_valid(processes)
 
-
-
 class TestDeployMCPBotServer:
 
     """Story: Deploy MCP Bot Server - Tests server deployment."""
-
-
 
     def test_generator_deploys_server_successfully(self, workspace_root):
 
@@ -1369,8 +1280,6 @@ class TestDeployMCPBotServer:
         # Then: Server initializes and publishes tool catalog
 
         then_deployment_succeeds(deployment_result, 'test_bot_server', min_tool_count=7)
-
-
 
     def test_server_publishes_tool_catalog_with_metadata(self, workspace_root):
 
@@ -1426,8 +1335,6 @@ class TestDeployMCPBotServer:
 
         then_catalog_has_tools_for_behavior(catalog, behavior, patterns)
 
-
-
     def test_generator_fails_when_protocol_handler_not_running(self, workspace_root):
 
         """
@@ -1465,8 +1372,6 @@ class TestDeployMCPBotServer:
         # Then: Raises ConnectionError
 
         when_deployer_attempts_deployment_with_invalid_url(config_file, workspace_root)
-
-
 
     def test_server_handles_initialization_failure(self, workspace_root):
 
@@ -1506,17 +1411,11 @@ class TestDeployMCPBotServer:
 
         then_deployment_fails_with_error(deployment_result, 'Bot Config not found')
 
-
-
-
-
 # ============================================================================
 
 # EXCEPTION HANDLING TESTS
 
 # ============================================================================
-
-
 
 def given_bot_directory_created_without_base_actions(tmp_path, bot_name: str):
 
@@ -1528,10 +1427,6 @@ def given_bot_directory_created_without_base_actions(tmp_path, bot_name: str):
 
     return bot_directory
 
-
-
-
-
 def given_fake_repo_root_created(tmp_path):
 
     """Given step: Fake repo root created without base_actions."""
@@ -1541,10 +1436,6 @@ def given_fake_repo_root_created(tmp_path):
     fake_repo_root.mkdir(parents=True, exist_ok=True)
 
     return fake_repo_root
-
-
-
-
 
 def when_mcp_generator_created_without_base_actions(bot_directory: Path, fake_repo_root: Path):
 
@@ -1558,15 +1449,9 @@ def when_mcp_generator_created_without_base_actions(bot_directory: Path, fake_re
 
             MCPServerGenerator(bot_directory=bot_directory)
 
-
-
-
-
 class TestMCPGeneratorExceptions:
 
     """Tests for MCPServerGenerator exception handling - no fallbacks."""
-
-
 
     def test_mcp_generator_raises_exception_when_base_actions_not_found(self, tmp_path):
 
@@ -1600,17 +1485,11 @@ class TestMCPGeneratorExceptions:
 
         when_mcp_generator_created_without_base_actions(bot_directory, fake_repo_root)
 
-
-
-
-
 # ============================================================================
 
 # RESTART MCP SERVER TESTS
 
 # ============================================================================
-
-
 
 def given_pycache_directories_exist(base_path: Path, cache_paths: list):
 
@@ -1634,10 +1513,6 @@ def given_pycache_directories_exist(base_path: Path, cache_paths: list):
 
     return cache_paths
 
-
-
-
-
 def when_clear_python_cache_is_called(base_path: Path):
 
     """When step: clear_python_cache is called.
@@ -1652,19 +1527,11 @@ def when_clear_python_cache_is_called(base_path: Path):
 
     return clear_python_cache(base_path)
 
-
-
-
-
 def then_all_pycache_directories_removed(cache_dirs: list):
 
     """Then step: All __pycache__ directories are removed."""
 
     assert not any(d.exists() for d in cache_dirs)
-
-
-
-
 
 def then_all_pyc_files_deleted(cache_dirs: list):
 
@@ -1676,19 +1543,11 @@ def then_all_pyc_files_deleted(cache_dirs: list):
 
         assert len(pyc_files) == 0
 
-
-
-
-
 def then_cache_cleared_count_matches(cached_count: int, expected_count: int):
 
     """Then step: Cache cleared count matches expected."""
 
     assert cached_count == expected_count
-
-
-
-
 
 def when_find_mcp_server_processes_is_called(server_name: str):
 
@@ -1697,10 +1556,6 @@ def when_find_mcp_server_processes_is_called(server_name: str):
     from agile_bot.bots.base_bot.src.mcp.server_restart import find_mcp_server_processes
 
     return find_mcp_server_processes(server_name)
-
-
-
-
 
 def then_processes_list_is_valid(processes: list):
 
@@ -1714,15 +1569,9 @@ def then_processes_list_is_valid(processes: list):
 
         assert pid > 0
 
-
-
-
-
 class TestRestartMCPServerToLoadCodeChanges:
 
     """Story: Restart MCP Server To Load Code Changes - Tests automatic restart of MCP server."""
-
-
 
     def test_clear_python_bytecode_cache(self, tmp_path):
 
@@ -1776,8 +1625,6 @@ class TestRestartMCPServerToLoadCodeChanges:
 
         then_cache_cleared_count_matches(cleared_count, 3)
 
-
-
     def test_find_mcp_server_processes(self):
 
         """
@@ -1809,7 +1656,4 @@ class TestRestartMCPServerToLoadCodeChanges:
         # Then: Processes list is valid (may be empty if no servers running)
 
         then_processes_list_is_valid(processes)
-
-
-
 

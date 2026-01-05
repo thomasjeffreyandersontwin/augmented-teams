@@ -41,9 +41,9 @@
       "timestamp": "2026-01-02T10:41:07.897486"
     }
   ],
-  "current_behavior": "story_bot.shape",
-  "timestamp": "2026-01-04T19:00:43.739643",
-  "current_action": "story_bot.shape.clarify",
+  "current_behavior": "story_bot.scenarios",
+  "timestamp": "2026-01-04T19:56:39.181217",
+  "current_action": "story_bot.scenarios.render",
   "action_phase": "instructions",
   "completed_behaviors": [
     "scenarios",
