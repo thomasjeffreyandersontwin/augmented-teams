@@ -215,14 +215,18 @@ class CLIScope(CLIBase):
         
         return "\n".join(lines)
     
-    def to_json_dict(self) -> dict:
+    def to_json_dict(self, include_story_graph: bool = False) -> dict:
         """Return scope data as a dictionary (without markdown formatting).
+        
+        Args:
+            include_story_graph: If True, load and include full story graph data.
+                                If False, only include filter/type/links (faster).
         
         Returns dict with:
         - filter: scope filter string
         - type: scope type (story, epic, files, etc.)
         - links: map/graph file links
-        - storyGraph: filtered story graph data (for story/epic scopes)
+        - storyGraph: filtered story graph data (for story/epic scopes) - only if include_story_graph=True
         - files: list of files (for file scopes)
         """
         import json as json_module

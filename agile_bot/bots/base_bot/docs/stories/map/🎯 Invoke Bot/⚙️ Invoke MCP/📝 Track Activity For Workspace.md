@@ -1,6 +1,6 @@
 # 📝 Track Activity For Workspace
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L869)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Invoke MCP](.)  
@@ -21,7 +21,7 @@ Track Activity For Workspace functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Activity logged to workspace_area not bot area (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L872)
+### Scenario: Activity logged to workspace_area not bot area (happy_path)
 
 **Steps:**
 ```gherkin
@@ -34,7 +34,7 @@ And Activity log location matches workspace_area from WORKING_AREA environment v
 ```
 
 
-### Scenario: Activity log contains correct entry (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L899)
+### Scenario: Activity log contains correct entry (happy_path)
 
 **Steps:**
 ```gherkin

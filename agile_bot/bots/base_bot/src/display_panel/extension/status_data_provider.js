@@ -13,7 +13,7 @@ const Logger = require("./logger.js");
 class StatusDataProvider {
   constructor(workspaceRoot) {
     this.workspaceRoot = workspaceRoot;
-    this.timeout = 10000; // 10 second timeout
+    this.timeout = 30000; // 30 second timeout
     
     // Track current workspace path (defaults to base_bot)
     this.currentWorkingArea = path.join(workspaceRoot, "agile_bot", "bots", "base_bot");
@@ -109,7 +109,7 @@ class StatusDataProvider {
       const timeoutId = setTimeout(() => {
         timedOut = true;
         pythonProcess.kill();
-        reject(new Error("Python process timed out after 10 seconds"));
+        reject(new Error(`Python process timed out after ${this.timeout/1000} seconds`));
       }, this.timeout);
 
       // Send 'status --format json' command via stdin
@@ -226,7 +226,7 @@ class StatusDataProvider {
       const timeoutId = setTimeout(() => {
         timedOut = true;
         pythonProcess.kill();
-        reject(new Error("Python process timed out after 10 seconds"));
+        reject(new Error(`Python process timed out after ${this.timeout/1000} seconds`));
       }, this.timeout);
 
       // Send scope command via stdin
@@ -404,7 +404,7 @@ class StatusDataProvider {
       const timeoutId = setTimeout(() => {
         timedOut = true;
         pythonProcess.kill();
-        reject(new Error("Python process timed out after 10 seconds"));
+        reject(new Error(`Python process timed out after ${this.timeout/1000} seconds`));
       }, this.timeout);
 
       // Send path command via stdin
@@ -511,7 +511,7 @@ class StatusDataProvider {
       const timeoutId = setTimeout(() => {
         timedOut = true;
         pythonProcess.kill();
-        reject(new Error("Command execution timed out after 10 seconds"));
+        reject(new Error(`Command execution timed out after ${this.timeout/1000} seconds`));
       }, this.timeout);
 
       // Send command via stdin

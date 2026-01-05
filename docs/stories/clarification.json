@@ -1,9 +1,0 @@
-{
-  "shape": {
-    "key_questions": {
-      "answers": {
-        "Who are the distinct types of users (e.g., operational users, power users, compliance consumers, content creators, producers)?": "Human users (developers, PMs, QA engineers) via CLI/REPL, I assistants via MCP tools, and system components (generators, bot behaviors). Primary personas: developers using CLI, AI agents using MCP."
-      }
-    }
-  }
-}

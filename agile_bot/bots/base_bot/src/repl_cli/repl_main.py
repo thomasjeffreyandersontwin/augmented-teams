@@ -42,6 +42,7 @@ import json
 import argparse
 from pathlib import Path
 
+
 # Configure UTF-8 encoding for stdout to support emojis in MarkdownFormatter
 if sys.platform == 'win32':
     import io

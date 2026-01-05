@@ -61,11 +61,24 @@ class StatusPanel {
             return;
           case "openScope":
             if (message.filePath) {
-              // Strip line number fragment if present (e.g., #L233)
+              // Parse fragment (e.g., #L233 for line number, #method_name for symbol)
               const cleanPath = message.filePath.split('#')[0];
-              const lineNumber = message.filePath.includes('#L') 
-                ? parseInt(message.filePath.split('#L')[1]) 
+              const fragment = message.filePath.includes('#') 
+                ? message.filePath.split('#')[1] 
                 : null;
+              
+              let lineNumber = null;
+              let symbolName = null;
+              
+              if (fragment) {
+                if (fragment.startsWith('L')) {
+                  // Line number format: #L123
+                  lineNumber = parseInt(fragment.substring(1));
+                } else {
+                  // Symbol/method name format: #test_method_name
+                  symbolName = fragment;
+                }
+              }
               
               // If path is already absolute, use it; otherwise resolve from workspace root
               const absolutePath = path.isAbsolute(cleanPath) 
@@ -88,9 +101,35 @@ class StatusPanel {
                   }
                 );
               } else {
-                // For text files, use openTextDocument to support line numbers
+                // For text files, use openTextDocument to support line numbers and symbols
                 vscode.workspace.openTextDocument(fileUri).then(
                   (doc) => {
+                    // If we have a symbol name, search for it in the file
+                    if (symbolName) {
+                      const text = doc.getText();
+                      const lines = text.split('\n');
+                      let foundLine = -1;
+                      
+                      // Search for the symbol (method/function/class definition)
+                      for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        // Match various patterns: def method_name, class ClassName, etc.
+                        if (line.includes(symbolName) && 
+                            (line.trim().startsWith('def ') || 
+                             line.trim().startsWith('class ') ||
+                             line.trim().startsWith('async def ') ||
+                             line.includes(`def ${symbolName}(`) ||
+                             line.includes(`class ${symbolName}(`))) {
+                          foundLine = i;
+                          break;
+                        }
+                      }
+                      
+                      if (foundLine >= 0) {
+                        lineNumber = foundLine + 1; // Convert to 1-based line number
+                      }
+                    }
+                    
                     const options = lineNumber 
                       ? { 
                           selection: new vscode.Range(lineNumber - 1, 0, lineNumber - 1, 0),
@@ -123,23 +162,13 @@ class StatusPanel {
             return;
           case "clearFilter":
             this._logger.log('Clearing scope filter - executing scope showAll');
-            // #region agent log
-            const fs = require('fs');
-            fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:124',message:'Clear filter clicked',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,G'})+'\n');
-            // #endregion
             // Execute scope showAll command directly
             this._dataProvider.executeCommand('scope showAll')
               .then((output) => {
-                // #region agent log
-                fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:128',message:'scope showAll executed',data:{outputLength:output?output.length:0,outputPreview:output?output.substring(0,200):'null'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})+'\n');
-                // #endregion
                 // Refresh panel after scope change
                 this._update();
               })
               .catch((error) => {
-                // #region agent log
-                fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:133',message:'scope showAll failed',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})+'\n');
-                // #endregion
                 this._logger.error('Failed to clear scope filter', error);
                 vscode.window.showErrorMessage(`Failed to clear scope: ${error.message}`);
               });
@@ -380,21 +409,14 @@ class StatusPanel {
 
 
   async _update() {
-    const fs = require('fs'); // #region agent log
     const webview = this._panel.webview;
     this._panel.title = "Bot Status Dashboard";
     
-    // #region agent log
-    fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:243',message:'_update() called',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F,G'})+'\n');
-    // #endregion
     this._logger.log("_update() called");
     
     try {
       // Check availability first
       const isAvailable = await this._dataProvider.checkAvailability();
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:252',message:'Availability checked',data:{isAvailable},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G'})+'\n');
-      // #endregion
       this._logger.log("Availability check", { isAvailable });
       
       if (!isAvailable) {
@@ -406,9 +428,6 @@ class StatusPanel {
 
       // Fetch status data
       const rawStatus = await this._dataProvider.getStatus();
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:262',message:'Got raw status from CLI',data:{rawLength:rawStatus.length,hasJSON:rawStatus.includes('{'),hasBehaviors:rawStatus.includes('Behaviors:')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G,H'})+'\n');
-      // #endregion
       this._logger.log("Got raw status, length:", rawStatus.length);
       
       // Store raw status for raw instructions display
@@ -416,9 +435,6 @@ class StatusPanel {
       
       // Adapt CLI output to structured JSON
       const structuredData = this._adapter.adapt(rawStatus);
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:270',message:'Adapted data',data:{hasBehaviors:!!(structuredData.behaviors && structuredData.behaviors.length),behaviorsCount:structuredData.behaviors?structuredData.behaviors.length:0,hasScope:!!structuredData.scope,botName:structuredData.bot?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H,I'})+'\n');
-      // #endregion
       
       // Add bot selector data
       structuredData.availableBots = this._dataProvider.getAvailableBots();
@@ -446,13 +462,7 @@ class StatusPanel {
       this._logger.log("Adapted data", structuredData);
 
       // Render HTML (pass webview and extensionUri so renderer can create proper URIs)
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:311',message:'About to render HTML',data:{hasRenderer:!!this._renderer,hasPanel:!!this._panel,hasWebview:!!this._panel.webview},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I,J'})+'\n');
-      // #endregion
       this._panel.webview.html = this._renderer.render(structuredData, this._panel.webview, this._extensionUri);
-      // #region agent log
-      fs.appendFileSync('c:\\dev\\augmented-teams\\.cursor\\debug.log', JSON.stringify({location:'status_panel.js:316',message:'HTML rendered to webview',data:{htmlLength:this._panel.webview.html.length,htmlStart:this._panel.webview.html.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'J'})+'\n');
-      // #endregion
       this._logger.log("Rendered HTML to webview");
       
     } catch (err) {
