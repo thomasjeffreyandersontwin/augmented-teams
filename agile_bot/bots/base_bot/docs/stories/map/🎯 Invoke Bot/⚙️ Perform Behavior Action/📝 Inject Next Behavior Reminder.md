@@ -15,21 +15,40 @@ Inject Next Behavior Reminder functionality for the mob minion system.
 
 ### Behavioral Acceptance Criteria
 
-- **When** Action is final action in behavior
-
-  **then** Next behavior reminder is injected into instructions
-
-- **When** Action is not final action
-
-  **then** Next behavior reminder is NOT injected
+- **When** action executes, **then** action completes successfully
 
 ## Scenarios
 
-### Scenario: Inject Next Behavior Reminder (happy_path)
+### Scenario: Next behavior reminder injected when final action (happy_path)
 
 **Steps:**
 ```gherkin
-Given system is ready
-When action executes
-Then action completes successfully
+Given validate is the final action in behavior workflow
+And bot_config.json defines behavior sequence
+When validate action executes
+Then base_instructions include next behavior reminder
+And reminder contains next behavior name and prompt text
 ```
+
+
+### Scenario: Next behavior reminder not injected when not final action (happy_path)
+
+**Steps:**
+```gherkin
+Given validate is NOT the final action (render comes after)
+And bot_config.json defines behavior sequence
+When validate action executes
+Then base_instructions do NOT include next behavior reminder
+```
+
+
+### Scenario: Next behavior reminder not injected when no next behavior (happy_path)
+
+**Steps:**
+```gherkin
+Given discovery is the last behavior in bot_config.json
+And render is the final action
+When render action executes
+Then base_instructions do NOT include next behavior reminder
+```
+

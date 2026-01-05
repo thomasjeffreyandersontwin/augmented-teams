@@ -1150,7 +1150,6 @@
                     "MCP Server Generator"
                   ],
                   "story_type": "user",
-                  "test_file": "test_generate_bot_server_and_tools.py",
                   "test_class": "TestGenerateBotTools",
                   "acceptance_criteria": [
                     "WHEN Generator processes Bot Config",
@@ -1172,7 +1171,6 @@
                     "MCP Server Generator"
                   ],
                   "story_type": "user",
-                  "test_file": "test_generate_bot_server_and_tools.py",
                   "test_class": "TestGenerateBehaviorTools",
                   "acceptance_criteria": [
                     "WHEN Generator processes Bot Config",
@@ -1194,7 +1192,6 @@
                     "MCP Server Generator"
                   ],
                   "story_type": "user",
-                  "test_file": "test_generate_bot_server_and_tools.py",
                   "test_class": "TestGenerateMCPBotServer",
                   "acceptance_criteria": [
                     "WHEN MCP Server Generator receives Bot Config",
@@ -1228,7 +1225,6 @@
                     "MCP Server Generator"
                   ],
                   "story_type": "user",
-                  "test_file": "test_generate_bot_server_and_tools.py",
                   "test_class": "TestGenerateBehaviorActionTools",
                   "acceptance_criteria": [
                     "WHEN Generator processes Bot Config",
@@ -1251,7 +1247,6 @@
                   "connector": "and",
                   "users": [],
                   "story_type": "user",
-                  "test_file": "test_generate_bot_server_and_tools.py",
                   "test_class": "TestDeployMCPBotServer",
                   "acceptance_criteria": [
                     "WHEN Generation Complete",
@@ -1277,7 +1272,6 @@
                     "MCP Server Generator"
                   ],
                   "story_type": "user",
-                  "test_file": "test_restart_mcp_server.py",
                   "test_class": "TestRestartMCPServerToLoadCodeChanges",
                   "acceptance_criteria": [
                     "WHEN Bot code changes are detected",
@@ -1724,7 +1718,6 @@
                     "AI Chat"
                   ],
                   "story_type": "user",
-                  "test_file": "test_invoke_mcp.py",
                   "test_class": "TestInvokeBotTool",
                   "acceptance_criteria": [
                     "WHEN AI Chat invokes bot tool with behavior and action parameters",
@@ -1754,7 +1747,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_invoke_mcp.py",
                   "test_class": "TestLoadAndMergeBehaviorActionInstructions",
                   "acceptance_criteria": [
                     "WHEN Action method is invoked",
@@ -1787,7 +1779,6 @@
                     "AI Chat"
                   ],
                   "story_type": "user",
-                  "test_file": "test_invoke_mcp.py",
                   "test_class": "TestForwardToCurrentBehaviorAndCurrentAction",
                   "acceptance_criteria": [
                     "WHEN Bot tool receives invocation",
@@ -1817,7 +1808,6 @@
                     "AI Chat"
                   ],
                   "story_type": "user",
-                  "test_file": "test_invoke_mcp.py",
                   "test_class": "TestForwardToCurrentAction",
                   "acceptance_criteria": [
                     "WHEN Behavior tool receives invocation",
@@ -1859,7 +1849,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_invoke_mcp.py",
                   "test_class": "TestTrackActivityForWorkspace",
                   "acceptance_criteria": [
                     "WHEN Activity is tracked",
@@ -1978,244 +1967,68 @@
               "connector": null,
               "stories": [
                 {
-                  "name": "Bootstrap Workspace",
-                  "sequential_order": 0.5,
-                  "connector": "or",
-                  "users": [
-                    "Bot Developer"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_perform_behavior_action.py",
-                  "test_class": "TestBootstrapWorkspace",
-                  "acceptance_criteria": [
-                    "WHEN Entry points (MCP/CLI) bootstrap environment",
-                    "THEN Environment is configured before importing modules",
-                    "AND All directory resolution reads from environment variables only",
-                    "AND agent.json provides default workspace location",
-                    "AND Environment variables can override agent.json"
-                  ]
-                },
-                {
-                  "name": "Find Behavior Folder",
+                  "name": "Invoke Behavior Actions In Workflow Order",
                   "sequential_order": 1,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_utils.py",
-                  "test_class": "TestFindBehaviorFolder",
-                  "acceptance_criteria": [
-                    "WHEN: find_behavior_folder is called with behavior name",
-                    "THEN: Returns path to behavior folder with number prefix if it exists",
-                    "AND: Handles various behavior folder naming patterns"
-                  ],
+                  "test_class": "TestInvokeBehaviorActionsInWorkflowOrder",
                   "scenarios": [
                     {
-                      "name": "Find behavior folder with number prefix",
-                      "steps": "GIVEN: Behavior folder exists with number prefix (8_tests)\nWHEN: find_behavior_folder is called with behavior name without prefix (tests)\nTHEN: Returns path to numbered folder (8_tests)",
-                      "test_method": "test_finds_behavior_folder_with_number_prefix"
-                    },
-                    {
-                      "name": "Find shape folder with number prefix",
-                      "steps": "GIVEN: Behavior folder exists as 1_shape\nWHEN: find_behavior_folder is called with 'shape'\nTHEN: Returns path to 1_shape folder",
-                      "test_method": "test_finds_shape_folder_with_number_prefix"
-                    },
-                    {
-                      "name": "Raises error when behavior folder not found",
-                      "steps": "GIVEN: Behavior folder does NOT exist\nWHEN: find_behavior_folder is called\nTHEN: Raises appropriate error",
-                      "test_method": "test_raises_error_when_behavior_folder_not_found"
+                      "name": "Complete workflow end-to-end",
+                      "steps": "Given Bot has multiple behaviors (shape, discovery)\nAnd each behavior has standard action workflow\nWhen execute clarify action in shape behavior\nAnd close clarify (transitions to strategy)\nAnd jump to discovery.clarify (out of order)\nAnd close discovery.clarify\nThen state correctly shows current action at each step\nAnd transitions occur as expected\nAnd completed actions tracked across multiple behaviors\nAnd out-of-order navigation works correctly",
+                      "test_method": "test_complete_workflow_end_to_end"
                     }
                   ]
                 },
                 {
                   "name": "Execute Behavior",
                   "sequential_order": 2,
-                  "connector": "or",
+                  "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_bot_execute_behavior.py",
                   "test_class": "TestExecuteBehavior",
-                  "acceptance_criteria": [
-                    "WHEN Bot behavior is invoked with action parameter",
-                    "THEN Bot executes specified action",
-                    "WHEN Bot behavior is invoked without action",
-                    "THEN Bot forwards to current action",
-                    "WHEN Bot behavior is invoked out of order",
-                    "THEN Bot requires confirmation"
-                  ]
-                },
-                {
-                  "name": "Invoke Behavior in Workflow Order",
-                  "sequential_order": 3,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_workflow_action_sequence.py",
-                  "test_class": "TestInvokeBehaviorInWorkflowOrder",
-                  "acceptance_criteria": [
-                    "WHEN Behavior is invoked",
-                    "THEN Behavior loads workflow order from behavior-specific behavior.json",
-                    "AND Behavior executes actions in configured order"
-                  ],
                   "scenarios": [
                     {
-                      "name": "Actions execute in workflow order",
-                      "steps": "GIVEN: Behavior with workflow order defined\nWHEN: Behavior is executed\nTHEN: Actions run in configured sequence",
-                      "test_method": "test_actions_execute_in_workflow_order"
+                      "name": "Execute behavior with action parameter",
+                      "steps": "Given Bot has behavior shape with action clarify\nWhen Bot.execute_behavior is called\nThen Action executes and returns BotResult\nAnd BotResult status is completed",
+                      "test_method": "test_execute_behavior_with_action_parameter"
+                    },
+                    {
+                      "name": "Execute behavior without action forwards to current",
+                      "steps": "Given Bot has behavior shape and workflow state shows current_action=strategy\nWhen Bot.execute_behavior is called without action parameter\nThen Forwards to current action (strategy)\nAnd BotResult shows strategy was executed",
+                      "test_method": "test_execute_behavior_without_action_forwards_to_current"
+                    },
+                    {
+                      "name": "Execute behavior requires confirmation when out of order",
+                      "steps": "Given Current behavior is discovery, requested behavior is shape\nWhen Bot.execute_behavior is called (going backwards)\nThen Executes directly without order checking",
+                      "test_method": "test_execute_behavior_requires_confirmation_when_out_of_order"
+                    },
+                    {
+                      "name": "Execute behavior handles entry workflow when no state",
+                      "steps": "Given No behavior_action_state.json exists\nWhen Bot.execute_behavior is called\nThen Executes directly (starts fresh workflow)",
+                      "test_method": "test_execute_behavior_handles_entry_workflow_when_no_state"
                     }
                   ]
                 },
                 {
-                  "name": "Invoke Behavior Actions in Workflow Order",
-                  "sequential_order": 4,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_complete_workflow_integration.py",
-                  "test_class": "TestInvokeBehaviorActionsInWorkflowOrder",
-                  "acceptance_criteria": [
-                    "WHEN user closes current action",
-                    "THEN action is saved to completed_actions",
-                    "AND workflow transitions to next action",
-                    "WHEN user closes final action",
-                    "THEN action is saved to completed_actions",
-                    "AND workflow stays at final action (no next action available)",
-                    "WHEN user attempts to close action that requires confirmation",
-                    "AND action is not in completed_actions",
-                    "THEN workflow does not allow closing without confirmation",
-                    "WHEN user closes action that's already marked complete",
-                    "THEN closing is idempotent (no error, action remains complete)",
-                    "WHEN CLI calls --close command",
-                    "THEN CLI routes to bot.close_current_action method",
-                    "AND Bot class has close_current_action method"
-                  ],
-                  "scenarios": [
-                    {
-                      "name": "Close current action and transition to next",
-                      "steps": "Given workflow is at action \"gather_context\"\nAnd action has NOT been marked complete yet\nWhen user closes current action\nThen action \"gather_context\" is saved to completed_actions\nAnd workflow transitions to \"decide_planning_criteria\" (next action)",
-                      "test_method": "test_close_current_action_marks_complete_and_transitions"
-                    },
-                    {
-                      "name": "Close action when already at final action",
-                      "steps": "Given workflow is at action \"validate_rules\" (final action)\nWhen user closes current action\nThen action \"validate_rules\" is saved to completed_actions\nAnd workflow stays at \"validate_rules\" (no next action available)",
-                      "test_method": "test_close_action_at_final_action_stays_at_final"
-                    },
-                    {
-                      "name": "Close final action and transition to next behavior",
-                      "steps": "Given workflow is at final action \"validate_rules\" of behavior \"shape\"\nWhen user closes current action\nThen \"validate_rules\" is saved to completed_actions\nAnd workflow stays at \"validate_rules\" (end of behavior)",
-                      "test_method": "test_close_final_action_transitions_to_next_behavior"
-                    },
-                    {
-                      "name": "Close action that requires confirmation but wasn't confirmed",
-                      "steps": "Given workflow is at \"initialize_project\"\nAnd action has NOT been saved to completed_actions (requires confirmation)\nThen is_action_completed returns False",
-                      "test_method": "test_error_when_closing_action_that_requires_confirmation"
-                    },
-                    {
-                      "name": "Close action that's already marked complete (idempotent)",
-                      "steps": "Given action already complete\nWhen close again (should be idempotent)\nThen should still work fine",
-                      "test_method": "test_close_handles_action_already_completed_gracefully"
-                    },
-                    {
-                      "name": "Bot class has close_current_action method (CLI routes to bot.close_current_action)",
-                      "steps": "Given bot is configured with behavior \"shape\"\nWhen Bot instance is created\nThen Bot class has close_current_action method\nAnd When close_current_action is called\nThen action \"gather_context\" is marked complete\nAnd workflow transitions to next action \"decide_planning_criteria\"",
-                      "test_method": "test_bot_class_has_close_current_action_method"
-                    }
-                  ]
-                },
-                {
-                  "name": "Invoke Behavior Actions in Workflow Order",
-                  "sequential_order": 4,
-                  "connector": "or",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_file": "test_complete_workflow_integration.py",
-                  "test_class": "TestInvokeBehaviorActionsInWorkflowOrder",
-                  "acceptance_criteria": [
-                    "WHEN workflow starts at initialize_project",
-                    "THEN user can confirm and save to completed_actions",
-                    "WHEN user forwards to gather_context",
-                    "THEN workflow executes gather_context and saves state",
-                    "WHEN user closes gather_context",
-                    "THEN workflow transitions to decide_planning_criteria",
-                    "WHEN user jumps to discovery.gather_context (out of order)",
-                    "THEN state correctly shows discovery.gather_context (not initialize_project)",
-                    "WHEN user closes discovery action",
-                    "THEN workflow transitions properly",
-                    "AND all completed actions tracked across both behaviors"
-                  ],
-                  "scenarios": [
-                    {
-                      "name": "Complete end-to-end workflow test demonstrating all fixes working together",
-                      "steps": "Flow:\n1. Start at initialize_project\n2. Confirm Ã¢â€ â€™ Saves to completed_actions\n3. Forward to gather_context\n4. Close gather_context Ã¢â€ â€™ Transitions to decide_planning_criteria\n5. Jump to discovery.gather_context (out of order)\n6. Verify state shows discovery.gather_context (not initialize_project)\n7. Close and verify proper transition\n8. Verify all completed actions tracked across both behaviors",
-                      "test_method": "test_complete_workflow_end_to_end"
-                    }
-                  ]
-                },
-                {
-                  "name": "Close Current Action",
+                  "name": "Insert Context Into Instructions",
                   "sequential_order": 5,
-                  "connector": "or",
+                  "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_close_current_action.py",
-                  "test_class": "TestCloseCurrentAction",
-                  "acceptance_criteria": [
-                    "WHEN user closes current action",
-                    "THEN action is saved to completed_actions",
-                    "AND workflow transitions to next action",
-                    "WHEN user closes final action",
-                    "THEN action is saved to completed_actions",
-                    "AND workflow stays at final action (no next action available)",
-                    "WHEN user attempts to close action that requires confirmation",
-                    "AND action is not in completed_actions",
-                    "THEN workflow does not allow closing without confirmation",
-                    "WHEN user closes action that's already marked complete",
-                    "THEN closing is idempotent (no error, action remains complete)",
-                    "WHEN CLI calls --close command",
-                    "THEN CLI routes to bot.close_current_action method",
-                    "AND Bot class has close_current_action method"
-                  ],
+                  "test_class": "TestInsertContextIntoInstructions",
                   "scenarios": [
                     {
-                      "name": "Close current action and transition to next",
-                      "steps": "Given workflow is at action \"gather_context\"\nAnd action has NOT been marked complete yet\nWhen user closes current action\nThen action \"gather_context\" is saved to completed_actions\nAnd workflow transitions to \"decide_planning_criteria\" (next action)",
-                      "test_method": "test_close_current_action_marks_complete_and_transitions"
-                    },
-                    {
-                      "name": "Close action when already at final action",
-                      "steps": "Given workflow is at action \"validate_rules\" (final action)\nWhen user closes current action\nThen action \"validate_rules\" is saved to completed_actions\nAnd workflow stays at \"validate_rules\" (no next action available)",
-                      "test_method": "test_close_action_at_final_action_stays_at_final"
-                    },
-                    {
-                      "name": "Close final action and transition to next behavior",
-                      "steps": "Given workflow is at final action \"validate_rules\" of behavior \"shape\"\nWhen user closes current action\nThen \"validate_rules\" is saved to completed_actions\nAnd workflow stays at \"validate_rules\" (end of behavior)",
-                      "test_method": "test_close_final_action_transitions_to_next_behavior"
-                    },
-                    {
-                      "name": "Close action that requires confirmation but wasn't confirmed",
-                      "steps": "Given workflow is at \"initialize_project\"\nAnd action has NOT been saved to completed_actions (requires confirmation)\nThen is_action_completed returns False",
-                      "test_method": "test_error_when_closing_action_that_requires_confirmation"
-                    },
-                    {
-                      "name": "Close action that's already marked complete (idempotent)",
-                      "steps": "Given action already complete\nWhen close again (should be idempotent)\nThen should still work fine",
-                      "test_method": "test_close_handles_action_already_completed_gracefully"
-                    },
-                    {
-                      "name": "Bot class has close_current_action method (CLI routes to bot.close_current_action)",
-                      "steps": "Given bot is configured with behavior \"shape\"\nWhen Bot instance is created\nThen Bot class has close_current_action method\nAnd When close_current_action is called\nThen action \"gather_context\" is marked complete\nAnd workflow transitions to next action \"decide_planning_criteria\"",
-                      "test_method": "test_bot_class_has_close_current_action_method"
+                      "name": "Action loads context data into instructions",
+                      "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
+                      "test_method": "test_action_loads_context_data_into_instructions"
                     }
                   ]
                 },
@@ -2227,33 +2040,170 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_base_action.py",
                   "test_class": "TestInjectNextBehaviorReminder",
-                  "acceptance_criteria": [
-                    "WHEN Action is final action in behavior",
-                    "THEN Next behavior reminder is injected into instructions",
-                    "WHEN Action is not final action",
-                    "THEN Next behavior reminder is NOT injected"
+                  "scenarios": [
+                    {
+                      "name": "Next behavior reminder injected when final action",
+                      "steps": "Given validate is the final action in behavior workflow\nAnd bot_config.json defines behavior sequence\nWhen validate action executes\nThen base_instructions include next behavior reminder\nAnd reminder contains next behavior name and prompt text",
+                      "test_method": "test_next_behavior_reminder_injected_when_final_action"
+                    },
+                    {
+                      "name": "Next behavior reminder not injected when not final action",
+                      "steps": "Given validate is NOT the final action (render comes after)\nAnd bot_config.json defines behavior sequence\nWhen validate action executes\nThen base_instructions do NOT include next behavior reminder",
+                      "test_method": "test_next_behavior_reminder_not_injected_when_not_final_action"
+                    },
+                    {
+                      "name": "Next behavior reminder not injected when no next behavior",
+                      "steps": "Given discovery is the last behavior in bot_config.json\nAnd render is the final action\nWhen render action executes\nThen base_instructions do NOT include next behavior reminder",
+                      "test_method": "test_next_behavior_reminder_not_injected_when_no_next_behavior"
+                    }
                   ]
                 },
                 {
-                  "name": "Load And Merge Behavior Action Instructions",
-                  "sequential_order": 3,
+                  "name": "Close Current Action",
+                  "sequential_order": 7,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN Tool invokes Bot.Behavior.Action method",
-                    "THEN Behavior Action loads instructions from behavior and base_actions",
-                    "AND Action merges base instructions with behavior-specific instructions",
-                    "AND Compiled instructions returned for injection into AI Chat"
+                  "test_class": "TestCloseCurrentAction",
+                  "scenarios": [
+                    {
+                      "name": "Close current action marks complete and transitions",
+                      "steps": "Given workflow is at action strategy\nAnd action has NOT been marked complete yet\nWhen user closes current action\nThen action is saved to completed_actions\nAnd workflow transitions to next action\nAnd completed_actions count increases\nAnd current action is updated in state file",
+                      "test_method": "test_close_current_action_marks_complete_and_transitions"
+                    },
+                    {
+                      "name": "Close action at final action stays at final",
+                      "steps": "Given workflow is at final action (render)\nWhen user closes final action\nThen action is saved to completed_actions\nAnd state stays at final action (no transition)",
+                      "test_method": "test_close_action_at_final_action_stays_at_final"
+                    },
+                    {
+                      "name": "Close final action transitions to next behavior",
+                      "steps": "Given workflow is at final action\nWhen user closes final action\nThen action is marked complete",
+                      "test_method": "test_close_final_action_transitions_to_next_behavior"
+                    },
+                    {
+                      "name": "Close action saves to completed actions list",
+                      "steps": "Given workflow is at an action (clarify)\nWhen user closes action\nThen action is in completed_actions list\nAnd completed_actions count is 1",
+                      "test_method": "test_close_action_saves_to_completed_actions_list"
+                    },
+                    {
+                      "name": "Close handles action already completed gracefully",
+                      "steps": "Given action has already been completed\nWhen user attempts to close already completed action\nThen operation completes gracefully\nAnd no duplicate entry added to completed_actions",
+                      "test_method": "test_close_handles_action_already_completed_gracefully"
+                    },
+                    {
+                      "name": "Bot class has close current action method",
+                      "steps": "Given Bot is initialized\nThen Bot has close_current method available",
+                      "test_method": "test_bot_class_has_close_current_action_method"
+                    }
+                  ]
+                },
+                {
+                  "name": "Invoke Behavior In Action Order",
+                  "sequential_order": 8,
+                  "connector": "and",
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "user",
+                  "test_class": "TestInvokeBehaviorInActionOrder",
+                  "scenarios": [
+                    {
+                      "name": "Behavior action order determines next action from current action",
+                      "steps": "Given behavior_action_state.json shows current_action: build\nAnd completed_actions: [clarify] (may be behind)\nWhen bot loads state\nThen current action is build (uses current_action from file as source of truth)",
+                      "test_method": "test_behavior_action_order_determines_next_action_from_current_action"
+                    },
+                    {
+                      "name": "Behavior action order starts at first action when no completed actions",
+                      "steps": "Given bot loads state with no completed_actions\nWhen bot is created\nThen current action is the first action (clarify)",
+                      "test_method": "test_behavior_action_order_starts_at_first_action_when_no_completed_actions"
+                    },
+                    {
+                      "name": "Behavior action order uses current action when provided",
+                      "steps": "Given current_action: strategy\nAnd completed_actions: [clarify]\nWhen bot loads state\nThen current action is strategy (uses current_action from file)",
+                      "test_method": "test_behavior_action_order_uses_current_action_when_provided"
+                    },
+                    {
+                      "name": "Behavior action order falls back to completed actions when current action missing",
+                      "steps": "Given bot has completed actions: [clarify, strategy, build]\nAnd current_action is empty in state file\nWhen bot is created\nThen current action falls back to validate (next after last completed)",
+                      "test_method": "test_behavior_action_order_falls_back_to_completed_actions_when_current_action_missing"
+                    },
+                    {
+                      "name": "Behavior action order starts at first action when no state file exists",
+                      "steps": "Given no state file exists\nWhen bot is created\nThen bot starts at first action (clarify)",
+                      "test_method": "test_behavior_action_order_starts_at_first_action_when_no_state_file_exists"
+                    },
+                    {
+                      "name": "Behavior action order out of order navigation removes completed actions after target",
+                      "steps": "Given current_action: validate\nAnd completed_actions: [clarify, strategy, build, render]\nWhen navigate out of order back to build\nThen current action is build\nAnd render is removed from completed_actions",
+                      "test_method": "test_behavior_action_order_out_of_order_navigation_removes_completed_actions_after_target"
+                    },
+                    {
+                      "name": "Behavior loads workflow order from behavior specific actions workflow",
+                      "steps": "Given behavior.json exists with actions_workflow configuration\nWhen behavior is initialized\nThen workflow states and transitions match configuration",
+                      "test_method": "test_behavior_loads_workflow_order_from_behavior_specific_actions_workflow"
+                    },
+                    {
+                      "name": "Behavior requires actions workflow json no fallback",
+                      "steps": "Given behavior requires behavior.json\nThen no fallback exists",
+                      "test_method": "test_behavior_requires_actions_workflow_json_no_fallback"
+                    },
+                    {
+                      "name": "Behavior loads from actions workflow json",
+                      "steps": "Given behavior.json exists with specific action order\nWhen behavior is initialized\nThen workflow uses order from behavior.json",
+                      "test_method": "test_behavior_loads_from_actions_workflow_json"
+                    },
+                    {
+                      "name": "Different behaviors can have different action orders",
+                      "steps": "Given two behaviors with different action orders in their behavior.json\nWhen behaviors are initialized\nThen each behavior has its configured action order\nAnd orders differ between behaviors",
+                      "test_method": "test_different_behaviors_can_have_different_action_orders"
+                    },
+                    {
+                      "name": "Workflow transitions built correctly from actions workflow json",
+                      "steps": "Given behavior.json with specific next_action values\nWhen behavior is initialized\nThen transitions are built from action_config.json next_action values\nAnd each transition has correct source and destination",
+                      "test_method": "test_workflow_transitions_built_correctly_from_actions_workflow_json"
+                    }
+                  ]
+                },
+                {
+                  "name": "Inject Status Update Breadcrumbs Into Instructions",
+                  "sequential_order": 9,
+                  "connector": "and",
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "user",
+                  "test_class": "TestInjectStatusUpdateBreadcrumbsIntoInstructions",
+                  "scenarios": [
+                    {
+                      "name": "Action injects workflow breadcrumbs when bot instance exists",
+                      "steps": "Given Bot is initialized with multiple behaviors\nAnd behavior_action_state.json exists with completed actions\nAnd Current behavior and action are set\nWhen Action instructions are accessed\nThen base_instructions include workflow progress breadcrumbs at the beginning\nAnd breadcrumbs show completed behaviors, current behavior/action, and remaining work",
+                      "test_method": "test_action_injects_workflow_breadcrumbs_when_bot_instance_exists"
+                    },
+                    {
+                      "name": "Breadcrumbs show completed behaviors when all actions completed",
+                      "steps": "Given Multiple behaviors exist\nAnd All actions in first behavior are completed\nWhen Action instructions are accessed for second behavior\nThen Breadcrumbs show first behavior as completed with checkmark",
+                      "test_method": "test_breadcrumbs_show_completed_behaviors_when_all_actions_completed"
+                    },
+                    {
+                      "name": "Breadcrumbs show next step command when next action exists",
+                      "steps": "Given Current behavior and action are set\nAnd Next action exists in current behavior\nWhen Action instructions are accessed\nThen Breadcrumbs include next step command with correct CLI command format",
+                      "test_method": "test_breadcrumbs_show_next_step_command_when_next_action_exists"
+                    },
+                    {
+                      "name": "Breadcrumbs not injected when no bot instance",
+                      "steps": "Given Behavior is created without bot instance\nWhen Action instructions are accessed\nThen Breadcrumbs are not included in instructions",
+                      "test_method": "test_breadcrumbs_not_injected_when_no_bot_instance"
+                    }
                   ]
                 }
               ]
             }
-          ]
+          ],
+          "test_file": "test_perform_behavior_action.py"
         },
         {
           "name": "Run Interactive REPL",
@@ -2476,7 +2426,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_initialize_repl_session.py",
                       "test_class": "TestLaunchCLIInInteractiveMode",
                       "scenarios": [
                         {
@@ -2500,7 +2449,6 @@
                         "Automation"
                       ],
                       "story_type": "user",
-                      "test_file": "test_initialize_repl_session.py",
                       "test_class": "TestLaunchCLIInPipeMode",
                       "scenarios": [
                         {
@@ -2518,7 +2466,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_initialize_repl_session.py",
                       "test_class": "TestDisplayPipedModeInstructionsForAIAgents",
                       "scenarios": [
                         {
@@ -2541,7 +2488,6 @@
                         "TTYDetector"
                       ],
                       "story_type": "system",
-                      "test_file": "test_initialize_repl_session.py",
                       "test_class": "TestDetectAndConfigureTTYNonTTYInputForCLI",
                       "scenarios": [
                         {
@@ -2564,7 +2510,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_initialize_repl_session.py",
                       "test_class": "TestLoadAndDisplayWorkspaceContextInCLI",
                       "scenarios": [
                         {
@@ -2612,7 +2557,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
                       "test_class": "TestNavigateUsingCLIDotNotation",
                       "scenarios": [
                         {
@@ -2645,7 +2589,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
                       "test_class": "TestNavigateSequentiallyUsingCLICommands",
                       "scenarios": [
                         {
@@ -2668,7 +2611,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
                       "test_class": "TestExitCLIREPL",
                       "scenarios": [
                         {
@@ -2699,7 +2641,6 @@
                         "System"
                       ],
                       "story_type": "system",
-                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli.py",
                       "scenarios": [
                         {
                           "name": "Navigate sets current behavior and first action",
@@ -2716,7 +2657,6 @@
                         "System"
                       ],
                       "story_type": "system",
-                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli.py",
                       "scenarios": [
                         {
                           "name": "Close current advances and persists state",
@@ -2733,7 +2673,6 @@
                         "System"
                       ],
                       "story_type": "system",
-                      "test_file": "test_navigate_bot_behaviors_and_actions_with_cli.py",
                       "scenarios": [
                         {
                           "name": "Remaining actions respects completion",
@@ -2771,7 +2710,6 @@
                       ],
                       "optional": false,
                       "priority": 1,
-                      "test_file": "test_execute_action_operation_through_cli.py",
                       "test_class": "TestGetActionInstructionsThroughCLI",
                       "scenarios": [
                         {
@@ -2802,23 +2740,6 @@
                       ]
                     },
                     {
-                      "name": "Auto-Run Instructions On Navigate",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN user navigates to behavior.action\nTHEN CLI automatically runs instructions for that action",
-                        "WHEN user navigates to behavior only\nTHEN CLI navigates to first action AND automatically runs instructions",
-                        "WHEN user re-navigates to same action\nTHEN CLI re-runs instructions automatically",
-                        "WHEN auto-run completes\nTHEN CLI displays formatted instructions AND waits for user input"
-                      ],
-                      "optional": false,
-                      "priority": 1
-                    },
-                    {
                       "name": "Confirm Work Through CLI with String Parameters",
                       "sequential_order": 3,
                       "connector": "and",
@@ -2834,7 +2755,6 @@
                       ],
                       "optional": false,
                       "priority": 1,
-                      "test_file": "test_execute_action_operation_through_cli.py",
                       "test_class": "TestConfirmWorkThroughCLIWithStringParameters",
                       "scenarios": [
                         {
@@ -2862,7 +2782,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_execute_action_operation_through_cli.py",
                       "test_class": "TestConfirmActionCompletionThroughCLI",
                       "scenarios": [
                         {
@@ -2912,7 +2831,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_execute_action_operation_through_cli.py",
                       "test_class": "TestReExecuteCurrentOperationUsingCLI",
                       "scenarios": [
                         {
@@ -2930,7 +2848,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_execute_action_operation_through_cli.py",
                       "test_class": "TestHandleOperationErrorsAndValidationInCLI",
                       "scenarios": [
                         {
@@ -2987,7 +2904,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_bot_scope_through_cli.py",
                       "test_class": "TestFilterWorkUsingKnowledgeGraphScopeInCLI",
                       "acceptance_criteria": [
                         "WHEN user sets epic scope filter\nTHEN CLI displays active scope filters",
@@ -3026,7 +2942,6 @@
                       ],
                       "optional": false,
                       "priority": 1,
-                      "test_file": "test_manage_bot_scope_through_cli.py",
                       "test_class": "TestFilterWorkUsingFilesScopeInCLI",
                       "scenarios": [
                         {
@@ -3057,7 +2972,6 @@
                       ],
                       "optional": false,
                       "priority": 2,
-                      "test_file": "test_manage_bot_scope_through_cli.py",
                       "test_class": "TestScopeTypesMutuallyExclusive",
                       "scenarios": [
                         {
@@ -3094,7 +3008,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_bot_scope_through_cli.py",
                       "test_class": "TestClearScopeFiltersInCLI",
                       "scenarios": [
                         {
@@ -3156,7 +3069,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli_current.py",
                       "test_class": "TestDisplayCLIHeader",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows header with bot name AND workspace path",
@@ -3185,7 +3097,7 @@
                         },
                         {
                           "name": "CLI displays workspace name and path",
-                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains 'Ã°Å¸â€œâ€š **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '\u00c3\u00b0\u00c5\u00b8\u00e2\u20ac\u0153\u00e2\u20ac\u0161 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
                           "test_method": "test_cli_displays_workspace_name_and_path",
                           "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
                         },
@@ -3231,7 +3143,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli.py",
                       "test_class": "TestDisplayBotHierarchyTreeInCLI",
                       "acceptance_criteria": [
                         "WHEN user views status\nTHEN CLI displays bot hierarchy tree with behaviors and actions",
@@ -3263,7 +3174,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli.py",
                       "test_class": "TestDisplayCurrentPositionInCLI",
                       "acceptance_criteria": [
                         "WHEN user views status\nTHEN CLI displays current behavior, action, and operation",
@@ -3294,7 +3204,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli.py",
                       "test_class": "TestDisplayActiveScopeInCLIStatus",
                       "acceptance_criteria": [
                         "WHEN user views status with active scope\nTHEN CLI displays active scope section",
@@ -3330,7 +3239,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli_current.py",
                       "test_class": "TestDisplayCLINavigationMenuFooter",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows footer with available commands",
@@ -3357,7 +3265,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli_current.py",
                       "test_class": "TestDisplayHeadlessModeStatusInCLI",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows headless mode section",
@@ -3390,7 +3297,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli_current.py",
                       "test_class": "TestDisplayAvailableBotInTreeHierarchy",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows current bot name in header",
@@ -3416,7 +3322,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli_current.py",
                       "test_class": "TestDisplayCLIBotCommandInNavigationMenuFooter",
                       "acceptance_criteria": [
                         "WHEN CLI displays footer\nTHEN CLI shows available navigation commands",
@@ -3442,7 +3347,6 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_file": "test_display_bot_state_using_cli.py",
                       "test_class": "TestFormatOutputForAI",
                       "acceptance_criteria": [
                         "WHEN CLI detects TTY mode\nTHEN CLI uses plain text formatting for output",
@@ -3562,7 +3466,6 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_file": "test_get_help_using_cli_current.py",
                       "test_class": "TestViewAvailableCommandsUsingCLIHelp",
                       "acceptance_criteria": [
                         "WHEN user enters help command\nTHEN CLI displays available commands AND their descriptions",
@@ -3703,7 +3606,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestInjectGuardrailsAsPartOfClarifyRequirements",
                   "acceptance_criteria": [
                     "WHEN gather_context action executes",
@@ -3741,7 +3643,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestTrackActivityForClarifyContextAction",
                   "acceptance_criteria": [
                     "WHEN GatherContextAction executes",
@@ -3774,7 +3675,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestStoreClarificationData",
                   "acceptance_criteria": [
                     "WHEN gather_context action stores clarification data",
@@ -3809,7 +3709,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestProceedToDecidePlanning",
                   "acceptance_criteria": [
                     "WHEN GatherContextAction completes execution",
@@ -3823,10 +3722,6 @@
                       "name": "Seamless transition from gather_context to decide_planning_criteria",
                       "steps": "Given behavior is 'discovery'\nAnd gather_context action is complete\nAnd Human confirms \"done\" or \"proceed\"\nWhen gather_context action finalizes\nThen Action saves Workflow State with:\n  - current_behavior='story_bot.discovery'\n  - current_action='story_bot.discovery.gather_context'\n  - timestamp=[completion time]\nAnd Action loads gather_context/action configuration\nAnd Action reads next_action='decide_planning_criteria'\nAnd Action injects AI instructions: \"When done, proceed to decide_planning_criteria\"\nAnd AI invokes decide_planning_criteria tool\nAnd Workflow transitions seamlessly to next action",
                       "test_method": "test_seamless_transition_from_gather_context_to_decide_planning_criteria"
-                    },
-                    {
-                      "name": "User must confirm before transition",
-                      "steps": "Given gather_context action is complete\nAnd Human has NOT yet confirmed completion\nWhen gather_context action waits for human feedback\nThen Action does NOT save workflow state as completed\nAnd Action does NOT inject next action instructions\nAnd Action does NOT proceed to decide_planning_criteria\nAnd AI waits for human to say \"done\" before transitioning"
                     },
                     {
                       "name": "Workflow state captures gather_context completion",
@@ -3848,7 +3743,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestLoadBaseActionConfig",
                   "acceptance_criteria": [
                     "WHEN Action loads configuration",
@@ -3871,7 +3765,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestAccessActions",
                   "acceptance_criteria": [
                     "WHEN Action needs to access other actions",
@@ -3894,7 +3787,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestInitializeAction",
                   "acceptance_criteria": [
                     "WHEN Action is initialized",
@@ -3917,7 +3809,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_gather_context.py",
                   "test_class": "TestLoadGuardrails",
                   "acceptance_criteria": [
                     "WHEN Action needs guardrails",
@@ -3999,21 +3890,6 @@
               "connector": "or",
               "stories": [
                 {
-                  "name": "Inject Strategy Criteria Into Instructions",
-                  "sequential_order": 1,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "acceptance_criteria": [
-                    "WHEN MCP Specific Behavior Action Tool invokes Planning Action",
-                    "THEN Action checks for guardrails in behavior/guardrails/planning/",
-                    "WHEN guardrails exist, THEN Action loads typical_assumptions.json and decision_criteria files",
-                    "AND Action injects planning guardrails into planning section"
-                  ]
-                },
-                {
                   "name": "Track Activity for Strategy Action",
                   "sequential_order": 2,
                   "connector": "or",
@@ -4038,7 +3914,6 @@
                       "test_method": "test_track_activity_when_planning_action_completes"
                     }
                   ],
-                  "test_file": "test_decide_strategy_criteria_action.py",
                   "test_class": "TestTrackActivityForStrategyAction"
                 },
                 {
@@ -4049,7 +3924,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_decide_strategy_criteria_action.py",
                   "test_class": "TestStoreStrategyData",
                   "scenarios": [
                     {
@@ -4091,16 +3965,11 @@
                       "test_method": "test_seamless_transition_from_planning_to_build_knowledge"
                     },
                     {
-                      "name": "User must confirm before transition",
-                      "steps": "Given decide_planning_criteria action is complete\nAnd Human has NOT yet confirmed completion\nWhen decide_planning_criteria action waits for human feedback\nThen Action does NOT save workflow state as completed\nAnd Action does NOT inject next action instructions\nAnd Action does NOT proceed to build_knowledge\nAnd AI waits for human to say \"done\" before transitioning"
-                    },
-                    {
                       "name": "Workflow state captures planning completion",
                       "steps": "Given decide_planning_criteria action completes at timestamp='2025-12-03T10:25:00Z'\nAnd Human confirms \"done\"\nWhen Action saves workflow state\nThen workflow state is updated with:\n  - current_action='story_bot.exploration.decide_planning_criteria'\n  - timestamp='2025-12-03T10:25:00Z'\nAnd completed_actions list includes: {action_state: 'story_bot.exploration.decide_planning_criteria', timestamp: '2025-12-03T10:25:00Z'}\nAnd State persists to project_area/workflow state\nAnd If workflow is interrupted after this point, planning is marked as completed",
                       "test_method": "test_workflow_state_captures_planning_completion"
                     }
                   ],
-                  "test_file": "test_decide_strategy_criteria_action.py",
                   "test_class": "TestProceedToBuildKnowledge"
                 },
                 {
@@ -4116,7 +3985,6 @@
                     "THEN Strategy is injected into action instructions",
                     "AND Instructions include strategy guidance"
                   ],
-                  "test_file": "test_decide_strategy_criteria_action.py",
                   "test_class": "TestInjectStrategyIntoInstructions",
                   "scenarios": [
                     {
@@ -4139,7 +4007,6 @@
                     "THEN Strategy data is stored to project area",
                     "AND Strategy data persists for later use"
                   ],
-                  "test_file": "test_decide_strategy_criteria_action.py",
                   "test_class": "TestStoreStrategyData"
                 }
               ]
@@ -4236,7 +4103,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestLoadStoryGraphIntoMemory",
                   "acceptance_criteria": [
                     "WHEN Story graph file exists",
@@ -4305,7 +4171,6 @@
                     "WHEN knowledge graph template does not exist",
                     "THEN Action raises FileNotFoundError with appropriate error message"
                   ],
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestInjectKnowledgeGraphTemplateForBuildKnowledge",
                   "scenarios": [
                     {
@@ -4338,7 +4203,6 @@
                     "THEN Action creates activity entry with timestamp, action name, behavior name",
                     "AND Activity entry appended to {project_area}/activity_log.json"
                   ],
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestTrackActivityForBuildKnowledgeAction",
                   "scenarios": [
                     {
@@ -4361,7 +4225,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestUpdateExistingKnowledgeGraph",
                   "acceptance_criteria": [
                     "WHEN Build Knowledge Action updates existing story graph",
@@ -4391,7 +4254,6 @@
                     "AND BuildKnowledgeAction processes content for saving",
                     "AND Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)"
                   ],
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestProceedToRenderOutput",
                   "scenarios": [
                     {
@@ -4435,7 +4297,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestCreateBuildScope",
                   "acceptance_criteria": [
                     "WHEN Build knowledge action needs scope",
@@ -4468,7 +4329,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_build_knowledge.py",
                   "test_class": "TestFilterKnowledgeGraph",
                   "acceptance_criteria": [
                     "WHEN Knowledge graph needs filtering",
@@ -4654,7 +4514,6 @@
                     "THEN Action creates activity entry with timestamp, action name, behavior name",
                     "AND Activity entry appended to {project_area}/activity_log.json"
                   ],
-                  "test_file": "test_render_output.py",
                   "test_class": "TestTrackActivityForRenderOutputAction",
                   "scenarios": [
                     {
@@ -4690,7 +4549,6 @@
                     "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
                     "AND Workflow proceeds to validate_rules"
                   ],
-                  "test_file": "test_render_output.py",
                   "test_class": "TestProceedToValidateRules",
                   "scenarios": [
                     {
@@ -4718,7 +4576,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_load_rendered_content.py",
                   "test_class": "TestLoadRenderConfigurations",
                   "acceptance_criteria": [
                     "WHEN render_output action executes",
@@ -4769,7 +4626,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_load_rendered_content.py",
                   "test_class": "TestInjectTemplateInstructions",
                   "acceptance_criteria": [
                     "WHEN render_output action processes template-only render configs",
@@ -4803,7 +4659,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_load_rendered_content.py",
                   "test_class": "TestInjectSynchronizerInstructions",
                   "acceptance_criteria": [
                     "WHEN render_output action processes synchronizer-based render configs",
@@ -4832,7 +4687,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestInjectRenderInstructionsAndConfigs",
                   "acceptance_criteria": [
                     "WHEN Render instructions are needed",
@@ -4860,7 +4714,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestGetRenderInstructions",
                   "acceptance_criteria": [
                     "WHEN Action needs render instructions",
@@ -4883,7 +4736,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestMergeBaseAndRenderInstructions",
                   "acceptance_criteria": [
                     "WHEN Base and render instructions exist",
@@ -4911,7 +4763,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestRenderOutputUsingSynchronizers",
                   "acceptance_criteria": [
                     "WHEN Output needs rendering",
@@ -4939,7 +4790,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestInjectRenderInstructionsAndConfigs",
                   "acceptance_criteria": [
                     "WHEN Render instructions are needed",
@@ -4955,7 +4805,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestGetRenderInstructions",
                   "acceptance_criteria": [
                     "WHEN Action needs render instructions",
@@ -4971,7 +4820,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestMergeBaseAndRenderInstructions",
                   "acceptance_criteria": [
                     "WHEN Base and render instructions exist",
@@ -4987,7 +4835,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_render_output.py",
                   "test_class": "TestRenderOutputUsingSynchronizers",
                   "acceptance_criteria": [
                     "WHEN Output needs rendering",
@@ -5134,7 +4981,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestInjectValidationRulesForValidateRulesAction",
                   "acceptance_criteria": [
                     "WHEN MCP Specific Behavior Action Tool invokes Validate Rules Action",
@@ -5163,7 +5009,6 @@
                     "THEN Action creates activity entry with timestamp, action name, behavior name, violations count",
                     "AND Activity entry appended to {project_area}/activity_log.json"
                   ],
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestTrackActivityForValidateRulesAction",
                   "scenarios": [
                     {
@@ -5186,7 +5031,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestInvokeCompleteValidationWorkflow",
                   "acceptance_criteria": [
                     "WHEN ValidateRulesAction completes execution",
@@ -5231,7 +5075,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestDiscoversScanners",
                   "acceptance_criteria": [
                     "WHEN scanner discovery is executed for rule files THEN scanners are discovered from rule files containing scanner properties",
@@ -5258,7 +5101,6 @@
                     "Scanner"
                   ],
                   "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestRunScannersAgainstKnowledgeGraph",
                   "acceptance_criteria": [
                     "WHEN scanners are executed against knowledge graph THEN violations are detected at exact line numbers",
@@ -5296,7 +5138,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestValidateRulesAccordingToScope",
                   "acceptance_criteria": [
                     "WHEN ValidateRulesAction receives scope parameter",
@@ -5319,7 +5160,6 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_file": "test_validate_knowledge_and_content_against_rules.py",
                   "test_class": "TestGenerateViolationReport",
                   "acceptance_criteria": [
                     "WHEN violation report is generated THEN report is generated in requested format",
@@ -5367,248 +5207,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "View Bot Status in Panel",
-      "sequential_order": 4,
-      "estimated_stories": 21,
-      "sub_epics": [
-        {
-          "name": "Transform CLI Output",
-          "sequential_order": 1,
-          "estimated_stories": 10,
-          "sub_epics": [],
-          "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "sequential_order": 1,
-              "stories": [
-                {
-                  "name": "Load Bot Configuration",
-                  "sequential_order": 1,
-                  "connector": null,
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Workflow Hierarchy",
-                  "sequential_order": 2,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Session Position",
-                  "sequential_order": 3,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Detect Scope Type",
-                  "sequential_order": 4,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Story Tree",
-                  "sequential_order": 5,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load File List",
-                  "sequential_order": 6,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Parameter Documentation",
-                  "sequential_order": 7,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Run Examples",
-                  "sequential_order": 8,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Headless Status",
-                  "sequential_order": 9,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Load Available Commands",
-                  "sequential_order": 10,
-                  "connector": "and",
-                  "users": [
-                    "Panel"
-                  ],
-                  "story_type": "system"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Display Status Information",
-          "sequential_order": 2,
-          "estimated_stories": 7,
-          "sub_epics": [],
-          "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "sequential_order": 1,
-              "stories": [
-                {
-                  "name": "Show Bot Identity",
-                  "sequential_order": 1,
-                  "connector": null,
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Show Workflow Status",
-                  "sequential_order": 2,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Show Scope Content",
-                  "sequential_order": 3,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Show Parameter Reference",
-                  "sequential_order": 4,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Show Command Examples",
-                  "sequential_order": 5,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Show Headless Information",
-                  "sequential_order": 6,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Show Available Commands",
-                  "sequential_order": 7,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Manage Panel Interactions",
-          "sequential_order": 3,
-          "estimated_stories": 4,
-          "sub_epics": [],
-          "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "sequential_order": 1,
-              "stories": [
-                {
-                  "name": "Refresh Status Data",
-                  "sequential_order": 1,
-                  "connector": null,
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Open Scope Files",
-                  "sequential_order": 2,
-                  "connector": "and",
-                  "users": [
-                    "Bot User"
-                  ],
-                  "story_type": "user"
-                },
-                {
-                  "name": "Maintain Single Panel",
-                  "sequential_order": 3,
-                  "connector": "and",
-                  "users": [
-                    "System"
-                  ],
-                  "story_type": "system"
-                },
-                {
-                  "name": "Fetch CLI Status",
-                  "sequential_order": 4,
-                  "connector": "and",
-                  "users": [
-                    "System"
-                  ],
-                  "story_type": "system"
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "stories": []
     }
   ],
   "increments": [

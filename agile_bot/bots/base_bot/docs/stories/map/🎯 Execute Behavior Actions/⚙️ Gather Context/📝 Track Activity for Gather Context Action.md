@@ -1,6 +1,6 @@
 # 📝 Track Activity for Gather Context Action
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L424)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Gather Context](.)  
@@ -23,7 +23,7 @@ Track Activity for Gather Context Action functionality for the mob minion system
 
 ## Scenarios
 
-### Scenario: Track activity when gather_context action starts (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L427)
+### Scenario: Track activity when gather_context action starts (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ And Activity log records action initiation
 ```
 
 
-### Scenario: Track activity when gather_context action completes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L445)
+### Scenario: Track activity when gather_context action completes (happy_path)
 
 **Steps:**
 ```gherkin
@@ -55,7 +55,7 @@ And Activity log shows complete execution record with metrics and file path
 ```
 
 
-### Scenario: Track multiple gather_context invocations across behaviors (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_gather_context.py#L465)
+### Scenario: Track multiple gather_context invocations across behaviors (happy_path)
 
 **Steps:**
 ```gherkin

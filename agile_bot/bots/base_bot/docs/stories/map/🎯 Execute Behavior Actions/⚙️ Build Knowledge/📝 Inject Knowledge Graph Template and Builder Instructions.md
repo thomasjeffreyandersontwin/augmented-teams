@@ -1,6 +1,6 @@
 # 📝 Inject Knowledge Graph Template and Builder Instructions
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L852)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
@@ -31,7 +31,7 @@ Inject Knowledge Graph Template and Builder Instructions functionality for the m
 
 ## Scenarios
 
-### Scenario: Action injects knowledge graph template (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L855)
+### Scenario: Action injects knowledge graph template (happy_path)
 
 **Steps:**
 ```gherkin
@@ -41,7 +41,7 @@ THEN: Template path is injected into instructions
 ```
 
 
-### Scenario: Action loads and merges instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L875)
+### Scenario: Action loads and merges instructions (happy_path)
 
 **Steps:**
 ```gherkin
@@ -51,7 +51,7 @@ THEN: Instructions are loaded from both locations and merged
 ```
 
 
-### Scenario: All template variables are replaced in instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L892)
+### Scenario: All template variables are replaced in instructions (happy_path)
 
 **Steps:**
 ```gherkin

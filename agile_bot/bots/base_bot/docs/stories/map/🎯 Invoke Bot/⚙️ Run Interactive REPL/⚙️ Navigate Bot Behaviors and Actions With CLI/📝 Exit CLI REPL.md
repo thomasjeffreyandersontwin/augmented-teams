@@ -1,6 +1,6 @@
 # 📝 Exit CLI REPL
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L247)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Navigate Bot Behaviors and Actions With CLI](.)  
@@ -19,7 +19,7 @@ Exit CLI REPL functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User exits REPL with exit command (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_navigate_bot_behaviors_and_actions_with_cli_current.py#L250)
+### Scenario: User exits REPL with exit command (happy_path)
 
 **Steps:**
 ```gherkin

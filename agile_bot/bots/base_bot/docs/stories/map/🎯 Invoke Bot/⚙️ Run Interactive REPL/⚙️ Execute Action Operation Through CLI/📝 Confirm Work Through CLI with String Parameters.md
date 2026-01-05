@@ -1,6 +1,6 @@
 # 📝 Confirm Work Through CLI with String Parameters
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L237)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Execute Action Operation Through CLI](.)  
@@ -32,7 +32,7 @@ Confirm Work Through CLI with String Parameters functionality for the mob minion
 
 ## Scenarios
 
-### Scenario: User confirms build work (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L240)
+### Scenario: User confirms build work (happy_path)
 
 **Steps:**
 ```gherkin
@@ -42,7 +42,7 @@ THEN: CLI processes work and advances to next action
 ```
 
 
-### Scenario: User confirms clarify with answers (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L269)
+### Scenario: User confirms clarify with answers (happy_path)
 
 **Steps:**
 ```gherkin
@@ -52,7 +52,7 @@ THEN: CLI saves clarification data and advances to next action
 ```
 
 
-### Scenario: User confirms clarify with evidence (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L300)
+### Scenario: User confirms clarify with evidence (happy_path)
 
 **Steps:**
 ```gherkin

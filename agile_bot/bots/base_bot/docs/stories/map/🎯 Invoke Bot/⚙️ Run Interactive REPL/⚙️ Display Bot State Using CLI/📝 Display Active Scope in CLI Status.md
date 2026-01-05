@@ -1,6 +1,6 @@
 # 📝 Display Active Scope in CLI Status
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L224)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -29,7 +29,7 @@ Display Active Scope in CLI Status functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User views active scope in status (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L227)
+### Scenario: User views active scope in status (happy_path)
 
 **Steps:**
 ```gherkin
@@ -39,7 +39,7 @@ THEN: CLI displays active scope section
 ```
 
 
-### Scenario: Status shows no active scope when cleared (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L259)
+### Scenario: Status shows no active scope when cleared (happy_path)
 
 **Steps:**
 ```gherkin
@@ -49,7 +49,7 @@ THEN: CLI displays 'No active scope filters'
 ```
 
 
-### Scenario: Status shows combined scope filters (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L289)
+### Scenario: Status shows combined scope filters (happy_path)
 
 **Steps:**
 ```gherkin

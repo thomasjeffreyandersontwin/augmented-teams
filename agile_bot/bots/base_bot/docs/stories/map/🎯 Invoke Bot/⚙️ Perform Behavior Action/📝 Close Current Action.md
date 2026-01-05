@@ -4,7 +4,7 @@
 
 **User:** Bot Behavior
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Perform Behavior Action](.)  
-**Sequential Order:** 5
+**Sequential Order:** 7
 **Story Type:** user
 
 ## Story Description
@@ -15,99 +15,72 @@ Close Current Action functionality for the mob minion system.
 
 ### Behavioral Acceptance Criteria
 
-- **When** user closes current action
-
-  **then** action is saved to completed_actions
-
-  **and** workflow transitions to next action
-
-- **When** user closes final action
-
-  **then** action is saved to completed_actions
-
-  **and** workflow stays at final action (no next action available)
-
-- **When** user attempts to close action that requires confirmation
-
-  **and** action is not in completed_actions
-
-  **then** workflow does not allow closing without confirmation
-
-- **When** user closes action that's already marked complete
-
-  **then** closing is idempotent (no error, action remains complete)
-
-- **When** CLI calls --close command
-
-  **then** CLI routes to bot.close_current_action method
-
-  **and** Bot class has close_current_action method
+- **When** action executes, **then** action completes successfully
 
 ## Scenarios
 
-### Scenario: Close current action and transition to next (happy_path)
+### Scenario: Close current action marks complete and transitions (happy_path)
 
 **Steps:**
 ```gherkin
-Given workflow is at action "gather_context"
+Given workflow is at action strategy
 And action has NOT been marked complete yet
 When user closes current action
-Then action "gather_context" is saved to completed_actions
-And workflow transitions to "decide_planning_criteria" (next action)
+Then action is saved to completed_actions
+And workflow transitions to next action
+And completed_actions count increases
+And current action is updated in state file
 ```
 
 
-### Scenario: Close action when already at final action (happy_path)
+### Scenario: Close action at final action stays at final (happy_path)
 
 **Steps:**
 ```gherkin
-Given workflow is at action "validate_rules" (final action)
-When user closes current action
-Then action "validate_rules" is saved to completed_actions
-And workflow stays at "validate_rules" (no next action available)
+Given workflow is at final action (render)
+When user closes final action
+Then action is saved to completed_actions
+And state stays at final action (no transition)
 ```
 
 
-### Scenario: Close final action and transition to next behavior (happy_path)
+### Scenario: Close final action transitions to next behavior (happy_path)
 
 **Steps:**
 ```gherkin
-Given workflow is at final action "validate_rules" of behavior "shape"
-When user closes current action
-Then "validate_rules" is saved to completed_actions
-And workflow stays at "validate_rules" (end of behavior)
+Given workflow is at final action
+When user closes final action
+Then action is marked complete
 ```
 
 
-### Scenario: Close action that requires confirmation but wasn't confirmed (happy_path)
+### Scenario: Close action saves to completed actions list (happy_path)
 
 **Steps:**
 ```gherkin
-Given workflow is at "initialize_project"
-And action has NOT been saved to completed_actions (requires confirmation)
-Then is_action_completed returns False
+Given workflow is at an action (clarify)
+When user closes action
+Then action is in completed_actions list
+And completed_actions count is 1
 ```
 
 
-### Scenario: Close action that's already marked complete (idempotent) (happy_path)
+### Scenario: Close handles action already completed gracefully (happy_path)
 
 **Steps:**
 ```gherkin
-Given action already complete
-When close again (should be idempotent)
-Then should still work fine
+Given action has already been completed
+When user attempts to close already completed action
+Then operation completes gracefully
+And no duplicate entry added to completed_actions
 ```
 
 
-### Scenario: Bot class has close_current_action method (CLI routes to bot.close_current_action) (happy_path)
+### Scenario: Bot class has close current action method (happy_path)
 
 **Steps:**
 ```gherkin
-Given bot is configured with behavior "shape"
-When Bot instance is created
-Then Bot class has close_current_action method
-And When close_current_action is called
-Then action "gather_context" is marked complete
-And workflow transitions to next action "decide_planning_criteria"
+Given Bot is initialized
+Then Bot has close_current method available
 ```
 

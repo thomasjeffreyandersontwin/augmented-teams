@@ -1,6 +1,6 @@
 # 📝 Format Output For AI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L366)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Display Bot State Using CLI](.)  
@@ -32,7 +32,7 @@ Format Output For AI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Terminal mode uses plain text formatting for separator (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L368)
+### Scenario: Terminal mode uses plain text formatting for separator (happy_path)
 
 **Steps:**
 ```gherkin
@@ -42,7 +42,7 @@ THEN: Separator uses equals signs for visibility
 ```
 
 
-### Scenario: Terminal mode uses plain text formatting for completed marker (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L378)
+### Scenario: Terminal mode uses plain text formatting for completed marker (happy_path)
 
 **Steps:**
 ```gherkin
@@ -52,7 +52,7 @@ THEN: Marker is plain text [OK]
 ```
 
 
-### Scenario: Terminal mode uses plain text formatting for current marker (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L388)
+### Scenario: Terminal mode uses plain text formatting for current marker (happy_path)
 
 **Steps:**
 ```gherkin
@@ -62,7 +62,7 @@ THEN: Marker is plain text [*]
 ```
 
 
-### Scenario: Terminal mode uses plain text formatting for pending marker (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L398)
+### Scenario: Terminal mode uses plain text formatting for pending marker (happy_path)
 
 **Steps:**
 ```gherkin
@@ -72,7 +72,7 @@ THEN: Marker is plain text [ ]
 ```
 
 
-### Scenario: Terminal mode uses space indentation for list items (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L408)
+### Scenario: Terminal mode uses space indentation for list items (happy_path)
 
 **Steps:**
 ```gherkin
@@ -82,7 +82,7 @@ THEN: Item uses space indentation
 ```
 
 
-### Scenario: Terminal mode returns text as is for highlight (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L418)
+### Scenario: Terminal mode returns text as is for highlight (happy_path)
 
 **Steps:**
 ```gherkin
@@ -92,7 +92,7 @@ THEN: Text is returned as-is
 ```
 
 
-### Scenario: Piped mode uses markdown formatting for separator (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L428)
+### Scenario: Piped mode uses markdown formatting for separator (happy_path)
 
 **Steps:**
 ```gherkin
@@ -102,7 +102,7 @@ THEN: Separator uses heavy line for visibility
 ```
 
 
-### Scenario: Piped mode uses markdown formatting for completed checkbox (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L438)
+### Scenario: Piped mode uses markdown formatting for completed checkbox (happy_path)
 
 **Steps:**
 ```gherkin
@@ -112,7 +112,7 @@ THEN: Marker uses markdown bullet with checkbox emoji
 ```
 
 
-### Scenario: Piped mode uses markdown formatting for current checkbox (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L448)
+### Scenario: Piped mode uses markdown formatting for current checkbox (happy_path)
 
 **Steps:**
 ```gherkin
@@ -122,7 +122,7 @@ THEN: Marker uses markdown bullet with emoji
 ```
 
 
-### Scenario: Piped mode uses markdown formatting for pending checkbox (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L458)
+### Scenario: Piped mode uses markdown formatting for pending checkbox (happy_path)
 
 **Steps:**
 ```gherkin
@@ -132,7 +132,7 @@ THEN: Marker uses markdown bullet with empty checkbox emoji
 ```
 
 
-### Scenario: Piped mode uses markdown lists for list items (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L468)
+### Scenario: Piped mode uses markdown lists for list items (happy_path)
 
 **Steps:**
 ```gherkin
@@ -142,7 +142,7 @@ THEN: Item uses markdown list syntax
 ```
 
 
-### Scenario: Piped mode indents markdown list items (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L478)
+### Scenario: Piped mode indents markdown list items (happy_path)
 
 **Steps:**
 ```gherkin
@@ -152,7 +152,7 @@ THEN: Item uses indented markdown list
 ```
 
 
-### Scenario: Piped mode uses bold for highlight (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L488)
+### Scenario: Piped mode uses bold for highlight (happy_path)
 
 **Steps:**
 ```gherkin
@@ -162,7 +162,7 @@ THEN: Text uses markdown bold
 ```
 
 
-### Scenario: Formatter created at session initialization for tty (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L498)
+### Scenario: Formatter created at session initialization for tty (happy_path)
 
 **Steps:**
 ```gherkin
@@ -172,7 +172,7 @@ THEN: Factory creates terminal formatter
 ```
 
 
-### Scenario: Formatter created for piped mode (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L506)
+### Scenario: Formatter created for piped mode (happy_path)
 
 **Steps:**
 ```gherkin
@@ -182,7 +182,7 @@ THEN: Factory creates markdown formatter
 ```
 
 
-### Scenario: Factory creates terminal formatter when requested (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L514)
+### Scenario: Factory creates terminal formatter when requested (happy_path)
 
 **Steps:**
 ```gherkin
@@ -192,7 +192,7 @@ THEN: Factory creates terminal formatter
 ```
 
 
-### Scenario: Factory creates markdown formatter when requested (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_display_bot_state_using_cli.py#L522)
+### Scenario: Factory creates markdown formatter when requested (happy_path)
 
 **Steps:**
 ```gherkin

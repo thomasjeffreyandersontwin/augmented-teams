@@ -1,6 +1,6 @@
 # 📝 Track Activity for Render Output Action
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L365)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Render Output](.)  
@@ -23,7 +23,7 @@ Track Activity for Render Output Action functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Track activity when render output action starts (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L368)
+### Scenario: Track activity when render output action starts (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +33,7 @@ THEN: Activity is tracked
 ```
 
 
-### Scenario: Track activity when render output action completes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L374)
+### Scenario: Track activity when render output action completes (happy_path)
 
 **Steps:**
 ```gherkin
@@ -43,7 +43,7 @@ THEN: Activity is tracked
 ```
 
 
-### Scenario: Activity log creates file if not exists (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_render_output.py#L398)
+### Scenario: Activity log creates file if not exists (happy_path)
 
 **Steps:**
 ```gherkin

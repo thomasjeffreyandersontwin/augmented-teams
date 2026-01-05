@@ -1,6 +1,6 @@
 # 📝 Proceed To Render Output
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L255)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
@@ -25,7 +25,7 @@ Proceed To Render Output functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Seamless transition from build knowledge to validate rules (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L258)
+### Scenario: Seamless transition from build knowledge to validate rules (happy_path)
 
 **Steps:**
 ```gherkin
@@ -35,7 +35,7 @@ THEN: Workflow transitions to validate
 ```
 
 
-### Scenario: Workflow state captures build knowledge completion (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L267)
+### Scenario: Workflow state captures build knowledge completion (happy_path)
 
 **Steps:**
 ```gherkin

@@ -1,6 +1,6 @@
 # 📝 Filter Work Using Knowledge Graph Scope in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L72)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Manage Bot Scope Through CLI](.)  
@@ -30,7 +30,7 @@ Filter Work Using Knowledge Graph Scope in CLI functionality for the mob minion 
 
 ## Scenarios
 
-### Scenario: User sets knowledge graph scope filter (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L80)
+### Scenario: User sets knowledge graph scope filter (happy_path)
 
 **Steps:**
 ```gherkin
@@ -40,7 +40,7 @@ THEN: CLI displays active scope filters
 ```
 
 
-### Scenario: User executes build with active knowledge graph scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_manage_bot_scope_through_cli.py#L109)
+### Scenario: User executes build with active knowledge graph scope (happy_path)
 
 **Steps:**
 ```gherkin

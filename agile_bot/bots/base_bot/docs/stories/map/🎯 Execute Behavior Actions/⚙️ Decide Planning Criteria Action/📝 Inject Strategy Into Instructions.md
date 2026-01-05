@@ -1,6 +1,6 @@
 # 📝 Inject Strategy Into Instructions
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py#L359)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Decide Planning Criteria Action](.)  
@@ -23,7 +23,7 @@ Inject Strategy Into Instructions functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Action injects decision criteria and assumptions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py#L362)
+### Scenario: Action injects decision criteria and assumptions (happy_path)
 
 **Steps:**
 ```gherkin

@@ -1,6 +1,6 @@
 # 📝 Load Story Graph Into Memory
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L955)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
@@ -27,7 +27,7 @@ Load Story Graph Into Memory functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Story map loads epics (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L970)
+### Scenario: Story map loads epics (happy_path)
 
 **Steps:**
 ```gherkin
@@ -37,7 +37,7 @@ THEN: Epics are accessible
 ```
 
 
-### Scenario: Epic has sub epics (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L980)
+### Scenario: Epic has sub epics (happy_path)
 
 **Steps:**
 ```gherkin
@@ -47,7 +47,7 @@ THEN: Sub-epics are available
 ```
 
 
-### Scenario: Sub epic has story groups (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L992)
+### Scenario: Sub epic has story groups (happy_path)
 
 **Steps:**
 ```gherkin
@@ -57,7 +57,7 @@ THEN: Story groups are available
 ```
 
 
-### Scenario: Story group has stories (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1005)
+### Scenario: Story group has stories (happy_path)
 
 **Steps:**
 ```gherkin
@@ -67,7 +67,7 @@ THEN: Stories are available
 ```
 
 
-### Scenario: Story has properties (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1018)
+### Scenario: Story has properties (happy_path)
 
 **Steps:**
 ```gherkin
@@ -77,7 +77,7 @@ THEN: Properties are available
 ```
 
 
-### Scenario: Story has scenarios (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1028)
+### Scenario: Story has scenarios (happy_path)
 
 **Steps:**
 ```gherkin
@@ -87,7 +87,7 @@ THEN: Scenarios are available
 ```
 
 
-### Scenario: Story map walk traverses all nodes (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1093)
+### Scenario: Story map walk traverses all nodes (happy_path)
 
 **Steps:**
 ```gherkin
@@ -97,7 +97,7 @@ THEN: All nodes are traversed
 ```
 
 
-### Scenario: From bot loads story graph (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1160)
+### Scenario: From bot loads story graph (happy_path)
 
 **Steps:**
 ```gherkin

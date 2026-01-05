@@ -1,6 +1,6 @@
 # 📝 Load And Merge Behavior Action Instructions
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L560)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Invoke MCP](.)  
@@ -23,7 +23,7 @@ Load And Merge Behavior Action Instructions functionality for the mob minion sys
 
 ## Scenarios
 
-### Scenario: Action Loads And Merges Instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L563)
+### Scenario: Action Loads And Merges Instructions (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +33,7 @@ Then Instructions are loaded from both locations and merged
 ```
 
 
-### Scenario: Action uses Instructions class to merge base and behavior instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L587)
+### Scenario: Action uses Instructions class to merge base and behavior instructions (happy_path)
 
 **Steps:**
 ```gherkin
@@ -43,7 +43,7 @@ Then Action uses Instructions class to merge instructions
 ```
 
 
-### Scenario: Action uses MergedInstructions class when render instructions present (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_invoke_mcp.py#L608)
+### Scenario: Action uses MergedInstructions class when render instructions present (happy_path)
 
 **Steps:**
 ```gherkin

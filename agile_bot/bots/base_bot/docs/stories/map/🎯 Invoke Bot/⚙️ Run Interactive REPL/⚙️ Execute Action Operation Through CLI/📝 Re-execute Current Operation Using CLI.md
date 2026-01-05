@@ -1,6 +1,6 @@
 # 📝 Re-execute Current Operation Using CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L455)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** User
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Execute Action Operation Through CLI](.)  
@@ -19,7 +19,7 @@ Re-execute Current Operation Using CLI functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: User re-executes current instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L458)
+### Scenario: User re-executes current instructions (happy_path)
 
 **Steps:**
 ```gherkin

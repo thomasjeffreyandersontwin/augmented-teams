@@ -1,6 +1,6 @@
 # 📝 Create Build Scope
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1243)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Build Knowledge](.)  
@@ -23,7 +23,7 @@ Create Build Scope functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Build scope created with different parameter combinations (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1266)
+### Scenario: Build scope created with different parameter combinations (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +33,7 @@ THEN: Scope contains expected filters
 ```
 
 
-### Scenario: Build scope defaults to all when no parameters (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1280)
+### Scenario: Build scope defaults to all when no parameters (happy_path)
 
 **Steps:**
 ```gherkin
@@ -43,7 +43,7 @@ THEN: Scope type is ALL
 ```
 
 
-### Scenario: Action uses build scope to define build scope (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_build_knowledge.py#L1296)
+### Scenario: Action uses build scope to define build scope (happy_path)
 
 **Steps:**
 ```gherkin

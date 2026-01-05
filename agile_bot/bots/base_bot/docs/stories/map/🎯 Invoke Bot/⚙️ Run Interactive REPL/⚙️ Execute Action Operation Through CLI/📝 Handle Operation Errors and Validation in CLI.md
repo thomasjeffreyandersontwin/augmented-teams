@@ -1,6 +1,6 @@
 # 📝 Handle Operation Errors and Validation in CLI
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L489)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** CLI
 **Path:** [🎯 Invoke Bot](../..) / [⚙️ Run Interactive REPL](..) / [⚙️ Execute Action Operation Through CLI](.)  
@@ -19,7 +19,7 @@ Handle Operation Errors and Validation in CLI functionality for the mob minion s
 
 ## Scenarios
 
-### Scenario: User enters invalid scope format with instructions (happy_path) | [Test](/agile_bot/bots/base_bot/test/test_execute_action_operation_through_cli.py#L492)
+### Scenario: User enters invalid scope format with instructions (happy_path)
 
 **Steps:**
 ```gherkin

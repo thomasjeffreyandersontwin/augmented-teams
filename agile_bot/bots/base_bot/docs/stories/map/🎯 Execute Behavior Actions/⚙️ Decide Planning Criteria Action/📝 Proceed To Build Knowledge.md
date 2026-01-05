@@ -1,6 +1,6 @@
 # 📝 Proceed To Build Knowledge
 
-**Navigation:** [📋 Story Map](../../../../story-map.drawio) | [Test](/agile_bot/bots/base_bot/test/test_decide_strategy_criteria_action.py#L339)
+**Navigation:** [📋 Story Map](../../../../story-map.drawio)
 
 **User:** Bot Behavior
 **Path:** [🎯 Execute Behavior Actions](../..) / [⚙️ Decide Planning Criteria Action](.)  
@@ -44,20 +44,6 @@ And Action reads next_action='build_knowledge'
 And Action injects AI instructions: "When done, proceed to build_knowledge"
 And AI invokes build_knowledge tool
 And Workflow transitions seamlessly to next action
-```
-
-
-### Scenario: User must confirm before transition (happy_path)
-
-**Steps:**
-```gherkin
-Given decide_planning_criteria action is complete
-And Human has NOT yet confirmed completion
-When decide_planning_criteria action waits for human feedback
-Then Action does NOT save workflow state as completed
-And Action does NOT inject next action instructions
-And Action does NOT proceed to build_knowledge
-And AI waits for human to say "done" before transitioning
 ```
 
 
