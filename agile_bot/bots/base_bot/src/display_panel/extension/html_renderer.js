@@ -710,7 +710,7 @@ class HtmlRenderer {
     <div class="section card-primary" style="border-top: none; padding-top: 0;">
         <div class="main-header">
             ${imagePath ? `<img src="${imagePath}" class="main-header-icon" alt="Company Icon" onerror="console.error('Failed to load icon:', this.src); this.style.border='1px solid red';" />` : ''}
-            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.54</span></span>
+            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.78</span></span>
             <button class="main-header-refresh" onclick="refreshStatus()" title="Refresh">
                 ${refreshIconPath ? `<img src="${refreshIconPath}" style="width: 36px; height: 36px; object-fit: contain; filter: saturate(1.3) brightness(0.95) hue-rotate(-5deg);" alt="Refresh" />` : '🔄'}
             </button>
@@ -1052,6 +1052,7 @@ class HtmlRenderer {
    * Render scope section (polymorphic: story tree, file list, or "all")
    */
   renderScope(scope, webview = null, extensionUri = null) {
+    const vscode = require('vscode');
     // Get icon URIs for expand/collapse
     let plusIconPath = '';
     let subtractIconPath = '';
@@ -1059,6 +1060,7 @@ class HtmlRenderer {
     let epicIconPath = '';
     let pageIconPath = '';
     let magnifyingGlassIconPath = '';
+    let clearIconPath = '';
     if (webview && extensionUri) {
       try {
         const plusUri = vscode.Uri.joinPath(extensionUri, 'img', 'plus.png');
@@ -1078,6 +1080,9 @@ class HtmlRenderer {
         
         const magnifyingGlassUri = vscode.Uri.joinPath(extensionUri, 'img', 'magnifying_glass.png');
         magnifyingGlassIconPath = webview.asWebviewUri(magnifyingGlassUri).toString();
+        
+        const clearUri = vscode.Uri.joinPath(extensionUri, 'img', 'clear.png');
+        clearIconPath = webview.asWebviewUri(clearUri).toString();
       } catch (err) {
         console.error('Failed to create icon URIs:', err);
       }
@@ -1090,7 +1095,7 @@ class HtmlRenderer {
 
     let contentHtml = '';
     let contentSummary = '';
-    if (scope.type === 'story' && scope.content) {
+    if ((scope.type === 'story' || scope.type === 'showAll') && scope.content) {
       contentHtml = this.renderStoryTree(scope.content, gearIconPath, epicIconPath, pageIconPath);
       contentSummary = `${scope.content.length} epic${scope.content.length !== 1 ? 's' : ''}`;
     } else if (scope.type === 'files' && scope.content) {
@@ -1119,6 +1124,22 @@ class HtmlRenderer {
                     <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
                     ${magnifyingGlassIconPath ? `<img src="${magnifyingGlassIconPath}" style="margin-right: 8px; width: 28px; height: 28px; object-fit: contain;" alt="Scope Icon" />` : '<span style="margin-right: 8px; font-size: 20px;">🔍</span>'}
                     <span style="font-weight: 600; font-size: 20px;">Scope</span>
+                    <!-- Clear button: clearIconPath=${!!clearIconPath} -->
+                    ${clearIconPath ? `<button onclick="event.stopPropagation(); clearScopeFilter();" style="
+                        background: transparent;
+                        border: none;
+                        padding: 4px 8px;
+                        margin-left: 12px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        transition: opacity 0.15s ease;
+                    " 
+                    onmouseover="this.style.opacity='0.7'" 
+                    onmouseout="this.style.opacity='1'"
+                    title="Clear scope filter (show all)">
+                        <img src="${clearIconPath}" style="width: 24px; height: 24px; object-fit: contain;" alt="Clear Filter" />
+                    </button>` : ''}
                 </div>
                 ${linksHtml ? `<div onclick="event.stopPropagation();" style="display: flex; align-items: center;">${linksHtml}</div>` : ''}
             </div>
@@ -1515,20 +1536,23 @@ class HtmlRenderer {
                     <span style="font-weight: 600; font-size: 20px;">Instructions</span>
                 </div>
                 <button id="submit-to-chat-btn" onclick="sendInstructionsToChat(event)" style="
-                    background: transparent;
-                    border: 1px solid var(--accent-color);
-                    border-radius: 4px;
-                    padding: 4px 8px;
+                    background: rgba(255, 140, 0, 0.15);
+                    border: none;
+                    border-radius: 8px;
+                    padding: 6px;
                     cursor: pointer;
                     display: flex;
                     align-items: center;
+                    justify-content: center;
                     transition: all 0.15s ease;
+                    width: 48px;
+                    height: 48px;
                     ${!promptContentStr ? 'opacity: 0.5; cursor: not-allowed;' : ''}
                 " 
-                onmouseover="this.style.backgroundColor='rgba(255, 140, 0, 0.1)'" 
-                onmouseout="this.style.backgroundColor='transparent'"
+                onmouseover="this.style.backgroundColor='rgba(255, 140, 0, 0.3)'" 
+                onmouseout="this.style.backgroundColor='rgba(255, 140, 0, 0.15)'"
                 title="${promptContentStr ? 'Submit instructions to chat' : 'Run instructions command first'}">
-                    ${botSubmitIconPath ? `<img src="${botSubmitIconPath}" style="width: 24px; height: 24px; object-fit: contain;" alt="Submit to Chat" />` : '<span style="font-size: 18px;">🤖</span>'}
+                    ${botSubmitIconPath ? `<img src="${botSubmitIconPath}" style="width: 100%; height: 100%; object-fit: contain;" alt="Submit to Chat" />` : '<span style="font-size: 28px;">🤖</span>'}
                 </button>
                 <script>
                     window._promptContent = ${JSON.stringify(promptContentStr)};
@@ -1537,65 +1561,47 @@ class HtmlRenderer {
             <div id="instructions-content" class="collapsible-content" style="max-height: 600px; overflow-y: auto; overflow-x: hidden; transition: max-height 0.3s ease;">
                 <div class="card-secondary" style="padding: 5px 10px;">
                     ${sections}
+                    
+                    <!-- Raw Instructions Subsection -->
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div class="collapsible-section">
+                            <div class="collapsible-header" style="
+                                cursor: pointer;
+                                padding: 8px 0;
+                                display: flex;
+                                align-items: center;
+                                user-select: none;
+                            " onclick="toggleSection('raw-instructions-content')">
+                                <span class="expand-icon" style="margin-right: 8px; font-size: 20px; transition: transform 0.15s;">▸</span>
+                                <img src="${webview && extensionUri ? webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'img', 'copy.png')).toString() : ''}" 
+                                     style="margin-right: 8px; width: 20px; height: 20px; object-fit: contain; opacity: 0.9;" 
+                                     alt="Raw" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+                                <span style="margin-right: 8px; font-size: 14px; display: none;">📄</span>
+                                <span style="font-weight: 600; font-size: 14px;">Raw Instructions (Test)</span>
+                            </div>
+                            <div id="raw-instructions-content" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
+                                <div style="padding: 10px 0; margin-top: 8px;">
+                                    <pre style="
+                                        white-space: pre-wrap;
+                                        word-wrap: break-word;
+                                        font-family: 'Courier New', monospace;
+                                        font-size: 11px;
+                                        line-height: 1.4;
+                                        color: rgba(255,255,255,0.8);
+                                        background: rgba(0,0,0,0.3);
+                                        padding: 12px;
+                                        border-radius: 4px;
+                                        margin: 0;
+                                        max-height: 400px;
+                                        overflow-y: auto;
+                                    ">${promptContentStr ? promptContentStr.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'Click 🤖 Submit button or run an instructions command to populate'}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Test Command Box -->
-        <div class="card" style="margin-top: 16px; padding: 16px;">
-            <div style="margin-bottom: 12px; font-weight: 600; font-size: 16px; color: var(--accent-color);">
-                Test VS Code Commands
-            </div>
-            <div style="margin-bottom: 8px; font-size: 12px; color: rgba(255,255,255,0.7);">
-                Try different commands to see which ones work:
-            </div>
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <input 
-                    id="test-command-input" 
-                    type="text" 
-                    placeholder="workbench.view.chat" 
-                    style="
-                        flex: 1;
-                        background: var(--input-bg);
-                        border: var(--input-border-width) solid var(--input-border);
-                        border-radius: var(--input-border-radius);
-                        padding: var(--input-padding);
-                        color: var(--vscode-foreground);
-                        font-family: var(--vscode-font-family);
-                        font-size: var(--font-size-base);
-                        transition: var(--input-transition);
-                    "
-                    onfocus="this.style.background='var(--input-bg-focus)'; this.style.borderColor='var(--input-border-focus)'; this.style.borderWidth='var(--input-border-width-focus)';"
-                    onblur="this.style.background='var(--input-bg)'; this.style.borderColor='var(--input-border)'; this.style.borderWidth='var(--input-border-width)';"
-                />
-                <button 
-                    onclick="testCommand()" 
-                    style="
-                        background: var(--accent-color);
-                        border: none;
-                        border-radius: 4px;
-                        padding: 8px 16px;
-                        color: #000;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: opacity 0.15s ease;
-                    "
-                    onmouseover="this.style.opacity='0.8'"
-                    onmouseout="this.style.opacity='1'"
-                >
-                    Test
-                </button>
-            </div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">
-                Suggested commands:
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                <button onclick="document.getElementById('test-command-input').value='workbench.view.chat'; testCommand();" class="command-suggestion">workbench.view.chat</button>
-                <button onclick="document.getElementById('test-command-input').value='workbench.action.chat.open'; testCommand();" class="command-suggestion">workbench.action.chat.open</button>
-                <button onclick="document.getElementById('test-command-input').value='workbench.action.quickchat.toggle'; testCommand();" class="command-suggestion">workbench.action.quickchat.toggle</button>
-                <button onclick="document.getElementById('test-command-input').value='editor.action.inlineChat.start'; testCommand();" class="command-suggestion">editor.action.inlineChat.start</button>
-            </div>
-            <div id="test-result" style="margin-top: 12px; padding: 8px; border-radius: 4px; display: none;"></div>
         </div>
     </div>`;
   }
@@ -2458,6 +2464,15 @@ class HtmlRenderer {
             });
         }
 
+        function clearScopeFilter() {
+            console.log('[FILTER] Clearing scope filter - sending scope showAll');
+            // Log to file from webview context
+            fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'html_renderer.js:2469',message:'clearScopeFilter called in webview',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'L'})}).catch(()=>{});
+            vscode.postMessage({
+                command: 'clearFilter'
+            });
+        }
+
         function sendInstructionsToChat(event) {
             console.log('[HTML] sendInstructionsToChat called');
             event.stopPropagation(); // Prevent toggling the section
@@ -2628,29 +2643,6 @@ class HtmlRenderer {
             }
         });
 
-        function testCommand() {
-            const input = document.getElementById('test-command-input');
-            const resultDiv = document.getElementById('test-result');
-            const command = input.value.trim();
-            
-            if (!command) {
-                resultDiv.style.display = 'block';
-                resultDiv.style.background = 'rgba(255, 140, 0, 0.1)';
-                resultDiv.style.color = '#ff8c00';
-                resultDiv.textContent = 'Please enter a command';
-                return;
-            }
-            
-            resultDiv.style.display = 'block';
-            resultDiv.style.background = 'rgba(100, 100, 100, 0.2)';
-            resultDiv.style.color = 'rgba(255, 255, 255, 0.7)';
-            resultDiv.textContent = 'Testing: ' + command + '...';
-            
-            vscode.postMessage({
-                command: 'testVSCodeCommand',
-                vsCodeCommand: command
-            });
-        }
     </script>`;
   }
 
