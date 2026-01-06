@@ -2206,6 +2206,2031 @@
           "test_file": "test_perform_behavior_action.py"
         },
         {
+          "name": "Invoke Bot Through Panel",
+          "sequential_order": 4.0,
+          "domain_concepts": [
+            {
+              "name": "PanelView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps JSON data",
+                  "collaborators": ["JSON"]
+                },
+                {
+                  "name": "Invokes Bot",
+                  "collaborators": ["CLI"]
+                },
+                {
+                  "name": "Provides element ID",
+                  "collaborators": ["String"]
+                },
+                {
+                  "name": "Renders to HTML",
+                  "collaborators": ["HTML", "JSON"]
+                }
+              ]
+            },
+            {
+              "name": "Panel",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps bot JSON",
+                  "collaborators": ["Bot JSON"]
+                },
+                {
+                  "name": "Displays BotHeaderView",
+                  "collaborators": ["BotHeaderView"]
+                },
+                {
+                  "name": "Displays PathsSection",
+                  "collaborators": ["PathsSection"]
+                },
+                {
+                  "name": "Displays BehaviorsSection",
+                  "collaborators": ["BehaviorsSection"]
+                },
+                {
+                  "name": "Displays ScopeSection",
+                  "collaborators": ["ScopeSection"]
+                },
+                {
+                  "name": "Displays InstructionsSection",
+                  "collaborators": ["InstructionsSection"]
+                }
+              ],
+              "realization": [
+                {
+                  "scope": "Invoke Bot Through Panel.Manage Bot Information.Open Panel",
+                  "scenario": "User activates panel command, extension creates panel and displays bot information by calling Python CLI, wrapping JSON response, and rendering all sections",
+                  "walks": [
+                    {
+                      "covers": "Extension activation and panel creation",
+                      "object_flow": [
+                        "// VS Code Extension activated",
+                        "panelData: JSON = CLI.execute('status')",
+                        "  -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
+                        "  -> stdin.write('status')",
+                        "  -> cliOutput: String = Bot.get_status_text()",
+                        "     -> botData: JSON = {name: 'story_bot', workspace: 'base_bot', behaviors: [...], paths: {...}}",
+                        "  return panelData: botData",
+                        "panel: Panel = new Panel(panelData, cli)",
+                        "return panel"
+                      ]
+                    },
+                    {
+                      "covers": "Panel constructor and section rendering",
+                      "object_flow": [
+                        "// Panel constructor",
+                        "this.botJSON = panelData",
+                        "this.cli = cli",
+                        "headerView: BotHeaderView = new BotHeaderView(this.botJSON, this.cli)",
+                        "pathsSection: PathsSection = new PathsSection(this.botJSON.paths, this.cli)",
+                        "behaviorsSection: BehaviorsSection = new PathsSection(this.botJSON.behaviors, this.cli)",
+                        "scopeSection: ScopeSection = new ScopeSection(this.botJSON.scope, this.cli)",
+                        "instructionsSection: InstructionsSection = new InstructionsSection(this.botJSON.instructions, this.cli)",
+                        "html: String = this.render()",
+                        "  -> headerHTML: String = headerView.render()",
+                        "     return `<div>${this.botJSON.name} v${this.botJSON.version}</div>`",
+                        "  -> pathsHTML: String = pathsSection.render()",
+                        "     return `<div>${this.botJSON.paths.workspace}</div>`",
+                        "  -> behaviorsHTML: String = behaviorsSection.render()",
+                        "  -> scopeHTML: String = scopeSection.render()",
+                        "  -> instructionsHTML: String = instructionsSection.render()",
+                        "  return `<div>${headerHTML}${pathsHTML}${behaviorsHTML}${scopeHTML}${instructionsHTML}</div>`",
+                        "webview.html = html"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                },
+                {
+                  "scope": "Invoke Bot Through Panel.Manage Bot Information.Refresh Panel",
+                  "scenario": "User clicks refresh button, panel calls CLI to get updated status, wraps new JSON, and re-renders all sections",
+                  "walks": [
+                    {
+                      "covers": "User refresh action and CLI round-trip",
+                      "object_flow": [
+                        "// User clicks refresh button",
+                        "BotHeaderView.onRefreshClick()",
+                        "  -> newData: JSON = this.cli.execute('status')",
+                        "     -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
+                        "     -> stdin.write('status')",
+                        "     -> botData: JSON = Bot.get_status_text()",
+                        "     return botData",
+                        "  -> this.botJSON = newData",
+                        "  -> panel.update(newData)",
+                        "     -> this.botJSON = newData",
+                        "     -> html: String = this.render()",
+                        "        // All sections re-render with new JSON",
+                        "     -> webview.html = html",
+                        "  return success"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                }
+              ]
+            },
+            {
+              "name": "BotHeaderView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps bot JSON",
+                  "collaborators": ["Bot JSON"]
+                },
+                {
+                  "name": "Displays image",
+                  "collaborators": ["Image"]
+                },
+                {
+                  "name": "Displays title",
+                  "collaborators": ["String", "Bot JSON"]
+                },
+                {
+                  "name": "Displays version number",
+                  "collaborators": ["String", "Bot JSON"]
+                },
+                {
+                  "name": "Refreshes panel",
+                  "collaborators": ["CLI"]
+                }
+              ]
+            },
+            {
+              "name": "PanelHeader",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Displays header image",
+                  "collaborators": ["Image"]
+                },
+                {
+                  "name": "Displays title",
+                  "collaborators": ["String"]
+                }
+              ]
+            },
+            {
+              "name": "SectionView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Renders section header",
+                  "collaborators": ["PanelHeader"]
+                },
+                {
+                  "name": "Toggles collapsed state",
+                  "collaborators": ["State"]
+                },
+                {
+                  "name": "May contain subsections",
+                  "collaborators": ["SubSectionView"]
+                }
+              ]
+            },
+            {
+              "name": "PathsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps bot paths JSON",
+                  "collaborators": ["BotPaths JSON"]
+                },
+                {
+                  "name": "Displays bot directory",
+                  "collaborators": ["String", "BotPaths JSON"]
+                },
+                {
+                  "name": "Edits workspace directory",
+                  "collaborators": ["CLI", "BotPaths JSON"]
+                },
+                {
+                  "name": "Displays available bots",
+                  "collaborators": ["AvailableBotsView"]
+                }
+              ]
+            },
+            {
+              "name": "AvailableBotsView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps bot registry JSON",
+                  "collaborators": ["BotRegistry JSON"]
+                },
+                {
+                  "name": "Displays available bots",
+                  "collaborators": ["List", "BotRegistry JSON"]
+                },
+                {
+                  "name": "Selects bot",
+                  "collaborators": ["CLI", "Bot"]
+                }
+              ]
+            },
+            {
+              "name": "SubSectionView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Toggles collapsed state",
+                  "collaborators": ["State"]
+                }
+              ]
+            },
+            {
+              "name": "BehaviorsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps behaviors JSON",
+                  "collaborators": ["Behaviors JSON"]
+                },
+                {
+                  "name": "Displays behavior names list",
+                  "collaborators": ["List", "Behavior JSON"]
+                },
+                {
+                  "name": "Navigates to behavior",
+                  "collaborators": ["CLI", "Behavior"]
+                },
+                {
+                  "name": "Toggles collapsed",
+                  "collaborators": ["State", "Behavior JSON"]
+                },
+                {
+                  "name": "Displays tooltip",
+                  "collaborators": ["String", "Behavior JSON"]
+                },
+                {
+                  "name": "Displays actions",
+                  "collaborators": ["ActionsView"]
+                },
+                {
+                  "name": "Executes behavior",
+                  "collaborators": ["CLI", "Behavior"]
+                },
+                {
+                  "name": "Displays completion progress",
+                  "collaborators": ["Status", "Behavior JSON"]
+                },
+                {
+                  "name": "Displays navigation",
+                  "collaborators": ["NavigationView"]
+                }
+              ],
+              "realization": [
+                {
+                  "scope": "Invoke Bot Through Panel.Navigate Behavior Action Status.Display Hierarchy",
+                  "scenario": "Panel displays behavior hierarchy with actions, user expands/collapses behaviors (instant), completion status from JSON",
+                  "walks": [
+                    {
+                      "covers": "Rendering behavior hierarchy from JSON",
+                      "object_flow": [
+                        "// BehaviorsSection constructor",
+                        "this.behaviorsJSON = behaviorsJSON",
+                        "this.cli = cli",
+                        "html: String = this.render()",
+                        "  -> behaviorsHTML: String = ''",
+                        "  -> for behavior in this.behaviorsJSON:",
+                        "     behaviorView: BehaviorView = new BehaviorView(behavior, this.cli)",
+                        "     behaviorHTML: String = behaviorView.render()",
+                        "       -> name: String = this.behaviorJSON.name",
+                        "       -> status: String = this.behaviorJSON.status // 'current', 'completed', 'pending'",
+                        "       -> actionsView: ActionsView = new ActionsView(this.behaviorJSON.actions, this.cli)",
+                        "       -> actionsHTML: String = actionsView.render()",
+                        "          -> for action in this.actionsJSON:",
+                        "             actionHTML: String = `<div>${action.name} [${action.status}]</div>`",
+                        "          return actionsHTML",
+                        "       return `<div class='behavior ${status}'>${name}${actionsHTML}</div>`",
+                        "     behaviorsHTML += behaviorHTML",
+                        "  return behaviorsHTML"
+                      ]
+                    },
+                    {
+                      "covers": "User expands behavior (client-side toggle)",
+                      "object_flow": [
+                        "// User clicks collapsed behavior",
+                        "BehaviorView.onToggleClick()",
+                        "  -> this.expanded = !this.expanded // Local state change",
+                        "  -> elementHTML: String = this.render()",
+                        "  -> document.getElementById(this.elementId).innerHTML = elementHTML",
+                        "  return // No CLI call - instant UI update"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                },
+                {
+                  "scope": "Invoke Bot Through Panel.Navigate Behavior Action Status.Execute Behavior Action",
+                  "scenario": "User clicks behavior to execute, system navigates to behavior and executes first action via CLI",
+                  "walks": [
+                    {
+                      "covers": "User executes behavior via CLI",
+                      "object_flow": [
+                        "// User clicks behavior name",
+                        "BehaviorView.onExecuteClick()",
+                        "  -> behaviorName: String = this.behaviorJSON.name",
+                        "  -> result: JSON = this.cli.execute(behaviorName)",
+                        "     -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
+                        "     -> stdin.write(behaviorName)",
+                        "     -> Bot.execute_behavior(behaviorName)",
+                        "        -> behavior: Behavior = behaviors.get(behaviorName)",
+                        "        -> action: Action = behavior.get_first_action()",
+                        "        -> action.execute()",
+                        "        -> BehaviorActionState.update_current(behavior, action)",
+                        "        return {behavior: behaviorName, action: action.name, status: 'in_progress'}",
+                        "     return statusJSON",
+                        "  -> panel.update(result)",
+                        "     -> this.behaviorsJSON = result.behaviors",
+                        "     -> html: String = behaviorsSection.render()",
+                        "     -> webview.postMessage({update: 'behaviors', html: html})",
+                        "  return"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                }
+              ]
+            },
+            {
+              "name": "NavigationView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps current action JSON",
+                  "collaborators": ["Action JSON"]
+                },
+                {
+                  "name": "Reruns action",
+                  "collaborators": ["CLI", "Action"]
+                },
+                {
+                  "name": "Navigates to next action",
+                  "collaborators": ["CLI", "Action"]
+                },
+                {
+                  "name": "Navigates to prev action",
+                  "collaborators": ["CLI", "Action"]
+                }
+              ]
+            },
+            {
+              "name": "ActionsView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps actions JSON",
+                  "collaborators": ["Actions JSON"]
+                },
+                {
+                  "name": "Displays action names list",
+                  "collaborators": ["List", "Action JSON"]
+                },
+                {
+                  "name": "Navigates to action",
+                  "collaborators": ["CLI", "Action"]
+                },
+                {
+                  "name": "Displays status indicators",
+                  "collaborators": ["Status", "Action JSON"]
+                },
+                {
+                  "name": "Executes action",
+                  "collaborators": ["CLI", "Action"]
+                },
+                {
+                  "name": "Displays completion progress",
+                  "collaborators": ["Progress", "Action JSON"]
+                }
+              ]
+            },
+            {
+              "name": "ScopeSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps scope JSON",
+                  "collaborators": ["Scope JSON"]
+                },
+                {
+                  "name": "Displays filtered files",
+                  "collaborators": ["FileListTabView"]
+                },
+                {
+                  "name": "Filters story graph",
+                  "collaborators": ["CLI", "Scope JSON"]
+                },
+                {
+                  "name": "Filters files",
+                  "collaborators": ["CLI", "Scope JSON"]
+                },
+                {
+                  "name": "Clears filter",
+                  "collaborators": ["CLI", "Scope JSON"]
+                },
+                {
+                  "name": "Displays story graph",
+                  "collaborators": ["StoryGraphTabView"]
+                }
+              ]
+            },
+            {
+              "name": "StoryGraphTabView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps story map JSON",
+                  "collaborators": ["StoryMap JSON"]
+                },
+                {
+                  "name": "Displays epic hierarchy",
+                  "collaborators": ["EpicView", "Epic JSON"]
+                },
+                {
+                  "name": "Searches stories",
+                  "collaborators": ["Filter", "StoryGraph JSON"]
+                },
+                {
+                  "name": "Opens story graph file",
+                  "collaborators": ["CLI", "File JSON"]
+                },
+                {
+                  "name": "Opens story map file",
+                  "collaborators": ["CLI", "File JSON"]
+                }
+              ],
+              "realization": [
+                {
+                  "scope": "Invoke Bot Through Panel.Filter And Navigate Scope.Display Story Scope Hierarchy",
+                  "scenario": "Panel displays nested epic/sub-epic/story/scenario hierarchy from story graph JSON, user can expand/collapse and navigate",
+                  "walks": [
+                    {
+                      "covers": "Rendering 4-level nested hierarchy from JSON",
+                      "object_flow": [
+                        "// StoryGraphTabView constructor",
+                        "this.storyMapJSON = storyMapJSON",
+                        "this.cli = cli",
+                        "html: String = this.render()",
+                        "  -> epicsHTML: String = ''",
+                        "  -> for epic in this.storyMapJSON.epics:",
+                        "     epicView: EpicView = new EpicView(epic, this.cli)",
+                        "     epicHTML: String = epicView.render()",
+                        "       -> name: String = this.epicJSON.name",
+                        "       -> icon: String = this.epicJSON.icon",
+                        "       -> subEpicsHTML: String = ''",
+                        "       -> for subEpic in this.epicJSON.sub_epics:",
+                        "          subEpicView: SubEpicView = new SubEpicView(subEpic, this.cli)",
+                        "          subEpicHTML: String = subEpicView.render()",
+                        "            -> storiesHTML: String = ''",
+                        "            -> for story in this.subEpicJSON.stories:",
+                        "               storyView: StoryView = new StoryView(story, this.cli)",
+                        "               storyHTML: String = storyView.render()",
+                        "                 -> scenariosHTML: String = ''",
+                        "                 -> for scenario in this.storyJSON.scenarios:",
+                        "                    scenarioView: ScenarioView = new ScenarioView(scenario, this.cli)",
+                        "                    scenarioHTML: String = scenarioView.render()",
+                        "                      return `<div>${this.scenarioJSON.name}</div>`",
+                        "                    scenariosHTML += scenarioHTML",
+                        "                 return `<div>${this.storyJSON.name}${scenariosHTML}</div>`",
+                        "               storiesHTML += storyHTML",
+                        "            return `<div>${this.subEpicJSON.name}${storiesHTML}</div>`",
+                        "          subEpicsHTML += subEpicHTML",
+                        "       return `<div>${name}${subEpicsHTML}</div>`",
+                        "     epicsHTML += epicHTML",
+                        "  return epicsHTML"
+                      ]
+                    },
+                    {
+                      "covers": "User opens epic folder via CLI",
+                      "object_flow": [
+                        "// User clicks epic folder link",
+                        "EpicView.onFolderClick()",
+                        "  -> folderPath: String = this.epicJSON.folder_path",
+                        "  -> this.cli.sendMessage({command: 'openScope', filePath: folderPath})",
+                        "     -> vscode.commands.executeCommand('vscode.open', fileUri)",
+                        "  return // No panel re-render needed"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                },
+                {
+                  "scope": "Invoke Bot Through Panel.Filter And Navigate Scope.Filter Story Scope",
+                  "scenario": "User types story name in filter, system calls CLI to update scope filter, returns filtered JSON, view re-renders with filtered hierarchy",
+                  "walks": [
+                    {
+                      "covers": "User filters scope via CLI",
+                      "object_flow": [
+                        "// User types 'Open Panel' in filter",
+                        "ScopeSection.onFilterInput('Open Panel')",
+                        "  -> filteredData: JSON = this.cli.execute('scope \"Open Panel\"')",
+                        "     -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
+                        "     -> stdin.write('scope \"Open Panel\"')",
+                        "     -> Bot.update_scope_filter('Open Panel')",
+                        "        -> scope: Scope = Scope.filter_by_story('Open Panel')",
+                        "        -> filteredStoryMap: JSON = scope.get_filtered_story_map()",
+                        "        return {scope: {filter: 'Open Panel', storyMap: filteredStoryMap}}",
+                        "     return scopeJSON",
+                        "  -> this.scopeJSON = filteredData.scope",
+                        "  -> storyGraphView: StoryGraphTabView = new StoryGraphTabView(filteredData.scope.storyMap, this.cli)",
+                        "  -> html: String = storyGraphView.render()",
+                        "     // Renders only matching epic/sub-epic/story",
+                        "  -> document.getElementById('scope-display').innerHTML = html",
+                        "  return"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                }
+              ]
+            },
+            {
+              "name": "EpicView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps epic JSON",
+                  "collaborators": ["Epic JSON"]
+                },
+                {
+                  "name": "Displays epic name",
+                  "collaborators": ["String", "Epic JSON"]
+                },
+                {
+                  "name": "Displays epic icon",
+                  "collaborators": ["Image"]
+                },
+                {
+                  "name": "Displays sub epics",
+                  "collaborators": ["SubEpicView", "SubEpic JSON"]
+                },
+                {
+                  "name": "Toggles collapsed",
+                  "collaborators": ["State"]
+                },
+                {
+                  "name": "Opens epic folder",
+                  "collaborators": ["CLI", "Epic JSON"]
+                },
+                {
+                  "name": "Opens epic test file",
+                  "collaborators": ["CLI", "Epic JSON"]
+                }
+              ]
+            },
+            {
+              "name": "SubEpicView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps sub epic JSON",
+                  "collaborators": ["SubEpic JSON"]
+                },
+                {
+                  "name": "Displays sub epic name",
+                  "collaborators": ["String", "SubEpic JSON"]
+                },
+                {
+                  "name": "Displays sub epic icon",
+                  "collaborators": ["Image"]
+                },
+                {
+                  "name": "Displays nested sub epics",
+                  "collaborators": ["SubEpicView", "SubEpic JSON"]
+                },
+                {
+                  "name": "Displays stories",
+                  "collaborators": ["StoryView", "Story JSON"]
+                },
+                {
+                  "name": "Toggles collapsed",
+                  "collaborators": ["State"]
+                },
+                {
+                  "name": "Opens sub epic folder",
+                  "collaborators": ["CLI", "SubEpic JSON"]
+                },
+                {
+                  "name": "Opens sub epic test file",
+                  "collaborators": ["CLI", "SubEpic JSON"]
+                }
+              ]
+            },
+            {
+              "name": "StoryView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps story JSON",
+                  "collaborators": ["Story JSON"]
+                },
+                {
+                  "name": "Displays story name",
+                  "collaborators": ["String", "Story JSON"]
+                },
+                {
+                  "name": "Displays story icon",
+                  "collaborators": ["Image"]
+                },
+                {
+                  "name": "Displays scenarios",
+                  "collaborators": ["ScenarioView", "Scenario JSON"]
+                },
+                {
+                  "name": "Toggles collapsed",
+                  "collaborators": ["State"]
+                },
+                {
+                  "name": "Opens test at class",
+                  "collaborators": ["CLI", "Story JSON"]
+                }
+              ]
+            },
+            {
+              "name": "ScenarioView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps scenario JSON",
+                  "collaborators": ["Scenario JSON"]
+                },
+                {
+                  "name": "Displays scenario name",
+                  "collaborators": ["String", "Scenario JSON"]
+                },
+                {
+                  "name": "Displays scenario icon",
+                  "collaborators": ["Image"]
+                },
+                {
+                  "name": "Opens test at scenario",
+                  "collaborators": ["CLI", "Scenario JSON"]
+                }
+              ]
+            },
+            {
+              "name": "FileListTabView",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps file list JSON",
+                  "collaborators": ["Path JSON"]
+                },
+                {
+                  "name": "Displays file names",
+                  "collaborators": ["List", "Path JSON"]
+                },
+                {
+                  "name": "Searches files",
+                  "collaborators": ["Filter", "Path JSON"]
+                },
+                {
+                  "name": "Opens file",
+                  "collaborators": ["CLI", "Path JSON"]
+                }
+              ]
+            },
+            {
+              "name": "InstructionsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps instructions JSON",
+                  "collaborators": ["Instructions JSON"]
+                },
+                {
+                  "name": "Wraps action JSON",
+                  "collaborators": ["Action JSON"]
+                },
+                {
+                  "name": "Displays base instructions",
+                  "collaborators": ["String", "Instructions JSON"]
+                },
+                {
+                  "name": "Displays action data",
+                  "collaborators": ["Object", "Action JSON"]
+                },
+                {
+                  "name": "Displays raw format",
+                  "collaborators": ["String", "Instructions JSON"]
+                },
+                {
+                  "name": "Submits to AI chat",
+                  "collaborators": ["CLI", "Instructions JSON"]
+                }
+              ]
+            },
+            {
+              "name": "ClarifyInstructionsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps key questions JSON",
+                  "collaborators": ["KeyQuestions JSON"]
+                },
+                {
+                  "name": "Displays key questions",
+                  "collaborators": ["List", "KeyQuestion JSON"]
+                },
+                {
+                  "name": "Updates evidence",
+                  "collaborators": ["CLI", "Evidence JSON"]
+                },
+                {
+                  "name": "Edits answer",
+                  "collaborators": ["CLI", "KeyQuestion JSON"]
+                }
+              ],
+              "realization": [
+                {
+                  "scope": "Invoke Bot Through Panel.Display Instructions.Display Clarify Instructions",
+                  "scenario": "When current action is clarify, panel displays ClarifyInstructionsSection with key questions in editable textareas, user edits answer, system saves via CLI",
+                  "walks": [
+                    {
+                      "covers": "Rendering clarify-specific instructions from JSON",
+                      "object_flow": [
+                        "// InstructionsSection determines which subclass to use",
+                        "InstructionsSection.create(instructionsJSON, actionJSON, cli)",
+                        "  -> actionType: String = actionJSON.type // 'clarify'",
+                        "  -> if actionType == 'clarify':",
+                        "     section: ClarifyInstructionsSection = new ClarifyInstructionsSection(instructionsJSON, actionJSON, cli)",
+                        "       -> this.keyQuestionsJSON = instructionsJSON.clarify.key_questions",
+                        "       -> this.cli = cli",
+                        "     return section",
+                        "html: String = section.render()",
+                        "  -> baseHTML: String = this.renderBase()",
+                        "     return `<div>${this.instructionsJSON.behavior_name}.${this.actionJSON.name}</div>`",
+                        "  -> questionsHTML: String = ''",
+                        "  -> for question in this.keyQuestionsJSON:",
+                        "     questionHTML: String = `",
+                        "       <div class='question'>",
+                        "         <label>${question.question}</label>",
+                        "         <textarea id='answer-${question.id}' ",
+                        "                   onchange='updateAnswer(${question.id})'>${question.answer}</textarea>",
+                        "       </div>`",
+                        "     questionsHTML += questionHTML",
+                        "  return `${baseHTML}${questionsHTML}`"
+                      ]
+                    },
+                    {
+                      "covers": "User edits answer and saves via CLI",
+                      "object_flow": [
+                        "// User edits answer in textarea and blur triggers save",
+                        "ClarifyInstructionsSection.onAnswerChange(questionId, newAnswer)",
+                        "  -> question: Object = this.keyQuestionsJSON.find(q => q.id == questionId)",
+                        "  -> result: JSON = this.cli.execute(`update_answer \"${question.question}\" \"${newAnswer}\"`)",
+                        "     -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
+                        "     -> stdin.write('update_answer ...')",
+                        "     -> Bot.update_question_answer(question, newAnswer)",
+                        "        -> clarificationFile: Path = behavior.get_clarification_file()",
+                        "        -> clarificationData: JSON = load_json(clarificationFile)",
+                        "        -> clarificationData.answers[question] = newAnswer",
+                        "        -> save_json(clarificationFile, clarificationData)",
+                        "        return {status: 'saved', question: question, answer: newAnswer}",
+                        "     return resultJSON",
+                        "  -> question.answer = newAnswer",
+                        "  -> // Local update complete, no re-render needed",
+                        "  return"
+                      ]
+                    }
+                  ],
+                  "model_updates": []
+                }
+              ]
+            },
+            {
+              "name": "StrategyInstructionsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps strategy JSON",
+                  "collaborators": ["Strategy JSON"]
+                },
+                {
+                  "name": "Displays decision criteria",
+                  "collaborators": ["List", "DecisionCriteria JSON"]
+                },
+                {
+                  "name": "Displays assumptions",
+                  "collaborators": ["String", "Assumptions JSON"]
+                },
+                {
+                  "name": "Edits decision criterion",
+                  "collaborators": ["CLI", "DecisionCriterion JSON"]
+                },
+                {
+                  "name": "Edits assumption",
+                  "collaborators": ["CLI", "Assumption JSON"]
+                }
+              ]
+            },
+            {
+              "name": "BuildInstructionsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps build JSON",
+                  "collaborators": ["Build JSON"]
+                },
+                {
+                  "name": "Displays knowledge graph spec",
+                  "collaborators": ["Object", "KnowledgeGraphSpec JSON"]
+                },
+                {
+                  "name": "Displays graph structure",
+                  "collaborators": ["Object", "KnowledgeGraphSpec JSON"]
+                },
+                {
+                  "name": "Displays builder instructions",
+                  "collaborators": ["String", "BuilderInstructions JSON"]
+                },
+                {
+                  "name": "Opens graph file",
+                  "collaborators": ["CLI", "Path JSON"]
+                }
+              ]
+            },
+            {
+              "name": "ValidateInstructionsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps validate JSON",
+                  "collaborators": ["Validate JSON"]
+                },
+                {
+                  "name": "Displays rules",
+                  "collaborators": ["List", "Rule JSON"]
+                },
+                {
+                  "name": "Displays rule descriptions",
+                  "collaborators": ["String", "Rule JSON"]
+                },
+                {
+                  "name": "Displays rule examples",
+                  "collaborators": ["List", "Rule JSON"]
+                },
+                {
+                  "name": "Opens rule file",
+                  "collaborators": ["CLI", "Path JSON"]
+                }
+              ]
+            },
+            {
+              "name": "RenderInstructionsSection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Wraps render JSON",
+                  "collaborators": ["Render JSON"]
+                },
+                {
+                  "name": "Displays render spec",
+                  "collaborators": ["Object", "RenderSpec JSON"]
+                },
+                {
+                  "name": "Displays templates",
+                  "collaborators": ["List", "Template JSON"]
+                },
+                {
+                  "name": "Displays render instructions",
+                  "collaborators": ["String", "RenderInstructions JSON"]
+                },
+                {
+                  "name": "Opens template file",
+                  "collaborators": ["CLI", "Path JSON"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [
+            {
+              "name": "Manage Bot Information",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Creates webview panel",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Manages panel lifecycle",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Handles user messages from webview",
+                  "collaborators": ["StatusDataProvider", "VSCode"]
+                },
+                {
+                  "name": "Refreshes panel display",
+                  "collaborators": ["StatusDataProvider", "HtmlRenderer"]
+                },
+                {
+                  "name": "Maintains expansion state",
+                  "collaborators": []
+                },
+                {
+                  "name": "Opens files in editor",
+                  "collaborators": ["VSCode"]
+                }
+              ]
+            },
+            {
+              "name": "StatusDataProvider",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Fetches CLI status via Python subprocess",
+                  "collaborators": ["PythonREPL"]
+                },
+                {
+                  "name": "Switches current bot",
+                  "collaborators": ["BotRegistry"]
+                },
+                {
+                  "name": "Updates workspace path",
+                  "collaborators": ["PythonREPL"]
+                },
+                {
+                  "name": "Executes CLI commands",
+                  "collaborators": ["PythonREPL"]
+                },
+                {
+                  "name": "Loads bot registry from JSON",
+                  "collaborators": ["FileSystem"]
+                },
+                {
+                  "name": "Provides available bot names",
+                  "collaborators": ["BotRegistry"]
+                }
+              ]
+            },
+            {
+              "name": "HtmlRenderer",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Renders complete panel HTML",
+                  "collaborators": ["CliOutputAdapter"]
+                },
+                {
+                  "name": "Renders bot information header",
+                  "collaborators": []
+                },
+                {
+                  "name": "Renders behavior action hierarchy",
+                  "collaborators": []
+                },
+                {
+                  "name": "Renders scope section with story tree",
+                  "collaborators": ["StoryTree", "FileList"]
+                },
+                {
+                  "name": "Renders instructions sections",
+                  "collaborators": []
+                },
+                {
+                  "name": "Formats clarify instructions with Q&A textareas",
+                  "collaborators": []
+                },
+                {
+                  "name": "Formats strategy instructions with decision criteria radio buttons",
+                  "collaborators": []
+                },
+                {
+                  "name": "Formats build instructions with knowledge graph links",
+                  "collaborators": []
+                },
+                {
+                  "name": "Formats validate instructions with rules list",
+                  "collaborators": []
+                },
+                {
+                  "name": "Formats render instructions with config/template/output links",
+                  "collaborators": []
+                },
+                {
+                  "name": "Generates JavaScript for webview interactions",
+                  "collaborators": []
+                },
+                {
+                  "name": "Escapes HTML entities",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "CliOutputAdapter",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Parses CLI JSON output",
+                  "collaborators": []
+                },
+                {
+                  "name": "Adapts CLI data to panel format",
+                  "collaborators": []
+                },
+                {
+                  "name": "Extracts behavior hierarchy",
+                  "collaborators": []
+                },
+                {
+                  "name": "Extracts scope information",
+                  "collaborators": []
+                },
+                {
+                  "name": "Extracts instructions data",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "BotRegistry",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Stores available bot configurations",
+                  "collaborators": []
+                },
+                {
+                  "name": "Validates bot names",
+                  "collaborators": []
+                },
+                {
+                  "name": "Provides bot CLI paths",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "StoryTree",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Represents epic/sub-epic/story hierarchy",
+                  "collaborators": ["Epic", "SubEpic", "Story"]
+                },
+                {
+                  "name": "Filters by story name",
+                  "collaborators": []
+                },
+                {
+                  "name": "Expands and collapses nodes",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Epic",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains sub-epics",
+                  "collaborators": ["SubEpic"]
+                },
+                {
+                  "name": "Provides folder link",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "SubEpic",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains stories",
+                  "collaborators": ["Story"]
+                },
+                {
+                  "name": "Provides test file link",
+                  "collaborators": []
+                },
+                {
+                  "name": "Provides folder link",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Story",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains acceptance criteria",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains scenarios",
+                  "collaborators": ["Scenario"]
+                },
+                {
+                  "name": "Provides story file link",
+                  "collaborators": []
+                },
+                {
+                  "name": "Provides test class link",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Scenario",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Provides test method link",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "FileList",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains file paths",
+                  "collaborators": []
+                },
+                {
+                  "name": "Filters by file pattern",
+                  "collaborators": []
+                },
+                {
+                  "name": "Displays in monospace",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "BehaviorActionHierarchy",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Represents behavior/action/operation tree",
+                  "collaborators": ["Behavior", "Action", "Operation"]
+                },
+                {
+                  "name": "Shows current action indicator",
+                  "collaborators": []
+                },
+                {
+                  "name": "Shows completed status indicator",
+                  "collaborators": []
+                },
+                {
+                  "name": "Shows pending indicator",
+                  "collaborators": []
+                },
+                {
+                  "name": "Expands and collapses behaviors",
+                  "collaborators": []
+                },
+                {
+                  "name": "Expands and collapses actions",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "Behavior",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains actions",
+                  "collaborators": ["Action"]
+                },
+                {
+                  "name": "Executes when clicked",
+                  "collaborators": ["Action", "Operation"]
+                }
+              ]
+            },
+            {
+              "name": "Action",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains operations",
+                  "collaborators": ["Operation"]
+                },
+                {
+                  "name": "Tracks completion status",
+                  "collaborators": []
+                },
+                {
+                  "name": "Executes when clicked",
+                  "collaborators": ["Operation"]
+                }
+              ]
+            },
+            {
+              "name": "Operation",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Executes workflow step",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "InstructionsDisplay",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Displays base instructions with behavior and action names",
+                  "collaborators": []
+                },
+                {
+                  "name": "Conditionally displays clarify instructions",
+                  "collaborators": ["ClarifyInstructions"]
+                },
+                {
+                  "name": "Conditionally displays strategy instructions",
+                  "collaborators": ["StrategyInstructions"]
+                },
+                {
+                  "name": "Conditionally displays build instructions",
+                  "collaborators": ["BuildInstructions"]
+                },
+                {
+                  "name": "Conditionally displays validate instructions",
+                  "collaborators": ["ValidateInstructions"]
+                },
+                {
+                  "name": "Conditionally displays render instructions",
+                  "collaborators": ["RenderInstructions"]
+                },
+                {
+                  "name": "Displays raw instructions format",
+                  "collaborators": []
+                },
+                {
+                  "name": "Submits instructions to AI chat",
+                  "collaborators": ["VSCode"]
+                }
+              ]
+            },
+            {
+              "name": "ClarifyInstructions",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains key questions",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains editable answer textareas",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains evidence list",
+                  "collaborators": []
+                },
+                {
+                  "name": "Updates answers on edit",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "StrategyInstructions",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains decision criteria with radio buttons",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains assumptions textarea",
+                  "collaborators": []
+                },
+                {
+                  "name": "Shows selected options from saved strategy",
+                  "collaborators": []
+                },
+                {
+                  "name": "Updates assumptions on edit",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "BuildInstructions",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains knowledge graph template path link",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains knowledge graph output file link",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains knowledge graph directory path",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains rules list with clickable links",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "ValidateInstructions",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains rules list",
+                  "collaborators": []
+                },
+                {
+                  "name": "Opens rule files on click",
+                  "collaborators": ["VSCode"]
+                }
+              ]
+            },
+            {
+              "name": "RenderInstructions",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Contains config file paths as links",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains template file paths as links",
+                  "collaborators": []
+                },
+                {
+                  "name": "Contains output file paths as links",
+                  "collaborators": []
+                },
+                {
+                  "name": "Opens files on link click",
+                  "collaborators": ["VSCode"]
+                }
+              ]
+            },
+            {
+              "name": "BehaviorActionNavigation",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Navigates to previous action",
+                  "collaborators": ["BehaviorActionHierarchy", "StatusDataProvider"]
+                },
+                {
+                  "name": "Navigates to next action",
+                  "collaborators": ["BehaviorActionHierarchy", "StatusDataProvider"]
+                },
+                {
+                  "name": "Reruns current action",
+                  "collaborators": ["StatusDataProvider"]
+                },
+                {
+                  "name": "Moves to next action when on last operation",
+                  "collaborators": ["Action", "Operation"]
+                },
+                {
+                  "name": "Moves to next behavior when on last action",
+                  "collaborators": ["Behavior", "Action"]
+                },
+                {
+                  "name": "Disables navigation when on last behavior",
+                  "collaborators": ["Behavior"]
+                },
+                {
+                  "name": "Updates action status indicators",
+                  "collaborators": ["Action"]
+                }
+              ]
+            },
+            {
+              "name": "CollapsibleContent",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Expands content",
+                  "collaborators": []
+                },
+                {
+                  "name": "Collapses content",
+                  "collaborators": []
+                },
+                {
+                  "name": "Preserves expansion state during refresh",
+                  "collaborators": ["StatusPanel"]
+                },
+                {
+                  "name": "Toggles on click",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "WorkspacePath",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Displays current path",
+                  "collaborators": []
+                },
+                {
+                  "name": "Accepts user input for new path",
+                  "collaborators": []
+                },
+                {
+                  "name": "Validates path",
+                  "collaborators": ["FileSystem"]
+                },
+                {
+                  "name": "Updates bot workspace",
+                  "collaborators": ["StatusDataProvider"]
+                },
+                {
+                  "name": "Triggers panel refresh on change",
+                  "collaborators": ["StatusPanel"]
+                },
+                {
+                  "name": "Displays error for invalid path",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "BotSelection",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Displays available bots",
+                  "collaborators": ["BotRegistry"]
+                },
+                {
+                  "name": "Highlights current bot",
+                  "collaborators": []
+                },
+                {
+                  "name": "Switches to selected bot",
+                  "collaborators": ["StatusDataProvider"]
+                },
+                {
+                  "name": "Refreshes panel with new bot status",
+                  "collaborators": ["StatusPanel", "StatusDataProvider"]
+                },
+                {
+                  "name": "Hides selection when only one bot available",
+                  "collaborators": ["BotRegistry"]
+                }
+              ]
+            },
+            {
+              "name": "ScopeSearch",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Searches story hierarchy by name",
+                  "collaborators": ["StoryTree"]
+                },
+                {
+                  "name": "Searches file list by pattern",
+                  "collaborators": ["FileList"]
+                },
+                {
+                  "name": "Matches epics",
+                  "collaborators": ["Epic"]
+                },
+                {
+                  "name": "Matches sub-epics",
+                  "collaborators": ["SubEpic"]
+                },
+                {
+                  "name": "Matches stories",
+                  "collaborators": ["Story"]
+                },
+                {
+                  "name": "Displays multiple matches hierarchically",
+                  "collaborators": ["StoryTree"]
+                },
+                {
+                  "name": "Clears search to show all items",
+                  "collaborators": ["StoryTree", "FileList"]
+                }
+              ]
+            },
+            {
+              "name": "BotInformation",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Displays bot name",
+                  "collaborators": []
+                },
+                {
+                  "name": "Displays workspace path",
+                  "collaborators": ["WorkspacePath"]
+                },
+                {
+                  "name": "Displays bot directory path",
+                  "collaborators": []
+                },
+                {
+                  "name": "Displays company icon",
+                  "collaborators": []
+                },
+                {
+                  "name": "Displays panel version",
+                  "collaborators": []
+                },
+                {
+                  "name": "Displays bot selection",
+                  "collaborators": ["BotSelection"]
+                },
+                {
+                  "name": "Truncates long paths with ellipsis",
+                  "collaborators": []
+                },
+                {
+                  "name": "Shows full path in tooltip on hover",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "PanelRefresh",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Triggers panel refresh",
+                  "collaborators": ["StatusPanel"]
+                },
+                {
+                  "name": "Re-fetches bot status from CLI",
+                  "collaborators": ["StatusDataProvider"]
+                },
+                {
+                  "name": "Updates all displayed information",
+                  "collaborators": ["HtmlRenderer"]
+                },
+                {
+                  "name": "Preserves expansion state",
+                  "collaborators": ["CollapsibleContent"]
+                }
+              ]
+            },
+            {
+              "name": "StoryFileNavigation",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Opens story graph JSON in editor",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Opens story map diagram in viewer",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Opens epic folder in IDE explorer",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Opens sub-epic folder in IDE explorer",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Opens test file at test class",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Opens test file at scenario method",
+                  "collaborators": ["VSCode"]
+                },
+                {
+                  "name": "Displays error when file cannot open",
+                  "collaborators": []
+                }
+              ]
+            },
+            {
+              "name": "InstructionsSubmission",
+              "module": "display_panel.extension",
+              "responsibilities": [
+                {
+                  "name": "Sends instructions to AI chat",
+                  "collaborators": ["VSCode", "InstructionsDisplay"]
+                },
+                {
+                  "name": "Validates instructions are selected",
+                  "collaborators": ["InstructionsDisplay"]
+                }
+              ]
+            }
+          ],
+          "sub_epics": [
+            {
+              "name": "Manage Bot Information",
+              "sequential_order": 1,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Open Panel",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User activates panel command",
+                        "THEN System displays bot name",
+                        "AND System displays workspace path",
+                        "AND System displays bot path",
+                        "AND System displays available botss",
+                        "AND System displays behavior action section",
+                        "AND System displays scope section",
+                        "AND System displays instructions section"
+                      ]
+                    },
+                    {
+                      "name": "Refresh Panel",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User clicks refresh button",
+                        "THEN System displays bot name",
+                        "AND System displays updated workspace path",
+                        "AND System displays updated bot path",
+                        "AND System displays updated available botss",
+                        "AND System displays updated behavior action section",
+                        "AND System displays updated scope section",
+                        "AND System displays updated instructions section"
+                      ]
+                    },
+                    {
+                      "name": "Change Workspace Path",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User changes workspace path",
+                        "THEN System displays updated workspace path",
+                        "AND System displays behavior action state of new workspace"
+                      ]
+                    },
+                    {
+                      "name": "Switch Bot",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User switches bot",
+                        "THEN System displays updated bot name",
+                        "AND System displays behavior action section for new bot",
+                        "AND System displays behavior action stateof workspace for new bot"
+                      ]
+                    },
+                    {
+                      "name": "Toggle Panel Section",
+                      "sequential_order": 5,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User clicks section header",
+                        "THEN System expands or collapses section"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Navigate Behavior Action Status",
+              "sequential_order": 2,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Display Hierarchy",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User views panel",
+                        "THEN System displays behavior list with actions",
+                        "WHEN Action is current",
+                        "THEN System displays current action in-progress indicator",
+                        "WHEN Action is completed",
+                        "THEN System displays completed indicator",
+                        "WHEN Action is pending",
+                        "THEN System displays pending indicator",
+                        "WHEN User clicks collapsed behavior",
+                        "THEN System expands behavior showing actions",
+                        "WHEN User clicks expanded behavior",
+                        "THEN System collapses behavior hiding actions",
+                        "WHEN User clicks collapsed action",
+                        "THEN System expands action showing operations",
+                        "WHEN User clicks expanded action",
+                        "THEN System collapses action hiding operations"
+                      ]
+                    },
+                    {
+                      "name": "Navigate Behavior Action",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User clicks back button",
+                        "THEN System  sets previous action as current",
+                        "AND System displays previous action in-progress indicator",
+                        "AND System reruns previous action details",
+                        "WHEN User clicks next button",
+                        "THEN System sets next action as current",
+                        "AND System displays next action in-progress indicator",
+                        "AND System reruns next action details",
+                        "WHEN User clicks current button",
+                        "THEN System reruns current action details",
+                        "WHEN User is on the last operation of an action",
+                        "THEN System moves to the next action and selects its first operation",
+                        "WHEN User is on the last action of a behavior",
+                        "THEN System moves to the next behavior and selects its first action and first operation",
+                        "WHEN User is on the last behavior of a bot",
+                        "THEN System disables next behavior navigation"
+                      ]
+                    },
+                    {
+                      "name": "Execute Behavior Action",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User clicks behavior",
+                        "THEN System displays that behavior as current",
+                        "AND System expands behavior",
+                        "AND System expands first action to display operations",
+                        "AND System sets first action as current",
+                        "AND System sets first operation as current",
+                        "AND System executes first operation of first action of that behavior",
+                        "WHEN User clicks action",
+                        "THEN System displays that action as current",
+                        "AND System expands action to display operations",
+                        "AND System sets first operation as current",
+                        "AND System executes first operation of that action"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Filter And Navigate Scope",
+              "sequential_order": 3,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Filter Story Scope",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User types story name in filter",
+                        "THEN System refreshes story hierarchy based on new story scope",
+                        "WHEN Filter matches epic",
+                        "THEN System displays epic with all sub-epics and stories collapsed beneath it",
+                        "WHEN Filter matches sub-epic",
+                        "THEN System displays sub-epic with all stories collapsed beneath it",
+                        "WHEN Filter matches story",
+                        "THEN System displays that story with its acceptance criteria",
+                        "WHEN User clicks story with acceptance criteria",
+                        "THEN System expands story showing acceptance criteria list",
+                        "WHEN Filter matches multiple items",
+                        "THEN System displays all matches in hierarchical format preserving parent-child relationships",
+                        "WHEN User clicks clear filter button",
+                        "THEN System displays all stories"
+                        
+                      ]
+                    },
+                    {
+                      "name": "Display Story Scope Hierarchy",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User views story scope",
+                        "THEN System displays epic list collapsed",
+                        "WHEN User clicks collapsed epic expand icon",
+                        "AND epic has sub-epics",
+                        "THEN System expands epic showing sub-epics collapsed beneath it",
+                        "WHEN User clicks epic folder link",
+                        "AND matching epic folder exists",
+                        "THEN System opens epic folder in IDE explorer",
+                        "WHEN User clicks collapsed sub-epic expand icon",
+                        "AND matching sub-epic has stories",
+                        "THEN System expands sub-epic showing stories collapsed beneath it",
+                        
+                        "WHEN Sub-epic has test file",
+                        "THEN System displays test link next to sub-epic name",
+                        "WHEN User clicks sub-epic test link",
+                        "THEN System opens test file in editor",
+                        "WHEN User clicks sub-epic folder link",
+                        "THEN System opens sub-epic folder in IDE explorer",
+                        
+                        "WHEN User clicks collapsed story expand icon",
+                        "AND matching sub-epic has stories",
+                        "THEN System expands story showing scenarios collapsed beneath it",
+                        "WHEN User clicks scenario link",
+                        "AND matching scenario has  file",
+                        "THEN System opens story markdown file in editor",
+                        
+                        "WHEN Story has test file",
+                        "THEN System displays test link next to story name",
+                        "WHEN User clicks story test link",
+                        "THEN System opens test file at test class",
+                        "WHEN User clicks collapsed story expand icon",
+                        "THEN System expands story showing scenarios",
+                        "WHEN User clicks scenario link",
+                        "THEN System opens test file at scenario test method"
+                      ]
+                    },
+                    {
+                      "name": "Filter File Scope",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User types file pattern in filter",
+                        "THEN System displays filtered file list",
+                        "AND System displays file list with monospace paths"
+                      ]
+                    }
+                   ,
+                    {
+                      "name": "Open Story Files",
+                      "sequential_order": 9,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User clicks graph link",
+                        "THEN System opens story-graph.json in editor",
+                        "WHEN User clicks map link",
+                        "THEN System opens story-map.drawio in diagram viewer",
+                        "WHEN System cannot open file",
+                        "THEN System displays error message"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Display Instructions",
+              "sequential_order": 4,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Display Base Instructions",
+                      "sequential_order": 1,
+                      "connector": null,
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User views panel",
+                        "THEN System displays base instructions section",
+                        "AND System displays behavior name",
+                        "AND System displays action name"
+                      ]
+                    },
+                    {
+                      "name": "Display Clarify Instructions",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN Current action is clarify",
+                        "THEN System displays key questions with editable answer textareas",
+                        "AND System displays evidence list",
+                        "WHEN User edits answer textarea",
+                        "THEN System updates answer",
+                        "WHEN saved key questions and answers exists",
+                        "THEN System displays saved key questions and answers"
+                      ]
+                    },
+                    {
+                      "name": "Display Strategy Instructions",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN Current action is strategy",
+                        "THEN System displays decision criteria with radio button options",
+                        "AND System displays assumptions textarea",
+                        "WHEN Saved strategy exists",
+                        "THEN System displays selected option for each decision criterion",
+                        "WHEN User edits assumptions textarea",
+                        "THEN System updates assumptions"
+                      ]
+                    },
+                    {
+                      "name": "Display Build Instructions",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN Current action is build",
+                        "THEN System displays knowledge graph section with template path link",
+                        "AND System displays knowledge graph output file link",
+                        "AND System displays knowledge graph directory path",
+                        "AND System displays rules list with clickable rule file links"
+                      ]
+                    },
+                    {
+                      "name": "Display Validate Instructions",
+                      "sequential_order": 5,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN Current action is validate",
+                        "THEN System displays rules list",
+                        "WHEN User clicks rule file link",
+                        "THEN System opens rule file in editor"
+                      ]
+                    },
+                    {
+                      "name": "Display Render Instructions",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN Current action is render",
+                        "THEN System displays config file paths as clickable links",
+                        "AND System displays template file paths as clickable links",
+                        "AND System displays output file paths as clickable links",
+                        "WHEN User clicks on any of these links",
+                        "THEN System opens the corresponding file in the editor"
+                      ]
+                    },
+                    {
+                      "name": "Display Instructions In Raw Format",
+                      "sequential_order": 7,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "WHEN User clicks action instruction in Behavior Action Hierarchy",
+                        "THEN System displays entire instructions exactly as it should be sent to the AI chat"
+                      ]
+                    },
+                    {
+                      "name": "Submit Instructions To Chat",
+                      "sequential_order": 8,
+                      "connector": "and",
+                      "users": ["User"],
+                      "story_type": "user",
+                      "acceptance_criteria": [
+                        "When user has clicked on a Behavior Action's Instructions",
+                        "AND User clicks submit button",
+                        "THEN System sends instructions to AI chat"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "Run Interactive REPL",
           "sequential_order": 10.0,
           "domain_concepts": [

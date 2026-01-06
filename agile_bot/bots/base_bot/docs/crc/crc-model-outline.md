@@ -31,23 +31,14 @@ Workflow State
     Pause workflow: Human,AI Chat
     Resume workflow: Human,AI Chat
 
-
-## Module: actions.build
-
 BuildKnowledgeAction
     Inject knowledge graph template: Behavior,Content,Knowledge Graph Spec,Knowledge Graph
     Inject builder instructions: Behavior,Content,Build Instructions
     Save Knowledge graph: Behavior,Content,Knowledge Graph
 
-
-## Module: actions.clarify
-
 GatherContextAction
     Inject gather context instructions: Behavior,Guardrails,Required Clarifications
     Inject questions and evidence: Behavior,Guardrails,Key Questions,Evidence
-
-
-## Module: actions.render
 
 RenderOutputAction
     Inject render output instructions: Behavior,Content,Render Spec,Renderer
@@ -64,9 +55,6 @@ Template
     Transform content: Transformer,Content
     Load template: Behavior,Content
 
-
-## Module: actions.rules
-
 Rule
     Validate content: Knowledge Graph,Violations
     Find behavior specific rules from context: Behavior
@@ -82,15 +70,9 @@ ValidateRulesAction
     Inject behavior specific rules: Behavior,Rules,Behavior Rules
     Load + inject content for validation: Behavior,Content,Knowledge Graph,Rendered Outputs
 
-
-## Module: actions.strategy
-
 PlanningAction
     Inject planning instructions: Behavior,Guardrails,Planning
     Inject decision criteria and assumptions: Behavior,Guardrails,Decision Criteria,Assumptions,Recommended Human Activity
-
-
-## Module: actions.validate
 
 CorrectBotAction
     Inject correct bot instructions: Behavior,Correct Bot Instructions
@@ -108,18 +90,6 @@ Synchronizer
     Get target_format: String
     Get extractor: Extractor
     Get renderer: Renderer
-
-
-## Module: agile_bot.bots.story_bot.src.story_bot_cli
-
-StoryBotCLI
-    Bootstraps environment: BOT_DIRECTORY,WORKING_AREA,Bot Config
-    Delegates to BaseBotCli: Base Bot CLI,Bot Name,Bot Config Path
-    Executes CLI: Base Bot CLI,Command Arguments
-    Get bot_directory: Path
-    Get workspace_directory: Path
-    Get bot_name: String
-    Get bot_config_path: Path
 
 
 ## Module: agile_bot.bots.story_bot.src.story_bot_mcp_server
@@ -193,7 +163,7 @@ DomainModelSynchronizer : Synchronizer
     Get domain_concepts: List
 
 
-## Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_epic
+## Module: agile_bot.bots.story_bot.src.synchronizers.story_io
 
 StoryIOEpic
     Owns features: Feature List,Epic Context
@@ -206,9 +176,6 @@ StoryIOEpic
     Get total_stories: Integer
     Get sequential_order: Float
 
-
-## Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_feature
-
 StoryIOFeature
     Owns stories: Story List,Feature Context
     Calculates story count: Story,Count
@@ -218,9 +185,6 @@ StoryIOFeature
     Get description: String
     Get stories: List
     Get story_count: Integer
-
-
-## Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_increment
 
 StoryIOIncrement
     Owns story assignments: Story List,Increment Context
@@ -234,9 +198,6 @@ StoryIOIncrement
     Get capacity: Integer
     Get priority_order: List
 
-
-## Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_renderer
-
 StoryIORenderer
     Renders epic cells: Epic,Cell Generator,XML
     Renders feature cells: Feature,Cell Generator,XML
@@ -247,9 +208,6 @@ StoryIORenderer
     Get cell_style: String
     Get layout_config: Dict
     Get xml_formatter: XMLFormatter
-
-
-## Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_story
 
 StoryIOStory
     Owns acceptance criteria: Criteria List,Story Context
@@ -263,9 +221,6 @@ StoryIOStory
     Get increment: Integer
     Get priority: Integer
     Get position: Position
-
-
-## Module: agile_bot.bots.story_bot.src.synchronizers.story_io.story_io_synchronizer
 
 StoryIOSynchronizer : Synchronizer
     Syncs story graph with drawio: Story Graph,Drawio File
@@ -282,9 +237,6 @@ StoryIOSynchronizer : Synchronizer
 
 
 ## Module: bot
-
-Action
-    Gets instructions for operation: String,Operation
 
 Base Bot
     Executes Actions: Workflow,Behavior,Action
@@ -317,6 +269,202 @@ Specific Bot
     Provide Trigger Words: 
 
 
+## Module: display_panel.extension
+
+PanelView (Base)
+    Wraps JSON data: JSON
+    Invokes Bot: CLI
+    Provides element ID: String
+    Renders to HTML: HTML,JSON
+
+Panel: PanelView
+    Wraps bot JSON: Bot JSON
+    Displays BotHeaderView: BotHeaderView
+    Displays PathsSection: PathsSection
+    Displays BehaviorsSection: BehaviorsSection
+    Displays ScopeSection: ScopeSection
+    Displays InstructionsSection: InstructionsSection
+
+BotHeaderView: PanelView
+    Wraps bot JSON: Bot JSON
+    Displays image: Image
+    Displays title: String,Bot JSON
+    Displays version number: String,Bot JSON
+    Refreshes panel: CLI
+
+PanelHeader
+    Displays header image: Image
+    Displays title: String
+
+SectionView : PanelView (Base)
+    Renders section header: PanelHeader
+    Toggles collapsed state: State
+    May contain subsections: SubSectionView
+
+PathsSection : SectionView
+    Wraps bot paths JSON: BotPaths JSON
+    Displays bot directory: String, BotPaths JSON
+    Edits workspace directory: CLI, BotPaths JSON
+    Displays available bots: AvailableBotsView
+
+AvailableBotsView : PanelView
+    Wraps bot registry JSON: BotRegistry JSON
+    Displays available bots: List,BotRegistry JSON
+    Selects bot: CLI,Bot
+
+SubSectionView: PanelView
+    Toggles collapsed state: State
+
+BehaviorsSection : SectionView
+    Wraps behaviors JSON: Behaviors JSON
+    Displays behavior names list: List,Behavior JSON
+    Navigates to behavior: CLI,Behavior
+    Toggles collapsed: State,Behavior JSON
+    Displays tooltip: String,Behavior JSON
+    Displays actions: ActionsView
+    Executes behavior: CLI,Behavior
+    Displays completion progress: Status,Behavior JSON
+    Displays navigation: NavigationView
+
+NavigationView : PanelView  
+    Wraps current action JSON: Action JSON
+    Reruns action: CLI,Action
+    Navigates to next action: CLI,Action
+    Navigates to prev action: CLI,Action
+
+ActionsView : PanelView
+    Wraps actions JSON: Actions JSON
+    Displays action names list: List,Action JSON
+    Navigates to action: CLI,Action
+    Displays status indicators: Status,Action JSON
+    Executes action: CLI, Action
+    Displays completion progress: Progress,Action JSON
+
+ScopeSection : SectionView
+    Wraps scope JSON: Scope JSON
+    Displays filtered files: FileListTabView
+    Filters story graph: CLI,Scope JSON
+    Filters files: CLI,Scope JSON
+    Clears filter: CLI,Scope JSON
+    Displays story graph: StoryGraphTabView
+ 
+StoryGraphTabView : PanelView
+    Wraps story map JSON: StoryMap JSON
+    Displays epic hierarchy: EpicView,Epic JSON
+    Searches stories: Filter,StoryGraph JSON
+    Opens story graph file: CLI,File JSON
+    Opens story map file: CLI,File JSON
+
+EpicView : PanelView
+    Wraps epic JSON: Epic JSON
+    Displays epic name: String,Epic JSON
+    Displays epic icon: Image
+    Displays sub epics: SubEpicView,SubEpic JSON
+    Toggles collapsed: State
+    Opens epic folder: CLI,Epic JSON
+    Opens epic test file: CLI,Epic JSON
+
+SubEpicView : PanelView
+    Wraps sub epic JSON: SubEpic JSON
+    Displays sub epic name: String,SubEpic JSON
+    Displays sub epic icon: Image
+    Displays nested sub epics: SubEpicView,SubEpic JSON
+    Displays stories: StoryView,Story JSON
+    Toggles collapsed: State
+    Opens sub epic folder: CLI,SubEpic JSON
+    Opens sub epic test file: CLI,SubEpic JSON
+
+StoryView : PanelView
+    Wraps story JSON: Story JSON
+    Displays story name: String,Story JSON
+    Displays story icon: Image
+    Displays scenarios: ScenarioView,Scenario JSON
+    Toggles collapsed: State
+    Opens test at class: CLI,Story JSON
+
+ScenarioView : PanelView
+    Wraps scenario JSON: Scenario JSON
+    Displays scenario name: String,Scenario JSON
+    Displays scenario icon: Image
+    Opens test at scenario: CLI,Scenario JSON
+
+FileListTabView : PanelView
+    Wraps file list JSON: Path JSON
+    Displays file names: List,Path JSON
+    Searches files: Filter,Path JSON
+    Opens file: CLI,Path JSON
+
+InstructionsSection : SectionView (Base)
+    Wraps instructions JSON: Instructions JSON
+    Wraps action JSON: Action JSON
+    Displays base instructions subsection: BaseInstructionsSubSection
+    Displays raw format subsection: RawFormatSubSection
+    Submits to AI chat: CLI,Instructions JSON
+
+BaseInstructionsSubSection : SubSectionView
+    Wraps instructions JSON: Instructions JSON
+    Displays behavior name: String,Instructions JSON
+    Displays action name: String,Instructions JSON
+    Displays  Instructions: Instructions JSON
+
+ActionDataSubSection : SubSectionView
+    Wraps action JSON: Action JSON
+    Displays action properties: Object,Action JSON
+
+RawFormatSubSection : SubSectionView
+    Wraps instructions JSON: Instructions JSON
+    Displays raw instructions: String,Instructions JSON
+
+ClarifyInstructionsSection : InstructionsSection
+    Wraps clarify subsection: ClarifyDataSubSection
+
+ClarifyDataSubSection : SubSectionView
+    Wraps key questions JSON: KeyQuestions JSON
+    Displays key questions: List,KeyQuestion JSON
+    Updates evidence: CLI,Evidence JSON
+    Edits answer: CLI,KeyQuestion JSON
+
+StrategyInstructionsSection : InstructionsSection
+    Wraps strategy subsection: StrategyDataSubSection
+
+StrategyDataSubSection : SubSectionView
+    Wraps strategy JSON: Strategy JSON
+    Displays decision criteria: List,DecisionCriteria JSON
+    Displays assumptions: String,Assumptions JSON
+    Edits decision criterion: CLI,DecisionCriterion JSON
+    Edits assumption: CLI,Assumption JSON
+
+BuildInstructionsSection : InstructionsSection
+    Wraps build subsection: BuildDataSubSection
+
+BuildDataSubSection : SubSectionView
+    Wraps build JSON: Build JSON
+    Displays knowledge graph spec: Object,KnowledgeGraphSpec JSON
+    Displays graph structure: Object,KnowledgeGraphSpec JSON
+    Displays builder instructions: String,BuilderInstructions JSON
+    Opens graph file: CLI,Path JSON
+
+ValidateInstructionsSection : InstructionsSection
+    Wraps validate subsection: ValidateDataSubSection
+
+ValidateDataSubSection : SubSectionView
+    Wraps validate JSON: Validate JSON
+    Displays rules: List,Rule JSON
+    Displays rule descriptions: String,Rule JSON
+    Displays rule examples: List,Rule JSON
+    Opens rule file: CLI,Path JSON
+
+RenderInstructionsSection : InstructionsSection
+    Wraps render subsection: RenderDataSubSection
+
+RenderDataSubSection : SubSectionView
+    Wraps render JSON: Render JSON
+    Displays render spec: Object,RenderSpec JSON
+    Displays templates: List,Template JSON
+    Displays render instructions: String,RenderInstructions JSON
+    Opens template file: CLI,Path JSON
+
+
 ## Module: ext
 
 Router
@@ -338,9 +486,6 @@ REPLSession
     Routes commands to CLI bot: CLIBot
     Displays status and results: CLIBot
     Has CLI bot: CLIBot
-
-
-## Module: repl_cli.cli_bot
 
 CLIAction
     Get name: str: 
@@ -375,112 +520,3 @@ CLIBot
     Get behaviors: CLIBehaviors: CLIBehaviors
     Get status text: str: CLIBehaviors,CLIBehavior,CLIActions,CLIAction
     Wraps domain bot: Bot
-
-
-## Module: repl_cli.headless
-
-ActionSummary
-    Aggregates operation results: ActionSummary,List,OperationResult
-    Reports action completion: String,ActionSummary
-
-BehaviorSummary
-    Aggregates action results: BehaviorSummary,List,ActionResult
-    Reports behavior completion: String,BehaviorSummary
-
-ErrorRecovery
-    Tracks recovery attempt count: RecoveryAttemptCount
-    Waits before retry: Duration
-    Restarts session: HeadlessSession
-    Determines if error is recoverable: RecoverableError,NonRecoverableError
-    Enforces max retry limit: RecoveryAttemptCount
-
-ExecutionContext
-    Loads from context file: Path
-    Get user message: UserMessage
-    Get chat history: ChatHistory
-    Get file references: FileReference
-
-HeadlessSession
-    Invokes with message and context file: Message,ContextFile,ExecutionResult
-    Invokes operation with behavior, action, operation, and context file: ExecutionResult,Behavior,Action,Operation,ContextFile
-    Invokes complete action with behavior, action, and context file: ExecutionResult,Behavior,Action,ContextFile
-    Invokes complete behavior with behavior name and context file: ExecutionResult,Behavior,ContextFile
-
-NonRecoverableError
-    Indicates CLI failure: 
-    Indicates API connection failure: 
-    Indicates max recovery attempts exceeded: RecoveryAttemptCount
-    Cannot be retried: 
-
-RecoverableError
-    Indicates AI hang: 
-    Indicates AI stuck in planning: 
-    Can be retried: 
-
-SessionLog
-    Creates with timestamped path: Path
-    Appends response: Response
-    Appends total loops: 
-    Get transcript: 
-
-
-## Module: repl_cli.repl_help
-
-REPLHelp
-    Includes headless mode documentation: HeadlessConfig
-    Shows headless command examples: 
-
-
-## Module: repl_cli.status_display
-
-StatusDisplay
-    Shows headless availability: HeadlessConfig
-    Shows active session status: HeadlessSession
-
-
-## Module: workflow
-
-BehaviorGraphBuilder
-    Read behavior workflow definitions: Behavior,Behavior Config
-    Create LangGraph StateGraph: LangGraph,BotLangState
-    Build node instances from actions: BotLangActionNode,Action
-    Connect nodes based on workflow order: LangGraph,BotLangActionNode
-
-BotLangActionNode
-    Wrap action.execute(context) method: Action,LangGraph
-    Implement two-pass pattern: Action,AI
-    Support execution modes: BotMode
-    Provide LangGraph entry point: LangGraph
-
-BotLangFlow
-    Execute nodes in sequence: BotLangActionNode,BotLangFlowRunner
-    Handle conditional branching: Decision Node,BotLangState
-    Support loops and iterations: BotLangActionNode,BotLangState
-    Pause at interactive points: Human,BotMode
-    Resume from checkpoint: Checkpoint,BotLangFlowRunner
-
-BotLangFlowRunner
-    Load BotLangFlow Python files: BotLangFlow,File System
-    Compile graph with checkpointer: LangGraph,SqliteSaver,Checkpoint
-    Execute workflow graph: LangGraph,BotLangActionNode,BotLangState
-    Resume from checkpoint: Checkpoint,BotLangState
-
-BotLangState
-    Contain story graph: Story Graph
-    Contain clarification data: Key Questions,Evidence
-    Contain strategy data: Decision Criteria,Assumptions
-    Contain context files: Context
-    Contain files dictionary: Source Files,Test Files
-    Contain workspace directory: Workspace
-    Contain workflow execution state: Action,Instructions
-
-BotMode
-    Determine AI interaction: BotLangActionNode,AI Client
-    Control pause points: BotLangActionNode,Human
-
-Checkpoint
-    Save workflow state: BotLangState,BotLangFlowRunner
-    Restore workflow state: BotLangState,BotLangFlowRunner
-    Track execution history: BotLangState
-    Enable resume capability: BotLangFlow,BotLangFlowRunner
-

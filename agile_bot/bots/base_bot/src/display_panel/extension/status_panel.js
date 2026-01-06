@@ -205,10 +205,15 @@ class StatusPanel {
             }
             return;
           case "switchBot":
+            this._logger.log(`[SWITCHBOT] Received switchBot message:`, message);
             if (message.botName) {
-              this._logger.log(`Switching bot to: ${message.botName}`);
+              this._logger.log(`[SWITCHBOT] Switching bot to: ${message.botName}`);
               this._dataProvider.currentBot = message.botName;
+              this._logger.log(`[SWITCHBOT] Calling _update()`);
               this._update();
+              this._logger.log(`[SWITCHBOT] Update complete`);
+            } else {
+              this._logger.error(`[SWITCHBOT] No botName in message`);
             }
             return;
           case "executeCommand":

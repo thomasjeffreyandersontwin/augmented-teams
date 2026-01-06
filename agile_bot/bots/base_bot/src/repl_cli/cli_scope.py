@@ -517,13 +517,28 @@ class CLIScope(CLIBase):
                 # Determine connector for this level
                 connector = "├── " if (has_siblings_at_level or has_children) else "└── "
                 
+                # Build sub-epic folder path for hyperlink
+                sub_epic_folder_path = self._build_sub_epic_folder_path(epic_name, item_name)
+                
                 # Add test file link if available
                 test_file = item_data
                 test_link = ""
                 if test_file:
                     test_link = self._build_test_file_link(test_file)
                 
-                enhanced_lines.append(f"{base_indent}{prefix}{connector}⚙️ {item_name}{test_link}")
+                # Create hyperlink for sub-epic folder if it exists
+                if sub_epic_folder_path and sub_epic_folder_path.exists():
+                    try:
+                        workspace_root = get_python_workspace_root()
+                        rel_path = sub_epic_folder_path.relative_to(workspace_root)
+                        rel_path_str = str(rel_path).replace('\\', '/')
+                        enhanced_lines.append(f"{base_indent}{prefix}{connector}[⚙️ {item_name}]({rel_path_str}){test_link}")
+                    except (ValueError, AttributeError):
+                        # If relative path fails, use original format without folder link
+                        enhanced_lines.append(f"{base_indent}{prefix}{connector}⚙️ {item_name}{test_link}")
+                else:
+                    # Folder doesn't exist, keep original formatting
+                    enhanced_lines.append(f"{base_indent}{prefix}{connector}⚙️ {item_name}{test_link}")
             
             elif item_type == 'story':
                 story_name = item_name
@@ -685,6 +700,19 @@ class CLIScope(CLIBase):
         
         return story_file
     
+    def _build_sub_epic_folder_path(self, epic_name: Optional[str], sub_epic_name: str) -> Optional[Path]:
+        """Build the folder path for a sub-epic based on epic/sub-epic names."""
+        if not epic_name or not sub_epic_name:
+            return None
+        
+        # Build path: docs/stories/map/🎯 {epic_name}/⚙️ {sub_epic_name}/
+        map_dir = self._workspace_directory / 'docs' / 'stories' / 'map'
+        epic_folder = f"🎯 {epic_name}"
+        sub_epic_folder = f"⚙️ {sub_epic_name}"
+        
+        folder_path = map_dir / epic_folder / sub_epic_folder
+        return folder_path if folder_path.exists() and folder_path.is_dir() else None
+    
     def _build_test_file_link(self, test_file: str) -> str:
         """Build link to test file."""
         return build_test_file_link(test_file, self._workspace_directory)
@@ -705,6 +733,20 @@ class CLIScope(CLIBase):
             
             for sub_epic in epic['sub_epics']:
                 sub_epic_name = sub_epic.get('name')
+                
+                # Add folder path for sub-epic
+                if sub_epic_name:
+                    sub_epic_folder_path = self._build_sub_epic_folder_path(epic_name, sub_epic_name)
+                    if sub_epic_folder_path and sub_epic_folder_path.exists():
+                        try:
+                            rel_path = sub_epic_folder_path.relative_to(workspace_root)
+                            sub_epic['sub_epic_folder'] = str(rel_path).replace('\\', '/')
+                            sub_epic['sub_epic_folder_exists'] = True
+                        except (ValueError, AttributeError):
+                            sub_epic['sub_epic_folder'] = str(sub_epic_folder_path).replace('\\', '/')
+                            sub_epic['sub_epic_folder_exists'] = True
+                    else:
+                        sub_epic['sub_epic_folder_exists'] = False
                 
                 # Add test link for sub-epic (feature) if test_file exists
                 test_file = sub_epic.get('test_file')

@@ -350,11 +350,6 @@ Domain model for Base Bot
 ### Module: bot
 
 
-#### Action
-
-**Key Responsibilities:**
-- **Gets instructions for operation**: This responsibility involves collaboration with String, Operation.
-
 #### Base Bot
 
 **Key Responsibilities:**
@@ -392,6 +387,127 @@ Domain model for Base Bot
 - **Provide Extractors**: Provide Extractors
 - **Provide Synchronizer**: Provide Synchronizer
 - **Provide Trigger Words**: Provide Trigger Words
+
+### Module: display_panel.extension
+
+
+#### BehaviorActionSection
+
+**Key Responsibilities:**
+- **Wraps behaviors**: This responsibility involves collaboration with Behaviors.
+- **Renders behavior action tree**: This responsibility involves collaboration with Behavior, Action, Operation.
+- **Shows current action indicator**: This responsibility involves collaboration with Action.
+- **Shows completed status indicator**: This responsibility involves collaboration with Action.
+- **Shows pending indicator**: This responsibility involves collaboration with Action.
+- **Handles navigation to previous action**: This responsibility involves collaboration with Behaviors, StatusDataProvider.
+- **Handles navigation to next action**: This responsibility involves collaboration with Behaviors, StatusDataProvider.
+- **Handles rerun current action**: This responsibility involves collaboration with StatusDataProvider.
+- **Handles behavior click to execute**: This responsibility involves collaboration with Behavior, StatusDataProvider.
+- **Handles action click to execute**: This responsibility involves collaboration with Action, StatusDataProvider.
+- **Expands and collapses behaviors**: Expands and collapses behaviors
+- **Expands and collapses actions**: Expands and collapses actions
+- **Updates action status indicators**: This responsibility involves collaboration with Action.
+
+#### BotInformationSection
+
+**Key Responsibilities:**
+- **Wraps bot metadata**: This responsibility involves collaboration with Bot, Workspace.
+- **Displays bot name**: This responsibility involves collaboration with Bot.
+- **Displays workspace path**: This responsibility involves collaboration with Workspace.
+- **Displays bot directory path**: This responsibility involves collaboration with Bot.
+- **Displays company icon**: Displays company icon
+- **Displays panel version**: Displays panel version
+- **Renders bot selection**: This responsibility involves collaboration with BotRegistry.
+- **Handles workspace path edits**: This responsibility involves collaboration with Workspace, StatusDataProvider.
+- **Handles bot switching**: This responsibility involves collaboration with BotRegistry, StatusDataProvider.
+- **Expands and collapses section**: Expands and collapses section
+- **Truncates long paths with ellipsis**: Truncates long paths with ellipsis
+- **Shows full path in tooltip**: Shows full path in tooltip
+
+#### BotPanel
+
+**Key Responsibilities:**
+- **Wraps active bot**: This responsibility involves collaboration with Bot.
+- **Contains available bots**: This responsibility involves collaboration with BotRegistry.
+- **Contains sections**: This responsibility involves collaboration with BotInformationSection, BehaviorActionSection, ScopeSection, InstructionsSection.
+- **Renders panel HTML**: This responsibility involves collaboration with HtmlRenderer.
+- **Handles user messages**: This responsibility involves collaboration with VSCode, WebView.
+- **Manages panel lifecycle**: This responsibility involves collaboration with VSCode.
+- **Refreshes display**: This responsibility involves collaboration with StatusDataProvider, HtmlRenderer.
+- **Opens files in editor**: This responsibility involves collaboration with VSCode.
+
+#### BotRegistry
+
+**Key Responsibilities:**
+- **Stores available bot configurations**: This responsibility involves collaboration with Bot.
+- **Validates bot names**: Validates bot names
+- **Provides bot CLI paths**: This responsibility involves collaboration with Bot.
+
+#### CliOutputAdapter
+
+**Key Responsibilities:**
+- **Parses CLI JSON output**: Parses CLI JSON output
+- **Adapts CLI data to panel format**: Adapts CLI data to panel format
+- **Extracts behavior hierarchy**: This responsibility involves collaboration with Behaviors.
+- **Extracts scope information**: This responsibility involves collaboration with StoryGraph, FileList.
+- **Extracts instructions data**: This responsibility involves collaboration with Instructions.
+
+#### HtmlRenderer
+
+**Key Responsibilities:**
+- **Renders complete panel HTML**: This responsibility involves collaboration with BotPanel.
+- **Renders bot information section**: This responsibility involves collaboration with BotInformationSection.
+- **Renders behavior action section**: This responsibility involves collaboration with BehaviorActionSection.
+- **Renders scope section**: This responsibility involves collaboration with ScopeSection.
+- **Renders instructions section**: This responsibility involves collaboration with InstructionsSection.
+- **Generates JavaScript for webview interactions**: Generates JavaScript for webview interactions
+- **Escapes HTML entities**: Escapes HTML entities
+
+#### InstructionsSection
+
+**Key Responsibilities:**
+- **Wraps current instructions**: This responsibility involves collaboration with Instructions.
+- **Renders base instructions**: This responsibility involves collaboration with Instructions, Behavior, Action.
+- **Renders clarify instructions**: This responsibility involves collaboration with Instructions, KeyQuestions, Evidence.
+- **Renders strategy instructions**: This responsibility involves collaboration with Instructions, DecisionCriteria, Assumptions.
+- **Renders build instructions**: This responsibility involves collaboration with Instructions, KnowledgeGraphSpec, Rules.
+- **Renders validate instructions**: This responsibility involves collaboration with Instructions, Rules.
+- **Renders render instructions**: This responsibility involves collaboration with Instructions, RenderSpec, Templates.
+- **Renders raw instructions format**: This responsibility involves collaboration with Instructions.
+- **Handles instruction submission to AI chat**: This responsibility involves collaboration with VSCode, Instructions.
+- **Handles user edits to questions**: This responsibility involves collaboration with KeyQuestions.
+- **Handles user edits to assumptions**: This responsibility involves collaboration with Assumptions.
+- **Validates instructions selected**: This responsibility involves collaboration with Instructions.
+- **Expands and collapses section**: Expands and collapses section
+
+#### ScopeSection
+
+**Key Responsibilities:**
+- **Wraps story graph scope**: This responsibility involves collaboration with StoryGraph.
+- **Wraps file scope**: This responsibility involves collaboration with FileList.
+- **Renders story hierarchy**: This responsibility involves collaboration with StoryGraph.
+- **Renders file list**: This responsibility involves collaboration with FileList.
+- **Handles story search**: This responsibility involves collaboration with StoryGraph.
+- **Handles file pattern search**: This responsibility involves collaboration with FileList.
+- **Expands and collapses story nodes**: This responsibility involves collaboration with StoryGraph.
+- **Opens story graph JSON**: This responsibility involves collaboration with VSCode, StoryGraph.
+- **Opens story map diagram**: This responsibility involves collaboration with VSCode.
+- **Opens epic folder**: This responsibility involves collaboration with VSCode, StoryGraph.
+- **Opens sub-epic folder**: This responsibility involves collaboration with VSCode, StoryGraph.
+- **Opens test file at class**: This responsibility involves collaboration with VSCode, StoryGraph.
+- **Opens test file at scenario**: This responsibility involves collaboration with VSCode, StoryGraph.
+- **Displays hierarchical matches**: This responsibility involves collaboration with StoryGraph.
+- **Clears search**: Clears search
+
+#### StatusDataProvider
+
+**Key Responsibilities:**
+- **Fetches CLI status via Python subprocess**: This responsibility involves collaboration with PythonREPL.
+- **Switches current bot**: This responsibility involves collaboration with BotRegistry.
+- **Updates workspace path**: This responsibility involves collaboration with Workspace.
+- **Executes CLI commands**: This responsibility involves collaboration with PythonREPL.
+- **Loads bot registry from JSON**: This responsibility involves collaboration with BotRegistry.
+- **Provides available bot names**: This responsibility involves collaboration with BotRegistry.
 
 ### Module: ext
 
@@ -466,87 +582,6 @@ Domain model for Base Bot
 - **Get behaviors: CLIBehaviors**: This responsibility involves collaboration with CLIBehaviors.
 - **Get status text: str**: This responsibility involves collaboration with CLIBehaviors, CLIBehavior, CLIActions, CLIAction.
 - **Wraps domain bot**: This responsibility involves collaboration with Bot.
-
-### Module: repl_cli.headless
-
-
-#### ActionSummary
-
-**Key Responsibilities:**
-- **Aggregates operation results**: This responsibility involves collaboration with ActionSummary, List, OperationResult.
-- **Reports action completion**: This responsibility involves collaboration with String, ActionSummary.
-
-#### BehaviorSummary
-
-**Key Responsibilities:**
-- **Aggregates action results**: This responsibility involves collaboration with BehaviorSummary, List, ActionResult.
-- **Reports behavior completion**: This responsibility involves collaboration with String, BehaviorSummary.
-
-#### ErrorRecovery
-
-**Key Responsibilities:**
-- **Tracks recovery attempt count**: This responsibility involves collaboration with RecoveryAttemptCount.
-- **Waits before retry**: This responsibility involves collaboration with Duration.
-- **Restarts session**: This responsibility involves collaboration with HeadlessSession.
-- **Determines if error is recoverable**: This responsibility involves collaboration with RecoverableError, NonRecoverableError.
-- **Enforces max retry limit**: This responsibility involves collaboration with RecoveryAttemptCount.
-
-#### ExecutionContext
-
-**Key Responsibilities:**
-- **Loads from context file**: This responsibility involves collaboration with Path.
-- **Get user message**: This responsibility involves collaboration with UserMessage.
-- **Get chat history**: This responsibility involves collaboration with ChatHistory.
-- **Get file references**: This responsibility involves collaboration with FileReference.
-
-#### HeadlessSession
-
-**Key Responsibilities:**
-- **Invokes with message and context file**: This responsibility involves collaboration with Message, ContextFile, ExecutionResult.
-- **Invokes operation with behavior, action, operation, and context file**: This responsibility involves collaboration with ExecutionResult, Behavior, Action, Operation, ContextFile.
-- **Invokes complete action with behavior, action, and context file**: This responsibility involves collaboration with ExecutionResult, Behavior, Action, ContextFile.
-- **Invokes complete behavior with behavior name and context file**: This responsibility involves collaboration with ExecutionResult, Behavior, ContextFile.
-
-#### NonRecoverableError
-
-**Key Responsibilities:**
-- **Indicates CLI failure**: Indicates CLI failure
-- **Indicates API connection failure**: Indicates API connection failure
-- **Indicates max recovery attempts exceeded**: This responsibility involves collaboration with RecoveryAttemptCount.
-- **Cannot be retried**: Cannot be retried
-
-#### RecoverableError
-
-**Key Responsibilities:**
-- **Indicates AI hang**: Indicates AI hang
-- **Indicates AI stuck in planning**: Indicates AI stuck in planning
-- **Can be retried**: Can be retried
-
-#### SessionLog
-
-**Key Responsibilities:**
-- **Creates with timestamped path**: This responsibility involves collaboration with Path.
-- **Appends response**: This responsibility involves collaboration with Response.
-- **Appends total loops**: Appends total loops
-- **Get transcript**: Get transcript
-
-### Module: repl_cli.repl_help
-
-
-#### REPLHelp
-
-**Key Responsibilities:**
-- **Includes headless mode documentation**: This responsibility involves collaboration with HeadlessConfig.
-- **Shows headless command examples**: Shows headless command examples
-
-### Module: repl_cli.status_display
-
-
-#### StatusDisplay
-
-**Key Responsibilities:**
-- **Shows headless availability**: This responsibility involves collaboration with HeadlessConfig.
-- **Shows active session status**: This responsibility involves collaboration with HeadlessSession.
 
 ### Module: workflow
 
