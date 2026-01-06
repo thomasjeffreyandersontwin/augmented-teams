@@ -710,7 +710,7 @@ class HtmlRenderer {
     <div class="section card-primary" style="border-top: none; padding-top: 0;">
         <div class="main-header">
             ${imagePath ? `<img src="${imagePath}" class="main-header-icon" alt="Company Icon" onerror="console.error('Failed to load icon:', this.src); this.style.border='1px solid red';" />` : ''}
-            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.104</span></span>
+            <span class="main-header-title">Agile Bots <span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v0.24.105</span></span>
             <button class="main-header-refresh" onclick="refreshStatus()" title="Refresh">
                 ${refreshIconPath ? `<img src="${refreshIconPath}" style="width: 36px; height: 36px; object-fit: contain; filter: saturate(1.3) brightness(0.95) hue-rotate(-5deg);" alt="Refresh" />` : '🔄'}
             </button>
