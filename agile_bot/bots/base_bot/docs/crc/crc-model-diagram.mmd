@@ -283,9 +283,6 @@ classDiagram
     }
 
     namespace bot {
-        class Action {
-            +gets_instructions_for_operation()
-        }
         class Base Bot {
             +executes_actions()
             +track_activity()
@@ -315,6 +312,109 @@ classDiagram
             +provide_extractors()
             +provide_synchronizer()
             +provide_trigger_words()
+        }
+    }
+
+    namespace display_panel.extension {
+        class BehaviorActionSection {
+            +wraps_behaviors()
+            +renders_behavior_action_tree()
+            +shows_current_action_indicator()
+            +shows_completed_status_indicator()
+            +shows_pending_indicator()
+            +handles_navigation_to_previous_action()
+            +handles_navigation_to_next_action()
+            +handles_rerun_current_action()
+            +handles_behavior_click_to_execute()
+            +handles_action_click_to_execute()
+            +expands_and_collapses_behaviors()
+            +expands_and_collapses_actions()
+            +updates_action_status_indicators()
+        }
+        class BotInformationSection {
+            +wraps_bot_metadata()
+            +displays_bot_name()
+            +displays_workspace_path()
+            +displays_bot_directory_path()
+            +displays_company_icon()
+            +displays_panel_version()
+            +renders_bot_selection()
+            +handles_workspace_path_edits()
+            +handles_bot_switching()
+            +expands_and_collapses_section()
+            +truncates_long_paths_with_ellipsis()
+            +shows_full_path_in_tooltip()
+        }
+        class BotPanel {
+            +wraps_active_bot()
+            +contains_available_bots()
+            +contains_sections()
+            +renders_panel_html()
+            +handles_user_messages()
+            +manages_panel_lifecycle()
+            +refreshes_display()
+            +opens_files_in_editor()
+        }
+        class BotRegistry {
+            +stores_available_bot_configurations()
+            +validates_bot_names()
+            +provides_bot_cli_paths()
+        }
+        class CliOutputAdapter {
+            +parses_cli_json_output()
+            +adapts_cli_data_to_panel_format()
+            +extracts_behavior_hierarchy()
+            +extracts_scope_information()
+            +extracts_instructions_data()
+        }
+        class HtmlRenderer {
+            +renders_complete_panel_html()
+            +renders_bot_information_section()
+            +renders_behavior_action_section()
+            +renders_scope_section()
+            +renders_instructions_section()
+            +generates_javascript_for_webview_interactions()
+            +escapes_html_entities()
+        }
+        class InstructionsSection {
+            +wraps_current_instructions()
+            +renders_base_instructions()
+            +renders_clarify_instructions()
+            +renders_strategy_instructions()
+            +renders_build_instructions()
+            +renders_validate_instructions()
+            +renders_render_instructions()
+            +renders_raw_instructions_format()
+            +handles_instruction_submission_to_ai_chat()
+            +handles_user_edits_to_questions()
+            +handles_user_edits_to_assumptions()
+            +validates_instructions_selected()
+            +expands_and_collapses_section()
+        }
+        class ScopeSection {
+            +wraps_story_graph_scope()
+            +wraps_file_scope()
+            +renders_story_hierarchy()
+            +renders_file_list()
+            +handles_story_search()
+            +handles_file_pattern_search()
+            +expands_and_collapses_story_nodes()
+            +opens_story_graph_json()
+            +opens_story_map_diagram()
+            +opens_epic_folder()
+            +opens_sub-epic_folder()
+            +opens_test_file_at_class()
+            +opens_test_file_at_scenario()
+            +displays_hierarchical_matches()
+            +clears_search()
+        }
+        class StatusDataProvider {
+            +fetches_cli_status_via_python_subprocess()
+            +switches_current_bot()
+            +updates_workspace_path()
+            +executes_cli_commands()
+            +loads_bot_registry_from_json()
+            +provides_available_bot_names()
         }
     }
 
@@ -378,67 +478,6 @@ classDiagram
         }
     }
 
-    namespace repl_cli.headless {
-        class ActionSummary {
-            +aggregates_operation_results()
-            +reports_action_completion()
-        }
-        class BehaviorSummary {
-            +aggregates_action_results()
-            +reports_behavior_completion()
-        }
-        class ErrorRecovery {
-            +tracks_recovery_attempt_count()
-            +waits_before_retry()
-            +restarts_session()
-            +determines_if_error_is_recoverable()
-            +enforces_max_retry_limit()
-        }
-        class ExecutionContext {
-            +loads_from_context_file()
-            +get_user_message()
-            +get_chat_history()
-            +get_file_references()
-        }
-        class HeadlessSession {
-            +invokes_with_message_and_context_file()
-            +invokes_operation_with_behavior,_action,_operation,_and_context_file()
-            +invokes_complete_action_with_behavior,_action,_and_context_file()
-            +invokes_complete_behavior_with_behavior_name_and_context_file()
-        }
-        class NonRecoverableError {
-            +indicates_cli_failure()
-            +indicates_api_connection_failure()
-            +indicates_max_recovery_attempts_exceeded()
-            +cannot_be_retried()
-        }
-        class RecoverableError {
-            +indicates_ai_hang()
-            +indicates_ai_stuck_in_planning()
-            +can_be_retried()
-        }
-        class SessionLog {
-            +creates_with_timestamped_path()
-            +appends_response()
-            +appends_total_loops()
-            +get_transcript()
-        }
-    }
-
-    namespace repl_cli.repl_help {
-        class REPLHelp {
-            +includes_headless_mode_documentation()
-            +shows_headless_command_examples()
-        }
-    }
-
-    namespace repl_cli.status_display {
-        class StatusDisplay {
-            +shows_headless_availability()
-            +shows_active_session_status()
-        }
-    }
-
     namespace workflow {
         class BehaviorGraphBuilder {
             +read_behavior_workflow_definitions()
@@ -489,26 +528,20 @@ classDiagram
     
     %% Associations
     Base Bot --> Behavior : uses
-    Base Bot --> Action : uses
     Base Bot --> Router : uses
     Base Bot --> Content : uses
     Specific Bot --> Behavior : uses
-    BotLangActionNode --> Action : uses
     BotLangActionNode --> BotMode : uses
     BehaviorGraphBuilder --> Behavior : uses
     BehaviorGraphBuilder --> BotLangState : uses
     BehaviorGraphBuilder --> BotLangActionNode : uses
-    BehaviorGraphBuilder --> Action : uses
     BotLangFlowRunner --> BotLangFlow : uses
     BotLangFlowRunner --> Checkpoint : uses
     BotLangFlowRunner --> BotLangActionNode : uses
     BotLangFlowRunner --> BotLangState : uses
     StoryBotMCPServer --> Behavior : uses
-    StoryBotMCPServer --> Action : uses
     BehaviorToolGenerator --> Behavior : uses
-    BehaviorToolGenerator --> Action : uses
     ActionStateManager --> Behavior : uses
-    ActionStateManager --> Action : uses
     Synchronizer --> Renderer : uses
     StoryIOEpic --> Template : uses
     StoryIOFeature --> Template : uses
@@ -516,8 +549,6 @@ classDiagram
     StoryIOIncrement --> Template : uses
     Router --> Base Bot : uses
     Router --> Behavior : uses
-    Router --> Action : uses
-    Workflow State --> Action : uses
     Workflow State --> Behavior : uses
     Checkpoint --> BotLangState : uses
     Checkpoint --> BotLangFlowRunner : uses
@@ -528,14 +559,29 @@ classDiagram
     BotLangFlow --> BotLangState : uses
     BotLangFlow --> BotMode : uses
     BotLangFlow --> Checkpoint : uses
-    BotLangState --> Action : uses
-    Behavior Action State --> Action : uses
     Behavior Action State --> Behavior : uses
     Behavior --> Rule : uses
     Behavior --> Content : uses
-    Behavior --> Action : uses
     Base Action --> Behavior : uses
     Base Action --> Content : uses
+    BotPanel --> BotRegistry : uses
+    BotPanel --> BotInformationSection : uses
+    BotPanel --> BehaviorActionSection : uses
+    BotPanel --> ScopeSection : uses
+    BotPanel --> InstructionsSection : uses
+    BotPanel --> HtmlRenderer : uses
+    BotPanel --> StatusDataProvider : uses
+    BotInformationSection --> BotRegistry : uses
+    BotInformationSection --> StatusDataProvider : uses
+    BehaviorActionSection --> Behavior : uses
+    BehaviorActionSection --> StatusDataProvider : uses
+    InstructionsSection --> Behavior : uses
+    HtmlRenderer --> BotPanel : uses
+    HtmlRenderer --> BotInformationSection : uses
+    HtmlRenderer --> BehaviorActionSection : uses
+    HtmlRenderer --> ScopeSection : uses
+    HtmlRenderer --> InstructionsSection : uses
+    StatusDataProvider --> BotRegistry : uses
     REPLSession --> CLIBot : uses
     CLIBot --> CLIBehaviors : uses
     CLIBot --> CLIBehavior : uses
@@ -545,17 +591,7 @@ classDiagram
     CLIBehavior --> CLIActions : uses
     CLIBehavior --> Behavior : uses
     CLIActions --> CLIAction : uses
-    CLIAction --> Action : uses
-    HeadlessSession --> Behavior : uses
-    HeadlessSession --> Action : uses
-    StatusDisplay --> HeadlessSession : uses
-    ActionSummary --> ActionSummary : uses
-    BehaviorSummary --> BehaviorSummary : uses
-    ErrorRecovery --> HeadlessSession : uses
-    ErrorRecovery --> RecoverableError : uses
-    ErrorRecovery --> NonRecoverableError : uses
     Behavior Workflow --> Behavior : uses
-    Behavior Workflow --> Action : uses
     GatherContextAction --> Behavior : uses
     GatherContextAction --> Guardrails : uses
     PlanningAction --> Behavior : uses

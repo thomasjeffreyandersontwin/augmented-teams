@@ -39,11 +39,31 @@
     {
       "action_state": "crc_bot.domain.validate",
       "timestamp": "2026-01-02T10:41:07.897486"
+    },
+    {
+      "action_state": "crc_bot.design.clarify",
+      "timestamp": "2026-01-06T00:23:15.494612"
+    },
+    {
+      "action_state": "crc_bot.design.strategy",
+      "timestamp": "2026-01-06T00:23:15.494612"
+    },
+    {
+      "action_state": "crc_bot.design.build",
+      "timestamp": "2026-01-06T00:23:15.494612"
+    },
+    {
+      "action_state": "crc_bot.design.validate",
+      "timestamp": "2026-01-06T00:23:15.494612"
+    },
+    {
+      "action_state": "crc_bot.design.render",
+      "timestamp": "2026-01-06T00:23:15.494612"
     }
   ],
   "current_behavior": "story_bot.shape",
-  "timestamp": "2026-01-05T16:46:05.006459",
-  "current_action": "story_bot.shape.build",
+  "timestamp": "2026-01-06T01:13:27.737653",
+  "current_action": "story_bot.shape.clarify",
   "action_phase": "instructions",
   "completed_behaviors": [
     "scenarios",
@@ -55,8 +75,10 @@
   ],
   "working_directory": "agile_bot/bots/base_bot",
   "scope": {
-    "type": "showAll",
-    "value": [],
+    "type": "story",
+    "value": [
+      "Panel"
+    ],
     "exclude": [],
     "skiprule": []
   }
