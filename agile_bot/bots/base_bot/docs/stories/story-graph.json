@@ -17,6 +17,43 @@
               ]
             },
             {
+              "name": "Execute behavior by name",
+              "collaborators": [
+                "Behavior Name",
+                "BotResult"
+              ]
+            },
+            {
+              "name": "Execute current action",
+              "collaborators": [
+                "BotResult"
+              ]
+            },
+            {
+              "name": "Navigate and execute",
+              "collaborators": [
+                "Behavior Name",
+                "Action Name",
+                "ActionContext",
+                "BotResult"
+              ]
+            },
+            {
+              "name": "Validate behavior exists",
+              "collaborators": [
+                "Behavior Name",
+                "Boolean"
+              ]
+            },
+            {
+              "name": "Validate action exists",
+              "collaborators": [
+                "Behavior Name",
+                "Action Name",
+                "Boolean"
+              ]
+            },
+            {
               "name": "Track activity",
               "collaborators": [
                 "Behavior",
@@ -1442,6 +1479,43 @@
               ]
             },
             {
+              "name": "Execute behavior by name",
+              "collaborators": [
+                "Behavior Name",
+                "BotResult"
+              ]
+            },
+            {
+              "name": "Execute current action",
+              "collaborators": [
+                "BotResult"
+              ]
+            },
+            {
+              "name": "Navigate and execute",
+              "collaborators": [
+                "Behavior Name",
+                "Action Name",
+                "ActionContext",
+                "BotResult"
+              ]
+            },
+            {
+              "name": "Validate behavior exists",
+              "collaborators": [
+                "Behavior Name",
+                "Boolean"
+              ]
+            },
+            {
+              "name": "Validate action exists",
+              "collaborators": [
+                "Behavior Name",
+                "Action Name",
+                "Boolean"
+              ]
+            },
+            {
               "name": "Track activity",
               "collaborators": [
                 "Behavior",
@@ -2218,8 +2292,20 @@
                   "collaborators": ["JSON"]
                 },
                 {
-                  "name": "Invokes Bot",
-                  "collaborators": ["CLI"]
+                  "name": "Spawns subprocess",
+                  "collaborators": ["CLI Client", "Python Process"]
+                },
+                {
+                  "name": "Sends command to CLI",
+                  "collaborators": ["Command", "Stdin"]
+                },
+                {
+                  "name": "Receives JSON from CLI",
+                  "collaborators": ["Stdout"]
+                },
+                {
+                  "name": "Parses JSON",
+                  "collaborators": ["String", "Dict"]
                 },
                 {
                   "name": "Provides element ID",
@@ -2271,10 +2357,44 @@
                         "// VS Code Extension activated",
                         "panelData: JSON = CLI.execute('status')",
                         "  -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
+                        "  -> // Python process initialization",
+                        "  -> main()",
+                        "     -> bot: Bot = load_bot()",
+                        "     -> session: REPLSession = REPLSession(bot)",
+                        "        -> this.bot = bot",
+                        "        -> // Detect output context and select adapter",
+                        "        -> isTTY: bool = sys.stdout.isatty()",
+                        "        -> isPiped: bool = not isTTY",
+                        "        -> if isPiped: // Panel subprocess",
+                        "           this.adapter = JSONBotAdapter(bot)",
+                        "        -> elif isTTY: // Interactive terminal",
+                        "           this.adapter = TTYBotAdapter(bot)",
+                        "        -> // Store adapter for session lifecycle",
+                        "     -> session.run()",
                         "  -> stdin.write('status')",
-                        "  -> cliOutput: String = Bot.get_status_text()",
-                        "     -> botData: JSON = {name: 'story_bot', workspace: 'base_bot', behaviors: [...], paths: {...}}",
-                        "  return panelData: botData",
+                        "  -> REPLSession.handle_command('status')",
+                        "     -> // Use session's pre-initialized adapter",
+                        "     -> output: String = this.adapter.serialize()",
+                        "        -> // JSONBotAdapter.serialize() [piped mode]",
+                        "        -> jsonDict: Dict = {}",
+                        "        -> jsonDict['name'] = this.bot.name",
+                        "        -> jsonDict['behaviors'] = []",
+                        "        -> for behavior in this.bot.behaviors:",
+                        "           behaviorAdapter: JSONBehaviorAdapter = JSONBehaviorAdapter(behavior)",
+                        "           behaviorDict: Dict = behaviorAdapter.serialize()",
+                        "              -> actions: Array = []",
+                        "              -> for action in this.behavior.actions:",
+                        "                 actionAdapter: JSONActionAdapter = JSONActionAdapter(action)",
+                        "                 actionDict: Dict = actionAdapter.serialize()",
+                        "                    return {name: action.name, is_completed: action.is_completed, is_current: ...}",
+                        "                 actions.append(actionDict)",
+                        "              return {name: behavior.name, actions: actions, is_completed: ..., is_current: ...}",
+                        "           jsonDict['behaviors'].append(behaviorDict)",
+                        "        return json.dumps(jsonDict)",
+                        "     -> print(output) // stdout",
+                        "  -> stdout: String = pythonProcess.stdout.read()",
+                        "  -> panelData: JSON = JSON.parse(stdout)",
+                        "  return panelData",
                         "panel: Panel = new Panel(panelData, cli)",
                         "return panel"
                       ]
@@ -2315,10 +2435,15 @@
                         "// User clicks refresh button",
                         "BotHeaderView.onRefreshClick()",
                         "  -> newData: JSON = this.cli.execute('status')",
-                        "     -> pythonProcess: Process = spawn('python', ['repl_main.py'])",
-                        "     -> stdin.write('status')",
-                        "     -> botData: JSON = Bot.get_status_text()",
-                        "     return botData",
+                        "     -> pythonProcess.stdin.write('status')",
+                        "     -> REPLSession.handle_command('status', format='json')",
+                        "        -> adapter: JSONBotAdapter = JSONBotAdapter(bot)",
+                        "        -> jsonDict: Dict = adapter.serialize() // Delegates to JSONBehaviorAdapter, JSONActionAdapter",
+                        "        -> jsonString: String = json.dumps(jsonDict)",
+                        "        -> print(jsonString)",
+                        "     -> stdout: String = pythonProcess.stdout.read()",
+                        "     -> newData: JSON = JSON.parse(stdout)",
+                        "     return newData",
                         "  -> this.botJSON = newData",
                         "  -> panel.update(newData)",
                         "     -> this.botJSON = newData",
@@ -2355,7 +2480,7 @@
                 },
                 {
                   "name": "Refreshes panel",
-                  "collaborators": ["CLI"]
+                  "collaborators": ["CLI Client"]
                 }
               ]
             },
@@ -2405,7 +2530,7 @@
                 },
                 {
                   "name": "Edits workspace directory",
-                  "collaborators": ["CLI", "BotPaths JSON"]
+                  "collaborators": ["CLI Client", "BotPaths JSON"]
                 },
                 {
                   "name": "Displays available bots",
@@ -2427,7 +2552,7 @@
                 },
                 {
                   "name": "Selects bot",
-                  "collaborators": ["CLI", "Bot"]
+                  "collaborators": ["CLI Client", "Bot"]
                 }
               ]
             },
@@ -2455,7 +2580,7 @@
                 },
                 {
                   "name": "Navigates to behavior",
-                  "collaborators": ["CLI", "Behavior"]
+                  "collaborators": ["CLI Client", "Behavior"]
                 },
                 {
                   "name": "Toggles collapsed",
@@ -2471,7 +2596,7 @@
                 },
                 {
                   "name": "Executes behavior",
-                  "collaborators": ["CLI", "Behavior"]
+                  "collaborators": ["CLI Client", "Behavior"]
                 },
                 {
                   "name": "Displays completion progress",
@@ -2566,15 +2691,15 @@
                 },
                 {
                   "name": "Reruns action",
-                  "collaborators": ["CLI", "Action"]
+                  "collaborators": ["CLI Client", "Action"]
                 },
                 {
                   "name": "Navigates to next action",
-                  "collaborators": ["CLI", "Action"]
+                  "collaborators": ["CLI Client", "Action"]
                 },
                 {
                   "name": "Navigates to prev action",
-                  "collaborators": ["CLI", "Action"]
+                  "collaborators": ["CLI Client", "Action"]
                 }
               ]
             },
@@ -2592,7 +2717,7 @@
                 },
                 {
                   "name": "Navigates to action",
-                  "collaborators": ["CLI", "Action"]
+                  "collaborators": ["CLI Client", "Action"]
                 },
                 {
                   "name": "Displays status indicators",
@@ -2600,7 +2725,7 @@
                 },
                 {
                   "name": "Executes action",
-                  "collaborators": ["CLI", "Action"]
+                  "collaborators": ["CLI Client", "Action"]
                 },
                 {
                   "name": "Displays completion progress",
@@ -2622,15 +2747,15 @@
                 },
                 {
                   "name": "Filters story graph",
-                  "collaborators": ["CLI", "Scope JSON"]
+                  "collaborators": ["CLI Client", "Scope JSON"]
                 },
                 {
                   "name": "Filters files",
-                  "collaborators": ["CLI", "Scope JSON"]
+                  "collaborators": ["CLI Client", "Scope JSON"]
                 },
                 {
                   "name": "Clears filter",
-                  "collaborators": ["CLI", "Scope JSON"]
+                  "collaborators": ["CLI Client", "Scope JSON"]
                 },
                 {
                   "name": "Displays story graph",
@@ -2656,11 +2781,11 @@
                 },
                 {
                   "name": "Opens story graph file",
-                  "collaborators": ["CLI", "File JSON"]
+                  "collaborators": ["CLI Client", "File JSON"]
                 },
                 {
                   "name": "Opens story map file",
-                  "collaborators": ["CLI", "File JSON"]
+                  "collaborators": ["CLI Client", "File JSON"]
                 }
               ],
               "realization": [
@@ -2774,11 +2899,11 @@
                 },
                 {
                   "name": "Opens epic folder",
-                  "collaborators": ["CLI", "Epic JSON"]
+                  "collaborators": ["CLI Client", "Epic JSON"]
                 },
                 {
                   "name": "Opens epic test file",
-                  "collaborators": ["CLI", "Epic JSON"]
+                  "collaborators": ["CLI Client", "Epic JSON"]
                 }
               ]
             },
@@ -2812,11 +2937,11 @@
                 },
                 {
                   "name": "Opens sub epic folder",
-                  "collaborators": ["CLI", "SubEpic JSON"]
+                  "collaborators": ["CLI Client", "SubEpic JSON"]
                 },
                 {
                   "name": "Opens sub epic test file",
-                  "collaborators": ["CLI", "SubEpic JSON"]
+                  "collaborators": ["CLI Client", "SubEpic JSON"]
                 }
               ]
             },
@@ -2846,7 +2971,7 @@
                 },
                 {
                   "name": "Opens test at class",
-                  "collaborators": ["CLI", "Story JSON"]
+                  "collaborators": ["CLI Client", "Story JSON"]
                 }
               ]
             },
@@ -2868,7 +2993,7 @@
                 },
                 {
                   "name": "Opens test at scenario",
-                  "collaborators": ["CLI", "Scenario JSON"]
+                  "collaborators": ["CLI Client", "Scenario JSON"]
                 }
               ]
             },
@@ -2890,7 +3015,7 @@
                 },
                 {
                   "name": "Opens file",
-                  "collaborators": ["CLI", "Path JSON"]
+                  "collaborators": ["CLI Client", "Path JSON"]
                 }
               ]
             },
@@ -2920,7 +3045,7 @@
                 },
                 {
                   "name": "Submits to AI chat",
-                  "collaborators": ["CLI", "Instructions JSON"]
+                  "collaborators": ["CLI Client", "Instructions JSON"]
                 }
               ]
             },
@@ -2938,11 +3063,11 @@
                 },
                 {
                   "name": "Updates evidence",
-                  "collaborators": ["CLI", "Evidence JSON"]
+                  "collaborators": ["CLI Client", "Evidence JSON"]
                 },
                 {
                   "name": "Edits answer",
-                  "collaborators": ["CLI", "KeyQuestion JSON"]
+                  "collaborators": ["CLI Client", "KeyQuestion JSON"]
                 }
               ],
               "realization": [
@@ -3020,11 +3145,11 @@
                 },
                 {
                   "name": "Edits decision criterion",
-                  "collaborators": ["CLI", "DecisionCriterion JSON"]
+                  "collaborators": ["CLI Client", "DecisionCriterion JSON"]
                 },
                 {
                   "name": "Edits assumption",
-                  "collaborators": ["CLI", "Assumption JSON"]
+                  "collaborators": ["CLI Client", "Assumption JSON"]
                 }
               ]
             },
@@ -3050,7 +3175,7 @@
                 },
                 {
                   "name": "Opens graph file",
-                  "collaborators": ["CLI", "Path JSON"]
+                  "collaborators": ["CLI Client", "Path JSON"]
                 }
               ]
             },
@@ -3076,7 +3201,7 @@
                 },
                 {
                   "name": "Opens rule file",
-                  "collaborators": ["CLI", "Path JSON"]
+                  "collaborators": ["CLI Client", "Path JSON"]
                 }
               ]
             },
@@ -3102,7 +3227,7 @@
                 },
                 {
                   "name": "Opens template file",
-                  "collaborators": ["CLI", "Path JSON"]
+                  "collaborators": ["CLI Client", "Path JSON"]
                 }
               ]
             }
@@ -4247,28 +4372,532 @@
                   "collaborators": []
                 },
                 {
-                  "name": "Parses command input",
-                  "collaborators": [
-                    "CLIBot"
-                  ]
+                  "name": "Determine channel adapter",
+                  "collaborators": ["ChannelAdapter"]
                 },
                 {
-                  "name": "Routes commands to CLI bot",
-                  "collaborators": [
-                    "CLIBot"
-                  ]
+                  "name": "Read and execute command",
+                  "collaborators": ["Command String", "REPLCommandResponse"]
                 },
                 {
-                  "name": "Displays status and results",
-                  "collaborators": [
-                    "CLIBot"
-                  ]
+                  "name": "Parse command",
+                  "collaborators": ["Command String", "Command Verb", "Params"]
                 },
                 {
-                  "name": "Has CLI bot",
-                  "collaborators": [
-                    "CLIBot"
-                  ]
+                  "name": "Route to bot domain methods",
+                  "collaborators": ["Bot", "Command Verb", "Params", "BotResult"]
+                },
+                {
+                  "name": "Serializes via channel adapter",
+                  "collaborators": ["ChannelAdapter", "String"]
+                },
+                {
+                  "name": "Displays serialized output",
+                  "collaborators": ["Stdout"]
+                }
+              ]
+            },
+            {
+              "name": "ChannelAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize domain object to format",
+                  "collaborators": ["Domain Object", "Format"]
+                },
+                {
+                  "name": "Deserialize format to domain object",
+                  "collaborators": ["Format", "Domain Object"]
+                }
+              ]
+            },
+            {
+              "name": "JSONAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize to JSON dict",
+                  "collaborators": ["Dict"]
+                },
+                {
+                  "name": "Deserialize JSON dict",
+                  "collaborators": ["Dict", "Domain Object"]
+                },
+                {
+                  "name": "Convert to JSON string",
+                  "collaborators": ["Dict", "String"]
+                },
+                {
+                  "name": "Parse JSON string",
+                  "collaborators": ["String", "Dict"]
+                },
+                {
+                  "name": "Validate JSON structure",
+                  "collaborators": ["Dict", "Schema"]
+                }
+              ]
+            },
+            {
+              "name": "JSONStatusAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Include status fields",
+                  "collaborators": ["Is Completed", "Is Current"]
+                },
+                {
+                  "name": "Include completion markers",
+                  "collaborators": ["Status String"]
+                }
+              ]
+            },
+            {
+              "name": "JSONBotAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize bot to JSON dict",
+                  "collaborators": ["Bot", "Dict"]
+                },
+                {
+                  "name": "Include bot metadata",
+                  "collaborators": ["Name", "Directory", "Paths"]
+                },
+                {
+                  "name": "Include behaviors",
+                  "collaborators": ["Behaviors", "Array"]
+                },
+                {
+                  "name": "Wraps domain bot",
+                  "collaborators": ["Bot"]
+                }
+              ]
+            },
+            {
+              "name": "JSONBehaviorAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize behavior to JSON dict",
+                  "collaborators": ["Behavior", "Dict"]
+                },
+                {
+                  "name": "Include behavior metadata",
+                  "collaborators": ["Name", "Description", "Status"]
+                },
+                {
+                  "name": "Include actions",
+                  "collaborators": ["Actions", "Array"]
+                },
+                {
+                  "name": "Wraps domain behavior",
+                  "collaborators": ["Behavior"]
+                }
+              ]
+            },
+            {
+              "name": "JSONActionAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize action to JSON dict",
+                  "collaborators": ["Action", "Dict"]
+                },
+                {
+                  "name": "Include action metadata",
+                  "collaborators": ["Name", "Description", "Status"]
+                },
+                {
+                  "name": "Wraps domain action",
+                  "collaborators": ["Action"]
+                }
+              ]
+            },
+            {
+              "name": "JSONScopeAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize scope to JSON dict",
+                  "collaborators": ["Scope", "Dict"]
+                },
+                {
+                  "name": "Include scope type",
+                  "collaborators": ["Scope Type", "String"]
+                },
+                {
+                  "name": "Include scope values",
+                  "collaborators": ["List", "Array"]
+                },
+                {
+                  "name": "Include filtered files",
+                  "collaborators": ["Files", "Array"]
+                },
+                {
+                  "name": "Wraps domain scope",
+                  "collaborators": ["Scope"]
+                }
+              ]
+            },
+            {
+              "name": "JSONInstructionsAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize instructions to JSON",
+                  "collaborators": ["Instructions", "Dict"]
+                },
+                {
+                  "name": "Include instruction sections",
+                  "collaborators": ["Sections", "Array"]
+                },
+                {
+                  "name": "Wraps domain instructions",
+                  "collaborators": ["Instructions"]
+                }
+              ]
+            },
+            {
+              "name": "JSONHelpAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize help to JSON",
+                  "collaborators": ["Help", "Dict"]
+                },
+                {
+                  "name": "Include help sections",
+                  "collaborators": ["Sections", "Array"]
+                },
+                {
+                  "name": "Wraps domain help",
+                  "collaborators": ["Help"]
+                }
+              ]
+            },
+            {
+              "name": "TextAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Parse command text",
+                  "collaborators": ["Text String", "Command", "Params"]
+                }
+              ]
+            },
+            {
+              "name": "TTYAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize to TTY text",
+                  "collaborators": ["Domain Object", "String"]
+                },
+                {
+                  "name": "Deserialize TTY text",
+                  "collaborators": ["String", "Domain Object"]
+                },
+                {
+                  "name": "Add color",
+                  "collaborators": ["Text", "Color"]
+                },
+                {
+                  "name": "Format indentation",
+                  "collaborators": ["Indent Level", "Spaces"]
+                }
+              ]
+            },
+            {
+              "name": "TTYStatusAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Format line with marker",
+                  "collaborators": ["Marker", "Text", "Indent"]
+                },
+                {
+                  "name": "Render marker",
+                  "collaborators": ["Status", "Completion"]
+                }
+              ]
+            },
+            {
+              "name": "TTYBotAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize bot to TTY",
+                  "collaborators": ["Bot", "String"]
+                },
+                {
+                  "name": "Format bot header",
+                  "collaborators": ["Bot Name", "String"]
+                },
+                {
+                  "name": "Format behaviors",
+                  "collaborators": ["Behaviors", "String"]
+                },
+                {
+                  "name": "Wraps domain bot",
+                  "collaborators": ["Bot"]
+                }
+              ]
+            },
+            {
+              "name": "TTYBehaviorAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize behavior to TTY",
+                  "collaborators": ["Behavior", "String"]
+                },
+                {
+                  "name": "Format behavior line",
+                  "collaborators": ["Behavior Name", "Marker", "Color"]
+                },
+                {
+                  "name": "Format actions",
+                  "collaborators": ["Actions", "String"]
+                },
+                {
+                  "name": "Wraps domain behavior",
+                  "collaborators": ["Behavior"]
+                }
+              ]
+            },
+            {
+              "name": "TTYActionAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize action to TTY",
+                  "collaborators": ["Action", "String"]
+                },
+                {
+                  "name": "Format action line",
+                  "collaborators": ["Action Name", "Marker", "Indent"]
+                },
+                {
+                  "name": "Wraps domain action",
+                  "collaborators": ["Action"]
+                }
+              ]
+            },
+            {
+              "name": "TTYScopeAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize scope to TTY",
+                  "collaborators": ["Scope", "String"]
+                },
+                {
+                  "name": "Format scope type",
+                  "collaborators": ["Scope Type", "String"]
+                },
+                {
+                  "name": "Format scope values",
+                  "collaborators": ["List", "String"]
+                },
+                {
+                  "name": "Wraps domain scope",
+                  "collaborators": ["Scope"]
+                }
+              ]
+            },
+            {
+              "name": "TTYInstructionsAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize instructions to TTY",
+                  "collaborators": ["Instructions", "String"]
+                },
+                {
+                  "name": "Format instruction sections",
+                  "collaborators": ["Sections", "String"]
+                },
+                {
+                  "name": "Wraps domain instructions",
+                  "collaborators": ["Instructions"]
+                }
+              ]
+            },
+            {
+              "name": "TTYHelpAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize help to TTY",
+                  "collaborators": ["Help", "String"]
+                },
+                {
+                  "name": "Format help sections",
+                  "collaborators": ["Sections", "String"]
+                },
+                {
+                  "name": "Wraps domain help",
+                  "collaborators": ["Help"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize to Markdown",
+                  "collaborators": ["String"]
+                },
+                {
+                  "name": "Deserialize Markdown",
+                  "collaborators": ["String", "Domain Object"]
+                },
+                {
+                  "name": "Parse markdown sections",
+                  "collaborators": ["Markdown", "Sections"]
+                },
+                {
+                  "name": "Format header",
+                  "collaborators": ["Level", "Text"]
+                },
+                {
+                  "name": "Format list item",
+                  "collaborators": ["Marker", "Text", "Indent"]
+                },
+                {
+                  "name": "Format code block",
+                  "collaborators": ["Language", "Content"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownStatusAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Render status marker",
+                  "collaborators": ["Status", "Marker String"]
+                },
+                {
+                  "name": "Format status line",
+                  "collaborators": ["Name", "Status", "String"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownBotAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize bot to Markdown",
+                  "collaborators": ["Bot", "String"]
+                },
+                {
+                  "name": "Format bot documentation",
+                  "collaborators": ["Bot Name", "Description", "Header"]
+                },
+                {
+                  "name": "Format behaviors",
+                  "collaborators": ["Behaviors", "Markdown Sections"]
+                },
+                {
+                  "name": "Wraps domain bot",
+                  "collaborators": ["Bot"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownBehaviorAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize behavior to Markdown",
+                  "collaborators": ["Behavior", "String"]
+                },
+                {
+                  "name": "Format behavior documentation",
+                  "collaborators": ["Behavior Name", "Description", "Section"]
+                },
+                {
+                  "name": "Format actions",
+                  "collaborators": ["Actions", "Markdown Subsections"]
+                },
+                {
+                  "name": "Wraps domain behavior",
+                  "collaborators": ["Behavior"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownActionAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize action to Markdown",
+                  "collaborators": ["Action", "String"]
+                },
+                {
+                  "name": "Format action documentation",
+                  "collaborators": ["Action Name", "Description", "Subsection"]
+                },
+                {
+                  "name": "Wraps domain action",
+                  "collaborators": ["Action"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownScopeAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize scope to Markdown",
+                  "collaborators": ["Scope", "String"]
+                },
+                {
+                  "name": "Format scope documentation",
+                  "collaborators": ["Scope Type", "Values", "Section"]
+                },
+                {
+                  "name": "Wraps domain scope",
+                  "collaborators": ["Scope"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownInstructionsAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize instructions to Markdown",
+                  "collaborators": ["Instructions", "String"]
+                },
+                {
+                  "name": "Format instruction sections",
+                  "collaborators": ["Sections", "Markdown"]
+                },
+                {
+                  "name": "Wraps domain instructions",
+                  "collaborators": ["Instructions"]
+                }
+              ]
+            },
+            {
+              "name": "MarkdownHelpAdapter",
+              "module": "repl_cli.adapters",
+              "responsibilities": [
+                {
+                  "name": "Serialize help to Markdown",
+                  "collaborators": ["Help", "String"]
+                },
+                {
+                  "name": "Format help sections",
+                  "collaborators": ["Sections", "Markdown"]
+                },
+                {
+                  "name": "Wraps domain help",
+                  "collaborators": ["Help"]
                 }
               ]
             },

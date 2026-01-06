@@ -240,6 +240,11 @@ StoryIOSynchronizer : Synchronizer
 
 Base Bot
     Executes Actions: Workflow,Behavior,Action
+    Execute behavior by name: Behavior Name,BotResult
+    Execute current action: BotResult
+    Navigate and execute: Behavior Name,Action Name,ActionContext,BotResult
+    Validate behavior exists: Behavior Name,Boolean
+    Validate action exists: Behavior Name,Action Name,Boolean
     Track activity: Behavior,Action
     Route to behaviors and actions: Router,Trigger Words
     Persist content: Content
@@ -273,7 +278,10 @@ Specific Bot
 
 PanelView (Base)
     Wraps JSON data: JSON
-    Invokes Bot: CLI
+    Spawns subprocess: CLI,Python Process
+    Sends command to CLI: Command,Stdin
+    Receives JSON from CLI: Stdout
+    Parses JSON: String,Dict
     Provides element ID: String
     Renders to HTML: HTML,JSON
 
@@ -482,41 +490,151 @@ Router
 REPLSession
     Runs REPL loop: 
     Reads input from stdin or terminal: 
-    Parses command input: CLIBot
-    Routes commands to CLI bot: CLIBot
-    Displays status and results: CLIBot
-    Has CLI bot: CLIBot
+    Determine channel adapter: ChannelAdapter
+    Read and execute command: Command String,REPLCommandResponse
+    Parse command: Command String,Command Verb,Params
+    Route to bot domain methods: Bot,Command Verb,Params,BotResult
+    Serializes via channel adapter: ChannelAdapter,String
+    Displays serialized output: Stdout
+    
 
-CLIAction
-    Get name: str: 
-    Get description: str: 
-    Is current: bool: 
-    Is completed: bool: 
-    Executes: ActionResult: Action
-    Wraps domain action: Action
+## Module: repl_cli.adapters
 
-CLIActions
-    Get all: List[CLIAction]: CLIAction
-    Get current: CLIAction: CLIAction
-    Find by name: CLIAction: CLIAction
-    Wraps domain actions: Actions
+ChannelAdapter (Abstract)
+    Serialize domain object to format: Domain Object,Format
+    Deserialize format to domain object: Format,Domain Object
 
-CLIBehavior
-    Get name: str: 
-    Get description: str: 
-    Get actions: CLIActions: CLIActions
-    Is current: bool: 
+TextAdapter : ChannelAdapter (Abstract)
+    Parse command text: Text String,Command,Params
+
+TTYAdapter : TextAdapter (Abstract)
+    Serialize to TTY text: Domain Object,String
+    Deserialize TTY text: String,Domain Object
+    Add color: Text,Color
+    Format indentation: Indent Level,Spaces
+
+TTYStatusAdapter : TTYAdapter (Abstract)
+    Format line with marker: Marker,Text,Indent
+    Render marker: Status,Completion
+
+TTYInstructionsAdapter : TTYAdapter
+    Serialize instructions to TTY: Instructions,String
+    Format instruction sections: Sections,String
+    Wraps domain instructions: Instructions
+
+TTYHelpAdapter : TTYAdapter
+    Serialize help to TTY: Help,String
+    Format help sections: Sections,String
+    Wraps domain help: Help
+
+TTYBotAdapter : TTYStatusAdapter
+    Serialize bot to TTY: Bot,String
+    Format bot header: Bot Name,String
+    Format behaviors: Behaviors,String
+    Wraps domain bot: Bot
+
+TTYBehaviorAdapter : TTYStatusAdapter
+    Serialize behavior to TTY: Behavior,String
+    Format behavior line: Behavior Name,Marker,Color
+    Format actions: Actions,String
     Wraps domain behavior: Behavior
 
-CLIBehaviors
-    Get all: List[CLIBehavior]: CLIBehavior
-    Get current: CLIBehavior: CLIBehavior
-    Find by name: CLIBehavior: CLIBehavior
-    Wraps domain behaviors: Behaviors
+TTYActionAdapter : TTYStatusAdapter
+    Serialize action to TTY: Action,String
+    Format action line: Action Name,Marker,Indent
+    Wraps domain action: Action
 
-CLIBot
-    Get name: str: 
-    Get workspace directory: Path: 
-    Get behaviors: CLIBehaviors: CLIBehaviors
-    Get status text: str: CLIBehaviors,CLIBehavior,CLIActions,CLIAction
+TTYScopeAdapter : TTYAdapter
+    Serialize scope to TTY: Scope,String
+    Format scope type: Scope Type,String
+    Format scope values: List,String
+    Wraps domain scope: Scope
+
+JSONAdapter : ChannelAdapter (Abstract)
+    Serialize to JSON dict: Dict
+    Deserialize JSON dict: Dict, Domain Object
+    Convert to JSON string: Dict, String
+    Parse JSON string: String, Dict
+    Validate JSON structure: Dict, Schema
+
+JSONStatusAdapter : JSONAdapter (Abstract)
+    Include status fields: Is Completed, Is Current
+    Include completion markers: Status String
+
+JSONInstructionsAdapter : JSONAdapter
+    Serialize instructions to JSON: Instructions,Dict
+    Include instruction sections: Sections,Array
+    Wraps domain instructions: Instructions
+
+JSONHelpAdapter : JSONAdapter
+    Serialize help to JSON: Help,Dict
+    Include help sections: Sections,Array
+    Wraps domain help: Help
+
+JSONBotAdapter : JSONStatusAdapter
+    Serialize bot to JSON dict: Bot,Dict
+    Include bot metadata: Name,Directory,Paths
+    Include behaviors: Behaviors,Array
     Wraps domain bot: Bot
+
+JSONBehaviorAdapter : JSONStatusAdapter
+    Serialize behavior to JSON dict: Behavior,Dict
+    Include behavior metadata: Name,Description,Status
+    Include actions: Actions,Array
+    Wraps domain behavior: Behavior
+
+JSONActionAdapter : JSONStatusAdapter
+    Serialize action to JSON dict: Action,Dict
+    Include action metadata: Name,Description,Status
+    Wraps domain action: Action
+
+JSONScopeAdapter : JSONAdapter
+    Serialize scope to JSON dict: Scope,Dict
+    Include scope type: Scope Type,String
+    Include scope values: List,Array
+    Include filtered files: Files,Array
+    Wraps domain scope: Scope
+
+MarkdownAdapter : TextAdapter (Abstract)
+    Serialize to Markdown: String
+    Deserialize Markdown: String, Domain Object
+    Parse markdown sections: Markdown, Sections
+    Format header: Level,Text
+    Format list item: Marker, Text, Indent
+    Format code block: Language, Content
+
+MarkdownStatusAdapter : MarkdownAdapter (Abstract)
+    Render status marker: Status, Marker String
+    Format status line: Name, Status, String
+
+MarkdownInstructionsAdapter : MarkdownAdapter
+    Serialize instructions to Markdown: Instructions,String
+    Format instruction sections: Sections,Markdown
+    Wraps domain instructions: Instructions
+
+MarkdownHelpAdapter : MarkdownAdapter
+    Serialize help to Markdown: Help,String
+    Format help sections: Sections,Markdown
+    Wraps domain help: Help
+
+MarkdownBotAdapter : MarkdownStatusAdapter
+    Serialize bot to Markdown: Bot,String
+    Format bot documentation: Bot Name,Description,Header
+    Format behaviors: Behaviors,Markdown Sections
+    Wraps domain bot: Bot
+
+MarkdownBehaviorAdapter : MarkdownStatusAdapter
+    Serialize behavior to Markdown: Behavior,String
+    Format behavior documentation: Behavior Name,Description,Section
+    Format actions: Actions,Markdown Subsections
+    Wraps domain behavior: Behavior
+
+MarkdownActionAdapter : MarkdownStatusAdapter
+    Serialize action to Markdown: Action,String
+    Format action documentation: Action Name,Description,Subsection
+    Wraps domain action: Action
+
+MarkdownScopeAdapter : MarkdownAdapter
+    Serialize scope to Markdown: Scope,String
+    Format scope documentation: Scope Type,Values,Section
+    Wraps domain scope: Scope
