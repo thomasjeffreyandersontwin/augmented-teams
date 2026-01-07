@@ -2578,38 +2578,6 @@
                       "connector": "and",
                       "stories": [
                         {
-                          "name": "Track Activity for Gather Context Action",
-                          "sequential_order": 2,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "test_class": "TestTrackActivityForClarifyContextAction",
-                          "acceptance_criteria": [
-                            "WHEN GatherContextAction executes",
-                            "THEN Action creates activity entry with timestamp, action name, behavior name",
-                            "AND Activity entry appended to {project_area}/activity_log.json"
-                          ],
-                          "scenarios": [
-                            {
-                              "name": "Track activity when gather_context action starts",
-                              "steps": "Given behavior is 'discovery'\nAnd action is 'gather_context'\nWhen gather_context action starts execution\nThen Activity logger creates entry with:\n  - timestamp=[start timestamp]\n  - action_state='story_bot.discovery.gather_context'\n  - inputs={source_files_count: 2, context_type: \"exploration\"}\nAnd Entry is appended to activity log at project_area/\nAnd Activity log records action initiation",
-                              "test_method": "test_track_activity_when_gather_context_action_starts"
-                            },
-                            {
-                              "name": "Track activity when gather_context action completes",
-                              "steps": "Given gather_context action started at timestamp='2025-12-03T10:00:00Z'\nAnd activity log has entry for gather_context  \nWhen gather_context action finishes execution at timestamp='2025-12-03T10:05:30Z'\nThen Activity logger creates completion entry with:\n  - action_state='story_bot.discovery.gather_context'\n  - outputs={questions_count: 5, evidence_count: 3, file_path: \"clarifications.json\"}\n  - duration=330 (seconds: 5.5 minutes)\nAnd Entry is appended to activity log\nAnd Activity log shows complete execution record with metrics and file path",
-                              "test_method": "test_track_activity_when_gather_context_action_completes"
-                            },
-                            {
-                              "name": "Track multiple gather_context invocations across behaviors",
-                              "steps": "Given activity log contains entry for story_bot.shape.gather_context completed at 09:00\nAnd activity log contains entry for story_bot.discovery.gather_context completed at 10:00\nWhen both entries are present in activity log\nThen activity log contains 2 separate entries:\n  - Entry 1: action_state='story_bot.shape.gather_context', timestamp='2025-12-03T09:00:00Z'\n  - Entry 2: action_state='story_bot.discovery.gather_context', timestamp='2025-12-03T10:00:00Z'\nAnd Each entry has its own inputs (metrics/paths), outputs (metrics/paths), and duration\nAnd Activity log distinguishes same action in different behaviors using full path",
-                              "test_method": "test_track_multiple_gather_context_invocations_across_behaviors"
-                            }
-                          ]
-                        },
-                        {
                           "name": "Store Clarification Data",
                           "sequential_order": 3,
                           "connector": "or",
@@ -2640,40 +2608,6 @@
                               "name": "Skip saving when no clarification parameters provided",
                               "steps": "GIVEN: gather_context action executes\nWHEN: no clarification parameters are provided\nTHEN: clarification.json is not created or updated",
                               "test_method": "test_skip_saving_when_no_clarification_parameters_provided"
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Proceed To Decide Planning",
-                          "sequential_order": 4,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "test_class": "TestProceedToDecidePlanning",
-                          "acceptance_criteria": [
-                            "WHEN GatherContextAction completes execution",
-                            "AND Human says action is done",
-                            "THEN GatherContextAction saves Workflow State (per \"Saves Behavior State\" story)",
-                            "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
-                            "AND Workflow proceeds to decide_planning_criteria"
-                          ],
-                          "scenarios": [
-                            {
-                              "name": "Seamless transition from gather_context to decide_planning_criteria",
-                              "steps": "Given behavior is 'discovery'\nAnd gather_context action is complete\nAnd Human confirms \"done\" or \"proceed\"\nWhen gather_context action finalizes\nThen Action saves Workflow State with:\n  - current_behavior='story_bot.discovery'\n  - current_action='story_bot.discovery.gather_context'\n  - timestamp=[completion time]\nAnd Action loads gather_context/action configuration\nAnd Action reads next_action='decide_planning_criteria'\nAnd Action injects AI instructions: \"When done, proceed to decide_planning_criteria\"\nAnd AI invokes decide_planning_criteria tool\nAnd Workflow transitions seamlessly to next action",
-                              "test_method": "test_seamless_transition_from_gather_context_to_decide_planning_criteria"
-                            },
-                            {
-                              "name": "Workflow state captures gather_context completion",
-                              "steps": "Given gather_context action completes at timestamp='2025-12-03T10:05:30Z'\nAnd Human confirms \"done\"\nWhen Action saves workflow state\nThen workflow state is updated with:\n  - current_action='story_bot.exploration.gather_context'\n  - timestamp='2025-12-03T10:05:30Z'\nAnd completed_actions list includes: {action_state: 'story_bot.exploration.gather_context', timestamp: '2025-12-03T10:05:30Z'}\nAnd State persists to project_area/workflow state\nAnd If workflow is interrupted after this point, gather_context is marked as completed",
-                              "test_method": "test_workflow_state_captures_gather_context_completion"
-                            },
-                            {
-                              "name": "Workflow resumes at decide_planning_criteria after interruption",
-                              "steps": "Given gather_context is completed and chat was interrupted\nWhen user reopens chat and invokes bot tool\nThen Router forwards to decide_planning_criteria action",
-                              "test_method": "test_workflow_resumes_at_decide_planning_criteria_after_interruption"
                             }
                           ]
                         },
@@ -2869,33 +2803,6 @@
                       "connector": "or",
                       "stories": [
                         {
-                          "name": "Track Activity for Strategy Action",
-                          "sequential_order": 2,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN PlanningAction executes",
-                            "THEN Action creates activity entry with timestamp, action name, behavior name",
-                            "AND Activity entry appended to {project_area}/activity_log.json"
-                          ],
-                          "scenarios": [
-                            {
-                              "name": "Track activity when planning action starts",
-                              "steps": "Given behavior is 'exploration'\nAnd action is 'decide_planning_criteria'\nWhen decide_planning_criteria action starts execution\nThen Activity logger creates entry with:\n  - timestamp=[start timestamp]\n  - action_state='story_bot.exploration.decide_planning_criteria'\n  - inputs={questions_count: 5, evidence_count: 3, context_file_path: \"clarifications.json\"}\nAnd Entry is appended to activity log at project_area/\nAnd Activity log records action initiation",
-                              "test_method": "test_track_activity_when_planning_action_starts"
-                            },
-                            {
-                              "name": "Track activity when planning action completes",
-                              "steps": "Given decide_planning_criteria action started at timestamp='2025-12-03T10:15:00Z'\nAnd activity log has entry for decide_planning_criteria\nWhen decide_planning_criteria action finishes execution at timestamp='2025-12-03T10:25:00Z'\nThen Activity logger creates completion entry with:\n  - action_state='story_bot.exploration.decide_planning_criteria'\n  - outputs={criteria_count: 4, assumptions_count: 2, decisions_count: 3, file_path: \"planning.json\"}\n  - duration=600 (seconds: 10 minutes)\nAnd Entry is appended to activity log\nAnd Activity log shows complete execution record with duration",
-                              "test_method": "test_track_activity_when_planning_action_completes"
-                            }
-                          ],
-                          "test_class": "TestTrackActivityForStrategyAction"
-                        },
-                        {
                           "name": "Store Strategy Data",
                           "sequential_order": 3,
                           "connector": "or",
@@ -2921,35 +2828,6 @@
                               "test_method": "test_skip_saving_when_no_strategy_parameters_provided"
                             }
                           ]
-                        },
-                        {
-                          "name": "Proceed To Build Knowledge",
-                          "sequential_order": 4,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN PlanningAction completes execution",
-                            "WHEN Human says action is done",
-                            "THEN PlanningAction saves Workflow State (per \"Saves Behavior State\" story)",
-                            "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
-                            "AND Workflow proceeds to build_knowledge"
-                          ],
-                          "scenarios": [
-                            {
-                              "name": "Seamless transition from planning to build_knowledge",
-                              "steps": "Given behavior is 'discovery'\nAnd decide_planning_criteria action is complete\nAnd Human confirms \"done\" or \"proceed\"\nWhen decide_planning_criteria action finalizes\nThen Action saves Workflow State with:\n  - current_behavior='story_bot.discovery'\n  - current_action='story_bot.discovery.decide_planning_criteria'\n  - timestamp=[completion time]\nAnd Action loads decide_planning_criteria/action configuration\nAnd Action reads next_action='build_knowledge'\nAnd Action injects AI instructions: \"When done, proceed to build_knowledge\"\nAnd AI invokes build_knowledge tool\nAnd Workflow transitions seamlessly to next action",
-                              "test_method": "test_seamless_transition_from_planning_to_build_knowledge"
-                            },
-                            {
-                              "name": "Workflow state captures planning completion",
-                              "steps": "Given decide_planning_criteria action completes at timestamp='2025-12-03T10:25:00Z'\nAnd Human confirms \"done\"\nWhen Action saves workflow state\nThen workflow state is updated with:\n  - current_action='story_bot.exploration.decide_planning_criteria'\n  - timestamp='2025-12-03T10:25:00Z'\nAnd completed_actions list includes: {action_state: 'story_bot.exploration.decide_planning_criteria', timestamp: '2025-12-03T10:25:00Z'}\nAnd State persists to project_area/workflow state\nAnd If workflow is interrupted after this point, planning is marked as completed",
-                              "test_method": "test_workflow_state_captures_planning_completion"
-                            }
-                          ],
-                          "test_class": "TestProceedToBuildKnowledge"
                         },
                         {
                           "name": "Store Strategy Data",
@@ -3134,33 +3012,6 @@
                           ]
                         },
                         {
-                          "name": "Track Activity for Build Knowledge Action",
-                          "sequential_order": 3,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN BuildKnowledgeAction executes",
-                            "THEN Action creates activity entry with timestamp, action name, behavior name",
-                            "AND Activity entry appended to {project_area}/activity_log.json"
-                          ],
-                          "test_class": "TestTrackActivityForBuildKnowledgeAction",
-                          "scenarios": [
-                            {
-                              "name": "Track activity when build action starts",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Build knowledge action starts\nTHEN: Activity is tracked",
-                              "test_method": "test_track_activity_when_build_action_starts"
-                            },
-                            {
-                              "name": "Track activity when build action completes",
-                              "steps": "GIVEN: Build knowledge outputs and duration\nWHEN: Build knowledge action completes\nTHEN: Activity is tracked with outputs and duration",
-                              "test_method": "test_track_activity_when_build_action_completes"
-                            }
-                          ]
-                        },
-                        {
                           "name": "Update Existing Knowledge Graph",
                           "sequential_order": 4,
                           "connector": "opt",
@@ -3180,34 +3031,6 @@
                               "name": "Behavior updates existing story graph JSON",
                               "steps": "GIVEN: Existing story-graph.json file exists\nWHEN: Build Knowledge Action executes for behavior\nTHEN: Action updates existing story-graph.json\nAND: Action adds increments array\nAND: Existing epics are preserved",
                               "test_method": "test_behavior_updates_existing_story_graph_json"
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Proceed To Render Output",
-                          "sequential_order": 5,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN BuildKnowledgeAction completes execution",
-                            "THEN BuildKnowledgeAction saves Workflow State (per \"Saves Behavior State\" story)",
-                            "AND BuildKnowledgeAction processes content for saving",
-                            "AND Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)"
-                          ],
-                          "test_class": "TestProceedToRenderOutput",
-                          "scenarios": [
-                            {
-                              "name": "Seamless transition from build knowledge to validate rules",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Build knowledge action completes\nTHEN: Workflow transitions to validate",
-                              "test_method": "test_seamless_transition_from_build_to_validate"
-                            },
-                            {
-                              "name": "Workflow state captures build knowledge completion",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Build knowledge action completes\nTHEN: Workflow state captures completion",
-                              "test_method": "test_workflow_state_captures_build_completion"
                             }
                           ]
                         },
@@ -3480,73 +3303,6 @@
                       "type": "and",
                       "connector": null,
                       "stories": [
-                        {
-                          "name": "Track Activity for Render Output Action",
-                          "sequential_order": 4,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN RenderOutputAction executes",
-                            "THEN Action creates activity entry with timestamp, action name, behavior name",
-                            "AND Activity entry appended to {project_area}/activity_log.json"
-                          ],
-                          "test_class": "TestTrackActivityForRenderOutputAction",
-                          "scenarios": [
-                            {
-                              "name": "Track activity when render output action starts",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Render output action starts\nTHEN: Activity is tracked",
-                              "test_method": "test_track_activity_when_render_output_action_starts"
-                            },
-                            {
-                              "name": "Track activity when render output action completes",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Render output action completes with outputs and duration\nTHEN: Activity is tracked",
-                              "test_method": "test_track_activity_when_render_output_action_completes"
-                            },
-                            {
-                              "name": "Activity log creates file if not exists",
-                              "steps": "GIVEN: workspace directory exists but no activity log\nWHEN: Action tracks activity\nTHEN: Activity log file is created automatically",
-                              "test_method": "test_activity_log_creates_file_if_not_exists"
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Proceed To Validate Rules",
-                          "sequential_order": 5,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN RenderOutputAction completes execution",
-                            "WHEN Human says action is done",
-                            "THEN RenderOutputAction saves Workflow State (per \"Saves Behavior State\" story)",
-                            "AND RenderOutputAction processes content for saving",
-                            "AND Workflow injects next action instructions (per \"Inject Next Behavior-Action\" story)",
-                            "AND Workflow proceeds to validate_rules"
-                          ],
-                          "test_class": "TestProceedToValidateRules",
-                          "scenarios": [
-                            {
-                              "name": "Seamless transition from validate rules to render output",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Validate rules action completes\nTHEN: Workflow transitions to render_output",
-                              "test_method": "test_seamless_transition_from_validate_to_render_output"
-                            },
-                            {
-                              "name": "Workflow state captures render output completion",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Render output action completes\nTHEN: Workflow state captures completion",
-                              "test_method": "test_workflow_state_captures_render_output_completion"
-                            },
-                            {
-                              "name": "Render output action executes successfully",
-                              "steps": "GIVEN: render_output action is initialized\nWHEN: Action is executed\nTHEN: Action completes without errors",
-                              "test_method": "test_render_output_action_executes_successfully"
-                            }
-                          ]
-                        },
                         {
                           "name": "Load Render Configurations",
                           "sequential_order": 1,
@@ -3937,33 +3693,6 @@
                       "type": "and",
                       "connector": null,
                       "stories": [
-                        {
-                          "name": "Track Activity for Validate Rules Action",
-                          "sequential_order": 2,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN ValidateRulesAction executes",
-                            "THEN Action creates activity entry with timestamp, action name, behavior name, violations count",
-                            "AND Activity entry appended to {project_area}/activity_log.json"
-                          ],
-                          "test_class": "TestTrackActivityForValidateRulesAction",
-                          "scenarios": [
-                            {
-                              "name": "Track activity when validate action starts",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Validate rules action starts\nTHEN: Activity is tracked",
-                              "test_method": "test_track_activity_when_validate_action_starts"
-                            },
-                            {
-                              "name": "Track activity when validate action completes",
-                              "steps": "GIVEN: Bot directory and workspace directory are set up\nWHEN: Validate rules action completes\nTHEN: Activity is tracked with outputs and duration",
-                              "test_method": "test_track_activity_when_validate_action_completes"
-                            }
-                          ]
-                        },
                         {
                           "name": "Invoke Complete Validation Workflow",
                           "sequential_order": 3,
