@@ -5512,7 +5512,7 @@
               ]
             },
             {
-              "name": "Navigate Bot Behaviors and Actions With CLI",
+              "name": "Navigate Behaviors Using REPL Commands",
               "sequential_order": 2,
               "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
               "story_groups": [
@@ -5596,7 +5596,7 @@
               ]
             },
             {
-              "name": "Navigate Bot Behaviors and Actions Via Domain Model",
+              "name": "Navigate Behaviors Using Domain Model",
               "sequential_order": 2.5,
               "test_file": "test_navigate_bot_behaviors_and_actions_with_cli.py",
               "story_groups": [
@@ -5657,7 +5657,7 @@
               ]
             },
             {
-              "name": "Execute Action Operation Through CLI",
+              "name": "View Action-Specific Instructions",
               "sequential_order": 3,
               "test_file": "test_execute_action_operation_through_cli.py",
               "story_groups": [
@@ -5850,7 +5850,7 @@
               ]
             },
             {
-              "name": "Manage Bot Scope Through CLI",
+              "name": "Manage Scope Using REPL",
               "sequential_order": 4,
               "test_file": "test_manage_bot_scope_through_cli.py",
               "story_groups": [
@@ -6024,7 +6024,7 @@
               ]
             },
             {
-              "name": "Display Bot State Using CLI",
+              "name": "Display State Using REPL",
               "sequential_order": 5,
               "test_file": "test_display_bot_state_using_cli.py",
               "story_groups": [
@@ -6309,119 +6309,13 @@
                       ],
                       "optional": false,
                       "priority": 2
-                    },
-                    {
-                      "name": "Format Output For AI",
-                      "sequential_order": 9,
-                      "connector": "and",
-                      "users": [
-                        "CLI"
-                      ],
-                      "story_type": "system",
-                      "test_class": "TestFormatOutputForAI",
-                      "acceptance_criteria": [
-                        "WHEN CLI detects TTY mode\nTHEN CLI uses plain text formatting for output",
-                        "WHEN CLI detects piped mode\nTHEN CLI uses markdown formatting for output",
-                        "WHEN formatting separators in terminal mode\nTHEN CLI uses plain text separators",
-                        "WHEN formatting separators in piped mode\nTHEN CLI uses markdown separators",
-                        "WHEN formatting status markers\nTHEN CLI uses appropriate format for current mode"
-                      ],
-                      "scenarios": [
-                        {
-                          "name": "Terminal mode uses plain text formatting for separator",
-                          "steps": "GIVEN: Terminal formatter is created\nWHEN: Separator is formatted\nTHEN: Separator uses equals signs for visibility",
-                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_separator"
-                        },
-                        {
-                          "name": "Terminal mode uses plain text formatting for completed marker",
-                          "steps": "GIVEN: Terminal formatter is created\nWHEN: Completed status marker is formatted\nTHEN: Marker is plain text [OK]",
-                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_completed_marker"
-                        },
-                        {
-                          "name": "Terminal mode uses plain text formatting for current marker",
-                          "steps": "GIVEN: Terminal formatter is created\nWHEN: Current status marker is formatted\nTHEN: Marker is plain text [*]",
-                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_current_marker"
-                        },
-                        {
-                          "name": "Terminal mode uses plain text formatting for pending marker",
-                          "steps": "GIVEN: Terminal formatter is created\nWHEN: Pending status marker is formatted\nTHEN: Marker is plain text [ ]",
-                          "test_method": "test_terminal_mode_uses_plain_text_formatting_for_pending_marker"
-                        },
-                        {
-                          "name": "Terminal mode uses space indentation for list items",
-                          "steps": "GIVEN: Terminal formatter is created\nWHEN: List item is formatted with indent level 2\nTHEN: Item uses space indentation",
-                          "test_method": "test_terminal_mode_uses_space_indentation_for_list_items"
-                        },
-                        {
-                          "name": "Terminal mode returns text as is for highlight",
-                          "steps": "GIVEN: Terminal formatter is created\nWHEN: Text is highlighted\nTHEN: Text is returned as-is",
-                          "test_method": "test_terminal_mode_returns_text_as_is_for_highlight"
-                        },
-                        {
-                          "name": "Piped mode uses markdown formatting for separator",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: Separator is formatted\nTHEN: Separator uses heavy line for visibility",
-                          "test_method": "test_piped_mode_uses_markdown_formatting_for_separator"
-                        },
-                        {
-                          "name": "Piped mode uses markdown formatting for completed checkbox",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: Completed status marker is formatted\nTHEN: Marker uses markdown bullet with checkbox emoji",
-                          "test_method": "test_piped_mode_uses_markdown_formatting_for_completed_checkbox"
-                        },
-                        {
-                          "name": "Piped mode uses markdown formatting for current checkbox",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: Current status marker is formatted\nTHEN: Marker uses markdown bullet with emoji",
-                          "test_method": "test_piped_mode_uses_markdown_formatting_for_current_checkbox"
-                        },
-                        {
-                          "name": "Piped mode uses markdown formatting for pending checkbox",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: Pending status marker is formatted\nTHEN: Marker uses markdown bullet with empty checkbox emoji",
-                          "test_method": "test_piped_mode_uses_markdown_formatting_for_pending_checkbox"
-                        },
-                        {
-                          "name": "Piped mode uses markdown lists for list items",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: List item is formatted with no indent\nTHEN: Item uses markdown list syntax",
-                          "test_method": "test_piped_mode_uses_markdown_lists_for_list_items"
-                        },
-                        {
-                          "name": "Piped mode indents markdown list items",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: List item is formatted with indent level 1\nTHEN: Item uses indented markdown list",
-                          "test_method": "test_piped_mode_indents_markdown_list_items"
-                        },
-                        {
-                          "name": "Piped mode uses bold for highlight",
-                          "steps": "GIVEN: Markdown formatter is created\nWHEN: Text is highlighted\nTHEN: Text uses markdown bold",
-                          "test_method": "test_piped_mode_uses_bold_for_highlight"
-                        },
-                        {
-                          "name": "Formatter created at session initialization for tty",
-                          "steps": "GIVEN: REPL session is starting\nWHEN: Factory creates formatter for TTY mode\nTHEN: Factory creates terminal formatter",
-                          "test_method": "test_formatter_created_at_session_initialization_for_tty"
-                        },
-                        {
-                          "name": "Formatter created for piped mode",
-                          "steps": "GIVEN: REPL session is starting\nWHEN: Factory creates formatter for piped mode\nTHEN: Factory creates markdown formatter",
-                          "test_method": "test_formatter_created_for_piped_mode"
-                        },
-                        {
-                          "name": "Factory creates terminal formatter when requested",
-                          "steps": "GIVEN: Factory is available\nWHEN: Terminal formatter is explicitly requested\nTHEN: Factory creates terminal formatter",
-                          "test_method": "test_factory_creates_terminal_formatter_when_requested"
-                        },
-                        {
-                          "name": "Factory creates markdown formatter when requested",
-                          "steps": "GIVEN: Factory is available\nWHEN: Markdown formatter is explicitly requested\nTHEN: Factory creates markdown formatter",
-                          "test_method": "test_factory_creates_markdown_formatter_when_requested"
-                        }
-                      ],
-                      "optional": false,
-                      "priority": 2
                     }
                   ]
                 }
               ]
             },
             {
-              "name": "Get Help Using CLI",
+              "name": "Get Help Using REPL",
               "sequential_order": 6,
               "test_file": "test_get_help_using_cli_current.py",
               "story_groups": [
@@ -6430,7 +6324,7 @@
                   "connector": null,
                   "stories": [
                     {
-                      "name": "Request Action Help Through CLI",
+                      "name": "Display Action Help Using CLI",
                       "sequential_order": 1,
                       "connector": null,
                       "users": [
@@ -6455,7 +6349,7 @@
                       "priority": 1
                     },
                     {
-                      "name": "View Parameter Documentation in CLI",
+                      "name": "Display Parameter Help Using CLI",
                       "sequential_order": 2,
                       "connector": "and",
                       "users": [
@@ -6464,7 +6358,7 @@
                       "story_type": "user"
                     },
                     {
-                      "name": "View Command Examples in CLI",
+                      "name": "Display Command Examples Using CLI",
                       "sequential_order": 3,
                       "connector": "and",
                       "users": [
