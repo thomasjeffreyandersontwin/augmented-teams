@@ -6852,165 +6852,459 @@
                 {
                   "name": "Display Common Instructions Through REPL",
                   "sequential_order": 1,
+                  "test_file": "test_execute_actions_using_repl.py",
                   "story_groups": [
                     {
                       "type": "and",
                       "connector": null,
                       "stories": [
+                        {
+                          "name": "Get Action Instructions Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_execute_actions_using_repl.py",
+                          "test_class": "TestGetActionInstructionsThroughCLI",
+                          "acceptance_criteria": [
+                            "WHEN user navigates to behavior.action.instructions\nTHEN CLI displays formatted instructions for that action",
+                            "WHEN user enters action name only as shortcut\nTHEN CLI executes instructions on current behavior's action"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "User gets instructions using full path",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLI displays formatted instructions",
+                              "test_method": "test_user_gets_instructions_using_full_path"
+                            },
+                            {
+                              "name": "User calls action by name shortcut",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters just 'build'\nTHEN: CLI executes instructions operation on current behavior's build action",
+                              "test_method": "test_user_calls_action_by_name_shortcut"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Confirm Action Completion Through CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_execute_actions_using_repl.py",
+                          "test_class": "TestConfirmActionCompletionThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "User confirms action completion",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'confirm'\nTHEN: CLI advances to next action",
+                              "test_method": "test_user_confirms_action_completion"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Re-execute Current Operation Using CLI",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_execute_actions_using_repl.py",
+                          "test_class": "TestReExecuteCurrentOperationUsingCLI",
+                          "scenarios": [
+                            {
+                              "name": "User re-executes current instructions",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'current'\nTHEN: CLI re-executes current instructions",
+                              "test_method": "test_user_re_executes_current_instructions"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Handle Operation Errors and Validation in CLI",
+                          "sequential_order": 4,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_execute_actions_using_repl.py",
+                          "test_class": "TestHandleOperationErrorsAndValidationInCLI",
+                          "scenarios": [
+                            {
+                              "name": "Handle operation errors gracefully",
+                              "steps": "GIVEN: CLI executes operation that fails\nWHEN: error occurs\nTHEN: CLI displays error message and remains operational",
+                              "test_method": "test_handle_operation_errors_gracefully"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Display Clarify Instructions Through REPL",
+                  "sequential_order": 2,
+                  "test_file": "test_display_clarify_instructions_using_repl.py",
+                  "story_groups": [
                     {
-                      "name": "Get Action Instructions Through CLI",
-                      "sequential_order": 1,
+                      "type": "and",
                       "connector": null,
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN user navigates to behavior.action.instructions\nTHEN CLI displays formatted instructions for that action",
-                        "WHEN user enters action name only as shortcut\nTHEN CLI executes instructions on current behavior's action",
-                        "WHEN user provides scope parameter with instructions\nTHEN CLI displays filtered instructions for specified scope",
-                        "WHEN user requests clarify action instructions\nTHEN CLI displays key questions and required evidence from guardrails"
-                      ],
-                      "optional": false,
-                      "priority": 1,
-                      "test_class": "TestViewInstructions",
-                      "scenarios": [
+                      "stories": [
                         {
-                          "name": "User gets instructions for build action without scope",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLI displays formatted instructions",
-                          "test_method": "test_user_gets_instructions_for_build_action_without_scope"
+                          "name": "Display Clarification Data Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_clarify_instructions_using_repl.py",
+                          "test_class": "TestDisplayClarificationDataThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display stored clarification data",
+                              "steps": "GIVEN: Clarification data exists\nWHEN: user views clarify instructions\nTHEN: CLI displays stored clarification data",
+                              "test_method": "test_display_stored_clarification_data"
+                            }
+                          ]
                         },
                         {
-                          "name": "User calls action by name shortcut",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters just 'build' (action name only)\nTHEN: CLI executes instructions operation on current behavior's build action\nAND: Instructions are formatted as strings, not JSON",
-                          "test_method": "test_user_calls_action_by_name_shortcut"
+                          "name": "Display Guardrails Through CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_clarify_instructions_using_repl.py",
+                          "test_class": "TestDisplayGuardrailsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display key questions from guardrails",
+                              "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: instructions are displayed\nTHEN: CLI shows key questions from guardrails",
+                              "test_method": "test_display_key_questions_from_guardrails"
+                            }
+                          ]
                         },
                         {
-                          "name": "User gets instructions for build action with scope",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'shape.build.instructions scope=\"Story1, Story2\"'\nTHEN: CLI displays filtered instructions for Story1, Story2",
-                          "test_method": "test_user_gets_instructions_for_build_action_with_scope"
+                          "name": "Get Clarify Instructions Through CLI",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_clarify_instructions_using_repl.py",
+                          "test_class": "TestGetClarifyInstructionsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Get clarify instructions with questions",
+                              "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'shape.clarify.instructions'\nTHEN: CLI displays key questions and required evidence",
+                              "test_method": "test_get_clarify_instructions_with_questions"
+                            }
+                          ]
                         },
                         {
-                          "name": "User gets instructions for clarify action without context",
-                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'shape.clarify.instructions'\nTHEN: CLI displays key questions and required evidence from guardrails",
-                          "test_method": "test_user_gets_instructions_for_clarify_action_without_context"
-                        },
-                        {
-                          "name": "User calls clarify by name shortcut",
-                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters just 'clarify' (action name only)\nTHEN: CLI executes instructions operation on current behavior's clarify action",
-                          "test_method": "test_user_calls_clarify_by_name_shortcut"
+                          "name": "Confirm Clarify With Answers Through CLI",
+                          "sequential_order": 4,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_clarify_instructions_using_repl.py",
+                          "test_class": "TestConfirmClarifyWithAnswersThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "User confirms clarify with answers",
+                              "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'confirm' with answers parameter\nTHEN: CLI saves clarification data and advances",
+                              "test_method": "test_user_confirms_clarify_with_answers"
+                            }
+                          ]
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Display Strategy Instructions Through REPL",
+                  "sequential_order": 3,
+                  "test_file": "test_display_strategy_instructions_using_repl.py",
+                  "story_groups": [
                     {
-                      "name": "Confirm Work Through CLI with String Parameters",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN user confirms build action\nTHEN CLI processes work AND advances to next action",
-                        "WHEN user confirms clarify with answers parameter\nTHEN CLI saves clarification data AND advances to next action",
-                        "WHEN user confirms clarify with evidence parameter\nTHEN CLI saves evidence AND advances to next action",
-                        "WHEN user confirms from instructions phase\nTHEN CLI advances to next action using 2-phase model"
-                      ],
-                      "optional": false,
-                      "priority": 1,
-                      "test_class": "TestConfirmWorkThroughCLIWithStringParameters",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "User confirms build work",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'confirm'\nTHEN: CLI processes work and advances to next action",
-                          "test_method": "test_user_confirms_build_work"
+                          "name": "Display Strategy Data Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_strategy_instructions_using_repl.py",
+                          "test_class": "TestDisplayStrategyDataThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display stored strategy data",
+                              "steps": "GIVEN: Strategy data exists\nWHEN: user views strategy instructions\nTHEN: CLI displays stored strategy decisions and assumptions",
+                              "test_method": "test_display_stored_strategy_data"
+                            }
+                          ]
                         },
                         {
-                          "name": "User confirms clarify with answers",
-                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'confirm' with answers parameter\nTHEN: CLI saves clarification data and advances to next action",
-                          "test_method": "test_user_confirms_clarify_with_answers"
-                        },
-                        {
-                          "name": "User confirms clarify with evidence",
-                          "steps": "GIVEN: CLI is at discovery.clarify.instructions\nWHEN: user enters 'confirm' with evidence-provided parameter\nTHEN: CLI saves evidence and advances to next action",
-                          "test_method": "test_user_confirms_clarify_with_evidence"
+                          "name": "Get Strategy Instructions Through CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_strategy_instructions_using_repl.py",
+                          "test_class": "TestGetStrategyInstructionsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Get strategy instructions with criteria",
+                              "steps": "GIVEN: CLI is at shape.strategy.instructions\nWHEN: user enters 'shape.strategy.instructions'\nTHEN: CLI displays planning criteria and assumptions",
+                              "test_method": "test_get_strategy_instructions_with_criteria"
+                            }
+                          ]
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Display Build Instructions Through REPL",
+                  "sequential_order": 4,
+                  "test_file": "test_display_build_instructions_using_repl.py",
+                  "story_groups": [
                     {
-                      "name": "Confirm Action Completion Through CLI",
-                      "sequential_order": 4,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestConfirmActionCompletion",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "User confirms build action completion",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'confirm'\nTHEN: CLI automatically navigates to shape.validate.instructions",
-                          "test_method": "test_user_confirms_build_action_completion"
+                          "name": "Display Story Graph Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_build_instructions_using_repl.py",
+                          "test_class": "TestDisplayStoryGraphThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display loaded story graph",
+                              "steps": "GIVEN: Story graph is loaded\nWHEN: user views build instructions\nTHEN: CLI displays story graph structure",
+                              "test_method": "test_display_loaded_story_graph"
+                            }
+                          ]
                         },
                         {
-                          "name": "User confirms clarify action completion",
-                          "steps": "GIVEN: CLI is at shape.clarify.instructions\nWHEN: user enters 'confirm'\nTHEN: CLI automatically navigates to shape.strategy.instructions",
-                          "test_method": "test_user_confirms_clarify_action_completion"
+                          "name": "Display Build Scope Through CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_build_instructions_using_repl.py",
+                          "test_class": "TestDisplayBuildScopeThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display active build scope",
+                              "steps": "GIVEN: Build scope is set\nWHEN: user views build instructions\nTHEN: CLI displays active scope filter",
+                              "test_method": "test_display_active_build_scope"
+                            }
+                          ]
                         },
                         {
-                          "name": "User confirms action and advances to next action",
-                          "steps": "GIVEN: CLI is at shape.strategy.instructions\nWHEN: user enters 'confirm'\nTHEN: CLI advances to next action and auto-executes instructions\nAND: Does not crash with 'object is not callable' error",
-                          "test_method": "test_user_confirms_action_and_advances_to_next"
+                          "name": "Display Filtered Knowledge Graph Through CLI",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_build_instructions_using_repl.py",
+                          "test_class": "TestDisplayFilteredKnowledgeGraphThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display knowledge graph with scope filter",
+                              "steps": "GIVEN: Scope filter is active\nWHEN: user views build instructions\nTHEN: CLI displays filtered knowledge graph",
+                              "test_method": "test_display_knowledge_graph_with_scope_filter"
+                            }
+                          ]
                         },
                         {
-                          "name": "User confirms from instructions (2-phase model)",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'confirm'\nTHEN: CLI advances to next action (valid - 2-phase model: instructions -> confirm)",
-                          "test_method": "test_user_confirms_from_instructions"
+                          "name": "Get Build Instructions Through CLI",
+                          "sequential_order": 4,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_build_instructions_using_repl.py",
+                          "test_class": "TestGetBuildInstructionsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Get build instructions without scope",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLI displays build instructions with full knowledge graph",
+                              "test_method": "test_get_build_instructions_without_scope"
+                            },
+                            {
+                              "name": "Get build instructions with scope",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'shape.build.instructions scope=\"Story1\"'\nTHEN: CLI displays build instructions filtered to Story1",
+                              "test_method": "test_get_build_instructions_with_scope"
+                            }
+                          ]
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Display Validate Instructions Through REPL",
+                  "sequential_order": 5,
+                  "test_file": "test_display_validate_instructions_using_repl.py",
+                  "story_groups": [
                     {
-                      "name": "Re-execute Current Operation Using CLI",
-                      "sequential_order": 6,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestReExecuteCurrentAction",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "User re-executes current instructions",
-                          "steps": "GIVEN: CLI is at shape.build.instructions (single behavior setup)\nWHEN: user enters 'current'\nTHEN: CLI re-executes current instructions",
-                          "test_method": "test_user_re_executes_current_instructions"
+                          "name": "Display Validation Scanners Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_validate_instructions_using_repl.py",
+                          "test_class": "TestDisplayValidationScannersThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display discovered scanners",
+                              "steps": "GIVEN: Validation scanners exist\nWHEN: user views validate instructions\nTHEN: CLI displays list of available scanners",
+                              "test_method": "test_display_discovered_scanners"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Display Validation Results Through CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_validate_instructions_using_repl.py",
+                          "test_class": "TestDisplayValidationResultsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display validation violations",
+                              "steps": "GIVEN: Validation has run\nWHEN: user views validate instructions\nTHEN: CLI displays violation report",
+                              "test_method": "test_display_validation_violations"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Get Validate Instructions Through CLI",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_validate_instructions_using_repl.py",
+                          "test_class": "TestGetValidateInstructionsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Get validate instructions with rules",
+                              "steps": "GIVEN: CLI is at shape.validate.instructions\nWHEN: user enters 'shape.validate.instructions'\nTHEN: CLI displays validation rules and scanners",
+                              "test_method": "test_get_validate_instructions_with_rules"
+                            }
+                          ]
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Display Render Instructions Through REPL",
+                  "sequential_order": 6,
+                  "test_file": "test_display_render_instructions_using_repl.py",
+                  "story_groups": [
                     {
-                      "name": "Handle Operation Errors and Validation in CLI",
-                      "sequential_order": 7,
-                      "connector": "and",
-                      "users": [
-                        "CLI"
-                      ],
-                      "story_type": "system",
-                      "test_class": "TestHandleErrorsAndValidation",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "User enters invalid scope format with instructions",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'shape.build.instructions scope=\"invalid{format}\"'\nTHEN: CLI displays error message with valid formats",
-                          "test_method": "test_user_enters_invalid_scope_format_with_instructions"
+                          "name": "Display Render Configurations Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_render_instructions_using_repl.py",
+                          "test_class": "TestDisplayRenderConfigurationsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display loaded render configurations",
+                              "steps": "GIVEN: Render configurations exist\nWHEN: user views render instructions\nTHEN: CLI displays templates and synchronizers",
+                              "test_method": "test_display_loaded_render_configurations"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Display Synchronizer Output Through CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_render_instructions_using_repl.py",
+                          "test_class": "TestDisplaySynchronizerOutputThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Display rendered output locations",
+                              "steps": "GIVEN: Synchronizers have run\nWHEN: user views render instructions\nTHEN: CLI displays output file paths",
+                              "test_method": "test_display_rendered_output_locations"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Get Render Instructions Through CLI",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_display_render_instructions_using_repl.py",
+                          "test_class": "TestGetRenderInstructionsThroughCLI",
+                          "scenarios": [
+                            {
+                              "name": "Get render instructions with templates",
+                              "steps": "GIVEN: CLI is at shape.render.instructions\nWHEN: user enters 'shape.render.instructions'\nTHEN: CLI displays render instructions with templates and synchronizers",
+                              "test_method": "test_get_render_instructions_with_templates"
+                            }
+                          ]
                         }
                       ]
                     }
                   ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "name": "Manage Scope Using REPL",
+            },
+            {
+              "name": "Manage Scope Using REPL",
               "sequential_order": 4,
               "test_file": "test_manage_scope_using_repl.py",
               "story_groups": [

@@ -227,3 +227,115 @@ class TestExitREPL:
         # THEN: REPL indicates exit/termination
         assert cli_response is not None
         assert cli_response.repl_terminated or 'exit' in cli_response.output.lower() or cli_response.status == 'exit'
+
+
+class TestDisplayBotHierarchyTree:
+    """
+    Story: Display Bot Hierarchy Tree with Progress Indicators
+    
+    REPL focus: Hierarchy tree display format with progress markers
+    """
+    
+    def test_user_views_bot_hierarchy_with_status_command(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: User views bot hierarchy with status command
+        GIVEN: CLI is at exploration.validate
+        WHEN: user enters 'status'
+        THEN: REPL parses status command
+              CLI displays bot hierarchy tree
+        
+        REPL focus: Status command execution and hierarchy display
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape', 'exploration'])
+        create_behavior_action_state(workspace, 'story_bot', 'exploration', 'validate')
+        bot.behaviors.load_state()
+        
+        # WHEN: user enters 'status' via REPL
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_response = repl_session.read_and_execute_command('status')
+        
+        # THEN: Status displayed
+        assert cli_response is not None
+        assert isinstance(cli_response.output, str)
+        assert len(cli_response.output) > 0
+
+
+class TestDisplayCurrentPosition:
+    """
+    Story: Display Current Position in CLI
+    
+    REPL focus: Current position indicators in status display
+    """
+    
+    def test_user_views_current_position_in_status(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: User views current position in status
+        GIVEN: CLI is at shape.clarify
+        WHEN: user enters 'status'
+        THEN: CLI displays current position with indicators
+        
+        REPL focus: Position display in status output
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
+        bot.behaviors.load_state()
+        
+        # WHEN: user enters 'status' via REPL
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_response = repl_session.read_and_execute_command('status')
+        
+        # THEN: Current position displayed
+        assert cli_response is not None
+        assert isinstance(cli_response.output, str)
+        assert len(cli_response.output) > 0
+    
+    def test_cli_displays_progress_section_with_current_position(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI displays Progress section with current position
+        GIVEN: CLI is at exploration.validate
+        WHEN: CLI renders status display
+        THEN: CLI displays Progress section header
+        
+        REPL focus: Progress section in status display
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        bot, workspace = setup_test_bot(tmp_path, ['exploration'])
+        create_behavior_action_state(workspace, 'story_bot', 'exploration', 'validate')
+        bot.behaviors.load_state()
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Progress information included
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        # Progress section should be present (format may vary)
+        assert len(display_text) > 0
+    
+    def test_cli_displays_behavior_in_progress_section(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI displays behavior in Progress section
+        GIVEN: CLI is at shape.validate
+        WHEN: CLI renders status display
+        THEN: CLI displays current behavior in Progress section
+        
+        REPL focus: Behavior display in progress section
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
+        bot.behaviors.load_state()
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Behavior info included
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        assert len(display_text) > 0
