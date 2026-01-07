@@ -2163,7 +2163,14 @@
                       ],
                       "story_type": "user",
                       "test_class": "TestSetStoryScope",
-                      "scenarios": [],
+                      "scenarios": [
+                        {
+                          "name": "Verify bot has scope attribute for filtering",
+                          "steps": "Given Bot is initialized\nWhen Bot is created\nThen Bot has scope attribute available",
+                          "test_method": "test_scope_is_accessible_from_bot",
+                          "test_class": "TestManageScopeIntegration"
+                        }
+                      ],
                       "acceptance_criteria": [
                         "WHEN Bot receives story scope parameter",
                         "THEN Scope is set for filtering knowledge graph",
@@ -2348,7 +2355,13 @@
                           ],
                           "story_type": "user",
                           "test_class": "TestGetActionInstructions",
-                          "scenarios": [],
+                          "scenarios": [
+                            {
+                              "name": "Verify actions can provide instructions",
+                              "steps": "Given Bot has behavior with action\nWhen Action is accessed\nThen Action has method to get instructions",
+                              "test_method": "test_action_has_instructions_method"
+                            }
+                          ],
                           "acceptance_criteria": [
                             "WHEN Action instructions are requested",
                             "THEN Complete instructions are returned",
@@ -3748,7 +3761,13 @@
                       ],
                       "story_type": "user",
                       "test_class": "TestTrackActionStart",
-                      "scenarios": [],
+                      "scenarios": [
+                        {
+                          "name": "Activity logging infrastructure exists",
+                          "steps": "Given Bot is ready to execute action\nWhen Action starts execution\nThen Activity log file exists or activity is trackable",
+                          "test_method": "test_activity_log_exists_after_action_execution"
+                        }
+                      ],
                       "acceptance_criteria": [
                         "WHEN Action starts execution",
                         "THEN Activity entry is created with timestamp and action state",
@@ -3764,7 +3783,13 @@
                       ],
                       "story_type": "user",
                       "test_class": "TestTrackActionCompletion",
-                      "scenarios": [],
+                      "scenarios": [
+                        {
+                          "name": "Action completion tracking",
+                          "steps": "Given Action has executed\nWhen Action completes\nThen Completion is tracked in completed_actions",
+                          "test_method": "test_action_completion_is_tracked"
+                        }
+                      ],
                       "acceptance_criteria": [
                         "WHEN Action completes execution",
                         "THEN Activity entry is updated with outputs and duration",
@@ -7126,7 +7151,7 @@
                         },
                         {
                           "name": "CLI displays workspace name and path",
-                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '\u00c3\u00b0\u00c5\u00b8\u00e2\u20ac\u0153\u00e2\u20ac\u0161 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains 'Ã°Å¸â€œâ€š **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
                           "test_method": "test_cli_displays_workspace_name_and_path",
                           "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
                         },
