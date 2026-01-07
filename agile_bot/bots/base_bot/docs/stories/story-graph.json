@@ -2038,6 +2038,7 @@
             {
               "name": "Navigate And Execute Behaviors",
               "sequential_order": 1,
+              "test_file": "test_invoke_bot_directly.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -2051,6 +2052,7 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
+                      "test_file": "test_invoke_bot_directly.py",
                       "test_class": "TestNavigateToBehaviorActionAndExecute",
                       "scenarios": [
                         {
@@ -2083,6 +2085,7 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
+                      "test_file": "test_invoke_bot_directly.py",
                       "test_class": "TestNavigateSequentially",
                       "scenarios": [
                         {
@@ -2149,95 +2152,159 @@
             {
               "name": "Manage Scope",
               "sequential_order": 4,
+              "test_file": "test_manage_scope_bot_api.py",
               "story_groups": [
                 {
                   "type": "and",
                   "connector": null,
                   "stories": [
                     {
-                      "name": "Set Story Scope",
+                      "name": "Set Scope Through Bot API",
                       "sequential_order": 1,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestSetStoryScope",
+                      "test_file": "test_manage_scope_bot_api.py",
+                      "test_class": "TestSetScopeThroughBotAPI",
                       "scenarios": [
                         {
-                          "name": "Verify bot has scope attribute for filtering",
-                          "steps": "Given Bot is initialized\nWhen Bot is created\nThen Bot has scope attribute available",
-                          "test_method": "test_scope_is_accessible_from_bot",
-                          "test_class": "TestManageScopeIntegration"
+                          "name": "Set story scope through bot API",
+                          "steps": "GIVEN: Bot is initialized\nWHEN: bot.scope.set(type='story', value=['Story1']) is called\nTHEN: bot.scope.get() returns {'type': 'story', 'value': ['Story1']}",
+                          "test_method": "test_set_story_scope_through_bot_api"
+                        },
+                        {
+                          "name": "Set file scope through bot API",
+                          "steps": "GIVEN: Bot is initialized\nWHEN: bot.scope.set(type='files', value=['*.py']) is called\nTHEN: bot.scope.get() returns {'type': 'files', 'value': ['*.py']}",
+                          "test_method": "test_set_file_scope_through_bot_api"
+                        },
+                        {
+                          "name": "Get current scope through bot API",
+                          "steps": "GIVEN: Bot has scope set\nWHEN: bot.scope.get() is called\nTHEN: returns current scope configuration",
+                          "test_method": "test_get_current_scope_through_bot_api"
                         }
                       ],
                       "acceptance_criteria": [
-                        "WHEN Bot receives story scope parameter",
-                        "THEN Scope is set for filtering knowledge graph",
-                        "AND Scope enforces mutually exclusive types"
+                        "WHEN bot.scope.set() is called with story filter, THEN scope is stored in bot context",
+                        "WHEN bot.scope.set() is called with file filter, THEN scope is stored in bot context",
+                        "WHEN bot.scope.get() is called, THEN returns current scope configuration"
                       ]
                     },
                     {
-                      "name": "Set File Scope",
+                      "name": "Filter Knowledge Graph Using Bot API",
                       "sequential_order": 2,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestSetFileScope",
-                      "scenarios": [],
+                      "test_file": "test_manage_scope_bot_api.py",
+                      "test_class": "TestFilterKnowledgeGraphUsingBotAPI",
+                      "scenarios": [
+                        {
+                          "name": "Execute action with story scope",
+                          "steps": "GIVEN: Bot has story scope set to ['Story1']\nWHEN: bot.execute_behavior('shape', action='build') is called\nTHEN: action.context.knowledge_graph contains only 'Story1' and its parent epic",
+                          "test_method": "test_execute_action_with_story_scope"
+                        },
+                        {
+                          "name": "Execute action with epic scope",
+                          "steps": "GIVEN: Bot has epic scope set to ['Epic A']\nWHEN: bot.execute_behavior('shape', action='build') is called\nTHEN: action.context.knowledge_graph contains only 'Epic A' and its stories",
+                          "test_method": "test_execute_action_with_epic_scope"
+                        },
+                        {
+                          "name": "Handle non-existent scope values",
+                          "steps": "GIVEN: Bot has story scope set to ['NonExistent']\nWHEN: bot.execute_behavior('shape', action='build') is called\nTHEN: action.context.knowledge_graph is empty (no matching content)",
+                          "test_method": "test_handle_nonexistent_scope_values"
+                        }
+                      ],
                       "acceptance_criteria": [
-                        "WHEN Bot receives file scope parameter",
-                        "THEN Scope is set for filtering files"
+                        "WHEN action executes with story scope active, THEN knowledge graph is filtered to matching stories",
+                        "WHEN action executes with epic scope active, THEN knowledge graph is filtered to matching epics",
+                        "WHEN scope includes non-existent stories, THEN bot handles gracefully with empty result"
                       ]
                     },
                     {
-                      "name": "Filter Knowledge Graph By Scope",
+                      "name": "Filter Files Using Bot API",
                       "sequential_order": 3,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestFilterKnowledgeGraphByScope",
-                      "scenarios": [],
+                      "test_file": "test_manage_scope_bot_api.py",
+                      "test_class": "TestFilterFilesUsingBotAPI",
+                      "scenarios": [
+                        {
+                          "name": "Execute action with file scope glob pattern",
+                          "steps": "GIVEN: Bot has file scope set to ['src/**/*.py']\nWHEN: bot.execute_behavior('code', action='validate') is called\nTHEN: only Python files in src/ are processed",
+                          "test_method": "test_execute_action_with_file_scope_glob"
+                        },
+                        {
+                          "name": "Execute action with file scope exclude pattern",
+                          "steps": "GIVEN: Bot has file scope set to ['src/'], exclude=['**/test_*']\nWHEN: bot.execute_behavior('code', action='validate') is called\nTHEN: test files are excluded from processing",
+                          "test_method": "test_execute_action_with_file_scope_exclude"
+                        }
+                      ],
                       "acceptance_criteria": [
-                        "WHEN Action executes with scope",
-                        "THEN Knowledge graph is filtered by scope",
-                        "AND Only scoped content is included"
+                        "WHEN action executes with file scope active, THEN only matching files are processed",
+                        "WHEN file scope uses glob patterns, THEN patterns are evaluated correctly",
+                        "WHEN file scope includes exclude patterns, THEN excluded files are skipped"
                       ]
                     },
                     {
-                      "name": "Pass Scope Parameters To Actions",
+                      "name": "Enforce Mutually Exclusive Scope Types Through Bot API",
                       "sequential_order": 4,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestPassScopeParametersToActions",
-                      "scenarios": [],
+                      "test_file": "test_manage_scope_bot_api.py",
+                      "test_class": "TestEnforceMutuallyExclusiveScopeTypes",
+                      "scenarios": [
+                        {
+                          "name": "Setting file scope replaces story scope",
+                          "steps": "GIVEN: Bot has story scope active\nWHEN: bot.scope.set(type='files', value=['*.py']) is called\nTHEN: bot.scope.get() returns only file scope (story scope replaced)",
+                          "test_method": "test_setting_file_scope_replaces_story_scope"
+                        },
+                        {
+                          "name": "Setting story scope replaces file scope",
+                          "steps": "GIVEN: Bot has file scope active\nWHEN: bot.scope.set(type='story', value=['Story1']) is called\nTHEN: bot.scope.get() returns only story scope (file scope replaced)",
+                          "test_method": "test_setting_story_scope_replaces_file_scope"
+                        }
+                      ],
                       "acceptance_criteria": [
-                        "WHEN Action is invoked",
-                        "THEN Scope parameters are passed to action",
-                        "AND Action respects scope during execution"
+                        "WHEN bot.scope.set() is called with file scope while story scope active, THEN story scope is replaced",
+                        "WHEN bot.scope.set() is called with story scope while file scope active, THEN file scope is replaced",
+                        "WHEN bot.scope.get() is called, THEN only one scope type is returned"
                       ]
                     },
                     {
-                      "name": "Clear Scope",
+                      "name": "Clear Scope Through Bot API",
                       "sequential_order": 5,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestClearScope",
-                      "scenarios": [],
+                      "test_file": "test_manage_scope_bot_api.py",
+                      "test_class": "TestClearScopeThroughBotAPI",
+                      "scenarios": [
+                        {
+                          "name": "Clear scope removes all filters",
+                          "steps": "GIVEN: Bot has story scope active\nWHEN: bot.scope.clear() is called\nTHEN: bot.scope.get() returns None or empty scope",
+                          "test_method": "test_clear_scope_removes_all_filters"
+                        },
+                        {
+                          "name": "Actions after clear process all content",
+                          "steps": "GIVEN: Bot had scope active, then cleared\nWHEN: bot.execute_behavior('shape', action='build') is called\nTHEN: action processes full knowledge graph (no filtering)",
+                          "test_method": "test_actions_after_clear_process_all_content"
+                        }
+                      ],
                       "acceptance_criteria": [
-                        "WHEN Clear scope is called",
-                        "THEN Scope is reset to all",
-                        "AND Future actions run without scope filter"
+                        "WHEN bot.scope.clear() is called, THEN all scope filters are removed",
+                        "WHEN action executes after scope cleared, THEN action processes all content without filtering"
                       ]
                     }
                   ]
@@ -6645,6 +6712,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_file": "test_navigate_behaviors_using_repl_commands.py",
                       "test_class": "TestNavigateToBehaviorActionAndExecute",
                       "scenarios": [
                         {
@@ -6677,6 +6745,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_file": "test_navigate_behaviors_using_repl_commands.py",
                       "test_class": "TestNavigateSequentially",
                       "scenarios": [
                         {
@@ -6699,6 +6768,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_file": "test_navigate_behaviors_using_repl_commands.py",
                       "test_class": "TestExitREPL",
                       "scenarios": [
                         {
@@ -6777,11 +6847,16 @@
               "name": "Display Action Instructions Using REPL",
               "sequential_order": 3,
               "test_file": "test_execute_actions_using_repl.py",
-              "story_groups": [
+              "story_groups": [],
+              "sub_epics": [
                 {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
+                  "name": "Display Common Instructions Through REPL",
+                  "sequential_order": 1,
+                  "story_groups": [
+                    {
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                     {
                       "name": "Get Action Instructions Through CLI",
                       "sequential_order": 1,
@@ -6931,9 +7006,11 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Manage Scope Using REPL",
+            }
+          ]
+        },
+        {
+          "name": "Manage Scope Using REPL",
               "sequential_order": 4,
               "test_file": "test_manage_scope_using_repl.py",
               "story_groups": [
@@ -6942,17 +7019,8 @@
                   "connector": null,
                   "stories": [
                     {
-                      "name": "Set Scope Through CLI Using String Parameters",
-                      "sequential_order": 1,
-                      "connector": null,
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user"
-                    },
-                    {
                       "name": "Filter Work Using Knowledge Graph Scope in CLI",
-                      "sequential_order": 2,
+                      "sequential_order": 1,
                       "connector": "and",
                       "users": [
                         "User"
@@ -6982,7 +7050,7 @@
                     },
                     {
                       "name": "Filter Work Using Files Scope in CLI",
-                      "sequential_order": 3,
+                      "sequential_order": 2,
                       "connector": "and",
                       "users": [
                         "User"
@@ -7012,7 +7080,7 @@
                     },
                     {
                       "name": "Enforce Mutually Exclusive Scope Types",
-                      "sequential_order": 4,
+                      "sequential_order": 3,
                       "connector": "and",
                       "users": [
                         "CLI"
@@ -7047,16 +7115,40 @@
                     },
                     {
                       "name": "View Current Scope in CLI",
-                      "sequential_order": 5,
+                      "sequential_order": 4,
                       "connector": "and",
                       "users": [
                         "User"
                       ],
-                      "story_type": "user"
+                      "story_type": "user",
+                      "test_file": "test_manage_scope_using_repl.py",
+                      "test_class": "TestViewCurrentScopeInCLI",
+                      "acceptance_criteria": [
+                        "WHEN user enters 'scope' command with no filters set\nTHEN CLI displays \"No scope filters active\"",
+                        "WHEN user enters 'scope' command with story scope set\nTHEN CLI displays active story scope filter",
+                        "WHEN user enters 'scope' command with file scope set\nTHEN CLI displays active file scope filter"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "View scope with no filters set",
+                          "steps": "GIVEN: CLI is initialized with no scope filters\nWHEN: user enters 'scope' command\nTHEN: CLI displays \"No scope filters active\"",
+                          "test_method": "test_view_scope_with_no_filters_set"
+                        },
+                        {
+                          "name": "View story scope filter",
+                          "steps": "GIVEN: Story scope filter is set to \"Story1\"\nWHEN: user enters 'scope' command\nTHEN: CLI displays active story scope filter",
+                          "test_method": "test_view_story_scope_filter"
+                        },
+                        {
+                          "name": "View file scope filter",
+                          "steps": "GIVEN: File scope filter is set to \"*.py\"\nWHEN: user enters 'scope' command\nTHEN: CLI displays active file scope filter",
+                          "test_method": "test_view_file_scope_filter"
+                        }
+                      ]
                     },
                     {
                       "name": "Clear Scope Through CLI",
-                      "sequential_order": 6,
+                      "sequential_order": 5,
                       "connector": "and",
                       "users": [
                         "User"
@@ -7075,32 +7167,6 @@
                           "test_method": "test_user_executes_build_after_clearing_scope"
                         }
                       ]
-                    },
-                    {
-                      "name": "Pass Scope Parameters When Executing Actions Through CLI",
-                      "sequential_order": 7,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user"
-                    },
-                    {
-                      "name": "Validate Scope Against Story Graph in CLI",
-                      "sequential_order": 8,
-                      "connector": "and",
-                      "users": [
-                        "CLI"
-                      ],
-                      "story_type": "system",
-                      "acceptance_criteria": [
-                        "WHEN user sets scope with story name\nTHEN CLI stores scope filter without validation",
-                        "WHEN user sets scope with epic name\nTHEN CLI stores scope filter without validation",
-                        "WHEN scope is set\nTHEN CLI accepts scope AND stores it in state file",
-                        "WHEN scope is applied to action\nTHEN action validates scope against story graph during execution"
-                      ],
-                      "optional": false,
-                      "priority": 2
                     }
                   ]
                 }
