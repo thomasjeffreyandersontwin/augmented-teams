@@ -28,6 +28,7 @@ from agile_bot.bots.base_bot.src.bot.bot import Bot, BotResult, Behavior
 # BotConfig merged into Bot - use Bot directly
 # BehaviorConfig merged into Behavior - use Behavior directly
 from agile_bot.bots.base_bot.src.bot.bot_paths import BotPaths
+from agile_bot.bots.base_bot.src.bot.merged_instructions import MergedInstructions
 from agile_bot.bots.base_bot.src.actions.strategy.strategy_action import StrategyAction
 from agile_bot.bots.base_bot.src.actions.clarify.clarify_action import ClarifyContextAction
 from conftest import (
