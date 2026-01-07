@@ -141,9 +141,9 @@
       "timestamp": "2026-01-07T00:50:10.497255"
     }
   ],
-  "current_behavior": "story_bot.scenarios",
-  "timestamp": "2026-01-07T00:50:29.793443",
-  "current_action": "story_bot.scenarios.render",
+  "current_behavior": "story_bot.tests",
+  "timestamp": "2026-01-07T01:19:28.670842",
+  "current_action": "story_bot.tests.build",
   "action_phase": "instructions",
   "completed_behaviors": [
     "scenarios",
@@ -155,12 +155,8 @@
   ],
   "working_directory": "agile_bot/bots/base_bot",
   "scope": {
-    "type": "story",
-    "value": [
-      "Panel",
-      "REPL",
-      "Invok"
-    ],
+    "type": "showAll",
+    "value": [],
     "exclude": [],
     "skiprule": []
   }

@@ -1282,6 +1282,7 @@ def test_something(self, tmp_path, monkeypatch):
 - [ ] Add `test_class` mappings for ALL new test classes
 - [ ] Add `test_method` mappings for ALL new test methods
 - [ ] Verify mappings are correct and complete
+- [ ] **DELETE `test_navigate_behaviors_using_domain_model.py`** - scenarios now covered in `test_invoke_bot_directly.py`
 
 ---
 
@@ -1310,8 +1311,8 @@ def test_something(self, tmp_path, monkeypatch):
 
 ## 📝 Notes
 
-- Keep `test_navigate_behaviors_using_domain_model.py` as reference implementation
-- Don't duplicate tests - if domain model already tests it, just reference it
+- **DELETE `test_navigate_behaviors_using_domain_model.py` when plan implementation is complete** - all scenarios will be covered in `test_invoke_bot_directly.py`
+- Don't duplicate tests - if already tested elsewhere, just reference it
 - REPL tests should be THIN - just command parsing + delegation verification
 - All assertion logic should be in helpers for reusability
 - **Build Action Instructions:** Focus on INTEGRATION, not individual action details (those have dedicated test files)
