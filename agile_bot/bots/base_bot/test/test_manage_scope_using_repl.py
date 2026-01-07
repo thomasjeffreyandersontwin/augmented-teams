@@ -66,7 +66,7 @@ def create_behavior_action_state(workspace_directory, behavior, action, operatio
     return state_file
 
 
-class TestFilterWorkUsingScopeInCLI:
+class TestSetScope:
     """Story: Filter Work Using Scope - CURRENT behavior (single Scope object)"""
     
     def test_user_sets_scope_filter(self, bot_directory, workspace_directory, monkeypatch):
@@ -130,7 +130,7 @@ class TestFilterWorkUsingScopeInCLI:
         assert isinstance(cli_response.output, str)
 
 
-class TestClearScopeFiltersInCLI:
+class TestClearScope:
     """Story: Clear Scope Filters - CURRENT behavior"""
     
     def test_user_clears_all_scope_filters(self, bot_directory, workspace_directory, monkeypatch):
