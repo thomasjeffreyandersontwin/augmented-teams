@@ -66,7 +66,7 @@ def create_behavior_action_state(workspace_directory, behavior, action, operatio
     return state_file
 
 
-class TestViewAvailableCommandsUsingCLIHelp:
+class TestDisplayActionHelpUsingCLI:
     """Story: View Available Commands - CURRENT behavior"""
     
     def test_user_views_all_available_commands(self, bot_directory, workspace_directory, monkeypatch):
@@ -101,7 +101,7 @@ class TestViewAvailableCommandsUsingCLIHelp:
         assert any(cmd in cli_response.output.lower() for cmd in ['help', 'status', 'exit', 'command'])
 
 
-class TestViewCommandExamplesUsingCLIHelp:
+class TestDisplayCommandExamplesUsingCLI:
     """Story: View Command Examples - CURRENT behavior"""
     
     def test_user_views_examples_in_help(self, bot_directory, workspace_directory, monkeypatch):
