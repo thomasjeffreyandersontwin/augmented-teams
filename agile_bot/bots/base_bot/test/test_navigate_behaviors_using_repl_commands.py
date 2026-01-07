@@ -65,7 +65,7 @@ def create_behavior_action_state(workspace_directory, behavior, action, operatio
     return state_file
 
 
-class TestNavigateUsingCLIDotNotation:
+class TestNavigateToBehaviorActionAndExecute:
     """Story: Navigate Using CLI Dot Notation - CURRENT behavior"""
     
     def test_user_navigates_with_behavior_only(self, bot_directory, workspace_directory, monkeypatch):
@@ -184,7 +184,7 @@ class TestNavigateUsingCLIDotNotation:
         assert 'ERROR' in cli_response.output or 'error' in cli_response.output.lower() or cli_response.status == 'error'
 
 
-class TestNavigateSequentiallyUsingCLICommands:
+class TestNavigateSequentially:
     """Story: Navigate Sequentially Using CLI Commands - CURRENT behavior"""
     
     def test_user_navigates_with_next_command(self, bot_directory, workspace_directory, monkeypatch):
@@ -244,7 +244,7 @@ class TestNavigateSequentiallyUsingCLICommands:
         assert isinstance(cli_response.output, str)
 
 
-class TestExitCLIREPL:
+class TestExitREPL:
     """Story: Exit CLI REPL - CURRENT behavior"""
     
     def test_user_exits_repl_with_exit_command(self, bot_directory, workspace_directory, monkeypatch):
