@@ -5262,7 +5262,7 @@
               ]
             },
             {
-              "name": "Navigate And Execute Behaviors",
+              "name": "Navigate And Execute Behaviors Through Panel",
               "sequential_order": 2,
               "story_groups": [
                 {
@@ -5351,7 +5351,7 @@
               ]
             },
             {
-              "name": "Manage Scope",
+              "name": "Manage Scope Through Panel",
               "sequential_order": 3,
               "story_groups": [
                 {
@@ -5461,7 +5461,7 @@
               ]
             },
             {
-              "name": "Build Action Instructions",
+              "name": "Build Action Instructions Through Panel",
               "sequential_order": 4,
               "story_groups": [
                 {
