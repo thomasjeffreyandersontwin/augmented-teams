@@ -65,7 +65,7 @@ def create_behavior_action_state(workspace_directory, behavior, action, operatio
     return state_file
 
 
-class TestGetActionInstructionsThroughCLI:
+class TestViewInstructions:
     """Story: Get Action Instructions Through CLI - CURRENT behavior"""
     
     def test_user_gets_instructions_for_build_action(self, bot_directory, workspace_directory, monkeypatch):
@@ -97,7 +97,7 @@ class TestGetActionInstructionsThroughCLI:
         assert isinstance(cli_response.output, str)
 
 
-class TestConfirmWorkThroughCLI:
+class TestConfirmWithParameters:
     """Story: Confirm Work Through CLI - 2-phase model"""
     
     def test_user_confirms_build_work(self, bot_directory, workspace_directory, monkeypatch):
@@ -129,7 +129,7 @@ class TestConfirmWorkThroughCLI:
         assert isinstance(cli_response.output, str)
 
 
-class TestConfirmActionCompletionThroughCLI:
+class TestConfirmActionCompletion:
     """Story: Confirm Action Completion - 2-phase model"""
     
     def test_user_confirms_build_action_completion(self, bot_directory, workspace_directory, monkeypatch):
@@ -161,7 +161,7 @@ class TestConfirmActionCompletionThroughCLI:
         assert isinstance(cli_response.output, str)
 
 
-class TestReExecuteCurrentOperationUsingCLI:
+class TestReExecuteCurrentAction:
     """Story: Re-execute Current Operation - CURRENT behavior"""
     
     def test_user_re_executes_current_instructions(self, bot_directory, workspace_directory, monkeypatch):
@@ -193,7 +193,7 @@ class TestReExecuteCurrentOperationUsingCLI:
         assert isinstance(cli_response.output, str)
 
 
-class TestHandleOperationErrorsAndValidationInCLI:
+class TestHandleErrorsAndValidation:
     """Story: Handle Operation Errors - CURRENT behavior"""
     
     def test_user_enters_invalid_command(self, bot_directory, workspace_directory, monkeypatch):
