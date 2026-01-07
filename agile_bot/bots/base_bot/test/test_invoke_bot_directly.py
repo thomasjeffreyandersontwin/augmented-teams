@@ -2633,7 +2633,7 @@ class TestInjectNextBehaviorReminder:
 # All helpers moved to test_helpers.py - imported above
 
 
-class TestCloseCurrentAction:
+class TestConfirmCurrentAction:
     """Story: Close Current Action - Tests that users can explicitly mark an action as complete and transition to the next action."""
 
     def test_close_current_action_marks_complete_and_transitions(self, bot_directory, workspace_directory):
@@ -2759,7 +2759,7 @@ class TestCloseCurrentAction:
 
 
 
-class TestInvokeBehaviorActionsInWorkflowOrder:
+class TestExecuteEndToEndWorkflow:
     """Story: Invoke Behavior Actions In Workflow Order - End-to-end test of the complete workflow with all fixes."""
 
     def _execute_workflow_steps(self, bot, state_file, bot_name):
@@ -2817,7 +2817,7 @@ class TestInvokeBehaviorActionsInWorkflowOrder:
 # STORY: Find Behavior Folder (Workflow Action Sequence)
 # ============================================================================
 
-class TestInvokeBehaviorInActionOrder:
+class TestNavigateSequentially:
     """Story: Behavior-Specific Action Order - Tests behavior-specific action order configuration."""
     
     def test_behavior_action_order_determines_next_action_from_current_action(self, bot_directory, workspace_directory):
@@ -3016,7 +3016,7 @@ class TestInvokeBehaviorInActionOrder:
 # Helper functions for Bot.execute_behavior() tests
 # ============================================================================
 
-class TestExecuteBehavior:
+class TestNavigateToBehaviorActionAndExecute:
     """Tests for Bot.execute_behavior() - Production code path."""
 
     def test_execute_behavior_with_action_parameter(self, bot_directory, workspace_directory):
@@ -3081,7 +3081,7 @@ class TestExecuteBehavior:
 # EXCEPTION HANDLING TESTS - REMOVED
 # ============================================================================
 
-class TestInsertContextIntoInstructions:
+class TestInjectContextIntoInstructions:
     """Tests for Insert Context Into Instructions story."""
     
     def test_action_loads_context_data_into_instructions(self, tmp_path, monkeypatch):
