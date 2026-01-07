@@ -66,7 +66,7 @@ def create_behavior_action_state(workspace_directory, behavior, action, operatio
     return state_file
 
 
-class TestDisplayBotHierarchyTreeInCLI:
+class TestViewBehaviorHierarchy:
     """Story: Display Bot Hierarchy Tree - CURRENT behavior"""
     
     def test_user_views_bot_hierarchy_with_status_command(self, bot_directory, workspace_directory, monkeypatch):
@@ -101,7 +101,7 @@ class TestDisplayBotHierarchyTreeInCLI:
         assert len(cli_response.output) > 0
 
 
-class TestDisplayCurrentPositionInCLI:
+class TestViewCurrentPosition:
     """Story: Display Current Position - CURRENT behavior"""
     
     def test_user_views_current_position_in_status(self, bot_directory, workspace_directory, monkeypatch):
@@ -223,7 +223,7 @@ class TestDisplayCurrentPositionInCLI:
         assert len(cli_response.output) > 0
 
 
-class TestDisplayActiveScopeInCLIStatus:
+class TestViewActiveScope:
     """Story: Display Active Scope - CURRENT behavior"""
     
     def test_user_views_active_scope_in_status(self, bot_directory, workspace_directory, monkeypatch):
@@ -258,7 +258,7 @@ class TestDisplayActiveScopeInCLIStatus:
         assert isinstance(cli_response.output, str)
 
 
-class TestDisplayCLIHeader:
+class TestViewSessionHeader:
     """Story: Display CLI Header"""
     
     def test_cli_displays_cli_status_section_header_when_status_command_is_run(self, bot_directory, workspace_directory, monkeypatch):
@@ -539,7 +539,7 @@ class TestDisplayCLIHeader:
         assert 'Headless Mode' in cli_response.output
 
 
-class TestDisplayCLINavigationMenuFooter:
+class TestViewNavigationCommands:
     """Story: Display CLI Navigation Menu Footer"""
     
     def test_cli_displays_commands_menu_footer(self, bot_directory, workspace_directory, monkeypatch):
@@ -572,7 +572,7 @@ class TestDisplayCLINavigationMenuFooter:
         assert 'Commands' in cli_response.output or 'status' in cli_response.output.lower()
 
 
-class TestDisplayHeadlessModeStatusInCLI:
+class TestViewHeadlessModeStatus:
     """Story: Display Headless Mode Status in CLI"""
     
     def test_cli_displays_headless_mode_section_when_configured(self, bot_directory, workspace_directory, monkeypatch):
@@ -645,7 +645,7 @@ class TestDisplayHeadlessModeStatusInCLI:
         assert 'Headless Mode' in cli_response.output
 
 
-class TestDisplayAvailableBotInTreeHierarchy:
+class TestViewAvailableBots:
     """Story: Display Available Bot in Tree Hierarchy"""
     
     def test_cli_displays_bot_name_in_header(self, bot_directory, workspace_directory, monkeypatch):
