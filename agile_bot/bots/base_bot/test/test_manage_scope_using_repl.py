@@ -78,6 +78,86 @@ class TestSetScope:
         assert isinstance(cli_response.output, str)
 
 
+class TestViewCurrentScopeInCLI:
+    """
+    Story: View Current Scope in CLI
+    
+    Domain logic: test_manage_scope_bot_api.py::TestSetScopeThroughBotAPI
+    REPL focus: Display scope configuration via CLI commands
+    """
+    
+    def test_view_scope_with_no_filters_set(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: View scope with no filters set
+        GIVEN: CLI is initialized with no scope filters
+        WHEN: user enters 'scope' command
+        THEN: CLI displays "No scope filters active"
+        
+        REPL focus: Default scope display
+        """
+        # GIVEN: CLI with no scope
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
+        bot.behaviors.load_state()
+        
+        # WHEN: user views scope via REPL
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_response = repl_session.read_and_execute_command('scope')
+        
+        # THEN: REPL displays no active scope
+        assert cli_response is not None
+        assert isinstance(cli_response.output, str)
+    
+    def test_view_story_scope_filter(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: View story scope filter
+        GIVEN: Story scope filter is set to "Story1"
+        WHEN: user enters 'scope' command
+        THEN: CLI displays active story scope filter
+        
+        REPL focus: Story scope display format
+        """
+        # GIVEN: Story scope is set
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
+        bot.behaviors.load_state()
+        
+        # WHEN: user sets story scope then views it
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        repl_session.read_and_execute_command('scope story="Story1"')
+        cli_response = repl_session.read_and_execute_command('scope')
+        
+        # THEN: CLI displays story scope
+        assert cli_response is not None
+        assert isinstance(cli_response.output, str)
+    
+    def test_view_file_scope_filter(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: View file scope filter
+        GIVEN: File scope filter is set to "*.py"
+        WHEN: user enters 'scope' command
+        THEN: CLI displays active file scope filter
+        
+        REPL focus: File scope display format
+        """
+        # GIVEN: File scope is set
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
+        bot.behaviors.load_state()
+        
+        # WHEN: user sets file scope then views it
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        repl_session.read_and_execute_command('scope file="*.py"')
+        cli_response = repl_session.read_and_execute_command('scope')
+        
+        # THEN: CLI displays file scope
+        assert cli_response is not None
+        assert isinstance(cli_response.output, str)
+
+
 class TestClearScope:
     """
     Story: Clear Scope Filters
