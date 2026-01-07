@@ -3970,7 +3970,7 @@
           ],
           "sub_epics": [
             {
-              "name": "Manage Bot Information",
+              "name": "Manage Panel Session",
               "sequential_order": 1,
               "story_groups": [
                 {
@@ -3997,7 +3997,7 @@
                       ]
                     },
                     {
-                      "name": "Refresh Panel",
+                      "name": "Display Session Status",
                       "sequential_order": 2,
                       "connector": "and",
                       "users": [
@@ -4062,7 +4062,7 @@
               ]
             },
             {
-              "name": "Navigate Behavior Action Status",
+              "name": "Navigate And Execute Behaviors",
               "sequential_order": 2,
               "story_groups": [
                 {
@@ -4151,7 +4151,7 @@
               ]
             },
             {
-              "name": "Filter And Navigate Scope",
+              "name": "Manage Scope",
               "sequential_order": 3,
               "story_groups": [
                 {
@@ -4261,7 +4261,7 @@
               ]
             },
             {
-              "name": "Display Instructions",
+              "name": "View Action-Specific Instructions",
               "sequential_order": 4,
               "story_groups": [
                 {
@@ -4381,7 +4381,7 @@
                       ]
                     },
                     {
-                      "name": "Submit Instructions To Chat",
+                      "name": "Submit Instructions To AI Agent",
                       "sequential_order": 8,
                       "connector": "and",
                       "users": [
