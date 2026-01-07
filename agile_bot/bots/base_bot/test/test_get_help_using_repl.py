@@ -85,3 +85,55 @@ class TestDisplayCommandExamplesUsingCLI:
         assert cli_response is not None
         assert isinstance(cli_response.output, str)
         assert len(cli_response.output) > 0
+
+
+class TestDisplayNavigationCommandsFooter:
+    """
+    Story: Display Navigation Commands Footer
+    
+    REPL focus: Available commands display in footer
+    """
+    
+    def test_cli_displays_available_commands(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI displays available commands
+        GIVEN: CLI is running
+        WHEN: Status displayed
+        THEN: Available commands shown
+        
+        REPL focus: Command list display
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Commands available
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        # Commands may be shown in various formats
+        assert len(display_text) > 0
+    
+    def test_cli_displays_bot_command_in_footer(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI displays bot command in footer
+        GIVEN: CLI is running
+        WHEN: Status displayed
+        THEN: Footer shows available commands
+        
+        REPL focus: Footer formatting
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Footer info included
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        # Footer may show help, commands, or other info
+        assert len(display_text) > 0

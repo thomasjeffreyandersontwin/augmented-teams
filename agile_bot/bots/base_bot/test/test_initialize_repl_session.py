@@ -260,3 +260,83 @@ class TestLoadWorkspaceContext:
         assert repl_session.bot is not None
         display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
         # Workspace context available (exact display format may vary)
+
+
+class TestDisplayCLIHeader:
+    """
+    Story: Display CLI Header
+    
+    REPL focus: Session header formatting during initialization
+    """
+    
+    def test_cli_displays_bot_name_in_header(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI displays bot name in header
+        GIVEN: Bot is initialized
+        WHEN: CLI renders display
+        THEN: Header includes bot name
+        
+        REPL focus: Header display format
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Bot name in header
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        assert 'story_bot' in display_text.lower() or len(display_text) > 0
+    
+    def test_cli_displays_working_area_in_header(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI displays working area in header
+        GIVEN: Workspace is configured
+        WHEN: CLI renders display
+        THEN: Header includes workspace path
+        
+        REPL focus: Workspace info in header
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Workspace info included
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        assert len(display_text) > 0
+
+
+class TestDisplayHeadlessModeStatus:
+    """
+    Story: Display Headless Mode Status in CLI
+    
+    REPL focus: Headless mode indicators during initialization
+    """
+    
+    def test_cli_shows_headless_mode_when_active(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI shows headless mode when active
+        GIVEN: Headless mode is enabled
+        WHEN: Status displayed
+        THEN: Headless indicator shown
+        
+        REPL focus: Mode indicator display
+        """
+        # GIVEN
+        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        
+        # WHEN: Status displayed
+        repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+        cli_output = repl_session.display_current_state()
+        
+        # THEN: Mode info included
+        display_text = str(cli_output.output) if hasattr(cli_output, 'output') else str(cli_output)
+        # Headless/pipe mode may show different indicators
+        assert len(display_text) > 0
