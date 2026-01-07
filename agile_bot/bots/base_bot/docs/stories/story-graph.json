@@ -3902,7 +3902,7 @@
             }
           ],
           "story_groups": [],
-          "test_file": "test_perform_behavior_action.py"
+          "test_file": "test_invoke_bot_directly.py"
         },
         {
           "name": "Invoke Bot Through Panel",
@@ -6597,7 +6597,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestLaunchCLIInInteractiveMode",
+                      "test_class": "TestStartREPLSession",
                       "scenarios": [
                         {
                           "name": "CLI launches in interactive mode",
@@ -6620,7 +6620,7 @@
                         "Automation"
                       ],
                       "story_type": "user",
-                      "test_class": "TestLaunchCLIInPipeMode",
+                      "test_class": "TestStartREPLInPipeMode",
                       "scenarios": [
                         {
                           "name": "CLI launches in pipe mode",
@@ -6659,7 +6659,7 @@
                         "TTYDetector"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDetectAndConfigureTTYNonTTYInputForCLI",
+                      "test_class": "TestDetectAndConfigureTTYNonTTYInput",
                       "scenarios": [
                         {
                           "name": "TTYDetector identifies interactive terminal",
@@ -6681,7 +6681,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestLoadAndDisplayWorkspaceContextInCLI",
+                      "test_class": "TestLoadWorkspaceContext",
                       "scenarios": [
                         {
                           "name": "CLI loads and displays workspace context",
@@ -6714,7 +6714,7 @@
             {
               "name": "Navigate Behaviors Using REPL Commands",
               "sequential_order": 2,
-              "test_file": "test_navigate_bot_behaviors_and_actions_with_cli_current.py",
+              "test_file": "test_navigate_behaviors_using_repl_commands.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -6728,7 +6728,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestNavigateUsingCLIDotNotation",
+                      "test_class": "TestNavigateToBehaviorActionAndExecute",
                       "scenarios": [
                         {
                           "name": "User navigates with behavior only (no dots)",
@@ -6760,7 +6760,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestNavigateSequentiallyUsingCLICommands",
+                      "test_class": "TestNavigateSequentially",
                       "scenarios": [
                         {
                           "name": "User navigates with next command",
@@ -6782,7 +6782,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestExitCLIREPL",
+                      "test_class": "TestExitREPL",
                       "scenarios": [
                         {
                           "name": "User exits REPL with exit command",
@@ -6798,7 +6798,7 @@
             {
               "name": "Navigate Behaviors Using Domain Model",
               "sequential_order": 2.5,
-              "test_file": "test_navigate_bot_behaviors_and_actions_with_cli.py",
+              "test_file": "test_navigate_behaviors_using_domain_model.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -6859,7 +6859,7 @@
             {
               "name": "Display Action Instructions Using REPL",
               "sequential_order": 3,
-              "test_file": "test_execute_action_operation_through_cli.py",
+              "test_file": "test_execute_actions_using_repl.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -6881,7 +6881,7 @@
                       ],
                       "optional": false,
                       "priority": 1,
-                      "test_class": "TestGetActionInstructionsThroughCLI",
+                      "test_class": "TestViewInstructions",
                       "scenarios": [
                         {
                           "name": "User gets instructions for build action without scope",
@@ -6953,7 +6953,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestConfirmActionCompletionThroughCLI",
+                      "test_class": "TestConfirmActionCompletion",
                       "scenarios": [
                         {
                           "name": "User confirms build action completion",
@@ -6985,7 +6985,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestReExecuteCurrentOperationUsingCLI",
+                      "test_class": "TestReExecuteCurrentAction",
                       "scenarios": [
                         {
                           "name": "User re-executes current instructions",
@@ -7002,7 +7002,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestHandleOperationErrorsAndValidationInCLI",
+                      "test_class": "TestHandleErrorsAndValidation",
                       "scenarios": [
                         {
                           "name": "User enters invalid scope format with instructions",
@@ -7018,7 +7018,7 @@
             {
               "name": "Manage Scope Using REPL",
               "sequential_order": 4,
-              "test_file": "test_manage_bot_scope_through_cli.py",
+              "test_file": "test_manage_scope_using_repl.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -7041,7 +7041,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestFilterWorkUsingKnowledgeGraphScopeInCLI",
+                      "test_class": "TestSetStoryScope",
                       "acceptance_criteria": [
                         "WHEN user sets epic scope filter\nTHEN CLI displays active scope filters",
                         "WHEN user sets story scope filter\nTHEN CLI displays active scope filters",
@@ -7079,7 +7079,7 @@
                       ],
                       "optional": false,
                       "priority": 1,
-                      "test_class": "TestFilterWorkUsingFilesScopeInCLI",
+                      "test_class": "TestSetFileScope",
                       "scenarios": [
                         {
                           "name": "User sets files scope filter",
@@ -7145,7 +7145,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestClearScopeFiltersInCLI",
+                      "test_class": "TestClearScope",
                       "scenarios": [
                         {
                           "name": "User clears all scope filters",
@@ -7192,7 +7192,7 @@
             {
               "name": "Display State Using REPL",
               "sequential_order": 5,
-              "test_file": "test_display_bot_state_using_cli.py",
+              "test_file": "test_display_state_using_repl.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -7206,7 +7206,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayCLIHeader",
+                      "test_class": "TestViewSessionHeader",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows header with bot name AND workspace path",
                         "WHEN displaying header in terminal mode\nTHEN CLI uses plain text formatting",
@@ -7234,7 +7234,7 @@
                         },
                         {
                           "name": "CLI displays workspace name and path",
-                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains 'Ã°Å¸â€œâ€š **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '\u00c3\u00b0\u00c5\u00b8\u00e2\u20ac\u0153\u00e2\u20ac\u0161 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
                           "test_method": "test_cli_displays_workspace_name_and_path",
                           "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
                         },
@@ -7280,7 +7280,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayBotHierarchyTreeInCLI",
+                      "test_class": "TestViewBehaviorHierarchy",
                       "acceptance_criteria": [
                         "WHEN user views status\nTHEN CLI displays bot hierarchy tree with behaviors and actions",
                         "WHEN displaying hierarchy\nTHEN CLI shows progress indicators for each action",
@@ -7311,7 +7311,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayCurrentPositionInCLI",
+                      "test_class": "TestViewCurrentPosition",
                       "acceptance_criteria": [
                         "WHEN user views status\nTHEN CLI displays current behavior, action, and operation",
                         "WHEN user navigates to different action\nTHEN CLI updates current position display",
@@ -7341,7 +7341,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayActiveScopeInCLIStatus",
+                      "test_class": "TestViewActiveScope",
                       "acceptance_criteria": [
                         "WHEN user views status with active scope\nTHEN CLI displays active scope section",
                         "WHEN no scope is active\nTHEN CLI displays no active scope filters message",
@@ -7376,7 +7376,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayCLINavigationMenuFooter",
+                      "test_class": "TestViewNavigationCommands",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows footer with available commands",
                         "WHEN displaying footer\nTHEN CLI lists navigation commands AND action commands",
@@ -7402,7 +7402,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayHeadlessModeStatusInCLI",
+                      "test_class": "TestViewHeadlessModeStatus",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows headless mode section",
                         "WHEN headless mode is configured\nTHEN CLI shows headless mode status as Available\nAND: CLI shows configured API key prefix\nAND: CLI shows usage examples\nAND: CLI shows command examples",
@@ -7434,7 +7434,7 @@
                         "CLI"
                       ],
                       "story_type": "system",
-                      "test_class": "TestDisplayAvailableBotInTreeHierarchy",
+                      "test_class": "TestViewAvailableBots",
                       "acceptance_criteria": [
                         "WHEN CLI displays status\nTHEN CLI shows current bot name in header",
                         "WHEN displaying bot hierarchy\nTHEN CLI shows bot name AND available behaviors",
@@ -7483,7 +7483,7 @@
             {
               "name": "Get Help Using REPL",
               "sequential_order": 6,
-              "test_file": "test_get_help_using_cli_current.py",
+              "test_file": "test_get_help_using_repl.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -7497,7 +7497,7 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewAvailableCommandsUsingCLIHelp",
+                      "test_class": "TestDisplayActionHelpUsingCLI",
                       "acceptance_criteria": [
                         "WHEN user enters help command\nTHEN CLI displays available commands AND their descriptions",
                         "WHEN user requests help for specific action\nTHEN CLI displays detailed help for that action",
