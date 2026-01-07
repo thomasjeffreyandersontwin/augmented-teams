@@ -2250,123 +2250,6 @@
               ]
             },
             {
-              "name": "Generate Action Instructions",
-              "sequential_order": 3,
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
-                    {
-                      "name": "Load Base Action Configuration",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestLoadBaseActionConfiguration",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Action is initialized",
-                        "THEN Base config is loaded from config.json",
-                        "AND Config includes action_state and parameters"
-                      ]
-                    },
-                    {
-                      "name": "Load And Merge Behavior-Specific Instructions",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestLoadAndMergeBehaviorSpecificInstructions",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Instructions are loaded",
-                        "THEN Behavior-specific instructions.json is merged with base",
-                        "AND Specific instructions override base instructions"
-                      ]
-                    },
-                    {
-                      "name": "Load Guardrails From Behavior Folder",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestLoadGuardrailsFromBehaviorFolder",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Behavior is loaded",
-                        "THEN Guardrails are read from guardrails/ folder",
-                        "AND Guardrails include .md and .mdc files"
-                      ]
-                    },
-                    {
-                      "name": "Inject Guardrails Into Instructions",
-                      "sequential_order": 4,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestInjectGuardrailsIntoInstructions",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Instructions are generated",
-                        "THEN Guardrails are injected into instructions",
-                        "AND Instructions include all guardrail content"
-                      ]
-                    },
-                    {
-                      "name": "Inject Context Into Instructions",
-                      "sequential_order": 5,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestInjectContextIntoInstructions",
-                      "scenarios": [
-                        {
-                          "name": "Action loads context data into instructions",
-                          "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
-                          "test_method": "test_action_loads_context_data_into_instructions"
-                        },
-                        {
-                          "title": "Inject Next Behavior Reminder",
-                          "description": "System automatically handles: Inject Next Behavior Reminder"
-                        },
-                        {
-                          "title": "Inject Status Update Breadcrumbs Into Instructions",
-                          "description": "System automatically handles: Inject Status Update Breadcrumbs Into Instructions"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Get Action Instructions",
-                      "sequential_order": 6,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestGetActionInstructions",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Action instructions are requested",
-                        "THEN Complete instructions are returned",
-                        "AND Instructions include base, guardrails, and context"
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
               "name": "Manage Scope",
               "sequential_order": 4,
               "story_groups": [
@@ -2516,6 +2399,123 @@
                 }
               ],
               "sub_epics": [
+                {
+                  "name": "Build Common Instructions For Actions",
+                  "sequential_order": 3,
+                  "story_groups": [
+                    {
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
+                        {
+                          "name": "Load Base Action Configuration",
+                          "sequential_order": 1,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestLoadBaseActionConfiguration",
+                          "scenarios": [],
+                          "acceptance_criteria": [
+                            "WHEN Action is initialized",
+                            "THEN Base config is loaded from config.json",
+                            "AND Config includes action_state and parameters"
+                          ]
+                        },
+                        {
+                          "name": "Load And Merge Behavior-Specific Instructions",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestLoadAndMergeBehaviorSpecificInstructions",
+                          "scenarios": [],
+                          "acceptance_criteria": [
+                            "WHEN Instructions are loaded",
+                            "THEN Behavior-specific instructions.json is merged with base",
+                            "AND Specific instructions override base instructions"
+                          ]
+                        },
+                        {
+                          "name": "Load Guardrails From Behavior Folder",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestLoadGuardrailsFromBehaviorFolder",
+                          "scenarios": [],
+                          "acceptance_criteria": [
+                            "WHEN Behavior is loaded",
+                            "THEN Guardrails are read from guardrails/ folder",
+                            "AND Guardrails include .md and .mdc files"
+                          ]
+                        },
+                        {
+                          "name": "Inject Guardrails Into Instructions",
+                          "sequential_order": 4,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestInjectGuardrailsIntoInstructions",
+                          "scenarios": [],
+                          "acceptance_criteria": [
+                            "WHEN Instructions are generated",
+                            "THEN Guardrails are injected into instructions",
+                            "AND Instructions include all guardrail content"
+                          ]
+                        },
+                        {
+                          "name": "Inject Context Into Instructions",
+                          "sequential_order": 5,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestInjectContextIntoInstructions",
+                          "scenarios": [
+                            {
+                              "name": "Action loads context data into instructions",
+                              "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
+                              "test_method": "test_action_loads_context_data_into_instructions"
+                            },
+                            {
+                              "title": "Inject Next Behavior Reminder",
+                              "description": "System automatically handles: Inject Next Behavior Reminder"
+                            },
+                            {
+                              "title": "Inject Status Update Breadcrumbs Into Instructions",
+                              "description": "System automatically handles: Inject Status Update Breadcrumbs Into Instructions"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Get Action Instructions",
+                          "sequential_order": 6,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestGetActionInstructions",
+                          "scenarios": [],
+                          "acceptance_criteria": [
+                            "WHEN Action instructions are requested",
+                            "THEN Complete instructions are returned",
+                            "AND Instructions include base, guardrails, and context"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
                 {
                   "name": "Gather Context",
                   "sequential_order": 1.0,
