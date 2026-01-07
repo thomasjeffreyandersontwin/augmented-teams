@@ -141,8 +141,7 @@ class Actions:
         state_data = self._state_manager.load_or_create_state(state_file)
         self._ensure_current_behavior_in_state(state_data)
         self._mark_action_completed(state_data)
-        # TEMPORARILY DISABLED: Auto-advance to next action (for testing render instructions)
-        # self._advance_to_next_action()
+        self._advance_to_next_action()
         self._update_current_action_in_state(state_data)
         self._save_state_file(state_file, state_data)
 
