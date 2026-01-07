@@ -99,7 +99,7 @@ def create_story_graph(workspace_directory):
     return stories_dir / 'story-graph.json'
 
 
-class TestLaunchCLIInInteractiveMode:
+class TestStartREPLSession:
     """Story: Launch CLI in Interactive Mode"""
     
     def test_cli_launches_in_interactive_mode(self, bot_directory, workspace_directory, monkeypatch):
@@ -167,7 +167,7 @@ class TestLaunchCLIInInteractiveMode:
         assert repl_session.current_action_name == 'build'
 
 
-class TestLaunchCLIInPipeMode:
+class TestStartREPLInPipeMode:
     """Story: Launch CLI in Pipe Mode"""
     
     def test_cli_launches_in_pipe_mode(self, bot_directory, workspace_directory, monkeypatch):
@@ -260,7 +260,7 @@ class TestDisplayPipedModeInstructionsForAIAgents:
         # (implicit in interactive mode)
 
 
-class TestDetectAndConfigureTTYNonTTYInputForCLI:
+class TestDetectAndConfigureTTYNonTTYInput:
     """Story: Detect and Configure TTY/Non-TTY Input for CLI"""
     
     def test_tty_detector_identifies_interactive_terminal(self, bot_directory, workspace_directory, monkeypatch):
@@ -320,7 +320,7 @@ class TestDetectAndConfigureTTYNonTTYInputForCLI:
         assert tty_result.interactive_prompts_enabled is False
 
 
-class TestLoadAndDisplayWorkspaceContextInCLI:
+class TestLoadWorkspaceContext:
     """Story: Load and Display Workspace Context in CLI"""
     
     def test_cli_loads_and_displays_workspace_context(self, bot_directory, workspace_directory, monkeypatch):
