@@ -413,7 +413,6 @@ class CLIScope(CLIBase):
         """Enhance story lines with hyperlinks to story files and format as tree structure."""
         enhanced_lines = []
         epic_name = None
-        sub_epic_name = None
         
         # Pattern to match story/epic/sub-epic lines with optional test info
         # Format: "  🎯 Epic Name" or "    ⚙️ Sub Epic Name|TEST_FILE:file.py" or "      📝 Story Name|TEST_FILE:file.py|TEST_CLASS:ClassName"
@@ -451,7 +450,7 @@ class CLIScope(CLIBase):
         # Second pass: render with tree structure, respecting nesting levels
         epic_idx = -1
         sub_epic_indices = {}  # Track sub-epic indices by nesting level
-        sub_epic_names = {}  # Track sub-epic names by nesting level
+        sub_epic_names = {}  # Track sub-epic names by nesting level (full nested path)
         sub_epic_test_files = {}  # Track sub-epic test_files by nesting level
         story_idx = -1
         
@@ -468,7 +467,15 @@ class CLIScope(CLIBase):
             elif item_type == 'sub_epic':
                 # Track this sub-epic at its nesting level
                 sub_epic_indices[indent_level] = i
-                sub_epic_names[indent_level] = item_name
+                # Build full nested path: combine parent path with current name
+                parent_indent = indent_level - 1
+                if parent_indent >= 0 and parent_indent in sub_epic_names:
+                    # Append to parent's path
+                    sub_epic_names[indent_level] = sub_epic_names[parent_indent] + [item_name]
+                else:
+                    # First level sub-epic under epic
+                    sub_epic_names[indent_level] = [item_name]
+                
                 # Track test_file from sub-epic (item_data is the test_file string)
                 sub_epic_test_files[indent_level] = item_data
                 story_idx = -1
@@ -517,8 +524,8 @@ class CLIScope(CLIBase):
                 # Determine connector for this level
                 connector = "├── " if (has_siblings_at_level or has_children) else "└── "
                 
-                # Build sub-epic folder path for hyperlink
-                sub_epic_folder_path = self._build_sub_epic_folder_path(epic_name, item_name)
+                # Build sub-epic folder path for hyperlink (pass full nested path)
+                sub_epic_folder_path = self._build_sub_epic_folder_path(epic_name, sub_epic_names[indent_level])
                 
                 # Add test file link if available
                 test_file = item_data
@@ -543,12 +550,12 @@ class CLIScope(CLIBase):
             elif item_type == 'story':
                 story_name = item_name
                 
-                # Find the parent sub-epic name at the appropriate nesting level
+                # Find the parent sub-epic path at the appropriate nesting level (now a list)
                 parent_indent_level = indent_level - 1
-                parent_sub_epic_name = sub_epic_names.get(parent_indent_level) if parent_indent_level >= 0 else None
+                parent_sub_epic_path = sub_epic_names.get(parent_indent_level) if parent_indent_level >= 0 else None
                 
-                # Build story file path
-                story_file_path = self._build_story_file_path(epic_name, parent_sub_epic_name, story_name)
+                # Build story file path (pass full nested path)
+                story_file_path = self._build_story_file_path(epic_name, parent_sub_epic_path, story_name)
                 
                 # Find the parent sub-epic index at the appropriate nesting level
                 parent_sub_epic_idx = -1
@@ -641,28 +648,43 @@ class CLIScope(CLIBase):
             
             sub_epics = epic.get('sub_epics', [])
             for sub_epic in sub_epics:
-                sub_epic_name = sub_epic.get('name')
-                
-                # Process stories in story_groups
-                story_groups = sub_epic.get('story_groups', [])
-                for story_group in story_groups:
-                    stories = story_group.get('stories', [])
-                    for story in stories:
-                        self._add_story_file_to_node(story, epic_name, sub_epic_name, workspace_root)
-                
-                # Process stories directly in sub_epic
-                direct_stories = sub_epic.get('stories', [])
-                for story in direct_stories:
-                    self._add_story_file_to_node(story, epic_name, sub_epic_name, workspace_root)
+                # Process sub-epic recursively with path tracking
+                self._process_sub_epic_for_file_paths(sub_epic, epic_name, [], workspace_root)
     
-    def _add_story_file_to_node(self, story_node: dict, epic_name: str, sub_epic_name: str, workspace_root: Path) -> None:
+    def _process_sub_epic_for_file_paths(self, sub_epic: dict, epic_name: str, parent_path: list, workspace_root: Path) -> None:
+        """Recursively process sub-epic and its nested children to add file paths."""
+        sub_epic_name = sub_epic.get('name')
+        if not sub_epic_name:
+            return
+        
+        # Build current path (parent path + current sub-epic)
+        current_path = parent_path + [sub_epic_name]
+        
+        # Process nested sub-epics recursively
+        nested_sub_epics = sub_epic.get('sub_epics', [])
+        for nested_sub_epic in nested_sub_epics:
+            self._process_sub_epic_for_file_paths(nested_sub_epic, epic_name, current_path, workspace_root)
+        
+        # Process stories in story_groups at this level
+        story_groups = sub_epic.get('story_groups', [])
+        for story_group in story_groups:
+            stories = story_group.get('stories', [])
+            for story in stories:
+                self._add_story_file_to_node(story, epic_name, current_path, workspace_root)
+        
+        # Process stories directly in sub_epic
+        direct_stories = sub_epic.get('stories', [])
+        for story in direct_stories:
+            self._add_story_file_to_node(story, epic_name, current_path, workspace_root)
+    
+    def _add_story_file_to_node(self, story_node: dict, epic_name: str, sub_epic_path: list, workspace_root: Path) -> None:
         """Add story_file path to a single story node."""
         story_name = story_node.get('name')
         if not story_name:
             return
         
-        # Build story file path
-        story_file_path = self._build_story_file_path(epic_name, sub_epic_name, story_name)
+        # Build story file path with full nested path
+        story_file_path = self._build_story_file_path(epic_name, sub_epic_path, story_name)
         
         if story_file_path and story_file_path.exists():
             try:
@@ -677,40 +699,73 @@ class CLIScope(CLIBase):
         else:
             story_node['story_file_exists'] = False
     
-    def _build_story_file_path(self, epic_name: Optional[str], sub_epic_name: Optional[str], story_name: str) -> Optional[Path]:
-        """Build the file path for a story based on epic/sub-epic/story names."""
+    def _build_story_file_path(self, epic_name: Optional[str], sub_epic_path: Optional[list], story_name: str) -> Optional[Path]:
+        """Build the file path for a story based on epic/nested sub-epic path/story names.
+        
+        Args:
+            epic_name: The epic name
+            sub_epic_path: List of nested sub-epic names (e.g., ["Invoke Bot Through Panel", "Manage Panel Session"])
+            story_name: The story name
+        """
         if not epic_name:
             return None
         
-        # Build path: docs/stories/map/🎯 {epic_name}/⚙️ {sub_epic_name}/📝 {story_name}.md
+        # Build path: docs/stories/map/🎯 {epic_name}/⚙️ {sub_epic_1}/⚙️ {sub_epic_2}/.../📝 {story_name}.md
         map_dir = self._workspace_directory / 'docs' / 'stories' / 'map'
         epic_folder = f"🎯 {epic_name}"
         
-        if sub_epic_name and sub_epic_name != epic_name:
-            sub_epic_folder = f"⚙️ {sub_epic_name}"
-            story_file = map_dir / epic_folder / sub_epic_folder / f"📝 {story_name}.md"
-        else:
-            # If no sub-epic or sub-epic same as epic, check if epic folder has stories directly
-            # Some structures might have stories directly under epic
-            story_file = map_dir / epic_folder / f"📝 {story_name}.md"
-            if not story_file.exists() and sub_epic_name:
-                # Try with sub-epic folder even if it matches epic name
-                sub_epic_folder = f"⚙️ {sub_epic_name}"
-                story_file = map_dir / epic_folder / sub_epic_folder / f"📝 {story_name}.md"
+        # Start with epic folder
+        current_path = map_dir / epic_folder
+        
+        # Add all nested sub-epic folders
+        if sub_epic_path:
+            for sub_epic_name in sub_epic_path:
+                if sub_epic_name and sub_epic_name != epic_name:
+                    sub_epic_folder = f"⚙️ {sub_epic_name}"
+                    current_path = current_path / sub_epic_folder
+        
+        # Add story file
+        story_file = current_path / f"📝 {story_name}.md"
+        
+        # Fallback: if path doesn't exist and we have a sub_epic_path, try simpler paths
+        if not story_file.exists() and sub_epic_path:
+            # Try with just the last sub-epic name (backward compatibility)
+            last_sub_epic = sub_epic_path[-1]
+            if last_sub_epic != epic_name:
+                fallback_path = map_dir / epic_folder / f"⚙️ {last_sub_epic}" / f"📝 {story_name}.md"
+                if fallback_path.exists():
+                    return fallback_path
+            
+            # Try directly under epic (backward compatibility)
+            fallback_path = map_dir / epic_folder / f"📝 {story_name}.md"
+            if fallback_path.exists():
+                return fallback_path
         
         return story_file
     
-    def _build_sub_epic_folder_path(self, epic_name: Optional[str], sub_epic_name: str) -> Optional[Path]:
-        """Build the folder path for a sub-epic based on epic/sub-epic names."""
-        if not epic_name or not sub_epic_name:
+    def _build_sub_epic_folder_path(self, epic_name: Optional[str], sub_epic_path: list) -> Optional[Path]:
+        """Build the folder path for a sub-epic based on epic/nested sub-epic path.
+        
+        Args:
+            epic_name: The epic name
+            sub_epic_path: List of nested sub-epic names (e.g., ["Invoke Bot Through Panel", "Manage Panel Session"])
+        """
+        if not epic_name or not sub_epic_path:
             return None
         
-        # Build path: docs/stories/map/🎯 {epic_name}/⚙️ {sub_epic_name}/
+        # Build path: docs/stories/map/🎯 {epic_name}/⚙️ {sub_epic_1}/⚙️ {sub_epic_2}/.../
         map_dir = self._workspace_directory / 'docs' / 'stories' / 'map'
         epic_folder = f"🎯 {epic_name}"
-        sub_epic_folder = f"⚙️ {sub_epic_name}"
         
-        folder_path = map_dir / epic_folder / sub_epic_folder
+        # Start with epic folder
+        folder_path = map_dir / epic_folder
+        
+        # Add all nested sub-epic folders
+        for sub_epic_name in sub_epic_path:
+            if sub_epic_name:
+                sub_epic_folder = f"⚙️ {sub_epic_name}"
+                folder_path = folder_path / sub_epic_folder
+        
         return folder_path if folder_path.exists() and folder_path.is_dir() else None
     
     def _build_test_file_link(self, test_file: str) -> str:
@@ -732,53 +787,67 @@ class CLIScope(CLIBase):
                 continue
             
             for sub_epic in epic['sub_epics']:
-                sub_epic_name = sub_epic.get('name')
-                
-                # Add folder path for sub-epic
-                if sub_epic_name:
-                    sub_epic_folder_path = self._build_sub_epic_folder_path(epic_name, sub_epic_name)
-                    if sub_epic_folder_path and sub_epic_folder_path.exists():
-                        try:
-                            rel_path = sub_epic_folder_path.relative_to(workspace_root)
-                            sub_epic['sub_epic_folder'] = str(rel_path).replace('\\', '/')
-                            sub_epic['sub_epic_folder_exists'] = True
-                        except (ValueError, AttributeError):
-                            sub_epic['sub_epic_folder'] = str(sub_epic_folder_path).replace('\\', '/')
-                            sub_epic['sub_epic_folder_exists'] = True
-                    else:
-                        sub_epic['sub_epic_folder_exists'] = False
-                
-                # Add test link for sub-epic (feature) if test_file exists
-                test_file = sub_epic.get('test_file')
-                if test_file:
-                    test_link = self._build_test_file_link(test_file)
-                    if test_link:
-                        # Extract URL from markdown link: " | [Test](url)"
-                        import re
-                        match = re.search(r'\[Test\]\(([^)]+)\)', test_link)
-                        if match:
-                            sub_epic['test_link'] = match.group(1)
-                
-                # Process stories in story_groups
-                if 'story_groups' in sub_epic:
-                    for story_group in sub_epic['story_groups']:
-                        if 'stories' in story_group:
-                            for story in story_group['stories']:
-                                self._add_story_file_to_story_obj(story, epic_name, sub_epic_name, workspace_root)
-                
-                # Process stories directly at sub_epic level
-                if 'stories' in sub_epic:
-                    for story in sub_epic['stories']:
-                        self._add_story_file_to_story_obj(story, epic_name, sub_epic_name, workspace_root)
+                # Process sub-epic recursively with path tracking
+                self._process_sub_epic_for_panel(sub_epic, epic_name, [], workspace_root)
     
-    def _add_story_file_to_story_obj(self, story: dict, epic_name: str, sub_epic_name: str, workspace_root: Path) -> None:
+    def _process_sub_epic_for_panel(self, sub_epic: dict, epic_name: str, parent_path: list, workspace_root: Path) -> None:
+        """Recursively process sub-epic and its nested children for panel consumption."""
+        sub_epic_name = sub_epic.get('name')
+        if not sub_epic_name:
+            return
+        
+        # Build current path (parent path + current sub-epic)
+        current_path = parent_path + [sub_epic_name]
+        
+        # Add folder path for sub-epic
+        sub_epic_folder_path = self._build_sub_epic_folder_path(epic_name, current_path)
+        if sub_epic_folder_path and sub_epic_folder_path.exists():
+            try:
+                rel_path = sub_epic_folder_path.relative_to(workspace_root)
+                sub_epic['sub_epic_folder'] = str(rel_path).replace('\\', '/')
+                sub_epic['sub_epic_folder_exists'] = True
+            except (ValueError, AttributeError):
+                sub_epic['sub_epic_folder'] = str(sub_epic_folder_path).replace('\\', '/')
+                sub_epic['sub_epic_folder_exists'] = True
+        else:
+            sub_epic['sub_epic_folder_exists'] = False
+        
+        # Add test link for sub-epic (feature) if test_file exists
+        test_file = sub_epic.get('test_file')
+        if test_file:
+            test_link = self._build_test_file_link(test_file)
+            if test_link:
+                # Extract URL from markdown link: " | [Test](url)"
+                import re
+                match = re.search(r'\[Test\]\(([^)]+)\)', test_link)
+                if match:
+                    sub_epic['test_link'] = match.group(1)
+        
+        # Process nested sub-epics recursively
+        if 'sub_epics' in sub_epic:
+            for nested_sub_epic in sub_epic['sub_epics']:
+                self._process_sub_epic_for_panel(nested_sub_epic, epic_name, current_path, workspace_root)
+        
+        # Process stories in story_groups at this level
+        if 'story_groups' in sub_epic:
+            for story_group in sub_epic['story_groups']:
+                if 'stories' in story_group:
+                    for story in story_group['stories']:
+                        self._add_story_file_to_story_obj(story, epic_name, current_path, workspace_root)
+        
+        # Process stories directly at sub_epic level
+        if 'stories' in sub_epic:
+            for story in sub_epic['stories']:
+                self._add_story_file_to_story_obj(story, epic_name, current_path, workspace_root)
+    
+    def _add_story_file_to_story_obj(self, story: dict, epic_name: str, sub_epic_path: list, workspace_root: Path) -> None:
         """Add story_file path to a single story object."""
         story_name = story.get('name')
         if not story_name:
             return
         
-        # Build the story file path
-        story_file_path = self._build_story_file_path(epic_name, sub_epic_name, story_name)
+        # Build the story file path with full nested path
+        story_file_path = self._build_story_file_path(epic_name, sub_epic_path, story_name)
         
         if story_file_path and story_file_path.exists():
             story['story_file_exists'] = True
