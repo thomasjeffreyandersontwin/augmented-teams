@@ -2482,151 +2482,6 @@
                       ]
                     },
                     {
-                      "name": "Build Clarify Instructions",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestBuildClarifyInstructions",
-                      "acceptance_criteria": [
-                        "WHEN gather_context action executes",
-                        "AND behavior folder exists with guardrails/required_context/key_questions.json",
-                        "AND behavior folder exists with guardrails/required_context/evidence.json",
-                        "THEN instructions should contain actual questions (not {{key_questions}} placeholder)",
-                        "AND instructions should contain actual evidence (not {{evidence}} placeholder)",
-                        "WHEN guardrails don't exist",
-                        "THEN gather_context should not fail",
-                        "AND action should execute with base instructions only"
-                      ],
-                      "scenarios": [
-                        {
-                          "name": "Gather context injects guardrails from behavior folder",
-                          "steps": "GIVEN: behavior folder: 1_shape (with number prefix)\nAND: guardrails/required_context/key_questions.json exists\nAND: guardrails/required_context/evidence.json exists\nWHEN: gather_context action executes\nTHEN: instructions should contain actual questions (not {{key_questions}} placeholder)\nAND: instructions should contain actual evidence (not {{evidence}} placeholder)\nAND: guardrails section includes key_questions with actual data\nAND: guardrails section includes evidence with actual data",
-                          "test_method": "test_action_injects_questions_and_evidence"
-                        },
-                        {
-                          "name": "Gather context handles missing guardrails gracefully",
-                          "steps": "GIVEN: behavior folder exists but no guardrails\nWHEN: gather_context action executes\nTHEN: action should succeed without guardrails\nAND: instructions contain base instructions only\nAND: no error is raised",
-                          "test_method": "test_action_uses_base_instructions_when_guardrails_missing"
-                        },
-                        {
-                          "name": "Gather context handles malformed guardrails gracefully",
-                          "steps": "GIVEN: guardrails files exist but contain invalid JSON\nWHEN: gather_context action executes\nTHEN: action should handle malformed JSON gracefully\nAND: action should continue with base instructions",
-                          "test_method": "test_action_handles_malformed_guardrails_json"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Build Validate Instructions",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestBuildValidateInstructions",
-                      "acceptance_criteria": [
-                        "WHEN MCP Specific Behavior Action Tool invokes Validate Rules Action",
-                        "THEN Action loads common bot rules from base_bot/rules/",
-                        "AND Action loads behavior-specific rules",
-                        "AND Action merges and injects rules into validation section"
-                      ],
-                      "scenarios": [
-                        {
-                          "name": "Validation rules injected into instructions",
-                          "steps": "GIVEN: Validation rules exist in guardrails\nWHEN: Validate action loads instructions\nTHEN: Rules are injected into instructions",
-                          "test_method": "test_validation_rules_injected_into_instructions"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Build Build Instructions",
-                      "sequential_order": 2,
-                      "connector": "opt",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN Build Knowledge Action executes",
-                        "THEN Action loads knowledge graph template from behavior/content/knowledge_graph/",
-                        "AND Action injects knowledge graph template path into instructions",
-                        "AND knowledge_graph_template field is present in instructions",
-                        "AND template file path exists and is accessible",
-                        "WHEN knowledge graph template does not exist",
-                        "THEN Action raises FileNotFoundError with appropriate error message"
-                      ],
-                      "test_class": "TestBuildInstructions",
-                      "scenarios": [
-                        {
-                          "name": "Action injects knowledge graph template",
-                          "steps": "GIVEN: Knowledge graph config and template exist\nWHEN: Action executes\nTHEN: Template path is injected into instructions",
-                          "test_method": "test_action_injects_knowledge_graph_template"
-                        },
-                        {
-                          "name": "Action loads and merges instructions",
-                          "steps": "GIVEN: Base and behavior-specific instructions exist\nWHEN: Action method is invoked\nTHEN: Instructions are loaded from both locations and merged",
-                          "test_method": "test_action_loads_and_merges_instructions"
-                        },
-                        {
-                          "name": "All template variables are replaced in instructions",
-                          "steps": "GIVEN: Base instructions with {{rules}}, {{schema}}, {{description}}, {{instructions}} placeholders\nWHEN: Action loads and merges instructions with all injections\nTHEN: All template variables are replaced with actual content",
-                          "test_method": "test_all_template_variables_are_replaced_in_instructions"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Build Strategy Instructions",
-                      "sequential_order": 5,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN Strategy is generated",
-                        "THEN Strategy is injected into action instructions",
-                        "AND Instructions include strategy guidance"
-                      ],
-                      "test_class": "TestBuildStrategyInstructions",
-                      "scenarios": [
-                        {
-                          "name": "Action injects decision criteria and assumptions",
-                          "steps": "GIVEN: Environment is bootstrapped with strategy guardrails\nWHEN: Action injects strategy criteria and assumptions\nTHEN: Instructions contain strategy criteria and assumptions",
-                          "test_method": "test_action_injects_decision_criteria_and_assumptions"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Build Render Instructions",
-                      "sequential_order": 6,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestBuildRenderInstructions",
-                      "acceptance_criteria": [
-                        "WHEN Render instructions are needed",
-                        "THEN Action injects render instructions and configs",
-                        "AND Instructions include render configuration"
-                      ],
-                      "scenarios": [
-                        {
-                          "name": "All template variables are replaced in final instructions",
-                          "steps": "GIVEN: Base instructions with {{render_configs}} and {{render_instructions}} placeholders\nWHEN: Action loads and merges instructions with all injections\nTHEN: All template variables are replaced with actual content",
-                          "test_method": "test_all_template_variables_are_replaced_in_instructions"
-                        },
-                        {
-                          "name": "Formatted render_configs includes all fields referenced in instructions",
-                          "steps": "GIVEN: Render configs with instructions, synchronizer, template, input, output fields\nWHEN: Configs are formatted for injection\nTHEN: All fields are present in formatted output",
-                          "test_method": "test_render_configs_format_includes_all_fields"
-                        }
-                      ]
-                    },
-                    {
                       "name": "Build Instructions In Raw Format",
                       "sequential_order": 7,
                       "connector": "and",
@@ -2909,6 +2764,43 @@
                               "test_method": "test_guardrails_loaded_from_behavior_directory"
                             }
                           ]
+                        },
+                        {
+                          "name": "Build Clarify Instructions",
+                          "sequential_order": 1,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestBuildClarifyInstructions",
+                          "acceptance_criteria": [
+                            "WHEN gather_context action executes",
+                            "AND behavior folder exists with guardrails/required_context/key_questions.json",
+                            "AND behavior folder exists with guardrails/required_context/evidence.json",
+                            "THEN instructions should contain actual questions (not {{key_questions}} placeholder)",
+                            "AND instructions should contain actual evidence (not {{evidence}} placeholder)",
+                            "WHEN guardrails don't exist",
+                            "THEN gather_context should not fail",
+                            "AND action should execute with base instructions only"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "Gather context injects guardrails from behavior folder",
+                              "steps": "GIVEN: behavior folder: 1_shape (with number prefix)\nAND: guardrails/required_context/key_questions.json exists\nAND: guardrails/required_context/evidence.json exists\nWHEN: gather_context action executes\nTHEN: instructions should contain actual questions (not {{key_questions}} placeholder)\nAND: instructions should contain actual evidence (not {{evidence}} placeholder)\nAND: guardrails section includes key_questions with actual data\nAND: guardrails section includes evidence with actual data",
+                              "test_method": "test_action_injects_questions_and_evidence"
+                            },
+                            {
+                              "name": "Gather context handles missing guardrails gracefully",
+                              "steps": "GIVEN: behavior folder exists but no guardrails\nWHEN: gather_context action executes\nTHEN: action should succeed without guardrails\nAND: instructions contain base instructions only\nAND: no error is raised",
+                              "test_method": "test_action_uses_base_instructions_when_guardrails_missing"
+                            },
+                            {
+                              "name": "Gather context handles malformed guardrails gracefully",
+                              "steps": "GIVEN: guardrails files exist but contain invalid JSON\nWHEN: gather_context action executes\nTHEN: action should handle malformed JSON gracefully\nAND: action should continue with base instructions",
+                              "test_method": "test_action_handles_malformed_guardrails_json"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -3073,6 +2965,28 @@
                             "AND Strategy data persists for later use"
                           ],
                           "test_class": "TestStoreStrategyData"
+                        },
+                        {
+                          "name": "Build Strategy Instructions",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "acceptance_criteria": [
+                            "WHEN Strategy is generated",
+                            "THEN Strategy is injected into action instructions",
+                            "AND Instructions include strategy guidance"
+                          ],
+                          "test_class": "TestBuildStrategyInstructions",
+                          "scenarios": [
+                            {
+                              "name": "Action injects decision criteria and assumptions",
+                              "steps": "GIVEN: Environment is bootstrapped with strategy guardrails\nWHEN: Action injects strategy criteria and assumptions\nTHEN: Instructions contain strategy criteria and assumptions",
+                              "test_method": "test_action_injects_decision_criteria_and_assumptions"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -3384,6 +3298,42 @@
                               "name": "Filter by increment priorities returns matching increments",
                               "steps": "GIVEN: Scope with increment priorities\nWHEN: Knowledge graph is filtered\nTHEN: Only matching increments are returned",
                               "test_method": "test_filter_by_increment_priorities_returns_matching_increments"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Build Build Instructions",
+                          "sequential_order": 2,
+                          "connector": "opt",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "acceptance_criteria": [
+                            "WHEN Build Knowledge Action executes",
+                            "THEN Action loads knowledge graph template from behavior/content/knowledge_graph/",
+                            "AND Action injects knowledge graph template path into instructions",
+                            "AND knowledge_graph_template field is present in instructions",
+                            "AND template file path exists and is accessible",
+                            "WHEN knowledge graph template does not exist",
+                            "THEN Action raises FileNotFoundError with appropriate error message"
+                          ],
+                          "test_class": "TestBuildInstructions",
+                          "scenarios": [
+                            {
+                              "name": "Action injects knowledge graph template",
+                              "steps": "GIVEN: Knowledge graph config and template exist\nWHEN: Action executes\nTHEN: Template path is injected into instructions",
+                              "test_method": "test_action_injects_knowledge_graph_template"
+                            },
+                            {
+                              "name": "Action loads and merges instructions",
+                              "steps": "GIVEN: Base and behavior-specific instructions exist\nWHEN: Action method is invoked\nTHEN: Instructions are loaded from both locations and merged",
+                              "test_method": "test_action_loads_and_merges_instructions"
+                            },
+                            {
+                              "name": "All template variables are replaced in instructions",
+                              "steps": "GIVEN: Base instructions with {{rules}}, {{schema}}, {{description}}, {{instructions}} placeholders\nWHEN: Action loads and merges instructions with all injections\nTHEN: All template variables are replaced with actual content",
+                              "test_method": "test_all_template_variables_are_replaced_in_instructions"
                             }
                           ]
                         }
@@ -3828,6 +3778,33 @@
                             "THEN Action uses synchronizers to render output",
                             "AND Synchronizers execute render method"
                           ]
+                        },
+                        {
+                          "name": "Build Render Instructions",
+                          "sequential_order": 6,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestBuildRenderInstructions",
+                          "acceptance_criteria": [
+                            "WHEN Render instructions are needed",
+                            "THEN Action injects render instructions and configs",
+                            "AND Instructions include render configuration"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "All template variables are replaced in final instructions",
+                              "steps": "GIVEN: Base instructions with {{render_configs}} and {{render_instructions}} placeholders\nWHEN: Action loads and merges instructions with all injections\nTHEN: All template variables are replaced with actual content",
+                              "test_method": "test_all_template_variables_are_replaced_in_instructions"
+                            },
+                            {
+                              "name": "Formatted render_configs includes all fields referenced in instructions",
+                              "steps": "GIVEN: Render configs with instructions, synchronizer, template, input, output fields\nWHEN: Configs are formatted for injection\nTHEN: All fields are present in formatted output",
+                              "test_method": "test_render_configs_format_includes_all_fields"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -4164,6 +4141,29 @@
                             "WHEN ValidateRulesAction receives array with 1000+ violations THEN Report is generated AND Large array is handled efficiently AND All violations are included with severity",
                             "WHEN ValidateRulesAction receives violations data with circular references THEN Error is reported: \"Circular reference detected in violations data\"",
                             "WHEN ValidateRulesAction receives violations with missing severity THEN Report is generated AND Missing severity is handled gracefully AND Default severity is applied or null is preserved"
+                          ]
+                        },
+                        {
+                          "name": "Build Validate Instructions",
+                          "sequential_order": 1,
+                          "connector": "and",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestBuildValidateInstructions",
+                          "acceptance_criteria": [
+                            "WHEN MCP Specific Behavior Action Tool invokes Validate Rules Action",
+                            "THEN Action loads common bot rules from base_bot/rules/",
+                            "AND Action loads behavior-specific rules",
+                            "AND Action merges and injects rules into validation section"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "Validation rules injected into instructions",
+                              "steps": "GIVEN: Validation rules exist in guardrails\nWHEN: Validate action loads instructions\nTHEN: Rules are injected into instructions",
+                              "test_method": "test_validation_rules_injected_into_instructions"
+                            }
                           ]
                         }
                       ]
