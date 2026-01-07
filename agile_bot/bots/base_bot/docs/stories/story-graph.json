@@ -5461,7 +5461,7 @@
               ]
             },
             {
-              "name": "Build Action Instructions Through Panel",
+              "name": "Display Action Instructions Through Panel",
               "sequential_order": 4,
               "story_groups": [
                 {
@@ -6857,7 +6857,7 @@
               ]
             },
             {
-              "name": "Build Action Instructions",
+              "name": "Display Action Instructions Using REPL",
               "sequential_order": 3,
               "test_file": "test_execute_action_operation_through_cli.py",
               "story_groups": [
