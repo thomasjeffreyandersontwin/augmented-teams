@@ -193,6 +193,55 @@ However, **NO test files or test classes were renamed** to match the new story s
 
 ---
 
+## 🎯 CRITICAL: Current Story Structure (After ALL 22 Commits)
+
+**The story names are NOW CORRECT.** Tests must be renamed to match the CURRENT state.
+
+### Current Structure - Invoke Bot Directly:
+```
+Invoke Bot Directly
+├─ Navigate And Execute Behaviors (3 stories)
+├─ Manage Scope (5 stories)
+├─ Build Action Instructions (6 nested sub-epics - see below)
+└─ Track Activity (3 stories)
+
+Build Action Instructions (nested feature with sub-epics):
+  ├─ Build Common Instructions For Actions (was "Generate Action Instructions")
+  ├─ Gather Context
+  ├─ Decide Planning Criteria Action
+  ├─ Build Knowledge
+  ├─ Render Output
+  └─ Validate Knowledge & Content Against Rules
+```
+
+**DELETED (no tests needed):**
+- ❌ Track Workflow State feature (entire feature deleted - commit cca9a03c)
+- ❌ All "Track Activity for XXX" stories (deleted from action sub-epics - commit 728420ad)
+- ❌ All "Proceed To XXX" stories (deleted from action sub-epics - commit 728420ad)
+
+### Current Structure - Panel:
+```
+Invoke Bot Through Panel
+├─ Manage Panel Session Through Panel
+├─ Navigate And Execute Behaviors Through Panel
+├─ Manage Scope Through Panel
+└─ Display Action Instructions Through Panel  ← "Display" not "Build"
+```
+
+### Current Structure - REPL:
+```
+Invoke Bot Through REPL
+├─ Manage REPL Session
+├─ Display State Using REPL
+├─ Navigate Behaviors Using REPL Commands
+├─ Navigate Behaviors Using Domain Model
+├─ Manage Scope Using REPL
+├─ Display Action Instructions Using REPL  ← "Display" not "Build"
+└─ Get Help Using REPL
+```
+
+---
+
 ## 📊 CURRENT STATE vs REQUIRED STATE
 
 ### Test Files That Exist But Need Renaming
@@ -323,6 +372,8 @@ However, **NO test files or test classes were renamed** to match the new story s
 
 ### 9. Action Sub-Epic Test Files (gather_context, decide_strategy, build_knowledge, render_output, validate)
 
+**CURRENT STRUCTURE:** These action sub-epics are now nested UNDER "Build Action Instructions" feature in "Invoke Bot Directly" (commits 8b253517, 0fea65b2, 065e35be).
+
 These test files exist and reference the action sub-epics. After commits 8b253517, 0fea65b2, 728420ad, the following test classes need updates:
 
 **test_gather_context.py:**
@@ -378,6 +429,15 @@ These test files exist and reference the action sub-epics. After commits 8b25351
 ---
 
 ## 🎯 IMPLEMENTATION PLAN
+
+**⚠️ IMPORTANT:** Story names in story-graph.json are CORRECT after all 22 commits. This plan ONLY renames:
+- Test files to match current story feature names
+- Test classes to match current story names  
+- Removes obsolete test classes for deleted stories
+
+**DO NOT change story names - only change test names to match them.**
+
+---
 
 ### Phase 1: Backup and Validation (30 minutes)
 
