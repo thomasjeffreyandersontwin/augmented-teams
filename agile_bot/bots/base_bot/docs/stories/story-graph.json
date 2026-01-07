@@ -5762,23 +5762,6 @@
                           "test_method": "test_user_enters_invalid_scope_format_with_instructions"
                         }
                       ]
-                    },
-                    {
-                      "name": "Invoke Specific Bot Behavior Command through CLI",
-                      "sequential_order": 8,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN user navigates to behavior using dot notation\nTHEN CLI routes command to current bot's behavior",
-                        "WHEN user enters behavior name only\nTHEN CLI navigates to first action of that behavior",
-                        "WHEN behavior does not exist\nTHEN CLI displays error message with available behaviors",
-                        "WHEN behavior is invoked\nTHEN CLI navigates to behavior AND runs instructions for first action"
-                      ],
-                      "optional": false,
-                      "priority": 2
                     }
                   ]
                 }
