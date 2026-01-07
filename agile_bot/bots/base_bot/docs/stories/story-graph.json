@@ -2041,14 +2041,14 @@
               "connector": null,
               "stories": [
                 {
-                  "name": "Invoke Behavior Actions In Workflow Order",
+                  "name": "Execute End-to-End Workflow",
                   "sequential_order": 1,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInvokeBehaviorActionsInWorkflowOrder",
+                  "test_class": "TestExecuteEndToEndWorkflow",
                   "scenarios": [
                     {
                       "name": "Complete workflow end-to-end",
@@ -2058,14 +2058,14 @@
                   ]
                 },
                 {
-                  "name": "Execute Behavior",
+                  "name": "Navigate To Behavior Action And Execute",
                   "sequential_order": 2,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestExecuteBehavior",
+                  "test_class": "TestNavigateToBehaviorActionAndExecute",
                   "scenarios": [
                     {
                       "name": "Execute behavior with action parameter",
@@ -2090,14 +2090,14 @@
                   ]
                 },
                 {
-                  "name": "Insert Context Into Instructions",
+                  "name": "Inject Context Into Instructions",
                   "sequential_order": 5,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInsertContextIntoInstructions",
+                  "test_class": "TestInjectContextIntoInstructions",
                   "scenarios": [
                     {
                       "name": "Action loads context data into instructions",
@@ -2134,14 +2134,14 @@
                   ]
                 },
                 {
-                  "name": "Close Current Action",
+                  "name": "Confirm Current Action",
                   "sequential_order": 7,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestCloseCurrentAction",
+                  "test_class": "TestConfirmCurrentAction",
                   "scenarios": [
                     {
                       "name": "Close current action marks complete and transitions",
@@ -2176,14 +2176,14 @@
                   ]
                 },
                 {
-                  "name": "Invoke Behavior In Action Order",
+                  "name": "Navigate Sequentially",
                   "sequential_order": 8,
                   "connector": "and",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInvokeBehaviorInActionOrder",
+                  "test_class": "TestNavigateSequentially",
                   "scenarios": [
                     {
                       "name": "Behavior action order determines next action from current action",
