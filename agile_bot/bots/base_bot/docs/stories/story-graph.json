@@ -2141,23 +2141,6 @@
                           "test_method": "test_workflow_transitions_built_correctly_from_actions_workflow_json"
                         }
                       ]
-                    },
-                    {
-                      "name": "Execute End-to-End Workflow",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestExecuteEndToEndWorkflow",
-                      "scenarios": [
-                        {
-                          "name": "Complete workflow end-to-end",
-                          "steps": "Given Bot has multiple behaviors (shape, discovery)\nAnd each behavior has standard action workflow\nWhen execute clarify action in shape behavior\nAnd close clarify (transitions to strategy)\nAnd jump to discovery.clarify (out of order)\nAnd close discovery.clarify\nThen state correctly shows current action at each step\nAnd transitions occur as expected\nAnd completed actions tracked across multiple behaviors\nAnd out-of-order navigation works correctly",
-                          "test_method": "test_complete_workflow_end_to_end"
-                        }
-                      ]
                     }
                   ]
                 }
@@ -2257,61 +2240,7 @@
             {
               "name": "Build Action Instructions",
               "sequential_order": 5,
-              "story_groups": [
-                {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
-                    {
-                      "name": "Build Base Instructions",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestBuildBaseInstructions",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Base instructions are requested",
-                        "THEN Action returns base instructions",
-                        "AND Instructions contain action guidance"
-                      ]
-                    },
-                    {
-                      "name": "Build Instructions In Raw Format",
-                      "sequential_order": 7,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestBuildInstructionsInRawFormat",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Raw format is requested",
-                        "THEN Instructions returned as JSON"
-                      ]
-                    },
-                    {
-                      "name": "Submit Instructions To AI Agent",
-                      "sequential_order": 8,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestSubmitInstructionsToAIAgent",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Submit is called",
-                        "THEN Instructions are formatted for AI agent",
-                        "AND Instructions are returned to caller"
-                      ]
-                    }
-                  ]
-                }
-              ],
+              "story_groups": [],
               "sub_epics": [
                 {
                   "name": "Build Common Instructions For Actions",
@@ -2548,28 +2477,6 @@
                           ]
                         },
                         {
-                          "name": "Access Actions",
-                          "sequential_order": 6,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "test_class": "TestAccessActions",
-                          "acceptance_criteria": [
-                            "WHEN Action needs to access other actions",
-                            "THEN Action can access action registry",
-                            "AND Action can retrieve action configurations"
-                          ],
-                          "scenarios": [
-                            {
-                              "name": "Actions accessible from behavior",
-                              "steps": "GIVEN: Behavior with actions configured\nWHEN: Actions are accessed\nTHEN: Action list is available",
-                              "test_method": "test_actions_accessible_from_behavior"
-                            }
-                          ]
-                        },
-                        {
                           "name": "Initialize Action",
                           "sequential_order": 7,
                           "connector": "or",
@@ -2742,21 +2649,6 @@
                               "test_method": "test_skip_saving_when_no_strategy_parameters_provided"
                             }
                           ]
-                        },
-                        {
-                          "name": "Store Strategy Data",
-                          "sequential_order": 6,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
-                          "acceptance_criteria": [
-                            "WHEN Strategy data is generated",
-                            "THEN Strategy data is stored to project area",
-                            "AND Strategy data persists for later use"
-                          ],
-                          "test_class": "TestStoreStrategyData"
                         },
                         {
                           "name": "Build Strategy Instructions",

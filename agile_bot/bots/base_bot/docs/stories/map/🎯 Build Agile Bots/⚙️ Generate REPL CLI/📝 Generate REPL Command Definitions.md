@@ -1,4 +1,3 @@
-Window
 # 📝 Generate REPL Command Definitions
 
 **Navigation:** [📋 Story Map](../../../../story-map.drawio)
