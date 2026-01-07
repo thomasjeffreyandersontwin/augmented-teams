@@ -2383,6 +2383,14 @@
                           "name": "Action loads context data into instructions",
                           "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
                           "test_method": "test_action_loads_context_data_into_instructions"
+                        },
+                        {
+                          "title": "Inject Next Behavior Reminder",
+                          "description": "System automatically handles: Inject Next Behavior Reminder"
+                        },
+                        {
+                          "title": "Inject Status Update Breadcrumbs Into Instructions",
+                          "description": "System automatically handles: Inject Status Update Breadcrumbs Into Instructions"
                         }
                       ]
                     },
@@ -2693,73 +2701,7 @@
               ]
             }
           ],
-          "story_groups": [
-            {
-              "type": "and",
-              "connector": null,
-              "stories": [
-                {
-                  "name": "Inject Next Behavior Reminder",
-                  "sequential_order": 6,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestInjectNextBehaviorReminder",
-                  "scenarios": [
-                    {
-                      "name": "Next behavior reminder injected when final action",
-                      "steps": "Given validate is the final action in behavior workflow\nAnd bot_config.json defines behavior sequence\nWhen validate action executes\nThen base_instructions include next behavior reminder\nAnd reminder contains next behavior name and prompt text",
-                      "test_method": "test_next_behavior_reminder_injected_when_final_action"
-                    },
-                    {
-                      "name": "Next behavior reminder not injected when not final action",
-                      "steps": "Given validate is NOT the final action (render comes after)\nAnd bot_config.json defines behavior sequence\nWhen validate action executes\nThen base_instructions do NOT include next behavior reminder",
-                      "test_method": "test_next_behavior_reminder_not_injected_when_not_final_action"
-                    },
-                    {
-                      "name": "Next behavior reminder not injected when no next behavior",
-                      "steps": "Given discovery is the last behavior in bot_config.json\nAnd render is the final action\nWhen render action executes\nThen base_instructions do NOT include next behavior reminder",
-                      "test_method": "test_next_behavior_reminder_not_injected_when_no_next_behavior"
-                    }
-                  ]
-                },
-                {
-                  "name": "Inject Status Update Breadcrumbs Into Instructions",
-                  "sequential_order": 9,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestInjectStatusUpdateBreadcrumbsIntoInstructions",
-                  "scenarios": [
-                    {
-                      "name": "Action injects workflow breadcrumbs when bot instance exists",
-                      "steps": "Given Bot is initialized with multiple behaviors\nAnd behavior_action_state.json exists with completed actions\nAnd Current behavior and action are set\nWhen Action instructions are accessed\nThen base_instructions include workflow progress breadcrumbs at the beginning\nAnd breadcrumbs show completed behaviors, current behavior/action, and remaining work",
-                      "test_method": "test_action_injects_workflow_breadcrumbs_when_bot_instance_exists"
-                    },
-                    {
-                      "name": "Breadcrumbs show completed behaviors when all actions completed",
-                      "steps": "Given Multiple behaviors exist\nAnd All actions in first behavior are completed\nWhen Action instructions are accessed for second behavior\nThen Breadcrumbs show first behavior as completed with checkmark",
-                      "test_method": "test_breadcrumbs_show_completed_behaviors_when_all_actions_completed"
-                    },
-                    {
-                      "name": "Breadcrumbs show next step command when next action exists",
-                      "steps": "Given Current behavior and action are set\nAnd Next action exists in current behavior\nWhen Action instructions are accessed\nThen Breadcrumbs include next step command with correct CLI command format",
-                      "test_method": "test_breadcrumbs_show_next_step_command_when_next_action_exists"
-                    },
-                    {
-                      "name": "Breadcrumbs not injected when no bot instance",
-                      "steps": "Given Behavior is created without bot instance\nWhen Action instructions are accessed\nThen Breadcrumbs are not included in instructions",
-                      "test_method": "test_breadcrumbs_not_injected_when_no_bot_instance"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
+          "story_groups": [],
           "test_file": "test_perform_behavior_action.py"
         },
         {
