@@ -15352,3 +15352,674 @@ ypothesisId": "H1"}
 {"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767765943889.112, "sessionId": "debug-session", "hypothesisId": "H1"}
 {"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 7}, "timestamp": 1767765943889.3806, "sessionId": "debug-session", "hypothesisId": "H1"}
 {"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767765943889.6365, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221390.12, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221390.3103, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221390.71, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221392.4194, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221392.7993, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221392.976, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766221395.13, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221395.4258, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221408.016, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766221408.2642, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221408.7588, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221431.488, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221431.904, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221432.374, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221434.9219, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221435.277, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221435.6836, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766221438.0693, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221438.4883, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221448.8474, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766221449.278, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221449.5803, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221479.829, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221480.2937, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221480.7708, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221482.5002, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221482.9683, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221483.2266, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766221486.0813, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221486.43, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221496.4485, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766221496.645, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221497.5955, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221529.3167, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221529.6892, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221531.5227, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221533.3516, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221533.675, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221533.8162, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221536.5757, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221536.96, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221547.996, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221549.0803, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221549.3728, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221566.0105, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221566.8318, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221567.7712, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221569.348, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221570.2678, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221571.0474, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221573.0732, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221573.4995, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221585.3877, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221585.964, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221586.3723, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221620.937, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221621.1577, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221621.503, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221622.411, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221622.7124, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221622.9048, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221623.8455, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221624.003, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221634.9097, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221635.2222, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221635.7744, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221643.4385, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221643.6436, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221644.1826, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221645.4382, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221645.9631, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221646.2024, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221648.3438, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221648.6443, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221659.9478, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221660.3586, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221660.7822, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221686.379, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221686.6953, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221687.2205, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221689.1025, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221689.6624, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221690.0796, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766221692.724, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221693.01, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221693.4534, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766221693.7324, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221694.011, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221792.1492, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221792.4683, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221793.1733, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221794.6138, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221795.0698, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221795.7432, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221798.374, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221798.8115, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221799.0923, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221799.2654, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221799.4792, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221840.5237, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221840.9778, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221841.5347, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221842.9634, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221843.435, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221843.732, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221845.2197, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221845.4895, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221845.887, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221846.1692, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221846.5476, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221876.3943, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221876.7117, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221877.0923, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221878.5137, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221878.7273, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221879.0376, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221882.146, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221882.5747, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221894.817, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221895.0732, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221895.2847, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221925.7527, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221926.149, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221926.7424, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221928.1545, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221928.8325, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221929.2131, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221931.8457, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221932.1772, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221941.436, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221941.8584, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221942.3137, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221955.3923, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221955.9172, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221956.3713, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221958.221, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221958.5781, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221958.7856, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221960.6104, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221961.2007, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766221971.182, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766221971.73, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766221972.2544, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221986.6265, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766221987.023, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766221987.647, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766221988.8394, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766221989.3706, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766221989.704, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766221991.5938, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766221991.88, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222001.9568, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222002.249, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222002.4575, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222013.4492, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222015.203, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222015.6965, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222016.9792, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222017.4307, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222017.86, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222020.153, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222020.5088, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222031.0437, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222031.2976, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222031.9265, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222043.08, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222043.5996, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222044.1782, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222045.7542, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222046.3088, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222046.7712, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222050.4954, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222050.7544, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222061.6763, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222062.004, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222062.4436, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222096.0308, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222096.2083, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222096.4353, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222099.378, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222099.981, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222100.2827, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222102.246, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222102.5469, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222112.7102, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222112.971, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222113.308, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222129.8638, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222130.0762, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222132.3223, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222134.526, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222135.1035, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222135.4438, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222137.4597, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222137.9006, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222149.5247, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222149.795, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222150.0276, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222187.4614, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222187.6592, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222187.943, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222188.9065, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222189.3218, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222189.5935, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222191.026, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222191.1953, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222201.9043, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222202.247, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222202.7131, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222225.0876, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222225.2383, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222225.4866, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222226.786, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222231.7874, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222232.2478, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222234.783, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222235.8896, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222249.356, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222249.6968, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222249.9868, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222256.708, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222256.833, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222257.4822, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222258.723, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222258.9978, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222259.2456, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222260.3064, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222260.5645, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222260.7517, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222260.9583, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222261.3057, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222273.708, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222273.9644, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222274.5276, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222275.566, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222275.8284, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222276.0198, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222276.8738, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222277.031, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222287.4436, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222287.7039, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222287.9385, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222302.2886, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222302.519, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222302.844, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222304.4094, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222304.8286, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222305.0935, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222307.3752, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222307.613, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222308.0422, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222308.291, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222308.5413, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222317.8613, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222318.2043, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222318.5842, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222319.7405, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222320.1228, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222320.4756, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222321.7058, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222321.9534, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222322.2583, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222322.516, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222322.881, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222333.1687, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222333.45, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222333.8394, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222335.156, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222335.8408, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222336.1306, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222337.9993, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222338.3047, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222338.578, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222338.879, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222339.153, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222344.5967, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222344.8882, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222345.3215, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222346.3884, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222346.816, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222349.031, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 0}, "timestamp": 1767766222349.4775, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222349.9507, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222350.4385, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 0}, "timestamp": 1767766222350.7634, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222351.0732, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222355.84, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222356.0845, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222356.4514, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222357.5557, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222357.9353, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222358.1802, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 0}, "timestamp": 1767766222358.5625, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222358.9033, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222359.253, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 0}, "timestamp": 1767766222359.491, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222359.701, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222369.2546, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766222369.479, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766222370.0037, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766222371.1895, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766222371.5315, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766222371.7856, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766222373.4016, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766222373.7166, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766222373.966, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766222374.307, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766222374.5789, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766285617.84, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766285618.2537, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766285618.7615, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766285619.9556, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766285620.315, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766285620.5876, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766285622.9883, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766285623.1868, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766285623.4746, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766285623.6655, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766285623.7998, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766294820.2087, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766294820.4678, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766294821.7722, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766294822.87, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766294823.144, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766294823.335, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 7}, "timestamp": 1767766294827.502, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766294827.7231, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766294828.222, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 7}, "timestamp": 1767766294828.532, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766294829.2988, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766324435.4202, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766324435.724, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766324436.002, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766324437.2249, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766324437.4824, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766324437.7397, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766324441.902, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766324442.1492, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766324442.537, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766324443.25, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766324443.519, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766324533.1592, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766324533.3818, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766324533.8765, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766324535.1672, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766324535.664, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766324536.1372, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766324541.2585, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766324541.5132, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766324542.0881, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766324542.4236, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766324543.4614, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766324576.2087, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766324576.5156, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766324576.878, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766324578.0718, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766324578.4033, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766324578.6558, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766324579.7039, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766324580.0212, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766324580.3425, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766324580.5054, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766324581.0051, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334211.158, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334211.339, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334211.7993, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334213.0044, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334213.6775, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334214.0251, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766334216.3948, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334216.691, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334227.6885, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766334228.1963, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334228.712, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334239.295, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334239.5266, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334239.8716, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334240.8804, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334241.1333, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334241.2786, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766334243.4885, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334243.8506, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334253.618, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766334253.9963, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334254.5505, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334289.4866, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334290.004, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334290.5122, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334291.9219, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334292.599, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334293.025, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766334300.9736, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334301.318, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334311.7554, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766334311.9812, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334312.2961, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334347.899, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334348.159, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334348.6936, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334351.27, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334351.6948, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334351.8958, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334353.4744, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334353.7415, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334364.2368, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334364.8484, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334365.0735, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334371.844, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334372.214, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334372.934, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334374.5837, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334375.0632, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334375.7922, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334377.929, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334378.18, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334387.9072, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334388.3574, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334388.688, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334406.4749, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334406.6812, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334407.0208, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334408.009, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334408.2546, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334408.4575, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334409.5222, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334409.6902, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334421.212, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334421.6665, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334422.0735, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334427.9697, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334428.1707, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334428.7263, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334430.9507, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334431.3904, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334431.7358, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334433.9443, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334434.18, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334443.8835, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334444.3484, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334444.751, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334459.6016, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334459.8794, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334460.17, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334461.4138, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334461.8242, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334462.2517, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 2}, "timestamp": 1767766334465.5667, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334465.785, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334466.0525, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 2}, "timestamp": 1767766334466.2402, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334466.4565, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334532.8267, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334533.0715, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334533.4795, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334534.585, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334534.9807, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334535.2236, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334536.471, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334536.64, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334537.0513, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334537.2905, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334537.8062, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334572.645, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334572.8154, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334573.1333, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334574.3967, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334574.7458, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334575.1443, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334576.4092, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334576.655, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334576.8838, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334577.1252, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334577.3582, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334595.7146, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334595.9648, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334596.2227, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334598.9229, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334599.2678, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334599.463, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334600.8225, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334601.0676, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334609.5464, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334609.917, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334610.2654, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334629.8206, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334630.4343, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334630.93, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334633.8174, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334634.2573, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334634.47, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334635.6616, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334635.9453, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334643.9998, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334644.3865, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334644.608, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334651.1418, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334651.392, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334651.6445, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334652.5242, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334652.9253, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334653.3528, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334655.0007, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334655.2395, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334666.2776, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334666.4626, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334666.9778, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334672.2651, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334672.5276, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334672.8286, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334673.804, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334674.1565, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334674.3542, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334675.602, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334675.8015, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334683.383, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334683.7463, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334684.164, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334689.3418, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334689.4873, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334689.7317, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334690.9792, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334691.4038, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334691.6172, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334693.2585, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334693.389, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334702.3164, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334702.5037, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334702.7666, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334707.8904, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334708.0964, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334708.4438, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334709.4812, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334710.0176, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334710.359, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334712.113, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334712.2903, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334724.6025, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334725.2192, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334725.723, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334746.038, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334746.3823, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334747.0251, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334749.223, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334749.7192, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334750.1338, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334751.431, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334751.6035, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334758.8982, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334759.1265, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334759.559, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334773.0989, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334773.3423, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334773.5708, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334774.402, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334774.7722, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334774.9785, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334776.178, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334776.4067, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334785.211, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334785.5232, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334785.9082, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334815.8044, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334816.1763, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334816.6963, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334818.5374, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334819.0105, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334819.3423, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334820.931, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334821.161, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334833.4597, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334833.8728, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334834.4263, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334859.1926, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334859.407, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334859.7202, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334860.7766, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334861.0762, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334861.2346, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334862.3699, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334862.5454, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334874.2686, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334874.8489, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334875.4114, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334884.7646, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334885.069, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334885.4756, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334887.1328, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334887.5679, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334887.9585, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334889.281, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334889.5562, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334889.7747, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334889.9744, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334890.2551, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334902.7197, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334902.967, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334903.3062, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334904.3223, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334904.6414, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334904.8389, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334905.9817, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334906.1301, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334916.588, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334917.0386, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334917.1829, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334925.5317, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334925.706, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334926.173, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334927.1897, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334927.533, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334927.9998, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334929.303, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334929.5483, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334930.353, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334930.6338, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334930.8096, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334936.0369, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334936.2356, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334936.6174, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334937.8276, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334938.2344, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334938.4172, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334939.8538, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334940.039, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334940.4954, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334940.6968, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334941.2456, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334959.4675, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334959.61, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334959.9983, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334960.9885, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334961.2043, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334961.5393, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334962.6045, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334962.9707, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334963.6353, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334964.0193, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334964.295, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334968.5593, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334968.7039, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334969.4062, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334970.4421, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334970.748, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334971.059, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 0}, "timestamp": 1767766334971.2966, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334971.5098, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334971.7563, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 0}, "timestamp": 1767766334971.9714, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334972.1982, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334974.8801, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334975.1216, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334975.5552, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334976.5742, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334976.9844, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334977.1667, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 0}, "timestamp": 1767766334977.35, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334977.7676, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334978.0134, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 0}, "timestamp": 1767766334978.374, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334978.6277, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:24", "message": "Bot.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334984.546, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "Before BotPaths creation", "data": {}, "timestamp": 1767766334984.7346, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:28", "message": "After BotPaths creation", "data": {}, "timestamp": 1767766334985.2314, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "Before Behaviors creation", "data": {}, "timestamp": 1767766334986.6194, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:18", "message": "Behaviors.__init__ entry", "data": {"bot_name": "story_bot"}, "timestamp": 1767766334986.9937, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "Before _discover_behaviors", "data": {}, "timestamp": 1767766334987.3105, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:22", "message": "After _discover_behaviors", "data": {"behavior_count": 1}, "timestamp": 1767766334988.5083, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "Before load_state", "data": {}, "timestamp": 1767766334988.7195, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "behaviors.py:24", "message": "After load_state - Behaviors.__init__ exit", "data": {}, "timestamp": 1767766334988.9238, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:33", "message": "After Behaviors creation", "data": {"behavior_count": 1}, "timestamp": 1767766334989.1123, "sessionId": "debug-session", "hypothesisId": "H1"}
+{"location": "bot.py:37", "message": "Bot.__init__ exit", "data": {}, "timestamp": 1767766334989.2705, "sessionId": "debug-session", "hypothesisId": "H1"}
