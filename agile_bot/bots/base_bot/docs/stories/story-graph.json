@@ -1946,7 +1946,7 @@
           ]
         },
         {
-          "name": "Perform Behavior Action",
+          "name": "Invoke Bot Directly",
           "sequential_order": 3.0,
           "domain_concepts": [
             {
@@ -4356,7 +4356,7 @@
           ]
         },
         {
-          "name": "Run Interactive REPL",
+          "name": "Invoke Bot Through REPL",
           "sequential_order": 10.0,
           "domain_concepts": [
             {
