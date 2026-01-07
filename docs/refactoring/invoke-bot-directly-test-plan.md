@@ -571,10 +571,749 @@ Once Navigate is complete, apply same pattern to:
 3. Refactor REPL tests to verify delegation only
 4. Update story-graph.json mappings
 
+---
+
+## 📝 Phase 5: Build "Manage Scope" Tests
+
+### Story: Set Story Scope
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestSetStoryScope`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Set story scope filters knowledge graph
+```python
+def test_set_story_scope_filters_knowledge_graph(self, tmp_path):
+    """
+    GIVEN: Bot has story graph loaded
+    WHEN: Scope is set with story parameter
+    THEN: Bot scope is configured for story filtering
+          Knowledge graph operations will be filtered
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    
+    # WHEN - Set story scope
+    bot.scope.set_story_scope(['Epic Name', 'Story Name'])
+    
+    # THEN
+    assert bot.scope.type == 'story'
+    assert bot.scope.value == ['Epic Name', 'Story Name']
+    assert bot.scope.is_active()
+```
+
+#### Scenario 2: Story scope enforces mutually exclusive types
+```python
+def test_story_scope_replaces_existing_file_scope(self, tmp_path):
+    """
+    GIVEN: Bot has file scope set
+    WHEN: Story scope is set
+    THEN: File scope is cleared
+          Only story scope is active
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.scope.set_file_scope(['*.py'])
+    
+    # WHEN - Set story scope (should replace file scope)
+    bot.scope.set_story_scope(['Epic Name'])
+    
+    # THEN
+    assert bot.scope.type == 'story'
+    assert bot.scope.value == ['Epic Name']
+    # File scope should be cleared
+    assert not hasattr(bot.scope, 'file_patterns') or bot.scope.file_patterns is None
+```
+
+### Story: Set File Scope
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestSetFileScope`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Set file scope filters files
+```python
+def test_set_file_scope_filters_files(self, tmp_path):
+    """
+    GIVEN: Bot is initialized
+    WHEN: Scope is set with file patterns
+    THEN: Bot scope is configured for file filtering
+          Future operations filter by file patterns
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    
+    # WHEN - Set file scope
+    bot.scope.set_file_scope(['src/**/*.py', 'test/**/*.py'])
+    
+    # THEN
+    assert bot.scope.type == 'files'
+    assert bot.scope.value == ['src/**/*.py', 'test/**/*.py']
+    assert bot.scope.is_active()
+```
+
+#### Scenario 2: File scope supports include and exclude patterns
+```python
+def test_file_scope_supports_exclude_patterns(self, tmp_path):
+    """
+    GIVEN: Bot is initialized
+    WHEN: Scope is set with include and exclude patterns
+    THEN: Scope contains both include and exclude patterns
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    
+    # WHEN - Set file scope with excludes
+    bot.scope.set_file_scope(
+        include=['src/**/*.py'],
+        exclude=['src/**/*_test.py']
+    )
+    
+    # THEN
+    assert bot.scope.type == 'files'
+    assert bot.scope.value == ['src/**/*.py']
+    assert bot.scope.exclude == ['src/**/*_test.py']
+```
+
+### Story: Filter Knowledge Graph By Scope
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestFilterKnowledgeGraphByScope`
+
+**Note:** Test class `TestFilterActionBasedOnScope` already exists in test_invoke_bot_directly.py (line 4529). Review and augment if needed.
+
+**Scenarios to implement:**
+
+#### Scenario 1: Knowledge graph filtered when story scope active
+```python
+def test_knowledge_graph_filtered_by_story_scope(self, tmp_path):
+    """
+    GIVEN: Bot has story scope set
+    WHEN: Knowledge graph is loaded
+    THEN: Only stories in scope are included
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.scope.set_story_scope(['Epic1'])
+    
+    # WHEN - Execute build action (loads knowledge graph)
+    result = bot.execute_behavior(behavior='shape', action='build')
+    
+    # THEN
+    # Knowledge graph should be filtered
+    # (Implementation depends on how knowledge graph exposes filtered data)
+    assert result.status == 'completed'
+```
+
+#### Scenario 2: Knowledge graph not filtered when no scope
+```python
+def test_knowledge_graph_unfiltered_when_no_scope(self, tmp_path):
+    """
+    GIVEN: Bot has no scope set
+    WHEN: Knowledge graph is loaded
+    THEN: All stories are included
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    # No scope set
+    
+    # WHEN - Execute build action
+    result = bot.execute_behavior(behavior='shape', action='build')
+    
+    # THEN
+    assert result.status == 'completed'
+    # All stories should be available
+```
+
+### Story: Pass Scope Parameters To Actions
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestPassScopeParametersToActions`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Actions receive scope from bot
+```python
+def test_actions_receive_scope_from_bot(self, tmp_path):
+    """
+    GIVEN: Bot has scope set
+    WHEN: Action executes
+    THEN: Action receives scope parameters
+          Action uses scope for filtering
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.scope.set_story_scope(['Epic1'])
+    
+    # WHEN - Execute action
+    bot.behaviors.navigate_to('shape')
+    action = bot.behaviors.current.actions.current
+    
+    # THEN
+    # Action should have access to scope
+    assert action.scope is not None
+    assert action.scope.type == 'story'
+```
+
+### Story: Clear Scope
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestClearScope`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Clear scope resets to all
+```python
+def test_clear_scope_resets_to_all(self, tmp_path):
+    """
+    GIVEN: Bot has scope set
+    WHEN: Clear scope is called
+    THEN: Scope is reset to None
+          Future actions run without scope filter
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.scope.set_story_scope(['Epic1'])
+    assert bot.scope.is_active()
+    
+    # WHEN - Clear scope
+    bot.scope.clear()
+    
+    # THEN
+    assert not bot.scope.is_active()
+    assert bot.scope.type is None
+```
+
+#### Scenario 2: Clear scope after execution persists
+```python
+def test_clear_scope_persists_across_actions(self, tmp_path):
+    """
+    GIVEN: Bot has scope set and cleared
+    WHEN: Multiple actions execute
+    THEN: Scope remains cleared
+          All actions run without filtering
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.scope.set_story_scope(['Epic1'])
+    bot.scope.clear()
+    
+    # WHEN - Execute multiple actions
+    bot.execute_behavior(behavior='shape', action='clarify')
+    bot.execute_behavior(behavior='shape', action='strategy')
+    
+    # THEN
+    assert not bot.scope.is_active()
+```
+
+---
+
+## 📝 Phase 6: Build "Track Activity" Tests
+
+### Story: Track Action Start
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestTrackActionStart`
+
+**Note:** Test class `TestTrackActivityForWorkspace` already exists in test_invoke_bot_directly.py (line 5087). Review and potentially rename/split.
+
+**Scenarios to implement:**
+
+#### Scenario 1: Activity entry created when action starts
+```python
+def test_activity_entry_created_when_action_starts(self, tmp_path):
+    """
+    GIVEN: Bot is ready to execute action
+    WHEN: Action starts execution
+    THEN: Activity entry is created with timestamp and action state
+          Entry appended to activity_log.json
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    activity_log_file = workspace / 'activity_log.json'
+    
+    # WHEN - Execute action (should track start)
+    bot.execute_behavior(behavior='shape', action='clarify')
+    
+    # THEN
+    assert activity_log_file.exists()
+    
+    activity_log = json.loads(activity_log_file.read_text(encoding='utf-8'))
+    assert len(activity_log) > 0
+    
+    start_entry = activity_log[0]
+    assert 'timestamp' in start_entry
+    assert 'action_state' in start_entry
+    assert start_entry['action_state'] == 'story_bot.shape.clarify'
+    assert start_entry['event'] == 'start'
+```
+
+#### Scenario 2: Activity log appends entries (not overwrites)
+```python
+def test_activity_log_appends_not_overwrites(self, tmp_path):
+    """
+    GIVEN: Activity log has existing entries
+    WHEN: New action starts
+    THEN: New entry is appended to log
+          Previous entries remain
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    
+    # Execute first action
+    bot.execute_behavior(behavior='shape', action='clarify')
+    
+    # WHEN - Execute second action
+    bot.execute_behavior(behavior='shape', action='strategy')
+    
+    # THEN
+    activity_log_file = workspace / 'activity_log.json'
+    activity_log = json.loads(activity_log_file.read_text(encoding='utf-8'))
+    
+    # Should have entries for both actions
+    assert len(activity_log) >= 2
+    action_states = [entry['action_state'] for entry in activity_log]
+    assert 'story_bot.shape.clarify' in action_states
+    assert 'story_bot.shape.strategy' in action_states
+```
+
+### Story: Track Action Completion
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestTrackActionCompletion`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Activity entry updated when action completes
+```python
+def test_activity_entry_updated_when_action_completes(self, tmp_path):
+    """
+    GIVEN: Action has started and created start entry
+    WHEN: Action completes execution
+    THEN: Activity entry is updated with completion details
+          Entry shows outputs and duration
+    """
+    # GIVEN/WHEN - Execute action to completion
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.execute_behavior(behavior='shape', action='clarify')
+    
+    # Mark action as complete
+    bot.behaviors.current.actions.close_current()
+    
+    # THEN
+    activity_log_file = workspace / 'activity_log.json'
+    activity_log = json.loads(activity_log_file.read_text(encoding='utf-8'))
+    
+    # Should have completion entry
+    completion_entries = [e for e in activity_log if e.get('event') == 'complete']
+    assert len(completion_entries) > 0
+    
+    completion_entry = completion_entries[0]
+    assert 'timestamp' in completion_entry
+    assert 'action_state' in completion_entry
+    assert completion_entry['action_state'] == 'story_bot.shape.clarify'
+```
+
+#### Scenario 2: Completion entry includes duration
+```python
+def test_completion_entry_includes_duration(self, tmp_path):
+    """
+    GIVEN: Action has start and end timestamps
+    WHEN: Completion entry is created
+    THEN: Entry includes duration calculation
+    """
+    # GIVEN/WHEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.execute_behavior(behavior='shape', action='clarify')
+    bot.behaviors.current.actions.close_current()
+    
+    # THEN
+    activity_log_file = workspace / 'activity_log.json'
+    activity_log = json.loads(activity_log_file.read_text(encoding='utf-8'))
+    
+    completion_entries = [e for e in activity_log if e.get('event') == 'complete']
+    if completion_entries:
+        completion_entry = completion_entries[0]
+        # Duration should be present (may be 'duration_seconds' or 'duration')
+        assert 'duration' in completion_entry or 'duration_seconds' in completion_entry
+```
+
+### Story: Record Activity Metrics And Paths
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestRecordActivityMetricsAndPaths`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Activity log captures file paths
+```python
+def test_activity_log_captures_file_paths(self, tmp_path):
+    """
+    GIVEN: Action works with files
+    WHEN: Action executes
+    THEN: Activity log captures input/output file paths
+    """
+    # GIVEN/WHEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    result = bot.execute_behavior(behavior='shape', action='clarify')
+    
+    # THEN
+    activity_log_file = workspace / 'activity_log.json'
+    if activity_log_file.exists():
+        activity_log = json.loads(activity_log_file.read_text(encoding='utf-8'))
+        
+        # Check for file path tracking in entries
+        # (Implementation depends on how paths are tracked)
+        assert len(activity_log) > 0
+```
+
+#### Scenario 2: Activity log captures metrics (not full content)
+```python
+def test_activity_log_captures_metrics_not_content(self, tmp_path):
+    """
+    GIVEN: Action generates output
+    WHEN: Activity is logged
+    THEN: Log captures metrics (file count, size)
+          Log does NOT capture full file content
+    """
+    # GIVEN/WHEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.execute_behavior(behavior='shape', action='clarify')
+    
+    # THEN
+    activity_log_file = workspace / 'activity_log.json'
+    if activity_log_file.exists():
+        activity_log = json.loads(activity_log_file.read_text(encoding='utf-8'))
+        
+        for entry in activity_log:
+            # Verify entries don't contain massive content
+            entry_str = json.dumps(entry)
+            assert len(entry_str) < 10000  # Entries should be small (metrics only)
+```
+
+---
+
+## 📝 Phase 7: Build "Build Action Instructions" Tests
+
+**Important Note:** The "Build Action Instructions" feature contains many nested sub-epics:
+- Build Common Instructions For Actions
+- Gather Context
+- Decide Planning Criteria Action
+- Build Knowledge
+- Render Output
+- Validate Knowledge & Content Against Rules
+
+**Many of these already have dedicated test files:**
+- `test_gather_context.py` (Gather Context)
+- `test_decide_strategy_criteria_action.py` (Decide Planning Criteria)
+- `test_build_knowledge.py` (Build Knowledge)
+- `test_render_output.py` (Render Output)
+
+**Strategy:** Focus on the INTEGRATION and ORCHESTRATION in `test_invoke_bot_directly.py`, NOT re-testing individual action implementation details.
+
+### Story: Get Action Instructions
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestGetActionInstructions`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Get instructions loads base + behavior-specific
+```python
+def test_get_instructions_loads_base_and_behavior_specific(self, tmp_path):
+    """
+    GIVEN: Bot has base actions and behavior-specific instructions
+    WHEN: get_instructions() is called for action
+    THEN: Returns merged instructions from base and behavior
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.behaviors.navigate_to('shape')
+    
+    # WHEN - Get instructions for clarify action
+    action = bot.behaviors.current.actions.get_action('clarify')
+    instructions = action.get_instructions()
+    
+    # THEN
+    assert instructions is not None
+    assert isinstance(instructions, dict)
+    # Should contain base instructions
+    assert 'system_prompt' in instructions or 'instructions' in instructions
+```
+
+#### Scenario 2: Instructions include guardrails when present
+```python
+def test_instructions_include_guardrails(self, tmp_path):
+    """
+    GIVEN: Behavior has guardrails configured
+    WHEN: get_instructions() is called
+    THEN: Instructions include guardrail content
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.behaviors.navigate_to('shape')
+    
+    # WHEN
+    action = bot.behaviors.current.actions.get_action('clarify')
+    instructions = action.get_instructions()
+    
+    # THEN
+    # Guardrails should be merged into instructions
+    assert instructions is not None
+```
+
+### Story: Load Base Action Configuration
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestLoadBaseActionConfiguration`
+
+**Note:** Test class already exists (line 4004). Review and augment if needed.
+
+**Scenarios to implement:**
+
+#### Scenario 1: Base action config loaded from base_actions folder
+```python
+def test_base_action_config_loaded_from_folder(self, tmp_path):
+    """
+    GIVEN: Base actions exist in base_actions folder
+    WHEN: Action is initialized
+    THEN: Base configuration is loaded
+    """
+    # Already tested - verify coverage
+    pass
+```
+
+### Story: Load And Merge Behavior-Specific Instructions
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestLoadAndMergeBehaviorSpecificInstructions`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Behavior instructions override base instructions
+```python
+def test_behavior_instructions_override_base(self, tmp_path):
+    """
+    GIVEN: Base and behavior both have instructions for action
+    WHEN: Instructions are merged
+    THEN: Behavior-specific instructions override base
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    
+    # Create behavior-specific instruction override
+    behavior_dir = bot.bot_paths.behaviors_directory / 'shape'
+    action_dir = behavior_dir / 'actions' / 'clarify'
+    action_dir.mkdir(parents=True, exist_ok=True)
+    
+    override_config = {
+        'instructions': ['Behavior-specific instruction']
+    }
+    (action_dir / 'action.json').write_text(json.dumps(override_config), encoding='utf-8')
+    
+    # WHEN
+    bot.behaviors.navigate_to('shape')
+    action = bot.behaviors.current.actions.get_action('clarify')
+    instructions = action.get_instructions()
+    
+    # THEN
+    # Behavior instructions should be present
+    assert instructions is not None
+```
+
+### Story: Load Guardrails From Behavior Folder
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestLoadGuardrailsFromBehaviorFolder`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Guardrails loaded from behavior folder
+```python
+def test_guardrails_loaded_from_behavior_folder(self, tmp_path):
+    """
+    GIVEN: Behavior has guardrails.json
+    WHEN: Action loads guardrails
+    THEN: Guardrails are available to action
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    
+    # WHEN
+    bot.behaviors.navigate_to('shape')
+    behavior = bot.behaviors.current
+    
+    # THEN
+    # Guardrails should be loaded (implementation detail)
+    assert behavior is not None
+```
+
+### Story: Inject Guardrails Into Instructions
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestInjectGuardrailsIntoInstructions`
+
+**Scenarios to implement:**
+
+#### Scenario 1: Guardrails injected into instruction output
+```python
+def test_guardrails_injected_into_instructions(self, tmp_path):
+    """
+    GIVEN: Action has guardrails configured
+    WHEN: Instructions are generated
+    THEN: Guardrails are included in output
+    """
+    # GIVEN
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    bot.behaviors.navigate_to('shape')
+    
+    # WHEN
+    action = bot.behaviors.current.actions.get_action('clarify')
+    instructions = action.get_instructions()
+    
+    # THEN
+    # Instructions should contain guardrails section
+    assert instructions is not None
+```
+
+### Story: Inject Context Into Instructions
+
+**File:** `test_invoke_bot_directly.py`  
+**Test Class:** `TestInjectContextIntoInstructions`
+
+**Note:** Test class already exists (line 3084). Review and augment if needed.
+
+**Scenarios to implement:**
+
+#### Scenario 1: Context from previous actions injected
+```python
+def test_context_from_previous_actions_injected(self, tmp_path):
+    """
+    GIVEN: Previous action stored context data
+    WHEN: Next action loads instructions
+    THEN: Context from previous action is included
+    """
+    # Already tested - verify coverage
+    pass
+```
+
+---
+
+## 📝 Phase 8: Refactor ALL REPL Tests to Use Helpers
+
+### Files to Refactor:
+1. ✅ `test_navigate_behaviors_using_repl_commands.py` (Navigate - Phase 3)
+2. `test_manage_scope_using_repl.py` (Manage Scope)
+3. `test_execute_actions_using_repl.py` (Execute Actions)
+4. `test_display_state_using_repl.py` (Display State)
+5. `test_get_help_using_repl.py` (Get Help)
+6. `test_initialize_repl_session.py` (Initialize)
+
+**Refactoring Pattern (Apply to All):**
+
+```python
+# BEFORE - Inline setup
+def test_something(self, bot_directory, workspace_directory, monkeypatch):
+    monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+    create_behavior(bot_directory, 'shape', ['clarify', 'strategy'])
+    create_behavior_action_state(workspace_directory, 'shape', 'clarify')
+    
+    bot = Bot(...)
+    repl_session = REPLSession(bot=bot, workspace_directory=workspace_directory)
+    
+# AFTER - Use helpers
+def test_something(self, tmp_path, monkeypatch):
+    """
+    Domain logic tested in: test_invoke_bot_directly.py::TestXXX
+    """
+    bot, workspace = setup_test_bot(tmp_path, ['shape'])
+    create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
+    
+    monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+    repl_session = REPLSession(bot=bot, workspace_directory=workspace)
+```
+
+---
+
+## 📝 Phase 9: Implementation Roadmap
+
+### **Step 1: Expand Common Helpers** (1-2 hours)
+- [ ] Add scope-related assertion helpers to `test_invoke_bot_helpers.py`
+  - `assert_scope_is_set(bot, scope_type, scope_value)`
+  - `assert_scope_is_cleared(bot)`
+- [ ] Add activity log helpers
+  - `read_activity_log(workspace_dir)`
+  - `assert_activity_logged(workspace, action_state, event_type)`
+
+### **Step 2: Build Manage Scope Tests** (2-3 hours)
+- [ ] Create `TestSetStoryScope` class (2 scenarios)
+- [ ] Create `TestSetFileScope` class (2 scenarios)
+- [ ] Create `TestFilterKnowledgeGraphByScope` class (2 scenarios)
+- [ ] Create `TestPassScopeParametersToActions` class (1 scenario)
+- [ ] Create `TestClearScope` class (2 scenarios)
+- [ ] Run tests - verify 100% pass
+
+### **Step 3: Build Track Activity Tests** (1-2 hours)
+- [ ] Create `TestTrackActionStart` class (2 scenarios)
+- [ ] Create `TestTrackActionCompletion` class (2 scenarios)
+- [ ] Create `TestRecordActivityMetricsAndPaths` class (2 scenarios)
+- [ ] Run tests - verify 100% pass
+
+### **Step 4: Build Action Instructions Integration Tests** (2-3 hours)
+- [ ] Create `TestGetActionInstructions` class (2 scenarios)
+- [ ] Create `TestLoadAndMergeBehaviorSpecificInstructions` class (1 scenario)
+- [ ] Create `TestLoadGuardrailsFromBehaviorFolder` class (1 scenario)
+- [ ] Create `TestInjectGuardrailsIntoInstructions` class (1 scenario)
+- [ ] Review existing `TestLoadBaseActionConfiguration` - augment if needed
+- [ ] Review existing `TestInjectContextIntoInstructions` - augment if needed
+- [ ] Run tests - verify 100% pass
+
+### **Step 5: Refactor ALL REPL Tests** (3-4 hours)
+- [ ] Refactor `test_manage_scope_using_repl.py` (use helpers)
+- [ ] Refactor `test_execute_actions_using_repl.py` (use helpers)
+- [ ] Refactor `test_display_state_using_repl.py` (use helpers)
+- [ ] Refactor `test_get_help_using_repl.py` (use helpers)
+- [ ] Refactor `test_initialize_repl_session.py` (use helpers)
+- [ ] Run ALL tests - verify 100% pass
+
+### **Step 6: Update story-graph.json** (1-2 hours)
+- [ ] Add `test_class` mappings for ALL new test classes
+- [ ] Add `test_method` mappings for ALL new test methods
+- [ ] Verify mappings are correct and complete
+
+---
+
+## 📊 Final Success Criteria
+
+### Coverage:
+- ✅ Navigate And Execute Behaviors - COMPLETE
+- ✅ Manage Scope - COMPLETE (5 stories)
+- ✅ Track Activity - COMPLETE (3 stories)
+- ✅ Build Action Instructions - COMPLETE (core integration tests)
+- ✅ All REPL tests refactored to use common helpers
+- ✅ Zero redundant domain logic in REPL tests
+- ✅ 100% test pass rate maintained
+- ✅ story-graph.json fully mapped
+
+### Total Estimated Time:
+- **Phase 1-4 (Current Plan):** 6-10 hours
+- **Phase 5-6 (Manage Scope + Track Activity):** 3-5 hours
+- **Phase 7 (Build Instructions Integration):** 2-3 hours
+- **Phase 8 (Refactor ALL REPL):** 3-4 hours
+- **Phase 9 (Update story-graph.json):** 1-2 hours
+
+**Grand Total: 15-24 hours** (2-3 days of focused work)
+
+---
+
 ## 📝 Notes
 
 - Keep `test_navigate_behaviors_using_domain_model.py` as reference implementation
 - Don't duplicate tests - if domain model already tests it, just reference it
 - REPL tests should be THIN - just command parsing + delegation verification
 - All assertion logic should be in helpers for reusability
+- **Build Action Instructions:** Focus on INTEGRATION, not individual action details (those have dedicated test files)
+- **Existing Tests:** Review existing test classes before creating new ones to avoid duplication
 
