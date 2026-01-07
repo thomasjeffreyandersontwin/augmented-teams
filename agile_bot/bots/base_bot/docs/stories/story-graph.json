@@ -2172,54 +2172,6 @@
                   "connector": null,
                   "stories": [
                     {
-                      "name": "Save Workflow State",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestSaveWorkflowState",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Action completes",
-                        "THEN State is saved to workflow_state.json",
-                        "AND State includes current action and completion status"
-                      ]
-                    },
-                    {
-                      "name": "Load Workflow State",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestLoadWorkflowState",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Behavior starts",
-                        "THEN State is loaded from workflow_state.json",
-                        "AND State determines resume point"
-                      ]
-                    },
-                    {
-                      "name": "Determine Resume Point After Interruption",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestDetermineResumePointAfterInterruption",
-                      "scenarios": [],
-                      "acceptance_criteria": [
-                        "WHEN Workflow is interrupted",
-                        "THEN Resume point is determined from state",
-                        "AND Next action starts from resume point"
-                      ]
-                    },
-                    {
                       "name": "Confirm Current Action",
                       "sequential_order": 7,
                       "connector": "and",
