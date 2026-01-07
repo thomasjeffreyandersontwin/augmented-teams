@@ -2172,6 +2172,54 @@
                   "connector": null,
                   "stories": [
                     {
+                      "name": "Save Workflow State",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestSaveWorkflowState",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action completes",
+                        "THEN State is saved to workflow_state.json",
+                        "AND State includes current action and completion status"
+                      ]
+                    },
+                    {
+                      "name": "Load Workflow State",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestLoadWorkflowState",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Behavior starts",
+                        "THEN State is loaded from workflow_state.json",
+                        "AND State determines resume point"
+                      ]
+                    },
+                    {
+                      "name": "Determine Resume Point After Interruption",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestDetermineResumePointAfterInterruption",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Workflow is interrupted",
+                        "THEN Resume point is determined from state",
+                        "AND Next action starts from resume point"
+                      ]
+                    },
+                    {
                       "name": "Confirm Current Action",
                       "sequential_order": 7,
                       "connector": "and",
@@ -2212,6 +2260,38 @@
                           "test_method": "test_bot_class_has_close_current_action_method"
                         }
                       ]
+                    },
+                    {
+                      "name": "Inject Next Action Instructions",
+                      "sequential_order": 5,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestInjectNextActionInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action completes",
+                        "THEN Next action reminder is injected",
+                        "AND Instructions include next behavior name"
+                      ]
+                    },
+                    {
+                      "name": "Transition To Next Action",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestTransitionToNextAction",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Current action is confirmed",
+                        "THEN State is updated to next action",
+                        "AND Next action becomes current"
+                      ]
                     }
                   ]
                 }
@@ -2225,6 +2305,70 @@
                   "type": "and",
                   "connector": null,
                   "stories": [
+                    {
+                      "name": "Load Base Action Configuration",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestLoadBaseActionConfiguration",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action is initialized",
+                        "THEN Base config is loaded from config.json",
+                        "AND Config includes action_state and parameters"
+                      ]
+                    },
+                    {
+                      "name": "Load And Merge Behavior-Specific Instructions",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestLoadAndMergeBehaviorSpecificInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Instructions are loaded",
+                        "THEN Behavior-specific instructions.json is merged with base",
+                        "AND Specific instructions override base instructions"
+                      ]
+                    },
+                    {
+                      "name": "Load Guardrails From Behavior Folder",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestLoadGuardrailsFromBehaviorFolder",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Behavior is loaded",
+                        "THEN Guardrails are read from guardrails/ folder",
+                        "AND Guardrails include .md and .mdc files"
+                      ]
+                    },
+                    {
+                      "name": "Inject Guardrails Into Instructions",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestInjectGuardrailsIntoInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Instructions are generated",
+                        "THEN Guardrails are injected into instructions",
+                        "AND Instructions include all guardrail content"
+                      ]
+                    },
                     {
                       "name": "Inject Context Into Instructions",
                       "sequential_order": 5,
@@ -2240,6 +2384,308 @@
                           "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
                           "test_method": "test_action_loads_context_data_into_instructions"
                         }
+                      ]
+                    },
+                    {
+                      "name": "Get Action Instructions",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestGetActionInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action instructions are requested",
+                        "THEN Complete instructions are returned",
+                        "AND Instructions include base, guardrails, and context"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Manage Scope",
+              "sequential_order": 4,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Set Story Scope",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestSetStoryScope",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Bot receives story scope parameter",
+                        "THEN Scope is set for filtering knowledge graph",
+                        "AND Scope enforces mutually exclusive types"
+                      ]
+                    },
+                    {
+                      "name": "Set File Scope",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestSetFileScope",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Bot receives file scope parameter",
+                        "THEN Scope is set for filtering files"
+                      ]
+                    },
+                    {
+                      "name": "Filter Knowledge Graph By Scope",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestFilterKnowledgeGraphByScope",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action executes with scope",
+                        "THEN Knowledge graph is filtered by scope",
+                        "AND Only scoped content is included"
+                      ]
+                    },
+                    {
+                      "name": "Pass Scope Parameters To Actions",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestPassScopeParametersToActions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action is invoked",
+                        "THEN Scope parameters are passed to action",
+                        "AND Action respects scope during execution"
+                      ]
+                    },
+                    {
+                      "name": "Clear Scope",
+                      "sequential_order": 5,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestClearScope",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Clear scope is called",
+                        "THEN Scope is reset to all",
+                        "AND Future actions run without scope filter"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "View Action-Specific Instructions",
+              "sequential_order": 5,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "View Base Instructions",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewBaseInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Base instructions are requested",
+                        "THEN Action returns base instructions",
+                        "AND Instructions contain action guidance"
+                      ]
+                    },
+                    {
+                      "name": "View Clarify Instructions",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewClarifyInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Clarify instructions are requested",
+                        "THEN Instructions include clarification.json data"
+                      ]
+                    },
+                    {
+                      "name": "View Strategy Instructions",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewStrategyInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Strategy instructions are requested",
+                        "THEN Instructions include strategy.json data"
+                      ]
+                    },
+                    {
+                      "name": "View Build Instructions",
+                      "sequential_order": 4,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewBuildInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Build instructions are requested",
+                        "THEN Instructions include knowledge graph template"
+                      ]
+                    },
+                    {
+                      "name": "View Validate Instructions",
+                      "sequential_order": 5,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewValidateInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Validate instructions are requested",
+                        "THEN Instructions include validation rules"
+                      ]
+                    },
+                    {
+                      "name": "View Render Instructions",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewRenderInstructions",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Render instructions are requested",
+                        "THEN Instructions include render configs"
+                      ]
+                    },
+                    {
+                      "name": "View Instructions In Raw Format",
+                      "sequential_order": 7,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestViewInstructionsInRawFormat",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Raw format is requested",
+                        "THEN Instructions returned as JSON"
+                      ]
+                    },
+                    {
+                      "name": "Submit Instructions To AI Agent",
+                      "sequential_order": 8,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestSubmitInstructionsToAIAgent",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Submit is called",
+                        "THEN Instructions are formatted for AI agent",
+                        "AND Instructions are returned to caller"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Track Activity",
+              "sequential_order": 6,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Track Action Start",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestTrackActionStart",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action starts execution",
+                        "THEN Activity entry is created with timestamp and action state",
+                        "AND Entry appended to activity_log.json"
+                      ]
+                    },
+                    {
+                      "name": "Track Action Completion",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestTrackActionCompletion",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Action completes execution",
+                        "THEN Activity entry is updated with outputs and duration",
+                        "AND Entry appended to activity_log.json"
+                      ]
+                    },
+                    {
+                      "name": "Record Activity Metrics And Paths",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestRecordActivityMetricsAndPaths",
+                      "scenarios": [],
+                      "acceptance_criteria": [
+                        "WHEN Activity is tracked",
+                        "THEN Metrics include file counts and content types",
+                        "AND Paths include file paths not content",
+                        "AND Activity log captures metrics and paths"
                       ]
                     }
                   ]
