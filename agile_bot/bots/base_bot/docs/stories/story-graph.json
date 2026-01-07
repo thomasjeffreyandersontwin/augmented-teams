@@ -5730,23 +5730,6 @@
                       ]
                     },
                     {
-                      "name": "Auto-Confirm Action After Instructions Complete",
-                      "sequential_order": 5,
-                      "connector": "and",
-                      "users": [
-                        "CLI"
-                      ],
-                      "story_type": "system",
-                      "acceptance_criteria": [
-                        "WHEN action has auto-confirm enabled\nTHEN CLI automatically runs confirm after displaying instructions",
-                        "WHEN auto-confirm triggers\nTHEN CLI displays instructions AND confirm output without user prompt",
-                        "WHEN action does not have auto-confirm\nTHEN CLI waits for manual confirm command",
-                        "WHEN auto-confirm completes\nTHEN CLI displays confirmation output AND waits for user input"
-                      ],
-                      "optional": false,
-                      "priority": 2
-                    },
-                    {
                       "name": "Re-execute Current Operation Using CLI",
                       "sequential_order": 6,
                       "connector": "and",
