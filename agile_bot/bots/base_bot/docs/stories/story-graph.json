@@ -2034,78 +2034,224 @@
               ]
             }
           ],
-          "sub_epics": [],
+          "sub_epics": [
+            {
+              "name": "Navigate And Execute Behaviors",
+              "sequential_order": 1,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Navigate To Behavior Action And Execute",
+                      "sequential_order": 2,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestNavigateToBehaviorActionAndExecute",
+                      "scenarios": [
+                        {
+                          "name": "Execute behavior with action parameter",
+                          "steps": "Given Bot has behavior shape with action clarify\nWhen Bot.execute_behavior is called\nThen Action executes and returns BotResult\nAnd BotResult status is completed",
+                          "test_method": "test_execute_behavior_with_action_parameter"
+                        },
+                        {
+                          "name": "Execute behavior without action forwards to current",
+                          "steps": "Given Bot has behavior shape and workflow state shows current_action=strategy\nWhen Bot.execute_behavior is called without action parameter\nThen Forwards to current action (strategy)\nAnd BotResult shows strategy was executed",
+                          "test_method": "test_execute_behavior_without_action_forwards_to_current"
+                        },
+                        {
+                          "name": "Execute behavior requires confirmation when out of order",
+                          "steps": "Given Current behavior is discovery, requested behavior is shape\nWhen Bot.execute_behavior is called (going backwards)\nThen Executes directly without order checking",
+                          "test_method": "test_execute_behavior_requires_confirmation_when_out_of_order"
+                        },
+                        {
+                          "name": "Execute behavior handles entry workflow when no state",
+                          "steps": "Given No behavior_action_state.json exists\nWhen Bot.execute_behavior is called\nThen Executes directly (starts fresh workflow)",
+                          "test_method": "test_execute_behavior_handles_entry_workflow_when_no_state"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Navigate Sequentially",
+                      "sequential_order": 8,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestNavigateSequentially",
+                      "scenarios": [
+                        {
+                          "name": "Behavior action order determines next action from current action",
+                          "steps": "Given behavior_action_state.json shows current_action: build\nAnd completed_actions: [clarify] (may be behind)\nWhen bot loads state\nThen current action is build (uses current_action from file as source of truth)",
+                          "test_method": "test_behavior_action_order_determines_next_action_from_current_action"
+                        },
+                        {
+                          "name": "Behavior action order starts at first action when no completed actions",
+                          "steps": "Given bot loads state with no completed_actions\nWhen bot is created\nThen current action is the first action (clarify)",
+                          "test_method": "test_behavior_action_order_starts_at_first_action_when_no_completed_actions"
+                        },
+                        {
+                          "name": "Behavior action order uses current action when provided",
+                          "steps": "Given current_action: strategy\nAnd completed_actions: [clarify]\nWhen bot loads state\nThen current action is strategy (uses current_action from file)",
+                          "test_method": "test_behavior_action_order_uses_current_action_when_provided"
+                        },
+                        {
+                          "name": "Behavior action order falls back to completed actions when current action missing",
+                          "steps": "Given bot has completed actions: [clarify, strategy, build]\nAnd current_action is empty in state file\nWhen bot is created\nThen current action falls back to validate (next after last completed)",
+                          "test_method": "test_behavior_action_order_falls_back_to_completed_actions_when_current_action_missing"
+                        },
+                        {
+                          "name": "Behavior action order starts at first action when no state file exists",
+                          "steps": "Given no state file exists\nWhen bot is created\nThen bot starts at first action (clarify)",
+                          "test_method": "test_behavior_action_order_starts_at_first_action_when_no_state_file_exists"
+                        },
+                        {
+                          "name": "Behavior action order out of order navigation removes completed actions after target",
+                          "steps": "Given current_action: validate\nAnd completed_actions: [clarify, strategy, build, render]\nWhen navigate out of order back to build\nThen current action is build\nAnd render is removed from completed_actions",
+                          "test_method": "test_behavior_action_order_out_of_order_navigation_removes_completed_actions_after_target"
+                        },
+                        {
+                          "name": "Behavior loads workflow order from behavior specific actions workflow",
+                          "steps": "Given behavior.json exists with actions_workflow configuration\nWhen behavior is initialized\nThen workflow states and transitions match configuration",
+                          "test_method": "test_behavior_loads_workflow_order_from_behavior_specific_actions_workflow"
+                        },
+                        {
+                          "name": "Behavior requires actions workflow json no fallback",
+                          "steps": "Given behavior requires behavior.json\nThen no fallback exists",
+                          "test_method": "test_behavior_requires_actions_workflow_json_no_fallback"
+                        },
+                        {
+                          "name": "Behavior loads from actions workflow json",
+                          "steps": "Given behavior.json exists with specific action order\nWhen behavior is initialized\nThen workflow uses order from behavior.json",
+                          "test_method": "test_behavior_loads_from_actions_workflow_json"
+                        },
+                        {
+                          "name": "Different behaviors can have different action orders",
+                          "steps": "Given two behaviors with different action orders in their behavior.json\nWhen behaviors are initialized\nThen each behavior has its configured action order\nAnd orders differ between behaviors",
+                          "test_method": "test_different_behaviors_can_have_different_action_orders"
+                        },
+                        {
+                          "name": "Workflow transitions built correctly from actions workflow json",
+                          "steps": "Given behavior.json with specific next_action values\nWhen behavior is initialized\nThen transitions are built from action_config.json next_action values\nAnd each transition has correct source and destination",
+                          "test_method": "test_workflow_transitions_built_correctly_from_actions_workflow_json"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Execute End-to-End Workflow",
+                      "sequential_order": 1,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestExecuteEndToEndWorkflow",
+                      "scenarios": [
+                        {
+                          "name": "Complete workflow end-to-end",
+                          "steps": "Given Bot has multiple behaviors (shape, discovery)\nAnd each behavior has standard action workflow\nWhen execute clarify action in shape behavior\nAnd close clarify (transitions to strategy)\nAnd jump to discovery.clarify (out of order)\nAnd close discovery.clarify\nThen state correctly shows current action at each step\nAnd transitions occur as expected\nAnd completed actions tracked across multiple behaviors\nAnd out-of-order navigation works correctly",
+                          "test_method": "test_complete_workflow_end_to_end"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Track Workflow State",
+              "sequential_order": 2,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Confirm Current Action",
+                      "sequential_order": 7,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestConfirmCurrentAction",
+                      "scenarios": [
+                        {
+                          "name": "Close current action marks complete and transitions",
+                          "steps": "Given workflow is at action strategy\nAnd action has NOT been marked complete yet\nWhen user closes current action\nThen action is saved to completed_actions\nAnd workflow transitions to next action\nAnd completed_actions count increases\nAnd current action is updated in state file",
+                          "test_method": "test_close_current_action_marks_complete_and_transitions"
+                        },
+                        {
+                          "name": "Close action at final action stays at final",
+                          "steps": "Given workflow is at final action (render)\nWhen user closes final action\nThen action is saved to completed_actions\nAnd state stays at final action (no transition)",
+                          "test_method": "test_close_action_at_final_action_stays_at_final"
+                        },
+                        {
+                          "name": "Close final action transitions to next behavior",
+                          "steps": "Given workflow is at final action\nWhen user closes final action\nThen action is marked complete",
+                          "test_method": "test_close_final_action_transitions_to_next_behavior"
+                        },
+                        {
+                          "name": "Close action saves to completed actions list",
+                          "steps": "Given workflow is at an action (clarify)\nWhen user closes action\nThen action is in completed_actions list\nAnd completed_actions count is 1",
+                          "test_method": "test_close_action_saves_to_completed_actions_list"
+                        },
+                        {
+                          "name": "Close handles action already completed gracefully",
+                          "steps": "Given action has already been completed\nWhen user attempts to close already completed action\nThen operation completes gracefully\nAnd no duplicate entry added to completed_actions",
+                          "test_method": "test_close_handles_action_already_completed_gracefully"
+                        },
+                        {
+                          "name": "Bot class has close current action method",
+                          "steps": "Given Bot is initialized\nThen Bot has close_current method available",
+                          "test_method": "test_bot_class_has_close_current_action_method"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Generate Action Instructions",
+              "sequential_order": 3,
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Inject Context Into Instructions",
+                      "sequential_order": 5,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestInjectContextIntoInstructions",
+                      "scenarios": [
+                        {
+                          "name": "Action loads context data into instructions",
+                          "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
+                          "test_method": "test_action_loads_context_data_into_instructions"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
           "story_groups": [
             {
               "type": "and",
               "connector": null,
               "stories": [
-                {
-                  "name": "Execute End-to-End Workflow",
-                  "sequential_order": 1,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestExecuteEndToEndWorkflow",
-                  "scenarios": [
-                    {
-                      "name": "Complete workflow end-to-end",
-                      "steps": "Given Bot has multiple behaviors (shape, discovery)\nAnd each behavior has standard action workflow\nWhen execute clarify action in shape behavior\nAnd close clarify (transitions to strategy)\nAnd jump to discovery.clarify (out of order)\nAnd close discovery.clarify\nThen state correctly shows current action at each step\nAnd transitions occur as expected\nAnd completed actions tracked across multiple behaviors\nAnd out-of-order navigation works correctly",
-                      "test_method": "test_complete_workflow_end_to_end"
-                    }
-                  ]
-                },
-                {
-                  "name": "Navigate To Behavior Action And Execute",
-                  "sequential_order": 2,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestNavigateToBehaviorActionAndExecute",
-                  "scenarios": [
-                    {
-                      "name": "Execute behavior with action parameter",
-                      "steps": "Given Bot has behavior shape with action clarify\nWhen Bot.execute_behavior is called\nThen Action executes and returns BotResult\nAnd BotResult status is completed",
-                      "test_method": "test_execute_behavior_with_action_parameter"
-                    },
-                    {
-                      "name": "Execute behavior without action forwards to current",
-                      "steps": "Given Bot has behavior shape and workflow state shows current_action=strategy\nWhen Bot.execute_behavior is called without action parameter\nThen Forwards to current action (strategy)\nAnd BotResult shows strategy was executed",
-                      "test_method": "test_execute_behavior_without_action_forwards_to_current"
-                    },
-                    {
-                      "name": "Execute behavior requires confirmation when out of order",
-                      "steps": "Given Current behavior is discovery, requested behavior is shape\nWhen Bot.execute_behavior is called (going backwards)\nThen Executes directly without order checking",
-                      "test_method": "test_execute_behavior_requires_confirmation_when_out_of_order"
-                    },
-                    {
-                      "name": "Execute behavior handles entry workflow when no state",
-                      "steps": "Given No behavior_action_state.json exists\nWhen Bot.execute_behavior is called\nThen Executes directly (starts fresh workflow)",
-                      "test_method": "test_execute_behavior_handles_entry_workflow_when_no_state"
-                    }
-                  ]
-                },
-                {
-                  "name": "Inject Context Into Instructions",
-                  "sequential_order": 5,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestInjectContextIntoInstructions",
-                  "scenarios": [
-                    {
-                      "name": "Action loads context data into instructions",
-                      "steps": "Given clarification.json file exists with data for multiple behaviors\nAnd strategy.json file exists with data for multiple behaviors\nAnd docs/context/ folder exists with input.txt and other files\nAnd Action is initialized\nWhen Action loads and merges instructions\nThen Instructions contain clarification key with all clarification data\nAnd Instructions contain strategy key with all strategy data\nAnd Instructions contain context_files key with list of file names\nAnd Base instructions include explanation of clarification data\nAnd Base instructions include explanation of strategy data\nAnd Base instructions include explanation of context files\nAnd Context file contents are NOT loaded into instructions\nWhen No clarification.json file exists\nThen Instructions do NOT contain clarification key and no error is raised\nWhen No strategy.json file exists\nThen Instructions do NOT contain strategy key and no error is raised\nWhen No docs/context/ folder exists\nThen Instructions do NOT contain context_files key and no error is raised",
-                      "test_method": "test_action_loads_context_data_into_instructions"
-                    }
-                  ]
-                },
                 {
                   "name": "Inject Next Behavior Reminder",
                   "sequential_order": 6,
@@ -2130,115 +2276,6 @@
                       "name": "Next behavior reminder not injected when no next behavior",
                       "steps": "Given discovery is the last behavior in bot_config.json\nAnd render is the final action\nWhen render action executes\nThen base_instructions do NOT include next behavior reminder",
                       "test_method": "test_next_behavior_reminder_not_injected_when_no_next_behavior"
-                    }
-                  ]
-                },
-                {
-                  "name": "Confirm Current Action",
-                  "sequential_order": 7,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestConfirmCurrentAction",
-                  "scenarios": [
-                    {
-                      "name": "Close current action marks complete and transitions",
-                      "steps": "Given workflow is at action strategy\nAnd action has NOT been marked complete yet\nWhen user closes current action\nThen action is saved to completed_actions\nAnd workflow transitions to next action\nAnd completed_actions count increases\nAnd current action is updated in state file",
-                      "test_method": "test_close_current_action_marks_complete_and_transitions"
-                    },
-                    {
-                      "name": "Close action at final action stays at final",
-                      "steps": "Given workflow is at final action (render)\nWhen user closes final action\nThen action is saved to completed_actions\nAnd state stays at final action (no transition)",
-                      "test_method": "test_close_action_at_final_action_stays_at_final"
-                    },
-                    {
-                      "name": "Close final action transitions to next behavior",
-                      "steps": "Given workflow is at final action\nWhen user closes final action\nThen action is marked complete",
-                      "test_method": "test_close_final_action_transitions_to_next_behavior"
-                    },
-                    {
-                      "name": "Close action saves to completed actions list",
-                      "steps": "Given workflow is at an action (clarify)\nWhen user closes action\nThen action is in completed_actions list\nAnd completed_actions count is 1",
-                      "test_method": "test_close_action_saves_to_completed_actions_list"
-                    },
-                    {
-                      "name": "Close handles action already completed gracefully",
-                      "steps": "Given action has already been completed\nWhen user attempts to close already completed action\nThen operation completes gracefully\nAnd no duplicate entry added to completed_actions",
-                      "test_method": "test_close_handles_action_already_completed_gracefully"
-                    },
-                    {
-                      "name": "Bot class has close current action method",
-                      "steps": "Given Bot is initialized\nThen Bot has close_current method available",
-                      "test_method": "test_bot_class_has_close_current_action_method"
-                    }
-                  ]
-                },
-                {
-                  "name": "Navigate Sequentially",
-                  "sequential_order": 8,
-                  "connector": "and",
-                  "users": [
-                    "Bot Behavior"
-                  ],
-                  "story_type": "user",
-                  "test_class": "TestNavigateSequentially",
-                  "scenarios": [
-                    {
-                      "name": "Behavior action order determines next action from current action",
-                      "steps": "Given behavior_action_state.json shows current_action: build\nAnd completed_actions: [clarify] (may be behind)\nWhen bot loads state\nThen current action is build (uses current_action from file as source of truth)",
-                      "test_method": "test_behavior_action_order_determines_next_action_from_current_action"
-                    },
-                    {
-                      "name": "Behavior action order starts at first action when no completed actions",
-                      "steps": "Given bot loads state with no completed_actions\nWhen bot is created\nThen current action is the first action (clarify)",
-                      "test_method": "test_behavior_action_order_starts_at_first_action_when_no_completed_actions"
-                    },
-                    {
-                      "name": "Behavior action order uses current action when provided",
-                      "steps": "Given current_action: strategy\nAnd completed_actions: [clarify]\nWhen bot loads state\nThen current action is strategy (uses current_action from file)",
-                      "test_method": "test_behavior_action_order_uses_current_action_when_provided"
-                    },
-                    {
-                      "name": "Behavior action order falls back to completed actions when current action missing",
-                      "steps": "Given bot has completed actions: [clarify, strategy, build]\nAnd current_action is empty in state file\nWhen bot is created\nThen current action falls back to validate (next after last completed)",
-                      "test_method": "test_behavior_action_order_falls_back_to_completed_actions_when_current_action_missing"
-                    },
-                    {
-                      "name": "Behavior action order starts at first action when no state file exists",
-                      "steps": "Given no state file exists\nWhen bot is created\nThen bot starts at first action (clarify)",
-                      "test_method": "test_behavior_action_order_starts_at_first_action_when_no_state_file_exists"
-                    },
-                    {
-                      "name": "Behavior action order out of order navigation removes completed actions after target",
-                      "steps": "Given current_action: validate\nAnd completed_actions: [clarify, strategy, build, render]\nWhen navigate out of order back to build\nThen current action is build\nAnd render is removed from completed_actions",
-                      "test_method": "test_behavior_action_order_out_of_order_navigation_removes_completed_actions_after_target"
-                    },
-                    {
-                      "name": "Behavior loads workflow order from behavior specific actions workflow",
-                      "steps": "Given behavior.json exists with actions_workflow configuration\nWhen behavior is initialized\nThen workflow states and transitions match configuration",
-                      "test_method": "test_behavior_loads_workflow_order_from_behavior_specific_actions_workflow"
-                    },
-                    {
-                      "name": "Behavior requires actions workflow json no fallback",
-                      "steps": "Given behavior requires behavior.json\nThen no fallback exists",
-                      "test_method": "test_behavior_requires_actions_workflow_json_no_fallback"
-                    },
-                    {
-                      "name": "Behavior loads from actions workflow json",
-                      "steps": "Given behavior.json exists with specific action order\nWhen behavior is initialized\nThen workflow uses order from behavior.json",
-                      "test_method": "test_behavior_loads_from_actions_workflow_json"
-                    },
-                    {
-                      "name": "Different behaviors can have different action orders",
-                      "steps": "Given two behaviors with different action orders in their behavior.json\nWhen behaviors are initialized\nThen each behavior has its configured action order\nAnd orders differ between behaviors",
-                      "test_method": "test_different_behaviors_can_have_different_action_orders"
-                    },
-                    {
-                      "name": "Workflow transitions built correctly from actions workflow json",
-                      "steps": "Given behavior.json with specific next_action values\nWhen behavior is initialized\nThen transitions are built from action_config.json next_action values\nAnd each transition has correct source and destination",
-                      "test_method": "test_workflow_transitions_built_correctly_from_actions_workflow_json"
                     }
                   ]
                 },
@@ -2289,31 +2326,49 @@
               "responsibilities": [
                 {
                   "name": "Wraps JSON data",
-                  "collaborators": ["JSON"]
+                  "collaborators": [
+                    "JSON"
+                  ]
                 },
                 {
                   "name": "Spawns subprocess",
-                  "collaborators": ["CLI Client", "Python Process"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Python Process"
+                  ]
                 },
                 {
                   "name": "Sends command to CLI",
-                  "collaborators": ["Command", "Stdin"]
+                  "collaborators": [
+                    "Command",
+                    "Stdin"
+                  ]
                 },
                 {
                   "name": "Receives JSON from CLI",
-                  "collaborators": ["Stdout"]
+                  "collaborators": [
+                    "Stdout"
+                  ]
                 },
                 {
                   "name": "Parses JSON",
-                  "collaborators": ["String", "Dict"]
+                  "collaborators": [
+                    "String",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Provides element ID",
-                  "collaborators": ["String"]
+                  "collaborators": [
+                    "String"
+                  ]
                 },
                 {
                   "name": "Renders to HTML",
-                  "collaborators": ["HTML", "JSON"]
+                  "collaborators": [
+                    "HTML",
+                    "JSON"
+                  ]
                 }
               ]
             },
@@ -2323,27 +2378,39 @@
               "responsibilities": [
                 {
                   "name": "Wraps bot JSON",
-                  "collaborators": ["Bot JSON"]
+                  "collaborators": [
+                    "Bot JSON"
+                  ]
                 },
                 {
                   "name": "Displays BotHeaderView",
-                  "collaborators": ["BotHeaderView"]
+                  "collaborators": [
+                    "BotHeaderView"
+                  ]
                 },
                 {
                   "name": "Displays PathsSection",
-                  "collaborators": ["PathsSection"]
+                  "collaborators": [
+                    "PathsSection"
+                  ]
                 },
                 {
                   "name": "Displays BehaviorsSection",
-                  "collaborators": ["BehaviorsSection"]
+                  "collaborators": [
+                    "BehaviorsSection"
+                  ]
                 },
                 {
                   "name": "Displays ScopeSection",
-                  "collaborators": ["ScopeSection"]
+                  "collaborators": [
+                    "ScopeSection"
+                  ]
                 },
                 {
                   "name": "Displays InstructionsSection",
-                  "collaborators": ["InstructionsSection"]
+                  "collaborators": [
+                    "InstructionsSection"
+                  ]
                 }
               ],
               "realization": [
@@ -2464,23 +2531,35 @@
               "responsibilities": [
                 {
                   "name": "Wraps bot JSON",
-                  "collaborators": ["Bot JSON"]
+                  "collaborators": [
+                    "Bot JSON"
+                  ]
                 },
                 {
                   "name": "Displays image",
-                  "collaborators": ["Image"]
+                  "collaborators": [
+                    "Image"
+                  ]
                 },
                 {
                   "name": "Displays title",
-                  "collaborators": ["String", "Bot JSON"]
+                  "collaborators": [
+                    "String",
+                    "Bot JSON"
+                  ]
                 },
                 {
                   "name": "Displays version number",
-                  "collaborators": ["String", "Bot JSON"]
+                  "collaborators": [
+                    "String",
+                    "Bot JSON"
+                  ]
                 },
                 {
                   "name": "Refreshes panel",
-                  "collaborators": ["CLI Client"]
+                  "collaborators": [
+                    "CLI Client"
+                  ]
                 }
               ]
             },
@@ -2490,11 +2569,15 @@
               "responsibilities": [
                 {
                   "name": "Displays header image",
-                  "collaborators": ["Image"]
+                  "collaborators": [
+                    "Image"
+                  ]
                 },
                 {
                   "name": "Displays title",
-                  "collaborators": ["String"]
+                  "collaborators": [
+                    "String"
+                  ]
                 }
               ]
             },
@@ -2504,15 +2587,21 @@
               "responsibilities": [
                 {
                   "name": "Renders section header",
-                  "collaborators": ["PanelHeader"]
+                  "collaborators": [
+                    "PanelHeader"
+                  ]
                 },
                 {
                   "name": "Toggles collapsed state",
-                  "collaborators": ["State"]
+                  "collaborators": [
+                    "State"
+                  ]
                 },
                 {
                   "name": "May contain subsections",
-                  "collaborators": ["SubSectionView"]
+                  "collaborators": [
+                    "SubSectionView"
+                  ]
                 }
               ]
             },
@@ -2522,19 +2611,29 @@
               "responsibilities": [
                 {
                   "name": "Wraps bot paths JSON",
-                  "collaborators": ["BotPaths JSON"]
+                  "collaborators": [
+                    "BotPaths JSON"
+                  ]
                 },
                 {
                   "name": "Displays bot directory",
-                  "collaborators": ["String", "BotPaths JSON"]
+                  "collaborators": [
+                    "String",
+                    "BotPaths JSON"
+                  ]
                 },
                 {
                   "name": "Edits workspace directory",
-                  "collaborators": ["CLI Client", "BotPaths JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "BotPaths JSON"
+                  ]
                 },
                 {
                   "name": "Displays available bots",
-                  "collaborators": ["AvailableBotsView"]
+                  "collaborators": [
+                    "AvailableBotsView"
+                  ]
                 }
               ]
             },
@@ -2544,15 +2643,23 @@
               "responsibilities": [
                 {
                   "name": "Wraps bot registry JSON",
-                  "collaborators": ["BotRegistry JSON"]
+                  "collaborators": [
+                    "BotRegistry JSON"
+                  ]
                 },
                 {
                   "name": "Displays available bots",
-                  "collaborators": ["List", "BotRegistry JSON"]
+                  "collaborators": [
+                    "List",
+                    "BotRegistry JSON"
+                  ]
                 },
                 {
                   "name": "Selects bot",
-                  "collaborators": ["CLI Client", "Bot"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Bot"
+                  ]
                 }
               ]
             },
@@ -2562,7 +2669,9 @@
               "responsibilities": [
                 {
                   "name": "Toggles collapsed state",
-                  "collaborators": ["State"]
+                  "collaborators": [
+                    "State"
+                  ]
                 }
               ]
             },
@@ -2572,39 +2681,63 @@
               "responsibilities": [
                 {
                   "name": "Wraps behaviors JSON",
-                  "collaborators": ["Behaviors JSON"]
+                  "collaborators": [
+                    "Behaviors JSON"
+                  ]
                 },
                 {
                   "name": "Displays behavior names list",
-                  "collaborators": ["List", "Behavior JSON"]
+                  "collaborators": [
+                    "List",
+                    "Behavior JSON"
+                  ]
                 },
                 {
                   "name": "Navigates to behavior",
-                  "collaborators": ["CLI Client", "Behavior"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Behavior"
+                  ]
                 },
                 {
                   "name": "Toggles collapsed",
-                  "collaborators": ["State", "Behavior JSON"]
+                  "collaborators": [
+                    "State",
+                    "Behavior JSON"
+                  ]
                 },
                 {
                   "name": "Displays tooltip",
-                  "collaborators": ["String", "Behavior JSON"]
+                  "collaborators": [
+                    "String",
+                    "Behavior JSON"
+                  ]
                 },
                 {
                   "name": "Displays actions",
-                  "collaborators": ["ActionsView"]
+                  "collaborators": [
+                    "ActionsView"
+                  ]
                 },
                 {
                   "name": "Executes behavior",
-                  "collaborators": ["CLI Client", "Behavior"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Behavior"
+                  ]
                 },
                 {
                   "name": "Displays completion progress",
-                  "collaborators": ["Status", "Behavior JSON"]
+                  "collaborators": [
+                    "Status",
+                    "Behavior JSON"
+                  ]
                 },
                 {
                   "name": "Displays navigation",
-                  "collaborators": ["NavigationView"]
+                  "collaborators": [
+                    "NavigationView"
+                  ]
                 }
               ],
               "realization": [
@@ -2687,19 +2820,30 @@
               "responsibilities": [
                 {
                   "name": "Wraps current action JSON",
-                  "collaborators": ["Action JSON"]
+                  "collaborators": [
+                    "Action JSON"
+                  ]
                 },
                 {
                   "name": "Reruns action",
-                  "collaborators": ["CLI Client", "Action"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Action"
+                  ]
                 },
                 {
                   "name": "Navigates to next action",
-                  "collaborators": ["CLI Client", "Action"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Action"
+                  ]
                 },
                 {
                   "name": "Navigates to prev action",
-                  "collaborators": ["CLI Client", "Action"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Action"
+                  ]
                 }
               ]
             },
@@ -2709,27 +2853,44 @@
               "responsibilities": [
                 {
                   "name": "Wraps actions JSON",
-                  "collaborators": ["Actions JSON"]
+                  "collaborators": [
+                    "Actions JSON"
+                  ]
                 },
                 {
                   "name": "Displays action names list",
-                  "collaborators": ["List", "Action JSON"]
+                  "collaborators": [
+                    "List",
+                    "Action JSON"
+                  ]
                 },
                 {
                   "name": "Navigates to action",
-                  "collaborators": ["CLI Client", "Action"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Action"
+                  ]
                 },
                 {
                   "name": "Displays status indicators",
-                  "collaborators": ["Status", "Action JSON"]
+                  "collaborators": [
+                    "Status",
+                    "Action JSON"
+                  ]
                 },
                 {
                   "name": "Executes action",
-                  "collaborators": ["CLI Client", "Action"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Action"
+                  ]
                 },
                 {
                   "name": "Displays completion progress",
-                  "collaborators": ["Progress", "Action JSON"]
+                  "collaborators": [
+                    "Progress",
+                    "Action JSON"
+                  ]
                 }
               ]
             },
@@ -2739,27 +2900,42 @@
               "responsibilities": [
                 {
                   "name": "Wraps scope JSON",
-                  "collaborators": ["Scope JSON"]
+                  "collaborators": [
+                    "Scope JSON"
+                  ]
                 },
                 {
                   "name": "Displays filtered files",
-                  "collaborators": ["FileListTabView"]
+                  "collaborators": [
+                    "FileListTabView"
+                  ]
                 },
                 {
                   "name": "Filters story graph",
-                  "collaborators": ["CLI Client", "Scope JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Scope JSON"
+                  ]
                 },
                 {
                   "name": "Filters files",
-                  "collaborators": ["CLI Client", "Scope JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Scope JSON"
+                  ]
                 },
                 {
                   "name": "Clears filter",
-                  "collaborators": ["CLI Client", "Scope JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Scope JSON"
+                  ]
                 },
                 {
                   "name": "Displays story graph",
-                  "collaborators": ["StoryGraphTabView"]
+                  "collaborators": [
+                    "StoryGraphTabView"
+                  ]
                 }
               ]
             },
@@ -2769,23 +2945,37 @@
               "responsibilities": [
                 {
                   "name": "Wraps story map JSON",
-                  "collaborators": ["StoryMap JSON"]
+                  "collaborators": [
+                    "StoryMap JSON"
+                  ]
                 },
                 {
                   "name": "Displays epic hierarchy",
-                  "collaborators": ["EpicView", "Epic JSON"]
+                  "collaborators": [
+                    "EpicView",
+                    "Epic JSON"
+                  ]
                 },
                 {
                   "name": "Searches stories",
-                  "collaborators": ["Filter", "StoryGraph JSON"]
+                  "collaborators": [
+                    "Filter",
+                    "StoryGraph JSON"
+                  ]
                 },
                 {
                   "name": "Opens story graph file",
-                  "collaborators": ["CLI Client", "File JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "File JSON"
+                  ]
                 },
                 {
                   "name": "Opens story map file",
-                  "collaborators": ["CLI Client", "File JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "File JSON"
+                  ]
                 }
               ],
               "realization": [
@@ -2879,31 +3069,49 @@
               "responsibilities": [
                 {
                   "name": "Wraps epic JSON",
-                  "collaborators": ["Epic JSON"]
+                  "collaborators": [
+                    "Epic JSON"
+                  ]
                 },
                 {
                   "name": "Displays epic name",
-                  "collaborators": ["String", "Epic JSON"]
+                  "collaborators": [
+                    "String",
+                    "Epic JSON"
+                  ]
                 },
                 {
                   "name": "Displays epic icon",
-                  "collaborators": ["Image"]
+                  "collaborators": [
+                    "Image"
+                  ]
                 },
                 {
                   "name": "Displays sub epics",
-                  "collaborators": ["SubEpicView", "SubEpic JSON"]
+                  "collaborators": [
+                    "SubEpicView",
+                    "SubEpic JSON"
+                  ]
                 },
                 {
                   "name": "Toggles collapsed",
-                  "collaborators": ["State"]
+                  "collaborators": [
+                    "State"
+                  ]
                 },
                 {
                   "name": "Opens epic folder",
-                  "collaborators": ["CLI Client", "Epic JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Epic JSON"
+                  ]
                 },
                 {
                   "name": "Opens epic test file",
-                  "collaborators": ["CLI Client", "Epic JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Epic JSON"
+                  ]
                 }
               ]
             },
@@ -2913,35 +3121,56 @@
               "responsibilities": [
                 {
                   "name": "Wraps sub epic JSON",
-                  "collaborators": ["SubEpic JSON"]
+                  "collaborators": [
+                    "SubEpic JSON"
+                  ]
                 },
                 {
                   "name": "Displays sub epic name",
-                  "collaborators": ["String", "SubEpic JSON"]
+                  "collaborators": [
+                    "String",
+                    "SubEpic JSON"
+                  ]
                 },
                 {
                   "name": "Displays sub epic icon",
-                  "collaborators": ["Image"]
+                  "collaborators": [
+                    "Image"
+                  ]
                 },
                 {
                   "name": "Displays nested sub epics",
-                  "collaborators": ["SubEpicView", "SubEpic JSON"]
+                  "collaborators": [
+                    "SubEpicView",
+                    "SubEpic JSON"
+                  ]
                 },
                 {
                   "name": "Displays stories",
-                  "collaborators": ["StoryView", "Story JSON"]
+                  "collaborators": [
+                    "StoryView",
+                    "Story JSON"
+                  ]
                 },
                 {
                   "name": "Toggles collapsed",
-                  "collaborators": ["State"]
+                  "collaborators": [
+                    "State"
+                  ]
                 },
                 {
                   "name": "Opens sub epic folder",
-                  "collaborators": ["CLI Client", "SubEpic JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "SubEpic JSON"
+                  ]
                 },
                 {
                   "name": "Opens sub epic test file",
-                  "collaborators": ["CLI Client", "SubEpic JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "SubEpic JSON"
+                  ]
                 }
               ]
             },
@@ -2951,27 +3180,42 @@
               "responsibilities": [
                 {
                   "name": "Wraps story JSON",
-                  "collaborators": ["Story JSON"]
+                  "collaborators": [
+                    "Story JSON"
+                  ]
                 },
                 {
                   "name": "Displays story name",
-                  "collaborators": ["String", "Story JSON"]
+                  "collaborators": [
+                    "String",
+                    "Story JSON"
+                  ]
                 },
                 {
                   "name": "Displays story icon",
-                  "collaborators": ["Image"]
+                  "collaborators": [
+                    "Image"
+                  ]
                 },
                 {
                   "name": "Displays scenarios",
-                  "collaborators": ["ScenarioView", "Scenario JSON"]
+                  "collaborators": [
+                    "ScenarioView",
+                    "Scenario JSON"
+                  ]
                 },
                 {
                   "name": "Toggles collapsed",
-                  "collaborators": ["State"]
+                  "collaborators": [
+                    "State"
+                  ]
                 },
                 {
                   "name": "Opens test at class",
-                  "collaborators": ["CLI Client", "Story JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Story JSON"
+                  ]
                 }
               ]
             },
@@ -2981,19 +3225,29 @@
               "responsibilities": [
                 {
                   "name": "Wraps scenario JSON",
-                  "collaborators": ["Scenario JSON"]
+                  "collaborators": [
+                    "Scenario JSON"
+                  ]
                 },
                 {
                   "name": "Displays scenario name",
-                  "collaborators": ["String", "Scenario JSON"]
+                  "collaborators": [
+                    "String",
+                    "Scenario JSON"
+                  ]
                 },
                 {
                   "name": "Displays scenario icon",
-                  "collaborators": ["Image"]
+                  "collaborators": [
+                    "Image"
+                  ]
                 },
                 {
                   "name": "Opens test at scenario",
-                  "collaborators": ["CLI Client", "Scenario JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Scenario JSON"
+                  ]
                 }
               ]
             },
@@ -3003,19 +3257,30 @@
               "responsibilities": [
                 {
                   "name": "Wraps file list JSON",
-                  "collaborators": ["Path JSON"]
+                  "collaborators": [
+                    "Path JSON"
+                  ]
                 },
                 {
                   "name": "Displays file names",
-                  "collaborators": ["List", "Path JSON"]
+                  "collaborators": [
+                    "List",
+                    "Path JSON"
+                  ]
                 },
                 {
                   "name": "Searches files",
-                  "collaborators": ["Filter", "Path JSON"]
+                  "collaborators": [
+                    "Filter",
+                    "Path JSON"
+                  ]
                 },
                 {
                   "name": "Opens file",
-                  "collaborators": ["CLI Client", "Path JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Path JSON"
+                  ]
                 }
               ]
             },
@@ -3025,27 +3290,43 @@
               "responsibilities": [
                 {
                   "name": "Wraps instructions JSON",
-                  "collaborators": ["Instructions JSON"]
+                  "collaborators": [
+                    "Instructions JSON"
+                  ]
                 },
                 {
                   "name": "Wraps action JSON",
-                  "collaborators": ["Action JSON"]
+                  "collaborators": [
+                    "Action JSON"
+                  ]
                 },
                 {
                   "name": "Displays base instructions",
-                  "collaborators": ["String", "Instructions JSON"]
+                  "collaborators": [
+                    "String",
+                    "Instructions JSON"
+                  ]
                 },
                 {
                   "name": "Displays action data",
-                  "collaborators": ["Object", "Action JSON"]
+                  "collaborators": [
+                    "Object",
+                    "Action JSON"
+                  ]
                 },
                 {
                   "name": "Displays raw format",
-                  "collaborators": ["String", "Instructions JSON"]
+                  "collaborators": [
+                    "String",
+                    "Instructions JSON"
+                  ]
                 },
                 {
                   "name": "Submits to AI chat",
-                  "collaborators": ["CLI Client", "Instructions JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Instructions JSON"
+                  ]
                 }
               ]
             },
@@ -3055,19 +3336,30 @@
               "responsibilities": [
                 {
                   "name": "Wraps key questions JSON",
-                  "collaborators": ["KeyQuestions JSON"]
+                  "collaborators": [
+                    "KeyQuestions JSON"
+                  ]
                 },
                 {
                   "name": "Displays key questions",
-                  "collaborators": ["List", "KeyQuestion JSON"]
+                  "collaborators": [
+                    "List",
+                    "KeyQuestion JSON"
+                  ]
                 },
                 {
                   "name": "Updates evidence",
-                  "collaborators": ["CLI Client", "Evidence JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Evidence JSON"
+                  ]
                 },
                 {
                   "name": "Edits answer",
-                  "collaborators": ["CLI Client", "KeyQuestion JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "KeyQuestion JSON"
+                  ]
                 }
               ],
               "realization": [
@@ -3133,23 +3425,37 @@
               "responsibilities": [
                 {
                   "name": "Wraps strategy JSON",
-                  "collaborators": ["Strategy JSON"]
+                  "collaborators": [
+                    "Strategy JSON"
+                  ]
                 },
                 {
                   "name": "Displays decision criteria",
-                  "collaborators": ["List", "DecisionCriteria JSON"]
+                  "collaborators": [
+                    "List",
+                    "DecisionCriteria JSON"
+                  ]
                 },
                 {
                   "name": "Displays assumptions",
-                  "collaborators": ["String", "Assumptions JSON"]
+                  "collaborators": [
+                    "String",
+                    "Assumptions JSON"
+                  ]
                 },
                 {
                   "name": "Edits decision criterion",
-                  "collaborators": ["CLI Client", "DecisionCriterion JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "DecisionCriterion JSON"
+                  ]
                 },
                 {
                   "name": "Edits assumption",
-                  "collaborators": ["CLI Client", "Assumption JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Assumption JSON"
+                  ]
                 }
               ]
             },
@@ -3159,23 +3465,37 @@
               "responsibilities": [
                 {
                   "name": "Wraps build JSON",
-                  "collaborators": ["Build JSON"]
+                  "collaborators": [
+                    "Build JSON"
+                  ]
                 },
                 {
                   "name": "Displays knowledge graph spec",
-                  "collaborators": ["Object", "KnowledgeGraphSpec JSON"]
+                  "collaborators": [
+                    "Object",
+                    "KnowledgeGraphSpec JSON"
+                  ]
                 },
                 {
                   "name": "Displays graph structure",
-                  "collaborators": ["Object", "KnowledgeGraphSpec JSON"]
+                  "collaborators": [
+                    "Object",
+                    "KnowledgeGraphSpec JSON"
+                  ]
                 },
                 {
                   "name": "Displays builder instructions",
-                  "collaborators": ["String", "BuilderInstructions JSON"]
+                  "collaborators": [
+                    "String",
+                    "BuilderInstructions JSON"
+                  ]
                 },
                 {
                   "name": "Opens graph file",
-                  "collaborators": ["CLI Client", "Path JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Path JSON"
+                  ]
                 }
               ]
             },
@@ -3185,23 +3505,37 @@
               "responsibilities": [
                 {
                   "name": "Wraps validate JSON",
-                  "collaborators": ["Validate JSON"]
+                  "collaborators": [
+                    "Validate JSON"
+                  ]
                 },
                 {
                   "name": "Displays rules",
-                  "collaborators": ["List", "Rule JSON"]
+                  "collaborators": [
+                    "List",
+                    "Rule JSON"
+                  ]
                 },
                 {
                   "name": "Displays rule descriptions",
-                  "collaborators": ["String", "Rule JSON"]
+                  "collaborators": [
+                    "String",
+                    "Rule JSON"
+                  ]
                 },
                 {
                   "name": "Displays rule examples",
-                  "collaborators": ["List", "Rule JSON"]
+                  "collaborators": [
+                    "List",
+                    "Rule JSON"
+                  ]
                 },
                 {
                   "name": "Opens rule file",
-                  "collaborators": ["CLI Client", "Path JSON"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Path JSON"
+                  ]
                 }
               ]
             },
@@ -3211,749 +3545,37 @@
               "responsibilities": [
                 {
                   "name": "Wraps render JSON",
-                  "collaborators": ["Render JSON"]
+                  "collaborators": [
+                    "Render JSON"
+                  ]
                 },
                 {
                   "name": "Displays render spec",
-                  "collaborators": ["Object", "RenderSpec JSON"]
+                  "collaborators": [
+                    "Object",
+                    "RenderSpec JSON"
+                  ]
                 },
                 {
                   "name": "Displays templates",
-                  "collaborators": ["List", "Template JSON"]
+                  "collaborators": [
+                    "List",
+                    "Template JSON"
+                  ]
                 },
                 {
                   "name": "Displays render instructions",
-                  "collaborators": ["String", "RenderInstructions JSON"]
+                  "collaborators": [
+                    "String",
+                    "RenderInstructions JSON"
+                  ]
                 },
                 {
                   "name": "Opens template file",
-                  "collaborators": ["CLI Client", "Path JSON"]
-                }
-              ]
-            }
-          ],
-          "sub_epics": [
-            {
-              "name": "Manage Bot Information",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Creates webview panel",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Manages panel lifecycle",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Handles user messages from webview",
-                  "collaborators": ["StatusDataProvider", "VSCode"]
-                },
-                {
-                  "name": "Refreshes panel display",
-                  "collaborators": ["StatusDataProvider", "HtmlRenderer"]
-                },
-                {
-                  "name": "Maintains expansion state",
-                  "collaborators": []
-                },
-                {
-                  "name": "Opens files in editor",
-                  "collaborators": ["VSCode"]
-                }
-              ]
-            },
-            {
-              "name": "StatusDataProvider",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Fetches CLI status via Python subprocess",
-                  "collaborators": ["PythonREPL"]
-                },
-                {
-                  "name": "Switches current bot",
-                  "collaborators": ["BotRegistry"]
-                },
-                {
-                  "name": "Updates workspace path",
-                  "collaborators": ["PythonREPL"]
-                },
-                {
-                  "name": "Executes CLI commands",
-                  "collaborators": ["PythonREPL"]
-                },
-                {
-                  "name": "Loads bot registry from JSON",
-                  "collaborators": ["FileSystem"]
-                },
-                {
-                  "name": "Provides available bot names",
-                  "collaborators": ["BotRegistry"]
-                }
-              ]
-            },
-            {
-              "name": "HtmlRenderer",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Renders complete panel HTML",
-                  "collaborators": ["CliOutputAdapter"]
-                },
-                {
-                  "name": "Renders bot information header",
-                  "collaborators": []
-                },
-                {
-                  "name": "Renders behavior action hierarchy",
-                  "collaborators": []
-                },
-                {
-                  "name": "Renders scope section with story tree",
-                  "collaborators": ["StoryTree", "FileList"]
-                },
-                {
-                  "name": "Renders instructions sections",
-                  "collaborators": []
-                },
-                {
-                  "name": "Formats clarify instructions with Q&A textareas",
-                  "collaborators": []
-                },
-                {
-                  "name": "Formats strategy instructions with decision criteria radio buttons",
-                  "collaborators": []
-                },
-                {
-                  "name": "Formats build instructions with knowledge graph links",
-                  "collaborators": []
-                },
-                {
-                  "name": "Formats validate instructions with rules list",
-                  "collaborators": []
-                },
-                {
-                  "name": "Formats render instructions with config/template/output links",
-                  "collaborators": []
-                },
-                {
-                  "name": "Generates JavaScript for webview interactions",
-                  "collaborators": []
-                },
-                {
-                  "name": "Escapes HTML entities",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "CliOutputAdapter",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Parses CLI JSON output",
-                  "collaborators": []
-                },
-                {
-                  "name": "Adapts CLI data to panel format",
-                  "collaborators": []
-                },
-                {
-                  "name": "Extracts behavior hierarchy",
-                  "collaborators": []
-                },
-                {
-                  "name": "Extracts scope information",
-                  "collaborators": []
-                },
-                {
-                  "name": "Extracts instructions data",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "BotRegistry",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Stores available bot configurations",
-                  "collaborators": []
-                },
-                {
-                  "name": "Validates bot names",
-                  "collaborators": []
-                },
-                {
-                  "name": "Provides bot CLI paths",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "StoryTree",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Represents epic/sub-epic/story hierarchy",
-                  "collaborators": ["Epic", "SubEpic", "Story"]
-                },
-                {
-                  "name": "Filters by story name",
-                  "collaborators": []
-                },
-                {
-                  "name": "Expands and collapses nodes",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "Epic",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains sub-epics",
-                  "collaborators": ["SubEpic"]
-                },
-                {
-                  "name": "Provides folder link",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "SubEpic",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains stories",
-                  "collaborators": ["Story"]
-                },
-                {
-                  "name": "Provides test file link",
-                  "collaborators": []
-                },
-                {
-                  "name": "Provides folder link",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "Story",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains acceptance criteria",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains scenarios",
-                  "collaborators": ["Scenario"]
-                },
-                {
-                  "name": "Provides story file link",
-                  "collaborators": []
-                },
-                {
-                  "name": "Provides test class link",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "Scenario",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Provides test method link",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "FileList",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains file paths",
-                  "collaborators": []
-                },
-                {
-                  "name": "Filters by file pattern",
-                  "collaborators": []
-                },
-                {
-                  "name": "Displays in monospace",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "BehaviorActionHierarchy",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Represents behavior/action/operation tree",
-                  "collaborators": ["Behavior", "Action", "Operation"]
-                },
-                {
-                  "name": "Shows current action indicator",
-                  "collaborators": []
-                },
-                {
-                  "name": "Shows completed status indicator",
-                  "collaborators": []
-                },
-                {
-                  "name": "Shows pending indicator",
-                  "collaborators": []
-                },
-                {
-                  "name": "Expands and collapses behaviors",
-                  "collaborators": []
-                },
-                {
-                  "name": "Expands and collapses actions",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "Behavior",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains actions",
-                  "collaborators": ["Action"]
-                },
-                {
-                  "name": "Executes when clicked",
-                  "collaborators": ["Action", "Operation"]
-                }
-              ]
-            },
-            {
-              "name": "Action",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains operations",
-                  "collaborators": ["Operation"]
-                },
-                {
-                  "name": "Tracks completion status",
-                  "collaborators": []
-                },
-                {
-                  "name": "Executes when clicked",
-                  "collaborators": ["Operation"]
-                }
-              ]
-            },
-            {
-              "name": "Operation",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Executes workflow step",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "InstructionsDisplay",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Displays base instructions with behavior and action names",
-                  "collaborators": []
-                },
-                {
-                  "name": "Conditionally displays clarify instructions",
-                  "collaborators": ["ClarifyInstructions"]
-                },
-                {
-                  "name": "Conditionally displays strategy instructions",
-                  "collaborators": ["StrategyInstructions"]
-                },
-                {
-                  "name": "Conditionally displays build instructions",
-                  "collaborators": ["BuildInstructions"]
-                },
-                {
-                  "name": "Conditionally displays validate instructions",
-                  "collaborators": ["ValidateInstructions"]
-                },
-                {
-                  "name": "Conditionally displays render instructions",
-                  "collaborators": ["RenderInstructions"]
-                },
-                {
-                  "name": "Displays raw instructions format",
-                  "collaborators": []
-                },
-                {
-                  "name": "Submits instructions to AI chat",
-                  "collaborators": ["VSCode"]
-                }
-              ]
-            },
-            {
-              "name": "ClarifyInstructions",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains key questions",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains editable answer textareas",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains evidence list",
-                  "collaborators": []
-                },
-                {
-                  "name": "Updates answers on edit",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "StrategyInstructions",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains decision criteria with radio buttons",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains assumptions textarea",
-                  "collaborators": []
-                },
-                {
-                  "name": "Shows selected options from saved strategy",
-                  "collaborators": []
-                },
-                {
-                  "name": "Updates assumptions on edit",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "BuildInstructions",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains knowledge graph template path link",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains knowledge graph output file link",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains knowledge graph directory path",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains rules list with clickable links",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "ValidateInstructions",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains rules list",
-                  "collaborators": []
-                },
-                {
-                  "name": "Opens rule files on click",
-                  "collaborators": ["VSCode"]
-                }
-              ]
-            },
-            {
-              "name": "RenderInstructions",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Contains config file paths as links",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains template file paths as links",
-                  "collaborators": []
-                },
-                {
-                  "name": "Contains output file paths as links",
-                  "collaborators": []
-                },
-                {
-                  "name": "Opens files on link click",
-                  "collaborators": ["VSCode"]
-                }
-              ]
-            },
-            {
-              "name": "BehaviorActionNavigation",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Navigates to previous action",
-                  "collaborators": ["BehaviorActionHierarchy", "StatusDataProvider"]
-                },
-                {
-                  "name": "Navigates to next action",
-                  "collaborators": ["BehaviorActionHierarchy", "StatusDataProvider"]
-                },
-                {
-                  "name": "Reruns current action",
-                  "collaborators": ["StatusDataProvider"]
-                },
-                {
-                  "name": "Moves to next action when on last operation",
-                  "collaborators": ["Action", "Operation"]
-                },
-                {
-                  "name": "Moves to next behavior when on last action",
-                  "collaborators": ["Behavior", "Action"]
-                },
-                {
-                  "name": "Disables navigation when on last behavior",
-                  "collaborators": ["Behavior"]
-                },
-                {
-                  "name": "Updates action status indicators",
-                  "collaborators": ["Action"]
-                }
-              ]
-            },
-            {
-              "name": "CollapsibleContent",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Expands content",
-                  "collaborators": []
-                },
-                {
-                  "name": "Collapses content",
-                  "collaborators": []
-                },
-                {
-                  "name": "Preserves expansion state during refresh",
-                  "collaborators": ["StatusPanel"]
-                },
-                {
-                  "name": "Toggles on click",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "WorkspacePath",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Displays current path",
-                  "collaborators": []
-                },
-                {
-                  "name": "Accepts user input for new path",
-                  "collaborators": []
-                },
-                {
-                  "name": "Validates path",
-                  "collaborators": ["FileSystem"]
-                },
-                {
-                  "name": "Updates bot workspace",
-                  "collaborators": ["StatusDataProvider"]
-                },
-                {
-                  "name": "Triggers panel refresh on change",
-                  "collaborators": ["StatusPanel"]
-                },
-                {
-                  "name": "Displays error for invalid path",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "BotSelection",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Displays available bots",
-                  "collaborators": ["BotRegistry"]
-                },
-                {
-                  "name": "Highlights current bot",
-                  "collaborators": []
-                },
-                {
-                  "name": "Switches to selected bot",
-                  "collaborators": ["StatusDataProvider"]
-                },
-                {
-                  "name": "Refreshes panel with new bot status",
-                  "collaborators": ["StatusPanel", "StatusDataProvider"]
-                },
-                {
-                  "name": "Hides selection when only one bot available",
-                  "collaborators": ["BotRegistry"]
-                }
-              ]
-            },
-            {
-              "name": "ScopeSearch",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Searches story hierarchy by name",
-                  "collaborators": ["StoryTree"]
-                },
-                {
-                  "name": "Searches file list by pattern",
-                  "collaborators": ["FileList"]
-                },
-                {
-                  "name": "Matches epics",
-                  "collaborators": ["Epic"]
-                },
-                {
-                  "name": "Matches sub-epics",
-                  "collaborators": ["SubEpic"]
-                },
-                {
-                  "name": "Matches stories",
-                  "collaborators": ["Story"]
-                },
-                {
-                  "name": "Displays multiple matches hierarchically",
-                  "collaborators": ["StoryTree"]
-                },
-                {
-                  "name": "Clears search to show all items",
-                  "collaborators": ["StoryTree", "FileList"]
-                }
-              ]
-            },
-            {
-              "name": "BotInformation",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Displays bot name",
-                  "collaborators": []
-                },
-                {
-                  "name": "Displays workspace path",
-                  "collaborators": ["WorkspacePath"]
-                },
-                {
-                  "name": "Displays bot directory path",
-                  "collaborators": []
-                },
-                {
-                  "name": "Displays company icon",
-                  "collaborators": []
-                },
-                {
-                  "name": "Displays panel version",
-                  "collaborators": []
-                },
-                {
-                  "name": "Displays bot selection",
-                  "collaborators": ["BotSelection"]
-                },
-                {
-                  "name": "Truncates long paths with ellipsis",
-                  "collaborators": []
-                },
-                {
-                  "name": "Shows full path in tooltip on hover",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "PanelRefresh",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Triggers panel refresh",
-                  "collaborators": ["StatusPanel"]
-                },
-                {
-                  "name": "Re-fetches bot status from CLI",
-                  "collaborators": ["StatusDataProvider"]
-                },
-                {
-                  "name": "Updates all displayed information",
-                  "collaborators": ["HtmlRenderer"]
-                },
-                {
-                  "name": "Preserves expansion state",
-                  "collaborators": ["CollapsibleContent"]
-                }
-              ]
-            },
-            {
-              "name": "StoryFileNavigation",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Opens story graph JSON in editor",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Opens story map diagram in viewer",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Opens epic folder in IDE explorer",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Opens sub-epic folder in IDE explorer",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Opens test file at test class",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Opens test file at scenario method",
-                  "collaborators": ["VSCode"]
-                },
-                {
-                  "name": "Displays error when file cannot open",
-                  "collaborators": []
-                }
-              ]
-            },
-            {
-              "name": "InstructionsSubmission",
-              "module": "display_panel.extension",
-              "responsibilities": [
-                {
-                  "name": "Sends instructions to AI chat",
-                  "collaborators": ["VSCode", "InstructionsDisplay"]
-                },
-                {
-                  "name": "Validates instructions are selected",
-                  "collaborators": ["InstructionsDisplay"]
+                  "collaborators": [
+                    "CLI Client",
+                    "Path JSON"
+                  ]
                 }
               ]
             }
@@ -3971,7 +3593,9 @@
                       "name": "Open Panel",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User activates panel command",
@@ -3988,7 +3612,9 @@
                       "name": "Refresh Panel",
                       "sequential_order": 2,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User clicks refresh button",
@@ -4005,7 +3631,9 @@
                       "name": "Change Workspace Path",
                       "sequential_order": 3,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User changes workspace path",
@@ -4017,7 +3645,9 @@
                       "name": "Switch Bot",
                       "sequential_order": 4,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User switches bot",
@@ -4030,7 +3660,9 @@
                       "name": "Toggle Panel Section",
                       "sequential_order": 5,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User clicks section header",
@@ -4053,7 +3685,9 @@
                       "name": "Display Hierarchy",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User views panel",
@@ -4078,7 +3712,9 @@
                       "name": "Navigate Behavior Action",
                       "sequential_order": 2,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User clicks back button",
@@ -4103,7 +3739,9 @@
                       "name": "Execute Behavior Action",
                       "sequential_order": 3,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User clicks behavior",
@@ -4136,7 +3774,9 @@
                       "name": "Filter Story Scope",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User types story name in filter",
@@ -4153,14 +3793,15 @@
                         "THEN System displays all matches in hierarchical format preserving parent-child relationships",
                         "WHEN User clicks clear filter button",
                         "THEN System displays all stories"
-                        
                       ]
                     },
                     {
                       "name": "Display Story Scope Hierarchy",
                       "sequential_order": 2,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User views story scope",
@@ -4174,21 +3815,18 @@
                         "WHEN User clicks collapsed sub-epic expand icon",
                         "AND matching sub-epic has stories",
                         "THEN System expands sub-epic showing stories collapsed beneath it",
-                        
                         "WHEN Sub-epic has test file",
                         "THEN System displays test link next to sub-epic name",
                         "WHEN User clicks sub-epic test link",
                         "THEN System opens test file in editor",
                         "WHEN User clicks sub-epic folder link",
                         "THEN System opens sub-epic folder in IDE explorer",
-                        
                         "WHEN User clicks collapsed story expand icon",
                         "AND matching sub-epic has stories",
                         "THEN System expands story showing scenarios collapsed beneath it",
                         "WHEN User clicks scenario link",
                         "AND matching scenario has  file",
                         "THEN System opens story markdown file in editor",
-                        
                         "WHEN Story has test file",
                         "THEN System displays test link next to story name",
                         "WHEN User clicks story test link",
@@ -4203,20 +3841,23 @@
                       "name": "Filter File Scope",
                       "sequential_order": 3,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User types file pattern in filter",
                         "THEN System displays filtered file list",
                         "AND System displays file list with monospace paths"
                       ]
-                    }
-                   ,
+                    },
                     {
                       "name": "Open Story Files",
                       "sequential_order": 9,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User clicks graph link",
@@ -4243,7 +3884,9 @@
                       "name": "Display Base Instructions",
                       "sequential_order": 1,
                       "connector": null,
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User views panel",
@@ -4256,7 +3899,9 @@
                       "name": "Display Clarify Instructions",
                       "sequential_order": 2,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN Current action is clarify",
@@ -4272,7 +3917,9 @@
                       "name": "Display Strategy Instructions",
                       "sequential_order": 3,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN Current action is strategy",
@@ -4288,7 +3935,9 @@
                       "name": "Display Build Instructions",
                       "sequential_order": 4,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN Current action is build",
@@ -4302,7 +3951,9 @@
                       "name": "Display Validate Instructions",
                       "sequential_order": 5,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN Current action is validate",
@@ -4315,7 +3966,9 @@
                       "name": "Display Render Instructions",
                       "sequential_order": 6,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN Current action is render",
@@ -4330,7 +3983,9 @@
                       "name": "Display Instructions In Raw Format",
                       "sequential_order": 7,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "WHEN User clicks action instruction in Behavior Action Hierarchy",
@@ -4341,7 +3996,9 @@
                       "name": "Submit Instructions To Chat",
                       "sequential_order": 8,
                       "connector": "and",
-                      "users": ["User"],
+                      "users": [
+                        "User"
+                      ],
                       "story_type": "user",
                       "acceptance_criteria": [
                         "When user has clicked on a Behavior Action's Instructions",
@@ -4373,27 +4030,46 @@
                 },
                 {
                   "name": "Determine channel adapter",
-                  "collaborators": ["ChannelAdapter"]
+                  "collaborators": [
+                    "ChannelAdapter"
+                  ]
                 },
                 {
                   "name": "Read and execute command",
-                  "collaborators": ["Command String", "REPLCommandResponse"]
+                  "collaborators": [
+                    "Command String",
+                    "REPLCommandResponse"
+                  ]
                 },
                 {
                   "name": "Parse command",
-                  "collaborators": ["Command String", "Command Verb", "Params"]
+                  "collaborators": [
+                    "Command String",
+                    "Command Verb",
+                    "Params"
+                  ]
                 },
                 {
                   "name": "Route to bot domain methods",
-                  "collaborators": ["Bot", "Command Verb", "Params", "BotResult"]
+                  "collaborators": [
+                    "Bot",
+                    "Command Verb",
+                    "Params",
+                    "BotResult"
+                  ]
                 },
                 {
                   "name": "Serializes via channel adapter",
-                  "collaborators": ["ChannelAdapter", "String"]
+                  "collaborators": [
+                    "ChannelAdapter",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Displays serialized output",
-                  "collaborators": ["Stdout"]
+                  "collaborators": [
+                    "Stdout"
+                  ]
                 }
               ]
             },
@@ -4403,11 +4079,17 @@
               "responsibilities": [
                 {
                   "name": "Serialize domain object to format",
-                  "collaborators": ["Domain Object", "Format"]
+                  "collaborators": [
+                    "Domain Object",
+                    "Format"
+                  ]
                 },
                 {
                   "name": "Deserialize format to domain object",
-                  "collaborators": ["Format", "Domain Object"]
+                  "collaborators": [
+                    "Format",
+                    "Domain Object"
+                  ]
                 }
               ]
             },
@@ -4417,23 +4099,37 @@
               "responsibilities": [
                 {
                   "name": "Serialize to JSON dict",
-                  "collaborators": ["Dict"]
+                  "collaborators": [
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Deserialize JSON dict",
-                  "collaborators": ["Dict", "Domain Object"]
+                  "collaborators": [
+                    "Dict",
+                    "Domain Object"
+                  ]
                 },
                 {
                   "name": "Convert to JSON string",
-                  "collaborators": ["Dict", "String"]
+                  "collaborators": [
+                    "Dict",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Parse JSON string",
-                  "collaborators": ["String", "Dict"]
+                  "collaborators": [
+                    "String",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Validate JSON structure",
-                  "collaborators": ["Dict", "Schema"]
+                  "collaborators": [
+                    "Dict",
+                    "Schema"
+                  ]
                 }
               ]
             },
@@ -4443,11 +4139,16 @@
               "responsibilities": [
                 {
                   "name": "Include status fields",
-                  "collaborators": ["Is Completed", "Is Current"]
+                  "collaborators": [
+                    "Is Completed",
+                    "Is Current"
+                  ]
                 },
                 {
                   "name": "Include completion markers",
-                  "collaborators": ["Status String"]
+                  "collaborators": [
+                    "Status String"
+                  ]
                 }
               ]
             },
@@ -4457,19 +4158,31 @@
               "responsibilities": [
                 {
                   "name": "Serialize bot to JSON dict",
-                  "collaborators": ["Bot", "Dict"]
+                  "collaborators": [
+                    "Bot",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Include bot metadata",
-                  "collaborators": ["Name", "Directory", "Paths"]
+                  "collaborators": [
+                    "Name",
+                    "Directory",
+                    "Paths"
+                  ]
                 },
                 {
                   "name": "Include behaviors",
-                  "collaborators": ["Behaviors", "Array"]
+                  "collaborators": [
+                    "Behaviors",
+                    "Array"
+                  ]
                 },
                 {
                   "name": "Wraps domain bot",
-                  "collaborators": ["Bot"]
+                  "collaborators": [
+                    "Bot"
+                  ]
                 }
               ]
             },
@@ -4479,19 +4192,31 @@
               "responsibilities": [
                 {
                   "name": "Serialize behavior to JSON dict",
-                  "collaborators": ["Behavior", "Dict"]
+                  "collaborators": [
+                    "Behavior",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Include behavior metadata",
-                  "collaborators": ["Name", "Description", "Status"]
+                  "collaborators": [
+                    "Name",
+                    "Description",
+                    "Status"
+                  ]
                 },
                 {
                   "name": "Include actions",
-                  "collaborators": ["Actions", "Array"]
+                  "collaborators": [
+                    "Actions",
+                    "Array"
+                  ]
                 },
                 {
                   "name": "Wraps domain behavior",
-                  "collaborators": ["Behavior"]
+                  "collaborators": [
+                    "Behavior"
+                  ]
                 }
               ]
             },
@@ -4501,15 +4226,24 @@
               "responsibilities": [
                 {
                   "name": "Serialize action to JSON dict",
-                  "collaborators": ["Action", "Dict"]
+                  "collaborators": [
+                    "Action",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Include action metadata",
-                  "collaborators": ["Name", "Description", "Status"]
+                  "collaborators": [
+                    "Name",
+                    "Description",
+                    "Status"
+                  ]
                 },
                 {
                   "name": "Wraps domain action",
-                  "collaborators": ["Action"]
+                  "collaborators": [
+                    "Action"
+                  ]
                 }
               ]
             },
@@ -4519,23 +4253,37 @@
               "responsibilities": [
                 {
                   "name": "Serialize scope to JSON dict",
-                  "collaborators": ["Scope", "Dict"]
+                  "collaborators": [
+                    "Scope",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Include scope type",
-                  "collaborators": ["Scope Type", "String"]
+                  "collaborators": [
+                    "Scope Type",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Include scope values",
-                  "collaborators": ["List", "Array"]
+                  "collaborators": [
+                    "List",
+                    "Array"
+                  ]
                 },
                 {
                   "name": "Include filtered files",
-                  "collaborators": ["Files", "Array"]
+                  "collaborators": [
+                    "Files",
+                    "Array"
+                  ]
                 },
                 {
                   "name": "Wraps domain scope",
-                  "collaborators": ["Scope"]
+                  "collaborators": [
+                    "Scope"
+                  ]
                 }
               ]
             },
@@ -4545,15 +4293,23 @@
               "responsibilities": [
                 {
                   "name": "Serialize instructions to JSON",
-                  "collaborators": ["Instructions", "Dict"]
+                  "collaborators": [
+                    "Instructions",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Include instruction sections",
-                  "collaborators": ["Sections", "Array"]
+                  "collaborators": [
+                    "Sections",
+                    "Array"
+                  ]
                 },
                 {
                   "name": "Wraps domain instructions",
-                  "collaborators": ["Instructions"]
+                  "collaborators": [
+                    "Instructions"
+                  ]
                 }
               ]
             },
@@ -4563,15 +4319,23 @@
               "responsibilities": [
                 {
                   "name": "Serialize help to JSON",
-                  "collaborators": ["Help", "Dict"]
+                  "collaborators": [
+                    "Help",
+                    "Dict"
+                  ]
                 },
                 {
                   "name": "Include help sections",
-                  "collaborators": ["Sections", "Array"]
+                  "collaborators": [
+                    "Sections",
+                    "Array"
+                  ]
                 },
                 {
                   "name": "Wraps domain help",
-                  "collaborators": ["Help"]
+                  "collaborators": [
+                    "Help"
+                  ]
                 }
               ]
             },
@@ -4581,7 +4345,11 @@
               "responsibilities": [
                 {
                   "name": "Parse command text",
-                  "collaborators": ["Text String", "Command", "Params"]
+                  "collaborators": [
+                    "Text String",
+                    "Command",
+                    "Params"
+                  ]
                 }
               ]
             },
@@ -4591,19 +4359,31 @@
               "responsibilities": [
                 {
                   "name": "Serialize to TTY text",
-                  "collaborators": ["Domain Object", "String"]
+                  "collaborators": [
+                    "Domain Object",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Deserialize TTY text",
-                  "collaborators": ["String", "Domain Object"]
+                  "collaborators": [
+                    "String",
+                    "Domain Object"
+                  ]
                 },
                 {
                   "name": "Add color",
-                  "collaborators": ["Text", "Color"]
+                  "collaborators": [
+                    "Text",
+                    "Color"
+                  ]
                 },
                 {
                   "name": "Format indentation",
-                  "collaborators": ["Indent Level", "Spaces"]
+                  "collaborators": [
+                    "Indent Level",
+                    "Spaces"
+                  ]
                 }
               ]
             },
@@ -4613,11 +4393,18 @@
               "responsibilities": [
                 {
                   "name": "Format line with marker",
-                  "collaborators": ["Marker", "Text", "Indent"]
+                  "collaborators": [
+                    "Marker",
+                    "Text",
+                    "Indent"
+                  ]
                 },
                 {
                   "name": "Render marker",
-                  "collaborators": ["Status", "Completion"]
+                  "collaborators": [
+                    "Status",
+                    "Completion"
+                  ]
                 }
               ]
             },
@@ -4627,19 +4414,30 @@
               "responsibilities": [
                 {
                   "name": "Serialize bot to TTY",
-                  "collaborators": ["Bot", "String"]
+                  "collaborators": [
+                    "Bot",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format bot header",
-                  "collaborators": ["Bot Name", "String"]
+                  "collaborators": [
+                    "Bot Name",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format behaviors",
-                  "collaborators": ["Behaviors", "String"]
+                  "collaborators": [
+                    "Behaviors",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Wraps domain bot",
-                  "collaborators": ["Bot"]
+                  "collaborators": [
+                    "Bot"
+                  ]
                 }
               ]
             },
@@ -4649,19 +4447,31 @@
               "responsibilities": [
                 {
                   "name": "Serialize behavior to TTY",
-                  "collaborators": ["Behavior", "String"]
+                  "collaborators": [
+                    "Behavior",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format behavior line",
-                  "collaborators": ["Behavior Name", "Marker", "Color"]
+                  "collaborators": [
+                    "Behavior Name",
+                    "Marker",
+                    "Color"
+                  ]
                 },
                 {
                   "name": "Format actions",
-                  "collaborators": ["Actions", "String"]
+                  "collaborators": [
+                    "Actions",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Wraps domain behavior",
-                  "collaborators": ["Behavior"]
+                  "collaborators": [
+                    "Behavior"
+                  ]
                 }
               ]
             },
@@ -4671,15 +4481,24 @@
               "responsibilities": [
                 {
                   "name": "Serialize action to TTY",
-                  "collaborators": ["Action", "String"]
+                  "collaborators": [
+                    "Action",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format action line",
-                  "collaborators": ["Action Name", "Marker", "Indent"]
+                  "collaborators": [
+                    "Action Name",
+                    "Marker",
+                    "Indent"
+                  ]
                 },
                 {
                   "name": "Wraps domain action",
-                  "collaborators": ["Action"]
+                  "collaborators": [
+                    "Action"
+                  ]
                 }
               ]
             },
@@ -4689,19 +4508,30 @@
               "responsibilities": [
                 {
                   "name": "Serialize scope to TTY",
-                  "collaborators": ["Scope", "String"]
+                  "collaborators": [
+                    "Scope",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format scope type",
-                  "collaborators": ["Scope Type", "String"]
+                  "collaborators": [
+                    "Scope Type",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format scope values",
-                  "collaborators": ["List", "String"]
+                  "collaborators": [
+                    "List",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Wraps domain scope",
-                  "collaborators": ["Scope"]
+                  "collaborators": [
+                    "Scope"
+                  ]
                 }
               ]
             },
@@ -4711,15 +4541,23 @@
               "responsibilities": [
                 {
                   "name": "Serialize instructions to TTY",
-                  "collaborators": ["Instructions", "String"]
+                  "collaborators": [
+                    "Instructions",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format instruction sections",
-                  "collaborators": ["Sections", "String"]
+                  "collaborators": [
+                    "Sections",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Wraps domain instructions",
-                  "collaborators": ["Instructions"]
+                  "collaborators": [
+                    "Instructions"
+                  ]
                 }
               ]
             },
@@ -4729,15 +4567,23 @@
               "responsibilities": [
                 {
                   "name": "Serialize help to TTY",
-                  "collaborators": ["Help", "String"]
+                  "collaborators": [
+                    "Help",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format help sections",
-                  "collaborators": ["Sections", "String"]
+                  "collaborators": [
+                    "Sections",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Wraps domain help",
-                  "collaborators": ["Help"]
+                  "collaborators": [
+                    "Help"
+                  ]
                 }
               ]
             },
@@ -4747,27 +4593,45 @@
               "responsibilities": [
                 {
                   "name": "Serialize to Markdown",
-                  "collaborators": ["String"]
+                  "collaborators": [
+                    "String"
+                  ]
                 },
                 {
                   "name": "Deserialize Markdown",
-                  "collaborators": ["String", "Domain Object"]
+                  "collaborators": [
+                    "String",
+                    "Domain Object"
+                  ]
                 },
                 {
                   "name": "Parse markdown sections",
-                  "collaborators": ["Markdown", "Sections"]
+                  "collaborators": [
+                    "Markdown",
+                    "Sections"
+                  ]
                 },
                 {
                   "name": "Format header",
-                  "collaborators": ["Level", "Text"]
+                  "collaborators": [
+                    "Level",
+                    "Text"
+                  ]
                 },
                 {
                   "name": "Format list item",
-                  "collaborators": ["Marker", "Text", "Indent"]
+                  "collaborators": [
+                    "Marker",
+                    "Text",
+                    "Indent"
+                  ]
                 },
                 {
                   "name": "Format code block",
-                  "collaborators": ["Language", "Content"]
+                  "collaborators": [
+                    "Language",
+                    "Content"
+                  ]
                 }
               ]
             },
@@ -4777,11 +4641,18 @@
               "responsibilities": [
                 {
                   "name": "Render status marker",
-                  "collaborators": ["Status", "Marker String"]
+                  "collaborators": [
+                    "Status",
+                    "Marker String"
+                  ]
                 },
                 {
                   "name": "Format status line",
-                  "collaborators": ["Name", "Status", "String"]
+                  "collaborators": [
+                    "Name",
+                    "Status",
+                    "String"
+                  ]
                 }
               ]
             },
@@ -4791,19 +4662,31 @@
               "responsibilities": [
                 {
                   "name": "Serialize bot to Markdown",
-                  "collaborators": ["Bot", "String"]
+                  "collaborators": [
+                    "Bot",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format bot documentation",
-                  "collaborators": ["Bot Name", "Description", "Header"]
+                  "collaborators": [
+                    "Bot Name",
+                    "Description",
+                    "Header"
+                  ]
                 },
                 {
                   "name": "Format behaviors",
-                  "collaborators": ["Behaviors", "Markdown Sections"]
+                  "collaborators": [
+                    "Behaviors",
+                    "Markdown Sections"
+                  ]
                 },
                 {
                   "name": "Wraps domain bot",
-                  "collaborators": ["Bot"]
+                  "collaborators": [
+                    "Bot"
+                  ]
                 }
               ]
             },
@@ -4813,19 +4696,31 @@
               "responsibilities": [
                 {
                   "name": "Serialize behavior to Markdown",
-                  "collaborators": ["Behavior", "String"]
+                  "collaborators": [
+                    "Behavior",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format behavior documentation",
-                  "collaborators": ["Behavior Name", "Description", "Section"]
+                  "collaborators": [
+                    "Behavior Name",
+                    "Description",
+                    "Section"
+                  ]
                 },
                 {
                   "name": "Format actions",
-                  "collaborators": ["Actions", "Markdown Subsections"]
+                  "collaborators": [
+                    "Actions",
+                    "Markdown Subsections"
+                  ]
                 },
                 {
                   "name": "Wraps domain behavior",
-                  "collaborators": ["Behavior"]
+                  "collaborators": [
+                    "Behavior"
+                  ]
                 }
               ]
             },
@@ -4835,15 +4730,24 @@
               "responsibilities": [
                 {
                   "name": "Serialize action to Markdown",
-                  "collaborators": ["Action", "String"]
+                  "collaborators": [
+                    "Action",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format action documentation",
-                  "collaborators": ["Action Name", "Description", "Subsection"]
+                  "collaborators": [
+                    "Action Name",
+                    "Description",
+                    "Subsection"
+                  ]
                 },
                 {
                   "name": "Wraps domain action",
-                  "collaborators": ["Action"]
+                  "collaborators": [
+                    "Action"
+                  ]
                 }
               ]
             },
@@ -4853,15 +4757,24 @@
               "responsibilities": [
                 {
                   "name": "Serialize scope to Markdown",
-                  "collaborators": ["Scope", "String"]
+                  "collaborators": [
+                    "Scope",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format scope documentation",
-                  "collaborators": ["Scope Type", "Values", "Section"]
+                  "collaborators": [
+                    "Scope Type",
+                    "Values",
+                    "Section"
+                  ]
                 },
                 {
                   "name": "Wraps domain scope",
-                  "collaborators": ["Scope"]
+                  "collaborators": [
+                    "Scope"
+                  ]
                 }
               ]
             },
@@ -4871,15 +4784,23 @@
               "responsibilities": [
                 {
                   "name": "Serialize instructions to Markdown",
-                  "collaborators": ["Instructions", "String"]
+                  "collaborators": [
+                    "Instructions",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format instruction sections",
-                  "collaborators": ["Sections", "Markdown"]
+                  "collaborators": [
+                    "Sections",
+                    "Markdown"
+                  ]
                 },
                 {
                   "name": "Wraps domain instructions",
-                  "collaborators": ["Instructions"]
+                  "collaborators": [
+                    "Instructions"
+                  ]
                 }
               ]
             },
@@ -4889,15 +4810,23 @@
               "responsibilities": [
                 {
                   "name": "Serialize help to Markdown",
-                  "collaborators": ["Help", "String"]
+                  "collaborators": [
+                    "Help",
+                    "String"
+                  ]
                 },
                 {
                   "name": "Format help sections",
-                  "collaborators": ["Sections", "Markdown"]
+                  "collaborators": [
+                    "Sections",
+                    "Markdown"
+                  ]
                 },
                 {
                   "name": "Wraps domain help",
-                  "collaborators": ["Help"]
+                  "collaborators": [
+                    "Help"
+                  ]
                 }
               ]
             },
@@ -5751,7 +5680,7 @@
                         },
                         {
                           "name": "CLI displays workspace name and path",
-                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '\u00c3\u00b0\u00c5\u00b8\u00e2\u20ac\u0153\u00e2\u20ac\u0161 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains 'Ã°Å¸â€œâ€š **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
                           "test_method": "test_cli_displays_workspace_name_and_path",
                           "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
                         },
