@@ -2458,7 +2458,7 @@
               ]
             },
             {
-              "name": "View Action-Specific Instructions",
+              "name": "Build Action Instructions",
               "sequential_order": 5,
               "story_groups": [
                 {
@@ -2466,14 +2466,14 @@
                   "connector": null,
                   "stories": [
                     {
-                      "name": "View Base Instructions",
+                      "name": "Build Base Instructions",
                       "sequential_order": 1,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewBaseInstructions",
+                      "test_class": "TestBuildBaseInstructions",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Base instructions are requested",
@@ -2482,14 +2482,14 @@
                       ]
                     },
                     {
-                      "name": "View Clarify Instructions",
+                      "name": "Build Clarify Instructions",
                       "sequential_order": 2,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewClarifyInstructions",
+                      "test_class": "TestBuildClarifyInstructions",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Clarify instructions are requested",
@@ -2497,14 +2497,14 @@
                       ]
                     },
                     {
-                      "name": "View Strategy Instructions",
+                      "name": "Build Strategy Instructions",
                       "sequential_order": 3,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewStrategyInstructions",
+                      "test_class": "TestBuildStrategyInstructions",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Strategy instructions are requested",
@@ -2512,14 +2512,14 @@
                       ]
                     },
                     {
-                      "name": "View Build Instructions",
+                      "name": "Build Build Instructions",
                       "sequential_order": 4,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewBuildInstructions",
+                      "test_class": "TestBuildBuildInstructions",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Build instructions are requested",
@@ -2527,14 +2527,14 @@
                       ]
                     },
                     {
-                      "name": "View Validate Instructions",
+                      "name": "Build Validate Instructions",
                       "sequential_order": 5,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewValidateInstructions",
+                      "test_class": "TestBuildValidateInstructions",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Validate instructions are requested",
@@ -2542,14 +2542,14 @@
                       ]
                     },
                     {
-                      "name": "View Render Instructions",
+                      "name": "Build Render Instructions",
                       "sequential_order": 6,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewRenderInstructions",
+                      "test_class": "TestBuildRenderInstructions",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Render instructions are requested",
@@ -2557,14 +2557,14 @@
                       ]
                     },
                     {
-                      "name": "View Instructions In Raw Format",
+                      "name": "Build Instructions In Raw Format",
                       "sequential_order": 7,
                       "connector": "and",
                       "users": [
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_class": "TestViewInstructionsInRawFormat",
+                      "test_class": "TestBuildInstructionsInRawFormat",
                       "scenarios": [],
                       "acceptance_criteria": [
                         "WHEN Raw format is requested",
@@ -4213,7 +4213,7 @@
               ]
             },
             {
-              "name": "View Action-Specific Instructions",
+              "name": "Build Action Instructions",
               "sequential_order": 4,
               "story_groups": [
                 {
@@ -5609,7 +5609,7 @@
               ]
             },
             {
-              "name": "View Action-Specific Instructions",
+              "name": "Build Action Instructions",
               "sequential_order": 3,
               "test_file": "test_execute_action_operation_through_cli.py",
               "story_groups": [
