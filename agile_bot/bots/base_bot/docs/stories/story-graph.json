@@ -5178,6 +5178,39 @@
                         "AND System displays behavior action section",
                         "AND System displays scope section",
                         "AND System displays instructions section"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User opens panel via command palette",
+                          "steps": [
+                            "Given VS Code workspace with bot installed",
+                            "When User executes 'Open Status Panel' command",
+                            "Then Panel webview appears",
+                            "And Panel displays bot name",
+                            "And Panel displays workspace path",
+                            "And Panel displays behavior action section",
+                            "And Panel displays scope section",
+                            "And Panel displays instructions section"
+                          ]
+                        },
+                        {
+                          "title": "User opens panel when already open",
+                          "steps": [
+                            "Given Panel is already open in VS Code",
+                            "When User executes 'Open Status Panel' command again",
+                            "Then Existing panel is brought to front",
+                            "And No duplicate panel is created"
+                          ]
+                        },
+                        {
+                          "title": "User opens panel with no bots configured",
+                          "steps": [
+                            "Given VS Code workspace with no bots installed",
+                            "When User executes 'Open Status Panel' command",
+                            "Then Panel displays error message",
+                            "And Error message indicates no bots found"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5197,6 +5230,31 @@
                         "AND System displays updated behavior action section",
                         "AND System displays updated scope section",
                         "AND System displays updated instructions section"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User refreshes panel to see updated status",
+                          "steps": [
+                            "Given Panel is open displaying current bot status",
+                            "And Bot state has changed since panel was opened",
+                            "When User clicks refresh button",
+                            "Then Panel displays updated bot name",
+                            "And Panel displays updated workspace path",
+                            "And Panel displays updated behavior action section",
+                            "And Panel displays updated scope",
+                            "And Panel displays updated instructions"
+                          ]
+                        },
+                        {
+                          "title": "User views session status on panel load",
+                          "steps": [
+                            "Given Bot is at behavior shape and action clarify",
+                            "When Panel opens",
+                            "Then Panel displays current bot name",
+                            "And Panel displays current workspace path",
+                            "And Panel displays shape.clarify as current action"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5211,6 +5269,29 @@
                         "WHEN User changes workspace path",
                         "THEN System displays updated workspace path",
                         "AND System displays behavior action state of new workspace"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User changes to different workspace directory",
+                          "steps": [
+                            "Given Panel is open showing workspace at c:/dev/project_a",
+                            "And Workspace at c:/dev/project_b exists with different bot state",
+                            "When User changes workspace path to c:/dev/project_b",
+                            "Then Panel displays c:/dev/project_b as current workspace",
+                            "And Panel displays behavior action state from project_b",
+                            "And Panel refreshes all sections with project_b data"
+                          ]
+                        },
+                        {
+                          "title": "User changes to invalid workspace directory",
+                          "steps": [
+                            "Given Panel is open showing valid workspace",
+                            "When User changes workspace path to non-existent directory",
+                            "Then Panel displays error message",
+                            "And Error message indicates directory not found",
+                            "And Panel retains previous valid workspace"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5226,6 +5307,30 @@
                         "THEN System displays updated bot name",
                         "AND System displays behavior action section for new bot",
                         "AND System displays behavior action stateof workspace for new bot"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User selects different bot from dropdown",
+                          "steps": [
+                            "Given Panel is open showing story_bot",
+                            "And Multiple bots are available (story_bot, crc_bot)",
+                            "When User selects crc_bot from bot selector dropdown",
+                            "Then Panel displays crc_bot as current bot",
+                            "And Panel displays crc_bot's behaviors",
+                            "And Panel displays crc_bot's current action",
+                            "And Panel refreshes all sections with crc_bot data"
+                          ]
+                        },
+                        {
+                          "title": "User switches bot and panel preserves workspace",
+                          "steps": [
+                            "Given Panel is open with story_bot at workspace c:/dev/project_a",
+                            "When User switches to crc_bot",
+                            "Then Panel displays crc_bot",
+                            "And Panel retains workspace c:/dev/project_a",
+                            "And Panel displays crc_bot state for that workspace"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5239,6 +5344,26 @@
                       "acceptance_criteria": [
                         "WHEN User clicks section header",
                         "THEN System expands or collapses section"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User expands collapsed section",
+                          "steps": [
+                            "Given Panel is open with behaviors section collapsed",
+                            "When User clicks behaviors section header",
+                            "Then Behaviors section expands",
+                            "And User sees behavior tree content"
+                          ]
+                        },
+                        {
+                          "title": "User collapses expanded section",
+                          "steps": [
+                            "Given Panel is open with instructions section expanded",
+                            "When User clicks instructions section header",
+                            "Then Instructions section collapses",
+                            "And User no longer sees instructions content"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -5278,6 +5403,42 @@
                         "THEN System expands action showing operations",
                         "WHEN User clicks expanded action",
                         "THEN System collapses action hiding operations"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "Panel displays behavior tree with progress indicators",
+                          "steps": [
+                            "Given Bot has multiple behaviors with completed and pending actions",
+                            "And Bot is currently at shape.clarify",
+                            "When Panel renders hierarchy section",
+                            "Then User sees behavior names (shape, discovery)",
+                            "And User sees action names under behaviors",
+                            "And Current action (clarify) shows in-progress indicator",
+                            "And Completed actions show checkmark indicator",
+                            "And Pending actions show empty indicator"
+                          ]
+                        },
+                        {
+                          "title": "User expands and collapses behaviors",
+                          "steps": [
+                            "Given Panel displays collapsed behavior tree",
+                            "When User clicks collapsed shape behavior",
+                            "Then Shape behavior expands showing actions (clarify, strategy)",
+                            "When User clicks expanded shape behavior again",
+                            "Then Shape behavior collapses hiding actions"
+                          ]
+                        },
+                        {
+                          "title": "User expands and collapses actions",
+                          "steps": [
+                            "Given Shape behavior is expanded showing actions",
+                            "And Clarify action is collapsed",
+                            "When User clicks collapsed clarify action",
+                            "Then Clarify action expands showing operations (instructions, execute, confirm)",
+                            "When User clicks expanded clarify action again",
+                            "Then Clarify action collapses hiding operations"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5305,6 +5466,47 @@
                         "THEN System moves to the next behavior and selects its first action and first operation",
                         "WHEN User is on the last behavior of a bot",
                         "THEN System disables next behavior navigation"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User clicks action and bot navigates to that action",
+                          "steps": [
+                            "Given Panel displays behavior hierarchy",
+                            "And Bot is at shape.clarify",
+                            "When User clicks on discovery.build action link",
+                            "Then Bot navigates to discovery.build",
+                            "And Panel refreshes to show new current position",
+                            "And discovery.build is highlighted as current action"
+                          ]
+                        },
+                        {
+                          "title": "User navigates forward through actions with next button",
+                          "steps": [
+                            "Given Bot is at shape.clarify",
+                            "When User clicks next button",
+                            "Then Bot navigates to shape.strategy",
+                            "And Panel displays shape.strategy as current",
+                            "And Panel displays shape.strategy in-progress indicator"
+                          ]
+                        },
+                        {
+                          "title": "User navigates backward through actions with back button",
+                          "steps": [
+                            "Given Bot is at shape.strategy",
+                            "When User clicks back button",
+                            "Then Bot navigates to shape.clarify",
+                            "And Panel displays shape.clarify as current",
+                            "And Panel displays shape.clarify in-progress indicator"
+                          ]
+                        },
+                        {
+                          "title": "User at last action cannot navigate forward",
+                          "steps": [
+                            "Given Bot is at last action of last behavior",
+                            "When User views next button",
+                            "Then Next button is disabled"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5328,6 +5530,43 @@
                         "AND System expands action to display operations",
                         "AND System sets first operation as current",
                         "AND System executes first operation of that action"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User clicks behavior to execute",
+                          "steps": [
+                            "Given Panel displays behavior hierarchy",
+                            "And Bot is at shape.clarify",
+                            "When User clicks discovery behavior",
+                            "Then Bot navigates to discovery.clarify (first action)",
+                            "And Panel displays discovery behavior as current",
+                            "And Panel expands discovery behavior",
+                            "And Panel displays discovery.clarify as current action",
+                            "And Bot executes discovery.clarify.instructions operation"
+                          ]
+                        },
+                        {
+                          "title": "User clicks action to execute",
+                          "steps": [
+                            "Given Panel displays expanded shape behavior",
+                            "And Bot is at shape.clarify",
+                            "When User clicks shape.strategy action",
+                            "Then Bot navigates to shape.strategy",
+                            "And Panel displays shape.strategy as current action",
+                            "And Panel expands shape.strategy showing operations",
+                            "And Bot executes shape.strategy.instructions operation"
+                          ]
+                        },
+                        {
+                          "title": "User clicks operation to execute",
+                          "steps": [
+                            "Given Panel displays expanded shape.clarify action",
+                            "And Operations are visible (instructions, execute, confirm)",
+                            "When User clicks clarify.confirm operation",
+                            "Then Bot executes clarify.confirm operation",
+                            "And Panel displays confirm operation as current"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -5365,6 +5604,37 @@
                         "THEN System displays all matches in hierarchical format preserving parent-child relationships",
                         "WHEN User clicks clear filter button",
                         "THEN System displays all stories"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User filters scope by story name",
+                          "steps": [
+                            "Given Panel displays scope section with full story hierarchy",
+                            "When User types Open Panel in scope filter",
+                            "Then Panel displays filtered hierarchy showing Open Panel story",
+                            "And Panel displays Open Panel parent sub-epic (Manage Panel Session)",
+                            "And Panel displays parent epic (Invoke Bot Through Panel)"
+                          ]
+                        },
+                        {
+                          "title": "User filters scope by epic name",
+                          "steps": [
+                            "Given Panel displays full story hierarchy",
+                            "When User types Invoke Bot in scope filter",
+                            "Then Panel displays Invoke Bot epic",
+                            "And Panel displays all sub-epics under Invoke Bot",
+                            "And Sub-epics are initially collapsed"
+                          ]
+                        },
+                        {
+                          "title": "User clears story scope filter",
+                          "steps": [
+                            "Given Panel displays filtered scope showing only Open Panel story",
+                            "When User clicks clear filter button",
+                            "Then Panel displays all stories in full hierarchy",
+                            "And All epics are visible"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5407,6 +5677,52 @@
                         "THEN System expands story showing scenarios",
                         "WHEN User clicks scenario link",
                         "THEN System opens test file at scenario test method"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views nested story tree with epics features and stories",
+                          "steps": [
+                            "Given Story graph has epics with nested sub-epics",
+                            "When User views scope section",
+                            "Then Panel displays epic names (Invoke Bot)",
+                            "When User expands Invoke Bot epic",
+                            "Then Panel displays sub-epics (Invoke Bot Through Panel, Invoke Bot Through REPL)",
+                            "When User expands Invoke Bot Through Panel sub-epic",
+                            "Then Panel displays nested sub-epics (Manage Panel Session, Navigate Behaviors)",
+                            "When User expands Manage Panel Session sub-epic",
+                            "Then Panel displays stories (Open Panel, Display Session Status)"
+                          ]
+                        },
+                        {
+                          "title": "User clicks test link and file opens at correct location",
+                          "steps": [
+                            "Given Story has test link displayed",
+                            "And Test file is test_manage_panel_session.spec.js",
+                            "And Test class is TestOpenPanel",
+                            "When User clicks test link for Open Panel story",
+                            "Then VS Code opens test_manage_panel_session.spec.js file",
+                            "And Editor scrolls to TestOpenPanel class"
+                          ]
+                        },
+                        {
+                          "title": "User clicks story file link and story markdown opens",
+                          "steps": [
+                            "Given Story has story file link displayed",
+                            "And Story file is Open Panel.md",
+                            "When User clicks story link for Open Panel",
+                            "Then VS Code opens Open Panel.md file in editor"
+                          ]
+                        },
+                        {
+                          "title": "User clicks test link for missing file",
+                          "steps": [
+                            "Given Story has test link displayed",
+                            "And Test file does not exist",
+                            "When User clicks test link",
+                            "Then Panel displays error message",
+                            "And Error message indicates file not found"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5421,6 +5737,27 @@
                         "WHEN User types file pattern in filter",
                         "THEN System displays filtered file list",
                         "AND System displays file list with monospace paths"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User filters scope by file pattern",
+                          "steps": [
+                            "Given Panel displays scope section",
+                            "When User types file:src/**/*.py in scope filter",
+                            "Then Panel displays file scope mode",
+                            "And Panel displays list of Python files in src directory",
+                            "And File paths are displayed in monospace font"
+                          ]
+                        },
+                        {
+                          "title": "User filters scope by specific file extension",
+                          "steps": [
+                            "Given Panel displays scope section",
+                            "When User types file:**/*.spec.js in scope filter",
+                            "Then Panel displays all JavaScript test files",
+                            "And Files are displayed with full relative paths"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5438,6 +5775,35 @@
                         "THEN System opens story-map.drawio in diagram viewer",
                         "WHEN System cannot open file",
                         "THEN System displays error message"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User opens story graph JSON file",
+                          "steps": [
+                            "Given Panel displays scope section with graph link",
+                            "When User clicks Graph link",
+                            "Then VS Code opens story-graph.json in editor",
+                            "And File is displayed with JSON syntax highlighting"
+                          ]
+                        },
+                        {
+                          "title": "User opens story map diagram",
+                          "steps": [
+                            "Given Panel displays scope section with map link",
+                            "When User clicks map link",
+                            "Then VS Code opens story-map.drawio in diagram viewer",
+                            "And Diagram is displayed with Draw.io extension"
+                          ]
+                        },
+                        {
+                          "title": "System cannot open missing file",
+                          "steps": [
+                            "Given Panel displays link to non-existent file",
+                            "When User clicks link",
+                            "Then Panel displays error message",
+                            "And Error message indicates file not found"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -5465,6 +5831,28 @@
                         "THEN System displays base instructions section",
                         "AND System displays behavior name",
                         "AND System displays action name"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views base instructions for current action",
+                          "steps": [
+                            "Given Bot is at shape.clarify",
+                            "When Panel displays instructions section",
+                            "Then Panel displays base instructions",
+                            "And Panel displays behavior name (shape)",
+                            "And Panel displays action name (clarify)",
+                            "And Instructions are scrollable"
+                          ]
+                        },
+                        {
+                          "title": "User copies base instructions to clipboard",
+                          "steps": [
+                            "Given Panel displays base instructions",
+                            "When User clicks copy button",
+                            "Then Instructions are copied to clipboard",
+                            "And Panel displays confirmation message"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5483,6 +5871,37 @@
                         "THEN System updates answer",
                         "WHEN saved key questions and answers exists",
                         "THEN System displays saved key questions and answers"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views clarify instructions with key questions",
+                          "steps": [
+                            "Given Bot is at shape.clarify",
+                            "And Guardrails define key questions and evidence",
+                            "When Panel displays instructions section",
+                            "Then Panel displays key questions list",
+                            "And Panel displays evidence requirements",
+                            "And Each question has editable textarea for answers"
+                          ]
+                        },
+                        {
+                          "title": "User edits answer to key question",
+                          "steps": [
+                            "Given Panel displays clarify instructions with questions",
+                            "When User types answer in question textarea",
+                            "Then System saves answer",
+                            "And Answer persists across panel refreshes"
+                          ]
+                        },
+                        {
+                          "title": "User views saved clarification answers",
+                          "steps": [
+                            "Given User has previously answered clarify questions",
+                            "And Answers are saved in clarification.json",
+                            "When Panel displays clarify instructions",
+                            "Then Panel displays saved answers in textareas"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5501,6 +5920,27 @@
                         "THEN System displays selected option for each decision criterion",
                         "WHEN User edits assumptions textarea",
                         "THEN System updates assumptions"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views strategy instructions with decision criteria",
+                          "steps": [
+                            "Given Bot is at shape.strategy",
+                            "When Panel displays instructions section",
+                            "Then Panel displays decision criteria with radio options",
+                            "And Panel displays assumptions textarea",
+                            "And User can select option for each criterion"
+                          ]
+                        },
+                        {
+                          "title": "User selects strategy decision criterion",
+                          "steps": [
+                            "Given Panel displays strategy instructions",
+                            "When User selects radio option for decision criterion",
+                            "Then System saves selected option",
+                            "And Selection persists across panel refreshes"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5517,6 +5957,26 @@
                         "AND System displays knowledge graph output file link",
                         "AND System displays knowledge graph directory path",
                         "AND System displays rules list with clickable rule file links"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views build instructions with knowledge graph info",
+                          "steps": [
+                            "Given Bot is at shape.build",
+                            "When Panel displays instructions section",
+                            "Then Panel displays knowledge graph template link",
+                            "And Panel displays knowledge graph output file link",
+                            "And Panel displays rules list with clickable links"
+                          ]
+                        },
+                        {
+                          "title": "User clicks knowledge graph template link",
+                          "steps": [
+                            "Given Panel displays build instructions",
+                            "When User clicks template path link",
+                            "Then VS Code opens knowledge graph template file in editor"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5532,6 +5992,25 @@
                         "THEN System displays rules list",
                         "WHEN User clicks rule file link",
                         "THEN System opens rule file in editor"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views validate instructions with rules list",
+                          "steps": [
+                            "Given Bot is at shape.validate",
+                            "When Panel displays instructions section",
+                            "Then Panel displays validation rules list",
+                            "And Each rule has clickable file link"
+                          ]
+                        },
+                        {
+                          "title": "User clicks validation rule file link",
+                          "steps": [
+                            "Given Panel displays validate instructions with rules",
+                            "When User clicks rule file link",
+                            "Then VS Code opens validation rule file in editor"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5549,6 +6028,34 @@
                         "AND System displays output file paths as clickable links",
                         "WHEN User clicks on any of these links",
                         "THEN System opens the corresponding file in the editor"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views render instructions with config and template links",
+                          "steps": [
+                            "Given Bot is at shape.render",
+                            "When Panel displays instructions section",
+                            "Then Panel displays config file paths as clickable links",
+                            "And Panel displays template file paths as clickable links",
+                            "And Panel displays output file paths as clickable links"
+                          ]
+                        },
+                        {
+                          "title": "User clicks render config file link",
+                          "steps": [
+                            "Given Panel displays render instructions",
+                            "When User clicks config file link",
+                            "Then VS Code opens render config file in editor"
+                          ]
+                        },
+                        {
+                          "title": "User clicks template file link",
+                          "steps": [
+                            "Given Panel displays render instructions",
+                            "When User clicks template file link",
+                            "Then VS Code opens template file in editor"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5562,6 +6069,27 @@
                       "acceptance_criteria": [
                         "WHEN User clicks action instruction in Behavior Action Hierarchy",
                         "THEN System displays entire instructions exactly as it should be sent to the AI chat"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User views instructions in raw format",
+                          "steps": [
+                            "Given Panel displays formatted instructions",
+                            "When User clicks raw format toggle button",
+                            "Then Panel displays instructions in raw text format",
+                            "And Instructions show exactly as they would be sent to AI",
+                            "And Raw format is scrollable"
+                          ]
+                        },
+                        {
+                          "title": "User switches from raw to formatted view",
+                          "steps": [
+                            "Given Panel displays instructions in raw format",
+                            "When User clicks formatted view toggle button",
+                            "Then Panel displays instructions in formatted view",
+                            "And Instructions show with sections and styling"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -5576,6 +6104,38 @@
                         "When user has clicked on a Behavior Action's Instructions",
                         "AND User clicks submit button",
                         "THEN System sends instructions to AI chat"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User submits instructions to AI chat",
+                          "steps": [
+                            "Given Panel displays instructions for current action",
+                            "When User clicks submit button",
+                            "Then System sends instructions to Cursor AI chat",
+                            "And Panel displays success confirmation message",
+                            "And AI chat receives instructions"
+                          ]
+                        },
+                        {
+                          "title": "User submits instructions when chat is not available",
+                          "steps": [
+                            "Given Panel displays instructions",
+                            "And Cursor AI chat is not available",
+                            "When User clicks submit button",
+                            "Then Panel displays error message",
+                            "And Error message indicates chat unavailable"
+                          ]
+                        },
+                        {
+                          "title": "User copies instructions before submitting",
+                          "steps": [
+                            "Given Panel displays instructions",
+                            "When User clicks copy button",
+                            "Then Instructions are copied to clipboard",
+                            "When User clicks submit button",
+                            "Then Instructions are also sent to AI chat"
+                          ]
+                        }
                       ]
                     }
                   ]
