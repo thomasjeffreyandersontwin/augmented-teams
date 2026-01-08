@@ -424,10 +424,25 @@ class REPLSession:
         return REPLCommandResponse(output=full_output, response=output, status="success")
     
     def _handle_status_command(self, format='text') -> REPLCommandResponse:
+        """Handle status command with TTY output format.
+        
+        Simple orchestration (mirrors JSON handler):
+        1. Get domain data from bot.status
+        2. Add session context (workspace, scope)
+        3. Adapter serializes to TTY text
+        """
         if format == 'json':
             return self._handle_status_command_json()
         
-        state_display = self.display_current_state(full=True, format=format)
+        # Get domain data from bot
+        status_data = self.bot.status
+        
+        # Add session-specific context
+        status_data['workspace'] = self.workspace_directory
+        status_data['scope'] = self.get_stored_scope()
+        
+        # Adapter serializes to TTY text (mirrors bot.status interface)
+        status_text = self.adapter.status(status_data)
         
         # Add CLI STATUS section header (for both TTY and piped mode)
         formatter = self.formatter
@@ -440,7 +455,7 @@ class REPLSession:
             "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
             formatter.subsection_separator()
         ])
-        output = cli_status_header + "\n" + state_display.output
+        output = cli_status_header + "\n" + status_text
         
         return REPLCommandResponse(
             output=output,
