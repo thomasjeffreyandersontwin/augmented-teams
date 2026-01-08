@@ -3999,46 +3999,6 @@ class TestLoadActions:
         assert "Behavior-specific instruction 2" in base_instructions_list
     
 # ============================================================================
-# STORY: Load Base Action Configuration
-# ============================================================================
-
-class TestLoadBaseActionConfiguration:
-    """Story: Load Base Action Configuration - action_config.json is parsed by Action (BaseActionConfig deleted)."""
-    
-    def test_action_loads_config_fields(self, tmp_path):
-        """Scenario: Action loads fields from action_config.json (BaseActionConfig merged into Action)."""
-        # Given: Environment and base action config file
-        bot_name = 'story_bot'
-        bot_paths = given_bot_paths_for_actions(tmp_path, bot_name)
-        
-        action_config_data = {
-            "name": "clarify",
-            "workflow": True,
-            "order": 2,
-            "next_action": "strategy"
-        }
-        given_base_action_config_exists(bot_paths, "clarify", action_config_data)
-        
-        # Create minimal behavior for Action
-        from agile_bot.bots.base_bot.test.test_helpers import create_actions_workflow_json
-        from agile_bot.bots.base_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
-        behavior_name = 'shape'
-        # Don't specify order in workflow - let the base action_config.json order (2) take effect
-        single_action_workflow = [{'name': 'clarify'}]
-        create_actions_workflow_json(bot_paths.bot_directory, behavior_name, actions=single_action_workflow)
-        create_minimal_guardrails_files(bot_paths.bot_directory, behavior_name, bot_name)
-        
-        # When: Action is created (loads config in __init__)
-        behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
-        action = behavior.actions.find_by_name('clarify')
-        
-        # Then: Fields are loaded from base action_config.json
-        # Note: next_action comes from real base_actions/clarify/action_config.json
-        assert action.order == 2
-        assert action.next_action == "decide_strategy"
-        assert action.workflow is True
-    
-# ============================================================================
 # HELPER FUNCTIONS - Access Bot Paths Story
 # ============================================================================
 

@@ -695,7 +695,7 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     for i, behavior_name in enumerate(behaviors, start=1):
         if setup_type == 'final_action' and behavior_name == 'shape':
             # Special handling for final action test
-            from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_workflow_config
+            from agile_bot.bots.base_bot.test.test_invoke_bot_directly import given_workflow_config
             given_workflow_config(bot_dir, behaviors=['shape'], final_action='validate')
         elif setup_type == 'last_behavior' and behavior_name == 'discovery':
             # Special handling for last behavior test
@@ -742,7 +742,7 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     
     if setup_type == 'resume':
         # Setup for workflow resume
-        from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_completed_action
+        from agile_bot.bots.base_bot.test.test_invoke_bot_directly import given_completed_action
         if 'behavior' in kwargs and 'action' in kwargs:
             completed_actions = given_completed_action(bot_name, kwargs['behavior'], kwargs['action'])
             # Additional resume setup can be added here

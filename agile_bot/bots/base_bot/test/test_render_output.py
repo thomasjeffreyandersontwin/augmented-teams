@@ -18,7 +18,7 @@ from agile_bot.bots.base_bot.test.test_helpers import (
     given_activity_log,
     given_directory_created
 )
-from agile_bot.bots.base_bot.test.test_perform_behavior_action import then_result_matches
+from agile_bot.bots.base_bot.test.test_invoke_bot_directly import then_result_matches
 from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
     verify_action_tracks_start,
     verify_action_tracks_completion,
