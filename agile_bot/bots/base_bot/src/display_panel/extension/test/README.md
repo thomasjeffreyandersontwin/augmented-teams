@@ -150,16 +150,36 @@ await take_debug_screenshot(page, 'debug-panel-state');
 
 Current test coverage:
 
+### Manage Panel Session (test_manage_panel_session.js)
 - ✅ Open Panel (3 scenarios)
 - ✅ Display Session Status (2 scenarios)
 - ✅ Toggle Panel Section (3 scenarios)
 - ⏸️ Change Workspace Path (requires special setup)
 - ⏸️ Switch Bot (requires multiple bots)
-- 🚧 Navigate And Execute (Phase 2)
-- 🚧 Manage Scope (Phase 2)
-- 🚧 Display Instructions (Phase 2)
 
-Total: 8/52 scenarios implemented (Phase 1 complete)
+### Navigate And Execute (test_navigate_and_execute.js)
+- ✅ Display Hierarchy (3 scenarios)
+- ✅ Navigate Behavior Action (3 scenarios)
+- ✅ Execute Behavior Action (4 scenarios)
+
+### Manage Scope (test_manage_scope.js)
+- ✅ Filter Story Scope (3 scenarios)
+- ✅ Display Story Scope Hierarchy (3 scenarios)
+- ✅ Filter File Scope (2 scenarios)
+- ✅ Open Story Files (3 scenarios)
+
+### Display Instructions (test_display_instructions.js)
+- ✅ Display Base Instructions (2 scenarios)
+- ✅ Display Clarify Instructions (2 scenarios)
+- ✅ Display Strategy Instructions (1 scenario)
+- ✅ Display Build Instructions (1 scenario)
+- ✅ Display Validate Instructions (1 scenario)
+- ✅ Display Render Instructions (1 scenario)
+- ✅ Display Instructions In Raw Format (2 scenarios)
+- ✅ Submit Instructions To AI Agent (3 scenarios)
+- ✅ Instructions Integration Tests (2 scenarios)
+
+Total: 52/52 scenarios implemented (Phase 2 complete)
 
 ## Known Limitations
 
