@@ -5156,6 +5156,7 @@
             {
               "name": "Manage Panel Session",
               "sequential_order": 1,
+              "test_file": "test_manage_panel_session.js",
               "story_groups": [
                 {
                   "type": "and",
@@ -5169,6 +5170,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestOpenPanel",
                       "acceptance_criteria": [
                         "WHEN User activates panel command",
                         "THEN System displays bot name",
@@ -5221,6 +5223,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplaySessionStatus",
                       "acceptance_criteria": [
                         "WHEN User clicks refresh button",
                         "THEN System displays bot name",
@@ -5265,6 +5268,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestChangeWorkspacePath",
                       "acceptance_criteria": [
                         "WHEN User changes workspace path",
                         "THEN System displays updated workspace path",
@@ -5302,6 +5306,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestSwitchBot",
                       "acceptance_criteria": [
                         "WHEN User switches bot",
                         "THEN System displays updated bot name",
@@ -5341,6 +5346,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestTogglePanelSection",
                       "acceptance_criteria": [
                         "WHEN User clicks section header",
                         "THEN System expands or collapses section"
@@ -5373,6 +5379,7 @@
             {
               "name": "Navigate And Execute Behaviors Through Panel",
               "sequential_order": 2,
+              "test_file": "test_navigate_and_execute.js",
               "story_groups": [
                 {
                   "type": "and",
@@ -5386,6 +5393,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayHierarchy",
                       "acceptance_criteria": [
                         "WHEN User views panel",
                         "THEN System displays behavior list with actions",
@@ -5449,6 +5457,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestNavigateBehaviorAction",
                       "acceptance_criteria": [
                         "WHEN User clicks back button",
                         "THEN System  sets previous action as current",
@@ -5517,6 +5526,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestExecuteBehaviorAction",
                       "acceptance_criteria": [
                         "WHEN User clicks behavior",
                         "THEN System displays that behavior as current",
@@ -5576,6 +5586,7 @@
             {
               "name": "Manage Scope Through Panel",
               "sequential_order": 3,
+              "test_file": "test_manage_scope.js",
               "story_groups": [
                 {
                   "type": "and",
@@ -5589,6 +5600,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestFilterStoryScope",
                       "acceptance_criteria": [
                         "WHEN User types story name in filter",
                         "THEN System refreshes story hierarchy based on new story scope",
@@ -5645,6 +5657,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayStoryScopeHierarchy",
                       "acceptance_criteria": [
                         "WHEN User views story scope",
                         "THEN System displays epic list collapsed",
@@ -5733,6 +5746,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestFilterFileScope",
                       "acceptance_criteria": [
                         "WHEN User types file pattern in filter",
                         "THEN System displays filtered file list",
@@ -5768,6 +5782,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestOpenStoryFiles",
                       "acceptance_criteria": [
                         "WHEN User clicks graph link",
                         "THEN System opens story-graph.json in editor",
@@ -5813,6 +5828,7 @@
             {
               "name": "Display Action Instructions Through Panel",
               "sequential_order": 4,
+              "test_file": "test_display_instructions.js",
               "story_groups": [
                 {
                   "type": "and",
@@ -5826,6 +5842,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayBaseInstructions",
                       "acceptance_criteria": [
                         "WHEN User views panel",
                         "THEN System displays base instructions section",
@@ -5863,6 +5880,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayClarifyInstructions",
                       "acceptance_criteria": [
                         "WHEN Current action is clarify",
                         "THEN System displays key questions with editable answer textareas",
@@ -5912,6 +5930,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayStrategyInstructions",
                       "acceptance_criteria": [
                         "WHEN Current action is strategy",
                         "THEN System displays decision criteria with radio button options",
@@ -5951,6 +5970,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayBuildInstructions",
                       "acceptance_criteria": [
                         "WHEN Current action is build",
                         "THEN System displays knowledge graph section with template path link",
@@ -5987,6 +6007,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayValidateInstructions",
                       "acceptance_criteria": [
                         "WHEN Current action is validate",
                         "THEN System displays rules list",
@@ -6021,6 +6042,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayRenderInstructions",
                       "acceptance_criteria": [
                         "WHEN Current action is render",
                         "THEN System displays config file paths as clickable links",
@@ -6066,6 +6088,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestDisplayInstructionsInRawFormat",
                       "acceptance_criteria": [
                         "WHEN User clicks action instruction in Behavior Action Hierarchy",
                         "THEN System displays entire instructions exactly as it should be sent to the AI chat"
@@ -6100,6 +6123,7 @@
                         "User"
                       ],
                       "story_type": "user",
+                      "test_class": "TestSubmitInstructionsToAIAgent",
                       "acceptance_criteria": [
                         "When user has clicked on a Behavior Action's Instructions",
                         "AND User clicks submit button",
