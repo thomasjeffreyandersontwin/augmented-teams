@@ -429,7 +429,7 @@ class REPLSession:
         Simple orchestration (mirrors JSON handler):
         1. Get domain data from bot.status
         2. Add session context (workspace, scope)
-        3. Adapter serializes to TTY text
+        3. Adapter serializes to TTY text (includes header formatting)
         """
         if format == 'json':
             return self._handle_status_command_json()
@@ -441,21 +441,8 @@ class REPLSession:
         status_data['workspace'] = self.workspace_directory
         status_data['scope'] = self.get_stored_scope()
         
-        # Adapter serializes to TTY text (mirrors bot.status interface)
-        status_text = self.adapter.status(status_data)
-        
-        # Add CLI STATUS section header (for both TTY and piped mode)
-        formatter = self.formatter
-        cli_status_header = "\n".join([
-            "",
-            formatter.section_separator(),
-            "***                    CLI STATUS section                    ***",
-            "This section contains current scope filter (if set), current progress in workflow, and available commands",
-            "Review the CLI STATUS section below to understand both current state and available commands.",
-            "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️",
-            formatter.subsection_separator()
-        ])
-        output = cli_status_header + "\n" + status_text
+        # Adapter serializes to TTY text with headers (formatting is adapter's job)
+        output = self.adapter.status(status_data)
         
         return REPLCommandResponse(
             output=output,
