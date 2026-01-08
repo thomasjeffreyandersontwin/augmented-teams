@@ -9,9 +9,8 @@ if TYPE_CHECKING:
 
 class CliCommandRouter:
 
-    def __init__(self, bot, formatter):
+    def __init__(self, bot):
         self.bot = bot
-        self.formatter = formatter
         self._context_builder = CliContextBuilder()
 
     def route_to_action(self, behavior_name: str, action_name: str, cli_args: List[str]):

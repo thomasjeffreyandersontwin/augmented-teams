@@ -131,6 +131,6 @@ class CLIBot:
         Returns:
             Dictionary with status, behavior, action, and data keys
         """
-        router = CliCommandRouter(self._bot, self._session.formatter)
+        router = CliCommandRouter(self._bot)
         return router.route_to_action(behavior_name, action_name, cli_args or [])
 
