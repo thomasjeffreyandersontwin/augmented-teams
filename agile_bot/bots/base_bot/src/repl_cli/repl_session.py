@@ -26,6 +26,7 @@ class REPLSession:
         
         # Adapter selection (from walkthrough lines 58-65)
         # Detect output context and select adapter for serialization
+        # Adapter gets session context (workspace, scope) for enriching bot data
         from .adapters.json_bot_adapter import JSONBotAdapter
         from .adapters.tty_bot_adapter import TTYBotAdapter
         
@@ -33,9 +34,9 @@ class REPLSession:
         isPiped = not isTTY
         
         if isPiped:  # Panel subprocess
-            self.adapter = JSONBotAdapter(self.cli_bot.domain_bot)
+            self.adapter = JSONBotAdapter(self.cli_bot.domain_bot, session=self)
         elif isTTY:  # Interactive terminal
-            self.adapter = TTYBotAdapter(self.cli_bot.domain_bot)
+            self.adapter = TTYBotAdapter(self.cli_bot.domain_bot, session=self)
     
     @property
     def bot(self):
@@ -426,23 +427,15 @@ class REPLSession:
     def _handle_status_command(self, format='text') -> REPLCommandResponse:
         """Handle status command with TTY output format.
         
-        Simple orchestration (mirrors JSON handler):
+        Simple orchestration:
         1. Get domain data from bot.status
-        2. Add session context (workspace, scope)
-        3. Adapter serializes to TTY text (includes header formatting)
+        2. Adapter enriches with session context and formats
         """
         if format == 'json':
             return self._handle_status_command_json()
         
-        # Get domain data from bot
-        status_data = self.bot.status
-        
-        # Add session-specific context
-        status_data['workspace'] = self.workspace_directory
-        status_data['scope'] = self.get_stored_scope()
-        
-        # Adapter serializes to TTY text with headers (formatting is adapter's job)
-        output = self.adapter.status(status_data)
+        # Adapter gets bot domain data and enriches with session context
+        output = self.adapter.status(self.bot.status)
         
         return REPLCommandResponse(
             output=output,
@@ -454,19 +447,11 @@ class REPLSession:
         """Handle status command with JSON output format (walkthrough lines 68-86).
         
         Simple orchestration:
-        1. Get domain data from bot.status
-        2. Add session context (workspace, scope)
-        3. Adapter serializes to JSON
+        1. Adapter gets bot domain data
+        2. Adapter enriches with session context and serializes
         """
-        # Get domain data from bot
-        status_data = self.bot.status
-        
-        # Add session-specific context
-        status_data['workspace'] = self.workspace_directory
-        status_data['scope'] = self.get_stored_scope()
-        
-        # Adapter serializes (walkthrough line 70)
-        json_output = self.adapter.serialize(status_data)
+        # Adapter enriches bot data with session context, then serializes
+        json_output = self.adapter.serialize()
         
         return REPLCommandResponse(
             output=json_output,
