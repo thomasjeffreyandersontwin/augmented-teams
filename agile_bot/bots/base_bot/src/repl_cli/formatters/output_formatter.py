@@ -1,55 +1,47 @@
-from abc import ABC, abstractmethod
+"""
+Minimal OutputFormatter for display helpers (icons, separators).
+
+NOTE: This is NOT for serialization (adapters handle that).
+This is ONLY for display utilities in TTY output.
+"""
 
 
-class OutputFormatter(ABC):
+class OutputFormatter:
+    """Minimal formatter for display helpers only."""
     
-    @abstractmethod
-    def section_separator(self) -> str:
-        """Heavy line for major section breaks"""
-        pass
-    
-    def subsection_separator(self) -> str:
-        """Light line for subsection breaks - defaults to same as section_separator"""
-        return self.section_separator()
-    
-    @abstractmethod
-    def status_marker(self, is_current: bool, is_completed: bool) -> str:
-        pass
-    
-    @abstractmethod
-    def list_item(self, content: str, indent_level: int = 0) -> str:
-        pass
-    
-    @abstractmethod
-    def highlight(self, text: str) -> str:
-        pass
-    
-    # Emoji/icon methods for different contexts
     def bot_icon(self) -> str:
-        """Icon for bot/AI context"""
-        return ""
+        """Return bot icon."""
+        return "[*]"
     
     def workspace_icon(self) -> str:
-        """Icon for workspace/folder context"""
-        return ""
-    
-    def path_icon(self) -> str:
-        """Icon for file path context"""
-        return ""
+        """Return workspace icon."""
+        return "[W]"
     
     def scope_icon(self) -> str:
-        """Icon for scope/target context"""
-        return ""
+        """Return scope icon."""
+        return "[S]"
     
     def position_icon(self) -> str:
-        """Icon for current position/location"""
-        return ""
-    
-    def currently_executing_icon(self) -> str:
-        """Icon for currently executing action"""
-        return ""
+        """Return position icon."""
+        return "[P]"
     
     def file_icon(self) -> str:
-        """Icon for file references"""
-        return ""
-
+        """Return file icon."""
+        return "[F]"
+    
+    def section_separator(self) -> str:
+        """Return section separator."""
+        return "=" * 80
+    
+    def subsection_separator(self) -> str:
+        """Return subsection separator."""
+        return "-" * 80
+    
+    def status_marker(self, is_current: bool, is_completed: bool) -> str:
+        """Return status marker based on state."""
+        if is_current:
+            return "[*]"  # Current
+        elif is_completed:
+            return "[OK]"  # Completed
+        else:
+            return "[ ]"  # Pending

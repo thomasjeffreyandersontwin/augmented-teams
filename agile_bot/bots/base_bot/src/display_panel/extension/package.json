@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "electron": "^39.2.7"
   }
 }

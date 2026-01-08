@@ -13,6 +13,9 @@ const { defineConfig, devices } = require('@playwright/test');
 module.exports = defineConfig({
   testDir: './test',
   
+  // Match test files using Python-style naming convention (test_*.js)
+  testMatch: /test_.*\.js$/,
+  
   // Run tests in files in parallel, but use single worker to avoid VS Code conflicts
   fullyParallel: false,
   workers: 1,
@@ -58,7 +61,12 @@ module.exports = defineConfig({
     },
   ],
   
-  // Don't start a web server (we'll launch VS Code instead)
-  webServer: undefined,
+  // Start the panel server before running tests
+  webServer: {
+    command: 'node server.js',
+    port: 3000,
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
 });
 

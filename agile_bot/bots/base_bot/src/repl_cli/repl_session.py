@@ -12,7 +12,7 @@ from .repl_results import (
 )
 from ..actions.action_context import Scope, ScopeType
 from .cli_bot import CLIBot
-from .formatters.formatter_factory import FormatterFactory
+from .formatters.output_formatter import OutputFormatter
 
 
 class REPLSession:
@@ -20,7 +20,22 @@ class REPLSession:
         self.cli_bot = CLIBot(bot, self)
         self.workspace_directory = Path(workspace_directory)
         tty_result = self.detect_tty()
-        self.formatter = FormatterFactory.create_formatter(tty_detected=tty_result.tty_detected)
+        
+        # Formatter for display helpers (icons, separators)
+        self.formatter = OutputFormatter()
+        
+        # Adapter selection (from walkthrough lines 58-65)
+        # Detect output context and select adapter for serialization
+        from .adapters.json_bot_adapter import JSONBotAdapter
+        from .adapters.tty_bot_adapter import TTYBotAdapter
+        
+        isTTY = sys.stdout.isatty()
+        isPiped = not isTTY
+        
+        if isPiped:  # Panel subprocess
+            self.adapter = JSONBotAdapter(self.cli_bot.domain_bot)
+        elif isTTY:  # Interactive terminal
+            self.adapter = TTYBotAdapter(self.cli_bot.domain_bot)
     
     @property
     def bot(self):
@@ -436,15 +451,11 @@ class REPLSession:
     def _handle_status_command_json(self) -> REPLCommandResponse:
         """Handle status command with JSON output format."""
         import json
-        from agile_bot.bots.base_bot.src.repl_cli.formatters import FormatterFactory
         
-        # Create JSON formatter
-        json_formatter = FormatterFactory.create_json_formatter()
-        
-        # Build JSON status structure
+        # Build JSON status structure (no formatter needed)
         status_data = {
             "bot": self._get_bot_info_json(),
-            "behaviors": self._get_behaviors_json(json_formatter),
+            "behaviors": self._get_behaviors_json(),
             "session": self._get_session_json(),
             "scope": self._get_scope_json(),
             "instructions": self._get_instructions_json(),
@@ -1579,7 +1590,7 @@ class REPLSession:
             "workspaceDirectory": workspace_path
         }
     
-    def _get_behaviors_json(self, formatter) -> list:
+    def _get_behaviors_json(self) -> list:
         """Get behaviors hierarchy as JSON."""
         if not self.bot or not self.bot.behaviors:
             return []

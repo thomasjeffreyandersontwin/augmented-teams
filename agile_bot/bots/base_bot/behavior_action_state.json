@@ -142,7 +142,7 @@
     }
   ],
   "current_behavior": "story_bot.tests",
-  "timestamp": "2026-01-07T20:13:21.995583",
+  "timestamp": "2026-01-07T23:24:38.446770",
   "current_action": "story_bot.tests.build",
   "action_phase": "instructions",
   "completed_behaviors": [
@@ -157,7 +157,7 @@
   "scope": {
     "type": "story",
     "value": [
-      "Panel"
+      "Invoke"
     ],
     "exclude": [],
     "skiprule": []

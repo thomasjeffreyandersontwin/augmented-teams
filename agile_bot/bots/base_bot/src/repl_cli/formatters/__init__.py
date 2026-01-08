@@ -1,8 +1,10 @@
+"""
+Minimal formatters for display helpers (icons, separators).
+
+NOTE: These are NOT for serialization (adapters handle that).
+These are ONLY for display utilities like icons and separators in TTY output.
+"""
+
 from .output_formatter import OutputFormatter
-from .terminal_formatter import TerminalFormatter
-from .markdown_formatter import MarkdownFormatter
-from .json_formatter import JSONFormatter
-from .formatter_factory import FormatterFactory
 
-__all__ = ['OutputFormatter', 'TerminalFormatter', 'MarkdownFormatter', 'JSONFormatter', 'FormatterFactory']
-
+__all__ = ['OutputFormatter']

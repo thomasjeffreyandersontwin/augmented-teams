@@ -212,11 +212,34 @@ class Bot:
             }
         
         # Parse scope filter
-        if scope_filter.startswith(('file:', 'files:')):
-            value_part = scope_filter.split(':', 1)[1].strip()
+        # Handle prefixed scope syntax (story=, epic=, increment=, files=, file:, files:)
+        if '=' in scope_filter or ':' in scope_filter:
+            # Determine delimiter (= or :)
+            if '=' in scope_filter:
+                delimiter = '='
+                prefix, value_part = scope_filter.split('=', 1)
+            else:
+                delimiter = ':'
+                prefix, value_part = scope_filter.split(':', 1)
+            
+            prefix = prefix.strip().lower()
+            value_part = value_part.strip()
             scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
-            scope_type = ScopeType.FILES
+            
+            # Map prefix to scope type
+            if prefix in ('file', 'files'):
+                scope_type = ScopeType.FILES
+            elif prefix == 'story':
+                scope_type = ScopeType.STORY
+            elif prefix == 'epic':
+                scope_type = ScopeType.EPIC
+            elif prefix == 'increment':
+                scope_type = ScopeType.INCREMENT
+            else:
+                # Unknown prefix, treat as story
+                scope_type = ScopeType.STORY
         else:
+            # No prefix - auto-detect based on value
             scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
             # Auto-detect if this looks like a file path
             looks_like_path = any(

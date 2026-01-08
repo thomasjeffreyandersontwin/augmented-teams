@@ -52,23 +52,30 @@ class TestStartREPLSession:
         GIVEN: REPLSession is configured for interactive mode
         WHEN: user runs 'python repl_main.py --stdio'
         THEN: REPLSession creates CLIBot wrapping Bot
+              REPLSession selects TTYBotAdapter (walkthrough lines 63-64)
               CLI displays interactive state
         
         REPL focus: Interactive mode initialization
         """
         # GIVEN: Interactive mode (TTY detected)
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
+        monkeypatch.setattr(sys.stdout, 'isatty', lambda: True)
         bot, workspace = setup_test_bot(tmp_path, ['shape'])
         
         # WHEN: REPLSession initializes in interactive mode
         repl_session = REPLSession(bot=bot, workspace_directory=workspace)
-        cli_output = repl_session.display_current_state()
         
         # THEN: REPLSession wraps Bot
         assert repl_session.bot is not None
         assert repl_session.bot.bot_name == 'story_bot'
         
-        # AND: CLI displays state (may show no behaviors or behavior list)
+        # AND: Adapter selected for TTY mode (NEW - from walkthrough)
+        from agile_bot.bots.base_bot.src.repl_cli.adapters.tty_bot_adapter import TTYBotAdapter
+        assert hasattr(repl_session, 'adapter')
+        assert isinstance(repl_session.adapter, TTYBotAdapter)
+        
+        # AND: CLI displays state (unchanged)
+        cli_output = repl_session.display_current_state()
         display_output = cli_output.output
         assert 'No behaviors available' in display_output or 'shape' in display_output.lower() or 'help' in display_output.lower()
     
@@ -109,11 +116,13 @@ class TestStartREPLInPipeMode:
         GIVEN: REPLSession is configured for pipe mode (non-TTY)
         WHEN: commands are piped
         THEN: REPLSession creates CLIBot without interactive prompts
+              REPLSession selects JSONBotAdapter (walkthrough lines 61-62)
         
         REPL focus: Pipe mode initialization and TTY detection
         """
         # GIVEN: Pipe mode (non-TTY detected)
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
+        monkeypatch.setattr(sys.stdout, 'isatty', lambda: False)
         bot, workspace = setup_test_bot(tmp_path, ['shape'])
         
         # WHEN: REPLSession initializes in pipe mode
@@ -122,7 +131,12 @@ class TestStartREPLInPipeMode:
         # THEN: REPLSession wraps Bot
         assert repl_session.bot is not None
         
-        # AND: TTY detection shows non-interactive
+        # AND: Adapter selected for JSON mode (NEW - from walkthrough)
+        from agile_bot.bots.base_bot.src.repl_cli.adapters.json_bot_adapter import JSONBotAdapter
+        assert hasattr(repl_session, 'adapter')
+        assert isinstance(repl_session.adapter, JSONBotAdapter)
+        
+        # AND: TTY detection shows non-interactive (unchanged)
         tty_result = repl_session.detect_tty()
         assert tty_result.tty_detected == False or tty_result.interactive_prompts_enabled == False
 

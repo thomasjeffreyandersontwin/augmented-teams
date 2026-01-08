@@ -41,11 +41,13 @@ let page;
 test.beforeAll(async () => {
   // Launch VS Code with extension
   electronApp = await electron.launch({
+    executablePath: 'C:\\Users\\thoma\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe',
     args: [
       '--extensionDevelopmentPath=' + path.join(__dirname, '..'),
       '--disable-extensions', // Disable other extensions
       '--skip-welcome',
       '--skip-release-notes',
+      '--start-minimized',
     ],
   });
   
@@ -253,4 +255,5 @@ test.describe('TestSwitchBot', () => {
     test.skip('Requires multiple configured bots');
   });
 });
+
 
