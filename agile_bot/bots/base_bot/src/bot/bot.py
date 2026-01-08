@@ -81,6 +81,20 @@ class Bot:
     def working_area(self) -> Optional[str]:
         return self._config.get('WORKING_AREA')
 
+    @property
+    def status(self) -> Dict[str, Any]:
+        """Return bot status as domain data.
+        
+        Returns domain objects that adapters will serialize to different formats.
+        This is pure domain data - no formatting decisions here.
+        """
+        return {
+            'bot': self,
+            'current_behavior': self.behaviors.current,
+            'current_action': self.behaviors.current.actions.current if self.behaviors.current else None,
+            'behaviors': self.behaviors,
+        }
+
     def help(self, topic: Optional[str] = None) -> Dict[str, Any]:
         """Display help information about the bot, behaviors, or actions.
         

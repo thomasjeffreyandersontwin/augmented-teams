@@ -449,9 +449,22 @@ class REPLSession:
         )
     
     def _handle_status_command_json(self) -> REPLCommandResponse:
-        """Handle status command with JSON output format (walkthrough lines 68-86)."""
-        # Use adapter.serialize() as per walkthrough line 70
-        json_output = self.adapter.serialize()
+        """Handle status command with JSON output format (walkthrough lines 68-86).
+        
+        Simple orchestration:
+        1. Get domain data from bot.status
+        2. Add session context (workspace, scope)
+        3. Adapter serializes to JSON
+        """
+        # Get domain data from bot
+        status_data = self.bot.status
+        
+        # Add session-specific context
+        status_data['workspace'] = self.workspace_directory
+        status_data['scope'] = self.get_stored_scope()
+        
+        # Adapter serializes (walkthrough line 70)
+        json_output = self.adapter.serialize(status_data)
         
         return REPLCommandResponse(
             output=json_output,
