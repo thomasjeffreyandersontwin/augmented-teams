@@ -427,15 +427,14 @@ class REPLSession:
     def _handle_status_command(self, format='text') -> REPLCommandResponse:
         """Handle status command with TTY output format.
         
-        Simple orchestration:
-        1. Get domain data from bot.status
-        2. Adapter enriches with session context and formats
+        Simple orchestration (same as JSON):
+        Adapter gets bot domain data, enriches with session context, and formats
         """
         if format == 'json':
             return self._handle_status_command_json()
         
-        # Adapter gets bot domain data and enriches with session context
-        output = self.adapter.status(self.bot.status)
+        # Adapter handles everything (same as JSON handler!)
+        output = self.adapter.status()
         
         return REPLCommandResponse(
             output=output,
@@ -446,12 +445,11 @@ class REPLSession:
     def _handle_status_command_json(self) -> REPLCommandResponse:
         """Handle status command with JSON output format (walkthrough lines 68-86).
         
-        Simple orchestration:
-        1. Adapter gets bot domain data
-        2. Adapter enriches with session context and serializes
+        Simple orchestration (same as TTY):
+        Adapter gets bot domain data, enriches with session context, and formats
         """
-        # Adapter enriches bot data with session context, then serializes
-        json_output = self.adapter.serialize()
+        # Adapter handles everything (mirrors TTY handler - same interface!)
+        json_output = self.adapter.status()
         
         return REPLCommandResponse(
             output=json_output,
