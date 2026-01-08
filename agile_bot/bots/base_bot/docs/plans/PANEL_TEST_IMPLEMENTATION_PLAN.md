@@ -1150,16 +1150,28 @@ test.describe('Display Instructions Through Panel', () => {
 
 **Deliverable:** `story-graph.json` with all scenarios added to panel stories
 
-### Phase 1: Playwright Setup (Week 2)
+### Phase 1: Playwright Setup (Week 2) ✅ **COMPLETE**
 **Focus:** E2E testing infrastructure
 
-- [ ] Install Playwright
-- [ ] Configure Playwright for VS Code extension testing
-- [ ] Create helper functions (Given/When/Then pattern)
-- [ ] Test basic panel open/close
-- [ ] Verify can interact with webview frames
-- [ ] Set up video recording for failures
-- [ ] Set up screenshot on failure
+- [x] Install Playwright (`@playwright/test`, `@vscode/test-electron`)
+- [x] Configure Playwright for VS Code extension testing (`playwright.config.js`)
+- [x] Create helper functions (Given/When/Then pattern in `test/helpers.js`)
+- [x] Test basic panel open/close (implemented in `test_manage_panel_session.js`)
+- [x] Verify can interact with webview frames (working with `get_panel_webview_frame()`)
+- [x] Set up video recording for failures (configured in playwright.config.js)
+- [x] Set up screenshot on failure (configured in playwright.config.js)
+
+**Deliverables:**
+- ✅ `playwright.config.js` - Configuration with video/screenshot capture
+- ✅ `test/helpers.js` - 40+ reusable Given/When/Then helpers
+- ✅ `test/test_manage_panel_session.js` - 8 working tests for Manage Panel Session
+- ✅ `test/README.md` - Complete documentation for running and writing tests
+- ✅ `package.json` - Updated with test scripts (`test`, `test:headed`, `test:debug`, `test:report`)
+
+**Test Coverage (Phase 1):**
+- ✅ Open Panel (3 scenarios: happy_path, edge_case, error_case)
+- ✅ Display Session Status (2 scenarios)
+- ✅ Toggle Panel Section (3 scenarios)
 
 ### Phase 2: Implement E2E Tests from Scenarios (Week 3-4)
 **Focus:** Implement tests that match scenarios from Phase 0
