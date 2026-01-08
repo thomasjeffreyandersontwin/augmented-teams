@@ -425,38 +425,27 @@ class REPLSession:
         return REPLCommandResponse(output=full_output, response=output, status="success")
     
     def _handle_status_command(self, format='text') -> REPLCommandResponse:
-        """Handle status command with TTY output format.
+        """Handle status command - adapter does everything.
         
-        Simple orchestration (same as JSON):
-        Adapter gets bot domain data, enriches with session context, and formats
+        Adapter returns complete formatted output (TTY or JSON with status field).
+        Minimal wrapper just to return to repl_main.
         """
         if format == 'json':
             return self._handle_status_command_json()
         
-        # Adapter handles everything (same as JSON handler!)
+        # Adapter returns complete output - minimal wrapper
         output = self.adapter.status()
-        
-        return REPLCommandResponse(
-            output=output,
-            response=output,
-            status="success"
-        )
+        return REPLCommandResponse(output=output, response="", status="success")
     
     def _handle_status_command_json(self) -> REPLCommandResponse:
-        """Handle status command with JSON output format (walkthrough lines 68-86).
+        """Handle status command with JSON output format.
         
-        Adapter returns complete JSON (includes status field).
-        REPLSession just returns it - no wrapping needed.
+        Adapter returns complete JSON (includes status field inside JSON).
+        Minimal wrapper just to return to repl_main.
         """
-        # Adapter returns complete JSON with status field included
-        json_output = self.adapter.status()
-        
-        # Just return the JSON - adapter already included status
-        return REPLCommandResponse(
-            output=json_output,
-            response="",  # Only output matters for JSON
-            status="success"
-        )
+        # Adapter returns complete JSON with status field - minimal wrapper
+        output = self.adapter.status()
+        return REPLCommandResponse(output=output, response="", status="success")
     
     def _handle_current_command(self, auto_execute_instructions=False) -> REPLCommandResponse:
         if not self.has_current_action:

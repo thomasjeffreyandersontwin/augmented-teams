@@ -76,7 +76,8 @@ This increment includes 6 stories covering bot discovery, navigation, rules beha
 ### 3. Navigate to Bot using CLI Dot Notation
 **Epic:** Navigate Bot Behaviors and Actions With CLI  
 **Sequential Order:** 4  
-**Story Type:** User  
+**Story Type:** User  scope all
+
 **Actor:** User
 
 **Purpose:** Allow users to switch the active bot context using dot notation, so subsequent commands apply to the new bot.
