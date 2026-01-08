@@ -5184,6 +5184,7 @@
                       "scenarios": [
                         {
                           "title": "User opens panel via command palette",
+                          "test_method": "test_user_opens_panel_via_command_palette_happy_path",
                           "steps": [
                             "Given VS Code workspace with bot installed",
                             "When User executes 'Open Status Panel' command",
