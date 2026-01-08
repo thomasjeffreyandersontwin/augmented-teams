@@ -62,68 +62,88 @@
     },
     {
       "action_state": "story_bot.prioritization.clarify",
-      "timestamp": "2026-01-07T14:37:34.261102"
+      "timestamp": "2026-01-07T19:48:23.667767"
     },
     {
       "action_state": "story_bot.prioritization.strategy",
-      "timestamp": "2026-01-07T14:37:34.261135"
+      "timestamp": "2026-01-07T19:48:23.667795"
     },
     {
       "action_state": "story_bot.prioritization.build",
-      "timestamp": "2026-01-07T14:37:34.261139"
+      "timestamp": "2026-01-07T19:48:23.667798"
     },
     {
       "action_state": "story_bot.prioritization.validate",
-      "timestamp": "2026-01-07T14:37:34.261143"
+      "timestamp": "2026-01-07T19:48:23.667801"
     },
     {
       "action_state": "story_bot.prioritization.render",
-      "timestamp": "2026-01-07T14:37:34.261147"
+      "timestamp": "2026-01-07T19:48:23.667805"
     },
     {
       "action_state": "story_bot.discovery.clarify",
-      "timestamp": "2026-01-07T14:37:34.264875"
+      "timestamp": "2026-01-07T19:48:23.674637"
     },
     {
       "action_state": "story_bot.discovery.strategy",
-      "timestamp": "2026-01-07T14:37:34.264881"
+      "timestamp": "2026-01-07T19:48:23.674648"
     },
     {
       "action_state": "story_bot.discovery.build",
-      "timestamp": "2026-01-07T14:37:34.264886"
+      "timestamp": "2026-01-07T19:48:23.674651"
     },
     {
       "action_state": "story_bot.discovery.validate",
-      "timestamp": "2026-01-07T14:37:34.264890"
+      "timestamp": "2026-01-07T19:48:23.674655"
     },
     {
       "action_state": "story_bot.discovery.render",
-      "timestamp": "2026-01-07T14:37:34.264895"
+      "timestamp": "2026-01-07T19:48:23.674658"
     },
     {
       "action_state": "story_bot.exploration.clarify",
-      "timestamp": "2026-01-07T14:37:34.269288"
+      "timestamp": "2026-01-07T19:48:23.680924"
     },
     {
       "action_state": "story_bot.exploration.strategy",
-      "timestamp": "2026-01-07T14:37:34.269295"
+      "timestamp": "2026-01-07T19:48:23.680935"
     },
     {
       "action_state": "story_bot.exploration.build",
-      "timestamp": "2026-01-07T14:37:34.269300"
+      "timestamp": "2026-01-07T19:48:23.680939"
     },
     {
       "action_state": "story_bot.exploration.validate",
-      "timestamp": "2026-01-07T14:37:34.269305"
+      "timestamp": "2026-01-07T19:48:23.680943"
     },
     {
       "action_state": "story_bot.exploration.render",
-      "timestamp": "2026-01-07T14:37:34.269310"
+      "timestamp": "2026-01-07T19:48:23.680947"
+    },
+    {
+      "action_state": "story_bot.scenarios.clarify",
+      "timestamp": "2026-01-07T20:08:48.439221"
+    },
+    {
+      "action_state": "story_bot.scenarios.strategy",
+      "timestamp": "2026-01-07T20:08:48.439252"
+    },
+    {
+      "action_state": "story_bot.scenarios.build",
+      "timestamp": "2026-01-07T20:08:48.439257"
+    },
+    {
+      "action_state": "story_bot.scenarios.validate",
+      "timestamp": "2026-01-07T20:08:48.439261"
+    },
+    {
+      "action_state": "story_bot.scenarios.render",
+      "timestamp": "2026-01-07T20:08:48.439266"
     }
   ],
-  "current_behavior": "story_bot.scenarios",
-  "timestamp": "2026-01-07T14:37:34.299027",
-  "current_action": "story_bot.scenarios.render",
+  "current_behavior": "story_bot.tests",
+  "timestamp": "2026-01-07T20:13:21.995583",
+  "current_action": "story_bot.tests.build",
   "action_phase": "instructions",
   "completed_behaviors": [
     "scenarios",
@@ -135,8 +155,10 @@
   ],
   "working_directory": "agile_bot/bots/base_bot",
   "scope": {
-    "type": "showAll",
-    "value": [],
+    "type": "story",
+    "value": [
+      "Panel"
+    ],
     "exclude": [],
     "skiprule": []
   }

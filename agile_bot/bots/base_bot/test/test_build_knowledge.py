@@ -608,7 +608,7 @@ def given_template_variables_test_setup(bot_directory: Path, workspace_directory
     given_base_instructions_copied_to_bot_directory(bot_directory, action)
     kg_dir = given_setup('directory_structure', bot_directory, behavior=behavior)
     given_behavior_specific_instructions_created(bot_directory, behavior, action, kg_dir)
-    from agile_bot.bots.base_bot.test.test_perform_behavior_action import given_behavior_config
+    from agile_bot.bots.base_bot.test.test_invoke_bot_directly import given_behavior_config
     # Create instructions.json via behavior config
     behavior_dir = bot_directory / 'behaviors' / behavior
     instructions_file = behavior_dir / 'instructions.json'
