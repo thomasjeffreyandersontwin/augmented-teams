@@ -43,7 +43,7 @@ import argparse
 from pathlib import Path
 
 
-# Configure UTF-8 encoding for stdout to support emojis in MarkdownFormatter
+# Configure UTF-8 encoding for stdout to support Unicode output
 if sys.platform == 'win32':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')

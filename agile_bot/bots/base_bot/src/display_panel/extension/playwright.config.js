@@ -5,9 +5,9 @@ const { defineConfig, devices } = require('@playwright/test');
  * Playwright Configuration for VS Code Extension Testing
  * 
  * This configuration:
- * - Uses a single worker to avoid VS Code conflicts
+ * - Uses a single worker to avoid VS Code instance conflicts
  * - Captures screenshots and videos on failure
- * - Uses Chromium browser
+ * - Uses Electron to launch VS Code with extension
  * - Sets generous timeouts for VS Code extension startup
  */
 module.exports = defineConfig({
@@ -34,9 +34,6 @@ module.exports = defineConfig({
   
   // Shared settings for all the projects below
   use: {
-    // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:3000',
-    
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
     
@@ -48,25 +45,20 @@ module.exports = defineConfig({
     
     // Generous timeout for VS Code extension actions
     actionTimeout: 30000,
+    
+    // Increase navigation timeout for VS Code startup
+    navigationTimeout: 30000,
   },
   
-  // Configure timeout for each test
+  // Configure timeout for each test (VS Code takes time to start)
   timeout: 60000,
   
-  // Configure projects for major browsers
+  // No specific browser project needed - tests use electron.launch() directly
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'vscode-extension',
+      testMatch: /test_.*\.js$/,
     },
   ],
-  
-  // Start the panel server before running tests
-  webServer: {
-    command: 'node server.js',
-    port: 3000,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
 });
 

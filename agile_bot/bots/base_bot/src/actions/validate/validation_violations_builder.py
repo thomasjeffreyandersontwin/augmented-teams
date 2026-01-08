@@ -1,12 +1,24 @@
 from pathlib import Path
 from typing import Dict, Any, List
-from ...repl_cli.formatters.markdown_formatter import MarkdownFormatter
+
+
+class _MarkdownHelper:
+    """Minimal markdown formatting helper for validation output."""
+    
+    def format_heading(self, text: str, level: int = 1) -> str:
+        """Format markdown heading."""
+        return f"{'#' * level} {text}"
+    
+    def format_bold(self, text: str) -> str:
+        """Format bold text."""
+        return f"**{text}**"
+
 
 class ValidationViolationsBuilder:
 
     def __init__(self, format_violation_line_fn):
         self._format_violation_line = format_violation_line_fn
-        self._formatter = MarkdownFormatter()
+        self._formatter = _MarkdownHelper()
 
     def build_violations(self, validation_rules: List[Dict[str, Any]]) -> List[str]:
         lines = [self._formatter.format_heading('Violations Found', level=2), '']
