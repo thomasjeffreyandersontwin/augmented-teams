@@ -42,13 +42,21 @@ class Bot:
         # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'bot.py:33','message':'Before Behaviors creation','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
         # #endregion
-        self.behaviors = Behaviors(bot_name, self.bot_paths)
+        # Get allowed behaviors from bot_config.json
+        allowed_behaviors = self._config.get('behaviors')
+        self.behaviors = Behaviors(bot_name, self.bot_paths, allowed_behaviors=allowed_behaviors)
         # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'bot.py:33','message':'After Behaviors creation','data':{'behavior_count':len(self.behaviors._behaviors) if self.behaviors else 0},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
         # #endregion
         self.behaviors._bot_instance = self
         for behavior in self.behaviors:
             behavior.bot = self
+        
+        # Create Scope instance with workspace context and load from state
+        from agile_bot.src.scope.scope import Scope
+        self._scope = Scope(self.bot_paths.workspace_directory, self.bot_paths)
+        self._scope.load()
+        
         # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'bot.py:37','message':'Bot.__init__ exit','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
         # #endregion
@@ -80,45 +88,45 @@ class Bot:
     @property
     def working_area(self) -> Optional[str]:
         return self._config.get('WORKING_AREA')
-
-    def status(self) -> 'Status':
-        """Return current bot status as Status domain object.
-        
-        Returns:
-            Status domain object with progress_path, stage_name, current_behavior, current_action
-        """
-        from agile_bot.src.status.status import Status
-        
-        # Determine progress path
+    
+    @property
+    def bot_directory(self) -> Path:
+        """Return the bot directory path."""
+        return self.bot_paths.bot_directory
+    
+    @property
+    def workspace_directory(self) -> Path:
+        """Return the workspace directory path."""
+        return self.bot_paths.workspace_directory
+    
+    @property
+    def progress_path(self) -> str:
+        """Return current progress path (e.g., 'discovery.validate')."""
         if self.behaviors.current:
             behavior = self.behaviors.current
             if behavior.actions.current_action_name:
-                progress_path = f"{behavior.name}.{behavior.actions.current_action_name}"
+                return f"{behavior.name}.{behavior.actions.current_action_name}"
             else:
-                progress_path = behavior.name
-        else:
-            progress_path = "idle"
-        
-        # Determine stage
+                return behavior.name
+        return "idle"
+    
+    @property
+    def stage_name(self) -> str:
+        """Return current stage name ('Idle', 'Ready', 'In Progress')."""
         if not self.behaviors.current:
-            stage_name = "Idle"
+            return "Idle"
         elif not self.behaviors.current.actions.current_action_name:
-            stage_name = "Ready"
+            return "Ready"
         else:
-            stage_name = "In Progress"
+            return "In Progress"
+
+    def status(self) -> 'Bot':
+        """Return current bot status - returns self since Bot now has all status properties.
         
-        # Current behavior/action
-        current_behavior = self.behaviors.current.name if self.behaviors.current else None
-        current_action = None
-        if self.behaviors.current and self.behaviors.current.actions.current_action_name:
-            current_action = self.behaviors.current.actions.current_action_name
-        
-        return Status(
-            progress_path=progress_path,
-            stage_name=stage_name,
-            current_behavior=current_behavior,
-            current_action=current_action
-        )
+        Returns:
+            Bot object (self) with progress_path, stage_name, and other status properties
+        """
+        return self
 
     def help(self, topic: Optional[str] = None) -> Dict[str, Any]:
         """Display help information about the bot, behaviors, or actions.
@@ -205,7 +213,7 @@ class Bot:
             'message': 'Exiting bot session. Goodbye!'
         }
     
-    def scope(self, scope_filter: Optional[str] = None) -> Dict[str, Any]:
+    def scope(self, scope_filter: Optional[str] = None):
         """Set or view the scope filter for the current workflow.
         
         AI AGENTS: This command requires COMPLETE folder paths. When you pass a directory path,
@@ -215,40 +223,26 @@ class Bot:
             scope_filter: Complete folder path or story name to filter by, or None to view current scope
         
         Returns:
-            Dict with scope information or updated scope status
+            Scope domain object
         """
-        from ..actions.action_context import Scope, ScopeType
+        from agile_bot.src.scope.scope import ScopeType
         import os
         
         if scope_filter is None:
-            # Return current scope from persistent storage
-            state_file = self.bot_paths.workspace_directory / 'behavior_action_state.json'
-            if state_file.exists():
-                try:
-                    state_data = json.loads(state_file.read_text())
-                    scope_dict = state_data.get('scope')
-                    if scope_dict:
-                        scope = Scope.from_dict(scope_dict)
-                        return {
-                            'status': 'success',
-                            'message': 'Current scope',
-                            'scope': scope.to_dict()
-                        }
-                except (json.JSONDecodeError, IOError):
-                    pass
-            return {
-                'status': 'success',
-                'message': 'No scope set',
-                'scope': None
-            }
+            # Return current scope instance
+            return self._scope
         
         if scope_filter.lower() == 'all':
-            # Clear scope from persistent storage
-            Scope.clear_from_bot(self.bot_paths.workspace_directory)
-            return {
-                'status': 'success',
-                'message': 'Scope filter cleared'
-            }
+            # Clear scope
+            self._scope.clear()
+            self._scope.save()
+            return self._scope
+        
+        if scope_filter.lower() == 'showall':
+            # Show all - set to SHOW_ALL type
+            self._scope.filter(ScopeType.SHOW_ALL, [])
+            self._scope.save()
+            return self._scope
         
         # Parse scope filter
         # Handle prefixed scope syntax (story=, epic=, increment=, files=, file:, files:)
@@ -268,10 +262,8 @@ class Bot:
             # Map prefix to scope type
             if prefix in ('file', 'files'):
                 scope_type = ScopeType.FILES
-            elif prefix == 'story':
+            elif prefix in ('story', 'epic'):  # Both map to STORY (searches all levels)
                 scope_type = ScopeType.STORY
-            elif prefix == 'epic':
-                scope_type = ScopeType.EPIC
             elif prefix == 'increment':
                 scope_type = ScopeType.INCREMENT
             else:
@@ -287,16 +279,11 @@ class Bot:
             )
             scope_type = ScopeType.FILES if looks_like_path else ScopeType.STORY
         
-        scope = Scope(type=scope_type, value=scope_values)
+        # Update scope filter
+        self._scope.filter(scope_type, scope_values)
+        self._scope.save()
         
-        # Persist scope to storage
-        scope.apply_to_bot(self.bot_paths.workspace_directory)
-        
-        return {
-            'status': 'success',
-            'message': f'Scope set to: {scope_filter}',
-            'scope': scope.to_dict()
-        }
+        return self._scope
     
     def path(self, directory: Optional[str] = None) -> Dict[str, Any]:
         """Set or view the working directory.
@@ -335,6 +322,41 @@ class Bot:
             'path': str(new_path),
             'message': f'Working directory set to: {new_path}'
         }
+    
+    def current(self) -> Dict[str, Any]:
+        """Get current action instructions.
+        
+        Returns:
+            Dict with current action instructions
+        """
+        if not self.behaviors.current:
+            return {
+                'status': 'error',
+                'message': 'No current behavior'
+            }
+        
+        behavior = self.behaviors.current
+        if not behavior.actions.current:
+            return {
+                'status': 'error',
+                'message': 'No current action'
+            }
+        
+        action = behavior.actions.current
+        
+        try:
+            # Get instructions for current action
+            from agile_bot.bots.base_bot.src.actions.action_context import ActionContext
+            context = action.context_class() if hasattr(action, 'context_class') else ActionContext()
+            instructions = action.get_instructions(context)
+            
+            # Return Instructions object directly for adapter serialization
+            return instructions
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Error getting instructions: {str(e)}'
+            }
 
     def next(self) -> Dict[str, Any]:
         """Navigate to the next action in the current behavior workflow.

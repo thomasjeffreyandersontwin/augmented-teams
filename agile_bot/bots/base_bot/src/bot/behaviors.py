@@ -15,12 +15,13 @@ logger = logging.getLogger(__name__)
 
 class Behaviors:
 
-    def __init__(self, bot_name: str, bot_paths: BotPaths):
+    def __init__(self, bot_name: str, bot_paths: BotPaths, allowed_behaviors: Optional[List[str]] = None):
         # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_path.parent.mkdir(parents=True, exist_ok=True); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:18','message':'Behaviors.__init__ entry','data':{'bot_name':bot_name},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
         # #endregion
         self.bot_name = bot_name
         self.bot_paths = bot_paths
+        self._allowed_behaviors = allowed_behaviors  # Filter behaviors by bot_config.json if provided
         self._behaviors: List['Behavior'] = []
         # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:22','message':'Before _discover_behaviors','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
@@ -59,6 +60,9 @@ class Behaviors:
         behavior_orders = []
         for item in behaviors_dir.iterdir():
             if not item.is_dir() or item.name.startswith('_') or item.name.startswith('.'):
+                continue
+            # Filter by allowed_behaviors from bot_config.json if provided
+            if self._allowed_behaviors is not None and item.name not in self._allowed_behaviors:
                 continue
             result = self._load_behavior_from_dir(item)
             if result:

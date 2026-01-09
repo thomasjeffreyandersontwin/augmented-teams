@@ -341,13 +341,9 @@ class Action:
         # Add behavior and action metadata for JSON output
         self._add_behavior_action_metadata(instructions)
         
-        # Format for display
-        formatted_output = self._format_instructions_for_display(instructions)
-        
-        return {
-            'instructions': instructions.to_dict(),
-            'formatted_output': formatted_output
-        }
+        # Return the Instructions object directly
+        # CLI will use adapters to serialize it appropriately
+        return instructions
     
     def _load_behavior_guardrails(self, instructions):
         """Load behavior-level guardrails (key questions and evidence) if available."""
