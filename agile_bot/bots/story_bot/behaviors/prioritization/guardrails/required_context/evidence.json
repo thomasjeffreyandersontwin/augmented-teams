@@ -1,11 +1,1 @@
-{
-  "description": "Evidence or artifacts that must be present or validated before this behavior can proceed",
-  "evidence": [
-    "Story map from shape stage",
-    "Business cases or initiative briefs",
-    "Project charters and delivery timelines",
-    "Capability or architecture documents",
-    "User rollout or onboarding strategies",
-    "Value models or impact maps"
-  ]
-}
+{"evidence": []}

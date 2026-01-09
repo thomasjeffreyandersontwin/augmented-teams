@@ -3,7 +3,7 @@
   "description": "Helps teams model the solution domain using CRC (Class-Responsibility-Collaborator) cards to define object responsibilities and collaborations",
   "goal": "Transform domain understanding into well-structured CRC models showing object responsibilities, collaborators, and interactions",
   "behaviorName": "crc_bot_entry",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "behaviors": {
     "domain": "Model business domain, extract CRC concepts from stories, define responsibilities",
     "design": "Apply OOP design principles, refine CRC cards with patterns, improve object design",

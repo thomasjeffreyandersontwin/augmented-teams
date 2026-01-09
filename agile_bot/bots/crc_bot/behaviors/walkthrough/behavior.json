@@ -5,7 +5,7 @@
   "goal": "Create CRC realization scenarios that trace object responsibilities and collaborations through the model, validating it can fulfill story requirements, discovering and adding missing responsibilities/collaborators/concepts to story-graph.json, and identifying improvements",
   "inputs": "story-graph.json with CRC model and stories, crc-model diagrams, story scenarios/acceptance criteria",
   "outputs": "story-graph.json updated with realization scenarios and refined domain concepts (added responsibilities/collaborators/concepts discovered), walkthrough-realizations.md documenting traces and model updates",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
     "Trace CRC object flows through scenarios to validate and refine the CRC model"
   ],

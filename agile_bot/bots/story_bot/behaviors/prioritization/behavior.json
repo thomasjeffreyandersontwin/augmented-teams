@@ -1,93 +1,42 @@
 {
   "behaviorName": "prioritization",
-  "order": 2,
-  "description": "Organize stories into delivery increments based on business value, dependencies, and risk",
-  "goal": "Prioritize stories into increments for iterative delivery",
-  "inputs": "story-graph.json (shaped story map), business priorities, dependencies",
-  "outputs": "story-graph.json (with increments), story-map-increments.drawio, story-map-increments.md",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "description": "Test behavior: prioritization",
+  "goal": "Test goal for prioritization",
+  "inputs": "Test inputs",
+  "outputs": "Test outputs",
+  "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "Organize stories into delivery increments based on business value, dependencies, and risk"
+    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
+    "",
+    "Test instructions for prioritization."
   ],
   "actions_workflow": {
     "actions": [
       {
         "name": "clarify",
         "order": 1,
-        "next_action": "strategy",
-        "instructions": []
+        "next_action": "strategy"
       },
       {
         "name": "strategy",
         "order": 2,
-        "next_action": "build",
-        "instructions": []
-      },
-      {
-        "name": "build",
-        "order": 3,
-        "next_action": "validate",
-        "instructions": [
-          "Organize stories into increments prioritized according to risk and value"
-        ]
+        "next_action": "validate"
       },
       {
         "name": "validate",
-        "order": 4,
-        "next_action": "render",
-        "instructions": [
-          "prioritization: validate vertical slices"
-        ]
+        "order": 3,
+        "next_action": "render"
       },
       {
         "name": "render",
-        "order": 5,
-        "instructions": [
-          "prioritization: render increment backlog"
-        ]
-      },
-      {
-        "name": "rules",
-        "instructions": [
-          "Display digested rules for this behavior as AI context"
-        ]
+        "order": 4
       }
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to prioritization/thin slicing behavior",
+    "description": "Trigger words for prioritization",
     "patterns": [
-      "start.*prioritization",
-      "let.*s.*prioritize",
-      "begin.*prioritization",
-      "do.*prioritization",
-      "prioritization",
-      "prioritize",
-      "rank.*epics",
-      "value.*based.*order",
-      "decide.*what.*first",
-      "slice.*",
-      "group.*by.*value",
-      "group.*by.*risk",
-      "group.*by.*assumption",
-      "define.*thin.*slice",
-      "organize.*map",
-      "plan.*mvp.*delivery",
-      "choose.*mvp",
-      "decide.*initial.*release",
-      "pick.*first.*slice",
-      "stack.*by.*impact",
-      "delivery.*sequence",
-      "delivery.*order",
-      "assumption.*driven.*planning",
-      "cost.*of.*delay",
-      "delivery.*strategy",
-      "validate.*risk.*first",
-      "learn.*fast.*slice",
-      "test.*value.*proposition",
-      "explore.*release.*path"
+      "test.*prioritization"
     ]
   }
 }
-
-

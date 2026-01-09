@@ -5,7 +5,7 @@
   "goal": "Refine CRC model with proper encapsulation, delegation, dependency injection, and design patterns. Verify module accuracy.",
   "inputs": "story-graph.json (with stories, domain concepts, and modules), architecture diagrams, technical requirements",
   "outputs": "story-graph.json (with detailed design patterns and verified modules), crc-design-model.md, crc-class-diagrams.mmd",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
     "Apply OOP design principles to refine CRC cards and define clear object responsibilities"
   ],

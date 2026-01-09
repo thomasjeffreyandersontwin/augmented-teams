@@ -7,18 +7,27 @@ Provides reusable helpers for bot setup and assertions used across:
 - All other navigation and REPL test files
 
 DRY principle: setup bot once, reuse everywhere
+
+NOTE: This file is in the OLD test area (base_bot/test/) and will eventually be removed.
+New tests in agile_bot/test/ use test_bot_setup_helpers.py instead.
 """
+import os
 import json
 from pathlib import Path
 
 from agile_bot.bots.base_bot.src.bot.bot import Bot
-from conftest import bootstrap_env, create_bot_config_file
-from agile_bot.bots.base_bot.test.test_helpers import (
+
+import sys
+repo_root = Path(__file__).parent.parent.parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
+
+from agile_bot.test.test_helpers import (
     create_actions_workflow_json,
-    create_base_actions_structure
-)
-from agile_bot.bots.base_bot.test.test_execute_behavior_actions import (
-    create_minimal_guardrails_files
+    create_base_actions_structure,
+    create_minimal_guardrails_files,
+    bootstrap_env,
+    create_bot_config_file
 )
 
 

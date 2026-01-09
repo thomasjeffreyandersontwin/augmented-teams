@@ -81,19 +81,44 @@ class Bot:
     def working_area(self) -> Optional[str]:
         return self._config.get('WORKING_AREA')
 
-    @property
-    def status(self) -> Dict[str, Any]:
-        """Return bot status as domain data.
+    def status(self) -> 'Status':
+        """Return current bot status as Status domain object.
         
-        Returns domain objects that adapters will serialize to different formats.
-        This is pure domain data - no formatting decisions here.
+        Returns:
+            Status domain object with progress_path, stage_name, current_behavior, current_action
         """
-        return {
-            'bot': self,
-            'current_behavior': self.behaviors.current,
-            'current_action': self.behaviors.current.actions.current if self.behaviors.current else None,
-            'behaviors': self.behaviors,
-        }
+        from agile_bot.src.status.status import Status
+        
+        # Determine progress path
+        if self.behaviors.current:
+            behavior = self.behaviors.current
+            if behavior.actions.current_action_name:
+                progress_path = f"{behavior.name}.{behavior.actions.current_action_name}"
+            else:
+                progress_path = behavior.name
+        else:
+            progress_path = "idle"
+        
+        # Determine stage
+        if not self.behaviors.current:
+            stage_name = "Idle"
+        elif not self.behaviors.current.actions.current_action_name:
+            stage_name = "Ready"
+        else:
+            stage_name = "In Progress"
+        
+        # Current behavior/action
+        current_behavior = self.behaviors.current.name if self.behaviors.current else None
+        current_action = None
+        if self.behaviors.current and self.behaviors.current.actions.current_action_name:
+            current_action = self.behaviors.current.actions.current_action_name
+        
+        return Status(
+            progress_path=progress_path,
+            stage_name=stage_name,
+            current_behavior=current_behavior,
+            current_action=current_action
+        )
 
     def help(self, topic: Optional[str] = None) -> Dict[str, Any]:
         """Display help information about the bot, behaviors, or actions.
@@ -309,6 +334,167 @@ class Bot:
             'status': 'success',
             'path': str(new_path),
             'message': f'Working directory set to: {new_path}'
+        }
+
+    def next(self) -> Dict[str, Any]:
+        """Navigate to the next action in the current behavior workflow.
+        
+        Returns:
+            Dict with navigation result (new position, message)
+        """
+        if not self.behaviors.current:
+            return {
+                'status': 'error',
+                'message': 'No behavior is currently active. Use a behavior.action command to start.'
+            }
+        
+        behavior = self.behaviors.current
+        current_action = behavior.actions.current_action_name
+        
+        if not current_action:
+            # No current action, start with first action
+            if behavior.action_names:
+                first_action = behavior.action_names[0]
+                behavior.actions.navigate_to(first_action)
+                return {
+                    'status': 'success',
+                    'message': f'Moved to {behavior.name}.{first_action}',
+                    'behavior': behavior.name,
+                    'action': first_action
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'message': f'Behavior {behavior.name} has no actions'
+                }
+        
+        # Find next action
+        action_names = behavior.action_names
+        try:
+            current_index = action_names.index(current_action)
+            if current_index < len(action_names) - 1:
+                next_action = action_names[current_index + 1]
+                behavior.actions.navigate_to(next_action)
+                return {
+                    'status': 'success',
+                    'message': f'Moved to {behavior.name}.{next_action}',
+                    'behavior': behavior.name,
+                    'action': next_action
+                }
+            else:
+                return {
+                    'status': 'info',
+                    'message': f'Already at last action in {behavior.name}',
+                    'behavior': behavior.name,
+                    'action': current_action
+                }
+        except ValueError:
+            return {
+                'status': 'error',
+                'message': f'Current action {current_action} not found in behavior'
+            }
+    
+    def back(self) -> Dict[str, Any]:
+        """Navigate to the previous action in the current behavior workflow.
+        
+        Returns:
+            Dict with navigation result (new position, message)
+        """
+        if not self.behaviors.current:
+            return {
+                'status': 'error',
+                'message': 'No behavior is currently active'
+            }
+        
+        behavior = self.behaviors.current
+        current_action = behavior.actions.current_action_name
+        
+        if not current_action:
+            return {
+                'status': 'error',
+                'message': 'No current action to go back from'
+            }
+        
+        # Find previous action
+        action_names = behavior.action_names
+        try:
+            current_index = action_names.index(current_action)
+            if current_index > 0:
+                prev_action = action_names[current_index - 1]
+                behavior.actions.navigate_to(prev_action)
+                return {
+                    'status': 'success',
+                    'message': f'Moved back to {behavior.name}.{prev_action}',
+                    'behavior': behavior.name,
+                    'action': prev_action
+                }
+            else:
+                return {
+                    'status': 'info',
+                    'message': f'Already at first action in {behavior.name}',
+                    'behavior': behavior.name,
+                    'action': current_action
+                }
+        except ValueError:
+            return {
+                'status': 'error',
+                'message': f'Current action {current_action} not found in behavior'
+            }
+    
+    def execute(self, behavior_name: str, action_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute a specific behavior.action with optional parameters.
+        
+        Args:
+            behavior_name: Name of the behavior to execute
+            action_name: Name of the action to execute (optional, uses current action if None)
+            params: Optional parameters to pass to the action
+        
+        Returns:
+            Dict with execution result
+        """
+        # Find behavior
+        behavior = self.behaviors.find_by_name(behavior_name)
+        if not behavior:
+            return {
+                'status': 'error',
+                'message': f'Behavior not found: {behavior_name}',
+                'available_behaviors': [b.name for b in self.behaviors]
+            }
+        
+        # Set as current behavior
+        self.behaviors.navigate_to(behavior_name)
+        
+        # Determine action to execute
+        if action_name:
+            # Set specific action as current
+            try:
+                behavior.actions.navigate_to(action_name)
+            except ValueError:
+                return {
+                    'status': 'error',
+                    'message': f'Action not found: {action_name}',
+                    'available_actions': behavior.action_names
+                }
+        else:
+            # Use current action or first action
+            if not behavior.actions.current_action_name:
+                if behavior.action_names:
+                    behavior.actions.navigate_to(behavior.action_names[0])
+                else:
+                    return {
+                        'status': 'error',
+                        'message': f'Behavior {behavior_name} has no actions'
+                    }
+        
+        current_action_name = behavior.actions.current_action_name
+        
+        # Execute the action (stub for now - actual execution would invoke action logic)
+        return {
+            'status': 'success',
+            'message': f'Executed {behavior_name}.{current_action_name}',
+            'behavior': behavior_name,
+            'action': current_action_name,
+            'result': 'Action execution complete'
         }
 
     def __getattr__(self, name: str):

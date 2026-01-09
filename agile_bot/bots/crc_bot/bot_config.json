@@ -9,7 +9,7 @@
   "description": "Helps teams model the solution domain using CRC (Class-Responsibility-Collaborator) cards to define object responsibilities and collaborations",
   "command description": "Execute the current action and current behavior in the crc_bot workflow.",
   "goal": "Transform domain understanding into well-structured CRC models showing object responsibilities, collaborators, and interactions",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "verbose_mode": false,
   "instructions": [
     "**CRC BOT PURPOSE:** Help users create and refine CRC (Class-Responsibility-Collaborator) models from domain understanding.",

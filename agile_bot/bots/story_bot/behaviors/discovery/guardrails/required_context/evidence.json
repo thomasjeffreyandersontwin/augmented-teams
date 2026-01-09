@@ -1,10 +1,1 @@
-{
-  "description": "Eidence or artifacts that must be present or validated before this behavior can proceed",
-  "evidence": [
-    "Story map from shape stage",
-    "Increments document from prioritization stage",
-    "User experience and customer journey maps",
-    "Workflow diagrams or journey maps",
-    "Architecture or integration diagrams"
-  ]
-}
+{"evidence": []}

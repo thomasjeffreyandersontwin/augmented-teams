@@ -5,7 +5,7 @@
   "goal": "Specify stories with detailed, testable scenarios using plain English",
   "inputs": "Acceptance criteria from exploration, domain models, integration contracts",
   "outputs": "Individual story .md files with detailed scenarios (no variables/examples tables)",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
     "Organize stories into delivery increments based on business value, dependencies, and risk"
   ],

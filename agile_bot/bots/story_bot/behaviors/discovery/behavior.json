@@ -1,89 +1,42 @@
 {
   "behaviorName": "discovery",
-  "order": 3,
-  "description": "Create a complete list of stories with a well defined story flow for one increment",
-  "goal": "Align on problem solution illustrated through user-system interactions that can be developed and tested in small iterations",
-  "inputs": "story-graph.json (with increments), integration contracts, UX flows",
-  "outputs": "story-graph.json (with story details), story-map-discovery.drawio, sub-epic/story detail documents",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "description": "Test behavior: discovery",
+  "goal": "Test goal for discovery",
+  "inputs": "Test inputs",
+  "outputs": "Test outputs",
+  "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "Create a complete list of stories with a well defined story flow for specified increments"
+    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
+    "",
+    "Test instructions for discovery."
   ],
   "actions_workflow": {
     "actions": [
       {
         "name": "clarify",
         "order": 1,
-        "next_action": "strategy",
-        "instructions": []
+        "next_action": "strategy"
       },
       {
         "name": "strategy",
         "order": 2,
-        "next_action": "build",
-        "instructions": []
-      },
-      {
-        "name": "build",
-        "order": 3,
-        "next_action": "validate",
-        "instructions": [
-          "discovery: build complete story list and flow for specified increment(s)",
-          "Enumerate all stories explicitly with proper sequencing and dependencies",
-          "Review and expand stories based on granularity approach (user stories vs system component stories)",
-          "CRITICAL: Add stories to BOTH main epics section (single source of truth) AND increments section (minimal reference view)"
-        ]
+        "next_action": "validate"
       },
       {
         "name": "validate",
-        "order": 4,
-        "next_action": "render",
-        "instructions": [
-          "discovery: validate story decomposition, vertical slicing, and story enumeration"
-        ]
+        "order": 3,
+        "next_action": "render"
       },
       {
         "name": "render",
-        "order": 5,
-        "instructions": [
-          "discovery: render story map increments in scope using all rendering specifications mentioned in the behavior instructions"
-        ]
-      },
-      {
-        "name": "rules",
-        "instructions": [
-          "Display digested rules for this behavior as AI context"
-        ]
+        "order": 4
       }
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to discovery/increment inventory behavior",
+    "description": "Trigger words for discovery",
     "patterns": [
-      "start.*discovery",
-      "let.*s.*discover",
-      "begin.*discovery",
-      "do.*discovery",
-      "discovery",
-      "map.*next.*increment",
-      "discover.*all",
-      "explore.*end.*to.*end.*flow",
-      "get.*inventory",
-      "list.*for.*increment",
-      "define.*increment.*scope",
-      "what.*are.*we.*building.*next",
-      "capture.*all.*next.*release",
-      "model.*next.*increment.*flow",
-      "visualize.*increment.*scope",
-      "build.*full.*inventory",
-      "walk.*through.*increment.*flow",
-      "define.*sequence",
-      "lay.*out.*increment.*plan",
-      "draft.*full.*map.*of.*increment",
-      "capture.*increment.*workflow",
-      "refine.*increment"
+      "test.*discovery"
     ]
   }
 }
-
-

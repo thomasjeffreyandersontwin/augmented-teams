@@ -5,7 +5,7 @@
   "goal": "Create a comprehensive CRC model from domain concepts captured in story-graph.json - define responsibilities, collaborators, relationships, and modules",
   "inputs": "story-graph.json domain concepts, domain expert interviews, existing domain documentation, source code folder structure",
   "outputs": "crc-model-outline.md, crc-model-description.md, crc-model-diagram.mmd (grouped by modules)",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
     "Synthesize context into CRC cards and build a CRC model that connects business and solution language"
   ],

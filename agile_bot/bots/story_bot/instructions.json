@@ -3,7 +3,7 @@
   "description": "Helps teams create, refine, and specify user stories from initial idea through to executable specifications",
   "goal": "Transform user needs into well-structured, testable stories using a progressive refinement workflow",
   "behaviorName": "story_bot_entry",
-  "baseActionsPath": "agile_bot/bots/base_bot/base_actions",
+  "baseActionsPath": "agile_bot/base_actions",
   "behaviors": {
     "1_shape": "Create initial story map outline (epics, features, stories) from user context",
     "2_prioritization": "Organize stories into delivery increments based on value and dependencies",
