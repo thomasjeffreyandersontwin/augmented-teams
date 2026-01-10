@@ -1,7 +1,6 @@
 """
 Minimal OutputFormatter for display helpers (icons, separators).
 
-NOTE: This is NOT for serialization (adapters handle that).
 This is ONLY for display utilities in TTY output.
 """
 

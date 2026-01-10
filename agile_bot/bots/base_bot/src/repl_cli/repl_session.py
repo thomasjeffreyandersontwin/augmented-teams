@@ -23,20 +23,6 @@ class REPLSession:
         
         # Formatter for display helpers (icons, separators)
         self.formatter = OutputFormatter()
-        
-        # Adapter selection (from walkthrough lines 58-65)
-        # Detect output context and select adapter for serialization
-        # Adapter gets session context (workspace, scope) for enriching bot data
-        from .adapters.json_bot_adapter import JSONBotAdapter
-        from .adapters.tty_bot_adapter import TTYBotAdapter
-        
-        isTTY = sys.stdout.isatty()
-        isPiped = not isTTY
-        
-        if isPiped:  # Panel subprocess
-            self.adapter = JSONBotAdapter(self.cli_bot.domain_bot, session=self)
-        elif isTTY:  # Interactive terminal
-            self.adapter = TTYBotAdapter(self.cli_bot.domain_bot, session=self)
     
     @property
     def bot(self):
@@ -425,27 +411,36 @@ class REPLSession:
         return REPLCommandResponse(output=full_output, response=output, status="success")
     
     def _handle_status_command(self, format='text') -> REPLCommandResponse:
-        """Handle status command - adapter does everything.
+        """Handle status command - display current state.
         
-        Adapter returns complete formatted output (TTY or JSON with status field).
-        Minimal wrapper just to return to repl_main.
+        Returns formatted output (text or JSON format).
         """
         if format == 'json':
             return self._handle_status_command_json()
         
-        # Adapter returns complete output - minimal wrapper
-        output = self.adapter.status()
-        return REPLCommandResponse(output=output, response="", status="success")
+        # Use display_current_state for text format
+        state_display = self.display_current_state(format='text')
+        return REPLCommandResponse(output=state_display.output, response="", status="success")
     
     def _handle_status_command_json(self) -> REPLCommandResponse:
         """Handle status command with JSON output format.
         
-        Adapter returns complete JSON (includes status field inside JSON).
-        Minimal wrapper just to return to repl_main.
+        Returns JSON formatted status.
         """
-        # Adapter returns complete JSON with status field - minimal wrapper
-        output = self.adapter.status()
-        return REPLCommandResponse(output=output, response="", status="success")
+        import json
+        # Use display_current_state with JSON format
+        state_display = self.display_current_state(format='json')
+        
+        # Wrap in JSON structure
+        json_output = {
+            "status": "success",
+            "output": state_display.output,
+            "current_behavior": state_display.current_behavior,
+            "current_action": state_display.current_action,
+            "breadcrumbs": state_display.breadcrumbs
+        }
+        
+        return REPLCommandResponse(output=json.dumps(json_output, indent=2), response="", status="success")
     
     def _handle_current_command(self, auto_execute_instructions=False) -> REPLCommandResponse:
         if not self.has_current_action:

@@ -1,6 +1,12 @@
 {
   "name": "story_bot",
   "behaviors": [
-    "shape"
+    "shape",
+    "prioritization",
+    "discovery",
+    "exploration",
+    "scenarios",
+    "tests",
+    "code"
   ]
 }

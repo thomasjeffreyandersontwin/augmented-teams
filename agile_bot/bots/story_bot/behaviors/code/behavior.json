@@ -1,1 +1,73 @@
-{"behaviorName": "code", "description": "Test behavior: code", "goal": "Test goal for code", "inputs": "Test inputs", "outputs": "Test outputs", "baseActionsPath": "agile_bot/base_actions", "instructions": ["Test instructions for code."], "trigger_words": {"description": "Trigger words for code", "patterns": ["test.*code"], "priority": 10}}
+{
+  "behaviorName": "code",
+  "order": 7,
+  "description": "Generate production source code from domain model and story specifications",
+  "goal": "Create clean, maintainable production code that implements story behavior",
+  "inputs": "Domain model, story specifications, and test files",
+  "outputs": "Source code files (.py, .js, etc.) with production implementation",
+  "baseActionsPath": "agile_bot/base_actions",
+  "instructions": [
+    "Create clean, maintainable production code that implements story behavior",
+    "**CODE MUST FOLLOW CLEAN CODE PRINCIPLES:**"
+  ],
+  "actions_workflow": {
+    "actions": [
+      {
+        "name": "clarify",
+        "order": 1,
+        "next_action": "strategy",
+        "instructions": []
+      },
+      {
+        "name": "strategy",
+        "order": 2,
+        "next_action": "build",
+        "instructions": []
+      },
+      {
+        "name": "build",
+        "order": 3,
+        "next_action": "validate",
+        "instructions": [
+          "code: render code required to implement all tests that have been recently built or updated"
+        ]
+      },
+      {
+        "name": "validate",
+        "order": 4,
+        "next_action": "render",
+        "instructions": [
+          "code: validate source code quality AND domain model refinements",
+          "Validate that all source files, classes, and functions are properly mapped to story-graph.json",
+          "MANDATORY: Discover and pass code_files parameter - CodeScanner requires explicit file paths to scan for violations"
+        ]
+      },
+      {
+        "name": "render",
+        "order": 5,
+        "instructions": [
+          "code: build clean code"
+        ]
+      }
+    ]
+  },
+  "trigger_words": {
+    "description": "Behavior-level trigger words - specific to production code generation behavior",
+    "patterns": [
+      "generate.*source.*code",
+      "create.*production.*code",
+      "write.*source.*files",
+      "implement.*production.*code",
+      "generate.*implementation",
+      "create.*source.*files",
+      "write.*production.*code",
+      "implement.*source.*code",
+      "generate.*code",
+      "create.*code",
+      "write.*code",
+      "implement.*code",
+      "production.*code",
+      "source.*code.*generation"
+    ]
+  }
+}
