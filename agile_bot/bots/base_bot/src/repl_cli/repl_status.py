@@ -91,7 +91,11 @@ class REPLStatus:
                     a_name = action.action_name
                     is_current_action = (is_current_behavior and a_name == current_action_name)
                     # Use domain logic to determine completion
-                    is_completed_action = behavior.actions.is_action_completed(a_name)
+                    # If the behavior itself is completed, all its actions are completed
+                    if is_completed_behavior:
+                        is_completed_action = True
+                    else:
+                        is_completed_action = behavior.actions.is_action_completed(a_name)
                     
                     # Get action description if available
                     a_desc = getattr(action, 'description', '') or ''
