@@ -100,7 +100,7 @@ if [ "$DO_ALL" = true ] || [ "$DO_CLI" = true ]; then
     echo -e "${YELLOW}[CLI] Generating CLI scripts and Cursor commands...${NC}"
     
     python3 -c "
-from agile_bot.bots.base_bot.src.cli.cli_generator import CliGenerator
+from agile_bot.src.cli.cli_generator import CliGenerator
 from pathlib import Path
 
 gen = CliGenerator(Path.cwd(), '$BOT_PATH')

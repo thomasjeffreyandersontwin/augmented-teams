@@ -36,8 +36,8 @@ if 'WORKING_AREA' not in os.environ and 'WORKING_DIR' not in os.environ:
         elif 'WORKING_AREA' in bot_config:
             os.environ['WORKING_AREA'] = bot_config['WORKING_AREA']
 
-from agile_bot.bots.base_bot.src.cli.cli_generator import CliGenerator
-from agile_bot.bots.base_bot.src.cli.cursor.command_generator import CursorCommandGenerator
+from agile_bot.src.cli.cli_generator import CliGenerator
+from agile_bot.src.cli.cursor.cursor_command_visitor import CursorCommandGenerator
 from agile_bot.bots.base_bot.src.mcp.mcp_server_generator import MCPServerGenerator
 
 
@@ -73,9 +73,9 @@ def main():
     try:
         from agile_bot.bots.base_bot.src.bot.bot import Bot
         bot = Bot(bot_name=cli_generator.bot_name, bot_directory=bot_directory, config_path=bot_directory / 'bot_config.json')
-        cursor_generator = CursorCommandGenerator(workspace_root, bot_location, cli_generator.bot_name)
-        cursor_commands = cursor_generator.generate_cursor_commands(cli_results['cli_python'], bot)
-        registry_path = cursor_generator.update_bot_registry(cli_results['cli_python'])
+        cursor_visitor = CursorCommandGenerator(workspace_root, bot_location, bot, cli_generator.bot_name)
+        cursor_commands = cursor_visitor.generate()
+        registry_path = cursor_visitor.update_bot_registry(cli_results['cli_python'])
         
         print(f"  [OK] Cursor commands: {len(cursor_commands)} files")
         print(f"  [OK] Registry: {registry_path}")

@@ -57,7 +57,7 @@ if ($all -or $cli) {
     Write-Host "[CLI] Generating CLI scripts and Cursor commands..." -ForegroundColor Yellow
     
     $cliScript = @"
-from agile_bot.bots.base_bot.src.cli.cli_generator import CliGenerator
+from agile_bot.src.cli.cli_generator import CliGenerator
 from pathlib import Path
 
 gen = CliGenerator(Path.cwd(), '$botPath')
