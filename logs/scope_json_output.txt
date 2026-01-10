@@ -1,0 +1,86 @@
+{
+  "type": "story",
+  "value": [
+    "Story A1"
+  ],
+  "exclude": [],
+  "skiprule": []
+}
+
+====================================================================================================
+INSTRUCTIONS
+====================================================================================================
+{
+  "base_instructions": [
+    "**Look for context in the following locations:**",
+    "- in this message and chat history",
+    "- in `C:/Users/thoma/AppData/Local/Temp/tmp8mc27p0t/workspace/docs/context/`",
+    "- generated files in `C:/Users/thoma/AppData/Local/Temp/tmp8mc27p0t/workspace/docs/stories/`",
+    "  clarification.json, strategy.json",
+    "",
+    "validate base instructions",
+    "shape: validate hierarchy, story structure, AND domain model",
+    "Apply story shaping rules (context: 'when shaping stories') for story structure",
+    "Apply domain shaping rules (context: 'when shaping the domain') for domain model validation"
+  ],
+  "config_path": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\content\\knowledge_graph\\story-graph-outline.json",
+  "rules": [
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\active_business_and_behavioral_language.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\lightweight_and_precise.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\outcome_oriented_language.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\small_and_testable.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\story_map_existing_code.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\user_and_system_behavior.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\valuable.json",
+    "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot\\behaviors\\shape\\rules\\verb_noun_format.json"
+  ],
+  "behavior_metadata": {
+    "name": "shape",
+    "description": "Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements",
+    "instructions": [
+      "Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements"
+    ]
+  },
+  "behavior_instructions": {
+    "name": "shape",
+    "description": "Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements",
+    "instructions": [
+      "Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements"
+    ]
+  },
+  "action_metadata": {
+    "name": "validate",
+    "description": "",
+    "instructions": [
+      "shape: validate hierarchy, story structure, AND domain model",
+      "Apply story shaping rules (context: 'when shaping stories') for story structure",
+      "Apply domain shaping rules (context: 'when shaping the domain') for domain model validation"
+    ]
+  },
+  "action_instructions": {
+    "name": "validate",
+    "description": "",
+    "instructions": [
+      "shape: validate hierarchy, story structure, AND domain model",
+      "Apply story shaping rules (context: 'when shaping stories') for story structure",
+      "Apply domain shaping rules (context: 'when shaping the domain') for domain model validation"
+    ]
+  },
+  "display_content": []
+}
+
+{
+  "name": "story_bot",
+  "bot_directory": "C:\\dev\\augmented-teams\\agile_bot\\bots\\story_bot",
+  "workspace_directory": "C:\\Users\\thoma\\AppData\\Local\\Temp\\tmp8mc27p0t\\workspace",
+  "behavior_names": [
+    "shape",
+    "prioritization",
+    "discovery",
+    "exploration",
+    "scenarios",
+    "tests",
+    "code"
+  ],
+  "current_behavior": "shape"
+}

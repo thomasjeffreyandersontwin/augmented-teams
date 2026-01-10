@@ -1,0 +1,1 @@
+{"name": "clarify", "workflow": true, "order": 1, "instructions": ["clarify base instructions"], "next_action": "strategy"}

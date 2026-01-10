@@ -1,0 +1,91 @@
+## 🎯 Scope
+**🎯 Current Scope:** Story A1## Story Graph
+**Path:** `C:\Users\thoma\AppData\Local\Temp\tmp8mc27p0t\workspace\docs\stories\story-graph.json`**Epic Count:** 1### Epics
+- 🎯  **Epic A**    - ⚙️  Sub-Epic A1      - 📝  Story A1To change scope (pick ONE - setting a new scope replaces the previous):- `scope all` - Clear scope, work on entire project
+- `scope "Story Name"` - Filter by story (replaces any file scope)
+- `scope "file:C:/path/to/**/*.py"` - Filter by files (replaces any story scope)
+---
+
+====================================================================================================
+INSTRUCTIONS
+====================================================================================================
+## Behavior Instructions - shape
+
+The purpose of this behavior is to create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements
+
+Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements
+
+## Action Instructions - validate
+
+shape: validate hierarchy, story structure, AND domain model
+Apply story shaping rules (context: 'when shaping stories') for story structure
+Apply domain shaping rules (context: 'when shaping the domain') for domain model validation
+
+---
+
+**Look for context in the following locations:**
+- in this message and chat history
+- in `C:/Users/thoma/AppData/Local/Temp/tmp8mc27p0t/workspace/docs/context/`
+- generated files in `C:/Users/thoma/AppData/Local/Temp/tmp8mc27p0t/workspace/docs/stories/`
+  clarification.json, strategy.json
+
+validate base instructions
+shape: validate hierarchy, story structure, AND domain model
+Apply story shaping rules (context: 'when shaping stories') for story structure
+Apply domain shaping rules (context: 'when shaping the domain') for domain model validation
+
+
+---
+## CLI STATUS section
+
+
+This section contains current scope filter (if set), current progress in workflow, and available commands
+
+Review the CLI STATUS section below to understand both current state and available commands.
+
+**☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️**
+
+---
+
+## 🤖 Bot: story_bot
+
+## Bot Paths
+**Workspace:** `C:\Users\thoma\AppData\Local\Temp\tmp8mc27p0t\workspace`**Bot Directory:** `C:\dev\augmented-teams\agile_bot\bots\story_bot`**Base Actions:** `C:\dev\augmented-teams\agile_bot\base_actions`**Documentation:** `docs\stories`**Python Root:** `C:\dev\augmented-teams`
+## 🎯 Scope
+**🎯 Current Scope:** Story A1## Story Graph
+**Path:** `C:\Users\thoma\AppData\Local\Temp\tmp8mc27p0t\workspace\docs\stories\story-graph.json`**Epic Count:** 1### Epics
+- 🎯  **Epic A**    - ⚙️  Sub-Epic A1      - 📝  Story A1To change scope (pick ONE - setting a new scope replaces the previous):- `scope all` - Clear scope, work on entire project
+- `scope "Story Name"` - Filter by story (replaces any file scope)
+- `scope "file:C:/path/to/**/*.py"` - Filter by files (replaces any story scope)
+---
+
+## 🗺️ Progress
+
+
+**Current Position:** shape.validate
+
+# Behaviors
+## Current: shape
+## All Behaviors
+- → shape
+-   prioritization
+-   discovery
+-   exploration
+-   scenarios
+-   tests
+-   code
+
+
+## 💻 Commands
+
+
+**status | back | current | next | path [dir] | scope [filter] | headless "msg" | help | exit**
+
+```powershell
+echo '[command]' | python -m agile_bot.src.cli.cli_main
+```
+
+---
+
+**Behaviors:** **shape** | prioritization | discovery | exploration | scenarios | tests | code
+**Actions:** clarify | strategy | build | **validate** | render | rules

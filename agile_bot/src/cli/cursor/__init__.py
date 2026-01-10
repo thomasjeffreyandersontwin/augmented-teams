@@ -1,0 +1,1 @@
+"""Cursor command generation package."""

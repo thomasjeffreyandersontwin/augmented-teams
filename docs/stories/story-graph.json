@@ -1,0 +1,20 @@
+{
+  "epics": [
+    {
+      "name": "Test Epic",
+      "sub_epics": [
+        {
+          "name": "Sub Epic 1",
+          "stories": [
+            {
+              "name": "Story A"
+            },
+            {
+              "name": "Story B"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "behaviorName": "arrange",
+  "description": "Test behavior: arrange",
+  "goal": "Test goal for arrange",
+  "inputs": "Test inputs",
+  "outputs": "Test outputs",
+  "baseActionsPath": "agile_bot/base_actions",
+  "instructions": [
+    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
+    "",
+    "Test instructions for arrange."
+  ],
+  "actions_workflow": {
+    "actions": [
+      {
+        "name": "clarify",
+        "order": 1,
+        "next_action": "strategy",
+        "instructions": [
+          "Follow agile_bot/base_actions/clarify/action_config.json",
+          "Test instructions for clarify in arrange"
+        ]
+      },
+      {
+        "name": "strategy",
+        "order": 2,
+        "next_action": "validate",
+        "instructions": [
+          "Follow agile_bot/base_actions/strategy/action_config.json",
+          "Test instructions for strategy in arrange"
+        ]
+      },
+      {
+        "name": "validate",
+        "order": 3,
+        "next_action": "render",
+        "instructions": [
+          "Follow agile_bot/base_actions/validate/action_config.json",
+          "Test instructions for validate in arrange"
+        ]
+      },
+      {
+        "name": "render",
+        "order": 4,
+        "instructions": [
+          "Follow agile_bot/base_actions/render/action_config.json",
+          "Test instructions for render in arrange"
+        ]
+      }
+    ]
+  },
+  "trigger_words": {
+    "description": "Trigger words for arrange",
+    "patterns": [
+      "test.*arrange"
+    ]
+  }
+}

@@ -1,0 +1,510 @@
+"""
+Scope domain object for filtering bot operations.
+
+Scope is a stateful domain object that:
+- Holds workspace context
+- Manages filter criteria (story/file filters)
+- Provides results as domain objects (StoryGraph or file list)
+"""
+
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Union
+from dataclasses import dataclass, field
+from enum import Enum
+import json
+
+
+class ScopeType(Enum):
+    ALL = 'all'
+    SHOW_ALL = 'showAll'
+    STORY = 'story'  # Searches across all graph levels (epic/sub-epic/story)
+    INCREMENT = 'increment'
+    FILES = 'files'
+
+
+@dataclass
+class KnowledgeGraphFilter:
+    """Filters content by knowledge graph nodes (stories, epics, sub-epics).
+    
+    Used for filtering operations to specific parts of the story graph.
+    Searches across ALL levels of the hierarchy (epic/sub-epic/story).
+    """
+    search_terms: List[str] = field(default_factory=list)
+    increments: List[int] = field(default_factory=list)
+    
+    def matches_node(self, node_name: str) -> bool:
+        """Check if node (epic/sub-epic/story) matches filter."""
+        if not self.search_terms:
+            return True
+        return node_name in self.search_terms
+    
+    def filter_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter knowledge graph to only nodes matching this filter.
+        
+        Searches ALL levels (epics, sub-epics, nested sub-epics, stories) regardless of where the term appears.
+        Recursively handles nested sub-epics at any depth.
+        """
+        if not self.search_terms and not self.increments:
+            return knowledge_graph
+        
+        all_filter_names = self.search_terms
+        
+        def name_matches(name: str) -> bool:
+            return any(filter_name.lower() in name.lower() for filter_name in all_filter_names)
+        
+        def filter_sub_epic(sub_epic: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+            """Recursively filter a sub-epic and its nested sub-epics.
+            
+            Returns:
+                Filtered sub-epic dict if it or any of its children match, None otherwise.
+            """
+            sub_epic_name = sub_epic.get('name', '')
+            
+            # Check if this sub-epic itself matches - if so, include entire sub-epic with all stories
+            if name_matches(sub_epic_name):
+                return sub_epic  # Include entire sub-epic if name matches
+            
+            # Check stories in story groups
+            matching_story_groups = []
+            for story_group in sub_epic.get('story_groups', []):
+                matching_stories = []
+                for story in story_group.get('stories', []):
+                    if name_matches(story.get('name', '')):
+                        matching_stories.append(story)
+                
+                if matching_stories:
+                    matching_story_groups.append({
+                        **story_group,
+                        'stories': matching_stories
+                    })
+            
+            # Check direct stories
+            matching_direct_stories = []
+            for story in sub_epic.get('stories', []):
+                if name_matches(story.get('name', '')):
+                    matching_direct_stories.append(story)
+            
+            # Recursively filter nested sub-epics
+            filtered_nested_sub_epics = []
+            for nested_sub_epic in sub_epic.get('sub_epics', []):
+                filtered_nested = filter_sub_epic(nested_sub_epic)
+                if filtered_nested:
+                    filtered_nested_sub_epics.append(filtered_nested)
+            
+            # If we have matches at any level, include this sub-epic
+            if matching_story_groups or matching_direct_stories or filtered_nested_sub_epics:
+                filtered_sub_epic = {**sub_epic}
+                if matching_story_groups:
+                    filtered_sub_epic['story_groups'] = matching_story_groups
+                if matching_direct_stories:
+                    filtered_sub_epic['stories'] = matching_direct_stories
+                if filtered_nested_sub_epics:
+                    filtered_sub_epic['sub_epics'] = filtered_nested_sub_epics
+                return filtered_sub_epic
+            
+            return None
+        
+        filtered_graph = {'epics': []}
+        epics = knowledge_graph.get('epics', [])
+        
+        for epic in epics:
+            epic_name = epic.get('name', '')
+            
+            if name_matches(epic_name):
+                filtered_graph['epics'].append(epic)
+                continue
+            
+            # Filter sub-epics recursively
+            filtered_sub_epics = []
+            for sub_epic in epic.get('sub_epics', []):
+                filtered_sub = filter_sub_epic(sub_epic)
+                if filtered_sub:
+                    filtered_sub_epics.append(filtered_sub)
+            
+            if filtered_sub_epics:
+                filtered_epic = {**epic, 'sub_epics': filtered_sub_epics}
+                filtered_graph['epics'].append(filtered_epic)
+        
+        return filtered_graph
+
+
+@dataclass
+class FileFilter:
+    """Filters files by path patterns.
+    
+    Supports glob patterns for include/exclude.
+    """
+    include_patterns: List[str] = field(default_factory=list)
+    exclude_patterns: List[str] = field(default_factory=list)
+    
+    def matches_file(self, file_path: Path) -> bool:
+        """Check if file matches the filter.
+        
+        Note: This method performs simple substring matching. For full glob pattern
+        matching, use filter_files() which implements complete glob pattern support.
+        """
+        if not self.include_patterns:
+            return True
+        file_str = str(file_path)
+        for pattern in self.include_patterns:
+            if pattern in file_str:
+                return True
+        return False
+    
+    def filter_files(self, file_list: List[Path]) -> List[Path]:
+        """Filter file list to only files matching this filter."""
+        if not self.include_patterns and not self.exclude_patterns:
+            return file_list
+        
+        from pathlib import PurePath
+        filtered = []
+        
+        for file_path in file_list:
+            file_str = str(file_path).replace('\\', '/')
+            file_path_obj = PurePath(file_str)
+            
+            if self.include_patterns:
+                matches_include = False
+                for pattern in self.include_patterns:
+                    pattern_normalized = pattern.replace('\\', '/')
+                    try:
+                        if (file_path_obj.match(pattern_normalized) or
+                            file_path_obj.match(f'**/{pattern_normalized}') or
+                            pattern_normalized in file_str):
+                            matches_include = True
+                            break
+                    except (ValueError, TypeError):
+                        if pattern_normalized in file_str:
+                            matches_include = True
+                            break
+                
+                if not matches_include:
+                    continue
+            
+            if self.exclude_patterns:
+                matches_exclude = False
+                for pattern in self.exclude_patterns:
+                    pattern_normalized = pattern.replace('\\', '/')
+                    try:
+                        if (file_path_obj.match(pattern_normalized) or
+                            file_path_obj.match(f'**/{pattern_normalized}') or
+                            pattern_normalized in file_str):
+                            matches_exclude = True
+                            break
+                    except (ValueError, TypeError):
+                        if pattern_normalized in file_str:
+                            matches_exclude = True
+                            break
+                
+                if matches_exclude:
+                    continue
+            
+            filtered.append(file_path)
+        
+        return filtered
+
+
+class Scope:
+    """Scope for filtering bot operations to specific content.
+    
+    Scope is created once with workspace context and provides:
+    - filter() method to set filter criteria
+    - results property that returns filtered StoryGraph or file list
+    - Persistence to bot state file
+    """
+    
+    def __init__(self, workspace_directory: Path, bot_paths=None):
+        """Initialize Scope with workspace context.
+        
+        Args:
+            workspace_directory: Workspace directory path
+            bot_paths: Optional BotPath for story graph loading
+        """
+        self.workspace_directory = Path(workspace_directory)
+        self.bot_paths = bot_paths
+        
+        # Filter state
+        self.type = ScopeType.ALL
+        self.value: List[str] = []
+        self.exclude: List[str] = []
+        self.skiprule: List[str] = []
+        
+        # Internal filters
+        self._knowledge_graph_filter: Optional[KnowledgeGraphFilter] = None
+        self._file_filter: Optional[FileFilter] = None
+        
+        # Cached results
+        self._cached_results = None
+        self._results_dirty = True
+    
+    def filter(self, type: ScopeType, value: List[str] = None, exclude: List[str] = None, skiprule: List[str] = None):
+        """Set filter criteria.
+        
+        Args:
+            type: Scope type (STORY, FILES, etc.)
+            value: Filter values (story names, file patterns, etc.)
+            exclude: Exclusion patterns
+            skiprule: Rules to skip
+        """
+        self.type = type
+        self.value = value or []
+        self.exclude = exclude or []
+        self.skiprule = skiprule or []
+        
+        # Rebuild filters
+        self._rebuild_filters()
+        
+        # Mark results as dirty
+        self._results_dirty = True
+        self._cached_results = None
+    
+    def clear(self):
+        """Clear all filters."""
+        self.filter(ScopeType.ALL, [], [], [])
+    
+    def _rebuild_filters(self):
+        """Rebuild internal filter objects from current criteria."""
+        self._knowledge_graph_filter = None
+        self._file_filter = None
+        
+        if self.type in (ScopeType.STORY, ScopeType.INCREMENT):
+            if self.type == ScopeType.STORY:
+                self._knowledge_graph_filter = KnowledgeGraphFilter(search_terms=self.value)
+            elif self.type == ScopeType.INCREMENT:
+                increments = [int(v) if isinstance(v, str) and v.isdigit() else v for v in self.value]
+                self._knowledge_graph_filter = KnowledgeGraphFilter(increments=increments)
+        
+        if self.type == ScopeType.FILES:
+            self._file_filter = FileFilter(
+                include_patterns=self.value,
+                exclude_patterns=self.exclude
+            )
+    
+    @property
+    def results(self) -> Union['StoryGraph', List[Path], None]:
+        """Get filtered results as domain objects.
+        
+        Returns:
+            - StoryGraph object for story/epic/increment scopes
+            - List of Path objects for file scopes
+            - None for ALL scope
+        """
+        if not self._results_dirty and self._cached_results is not None:
+            return self._cached_results
+        
+        # Compute results based on scope type
+        if self.type in (ScopeType.STORY, ScopeType.INCREMENT, ScopeType.SHOW_ALL):
+            self._cached_results = self._get_story_graph_results()
+        elif self.type == ScopeType.FILES:
+            self._cached_results = self._get_file_results()
+        else:
+            self._cached_results = None
+        
+        self._results_dirty = False
+        return self._cached_results
+    
+    def _get_story_graph_results(self):
+        """Get filtered story graph as StoryGraph object."""
+        story_graph_path = self.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
+        
+        if not story_graph_path.exists():
+            return None
+        
+        try:
+            # Load and filter graph data
+            graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
+            
+            if self._knowledge_graph_filter:
+                filtered_data = self._knowledge_graph_filter.filter_knowledge_graph(graph_data)
+            else:
+                filtered_data = graph_data
+            
+            # Create StoryGraph domain object with filtered data
+            from ..story_graph.story_graph import StoryGraph
+            from ..bot_path import BotPath
+            
+            # Use bot_paths if available, otherwise create minimal one
+            if self.bot_paths:
+                story_graph = StoryGraph(self.bot_paths, self.workspace_directory, require_file=False)
+            else:
+                # Create minimal BotPath just for story graph
+                bot_path = BotPath(bot_directory=self.workspace_directory)
+                story_graph = StoryGraph(bot_path, self.workspace_directory, require_file=False)
+            
+            # Replace content with filtered data
+            story_graph._content = filtered_data
+            
+            return story_graph
+        except Exception as e:
+            import logging
+            logging.error(f"Error loading story graph: {e}")
+            return None
+    
+    def _get_file_results(self) -> List[Path]:
+        """Get filtered file list."""
+        import glob as glob_module
+        
+        all_files = []
+        paths = self.value if isinstance(self.value, list) else [self.value]
+        
+        for path_str in paths:
+            has_glob = any(char in path_str for char in ['*', '?', '['])
+            
+            if has_glob:
+                if not Path(path_str).is_absolute():
+                    pattern = str(self.workspace_directory / path_str)
+                else:
+                    pattern = path_str
+                
+                matched_files = glob_module.glob(pattern, recursive=True)
+                for match in matched_files:
+                    match_path = Path(match)
+                    if match_path.is_file():
+                        all_files.append(match_path)
+            else:
+                file_path = Path(path_str)
+                if not file_path.is_absolute():
+                    file_path = self.workspace_directory / file_path
+                
+                if file_path.exists() and file_path.is_dir():
+                    py_files = list(file_path.rglob('*.py'))
+                    all_files.extend(py_files)
+                elif file_path.exists() and file_path.is_file():
+                    all_files.append(file_path)
+        
+        return all_files
+    
+    @property
+    def knowledge_graph_filter(self) -> Optional[KnowledgeGraphFilter]:
+        return self._knowledge_graph_filter
+    
+    @property
+    def file_filter(self) -> Optional[FileFilter]:
+        return self._file_filter
+    
+    def filters_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Legacy method - filters knowledge graph dict."""
+        if self._knowledge_graph_filter:
+            return self._knowledge_graph_filter.filter_knowledge_graph(knowledge_graph)
+        return knowledge_graph
+    
+    def filters_files(self, file_list: List[Path]) -> List[Path]:
+        """Legacy method - filters file list."""
+        if self._file_filter:
+            return self._file_filter.filter_files(file_list)
+        return file_list
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize scope criteria to dict for persistence."""
+        return {
+            'type': self.type.value,
+            'value': self.value,
+            'exclude': self.exclude,
+            'skiprule': self.skiprule,
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], workspace_directory: Path, bot_paths=None) -> 'Scope':
+        """Load scope from dict.
+        
+        Args:
+            data: Scope data dict
+            workspace_directory: Workspace directory
+            bot_paths: Optional BotPath
+        """
+        scope = cls(workspace_directory, bot_paths)
+        
+        if not data:
+            return scope
+        
+        scope_type_str = data.get('type', 'all')
+        try:
+            scope_type = ScopeType(scope_type_str)
+        except ValueError:
+            raise ValueError(f"Invalid scope type: '{scope_type_str}'. Valid types: {[t.value for t in ScopeType]}")
+        
+        value = data.get('value', [])
+        if not isinstance(value, list):
+            value = [value] if value else []
+        
+        exclude = data.get('exclude', [])
+        if not isinstance(exclude, list):
+            exclude = [exclude] if exclude else []
+        
+        skiprule = data.get('skiprule', [])
+        if not isinstance(skiprule, list):
+            skiprule = [skiprule] if skiprule else []
+        
+        scope.filter(scope_type, value, exclude, skiprule)
+        
+        return scope
+    
+    def save(self):
+        """Save scope to bot state file."""
+        state_file = self.workspace_directory / 'behavior_action_state.json'
+        
+        if state_file.exists():
+            try:
+                state_data = json.loads(state_file.read_text())
+            except (json.JSONDecodeError, IOError):
+                state_data = {}
+        else:
+            state_data = {}
+        
+        state_data['scope'] = self.to_dict()
+        
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(json.dumps(state_data, indent=2))
+    
+    def load(self):
+        """Load scope from bot state file."""
+        state_file = self.workspace_directory / 'behavior_action_state.json'
+        
+        if not state_file.exists():
+            return
+        
+        try:
+            state_data = json.loads(state_file.read_text())
+            scope_data = state_data.get('scope')
+            
+            if scope_data:
+                # Update this instance from loaded data
+                scope_type_str = scope_data.get('type', 'all')
+                scope_type = ScopeType(scope_type_str)
+                
+                value = scope_data.get('value', [])
+                if not isinstance(value, list):
+                    value = [value] if value else []
+                
+                exclude = scope_data.get('exclude', [])
+                if not isinstance(exclude, list):
+                    exclude = [exclude] if exclude else []
+                
+                skiprule = scope_data.get('skiprule', [])
+                if not isinstance(skiprule, list):
+                    skiprule = [skiprule] if skiprule else []
+                
+                self.filter(scope_type, value, exclude, skiprule)
+        except (json.JSONDecodeError, IOError, ValueError):
+            pass
+    
+    # Legacy methods for backward compatibility
+    def apply_to_bot(self, workspace_directory: Path = None):
+        """Legacy method - save scope to state file."""
+        self.save()
+    
+    @staticmethod
+    def clear_from_bot(workspace_directory: Path) -> None:
+        """Clear scope from bot state file."""
+        state_file = workspace_directory / 'behavior_action_state.json'
+        
+        if not state_file.exists():
+            return
+        
+        try:
+            state_data = json.loads(state_file.read_text())
+            if 'scope' in state_data:
+                del state_data['scope']
+                state_file.write_text(json.dumps(state_data, indent=2))
+        except (json.JSONDecodeError, IOError):
+            pass
