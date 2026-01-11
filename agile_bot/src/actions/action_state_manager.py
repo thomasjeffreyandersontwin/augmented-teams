@@ -152,17 +152,3 @@ class ActionStateManager:
             if action.action_name == action_name:
                 return i
         return -1
-
-    def filter_completed_actions_after_target(self, completed_actions: list, target_index: int, actions_list: List) -> list:
-        action_names_after_target = [a.action_name for a in actions_list[target_index + 1:]]
-        expected_behavior_prefix = f'{self.behavior.bot_name}.{self.behavior.name}.'
-        filtered = []
-        for completed_action in completed_actions:
-            action_state = completed_action.get('action_state', '')
-            if not action_state.startswith(expected_behavior_prefix):
-                filtered.append(completed_action)
-                continue
-            completed_action_name = action_state.split('.')[-1]
-            if completed_action_name not in action_names_after_target:
-                filtered.append(completed_action)
-        return filtered

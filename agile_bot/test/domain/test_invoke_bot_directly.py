@@ -1634,7 +1634,6 @@ def given_bot_with_multiple_behaviors_setup(bot_directory: Path, workspace_direc
         behaviors = ['shape', 'prioritization', 'discovery']
     
     bot_name = 'story_bot'
-    bot, workspace = setup_test_bot(tmp_path)
     
     from agile_bot.test.domain.test_helpers import create_actions_workflow_json
     # Create workflow with standard actions (no build)
@@ -1698,8 +1697,6 @@ def given_all_actions_completed_for_behavior(workspace_directory: Path, bot_name
 
 def given_behavior_created_without_bot_instance(bot_directory: Path, workspace_directory: Path, behavior_name: str):
     """Given: Behavior is created without bot instance."""
-    bot, workspace = setup_test_bot(tmp_path)
-    
     from agile_bot.src.bot_path import BotPath
     from agile_bot.src.bot.behavior import Behavior
     from agile_bot.test.domain.test_helpers import create_actions_workflow_json
@@ -2562,6 +2559,10 @@ class TestInjectNextBehaviorReminder:
         THEN: base_instructions do NOT include next behavior reminder
         """
         from agile_bot.test.domain.test_helpers import given_environment_setup
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         config_path = given_environment_setup(bot_directory, workspace_directory, ['shape', 'prioritization', 'discovery'], 'non_final_action')
         # Additional setup specific to non-final action test
         given_workflow_config(bot_directory)
@@ -2582,6 +2583,10 @@ class TestInjectNextBehaviorReminder:
         THEN: base_instructions do NOT include next behavior reminder
         """
         from agile_bot.test.domain.test_helpers import given_environment_setup
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         config_path = given_environment_setup(bot_directory, workspace_directory, ['shape', 'prioritization', 'discovery'], 'last_behavior')
         # Additional setup specific to last behavior test
         given_workflow_config(bot_directory)
@@ -2865,28 +2870,6 @@ class TestNavigateSequentially:
         # Then: Bot starts at first action (clarify)
         helper.assert_at_behavior_action('shape', 'clarify')
 
-    def test_behavior_action_order_out_of_order_navigation_removes_completed_actions_after_target(self, tmp_path):
-        """Scenario: When navigating out of order, bot can navigate to earlier action"""
-        
-        # Given: Bot is at validate with prior actions completed
-        helper = BotTestHelper(tmp_path)
-        helper.set_state('shape', 'validate', completed_actions=[
-            'story_bot.shape.clarify',
-            'story_bot.shape.strategy',
-            'story_bot.shape.build',
-            'story_bot.shape.render'
-        ])
-        
-        # Navigate to validate
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('validate')
-        helper.assert_at_behavior_action('shape', 'validate')
-        
-        # When navigating back to build (out of order)
-        helper.bot.behaviors.current.actions.navigate_to('build')
-        
-        # Then current action should be build
-        helper.assert_at_behavior_action('shape', 'build')
     
     def test_behavior_loads_workflow_order_from_behavior_specific_actions_workflow(self, tmp_path):
         """Scenario: Behavior loads workflow order from behaviors/{behavior_name}/behavior.json"""
@@ -2894,10 +2877,14 @@ class TestNavigateSequentially:
         # Given: Bot with production behaviors
         helper = BotTestHelper(tmp_path)
         
-        # Then: Shape behavior should have actions loaded from its behavior.json
+        # Then: Shape behavior should have exactly 5 actions loaded from its behavior.json
         helper.bot.behaviors.navigate_to('shape')
         assert helper.bot.behaviors.current.name == 'shape'
-        assert len(helper.bot.behaviors.current.actions.names) > 0
+        
+        # Shape behavior has 5 actions: clarify, strategy, build, validate, render
+        action_names = helper.bot.behaviors.current.actions.names
+        assert len(action_names) == 5, f"Expected 5 actions but got {len(action_names)}: {action_names}"
+        assert action_names == ['clarify', 'strategy', 'build', 'validate', 'render']
     
     @pytest.mark.skip(reason="Exception handling test - removed")
     def test_behavior_requires_actions_workflow_json_no_fallback(self, tmp_path):
@@ -3220,6 +3207,12 @@ class TestInjectStatusUpdateBreadcrumbsIntoInstructions:
         AND: breadcrumbs show completed behaviors, current behavior/action, and remaining work
         """
         # Given: Bot is initialized with multiple behaviors
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
         bot_name, behaviors = given_bot_with_multiple_behaviors_setup(bot_directory, workspace_directory)
         
         # And: behavior_action_state.json exists with completed actions
@@ -3250,6 +3243,12 @@ class TestInjectStatusUpdateBreadcrumbsIntoInstructions:
         THEN: Breadcrumbs show first behavior as completed with checkmark
         """
         # Given: Multiple behaviors exist
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
         bot_name, behaviors = given_bot_with_multiple_behaviors_setup(bot_directory, workspace_directory, ['shape', 'prioritization'])
         
         # And: All actions in first behavior are completed
@@ -3273,6 +3272,12 @@ class TestInjectStatusUpdateBreadcrumbsIntoInstructions:
         THEN: Breadcrumbs include next step command with correct CLI command format
         """
         # Given: Current behavior and action are set
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
         bot_name, behaviors = given_bot_with_multiple_behaviors_setup(bot_directory, workspace_directory)
         bot = when_bot_is_created_with_behaviors(bot_directory, bot_name, behaviors)
         current_behavior = when_current_behavior_is_set_to(bot, behaviors[0])
@@ -3295,6 +3300,12 @@ class TestInjectStatusUpdateBreadcrumbsIntoInstructions:
         THEN: Breadcrumbs are not included in instructions
         """
         # Given: Behavior is created without bot instance
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
+        os.environ['BOT_DIRECTORY'] = str(bot_directory)
+        os.environ['WORKING_AREA'] = str(workspace_directory)
         behavior = given_behavior_created_without_bot_instance(bot_directory, workspace_directory, 'shape')
         
         # When: Action instructions are accessed
@@ -4354,7 +4365,7 @@ class TestManageBehaviorsCollection:
         # Then: Current behavior updated to 'discovery'
         then_current_behavior_name_is(behaviors_collection, 'discovery')
     
-    def test_behaviors_close_current_marks_behavior_and_action_complete(self, tmp_path, workspace_directory):
+    def test_behaviors_close_current_marks_behavior_and_action_complete(self, tmp_path):
         """
         SCENARIO: Behaviors close current marks behavior and action complete
         GIVEN: Behaviors collection with current behavior and current action
@@ -4368,6 +4379,8 @@ class TestManageBehaviorsCollection:
         behaviors_collection = when_behaviors_collection_is_created(bot_config)
         when_behaviors_collection_navigates_to(behaviors_collection, 'shape')
         # Set up workflow state with current action
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         given_workflow_state_file_with_current_action(workspace_directory, bot_name, 'shape', 'clarify')
         
         # When: close_current() called
@@ -4810,7 +4823,7 @@ class TestBootstrapWorkspace:
         assert get_workspace_directory() == test_workspace_dir
     
     def test_environment_variable_takes_precedence_over_bot_config(
-        self, bot_directory, temp_workspace
+        self, tmp_path
     ):
         """
         SCENARIO: Pre-set environment variable not overwritten
@@ -4823,12 +4836,14 @@ class TestBootstrapWorkspace:
         from agile_bot.src.bot.workspace import get_workspace_directory
         
         # Given: Environment variable already set with one value
-        override_workspace = temp_workspace / 'override_workspace'
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        override_workspace = tmp_path / 'override_workspace'
         override_workspace.mkdir(parents=True, exist_ok=True)
         os.environ['WORKING_AREA'] = str(override_workspace)
         
         # And: bot_config.json has different value
-        workspace_directory = temp_workspace / 'config_workspace'
+        workspace_directory = tmp_path / 'config_workspace'
         workspace_directory.mkdir(parents=True, exist_ok=True)
         bot_config = {
             "botName": "story_bot",
@@ -4859,7 +4874,7 @@ class TestBootstrapWorkspace:
         assert get_workspace_directory() == override_workspace
     
     def test_missing_bot_config_with_preconfig_env_var_works(
-        self, bot_directory, workspace_directory
+        self, tmp_path
     ):
         """
         SCENARIO: bot_config.json not required if env vars pre-configured
@@ -4873,6 +4888,10 @@ class TestBootstrapWorkspace:
         from agile_bot.src.bot.workspace import get_bot_directory, get_workspace_directory
         
         # Given: Environment variables already set
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         
@@ -4891,7 +4910,7 @@ class TestBootstrapWorkspace:
     # ========================================================================
     
     def test_bot_initializes_with_bootstrapped_directories(
-        self, bot_directory, workspace_directory
+        self, tmp_path
     ):
         """
         SCENARIO: Bot successfully initializes with bootstrapped environment
@@ -4903,6 +4922,10 @@ class TestBootstrapWorkspace:
         AND: Bot.workspace_directory property returns workspace from environment
         """
         # Given: Environment is bootstrapped
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         
@@ -4917,7 +4940,7 @@ class TestBootstrapWorkspace:
         assert bot.bot_paths.workspace_directory == workspace_directory
     
     def test_behavior_action_state_created_in_workspace_directory(
-        self, bot_directory, workspace_directory
+        self, tmp_path
     ):
         """
         SCENARIO: Behavior action state file created in correct workspace
@@ -4928,6 +4951,10 @@ class TestBootstrapWorkspace:
         AND: NOT to bot directory
         """
         # Given: Environment is bootstrapped
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         
@@ -4953,7 +4980,7 @@ class TestBootstrapWorkspace:
     # ========================================================================
     
     def test_bot_config_loaded_from_bot_directory(
-        self, bot_directory, workspace_directory
+        self, tmp_path
     ):
         """
         SCENARIO: Bot configuration loaded from bot directory (not workspace)
@@ -4965,6 +4992,10 @@ class TestBootstrapWorkspace:
         AND: NOT from WORKING_AREA
         """
         # Given: Directories are set
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         
@@ -4997,7 +5028,7 @@ class TestBootstrapWorkspace:
         assert config_path.parent == bot_directory
     
     def test_behavior_folders_resolved_from_bot_directory(
-        self, bot_directory, workspace_directory
+        self, tmp_path
     ):
         """
         SCENARIO: Behavior folders resolved from bot directory
@@ -5010,6 +5041,10 @@ class TestBootstrapWorkspace:
         from agile_bot.src.bot.workspace import get_behavior_folder
         
         # Given: Directories are set
+        bot_directory = tmp_path / 'bot'
+        bot_directory.mkdir(parents=True, exist_ok=True)
+        workspace_directory = tmp_path / 'workspace'
+        workspace_directory.mkdir(parents=True, exist_ok=True)
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         

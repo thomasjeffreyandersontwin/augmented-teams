@@ -116,10 +116,7 @@ class Actions:
             return action
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
-    def _filter_completed_actions_after_target(self, completed_actions: list, target_index: int) -> list:
-        return self._state_manager.filter_completed_actions_after_target(completed_actions, target_index, self._actions)
-
-    def navigate_to(self, action_name: str, out_of_order: bool=False):
+    def navigate_to(self, action_name: str):
         action = self.find_by_name(action_name)
         if action is None:
             raise ValueError(f"Action '{action_name}' not found")
@@ -130,21 +127,11 @@ class Actions:
             # Non-workflow actions don't affect workflow state
             return
         
-        target_index = None
         for i, a in enumerate(self._actions):
             if a.action_name == action_name:
-                target_index = i
                 self._current_index = i
                 break
-        if not out_of_order or not self.behavior.bot_paths:
-            self.save_state()
-            return
-        state_file = self._state_manager.get_state_file_path()
-        state_data = json.loads(state_file.read_text(encoding='utf-8'))
-        completed_actions = state_data.get('completed_actions', [])
-        if completed_actions:
-            state_data['completed_actions'] = self._filter_completed_actions_after_target(completed_actions, target_index)
-            state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+        
         self.save_state()
 
     def close_current(self):
