@@ -281,141 +281,6 @@ def create_test_behavior_action_state(helper: 'BotTestHelper', bot_name: str, be
     else:
         return bot
 
-
-def when_create_behavior_action_state_with_current_action(bot_directory: Path, workspace_directory: Path, bot_name: str, behavior: str, current_action: str, completed: list):
-    """When: Create behavior action state with current action."""
-    bot = create_test_behavior_action_state(bot_directory, workspace_directory, bot_name, behavior, current_action, completed, return_state_file=False)
-    return bot
-
-
-
-def given_standard_states_and_transitions():
-    """Given: Standard states and transitions."""
-    states = ['clarify', 'strategy', 
-              'build', 'validate', 'render']
-    transitions = [
-        {'trigger': 'proceed', 'source': 'clarify', 'dest': 'strategy'},
-        {'trigger': 'proceed', 'source': 'strategy', 'dest': 'build'},
-        {'trigger': 'proceed', 'source': 'build', 'dest': 'validate'},
-        {'trigger': 'proceed', 'source': 'validate', 'dest': 'render'},
-    ]
-    return states, transitions
-
-
-def given_environment_and_empty_behavior_action_state(bot_directory: Path, workspace_directory: Path, bot_name: str, behavior: str, completed: list):
-    """Given: Environment and empty current_action in behavior_action_state."""
-    from agile_bot.test.domain.test_helpers import setup_bot_behavior_action
-    bot, _ = setup_bot_behavior_action(
-        workspace_directory=workspace_directory,
-        bot_name=bot_name,
-        behavior=behavior,
-        current_action=None,
-        completed_actions=completed,
-        create_state_file=True,
-        navigate_to_behavior=True,
-        navigate_to_action=False,
-        use_actual_bot_directory=True
-    )
-    return bot
-
-
-
-def then_verify_completed_actions_after_navigation(state_file: Path, bot_name: str, behavior: str):
-    """Then: Verify completed actions after navigation."""
-    state_data = json.loads(state_file.read_text(encoding='utf-8'))
-    completed_states = [a.get('action_state') for a in state_data.get('completed_actions', [])]
-    assert f'{bot_name}.{behavior}.render' not in completed_states
-    expected_action_states = [f'{bot_name}.{behavior}.clarify', f'{bot_name}.{behavior}.strategy']
-    from agile_bot.test.domain.test_execute_behavior_actions import then_completed_actions_match
-    then_completed_actions_match(state_file, expected_action_states)
-
-
-
-
-def given_bot_paths(workspace_dir: Path = None):
-    """Given: Bot paths.
-    
-    Consolidates: when_bot_paths_is_created
-    
-    Creates BotPath instance. If workspace_dir is None, uses default.
-    """
-    from agile_bot.src.bot_path import BotPath
-    if workspace_dir:
-        return BotPath(workspace_dir)
-    return BotPath()
-
-
-def given_behavior_config_from_paths(bot_paths: BotPath, behavior: str):
-    """Given: Behavior config from paths.
-    
-    Consolidates: when_behavior_config_is_created
-    
-    Creates Behavior instance from bot_paths and behavior name.
-    (BehaviorConfig merged into Behavior)
-    """
-    return Behavior(name=behavior, bot_paths=bot_paths)
-
-
-def then_behavior_config_matches_fields(
-    behavior_config,
-    expected_description: str,
-    expected_goal: str,
-    expected_inputs: list,
-    expected_outputs: list,
-    expected_instructions: dict,
-    expected_trigger_words: list,
-):
-    """Then: Behavior fields match expected values (BehaviorConfig merged into Behavior)."""
-    assert behavior_config.description == expected_description
-    assert behavior_config.goal == expected_goal
-    assert behavior_config.inputs == expected_inputs
-    assert behavior_config.outputs == expected_outputs
-    assert behavior_config.instructions == expected_instructions
-    assert behavior_config.trigger_words == expected_trigger_words
-    assert behavior_config.base_actions_path == behavior_config.bot_paths.base_actions_directory
-
-
-def then_actions_sorted(behavior_config, expected_actions: list, expected_names: list):
-    """Then: Actions sorted.
-    
-    Consolidates: then_actions_workflow_sorted
-    
-    Verifies that actions_workflow is sorted and action names match expected.
-    (BehaviorConfig merged into Behavior)
-    """
-    assert [a["name"] for a in behavior_config.actions_workflow] == expected_actions
-    assert behavior_config.action_names == expected_names
-
-
-
-def then_behavior_states_and_transitions_match(behavior_instance):
-    """Then: Behavior states and transitions match.
-    
-    Consolidates: then_workflow_states_and_transitions_match_tests
-    
-    Verifies that behavior has expected states and transitions.
-    """
-    then_behavior_states_match(behavior_instance, ['build', 'render', 'validate'])
-    then_behavior_transitions_match(behavior_instance, [
-        {'trigger': 'proceed', 'source': 'build', 'dest': 'render'},
-        {'trigger': 'proceed', 'source': 'render', 'dest': 'validate'},
-    ])
-
-
-def then_bot_result_has_correct_status(result: BotResult, expected_status: str, expected_behavior: str = None, expected_action: str = None):
-    """Then: BotResult has correct status."""
-    assert isinstance(result, BotResult)
-    assert result.status == expected_status
-    if expected_behavior:
-        assert result.behavior == expected_behavior
-    if expected_action:
-        assert result.action == expected_action
-
-def given_no_workflow_state_exists(workspace_directory: Path):
-    """Given: No behavior action state exists."""
-    state_file = workspace_directory / 'behavior_action_state.json'
-    assert not state_file.exists()
-
 # Exception handling helpers removed
 
 
@@ -425,11 +290,6 @@ def given_no_workflow_state_exists(workspace_directory: Path):
 # ============================================================================
 # STORY: Insert Context Into Instructions
 # ============================================================================
-
-def given_bot_with_multiple_behaviors_setup(bot_directory: Path, workspace_directory: Path, behaviors: list = None) -> tuple:
-    """Deprecated: replaced by BotTestHelper usage."""
-    raise RuntimeError("Use BotTestHelper for setup instead of given_bot_with_multiple_behaviors_setup")
-
 
 # ============================================================================
 # HELPER FUNCTIONS - Load Bot Configuration Story
@@ -498,12 +358,6 @@ def then_behaviors_names_is_empty(behaviors):
     assert behaviors.names == []
 
 
-def then_bot_base_actions_path_matches(bot, expected_path: Path):
-    """Then: Bot.base_actions_path matches expected (BotConfig merged into Bot)."""
-    assert bot.base_actions_path == expected_path
-    assert isinstance(bot.base_actions_path, Path)
-
-
 # Exception handling helpers removed
 
 
@@ -560,40 +414,6 @@ def when_behaviors_collection_is_created(bot):
     """When: Behaviors collection is created (BotConfig merged into Bot)."""
     from agile_bot.src.bot.behaviors import Behaviors
     return Behaviors(bot.name, bot.bot_paths)
-
-
-def then_behaviors_collection_is_not_none(behaviors):
-    """Then: Behaviors collection is not None."""
-    assert behaviors is not None
-
-
-def then_behaviors_collection_has_current(behaviors, expected_behavior_name: str):
-    """Then: Behaviors collection has correct current behavior."""
-    assert behaviors.current is not None
-    assert behaviors.current.name == expected_behavior_name
-
-def when_behaviors_collection_navigates_to(behaviors, behavior_name: str):
-    """When: Behaviors collection navigates to behavior."""
-    behaviors.navigate_to(behavior_name)
-
-
-def when_behaviors_next_accessed(behaviors):
-    """When: Behaviors next property accessed."""
-    return behaviors.next()
-
-
-def then_current_behavior_is(behaviors, expected_behavior_name: str):
-    """Then: Current behavior matches expected."""
-    assert behaviors.current is not None
-    assert behaviors.current.name == expected_behavior_name
-
-
-def then_behavior_action_state_file_contains(workspace_dir: Path, bot_name: str, expected_behavior: str):
-    """Then: behavior_action_state.json contains expected behavior."""
-    state_file = workspace_dir / 'behavior_action_state.json'
-    assert state_file.exists()
-    state_data = json.loads(state_file.read_text(encoding='utf-8'))
-    assert state_data['current_behavior'] == f'{bot_name}.{expected_behavior}'
 
 
 # ============================================================================
