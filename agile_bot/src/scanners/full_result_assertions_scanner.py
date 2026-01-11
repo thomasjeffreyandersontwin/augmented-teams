@@ -12,16 +12,27 @@ class FullResultAssertionsScanner(TestScanner):
     """Detect assertions that only check a single field of complex objects instead of the whole result."""
 
     TARGET_NAMES: Set[str] = {
+        # common state/result holders
         "state",
         "log",
         "activity_log",
         "result",
         "results",
         "response",
-        "story_graph",
-        "graph",
+        "resp",
+        "payload",
         "data",
         "output",
+        "details",
+        "info",
+        "graph",
+        "story_graph",
+        "story_map",
+        "instructions",
+        "config",
+        "cfg",
+        "activity",
+        "event",
     }
 
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -34,9 +45,12 @@ class FullResultAssertionsScanner(TestScanner):
         content, lines, tree = parsed
 
         for func in [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name.startswith("test")]:
+            alias_targets = self._collect_result_aliases(func)
+            if self._has_full_object_assert(func, alias_targets):
+                continue  # already asserting full object on result-like object
             for node in ast.walk(func):
                 if isinstance(node, ast.Assert):
-                    if self._is_single_field_assert(node.test):
+                    if self._is_single_field_assert(node.test, alias_targets):
                         violations.append(
                             Violation(
                                 rule=rule_obj,
@@ -49,29 +63,92 @@ class FullResultAssertionsScanner(TestScanner):
 
         return violations
 
-    def _is_single_field_assert(self, test_expr: ast.AST) -> bool:
-        # assert obj['field'] == ...
+    def _is_single_field_assert(self, test_expr: ast.AST, aliases: Set[str]) -> bool:
+        targets = aliases or set()
+        # assert obj['field'] == ... OR ... == obj['field']
         if isinstance(test_expr, ast.Compare):
             left = test_expr.left
-            if self._is_subscript_or_attr_on_target(left):
+            if self._is_subscript_or_attr_on_target(left, targets):
                 return True
-        # assert len(obj) == ...
+            # assert something == obj['field']
+            for comp in test_expr.comparators:
+                if self._is_subscript_or_attr_on_target(comp, targets):
+                    return True
+        # assert len(obj) == ... or ... == len(obj)
         if isinstance(test_expr, ast.Compare):
-            if isinstance(test_expr.left, ast.Call):
-                call = test_expr.left
-                if isinstance(call.func, ast.Name) and call.func.id == "len":
-                    if call.args and self._is_target_name(call.args[0]):
+            sides = [test_expr.left] + list(test_expr.comparators)
+            for side in sides:
+                if isinstance(side, ast.Call) and isinstance(side.func, ast.Name) and side.func.id == "len":
+                    if side.args and self._is_target_name(side.args[0], targets):
+                        return True
+        # membership checks: 'field' in obj  OR obj in something
+        if isinstance(test_expr, ast.Compare):
+            sides = [test_expr.left] + list(test_expr.comparators)
+            for side in sides:
+                if self._is_target_name(side, targets) or self._is_subscript_or_attr_on_target(side, targets):
+                    return True
+        if isinstance(test_expr, ast.BoolOp):
+            # Any part that is single-field counts as violation
+            return any(self._is_single_field_assert(value, targets) for value in test_expr.values)
+        return False
+
+    def _is_subscript_or_attr_on_target(self, node: ast.AST, aliases: Set[str]) -> bool:
+        if isinstance(node, ast.Subscript):
+            if self._is_target_name(node.value, aliases):
+                return True
+        if isinstance(node, ast.Attribute):
+            base = node.value
+            while isinstance(base, ast.Attribute):
+                base = base.value
+            if self._is_target_name(base, aliases):
+                return True
+        return False
+
+    def _is_target_name(self, node: ast.AST, aliases: Set[str]) -> bool:
+        return isinstance(node, ast.Name) and node.id in (self.TARGET_NAMES | aliases)
+
+    def _has_full_object_assert(self, func_node: ast.FunctionDef, aliases: Set[str]) -> bool:
+        """Detect if function asserts equality of whole object (dict or dataclass-like) on a result-like target."""
+        for node in ast.walk(func_node):
+            if isinstance(node, ast.Assert) and isinstance(node.test, ast.Compare):
+                left = node.test.left
+                comps = node.test.comparators
+                if any(self._is_target_name(expr, aliases) for expr in [left, *comps]):
+                    # if comparing target directly to something (likely full object)
+                    if not any(isinstance(expr, (ast.Subscript, ast.Attribute)) for expr in [left, *comps]):
                         return True
         return False
 
-    def _is_subscript_or_attr_on_target(self, node: ast.AST) -> bool:
-        if isinstance(node, ast.Subscript):
-            if self._is_target_name(node.value):
-                return True
-        if isinstance(node, ast.Attribute):
-            if self._is_target_name(node.value):
-                return True
-        return False
+    def _collect_result_aliases(self, func_node: ast.FunctionDef) -> Set[str]:
+        """
+        Collect names that likely hold result/state objects:
+        - Assignment from a call with result-ish name.
+        - Assignment from an existing target name.
+        """
+        aliases: Set[str] = set()
+        for node in ast.walk(func_node):
+            if isinstance(node, ast.Assign):
+                targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
+                source = node.value
+                source_name = None
+                if isinstance(source, ast.Name) and source.id in (self.TARGET_NAMES | aliases):
+                    source_name = source.id
+                elif isinstance(source, ast.Call):
+                    source_name = self._infer_call_name(source)
+                    if source_name and source_name in self.TARGET_NAMES:
+                        pass
+                    else:
+                        source_name = None
+                if targets:
+                    for t in targets:
+                        if source_name or (isinstance(source, ast.Name) and source.id in (self.TARGET_NAMES | aliases)):
+                            aliases.add(t)
+        return aliases
 
-    def _is_target_name(self, node: ast.AST) -> bool:
-        return isinstance(node, ast.Name) and node.id in self.TARGET_NAMES
+    def _infer_call_name(self, call: ast.Call) -> Optional[str]:
+        func = call.func
+        if isinstance(func, ast.Name):
+            return func.id
+        if isinstance(func, ast.Attribute):
+            return func.attr
+        return None

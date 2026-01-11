@@ -9,10 +9,15 @@ from .violation import Violation
 
 
 class ObjectOrientedHelpersScanner(TestScanner):
-    """Detect tests with many parameters/parametrize columns but no helper/factory usage."""
+    """
+    Detect test functions that rely on many ad-hoc given/when/then helpers or
+    param-soup setups instead of consolidating through an object-oriented helper
+    (e.g., BotTestHelper / factory objects).
+    """
 
-    PARAM_THRESHOLD = 5  # number of parameters before flagging
-    PARAMETRIZE_THRESHOLD = 5  # number of parametrize columns before flagging
+    PARAM_THRESHOLD = 3  # more than a couple params is already suspicious
+    PARAMETRIZE_THRESHOLD = 3  # 3+ columns suggests data soup
+    HELPER_CALL_THRESHOLD = 2  # multiple given/when/then calls => likely fragmented
 
     def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations: List[Dict[str, Any]] = []
@@ -28,11 +33,29 @@ class ObjectOrientedHelpersScanner(TestScanner):
                 helper_used = self._uses_helper(node)
                 param_count = self._count_params(node)
                 parametrize_cols = self._parametrize_column_count(node)
+                gwt_calls = self._given_when_then_calls(node)
 
+                # Flag if heavy params or parametrize without OO helper
                 if (param_count >= self.PARAM_THRESHOLD or parametrize_cols >= self.PARAMETRIZE_THRESHOLD) and not helper_used:
                     message = (
                         f'Test "{node.name}" has many parameters ({max(param_count, parametrize_cols)}) '
                         f"but no helper/factory usage - consolidate with BotTestHelper or shared helper object."
+                    )
+                    violations.append(
+                        Violation(
+                            rule=rule_obj,
+                            violation_message=message,
+                            line_number=node.lineno,
+                            location=str(file_path),
+                            severity="warning",
+                        ).to_dict()
+                    )
+
+                # Flag if multiple given/when/then helpers (fragmented setup) and no OO helper present
+                if gwt_calls >= self.HELPER_CALL_THRESHOLD and not helper_used:
+                    message = (
+                        f'Test "{node.name}" uses {gwt_calls} given/when/then helpers but no shared helper object; '
+                        f"consolidate into BotTestHelper-style fixtures with standard data."
                     )
                     violations.append(
                         Violation(
@@ -65,6 +88,21 @@ class ObjectOrientedHelpersScanner(TestScanner):
                             columns = [c.strip() for c in first_arg.value.split(",") if c.strip()]
                             return len(columns)
         return 0
+
+    def _given_when_then_calls(self, func_node: ast.FunctionDef) -> int:
+        """Count calls to given_/when_/then_ helpers inside a test function."""
+        count = 0
+        for inner in ast.walk(func_node):
+            if isinstance(inner, ast.Call):
+                func = inner.func
+                name = ""
+                if isinstance(func, ast.Name):
+                    name = func.id
+                elif isinstance(func, ast.Attribute):
+                    name = func.attr
+                if name.startswith(("given_", "when_", "then_")):
+                    count += 1
+        return count
 
     def _uses_helper(self, func_node: ast.FunctionDef) -> bool:
         """Detect Helper/Factory usage inside a test function."""
