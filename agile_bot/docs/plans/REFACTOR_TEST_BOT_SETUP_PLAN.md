@@ -35,6 +35,31 @@
 **Next Steps:**
 - Step 5: Continue refactoring remaining ~65 tests systematically
 - Step 7: Add safety guards (prevent writes to production)
+- NEW: Remove orphaned legacy helpers in `test_invoke_bot_directly.py` (all `given_/when_/then_` functions are unused); migrate any still-needed logic into `BotTestHelper` or delete.
+
+# Purge Legacy Test Helpers (test_invoke_bot_directly.py)
+
+- Goal: delete all remaining standalone `given_/when_/then_` helpers (including guard-style “is this there?” checks); inline true one-liners; move any reusable logic into `BotTestHelper` (or a tiny StoryScope helper if reuse is real). Keep pytest green for this file.
+
+- Helper surface to add (BotTestHelper) — only if demonstrated reuse:
+  - `assert_actions_order(behavior, expected_order)` (optional; else inline expected list)
+  - `story_scope_filter(scope_type, scope_value=None, behavior_name=None)` (or a tiny StoryScope helper) if multiple tests share the same scope-filter setup
+  - `assert_story_graph(epic=None, story=None, increment=None, expected_epic_count=None, expected_increment_count=None)` only if several tests need identical graph assertions; otherwise inline
+
+- Sections to purge/replace (line ranges approximate):
+  - Workflow exec + action-config helpers (~35–216): delete `when_workflow_executes_and_verifies`, `given_action_config`, `when_validate_action_executes`, `given_action_configs_exist_for_workflow_actions_with_render_output_after`, `when_render_output_action_executes`; replace with BotTestHelper methods or inline JSON asserts.
+  - Breadcrumb/instructions block (~2100s): delete `given_bot_with_multiple_behaviors_setup`, `given_behavior_action_state_file_exists_with_completed_actions`, `given_all_actions_completed_for_behavior`, `given_behavior_created_without_bot_instance`, all `when_*`/`then_*breadcrumbs*`; use BotTestHelper setup (`set_state`, `set_completed`, navigation) and direct assertions on `Instructions.base_instructions`. No guard checks.
+  - Behavior setup/execute factories (~880–1100): delete workflow factories (`given_behavior_workflow_created_for_execute_behavior`, `given_multiple_behavior_workflows_created_for_execute_behavior`, `given_workflow_state_created_for_execute_behavior`, `create_test_behavior_action_state`, `given_bot_setup_*`); use BotTestHelper (`set_state`, `set_completed`, `navigate_to`, `forward_to_current`). Add only if repeated (e.g., `ensure_workflow_has_build`).
+  - Result helpers: delete `then_bot_result_has_correct_status`; use comprehensive `assert_bot_result_*` or inline full-field assertions.
+  - Behavior/order helpers (~740–860): delete unused order/state helpers; if reused, move to `assert_actions_order`, else inline expected lists.
+  - Story-graph scope helpers (~1400+): delete `when_build_scope_filters_story_graph`, `when_validation_scope_filters_story_graph`, `when_render_scope_filters_story_graph` and their `then_` checks; replace with `story_scope_filter` (or tiny helper) plus inline asserts on resulting graph. No guard helpers.
+  - Misc guard/identity helpers across file: remove “is not None” wrappers; assert directly with expected values.
+
+- Cleanup/verification:
+  - `rg "^def (given|when|then)_" agile_bot/test/domain/test_invoke_bot_directly.py` → expect zero.
+  - Drop dead imports from deletions.
+  - `python -m pytest agile_bot/test/domain/test_invoke_bot_directly.py --tb=short -q`
+  - Run lints on touched files.
 
 ## Problem Statement
 Tests currently create bot structures from scratch in 85+ setup functions, causing:

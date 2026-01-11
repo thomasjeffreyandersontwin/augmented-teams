@@ -92,7 +92,9 @@ def get_test_base_actions_dir(bot_directory: Path) -> Path:
     Always returns the shared agile_bot/base_actions directory.
     """
     # Use repository root inferred from this helper file location (stable).
-    repo_root = Path(__file__).resolve().parent.parent.parent
+    # File is at: agile_bot/test/domain/test_helpers.py
+    # Need 4 parents to get to repo root: domain -> test -> agile_bot -> repo_root
+    repo_root = Path(__file__).resolve().parent.parent.parent.parent
     return get_base_actions_dir(repo_root)
 
 def get_base_bot_rules_dir(repo_root: Path) -> Path:
@@ -915,11 +917,7 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     # Create behaviors (skip if using production paths - should have been caught by early return but double-check)
     if not _is_production_story_bot_path(bot_dir / 'bot_config.json'):
         for i, behavior_name in enumerate(behaviors, start=1):
-            if setup_type == 'final_action' and behavior_name == 'shape':
-                # Special handling for final action test
-                from agile_bot.test.domain.test_invoke_bot_directly import given_workflow_config
-                given_workflow_config(bot_dir, behaviors=['shape'], final_action='validate')
-            elif setup_type == 'last_behavior' and behavior_name == 'discovery':
+            if setup_type == 'last_behavior' and behavior_name == 'discovery':
                 # Special handling for last behavior test
                 create_actions_workflow_json(
                     bot_directory=bot_dir,
@@ -962,9 +960,11 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     
     if setup_type == 'resume':
         # Setup for workflow resume
-        from agile_bot.test.domain.test_invoke_bot_directly import given_completed_action
         if 'behavior' in kwargs and 'action' in kwargs:
-            completed_actions = given_completed_action(bot_name, kwargs['behavior'], kwargs['action'])
+            completed_actions = [{
+                'action_state': f"{bot_name}.{kwargs['behavior']}.{kwargs['action']}",
+                'timestamp': '2025-12-04T15:55:00.000000'
+            }]
             # Additional resume setup can be added here
     
     return config_path

@@ -90,6 +90,9 @@ class TestAgentInitialization:
 16. **`use_real_implementations.json`** - Use real temp files, not mocks
 17. **`helper_extraction_and_reuse.json`** - Extract duplicate setup to helpers/factories (from BDD Rules 8.3 & 4)
 18. **`test_driven_development.json`** - RED-GREEN-REFACTOR cycle
+19. **`object_oriented_test_helpers.json`** - Use shared helper objects (e.g., BotTestHelper test hopper) to build complete domain fixtures instead of spreading primitives across parametrize blocks
+20. **`standard_test_data_sets.json`** - Reuse canonical test data sets instead of recreating ad-hoc values
+21. **`assert_full_results.json`** - Assert full domain results/logs/state objects instead of cherry-picking single fields
 
 ### Production Code Rules
 
