@@ -22,7 +22,7 @@ repo_root = Path(__file__).parent.parent.parent.parent
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
-from agile_bot.test.test_helpers import (
+from agile_bot.test.domain.test_helpers import (
     create_actions_workflow_json,
     create_base_actions_structure,
     bootstrap_env,

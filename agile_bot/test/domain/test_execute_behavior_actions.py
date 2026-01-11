@@ -12,7 +12,7 @@ For functions used across multiple epics, see test_helpers.py.
 import json
 from pathlib import Path
 # Workflow class removed - state managed by Behaviors and Actions collections
-from agile_bot.test.test_helpers import (
+from agile_bot.test.domain.test_helpers import (
     bootstrap_env,
     create_activity_log_file,
     get_behavior_action_state_path,
@@ -37,7 +37,7 @@ def verify_action_tracks_start(bot_dir: Path, workspace_dir: Path, action_class,
     
     # If action is 'build', create knowledge graph config structure
     if action_name == 'build':
-        from agile_bot.test.test_build_knowledge import given_setup
+        from agile_bot.test.domain.test_build_knowledge import given_setup
         kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
         given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
@@ -90,7 +90,7 @@ def verify_action_tracks_completion(bot_dir: Path, workspace_dir: Path, action_c
     
     # If action is 'build', create knowledge graph config structure
     if action_name == 'build':
-        from agile_bot.test.test_build_knowledge import given_setup
+        from agile_bot.test.domain.test_build_knowledge import given_setup
         kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
         given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
@@ -144,7 +144,7 @@ def verify_workflow_transition(bot_dir: Path, workspace_dir: Path, source_action
     
     # Create bot config and behavior setup
     from conftest import create_bot_config_file
-    from agile_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.test.domain.test_helpers import create_actions_workflow_json
     from agile_bot.src.bot.bot import Bot
     
     # Create custom workflow that includes all actions needed for the test
@@ -165,7 +165,7 @@ def verify_workflow_transition(bot_dir: Path, workspace_dir: Path, source_action
     
     # If build action is involved, create knowledge graph config structure
     if source_action == 'build' or dest_action == 'build':
-        from agile_bot.test.test_build_knowledge import given_setup
+        from agile_bot.test.domain.test_build_knowledge import given_setup
         kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
         given_setup('config_and_template', bot_dir, kg_dir=kg_dir)
     
@@ -193,7 +193,7 @@ def verify_workflow_saves_completed_action(bot_dir: Path, workspace_dir: Path, a
     
     # Create bot config and behavior setup
     from conftest import create_bot_config_file
-    from agile_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.test.domain.test_helpers import create_actions_workflow_json
     from agile_bot.src.bot.bot import Bot
     
     # Create custom workflow that includes all actions needed for the test
@@ -214,7 +214,7 @@ def verify_workflow_saves_completed_action(bot_dir: Path, workspace_dir: Path, a
     
     # If behavior has 'build' action, create knowledge graph configs
     if action_name == 'build':
-        from agile_bot.test.test_build_knowledge import (
+        from agile_bot.test.domain.test_build_knowledge import (
             given_setup
         )
         kg_dir = given_setup('directory_structure', bot_dir, behavior=behavior)
@@ -321,7 +321,7 @@ def _create_validate_action(bot_name: str, behavior: str, bot_directory: Path):
     from agile_bot.src.actions.validate.validate_action import ValidateRulesAction
     from agile_bot.src.bot_path import BotPath
     from agile_bot.src.behaviors.behavior import Behavior
-    from agile_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.test.domain.test_helpers import create_actions_workflow_json
     
     # Ensure behavior.json exists
     create_actions_workflow_json(bot_directory, behavior)
@@ -347,7 +347,7 @@ def _create_gather_context_action(bot_name: str, behavior: str, bot_directory: P
     from agile_bot.src.actions.clarify.clarify_action import ClarifyContextAction
     from agile_bot.src.behaviors.behavior import Behavior
     from agile_bot.src.bot_path import BotPath
-    from agile_bot.test.test_helpers import _is_production_story_bot_path
+    from agile_bot.test.domain.test_helpers import _is_production_story_bot_path
     # BaseActionConfig deleted - Action already has config loading
     import json
     

@@ -442,7 +442,7 @@ class RealImplementationsScanner(TestScanner):
     
     def _find_helper_file(self, module_name: str, project_path: Path) -> Optional[Path]:
         # Convert module name to file path
-        # e.g., 'agile_bot.test.test_helpers' -> 'agile_bot/test/test_helpers.py'
+        # e.g., 'agile_bot.test.domain.test_helpers' -> 'agile_bot/test/domain/test_helpers.py'
         module_path = module_name.replace('.', '/')
         possible_paths = [
             project_path / f'{module_path}.py',

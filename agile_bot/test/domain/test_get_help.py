@@ -6,11 +6,11 @@ from pathlib import Path
 from agile_bot.src.bot.bot import Bot, BotResult
 from agile_bot.src.behaviors import Behavior
 from agile_bot.src.bot_path import BotPath
-from agile_bot.test.test_helpers import (
+from agile_bot.test.domain.test_helpers import (
     bootstrap_env, create_actions_workflow_json, create_behavior_folder,
     given_bot_name_and_behavior_setup, when_bot_is_created
 )
-from agile_bot.test.test_invoke_bot_helpers import (
+from agile_bot.test.domain.test_invoke_bot_helpers import (
     setup_test_bot,
     create_behavior_action_state
 )

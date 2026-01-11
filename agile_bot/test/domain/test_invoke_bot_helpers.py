@@ -8,13 +8,13 @@ import json
 from pathlib import Path
 
 from agile_bot.src.bot.bot import Bot
-from agile_bot.test.test_helpers import (
+from agile_bot.test.domain.test_helpers import (
     create_actions_workflow_json,
     create_base_actions_structure,
     bootstrap_env,
     create_bot_config_file
 )
-from agile_bot.test.test_execute_behavior_actions import (
+from agile_bot.test.domain.test_execute_behavior_actions import (
     create_minimal_guardrails_files
 )
 

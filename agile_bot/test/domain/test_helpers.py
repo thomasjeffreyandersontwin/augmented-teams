@@ -272,8 +272,8 @@ def _is_production_story_bot_path(path: Path) -> bool:
         path = path.resolve()
         path_str = str(path).replace('\\', '/')
         
-        # Get the repo root (agile_bot/test/test_helpers.py -> repo root is 3 levels up)
-        # __file__ = agile_bot/test/test_helpers.py
+        # Get the repo root (agile_bot/test/domain/test_helpers.py -> repo root is 3 levels up)
+        # __file__ = agile_bot/test/domain/test_helpers.py
         # .parent = agile_bot/test
         # .parent.parent = agile_bot
         # .parent.parent.parent = repo root
@@ -461,7 +461,7 @@ def read_activity_log(workspace_dir: Path) -> list:
 # _create_validate_action, _create_gather_context_action, _create_action_with_provided_class,
 # _create_action_with_default_class, given_environment_bootstrapped_and_action_initialized
 # - These are epic-level helpers for "Execute Behavior Actions" epic, moved to test_execute_behavior_actions.py
-# Import from: from agile_bot.test.test_execute_behavior_actions import ...
+# Import from: from agile_bot.test.domain.test_execute_behavior_actions import ...
 
 # ============================================================================
 # COMMON GIVEN/WHEN/THEN HELPERS - Used across multiple test files
@@ -889,8 +889,8 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     Returns:
         Path to bot config file
     """
-    from agile_bot.test.test_helpers import create_base_actions_structure, create_bot_config_file
-    from agile_bot.test.test_helpers import create_actions_workflow_json
+    from agile_bot.test.domain.test_helpers import create_base_actions_structure, create_bot_config_file
+    from agile_bot.test.domain.test_helpers import create_actions_workflow_json
     
     # If using production story_bot, skip file creation - use existing files
     if _is_production_story_bot_path(bot_dir / 'bot_config.json'):
@@ -917,7 +917,7 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
         for i, behavior_name in enumerate(behaviors, start=1):
             if setup_type == 'final_action' and behavior_name == 'shape':
                 # Special handling for final action test
-                from agile_bot.test.test_invoke_bot_directly import given_workflow_config
+                from agile_bot.test.domain.test_invoke_bot_directly import given_workflow_config
                 given_workflow_config(bot_dir, behaviors=['shape'], final_action='validate')
             elif setup_type == 'last_behavior' and behavior_name == 'discovery':
                 # Special handling for last behavior test
@@ -962,7 +962,7 @@ def given_environment_setup(bot_dir: Path, workspace_dir: Path, behaviors: list 
     
     if setup_type == 'resume':
         # Setup for workflow resume
-        from agile_bot.test.test_invoke_bot_directly import given_completed_action
+        from agile_bot.test.domain.test_invoke_bot_directly import given_completed_action
         if 'behavior' in kwargs and 'action' in kwargs:
             completed_actions = given_completed_action(bot_name, kwargs['behavior'], kwargs['action'])
             # Additional resume setup can be added here
@@ -991,8 +991,8 @@ def given_workflow_config(bot_directory: Path, behaviors: list = None, actions: 
         actions: List of action configs (default: standard workflow actions)
         final_action: Name of final action (default: 'render')
     """
-    from agile_bot.test.test_helpers import create_base_actions_structure
-    from agile_bot.test.test_helpers import create_actions_workflow_json, get_test_base_actions_dir
+    from agile_bot.test.domain.test_helpers import create_base_actions_structure
+    from agile_bot.test.domain.test_helpers import create_actions_workflow_json, get_test_base_actions_dir
     from agile_bot.test.domain.test_execute_behavior_actions import create_minimal_guardrails_files
     
     if behaviors is None:
@@ -1364,9 +1364,9 @@ def given_action_initialized(action_type, bot_directory, bot_name='story_bot', b
     """
     from pathlib import Path
     from agile_bot.src.bot.bot_paths import BotPaths
-    from agile_bot.test.test_helpers import create_actions_workflow_json, bootstrap_env
+    from agile_bot.test.domain.test_helpers import create_actions_workflow_json, bootstrap_env
     from agile_bot.test.domain.test_execute_behavior_actions import create_minimal_guardrails_files
-    from agile_bot.test.test_invoke_mcp import given_base_actions_setup
+    from agile_bot.test.domain.test_invoke_mcp import given_base_actions_setup
     
     workspace_directory = kwargs.get('workspace_directory')
     if workspace_directory is None:
@@ -1660,7 +1660,7 @@ def then_instructions_have_structure(instructions, structure='validation_rules')
         
         # Validate each rule structure (accepts Rule objects or dicts)
         from agile_bot.src.actions.rules.rule import Rule
-        from agile_bot.test.test_validate_knowledge_and_content_against_rules import validate_violation_structure
+        from agile_bot.test.domain.test_validate_knowledge_and_content_against_rules import validate_violation_structure
         
         for rule in validation_rules:
             # Handle Rule objects (new format)
@@ -2212,7 +2212,7 @@ def create_behavior_folder_with_json(bot_dir: Path, folder_name: str) -> Path:
     behavior_file.write_text(json.dumps(behavior_config, indent=2), encoding='utf-8')
     
     # Ensure shared base_actions exist in agile_bot/base_actions (not under bot_dir)
-    from agile_bot.test.test_helpers import create_base_actions_structure
+    from agile_bot.test.domain.test_helpers import create_base_actions_structure
     create_base_actions_structure(bot_dir)
     
     return behavior_folder
@@ -2941,8 +2941,8 @@ def given_action_setup(action_type, bot_directory, behavior):
         Action instance or setup result
     """
     from pathlib import Path
-    from agile_bot.test.test_helpers import create_base_actions_structure
-    from agile_bot.test.test_helpers import bootstrap_env
+    from agile_bot.test.domain.test_helpers import create_base_actions_structure
+    from agile_bot.test.domain.test_helpers import bootstrap_env
     from agile_bot.src.bot.bot_paths import BotPaths
     from agile_bot.src.bot.behavior import Behavior
     from agile_bot.src.actions.build.build_action import BuildKnowledgeAction
@@ -3005,7 +3005,7 @@ def when_action_executes(action_type, bot_directory, behavior, **execution_param
         instructions dict, or (action_obj, instructions) tuple if return_action=True
     """
     from pathlib import Path
-    from agile_bot.test.test_helpers import create_base_actions_structure
+    from agile_bot.test.domain.test_helpers import create_base_actions_structure
     from agile_bot.src.bot_path.bot_path import BotPath
     from agile_bot.src.bot.behavior import Behavior
     from agile_bot.src.actions.build.build_action import BuildKnowledgeAction
@@ -3038,7 +3038,7 @@ def when_action_executes(action_type, bot_directory, behavior, **execution_param
         if action_type == 'build':
             # For build actions, we need to create behavior
             # Use the same pattern as _create_behavior from test_build_knowledge.py
-            from agile_bot.test.test_helpers import create_actions_workflow_json
+            from agile_bot.test.domain.test_helpers import create_actions_workflow_json
             from agile_bot.test.domain.test_execute_behavior_actions import create_minimal_guardrails_files
             
             create_actions_workflow_json(bot_directory, behavior)

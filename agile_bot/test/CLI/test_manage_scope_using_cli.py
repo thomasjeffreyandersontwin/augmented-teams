@@ -14,7 +14,7 @@ import pytest
 import json
 from pathlib import Path
 from agile_bot.src.cli.cli_session import CLISession
-from agile_bot.test.test_invoke_bot_helpers import (
+from agile_bot.test.domain.test_invoke_bot_helpers import (
     setup_test_bot,
     create_behavior_action_state
 )
