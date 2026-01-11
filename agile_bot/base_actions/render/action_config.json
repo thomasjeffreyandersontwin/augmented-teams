@@ -7,6 +7,8 @@
   "instructions": [
     "Please follow the instructions below in order to manually render output documents using templates",
     "",
+    "{{render_instructions}}",
+    "",
     "All render configurations are automatically loaded and injected below. Process ALL configs - do not skip any.",
     "",
     "{{render_configs}}",

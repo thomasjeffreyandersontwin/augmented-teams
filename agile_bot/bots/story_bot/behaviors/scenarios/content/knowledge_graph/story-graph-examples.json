@@ -11,33 +11,11 @@
       "name": "",
       "sequential_order": 1,
       "estimated_stories": null,
-      "domain_concepts": [
-        {
-          "name": "",
-          "responsibilities": [
-            {
-              "name": "",
-              "collaborators": []
-            }
-          ]
-        }
-      ],
       "sub_epics": [
         {
           "name": "",
           "sequential_order": 1,
           "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "",
-              "responsibilities": [
-                {
-                  "name": "",
-                  "collaborators": []
-                }
-              ]
-            }
-          ],
           "sub_epics": [],
           "story_groups": [
             {

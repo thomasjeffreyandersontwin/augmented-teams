@@ -4,40 +4,18 @@
     "story_additions": "Adds to each story: Steps (array of action strings), acceptance_criteria (array of WHEN/THEN strings), optional (boolean), priority (number)",
     "acceptance_criteria_format": "Each acceptance criteria is ONE string with format: \"WHEN [condition]\\nTHEN [outcome]\" or \"WHEN [condition]\\nTHEN [outcome] AND [additional outcome]\". Use \\n for line break between WHEN and THEN. Each WHEN starts a new acceptance criteria",
     "steps_format": "Steps array contains action strings describing what the actor does in sequence (e.g., [\"Navigate to settings page\", \"Click export button\", \"Select CSV format\"])",
-    "structure": "Inherits full story graph (epics, sub_epics, story_groups, domain_concepts). Story groups replace features. ONLY adds exploration fields to stories"
+    "structure": "Inherits full story graph (epics, sub_epics, story_groups). Story groups replace features. ONLY adds exploration fields to stories"
   },
   "epics": [
     {
       "name": "",
       "sequential_order": 1,
       "estimated_stories": null,
-      "domain_concepts": [
-        {
-          "name": "",
-          "responsibilities": [
-            {
-              "name": "",
-              "collaborators": []
-            }
-          ]
-        }
-      ],
       "sub_epics": [
         {
           "name": "",
           "sequential_order": 1,
           "estimated_stories": null,
-          "domain_concepts": [
-            {
-              "name": "",
-              "responsibilities": [
-                {
-                  "name": "",
-                  "collaborators": []
-                }
-              ]
-            }
-          ],
           "sub_epics": [],
           "story_groups": [
             {

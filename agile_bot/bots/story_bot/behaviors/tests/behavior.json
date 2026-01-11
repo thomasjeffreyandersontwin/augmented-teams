@@ -49,7 +49,8 @@
           "   - Format: \"test_method\": \"test_<scenario_name_snake_case>\"",
           "   - Example: \"test_method\": \"test_generator_creates_bot_tool_for_test_bot\"",
           "   - Maps to the exact scenario name that the test method validates",
-          "Refine domain model concepts, relationships, and responsibilities based on test file implementation patterns and requirements"
+          "",
+          "Test code should use domain language - class names from domain entities, method names from domain responsibilities"
         ]
       },
       {
@@ -65,7 +66,8 @@
         "name": "validate",
         "order": 5,
         "instructions": [
-          "specification_tests: validate test code AND domain model refinements",
+          "specification_tests: validate test code and domain language usage",
+          "Validate that test code uses proper domain terminology (class names = domain entities, method names = domain responsibilities)",
           "Validate that all test files, classes, and methods are properly mapped to story-graph.json"
         ]
       }

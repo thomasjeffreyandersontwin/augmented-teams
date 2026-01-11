@@ -3,7 +3,7 @@
   "order": 4,
   "description": "Define acceptance criteria (When/Then) for stories to establish clear success criteria",
   "goal": "Explore each story to create testable acceptance criteria",
-  "inputs": "story-graph.json with discovery details, domain models, user flows",
+  "inputs": "story-graph.json with discovery details, user flows, domain language/concepts",
   "outputs": "story-graph.json (with acceptance criteria), individual story files with AC",
   "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
@@ -28,8 +28,8 @@
         "order": 3,
         "next_action": "validate",
         "instructions": [
-          "exploration: build acceptance criteria AND refine domain model based on acceptance criteria details",
-          "Refine domain model concepts, relationships, and responsibilities based on acceptance criteria exploration",
+          "exploration: build acceptance criteria using domain language",
+          "Use proper domain terminology in acceptance criteria - refer to domain concepts and patterns",
           "CRITICAL: Update the EXISTING story-graph.json file (do NOT create story-graph-explored.json or any separate file)",
           "CRITICAL: Add/update Steps and acceptance_criteria ONLY in main epics section (single source of truth), NOT in increments section"
         ]
@@ -39,7 +39,8 @@
         "order": 4,
         "next_action": "render",
         "instructions": [
-          "exploration: validate AC format and coverage AND domain model refinements"
+          "exploration: validate AC format, coverage, and domain language usage",
+          "Validate that acceptance criteria use proper domain terminology and reference domain concepts correctly"
         ]
       },
       {

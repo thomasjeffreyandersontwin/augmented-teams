@@ -97,7 +97,7 @@ agile_bot/bots/test_story_bot/
 # ============================================================================
 # IDE and Editor Files
 # ============================================================================
-.vscode/
+# .vscode/ - Commented out to allow AI to edit settings.json
 .idea/
 *.swp
 *.swo

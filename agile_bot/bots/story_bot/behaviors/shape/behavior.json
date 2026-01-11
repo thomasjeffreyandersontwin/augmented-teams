@@ -1,13 +1,13 @@
 {
   "behaviorName": "shape",
   "order": 1,
-  "description": "Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements",
-  "goal": "Shape both story map and domain model together from user context - capture domain concepts, responsibilities, and requirements alongside story structure",
-  "inputs": "User context, interviews, vision documents, existing requirements, business DOmain Experts interviews",
-  "outputs": "story-graph.json, story-map.md, story-map-outline.drawio, story-map.txt, domain_outline.md, domain_graph.json, domain-model-description.md",
+  "description": "Create a story map that captures the user's journey through epics, features, and stories",
+  "goal": "Shape story map from user context - capture user needs, business requirements, and story structure",
+  "inputs": "User context, interviews, vision documents, existing requirements, business domain experts interviews",
+  "outputs": "story-graph.json, story-map.md, story-map-outline.drawio, story-map.txt",
   "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "Create a story map and domain model outline that captures the user's journey through epics, features, and stories, and captures domain model concepts and requirements"
+    "Create a story map that captures the user's journey through epics, features, and stories"
   ],
   "actions_workflow": {
     "actions": [
@@ -16,25 +16,22 @@
         "order": 1,
         "next_action": "strategy",
         "instructions": [
-          "Gather context for both story mapping and domain modeling"
+          "Gather context for story mapping"
         ]
       },
       {
         "name": "strategy",
         "order": 2,
         "next_action": "build",
-        "instructions": [
-          "Include domain modeling planning criteria alongside story mapping criteria"
-        ]
+        "instructions": []
       },
       {
         "name": "build",
         "order": 3,
         "next_action": "validate",
         "instructions": [
-          "shape: build story map structure AND domain model",
-          "Apply story shaping rules (context: 'when shaping stories') for story structure",
-          "Apply domain shaping rules (context: 'when shaping the domain') for domain model structure"
+          "shape: build story map structure",
+          "Apply story shaping rules (context: 'when shaping stories') for story structure"
         ]
       },
       {
@@ -42,22 +39,21 @@
         "order": 4,
         "next_action": "render",
         "instructions": [
-          "shape: validate hierarchy, story structure, AND domain model",
-          "Apply story shaping rules (context: 'when shaping stories') for story structure",
-          "Apply domain shaping rules (context: 'when shaping the domain') for domain model validation"
+          "shape: validate hierarchy and story structure",
+          "Apply story shaping rules (context: 'when shaping stories') for story structure"
         ]
       },
       {
         "name": "render",
         "order": 5,
         "instructions": [
-          "shape: render story map documents AND domain model documents"
+          "shape: render story map documents"
         ]
       }
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to shaping/scoping/initial planning behavior, including domain shaping integration",
+    "description": "Behavior-level trigger words - specific to shaping/scoping/initial planning behavior",
     "patterns": [
       "start.*shaping",
       "let.*s.*shape",
@@ -139,17 +135,7 @@
       "set.*up.*new",
       "commence.*new",
       "embark.*on.*new",
-      "undertake.*new",
-      "shape.*domain",
-      "model.*domain",
-      "identify.*bounded.*contexts",
-      "map.*domain",
-      "discover.*domain.*concepts",
-      "define.*ubiquitous.*language",
-      "start.*domain.*modeling",
-      "begin.*ddd",
-      "explore.*domain",
-      "domain.*shaping"
+      "undertake.*new"
     ]
   }
 }

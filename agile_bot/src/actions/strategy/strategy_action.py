@@ -33,16 +33,15 @@ class StrategyAction(Action):
         return self.strategy.assumptions.assumptions
     
     def _prepare_instructions(self, instructions, context: StrategyActionContext):
-        """Add strategy data (criteria, assumptions, activities) to instructions."""
+        """Add strategy data (criteria, assumptions) to instructions.
+        
+        Note: Workflow instructions come from base_actions/strategy/action_config.json.
+        This method adds only the behavior-specific data.
+        """
         strategy_data = self.strategy.instructions
-        # Add strategy instructions to base_instructions if they exist
-        if 'instructions' in strategy_data:
-            for line in strategy_data['instructions']:
-                instructions.add(line)
-        # Store other strategy data (criteria, assumptions) as separate keys
-        strategy_data_without_instructions = {k: v for k, v in strategy_data.items() if k != 'instructions'}
-        if strategy_data_without_instructions:
-            instructions.update(strategy_data_without_instructions)
+        # Store strategy data (criteria, assumptions) as separate keys
+        if strategy_data:
+            instructions.update(strategy_data)
     
     def _do_confirm(self, context: StrategyActionContext) -> Dict[str, Any]:
         """Save strategy decisions and assumptions to strategy.json."""
@@ -133,12 +132,12 @@ class StrategyAction(Action):
         return lines
 
     def do_execute(self, context: StrategyActionContext):
-        instructions = self.get_instructions(context)
-        instructions.update(self.strategy.instructions)
+        """Execute strategy action - get instructions and save if decisions provided."""
+        result = self.get_instructions(context)
         decisions = context.get_decisions()
         if decisions or context.assumptions:
             self.save_strategy(context)
-        return instructions
+        return result
 
     def save_strategy(self, context: StrategyActionContext):
         strategy_decision = StrategyDecision(
