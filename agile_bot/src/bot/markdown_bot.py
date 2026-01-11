@@ -110,7 +110,7 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
         lines.append("")
         lines.append("---")
         return '\n'.join(lines)
-        
+    
     def format_bot_info(self) -> str:
         """Returns bot name and paths."""
         lines = []
