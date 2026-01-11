@@ -1,1 +1,1 @@
-{"name": "clarify", "order": 1, "instructions": ["Base instruction 1", "Base instruction 2"]}
+{"name": "clarify", "workflow": true, "order": 0}

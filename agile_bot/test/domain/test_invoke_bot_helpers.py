@@ -40,7 +40,8 @@ def setup_test_bot(tmp_path, behaviors: list[str]) -> tuple[Bot, Path]:
     from pathlib import Path
     
     # Get the actual story_bot directory
-    repo_root = Path(__file__).parent.parent.parent
+    # FIXED: Need 4 levels up from agile_bot/test/domain/test_invoke_bot_helpers.py
+    repo_root = Path(__file__).parent.parent.parent.parent
     bot_dir = repo_root / 'agile_bot' / 'bots' / 'story_bot'
     
     # Create temp workspace directory for state files
