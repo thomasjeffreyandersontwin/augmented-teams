@@ -1079,11 +1079,7 @@ test('TestFilterStoryScope', { concurrency: false }, async (t) => {
         }
     });
 });
-    
-    // THEN: Verify exact HTML structure matching screenshot 3
-    
-    // Main scope section container
-    expect(html).toMatch(/<div[^>]*class="[^"]*section[^"]*scope-section[^"]*card-primary[^"]*"[^>]*>/);
+```
     expect(html).toMatch(/<div[^>]*class="[^"]*collapsible-section[^"]*expanded[^"]*"[^>]*>/);
     expect(html).toMatch(/<div[^>]*class="[^"]*collapsible-header[^"]*"[^>]*onclick="toggleSection\('scope-content'\)"[^>]*>/);
     expect(html).toContain('Scope');

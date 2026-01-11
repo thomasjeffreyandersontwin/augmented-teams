@@ -5,7 +5,7 @@
     "design",
     "walkthrough"
   ],
-  "WORKING_AREA": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot",
+  "WORKING_AREA": "C:\\dev\\augmented-teams\\agile_bot",
   "description": "Helps teams model the solution domain using CRC (Class-Responsibility-Collaborator) cards to define object responsibilities and collaborations",
   "command description": "Execute the current action and current behavior in the crc_bot workflow.",
   "goal": "Transform domain understanding into well-structured CRC models showing object responsibilities, collaborators, and interactions",

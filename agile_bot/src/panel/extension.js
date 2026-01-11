@@ -1,0 +1,74 @@
+/**
+ * Bot Panel Extension
+ * 
+ * Main entry point for VS Code extension that displays bot status
+ * in a rich webview panel above the chat interface.
+ */
+
+const vscode = require("vscode");
+const BotPanel = require("./bot_panel.js");
+
+let outputChannel = null;
+
+function log(message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}`;
+  console.log(logMessage);
+  if (outputChannel) {
+    outputChannel.appendLine(logMessage);
+  }
+}
+
+/**
+ * Extension activation
+ * Called when extension is first activated (command invoked)
+ */
+function activate(context) {
+  try {
+    outputChannel = vscode.window.createOutputChannel("Bot Panel");
+    log("Activating Bot Panel extension");
+    
+    // Register the view panel command - don't check workspace here, let command handle it
+    const viewPanelCommand = vscode.commands.registerCommand(
+      "agilebot.viewPanel",
+      () => {
+        try {
+          log("View Bot Panel command invoked");
+          const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
+          if (!workspaceRoot) {
+            vscode.window.showErrorMessage("Bot Panel: No workspace folder found. Please open a workspace folder.");
+            return;
+          }
+          BotPanel.createOrShow(workspaceRoot, context.extensionUri);
+        } catch (error) {
+          log(`ERROR: Command execution failed: ${error.message}`);
+          log(`ERROR: Stack: ${error.stack}`);
+          vscode.window.showErrorMessage(`Bot Panel Error: ${error.message}`);
+        }
+      }
+    );
+    
+    context.subscriptions.push(viewPanelCommand);
+    
+    log("Bot Panel extension activated successfully - command registered");
+    
+  } catch (error) {
+    log(`ERROR: Activation failed: ${error.message}`);
+    log(`ERROR: Stack: ${error.stack}`);
+    vscode.window.showErrorMessage(`Bot Panel Error: ${error.message}`);
+  }
+}
+
+/**
+ * Extension deactivation
+ * Called when extension is deactivated
+ */
+function deactivate() {
+  log("Deactivating Bot Panel extension");
+  if (outputChannel) {
+    outputChannel.dispose();
+    outputChannel = null;
+  }
+}
+
+module.exports = { activate, deactivate };

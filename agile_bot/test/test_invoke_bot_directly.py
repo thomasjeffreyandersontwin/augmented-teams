@@ -2,6 +2,8 @@
 import pytest
 import json
 import os
+import shutil
+import stat
 from pathlib import Path
 # Behaviors and Actions manage their own order and current state
 # State is persisted in behavior_action_state.json
@@ -824,35 +826,16 @@ def given_behavior_config(bot_directory: Path, behavior: str, config=None, bot_n
     """
     from agile_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
     
-    # Create behavior directory
+    # Block deprecated/non-existent behaviors to avoid polluting story_bot
+    if behavior in {'knowledge', 'examples'}:
+        raise RuntimeError(f"Deprecated test behavior requested: {behavior}. Use existing story_bot behaviors instead.")
+    
+    # Behavior directory (created later if needed)
     behavior_dir = bot_directory / 'behaviors' / behavior
-    behavior_dir.mkdir(parents=True, exist_ok=True)
     
     # If config is None, return default config dict based on behavior name
     if config is None:
-        if behavior == 'knowledge':
-            return {
-                "behaviorName": "knowledge",
-                "description": "Test behavior: knowledge",
-                "goal": "Test goal for knowledge",
-                "inputs": "Test inputs",
-                "outputs": "Test outputs",
-                "baseActionsPath": "agile_bot/base_actions",
-                "instructions": ["Test instructions for knowledge."],
-                "actions_workflow": {
-                    "actions": [
-                        {"name": "build", "order": 3, "next_action": "validate"},
-                        {"name": "validate", "order": 4, "next_action": "render"},
-                        {"name": "render", "order": 5}
-                    ]
-                },
-                "trigger_words": {
-                    "description": "Trigger words for knowledge",
-                    "patterns": ["test.*knowledge"],
-                    "priority": 10
-                }
-            }
-        elif behavior == 'code':
+        if behavior == 'code':
             return {
                 "behaviorName": "code",
                 "description": "Test behavior: code",
@@ -915,6 +898,7 @@ def given_behavior_config(bot_directory: Path, behavior: str, config=None, bot_n
             }
     
     # If config is provided, create behavior.json file with everything in it
+    behavior_dir.mkdir(parents=True, exist_ok=True)
     behavior_file = behavior_dir / 'behavior.json'
     
     # Safety check: prevent writing to production story_bot behavior.json files
@@ -2545,7 +2529,7 @@ class TestInjectNextBehaviorReminder:
         AND: reminder contains next behavior name and prompt text
         """
         from agile_bot.test.test_helpers import given_environment_setup
-        config_path = given_environment_setup(bot_directory, workspace_directory, ['shape', 'prioritization', 'arrange', 'discovery'], 'final_action')
+        config_path = given_environment_setup(bot_directory, workspace_directory, ['shape', 'prioritization', 'discovery'], 'final_action')
         # Additional setup specific to final action test
         given_action_config(bot_directory, 'validate')
         # Note: given_workflow_config already called by given_environment_setup with final_action='validate'
@@ -2566,7 +2550,7 @@ class TestInjectNextBehaviorReminder:
         THEN: base_instructions do NOT include next behavior reminder
         """
         from agile_bot.test.test_helpers import given_environment_setup
-        config_path = given_environment_setup(bot_directory, workspace_directory, ['shape', 'prioritization', 'arrange'], 'non_final_action')
+        config_path = given_environment_setup(bot_directory, workspace_directory, ['shape', 'prioritization', 'discovery'], 'non_final_action')
         # Additional setup specific to non-final action test
         given_workflow_config(bot_directory)
         given_action_config(bot_directory, 'validate', is_final=False)
@@ -2916,23 +2900,14 @@ class TestNavigateSequentially:
         """Helper: Set up knowledge and code behaviors with different orders."""
         from agile_bot.test.test_execute_behavior_actions import create_minimal_guardrails_files
         knowledge_behavior = 'shape'
-        knowledge_behavior_config = given_behavior_config(bot_directory, 'knowledge')
+        knowledge_behavior_config = given_behavior_config(bot_directory, knowledge_behavior)
         given_behavior_config(bot_directory, knowledge_behavior, knowledge_behavior_config, bot_name)
         
         code_behavior = 'tests'
         code_behavior_config = given_behavior_config(bot_directory, 'code')
         given_behavior_config(bot_directory, code_behavior, code_behavior_config, bot_name)
         
-        # Create knowledge graph configs for behaviors with 'build' action
-        from agile_bot.test.test_build_knowledge import (
-            given_knowledge_graph_directory_structure_created,
-            given_knowledge_graph_config_and_template_created
-        )
-        kg_dir_shape = given_knowledge_graph_directory_structure_created(bot_directory, behavior=knowledge_behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir_shape)
-        kg_dir_tests = given_knowledge_graph_directory_structure_created(bot_directory, behavior=code_behavior)
-        given_knowledge_graph_config_and_template_created(kg_dir_tests)
-        
+        # Use existing behavior assets; no creation of extra behaviors
         return knowledge_behavior, code_behavior
 
     def test_different_behaviors_can_have_different_action_orders(self, bot_directory, workspace_directory):
@@ -5024,8 +4999,14 @@ def temp_workspace():
     test_dir = Path(tempfile.mkdtemp())
     yield test_dir
     
-    # Cleanup
-    shutil.rmtree(test_dir)
+    # Cleanup (handle read-only files on Windows)
+    def _handle_remove_readonly(func, path, excinfo):
+        try:
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        except Exception:
+            pass  # best-effort cleanup
+    shutil.rmtree(test_dir, onerror=_handle_remove_readonly)
 
 class TestTrackActivityForWorkspace:
     """Story: Track Activity For Workspace - Tests that activity is tracked in the correct workspace_area location."""
@@ -5084,14 +5065,15 @@ class TestTrackActivityForWorkspace:
 def bot_directory(temp_workspace):
     """Fixture: Bot directory structure.
     
-    Returns actual story_bot directory, not a temporary test_bot.
-    Tests should use the actual story_bot directory with all its behaviors.
+    Creates a temporary copy of story_bot so tests read defaults without
+    writing to production files.
     """
     from pathlib import Path
-    # Return actual story_bot directory, not a temporary test_bot
     repo_root = Path(__file__).resolve().parent.parent.parent
-    bot_dir = repo_root / 'agile_bot' / 'bots' / 'story_bot'
-    return bot_dir
+    source_bot_dir = repo_root / 'agile_bot' / 'bots' / 'story_bot'
+    temp_bot_dir = temp_workspace / 'story_bot'
+    shutil.copytree(source_bot_dir, temp_bot_dir)
+    return temp_bot_dir
 
 
 @pytest.fixture

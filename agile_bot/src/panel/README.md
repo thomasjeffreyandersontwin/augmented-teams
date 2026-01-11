@@ -56,14 +56,14 @@ This creates a `.vsix` file (e.g., `bot-panel-0.1.0.vsix`)
 
 #### Step 2: Install Extension
 
-**Method A: Install from VSIX file**
-```powershell
-code --install-extension bot-panel-0.1.0.vsix --force
-```
-
-**Method B: Install from command line (if using Cursor)**
+**Install from VSIX file (for Cursor)**
 ```powershell
 cursor --install-extension bot-panel-0.1.0.vsix --force
+```
+
+**Note:** If you have the extension installed in VS Code, uninstall it first:
+```powershell
+code --uninstall-extension agilebot.bot-panel
 ```
 
 #### Step 3: Reload VS Code/Cursor
@@ -81,7 +81,12 @@ cursor --install-extension bot-panel-0.1.0.vsix --force
 
 #### Step 5: Uninstall Extension
 
-**Method A: Uninstall by ID**
+**Uninstall by ID (from Cursor)**
+```powershell
+cursor --uninstall-extension agilebot.bot-panel
+```
+
+**If installed in VS Code, uninstall from there:**
 ```powershell
 code --uninstall-extension agilebot.bot-panel
 ```
@@ -190,4 +195,14 @@ From `package.json`:
 Use this ID for uninstall commands:
 ```powershell
 code --uninstall-extension agilebot.bot-panel
+```
+
+## Migrating from Old Extension
+
+If you have the old "REPL Status Display Panel" extension installed (`agilebot.repl-status-panel`), it will be automatically uninstalled when you run `panel_rebuild.ps1`. The rebuild script uninstalls both the old extension and any previous version of Bot Panel before installing the new version.
+
+If you need to manually uninstall the old extension:
+
+```powershell
+code --uninstall-extension agilebot.repl-status-panel
 ```

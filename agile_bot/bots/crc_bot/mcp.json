@@ -9,7 +9,7 @@
     "env": {
       "AGENT_NAME": "crc_bot",
       "PYTHONPATH": "C:\\dev\\augmented-teams",
-      "WORKING_AREA": "C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot"
+      "WORKING_AREA": "C:\\dev\\augmented-teams\\agile_bot"
     }
   }
 }

@@ -533,9 +533,13 @@ class TestNavigateSequentiallyInTTYMode:
         SCENARIO: User navigates with next command - TTY Mode
         GIVEN: CLI is at shape.clarify
         WHEN: user enters 'next'
-        THEN: CLI parses 'next' command and advances to next action
-              CLI output shows instructions and status in exact TTY format
-              Footer shows shape and strategy bolded
+        THEN: CLI parses 'next' command
+              And Bot navigates to shape.strategy action
+              And Bot executes shape.strategy action
+              And CLI output shows execution result in exact TTY format
+              And CLI output shows instructions for shape.strategy in exact TTY format
+              And CLI output shows bot status in exact TTY format
+              And Footer shows shape and strategy bolded
         
         Domain logic tested in: TestNavigateSequentially
         """
@@ -552,6 +556,9 @@ class TestNavigateSequentiallyInTTYMode:
         assert cli_response is not None
         assert isinstance(cli_response.output, str)
         output = cli_response.output
+        
+        # Verify execution result section (from unified structure)
+        assert 'Status:' in output or 'Message:' in output
         
         # Verify INSTRUCTIONS section shows strategy action
         assert 'INSTRUCTIONS' in output
@@ -576,16 +583,17 @@ class TestNavigateSequentiallyInTTYMode:
         # Verify delegation: Advanced to next action (strategy)
         assert_bot_at_behavior_action(bot, 'shape', 'strategy')
     
-    @pytest.mark.xfail(reason="Actions.previous not implemented yet - pre-existing bug")
     def test_user_navigates_with_back_command(self, tmp_path):
         """
         SCENARIO: User navigates with back command - TTY Mode
         GIVEN: CLI is at shape.strategy
         WHEN: user enters 'back'
         THEN: CLI parses 'back' command
-              CLI output shows result (success or error) in TTY format
-        
-        Note: xfail - Actions.previous not yet implemented (pre-existing bug)
+              And Bot navigates to shape.clarify action
+              And Bot executes shape.clarify action
+              And CLI output shows execution result in exact TTY format
+              And CLI output shows instructions for shape.clarify in exact TTY format
+              And CLI output shows bot status in exact TTY format
         """
         # GIVEN: at strategy (second action)
         bot, workspace = setup_test_bot(tmp_path, ['shape'])
@@ -599,8 +607,18 @@ class TestNavigateSequentiallyInTTYMode:
         # THEN: CLI parsed command and CLI shows output in TTY format
         assert cli_response is not None
         assert isinstance(cli_response.output, str)
+        output = cli_response.output
         
-        # Note: Domain delegation check skipped - Actions.previous not implemented yet
+        # Verify execution result section (from unified structure)
+        assert 'Status:' in output or 'Message:' in output
+        
+        # Verify INSTRUCTIONS section shows clarify action (previous action)
+        assert 'INSTRUCTIONS' in output
+        assert 'Behavior Instructions - shape' in output
+        assert 'Action Instructions - clarify' in output
+        
+        # Verify delegation: Moved back to previous action (clarify)
+        assert_bot_at_behavior_action(bot, 'shape', 'clarify')
 
 
 class TestNavigateSequentiallyInPipeMode:
@@ -616,9 +634,13 @@ class TestNavigateSequentiallyInPipeMode:
         SCENARIO: User navigates with next command - Markdown Mode
         GIVEN: CLI is at shape.clarify
         WHEN: user enters 'next'
-        THEN: CLI parses 'next' command and advances to next action
-              CLI output shows JSON response, instructions, and status in exact Markdown format
-              Footer shows shape and strategy bolded
+        THEN: CLI parses 'next' command
+        And Bot navigates to shape.strategy action
+        And Bot executes shape.strategy action
+        And CLI output shows execution result in exact Markdown format
+        And CLI output shows instructions for shape.strategy in exact Markdown format
+        And CLI output shows bot status in exact Markdown format
+        And Footer shows shape and strategy bolded
         
         Domain logic tested in: TestNavigateSequentially
         """
@@ -636,11 +658,8 @@ class TestNavigateSequentiallyInPipeMode:
         assert isinstance(cli_response.output, str)
         output = cli_response.output
         
-        # Verify JSON response block at top (for navigation commands)
-        assert '```json' in output or '{' in output
-        assert '"status": "success"' in output or '"status":"success"' in output
-        assert '"behavior": "shape"' in output or '"behavior":"shape"' in output
-        assert '"action": "strategy"' in output or '"action":"strategy"' in output
+        # Verify execution result section (from unified structure)
+        assert 'Status:' in output or 'Message:' in output
         
         # Verify INSTRUCTIONS section
         assert '## Behavior Instructions - shape' in output
@@ -654,16 +673,17 @@ class TestNavigateSequentiallyInPipeMode:
         # Verify delegation: Advanced to next action (strategy)
         assert_bot_at_behavior_action(bot, 'shape', 'strategy')
     
-    @pytest.mark.xfail(reason="Actions.previous not implemented yet - pre-existing bug")
     def test_user_navigates_with_back_command(self, tmp_path):
         """
         SCENARIO: User navigates with back command - Markdown Mode
         GIVEN: CLI is at shape.strategy
         WHEN: user enters 'back'
         THEN: CLI parses 'back' command
-              CLI output shows result (success or error) in Markdown format
-        
-        Note: xfail - Actions.previous not yet implemented (pre-existing bug)
+        And Bot navigates to shape.clarify action
+        And Bot executes shape.clarify action
+        And CLI output shows execution result in exact Markdown format
+        And CLI output shows instructions for shape.clarify in exact Markdown format
+        And CLI output shows bot status in exact Markdown format
         """
         # GIVEN: at strategy (second action)
         bot, workspace = setup_test_bot(tmp_path, ['shape'])
@@ -677,8 +697,17 @@ class TestNavigateSequentiallyInPipeMode:
         # THEN: CLI parsed command and CLI shows output in Markdown format
         assert cli_response is not None
         assert isinstance(cli_response.output, str)
+        output = cli_response.output
         
-        # Note: Domain delegation check skipped - Actions.previous not implemented yet
+        # Verify execution result section (from unified structure)
+        assert 'Status:' in output or 'Message:' in output
+        
+        # Verify INSTRUCTIONS section shows clarify action (previous action)
+        assert '## Behavior Instructions - shape' in output
+        assert '## Action Instructions - clarify' in output
+        
+        # Verify delegation: Moved back to previous action (clarify)
+        assert_bot_at_behavior_action(bot, 'shape', 'clarify')
 
 
 class TestNavigateSequentiallyInJSONMode:
@@ -694,9 +723,13 @@ class TestNavigateSequentiallyInJSONMode:
         SCENARIO: User navigates with next command - JSON Mode
         GIVEN: CLI is at shape.clarify
         WHEN: user enters 'next'
-        THEN: CLI parses 'next' command and advances to next action
-              CLI output shows navigation response JSON, instructions JSON, and bot JSON in exact format
-              First JSON object contains status="success", behavior="shape", action="strategy"
+        THEN: CLI parses 'next' command
+        And Bot navigates to shape.strategy action
+        And Bot executes shape.strategy action
+        And CLI output shows unified JSON object in exact format
+        And Unified JSON object contains execution section with execution.status="success", execution.behavior="shape", execution.action="strategy"
+        And Unified JSON object contains instructions section for shape.strategy
+        And Unified JSON object contains bot section with current_behavior="shape"
         
         Domain logic tested in: TestNavigateSequentially
         """
@@ -714,45 +747,47 @@ class TestNavigateSequentiallyInJSONMode:
         assert isinstance(cli_response.output, str)
         output = cli_response.output
         
-        # Verify first JSON object is navigation response
-        nav_data = assert_valid_json(output)
-        assert isinstance(nav_data, dict)
-        assert nav_data['status'] == 'success'
-        assert nav_data['behavior'] == 'shape'
-        assert nav_data['action'] == 'strategy'
-        assert 'message' in nav_data
+        # Verify unified JSON structure
+        unified_data = assert_valid_json(output)
+        assert isinstance(unified_data, dict)
         
-        # Verify instructions JSON object exists
-        assert 'INSTRUCTIONS' in output
-        instructions_start = output.find('{', output.find('INSTRUCTIONS'))
-        assert instructions_start > 0, "Should find start of instructions JSON object"
-        instructions_data = assert_valid_json(output[instructions_start:])
-        assert instructions_data['behavior_metadata']['name'] == 'shape'
-        assert instructions_data['action_metadata']['name'] == 'strategy'
+        # Verify execution section
+        assert 'execution' in unified_data
+        execution = unified_data['execution']
+        assert isinstance(execution, dict)
+        assert execution['status'] == 'success'
+        assert execution['behavior'] == 'shape'
+        assert execution['action'] == 'strategy'
+        assert 'message' in execution
         
-        # Verify bot JSON object exists
-        # Find bot JSON by searching for "current_behavior" key (unique to bot JSON)
-        current_behavior_key = output.rfind('"current_behavior"')
-        assert current_behavior_key > instructions_start, "Bot JSON should come after instructions JSON"
-        # Find the start of the JSON object containing "current_behavior"
-        bot_start = output.rfind('{', 0, current_behavior_key)
-        assert bot_start >= 0, "Should find start of bot JSON object"
-        bot_data = assert_valid_json(output[bot_start:])
+        # Verify instructions section
+        assert 'instructions' in unified_data
+        instructions = unified_data['instructions']
+        assert isinstance(instructions, dict)
+        assert instructions['behavior_metadata']['name'] == 'shape'
+        assert instructions['action_metadata']['name'] == 'strategy'
+        
+        # Verify bot section
+        assert 'bot' in unified_data
+        bot_data = unified_data['bot']
+        assert isinstance(bot_data, dict)
         assert bot_data['current_behavior'] == 'shape'
         
         # Verify delegation: Advanced to next action (strategy)
         assert_bot_at_behavior_action(bot, 'shape', 'strategy')
     
-    @pytest.mark.xfail(reason="Actions.previous not implemented yet - pre-existing bug")
     def test_user_navigates_with_back_command(self, tmp_path):
         """
         SCENARIO: User navigates with back command - JSON Mode
         GIVEN: CLI is at shape.strategy
         WHEN: user enters 'back'
         THEN: CLI parses 'back' command
-              CLI output shows result (success or error) in JSON format
-        
-        Note: xfail - Actions.previous not yet implemented (pre-existing bug)
+        And Bot navigates to shape.clarify action
+        And Bot executes shape.clarify action
+        And CLI output shows unified JSON object in exact format
+        And Unified JSON object contains execution section with execution.status="success", execution.behavior="shape", execution.action="clarify"
+        And Unified JSON object contains instructions section for shape.clarify
+        And Unified JSON object contains bot section with current_behavior="shape"
         """
         # GIVEN: at strategy (second action)
         bot, workspace = setup_test_bot(tmp_path, ['shape'])
@@ -766,10 +801,35 @@ class TestNavigateSequentiallyInJSONMode:
         # THEN: CLI parsed command and CLI shows output in exact JSON format
         assert cli_response is not None
         assert isinstance(cli_response.output, str)
-        # Verify exact JSON format
-        assert_valid_json(cli_response.output)
+        output = cli_response.output
         
-        # Note: Domain delegation check skipped - Actions.previous not implemented yet
+        # Verify unified JSON structure
+        unified_data = assert_valid_json(output)
+        assert isinstance(unified_data, dict)
+        
+        # Verify execution section
+        assert 'execution' in unified_data
+        execution = unified_data['execution']
+        assert isinstance(execution, dict)
+        assert execution['status'] == 'success'
+        assert execution['behavior'] == 'shape'
+        assert execution['action'] == 'clarify'
+        
+        # Verify instructions section
+        assert 'instructions' in unified_data
+        instructions = unified_data['instructions']
+        assert isinstance(instructions, dict)
+        assert instructions['behavior_metadata']['name'] == 'shape'
+        assert instructions['action_metadata']['name'] == 'clarify'
+        
+        # Verify bot section
+        assert 'bot' in unified_data
+        bot_data = unified_data['bot']
+        assert isinstance(bot_data, dict)
+        assert bot_data['current_behavior'] == 'shape'
+        
+        # Verify delegation: Moved back to previous action (clarify)
+        assert_bot_at_behavior_action(bot, 'shape', 'clarify')
 
 
 class TestExitCLIInTTYMode:

@@ -72,6 +72,11 @@ class ValidationContext:
         from agile_bot.src.scope import ScopeType
         from agile_bot.src.actions.validate.validation_type import ValidationType
         
+        # Enforce story-graph-only behaviors to ignore file scopes entirely.
+        validation_type = behavior.validation_type
+        if validation_type == ValidationType.STORY_GRAPH:
+            return {}
+
         # If scope type is FILES, use the file paths directly from scope.value
         if context.scope and context.scope.type == ScopeType.FILES:
             files_dict = {}
@@ -97,14 +102,6 @@ class ValidationContext:
                 return filtered_files
             
             return files_dict
-        
-        # Get validation type from behavior
-        validation_type = behavior.validation_type
-        
-        # If behavior validates story graph only, return empty files unless explicit files scope
-        if validation_type == ValidationType.STORY_GRAPH:
-            # No files scope - return empty dict for story-graph-only behaviors
-            return {}
         
         # For behaviors that validate files (or both), discover files
         file_discovery = FileDiscovery(behavior.bot_paths, behavior.name, [])

@@ -1,54 +1,5 @@
 {
-  "_explanation": {
-    "increments": "Organize stories into increments prioritized by risk and value. Each increment should be a vertical slice delivering end-to-end working flow. Priority 1 = NOW (current increment), Priority 2 = NEXT, Priority 3 = LATER.",
-    "epic_distribution": "Epics and sub_epics can span multiple increments. Show partial completion using estimated_stories (e.g., Epic has 10 total stories: Increment 1 delivers 3, Increment 2 delivers 4, Increment 3 delivers remaining 3).",
-    "architectural_risk": "Prioritize stories that validate architectural risks, test integrations, or prove technology choices in early increments (Priority 1). Defer nice-to-have features to later increments."
-  },
-  "epics": [
-    {
-      "name": "",
-      "users": [],
-      "sequential_order": 1,
-      "estimated_stories": null,
-      "domain_concepts": [
-        {
-          "name": "",
-          "responsibilities": [
-            {
-              "name": "",
-              "collaborators": []
-            }
-          ]
-        }
-      ],
-      "sub_epics": [
-        {
-          "name": "",
-          "users": [],
-          "sequential_order": 1,
-          "stories": [
-            {
-              "name": "",
-              "users": [],
-              "sequential_order": 1
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "increments": [
-    {
-      "name": "",
-      "priority": 1
-    },
-    {
-      "name": "",
-      "priority": 2
-    },
-    {
-      "name": "",
-      "priority": 3
-    }
-  ]
+  "_explanation": {},
+  "epics": [],
+  "increments": []
 }

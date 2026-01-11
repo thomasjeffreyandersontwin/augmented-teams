@@ -223,31 +223,9 @@ class ValidateRulesAction(Action):
     
     def do_execute(self, context: ValidateActionContext):
         """Legacy method for backwards compatibility."""
-        logger.info('=== Starting validation ===')
-        logger.info(f'Behavior: {self.behavior.name}')
-        logger.info(f'Context: scope={context.scope}, skip_cross_file={context.skip_cross_file}')
-        
-        # Get validation result from executor (returns dict with 'instructions' key)
-        result = self._executor.execute_synchronous(context)
-        
-        # Convert instructions dict to Instructions object
-        instructions_dict = result.get('instructions', {})
-        if instructions_dict:
-            from agile_bot.src.instructions.instructions import Instructions
-            instructions_obj = Instructions(
-                base_instructions=instructions_dict.get('base_instructions', []),
-                bot_paths=self.behavior.bot_paths,
-                scope=context.scope if hasattr(context, 'scope') else None
-            )
-            # Copy all other fields from dict to Instructions object
-            for key, value in instructions_dict.items():
-                if key != 'base_instructions':
-                    instructions_obj.set(key, value)
-            
-            return instructions_obj
-        
-        # Fallback: return result as-is if no instructions dict found
-        return result
+        # Align with other actions: build full instructions via get_instructions()
+        # (runs scanners and injects results/links in _prepare_instructions)
+        return self.get_instructions(context)
 
     def inject_behavior_specific_rules(self) -> Dict[str, Any]:
         all_rules = []
