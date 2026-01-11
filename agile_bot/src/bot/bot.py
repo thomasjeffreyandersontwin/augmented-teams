@@ -398,12 +398,9 @@ class Bot:
                     'action': next_action
                 }
             else:
-                return {
-                    'status': 'info',
-                    'message': f'Already at last action in {behavior.name}',
-                    'behavior': behavior.name,
-                    'action': current_action
-                }
+                # At last action of current behavior: advance to next behavior if any
+                advance_result = self.behaviors.advance()
+                return advance_result
         except ValueError:
             return {
                 'status': 'error',

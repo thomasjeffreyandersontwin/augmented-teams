@@ -1330,16 +1330,16 @@
           ]
         },
         {
-          "name": "Generate REPL CLI",
+          "name": "Generate CLI",
           "sequential_order": 3.0,
-          "test_file": "test_generate_repl_cli.py",
+          "test_file": "test_generate_cli.py",
           "story_groups": [
             {
               "type": "and",
               "connector": null,
               "stories": [
                 {
-                  "name": "Generate REPL Command Definitions",
+                  "name": "Generate Command Definitions",
                   "sequential_order": 1,
                   "connector": null,
                   "users": [
@@ -2052,7 +2052,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_invoke_bot_directly.py",
                       "test_class": "TestNavigateToBehaviorActionAndExecute",
                       "scenarios": [
                         {
@@ -2085,7 +2084,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_invoke_bot_directly.py",
                       "test_class": "TestNavigateSequentially",
                       "scenarios": [
                         {
@@ -2166,7 +2164,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_scope_bot_api.py",
                       "test_class": "TestSetScopeThroughBotAPI",
                       "scenarios": [
                         {
@@ -2199,7 +2196,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_scope_bot_api.py",
                       "test_class": "TestFilterKnowledgeGraphUsingBotAPI",
                       "scenarios": [
                         {
@@ -2232,7 +2228,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_scope_bot_api.py",
                       "test_class": "TestFilterFilesUsingBotAPI",
                       "scenarios": [
                         {
@@ -2260,7 +2255,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_scope_bot_api.py",
                       "test_class": "TestEnforceMutuallyExclusiveScopeTypes",
                       "scenarios": [
                         {
@@ -2288,7 +2282,6 @@
                         "Bot Behavior"
                       ],
                       "story_type": "user",
-                      "test_file": "test_manage_scope_bot_api.py",
                       "test_class": "TestClearScopeThroughBotAPI",
                       "scenarios": [
                         {
@@ -3887,6 +3880,85 @@
           ],
           "story_groups": [],
           "test_file": "test_invoke_bot_directly.py"
+        },
+        {
+          "name": "Get Help",
+          "sequential_order": 6,
+          "test_file": "test_get_help.py",
+          "story_groups": [
+            {
+              "type": "and",
+              "connector": null,
+              "stories": [
+                {
+                  "name": "Get Action Instructions",
+                  "sequential_order": 1,
+                  "connector": null,
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "user",
+                  "test_class": "TestGetActionInstructions",
+                  "acceptance_criteria": [
+                    "WHEN Action instructions are requested",
+                    "THEN Complete instructions are returned",
+                    "AND Instructions include base, guardrails, and context"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Verify actions can provide instructions",
+                      "steps": "Given Bot has behavior with action\nWhen Action is accessed\nThen Action has method to get instructions",
+                      "test_method": "test_action_has_instructions_method"
+                    }
+                  ]
+                },
+                {
+                  "name": "Get Parameter Help",
+                  "sequential_order": 2,
+                  "connector": "and",
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "user",
+                  "test_class": "TestGetParameterHelp",
+                  "acceptance_criteria": [
+                    "WHEN Parameter help is requested",
+                    "THEN Action parameters are returned with descriptions",
+                    "AND Parameter types and requirements are included"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Action provides parameter help",
+                      "steps": "Given Bot has behavior with action\nWhen Parameter help is requested\nThen Action returns parameter descriptions",
+                      "test_method": "test_action_provides_parameter_help"
+                    }
+                  ]
+                },
+                {
+                  "name": "Get Command Examples",
+                  "sequential_order": 3,
+                  "connector": "and",
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "user",
+                  "test_class": "TestGetCommandExamples",
+                  "acceptance_criteria": [
+                    "WHEN Command examples are requested",
+                    "THEN Action usage examples are returned",
+                    "AND Examples show different usage patterns"
+                  ],
+                  "scenarios": [
+                    {
+                      "name": "Action provides command examples",
+                      "steps": "Given Bot has behavior with action\nWhen Command examples are requested\nThen Action returns usage examples",
+                      "test_method": "test_action_provides_command_examples"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "Invoke Bot Through Panel",
@@ -7150,9 +7222,9 @@
           "background": {},
           "sub_epics": [
             {
-              "name": "Initialize REPL Session",
+              "name": "Initialize CLI Session",
               "sequential_order": 1,
-              "test_file": "test_initialize_repl_session.py",
+              "test_file": "test_initialize_cli_session.py",
               "story_groups": [
                 {
                   "type": "and",
@@ -7166,17 +7238,32 @@
                         "User"
                       ],
                       "story_type": "user",
-                      "test_class": "TestStartREPLSession",
+                      "test_class": "TestStartCLISessionInTTYMode",
                       "scenarios": [
                         {
                           "name": "CLI launches in interactive mode",
-                          "steps": "GIVEN: REPLSession is configured for interactive mode\nWHEN: user runs 'python repl_main.py --stdio'\nTHEN: REPLSession creates CLIBot wrapping Bot",
+                          "steps": "GIVEN: CLISession is configured for interactive mode (TTY detected)\nWHEN: user runs CLI\nTHEN: CLISession wraps Bot\nAND: CLI can execute commands\nAND: CLI uses TTY adapters for output",
                           "test_method": "test_cli_launches_in_interactive_mode"
                         },
                         {
                           "name": "CLI loads existing behavior action state on launch",
-                          "steps": "GIVEN: REPLSession is configured for interactive mode\nAND: behavior action state file exists\nWHEN: user runs 'python repl_main.py --stdio'\nTHEN: REPLSession loads stored behavior action state",
+                          "steps": "GIVEN: CLISession is configured for interactive mode\nAND: behavior action state file exists\nWHEN: user runs CLI\nTHEN: Bot loads stored behavior action state",
                           "test_method": "test_cli_loads_existing_behavior_action_state_on_launch"
+                        },
+                        {
+                          "name": "CLI displays status on launch",
+                          "steps": "GIVEN: CLISession is initialized in interactive mode\nWHEN: user executes 'status' command\nTHEN: CLI displays complete status output with all required sections in correct order\nAND: Output format matches TTY adapter format (hard-coded expectations)",
+                          "test_method": "test_cli_displays_status_on_launch"
+                        },
+                        {
+                          "name": "CLI displays header section",
+                          "steps": "GIVEN: CLISession is initialized\nWHEN: user executes 'status' command\nTHEN: CLI displays header section with exact format\nAND: Header includes separator lines, centered bold text, description, and warning",
+                          "test_method": "test_cli_displays_header_section"
+                        },
+                        {
+                          "name": "CLI displays bot section",
+                          "steps": "GIVEN: CLISession is initialized\nWHEN: user executes 'status' command\nTHEN: CLI displays bot section with exact format\nAND: Bot section includes bot name, bot path, workspace path, and change path instructions",
+                          "test_method": "test_cli_displays_bot_section"
                         }
                       ]
                     },
@@ -7189,12 +7276,60 @@
                         "Automation"
                       ],
                       "story_type": "user",
-                      "test_class": "TestStartREPLInPipeMode",
+                      "test_class": "TestStartCLISessionInPipeMode",
                       "scenarios": [
                         {
                           "name": "CLI launches in pipe mode",
-                          "steps": "GIVEN: REPLSession is configured for pipe mode\nWHEN: commands are piped\nTHEN: REPLSession creates CLIBot without interactive prompts",
+                          "steps": "GIVEN: CLISession is configured for pipe mode (non-TTY detected)\nWHEN: commands are piped\nTHEN: CLISession creates session without interactive prompts\nAND: CLI can execute commands in pipe mode\nAND: CLI uses markdown adapters for output",
                           "test_method": "test_cli_launches_in_pipe_mode"
+                        },
+                        {
+                          "name": "CLI displays status in markdown format",
+                          "steps": "GIVEN: CLISession is initialized in pipe mode\nWHEN: user executes 'status' command\nTHEN: CLI displays complete status output in markdown format\nAND: Output includes markdown syntax (headers, bold, code blocks, lists)",
+                          "test_method": "test_cli_displays_status_in_markdown_format"
+                        },
+                        {
+                          "name": "CLI displays header section in markdown",
+                          "steps": "GIVEN: CLISession is initialized in pipe mode\nWHEN: user executes 'status' command\nTHEN: CLI displays header section with markdown formatting\nAND: Header uses markdown separators and headers",
+                          "test_method": "test_cli_displays_header_section_in_markdown"
+                        },
+                        {
+                          "name": "CLI displays bot section in markdown",
+                          "steps": "GIVEN: CLISession is initialized in pipe mode\nWHEN: user executes 'status' command\nTHEN: CLI displays bot section with markdown formatting\nAND: Bot section uses markdown headers, bold, and code blocks",
+                          "test_method": "test_cli_displays_bot_section_in_markdown"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Launch CLI in JSON Mode",
+                      "sequential_order": 3,
+                      "connector": "and",
+                      "users": [
+                        "Web View",
+                        "API Client"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestStartCLISessionInJSONMode",
+                      "scenarios": [
+                        {
+                          "name": "CLI launches in JSON mode",
+                          "steps": "GIVEN: CLISession is configured for JSON mode (mode='json' set explicitly)\nWHEN: commands are executed\nTHEN: CLISession creates session\nAND: CLI can execute commands in JSON mode\nAND: CLI uses JSON adapters for output",
+                          "test_method": "test_cli_launches_in_json_mode"
+                        },
+                        {
+                          "name": "CLI displays status in JSON format",
+                          "steps": "GIVEN: CLISession is initialized in JSON mode\nWHEN: user executes 'status' command\nTHEN: CLI displays complete status output in JSON format\nAND: Output is valid JSON with required fields (name, bot_directory, workspace_directory, behavior_names, current_behavior)",
+                          "test_method": "test_cli_displays_status_in_json_format"
+                        },
+                        {
+                          "name": "CLI displays header section in JSON",
+                          "steps": "GIVEN: CLISession is initialized in JSON mode\nWHEN: user executes 'status' command\nTHEN: CLI displays header section with JSON structure\nAND: Output is valid JSON dictionary",
+                          "test_method": "test_cli_displays_header_section_in_json"
+                        },
+                        {
+                          "name": "CLI displays bot section in JSON",
+                          "steps": "GIVEN: CLISession is initialized in JSON mode\nWHEN: user executes 'status' command\nTHEN: CLI displays bot section with JSON structure\nAND: JSON includes bot name and directory fields",
+                          "test_method": "test_cli_displays_bot_section_in_json"
                         }
                       ]
                     },
@@ -7221,7 +7356,7 @@
                       ]
                     },
                     {
-                      "name": "Detect and Configure TTY/Non-TTY Input for CLI",
+                      "name": "Detect and Configure TTY/Non-TTY Input",
                       "sequential_order": 4,
                       "connector": "and",
                       "users": [
@@ -7231,13 +7366,13 @@
                       "test_class": "TestDetectAndConfigureTTYNonTTYInput",
                       "scenarios": [
                         {
-                          "name": "TTYDetector identifies interactive terminal",
-                          "steps": "GIVEN: stdin is connected to a TTY terminal\nWHEN: TTYDetector.is_interactive() is called\nTHEN: TTYDetector returns True",
+                          "name": "TTY detector identifies interactive terminal",
+                          "steps": "GIVEN: stdin is connected to a TTY terminal\nWHEN: CLI detects TTY status\nTHEN: Interactive mode is detected\nAND: TTY adapters are used",
                           "test_method": "test_tty_detector_identifies_interactive_terminal"
                         },
                         {
-                          "name": "TTYDetector identifies piped input",
-                          "steps": "GIVEN: stdin is piped from another process\nWHEN: TTYDetector.is_interactive() is called\nTHEN: TTYDetector returns False",
+                          "name": "TTY detector identifies piped input",
+                          "steps": "GIVEN: stdin is piped from another process\nWHEN: CLI detects TTY status\nTHEN: Pipe mode is detected\nAND: Markdown adapters are used",
                           "test_method": "test_tty_detector_identifies_piped_input"
                         }
                       ]

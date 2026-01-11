@@ -1,6 +1,6 @@
 # Validation Report - Shape
 
-**Generated:** 2026-01-11 11:02:24
+**Generated:** 2026-01-11 11:59:14
 **Project:** agile_bot
 **Behavior:** shape
 **Action:** validate
@@ -115,22 +115,20 @@ These violations were detected by scanning each file individually.
 
 The following validation steps were performed:
 
-1. validate base instructions
+1. ## Step 1: Scanner Violation Review
 2. 
-=== SCANNER EXECUTION STATUS ===
-3. Successfully Executed: 4
-4. Load Failed: 0
-5. Execution Failed: 0
-6. No Scanner: 4
-7. 
-8. All scanners executed successfully.
-9. === END SCANNER STATUS ===
-
-10. Based on code scanner diagnostics, edit the knowledge graph to fix violations:
-*... and 3 more instructions*
+3. {{scanner_output}}
+4. 
+5. Carefully review all scanner-reported violations as follows:
+6. 1. For each violation message, locate the corresponding element in the knowledge graph.
+7. 2. Open the relevant rule file and read all DO and DON'T examples thoroughly.
+8. 3. Decide if the violation is **Valid** (truly a rule breach per examples) or a **False Positive** (explain why if so).
+9. 4. Determine the **Root Cause** (e.g., 'incorrect concept naming', 'missing actor', etc.).
+10. 5. Assign a **Theme** grouping based on the type of issue (e.g., 'noun-only naming', 'incomplete acceptance criteria').
+*... and 52 more instructions*
 
 ## Report Location
 
 This report was automatically generated and saved to:
-`C:\dev\augmented-teams\agile_bot\docs\stories\reports\shape-validation-report-2026-01-11_11-02-23.md`
+`C:\dev\augmented-teams\agile_bot\docs\stories\reports\shape-validation-report-2026-01-11_11-59-14.md`
 

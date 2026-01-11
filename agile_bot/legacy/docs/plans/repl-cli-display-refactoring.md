@@ -1,4 +1,4 @@
-# Design Model
+=== Story Graph ===# Design Model
 
 ## Object-Oriented Design Patterns
 

@@ -213,11 +213,19 @@ class Actions:
 
     def is_final_action(self) -> bool:
         try:
-            if self.current is None:
-                return False
             action_names = self.names
-            if action_names and self.current.action_name == action_names[-1]:
-                return True
+            if not action_names:
+                return False
+            # If we have a current action, check position
+            if self.current is not None:
+                return self.current.action_name == action_names[-1]
+            # If no current action, fall back to state file: consider final if last action is marked completed
+            state_file = self._state_manager.get_state_file_path()
+            if state_file.exists():
+                state_data = json.loads(state_file.read_text(encoding='utf-8'))
+                completed = state_data.get('completed_actions', [])
+                last_action_state = f'{self.behavior.bot_name}.{self.behavior.name}.{action_names[-1]}'
+                return any(a.get('action_state') == last_action_state for a in completed if isinstance(a, dict))
         except Exception as e:
             logging.getLogger(__name__).debug(f'Failed to check if action is final: {e}')
             raise

@@ -147,31 +147,39 @@ class Behaviors:
                 'message': 'No current behavior set'
             }
         
-        # Try to advance within current behavior
         current_behavior = self.current
-        next_action_result = current_behavior.actions.advance()
+        actions = current_behavior.actions
+        # If no current action, navigate to first
+        if actions.current is None and actions.names:
+            actions.navigate_to(actions.names[0])
         
-        if next_action_result['status'] == 'success':
-            return next_action_result
-        
-        # If at end of behavior, try to advance to next behavior
-        next_behavior = self.next()
-        if next_behavior:
-            self._current_index += 1
-            self.save_state()
-            # Navigate to first action of next behavior
-            if next_behavior.actions._actions:
-                next_behavior.actions.navigate_to(next_behavior.actions.names[0])
+        # If we are at the final action, close it and move to next behavior
+        if actions.is_final_action():
+            actions.close_current()
+            next_behavior = self.next()
+            if next_behavior:
+                self._current_index += 1
+                self.save_state()
+                if next_behavior.actions.names:
+                    next_behavior.actions.navigate_to(next_behavior.actions.names[0])
+                return {
+                    'status': 'success',
+                    'message': f'Advanced to behavior: {next_behavior.name}',
+                    'behavior': next_behavior.name,
+                    'action': next_behavior.actions.current.action_name if next_behavior.actions.current else None
+                }
             return {
-                'status': 'success',
-                'message': f'Advanced to behavior: {next_behavior.name}',
-                'behavior': next_behavior.name,
-                'action': next_behavior.actions.current.action_name if next_behavior.actions.current else None
+                'status': 'complete',
+                'message': 'Workflow complete - no more behaviors'
             }
         
+        # Otherwise, advance within the current behavior
+        actions.close_current()
         return {
-            'status': 'complete',
-            'message': 'Workflow complete - no more behaviors'
+            'status': 'success',
+            'message': f'Advanced to action: {actions.current.action_name if actions.current else None}',
+            'behavior': current_behavior.name,
+            'action': actions.current.action_name if actions.current else None
         }
     
     def go_back(self) -> Dict[str, Any]:
