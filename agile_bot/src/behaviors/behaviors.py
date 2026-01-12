@@ -233,55 +233,10 @@ class Behaviors:
         if behavior is None:
             raise ValueError(f"Behavior '{behavior_name}' not found")
         
-        target_index = None
         for i, b in enumerate(self._behaviors):
             if b.name == behavior.name:
-                target_index = i
                 self._current_index = i
                 break
-        
-        # When navigating to a behavior: mark all actions in previous behaviors as complete,
-        # clear all actions in future behaviors
-        if target_index is not None and self.bot_paths:
-            workspace_dir = self.bot_paths.workspace_directory
-            state_file = workspace_dir / 'behavior_action_state.json'
-            
-            import json
-            if state_file.exists():
-                state_data = json.loads(state_file.read_text(encoding='utf-8'))
-            else:
-                state_data = {}
-            
-            completed_actions = state_data.get('completed_actions', [])
-            
-            # Mark all actions in previous behaviors as complete
-            for i in range(target_index):
-                past_behavior = self._behaviors[i]
-                for action_name in past_behavior.actions.names:
-                    action_state = f"{self.bot_name}.{past_behavior.name}.{action_name}"
-                    # Check if already completed
-                    is_completed = any(a.get('action_state') == action_state for a in completed_actions if isinstance(a, dict))
-                    if not is_completed:
-                        from datetime import datetime
-                        completed_actions.append({
-                            'action_state': action_state,
-                            'timestamp': datetime.now().isoformat()
-                        })
-            
-            # Remove completed actions from future behaviors
-            actions_to_remove = set()
-            for i in range(target_index + 1, len(self._behaviors)):
-                future_behavior = self._behaviors[i]
-                for action_name in future_behavior.actions.names:
-                    action_state = f"{self.bot_name}.{future_behavior.name}.{action_name}"
-                    actions_to_remove.add(action_state)
-            
-            state_data['completed_actions'] = [
-                action for action in completed_actions 
-                if isinstance(action, dict) and action.get('action_state') not in actions_to_remove
-            ]
-            state_file.parent.mkdir(parents=True, exist_ok=True)
-            state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
         
         # Load actions state before saving (so current_action is set correctly)
         if self.current and self.current.actions:

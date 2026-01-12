@@ -37,8 +37,8 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         # Setup knowledge graph directory and files
         kg_dir = helper.bot_directory / 'behaviors' / behavior / 'content' / 'knowledge_graph'
         kg_dir.mkdir(parents=True, exist_ok=True)
-        helper.given_file_created(kg_dir, 'build_story_graph_outline.json', {'template': template_name})
-        helper.given_file_created(kg_dir, template_name, {'template': 'knowledge_graph', 'structure': {}})
+        helper.files.given_file_created(kg_dir, 'build_story_graph_outline.json', {'template': template_name})
+        helper.files.given_file_created(kg_dir, template_name, {'template': 'knowledge_graph', 'structure': {}})
         
         # Get behavior and action from BotTestHelper
         helper.bot.behaviors.navigate_to(behavior)
@@ -46,7 +46,7 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         action_obj = BuildKnowledgeAction(behavior=behavior_obj, action_config=None)
         instructions = action_obj.instructions
         
-        helper.then_instructions_contain(instructions, 'template_path', template_name=template_name)
+        helper.instructions.assert_instructions_contain(instructions, 'template_path', template_name=template_name)
 
     def test_action_loads_and_merges_instructions(self, tmp_path):
         """
@@ -60,8 +60,8 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         action = 'build'
         
         # Setup knowledge graph directory and files
-        helper.setup_knowledge_graph_config_and_template(behavior)
-        helper.create_behavior_specific_instructions(behavior, action)
+        helper.build.setup_knowledge_graph_config_and_template(behavior)
+        helper.build.create_behavior_specific_instructions(behavior, action)
         
         # Get behavior and action from BotTestHelper
         helper.bot.behaviors.navigate_to(behavior)
@@ -72,8 +72,8 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         from agile_bot.src.actions.action_context import ScopeActionContext
         merged_instructions = action_obj.get_instructions(ScopeActionContext())
         
-        helper.then_instructions_merged_from_sources(merged_instructions, behavior, action, sources='both')
-        helper.assert_build_knowledge_instructions(merged_instructions)
+        helper.instructions.assert_instructions_merged_from_sources(merged_instructions, behavior, action, sources='both')
+        helper.build.assert_build_knowledge_instructions(merged_instructions)
 
     def test_all_template_variables_are_replaced_in_instructions(self, tmp_path):
         """
@@ -86,7 +86,7 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         behavior = 'shape'
         
         # Setup knowledge graph config
-        helper.setup_knowledge_graph_config_and_template(behavior)
+        helper.build.setup_knowledge_graph_config_and_template(behavior)
         
         # Get behavior from BotTestHelper
         helper.bot.behaviors.navigate_to(behavior)
@@ -98,7 +98,7 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         instructions = action_obj.get_instructions(ScopeActionContext())
         
         # Verify all BuildKnowledgeAction fields are present
-        helper.assert_build_knowledge_instructions(instructions)
+        helper.build.assert_build_knowledge_instructions(instructions)
 
 class TestUpdateExistingKnowledgeGraph:
     """Story: Update Existing Knowledge Graph - Tests that build updates existing story-graph.json instead of creating a new file."""
@@ -111,20 +111,20 @@ class TestUpdateExistingKnowledgeGraph:
         helper = BotTestHelper(tmp_path)
         behavior = 'prioritization'
         
-        existing_story_graph = helper.given_story_graph_dict(epic='mob')
+        existing_story_graph = helper.story.given_story_graph_dict(epic='mob')
         stories_dir = helper.workspace / 'docs' / 'stories'
-        story_graph_path = helper.given_file_created(stories_dir, 'story-graph.json', existing_story_graph)
+        story_graph_path = helper.files.given_file_created(stories_dir, 'story-graph.json', existing_story_graph)
         
         # Setup knowledge graph directory
         kg_dir = helper.bot_directory / 'behaviors' / behavior / 'content' / 'knowledge_graph'
         kg_dir.mkdir(parents=True, exist_ok=True)
-        helper.given_file_created(kg_dir, 'build_story_graph_increments.json', {
+        helper.files.given_file_created(kg_dir, 'build_story_graph_increments.json', {
             "name": "build_story_graph_outline",
             "path": "docs/stories",
             "template": "story_graph_increments.json",
             "output": "story-graph.json"
         })
-        helper.given_file_created(kg_dir, 'story_graph_increments.json', {
+        helper.files.given_file_created(kg_dir, 'story_graph_increments.json', {
             "_explanation": {},
             "epics": [],
             "increments": []
@@ -139,9 +139,9 @@ class TestUpdateExistingKnowledgeGraph:
         from agile_bot.src.actions.action_context import ScopeActionContext
         instructions = action_obj.get_instructions(ScopeActionContext())
         
-        helper.assert_instructions_indicate_updating_existing_file(instructions, 'story-graph.json')
-        helper.assert_story_graph_updated_with_increments(instructions, story_graph_path)
-        helper.assert_config_path_matches(instructions, 'docs/stories')
+        helper.build.assert_instructions_indicate_updating_existing_file(instructions, 'story-graph.json')
+        helper.build.assert_story_graph_updated_with_increments(instructions, story_graph_path)
+        helper.instructions.assert_config_path_matches(instructions, 'docs/stories')
 
 class TestLoadStoryGraphIntoMemory:
     """Story: Load Story Graph Into Memory - Tests loading story graph and creating StoryMap object model."""
@@ -164,11 +164,11 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
+        story_map = helper.story.create_story_map()
         # When: Epics are retrieved from story map
-        epics = helper.when_item_accessed('epics', story_map)
+        epics = helper.story.when_item_accessed('epics', story_map)
         # Then: Epics contain single build knowledge epic
-        helper.assert_story_map_matches(epics)
+        helper.story.assert_story_map_matches(epics)
     
     def test_epic_has_sub_epics(self, tmp_path):
         """
@@ -176,9 +176,9 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
-        epic = helper.assert_story_map_matches(epics)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
+        epic = helper.story.assert_story_map_matches(epics)
         # When: Epic children are retrieved
         children = epic.children
         # Then: Children contain single sub epic
@@ -192,9 +192,9 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
-        epic = helper.assert_story_map_matches(epics)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
+        epic = helper.story.assert_story_map_matches(epics)
         sub_epic = epic.children[0]
         # When: Sub epic children are retrieved
         children = sub_epic.children
@@ -208,9 +208,9 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
-        epic = helper.assert_story_map_matches(epics)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
+        epic = helper.story.assert_story_map_matches(epics)
         sub_epic = epic.children[0]
         story_group = sub_epic.children[0]
         # When: Story group stories are retrieved
@@ -226,9 +226,9 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
+        story_map = helper.story.create_story_map()
         # When: Story is retrieved from path
-        story = helper.when_item_accessed('story', story_map)
+        story = helper.story.when_item_accessed('story', story_map)
         # Then: Story has expected properties
         assert story.name == "Load Story Graph Into Memory"
         assert story.users == ["Story Bot"]
@@ -243,8 +243,8 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        story = helper.when_item_accessed('story', story_map)
+        story_map = helper.story.create_story_map()
+        story = helper.story.when_item_accessed('story', story_map)
         # When: Story scenarios are retrieved
         scenarios = story.scenarios
         # Then: Scenarios contain expected scenarios
@@ -261,10 +261,10 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        story = helper.when_item_accessed('story', story_map)
+        story_map = helper.story.create_story_map()
+        story = helper.story.when_item_accessed('story', story_map)
         # When: Scenario is retrieved from story
-        scenario = helper.when_item_accessed('scenario', story)
+        scenario = helper.story.when_item_accessed('scenario', story)
         # Then: Scenario has expected properties
         assert scenario.name == "Story graph file exists"
         assert scenario.type == "happy_path"
@@ -280,10 +280,10 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        story = helper.when_item_accessed('story', story_map)
+        story_map = helper.story.create_story_map()
+        story = helper.story.when_item_accessed('story', story_map)
         # When: Scenario is retrieved from story
-        scenario = helper.when_item_accessed('scenario', story)
+        scenario = helper.story.when_item_accessed('scenario', story)
         # Then: Scenario has default test method
         assert scenario.default_test_method == "test_story_graph_file_exists"
     
@@ -293,8 +293,8 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        story = helper.when_item_accessed('story', story_map)
+        story_map = helper.story.create_story_map()
+        story = helper.story.when_item_accessed('story', story_map)
         # When: Story scenario outlines are retrieved
         scenario_outlines = story.scenario_outlines
         # Then: Scenario outlines contain expected outline
@@ -308,10 +308,10 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        story = helper.when_item_accessed('story', story_map)
+        story_map = helper.story.create_story_map()
+        story = helper.story.when_item_accessed('story', story_map)
         # When: Scenario outline is retrieved from story
-        scenario_outline = helper.when_item_accessed('scenario_outline', story)
+        scenario_outline = helper.story.when_item_accessed('scenario_outline', story)
         # Then: Scenario outline has expected examples
         assert len(scenario_outline.examples_columns) == 2
         assert scenario_outline.examples_columns == ["file_path", "expected_epics"]
@@ -325,9 +325,9 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
+        story_map = helper.story.create_story_map()
         # When: Story is retrieved from path
-        story = helper.when_item_accessed('story', story_map)
+        story = helper.story.when_item_accessed('story', story_map)
         # Then: Story has default test class
         assert story.default_test_class == "TestLoadStoryGraphIntoMemory"
     
@@ -337,9 +337,9 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
-        epic = helper.when_item_accessed('epic', epics)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
+        epic = helper.story.when_item_accessed('epic', epics)
         # When: Story map is walked
         nodes = list(story_map.walk(epic))
         # Then: Nodes match expected structure
@@ -358,12 +358,12 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: First epic is retrieved
-        epic = helper.when_item_accessed('epic', epics)
+        epic = helper.story.when_item_accessed('epic', epics)
         # Then: Epic map location is correct
-        helper.assert_map_location_matches(epic)
+        helper.story.assert_map_location_matches(epic)
     
     def test_map_location_for_sub_epic(self, tmp_path):
         """
@@ -371,12 +371,12 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: Sub epic is retrieved from epics
-        sub_epic = helper.when_item_accessed('sub_epic', epics)
+        sub_epic = helper.story.when_item_accessed('sub_epic', epics)
         # Then: Sub epic map location is correct
-        helper.assert_map_location_matches(sub_epic)
+        helper.story.assert_map_location_matches(sub_epic)
     
     def test_map_location_for_story(self, tmp_path):
         """
@@ -384,12 +384,12 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: Story is retrieved from epics
-        story = helper.when_item_accessed('story', epics)
+        story = helper.story.when_item_accessed('story', epics)
         # Then: Story map location is correct
-        helper.assert_map_location_matches(story)
+        helper.story.assert_map_location_matches(story)
     
     def test_scenario_map_location(self, tmp_path):
         """
@@ -397,12 +397,12 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: Scenario is retrieved from epics
-        scenario = helper.when_item_accessed('scenario', epics)
+        scenario = helper.story.when_item_accessed('scenario', epics)
         # Then: Scenario map location is correct
-        helper.assert_map_location_matches(scenario)
+        helper.story.assert_map_location_matches(scenario)
     
     def test_scenario_outline_map_location(self, tmp_path):
         """
@@ -410,39 +410,41 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: Scenario outline is retrieved from epics
-        scenario_outline = helper.when_item_accessed('scenario_outline', epics)
+        scenario_outline = helper.story.when_item_accessed('scenario_outline', epics)
         # Then: Scenario outline map location is correct
-        helper.assert_map_location_matches(scenario_outline)
+        helper.story.assert_map_location_matches(scenario_outline)
     
     def test_from_bot_loads_story_graph(self, tmp_path):
         """
         SCENARIO: From Bot Loads Story Graph
         """
-        helper = BotTestHelper(tmp_path)
-        docs_dir = helper.bot_directory / 'docs'
-        docs_dir.mkdir(parents=True, exist_ok=True)
-        story_graph = helper.given_story_graph_dict()
-        story_graph_path = helper.given_file_created(docs_dir, 'story-graph.json', story_graph)
+        # Use custom bot directory to avoid modifying production bot
+        helper = BotTestHelper(tmp_path, bot_directory=tmp_path / 'bot')
+        stories_dir = helper.bot_directory / 'docs' / 'stories'
+        stories_dir.mkdir(parents=True, exist_ok=True)
+        story_graph = helper.story.given_story_graph_dict()
+        story_graph_path = helper.files.given_file_created(stories_dir, 'story-graph.json', story_graph)
         story_map = StoryMap.from_bot(helper.bot_directory)
-        helper.assert_story_map_matches(story_map)
+        helper.story.assert_story_map_matches(story_map)
     
     def test_from_bot_with_path(self, tmp_path):
         """
         SCENARIO: From Bot With Path
         """
         # Given: Bot directory, docs directory, and story graph file are created
-        helper = BotTestHelper(tmp_path)
-        docs_dir = helper.bot_directory / 'docs'
-        docs_dir.mkdir(parents=True, exist_ok=True)
-        story_graph = helper.given_story_graph_dict()
-        story_graph_path = helper.given_file_created(docs_dir, 'story-graph.json', story_graph)
+        # Use custom bot directory to avoid modifying production bot
+        helper = BotTestHelper(tmp_path, bot_directory=tmp_path / 'bot')
+        stories_dir = helper.bot_directory / 'docs' / 'stories'
+        stories_dir.mkdir(parents=True, exist_ok=True)
+        story_graph = helper.story.given_story_graph_dict()
+        story_graph_path = helper.files.given_file_created(stories_dir, 'story-graph.json', story_graph)
         # When: Story map is created from bot
         story_map = StoryMap.from_bot(helper.bot_directory)
         # Then: Story map contains test epic
-        helper.assert_story_map_matches(story_map)
+        helper.story.assert_story_map_matches(story_map)
     
     def test_scenario_map_location_duplicate(self, tmp_path):
         """
@@ -450,12 +452,12 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: Scenario is retrieved from epics
-        scenario = helper.when_item_accessed('scenario', epics)
+        scenario = helper.story.when_item_accessed('scenario', epics)
         # Then: Scenario map location is correct
-        helper.assert_map_location_matches(scenario)
+        helper.story.assert_map_location_matches(scenario)
     
     def test_scenario_outline_map_location_duplicate(self, tmp_path):
         """
@@ -463,12 +465,12 @@ class TestLoadStoryGraphIntoMemory:
         """
         # Given: Story map is loaded
         helper = BotTestHelper(tmp_path)
-        story_map = helper.create_story_map()
-        epics = helper.when_item_accessed('epics', story_map)
+        story_map = helper.story.create_story_map()
+        epics = helper.story.when_item_accessed('epics', story_map)
         # When: Scenario outline is retrieved from epics
-        scenario_outline = helper.when_item_accessed('scenario_outline', epics)
+        scenario_outline = helper.story.when_item_accessed('scenario_outline', epics)
         # Then: Scenario outline map location is correct
-        helper.assert_map_location_matches(scenario_outline)
+        helper.story.assert_map_location_matches(scenario_outline)
 
 class TestCreateBuildScope:
     """Story: Create Build Scope (Sub-epic: Build Knowledge)"""
@@ -503,10 +505,10 @@ class TestCreateBuildScope:
         # Given: Parameters dict
         helper = BotTestHelper(tmp_path)
         # When: BuildScope instantiated
-        build_scope = helper.create_build_scope(parameters)
+        build_scope = helper.build.create_build_scope(parameters)
         
         # Then: BuildScope scope property returns expected configuration
-        helper.assert_build_scope_matches(build_scope, expected_scope_contains)
+        helper.build.assert_build_scope_matches(build_scope, expected_scope_contains)
     
     def test_build_scope_defaults_to_all_when_no_parameters(self, tmp_path):
         """
@@ -520,10 +522,10 @@ class TestCreateBuildScope:
         parameters = {}
         
         # When: BuildScope instantiated
-        build_scope = helper.create_build_scope(parameters)
+        build_scope = helper.build.create_build_scope(parameters)
         
         # Then: Scope defaults to 'all'
-        helper.assert_build_scope_contains(build_scope, 'all', True)
+        helper.build.assert_build_scope_contains(build_scope, 'all', True)
     
     def test_action_uses_build_scope_to_define_build_scope(self, tmp_path):
         """
@@ -539,21 +541,17 @@ class TestCreateBuildScope:
         # Create knowledge graph directory and config
         kg_dir = helper.bot_directory / 'behaviors' / behavior_name / 'content' / 'knowledge_graph'
         kg_dir.mkdir(parents=True, exist_ok=True)
-        helper.setup_knowledge_graph_config_and_template(behavior_name)
+        helper.build.setup_knowledge_graph_config_and_template(behavior_name)
         
         # Get behavior from BotTestHelper
         helper.bot.behaviors.navigate_to(behavior_name)
         behavior = helper.bot.behaviors.current
         action = BuildKnowledgeAction(behavior=behavior, action_config=None)
-        parameters = helper.build_parameters_with_scope('all')
+        parameters = helper.build.build_parameters_with_scope('all')
         
         # When: Action executes with scope parameters
         # Then: Uses BuildScope class
-        helper.assert_action_uses_build_scope(action, parameters)
-
-
-
-
+        helper.build.assert_action_uses_build_scope(action, parameters)
 
 class TestFilterKnowledgeGraph:
     """Story: Filter Knowledge Graph (Sub-epic: Build Knowledge)"""
@@ -567,14 +565,14 @@ class TestFilterKnowledgeGraph:
         """
         # Given: Story graph with epics and increments
         helper = BotTestHelper(tmp_path)
-        story_graph = helper.story_graph_with_epics_and_increments()
+        story_graph = helper.story.story_graph_with_epics_and_increments()
         
         # When: Filter with scope 'all'
-        filtered_graph = helper.filter_story_graph('build', 'all', None, story_graph=story_graph)
+        filtered_graph = helper.scope.filter_story_graph('build', 'all', None, story_graph=story_graph)
         
         # Then: All epics and increments present
-        helper.assert_story_graph_contains_all_epics(filtered_graph, 2)
-        helper.assert_story_graph_contains_all_increments(filtered_graph, 2)
+        helper.scope.assert_story_graph_contains_all_epics(filtered_graph, 2)
+        helper.scope.assert_story_graph_contains_all_increments(filtered_graph, 2)
     
     def test_filter_by_story_names_returns_matching_stories(self, tmp_path):
         """
@@ -585,14 +583,14 @@ class TestFilterKnowledgeGraph:
         """
         # Given: Story graph with stories
         helper = BotTestHelper(tmp_path)
-        story_graph = helper.story_graph_with_epics_and_increments()
+        story_graph = helper.story.story_graph_with_epics_and_increments()
         
         # When: Filter by story names
-        filtered_graph = helper.filter_story_graph('build', 'story', ['Story A1'], story_graph=story_graph)
+        filtered_graph = helper.scope.filter_story_graph('build', 'story', ['Story A1'], story_graph=story_graph)
         
         # Then: Only matching story and its parent epic present
-        helper.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
-        helper.assert_story_graph_contains_story(filtered_graph, 'Story A1')
+        helper.scope.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
+        helper.scope.assert_story_graph_contains_story(filtered_graph, 'Story A1')
         assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
     
     def test_filter_by_epic_names_returns_matching_epics(self, tmp_path):
@@ -604,15 +602,15 @@ class TestFilterKnowledgeGraph:
         """
         # Given: Story graph with epics
         helper = BotTestHelper(tmp_path)
-        story_graph = helper.story_graph_with_epics_and_increments()
+        story_graph = helper.story.story_graph_with_epics_and_increments()
         
         # When: Filter by epic names
-        filtered_graph = helper.filter_story_graph('build', 'epic', ['Epic A'], story_graph=story_graph)
+        filtered_graph = helper.scope.filter_story_graph('build', 'epic', ['Epic A'], story_graph=story_graph)
         
         # Then: Only matching epic present
-        helper.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
+        helper.scope.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
         assert 'Epic B' not in [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        helper.assert_story_graph_contains_increment(filtered_graph, 'Increment 1')
+        helper.scope.assert_story_graph_contains_increment(filtered_graph, 'Increment 1')
     
     def test_filter_by_increment_priorities_returns_matching_increments(self, tmp_path):
         """
@@ -623,15 +621,15 @@ class TestFilterKnowledgeGraph:
         """
         # Given: Story graph with increments
         helper = BotTestHelper(tmp_path)
-        story_graph = helper.story_graph_with_epics_and_increments()
+        story_graph = helper.story.story_graph_with_epics_and_increments()
         
         # When: Filter by increment priorities
-        filtered_graph = helper.filter_story_graph('build', 'increment', [1], story_graph=story_graph)
+        filtered_graph = helper.scope.filter_story_graph('build', 'increment', [1], story_graph=story_graph)
         
         # Then: Only matching increment present
-        helper.assert_story_graph_contains_increment(filtered_graph, 'Increment 1')
+        helper.scope.assert_story_graph_contains_increment(filtered_graph, 'Increment 1')
         assert 'Increment 2' not in [inc.get('name') for inc in filtered_graph.get('increments', [])]
-        helper.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
+        helper.scope.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
     
     def test_filter_by_increment_names_returns_matching_increments(self, tmp_path):
         """
@@ -642,12 +640,12 @@ class TestFilterKnowledgeGraph:
         """
         # Given: Story graph with increments
         helper = BotTestHelper(tmp_path)
-        story_graph = helper.story_graph_with_epics_and_increments()
+        story_graph = helper.story.story_graph_with_epics_and_increments()
         
         # When: Filter by increment names
-        filtered_graph = helper.filter_story_graph('build', 'increment', ['Increment 1'], story_graph=story_graph)
+        filtered_graph = helper.scope.filter_story_graph('build', 'increment', ['Increment 1'], story_graph=story_graph)
         
         # Then: Only matching increment present
-        helper.assert_story_graph_contains_increment(filtered_graph, 'Increment 1')
+        helper.scope.assert_story_graph_contains_increment(filtered_graph, 'Increment 1')
         assert 'Increment 2' not in [inc.get('name') for inc in filtered_graph.get('increments', [])]
-        helper.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
+        helper.scope.assert_story_graph_contains_epic(filtered_graph, 'Epic A')

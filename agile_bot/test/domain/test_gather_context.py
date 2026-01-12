@@ -29,12 +29,12 @@ def given_environment_bootstrapped_with_guardrails(helper: BotTestHelper):
     bot_name = 'story_bot'
     behavior = 'shape'
     
-    helper.create_behavior_json(behavior, actions=[{'name': 'clarify', 'order': 1}])
-    helper.create_minimal_guardrails_files(behavior)
+    helper.behaviors.create_behavior_json(behavior, actions=[{'name': 'clarify', 'order': 1}])
+    helper.guardrails.create_minimal_guardrails_files(behavior)
     
     questions = ['What is the scope?', 'Who are the users?']
     evidence = ['Requirements doc', 'User interviews']
-    helper.create_guardrails_files(behavior, questions, evidence)
+    helper.guardrails.create_guardrails_files(behavior, questions, evidence)
     return bot_name, behavior, questions, evidence
 
 
@@ -45,9 +45,9 @@ def given_environment_bootstrapped_with_malformed_guardrails(helper: BotTestHelp
     bot_name = 'story_bot'
     behavior = 'shape'
     
-    helper.create_behavior_json(behavior, actions=[{"name": "clarify", "order": 1, "next_action": "strategy"}])
-    helper.create_minimal_guardrails_files(behavior)
-    helper.create_malformed_guardrails_file(behavior)
+    helper.behaviors.create_behavior_json(behavior, actions=[{"name": "clarify", "order": 1, "next_action": "strategy"}])
+    helper.guardrails.create_minimal_guardrails_files(behavior)
+    helper.guardrails.create_malformed_guardrails_file(behavior)
     
     from agile_bot.src.bot_path import BotPath
     from agile_bot.src.behaviors.behavior import Behavior
@@ -142,13 +142,13 @@ class TestInjectGuardrailsAsPartOfClarifyRequirements:
         bot_paths = BotPath(bot_directory=helper.bot_directory)
         behavior_obj = Behavior(name=behavior, bot_paths=bot_paths)
         action_obj = ClarifyContextAction(behavior=behavior_obj, action_config=None)
-        instructions = helper.when_action_injects(action_obj, content='questions_and_evidence')
+        instructions = helper.behaviors.when_action_injects(action_obj, content='questions_and_evidence')
         
         # Verify all ClarifyContextAction fields are present
-        helper.assert_clarify_context_instructions(instructions)
+        helper.clarify.assert_clarify_context_instructions(instructions)
         
         # Verify specific guardrails content matches expectations
-        helper.then_instructions_contain(instructions, 'guardrails', expected_questions=questions, expected_evidence=evidence)
+        helper.instructions.assert_instructions_contain(instructions, 'guardrails', expected_questions=questions, expected_evidence=evidence)
 
 class TestStoreClarificationData:
     """Story: Store Clarification Data - Tests that clarification data is saved to clarification.json."""
@@ -228,76 +228,61 @@ class TestLoadGuardrails:
     """Story: Load Guardrails (Sub-epic: Gather Context)"""
     
     def test_guardrails_loads_required_context_guardrails(self, tmp_path):
-        helper = BotTestHelper(tmp_path)
         """
         SCENARIO: Guardrails loads required context guardrails
-        GIVEN: BehaviorConfig with guardrails directory
+        GIVEN: Production story_bot behavior with guardrails directory
         WHEN: Guardrails instantiated with behavior_config
         THEN: Required context guardrails loaded
         """
-        # Given: BehaviorConfig with guardrails directory
-        given_environment_bootstrapped(helper)
-        bot_name = 'story_bot'
+        # Given: Production story_bot behavior (shape) with guardrails
+        helper = BotTestHelper(tmp_path)
         behavior_name = 'shape'
-        helper.create_behavior_json(behavior_name, baseActionsPath="agile_bot/base_actions", 
-                                   instructions=[f"Test instructions for {behavior_name}."])
-        helper.create_minimal_guardrails_files(behavior_name)
         from agile_bot.src.bot_path import BotPath
         from agile_bot.src.behaviors.behavior import Behavior
         bot_paths = BotPath(bot_directory=helper.bot_directory)
         behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
         
-        # When: Guardrails instantiated
+        # When: Guardrails instantiated from production behavior
         guardrails = behavior.guardrails
         
-        # Then: Required context guardrails loaded
+        # Then: Required context guardrails loaded from production files
         assert hasattr(guardrails, 'required_context')
         assert hasattr(guardrails, 'strategy')
         assert guardrails.required_context is not None
     
     def test_guardrails_loads_strategy_guardrails(self, tmp_path):
-        helper = BotTestHelper(tmp_path)
         """
         SCENARIO: Guardrails loads strategy guardrails
-        GIVEN: BehaviorConfig with strategy guardrails directory
+        GIVEN: Production story_bot behavior with strategy guardrails directory
         WHEN: Guardrails instantiated
         THEN: Strategy guardrails loaded
         """
-        # Given: BehaviorConfig with strategy guardrails directory
-        given_environment_bootstrapped(helper)
-        bot_name = 'story_bot'
+        # Given: Production story_bot behavior (shape) with strategy guardrails
+        helper = BotTestHelper(tmp_path)
         behavior_name = 'shape'
-        helper.create_behavior_json(behavior_name, baseActionsPath="agile_bot/base_actions", 
-                                   instructions=[f"Test instructions for {behavior_name}."])
-        helper.create_minimal_guardrails_files(behavior_name)
         from agile_bot.src.bot_path import BotPath
         from agile_bot.src.behaviors.behavior import Behavior
         bot_paths = BotPath(bot_directory=helper.bot_directory)
         behavior = Behavior(name=behavior_name, bot_paths=bot_paths)
         
-        # When: Guardrails instantiated
+        # When: Guardrails instantiated from production behavior
         guardrails = behavior.guardrails
         
-        # Then: Strategy guardrails loaded
+        # Then: Strategy guardrails loaded from production files
         assert hasattr(guardrails, 'required_context')
         assert hasattr(guardrails, 'strategy')
         assert guardrails.strategy is not None
     
     def test_guardrails_properties_return_guardrails_objects(self, tmp_path):
-        helper = BotTestHelper(tmp_path)
         """
         SCENARIO: Guardrails properties return guardrails objects
-        GIVEN: Guardrails with loaded guardrails
+        GIVEN: Production story_bot behavior with guardrails
         WHEN: Properties accessed (required_context, strategy)
         THEN: Returns RequiredContext object and Strategy object
         """
-        # Given: Guardrails with loaded guardrails
-        given_environment_bootstrapped(helper)
-        bot_name = 'story_bot'
+        # Given: Production story_bot behavior (shape) with guardrails
+        helper = BotTestHelper(tmp_path)
         behavior_name = 'shape'
-        helper.create_behavior_json(behavior_name, baseActionsPath="agile_bot/base_actions", 
-                                   instructions=[f"Test instructions for {behavior_name}."])
-        helper.create_minimal_guardrails_files(behavior_name)
         from agile_bot.src.bot_path import BotPath
         from agile_bot.src.behaviors.behavior import Behavior
         bot_paths = BotPath(bot_directory=helper.bot_directory)
