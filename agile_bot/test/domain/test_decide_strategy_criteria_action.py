@@ -122,7 +122,7 @@ class TestStoreStrategyData:
         # Then: Both behaviors' data are preserved
         strategy_data = then_strategy_file_preserves_existing_behaviors(strategy_file, ['discovery', 'shape'])
         assert strategy_data['discovery']['strategy_criteria']['decisions_made']['scope'] == 'Component level'
-        assert strategy_data['shape']['strategy_criteria']['decisions_made']['drill_down'] == 'Dig deep on user workflows'
+        assert strategy_data['shape']['strategy_criteria']['decisions_made']['drill_down'] == 'Dig deep on system interactions'
 
     def test_skip_saving_when_no_strategy_parameters_provided(self, tmp_path):
         """

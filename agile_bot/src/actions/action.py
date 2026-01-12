@@ -101,6 +101,87 @@ class Action:
     def description(self) -> str:
         """Get the action description from base config."""
         return self._base_config.get('description', '')
+    
+    @property
+    def help(self) -> Dict[str, Any]:
+        """Get parameter help for this action.
+        
+        Returns a dict with:
+        - description: Action description
+        - parameters: List of dicts with 'name', 'type', 'description' for each parameter
+        """
+        import dataclasses
+        from typing import get_origin
+        
+        help_dict = {
+            'description': self.description,
+            'parameters': []
+        }
+        
+        # Get parameters from context_class if it's a dataclass
+        if hasattr(self.__class__, 'context_class'):
+            context_class = self.__class__.context_class
+            if dataclasses.is_dataclass(context_class):
+                for field in dataclasses.fields(context_class):
+                    param_info = {
+                        'name': field.name,
+                        'cli_name': f'--{field.name.replace("_", "-")}',
+                        'type': self._get_type_string(field.type),
+                        'description': self._get_parameter_description(field.name)
+                    }
+                    help_dict['parameters'].append(param_info)
+        
+        return help_dict
+    
+    def _get_type_string(self, python_type) -> str:
+        """Convert Python type hint to string for help display."""
+        if python_type is type(None):
+            return "none"
+        if python_type == str:
+            return "string"
+        elif python_type == Path:
+            return "path"
+        elif python_type == int:
+            return "int"
+        elif python_type == float:
+            return "float"
+        elif python_type == bool:
+            return "bool"
+        elif python_type == dict:
+            return "dict"
+        elif python_type == list:
+            return "list"
+        
+        # Handle generic types (Dict[...], List[...], etc.)
+        from typing import get_origin
+        origin = get_origin(python_type)
+        if origin is dict:
+            return "dict"
+        elif origin is list:
+            return "list"
+        elif origin is tuple:
+            return "tuple"
+        elif origin is set:
+            return "set"
+        
+        return "value"
+    
+    def _get_parameter_description(self, param_name: str) -> str:
+        """Get meaningful description for a parameter."""
+        if 'answers' in param_name or 'key_questions_answered' in param_name:
+            return "Dict mapping question keys to answer strings"
+        elif 'evidence_provided' in param_name or 'evidence' in param_name:
+            return "Dict mapping evidence types to evidence content"
+        elif 'choices' in param_name or 'decisions_made' in param_name or 'decisions' in param_name:
+            return "Dict mapping decision criteria keys to selected options/values"
+        elif 'assumptions' in param_name or 'assumptions_made' in param_name:
+            return "List of assumption strings"
+        elif 'scope' in param_name:
+            return "Scope structure: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}"
+        elif 'path' in param_name or 'directory' in param_name:
+            return "Path to working directory or file"
+        else:
+            return "Optional parameter"
 
     def _merge_instructions(self, base_instructions, behavior_instructions) -> List:
         if isinstance(base_instructions, list) and isinstance(behavior_instructions, list):

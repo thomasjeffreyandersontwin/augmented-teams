@@ -1,7 +1,4 @@
 {
-  "_explanation": {
-    "epics": "Top-level epics",
-    "sub_epics": "Sub-epic breakdowns"
-  },
+  "_explanation": {},
   "epics": []
 }

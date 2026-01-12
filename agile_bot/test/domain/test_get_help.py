@@ -64,33 +64,39 @@ class TestGetParameterHelp:
     
     def test_action_provides_parameter_help(self, tmp_path):
         """
-        SCENARIO: Action provides parameter help
+        SCENARIO: Action provides parameter help via .help property
         GIVEN: Bot has behavior with action
-        WHEN: Parameter help is requested
-        THEN: Action returns parameter descriptions
+        WHEN: Action.help is accessed
+        THEN: Returns dict with description and parameters list
         
-        Domain focus: Parameter help retrieval
+        Domain focus: Parameter help retrieval from Action.help
         """
         # GIVEN: Bot has behavior with action
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('shape')
-        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
         
-        # WHEN: Parameter help is requested
-        # Check if action has parameter help method or property
-        has_param_help = (
-            hasattr(action, 'get_parameter_help') or
-            hasattr(action, 'parameter_help') or
-            hasattr(action, 'parameters') or
-            hasattr(action, 'get_parameters')
-        )
+        # Get the actual action instance
+        from agile_bot.src.actions.clarify.clarify_action import ClarifyContextAction
+        behavior_obj = helper.bot.behaviors.current
+        action = ClarifyContextAction(behavior=behavior_obj, action_config=None)
         
-        # THEN: Complete action object with parameter help capability
-        assert action is not None
-        assert action.action_name == 'clarify'
-        assert hasattr(action, 'order')
-        assert isinstance(action.order, int)
-        assert has_param_help, "Action should provide parameter help"
+        # WHEN: Action.help is accessed
+        help_info = action.help
+        
+        # THEN: Help info has expected structure
+        assert help_info is not None, "Action should provide help"
+        assert isinstance(help_info, dict), "Help should be a dict"
+        assert 'description' in help_info, "Help should have description"
+        assert 'parameters' in help_info, "Help should have parameters"
+        assert isinstance(help_info['parameters'], list), "Parameters should be a list"
+        
+        # Verify parameters have expected structure
+        if len(help_info['parameters']) > 0:
+            param = help_info['parameters'][0]
+            assert 'name' in param, "Parameter should have name"
+            assert 'cli_name' in param, "Parameter should have CLI name"
+            assert 'type' in param, "Parameter should have type"
+            assert 'description' in param, "Parameter should have description"
         
         # Try to retrieve parameter help if method exists and verify structure
         if hasattr(action, 'get_parameter_help'):

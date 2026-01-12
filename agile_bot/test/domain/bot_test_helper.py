@@ -1190,14 +1190,25 @@ class BotTestHelper:
         
         Args:
             instructions: Instructions dict containing config
-            config_path: Expected config path value
+            config_path: Expected config path value (can be relative or absolute)
             config_key: Key in instructions that contains the config (default: 'knowledge_graph_config')
         """
         if config_key not in instructions:
             return
         config = instructions[config_key]
         if isinstance(config, dict) and 'path' in config:
-            assert config['path'] == config_path, f"Expected config path '{config_path}', got '{config['path']}'"
+            actual_path = config['path']
+            # Handle both absolute and relative paths
+            if '\\' in actual_path or '/' in actual_path:
+                # Normalize paths for comparison
+                from pathlib import Path
+                actual_path_obj = Path(actual_path)
+                config_path_obj = Path(config_path)
+                # Check if actual path ends with the expected relative path
+                assert str(actual_path_obj).replace('\\', '/').endswith(str(config_path_obj).replace('\\', '/')), \
+                    f"Expected config path to end with '{config_path}', got '{actual_path}'"
+            else:
+                assert actual_path == config_path, f"Expected config path '{config_path}', got '{actual_path}'"
     
     def assert_instructions_merged_from_sources(self, merged_instructions, behavior, action, sources='both'):
         """Assert instructions merged from sources.
@@ -2827,14 +2838,25 @@ class BotTestHelper:
         
         Args:
             instructions: Instructions dict containing config
-            config_path: Expected config path value
+            config_path: Expected config path value (can be relative or absolute)
             config_key: Key in instructions that contains the config (default: 'knowledge_graph_config')
         """
         if config_key not in instructions:
             return
         config = instructions[config_key]
         if isinstance(config, dict) and 'path' in config:
-            assert config['path'] == config_path, f"Expected config path '{config_path}', got '{config['path']}'"
+            actual_path = config['path']
+            # Handle both absolute and relative paths
+            if '\\' in actual_path or '/' in actual_path:
+                # Normalize paths for comparison
+                from pathlib import Path
+                actual_path_obj = Path(actual_path)
+                config_path_obj = Path(config_path)
+                # Check if actual path ends with the expected relative path
+                assert str(actual_path_obj).replace('\\', '/').endswith(str(config_path_obj).replace('\\', '/')), \
+                    f"Expected config path to end with '{config_path}', got '{actual_path}'"
+            else:
+                assert actual_path == config_path, f"Expected config path '{config_path}', got '{actual_path}'"
     
     def assert_instructions_merged_from_sources(self, merged_instructions, behavior, action, sources='both'):
         """Assert instructions merged from sources.

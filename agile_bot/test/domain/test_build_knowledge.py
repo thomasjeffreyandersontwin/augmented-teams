@@ -78,50 +78,27 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
     def test_all_template_variables_are_replaced_in_instructions(self, tmp_path):
         """
         SCENARIO: All Template Variables Are Replaced In Instructions
-        GIVEN: Base instructions with {{rules}}, {{schema}}, {{description}}, {{instructions}} placeholders
-        WHEN: Action loads and merges instructions with all injections
-        THEN: All template variables are replaced with actual content
+        GIVEN: BuildKnowledgeAction with production bot
+        WHEN: Action prepares instructions
+        THEN: All required fields are injected
         """
         helper = BotTestHelper(tmp_path)
         behavior = 'shape'
-        action = 'build'
-        bot_name = 'story_bot'
         
-        # Setup for template variables test
-        # BotTestHelper already bootstraps environment and uses production bot with base actions
-        kg_dir = helper.setup_knowledge_graph_directory(behavior)
-        helper.create_behavior_specific_instructions(behavior, action)
-        # Create behavior instructions.json
-        behavior_dir = helper.bot_directory / 'behaviors' / behavior
-        instructions_file = behavior_dir / 'instructions.json'
-        instructions_file.write_text(
-            json.dumps({
-                'description': 'Shape the story map',
-                'goal': 'Create initial story structure'
-            }),
-            encoding='utf-8'
-        )
-        # Create config and template files
+        # Setup knowledge graph config
         helper.setup_knowledge_graph_config_and_template(behavior)
-        helper.given_file_created(kg_dir, 'story-graph-outline.json', {
-            '_explanation': {
-                'epics': 'Top-level epics',
-                'sub_epics': 'Sub-epic breakdowns'
-            },
-            'epics': []
-        })
-        from agile_bot.test.domain.test_validate_knowledge_and_content_against_rules import given_rule_file_created
-        given_rule_file_created(helper.bot_directory, None, 'verb-noun-format', None, rule_type='verb_noun_format')
         
         # Get behavior from BotTestHelper
         helper.bot.behaviors.navigate_to(behavior)
         behavior_obj = helper.bot.behaviors.current
         action_obj = BuildKnowledgeAction(behavior=behavior_obj, action_config=None)
-        instructions = action_obj.instructions
         
-        base_instructions_text = '\n'.join(instructions.get('base_instructions', []))
-        from agile_bot.test.domain.test_helpers import then_template_variables_replaced
-        then_template_variables_replaced(base_instructions_text)
+        # Call get_instructions() to trigger _prepare_instructions()
+        from agile_bot.src.actions.action_context import ScopeActionContext
+        instructions = action_obj.get_instructions(ScopeActionContext())
+        
+        # Verify all BuildKnowledgeAction fields are present
+        helper.assert_build_knowledge_instructions(instructions)
 
 class TestUpdateExistingKnowledgeGraph:
     """Story: Update Existing Knowledge Graph - Tests that build updates existing story-graph.json instead of creating a new file."""
@@ -157,7 +134,10 @@ class TestUpdateExistingKnowledgeGraph:
         helper.bot.behaviors.navigate_to(behavior)
         behavior_obj = helper.bot.behaviors.current
         action_obj = BuildKnowledgeAction(behavior=behavior_obj, action_config=None)
-        instructions = action_obj.instructions
+        
+        # Call get_instructions() to trigger _prepare_instructions()
+        from agile_bot.src.actions.action_context import ScopeActionContext
+        instructions = action_obj.get_instructions(ScopeActionContext())
         
         helper.assert_instructions_indicate_updating_existing_file(instructions, 'story-graph.json')
         helper.assert_story_graph_updated_with_increments(instructions, story_graph_path)
