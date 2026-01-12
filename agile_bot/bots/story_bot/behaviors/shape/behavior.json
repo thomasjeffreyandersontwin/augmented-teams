@@ -1,12 +1,6 @@
 {
   "behaviorName": "shape",
   "description": "Test behavior: shape",
-  "goal": "Test goal for shape",
-  "inputs": "Test inputs",
-  "outputs": "Test outputs",
-  "instructions": [
-    "Test instructions for shape."
-  ],
   "actions_workflow": {
     "actions": [
       {
@@ -34,6 +28,5 @@
         "order": 5
       }
     ]
-  },
-  "baseActionsPath": "agile_bot/base_actions"
+  }
 }

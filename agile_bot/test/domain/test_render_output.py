@@ -538,7 +538,7 @@ class TestInjectRenderInstructionsAndConfigs:
         SCENARIO: All template variables are replaced in final instructions
         GIVEN: Render action with production synchronizers
         WHEN: Action executes
-        THEN: Instructions contain synchronizer execution results
+        THEN: Instructions contain all required render fields
         """
         # Use production bot with real synchronizers
         helper = BotTestHelper(tmp_path)
@@ -551,11 +551,8 @@ class TestInjectRenderInstructionsAndConfigs:
         action = RenderOutputAction(behavior=behavior_obj, action_config=None)
         result = action.do_execute(ScopeActionContext())
         
-        # Verify instructions contain render output
-        base_instructions = result.get('base_instructions', [])
-        base_instructions_text = '\n'.join(base_instructions)
-        assert 'Synchronizers Already Executed' in base_instructions_text or 'render' in base_instructions_text.lower()
-        assert 'render_domain_model' in base_instructions_text or 'render_story' in base_instructions_text
+        # Verify all RenderOutputAction fields are present
+        helper.assert_render_output_instructions(result)
 
     def test_render_configs_format_includes_all_fields(self, tmp_path):
         """

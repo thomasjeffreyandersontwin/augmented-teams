@@ -33,8 +33,8 @@ class TestInjectStrategyIntoInstructions:
         # When: Action injects strategy criteria and assumptions
         instructions = helper.when_action_injects(action_obj, content='strategy_criteria_and_assumptions')
         
-        # Then: Instructions contain strategy criteria and assumptions
-        assert 'strategy_criteria' in instructions or 'assumptions' in instructions
+        # Then: Instructions contain all required strategy fields
+        helper.assert_strategy_instructions(instructions)
 
 
 # ============================================================================

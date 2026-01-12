@@ -144,13 +144,11 @@ class TestInjectGuardrailsAsPartOfClarifyRequirements:
         action_obj = ClarifyContextAction(behavior=behavior_obj, action_config=None)
         instructions = helper.when_action_injects(action_obj, content='questions_and_evidence')
         
-        # Instructions might be a dict with 'instructions' key or direct dict
-        if isinstance(instructions, dict) and 'instructions' in instructions:
-            instructions_dict = instructions['instructions']
-        else:
-            instructions_dict = instructions
+        # Verify all ClarifyContextAction fields are present
+        helper.assert_clarify_context_instructions(instructions)
         
-        helper.then_instructions_contain(instructions_dict, 'guardrails', expected_questions=questions, expected_evidence=evidence)
+        # Verify specific guardrails content matches expectations
+        helper.then_instructions_contain(instructions, 'guardrails', expected_questions=questions, expected_evidence=evidence)
 
 class TestStoreClarificationData:
     """Story: Store Clarification Data - Tests that clarification data is saved to clarification.json."""

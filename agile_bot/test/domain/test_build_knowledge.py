@@ -67,12 +67,13 @@ class TestInjectKnowledgeGraphTemplateForBuildKnowledge:
         helper.bot.behaviors.navigate_to(behavior)
         behavior_obj = helper.bot.behaviors.current
         action_obj = BuildKnowledgeAction(behavior=behavior_obj, action_config=None)
-        merged_instructions = action_obj.instructions
+        
+        # Call get_instructions() to trigger _prepare_instructions() which injects BuildKnowledgeAction fields
+        from agile_bot.src.actions.action_context import ScopeActionContext
+        merged_instructions = action_obj.get_instructions(ScopeActionContext())
         
         helper.then_instructions_merged_from_sources(merged_instructions, behavior, action, sources='both')
-        helper.assert_base_instructions_present(merged_instructions)
-        helper.assert_behavior_instructions_present(merged_instructions)
-        helper.assert_behavior_instructions_contain_action(merged_instructions, behavior, action)
+        helper.assert_build_knowledge_instructions(merged_instructions)
 
     def test_all_template_variables_are_replaced_in_instructions(self, tmp_path):
         """
