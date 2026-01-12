@@ -14,27 +14,27 @@ logger = logging.getLogger(__name__)
 
 class TestFileNamingScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         # File existence check not needed - we're checking the file name, not reading content
         if not file_path.exists():
             return violations
         
-        sub_epic_names = self._extract_sub_epic_names(knowledge_graph)
+        sub_epic_names = self._extract_sub_epic_names(story_graph)
         
         file_name = file_path.stem  # Without .py extension
         
         violation = self._check_file_name_matches_sub_epic(
-            file_name, sub_epic_names, file_path, rule_obj, knowledge_graph
+            file_name, sub_epic_names, file_path, rule_obj, story_graph
         )
         if violation:
             violations.append(violation)
         
         return violations
     
-    def _extract_sub_epic_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
-        story_map = StoryMap(knowledge_graph)
+    def _extract_sub_epic_names(self, story_graph: Dict[str, Any]) -> List[str]:
+        story_map = StoryMap(story_graph)
         sub_epic_names = []
         for epic in story_map.epics:
             for node in story_map.walk(epic):
@@ -56,7 +56,7 @@ class TestFileNamingScanner(TestScanner):
         name = re.sub(r'[^a-zA-Z0-9_]', '', name)
         return name.lower()
     
-    def _check_file_name_matches_sub_epic(self, file_name: str, sub_epic_names: List[str], file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _check_file_name_matches_sub_epic(self, file_name: str, sub_epic_names: List[str], file_path: Path, rule_obj: Any, story_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         name_without_prefix = file_name[5:] if file_name.startswith('test_') else file_name
         
         name_normalized = self._to_snake_case(name_without_prefix)
@@ -74,7 +74,7 @@ class TestFileNamingScanner(TestScanner):
             return None
         
         # File name doesn't match any sub-epic - check if methods span multiple sub-epics
-        sub_epics_spanned = self._get_sub_epics_spanned_by_test_methods(file_path, knowledge_graph)
+        sub_epics_spanned = self._get_sub_epics_spanned_by_test_methods(file_path, story_graph)
         
         # If methods span multiple sub-epics, it's OK (cross-epic test file)
         if len(sub_epics_spanned) > 1:
@@ -96,7 +96,7 @@ class TestFileNamingScanner(TestScanner):
             severity='error'
         ).to_dict()
     
-    def _get_sub_epics_spanned_by_test_methods(self, file_path: Path, knowledge_graph: Dict[str, Any]) -> set:
+    def _get_sub_epics_spanned_by_test_methods(self, file_path: Path, story_graph: Dict[str, Any]) -> set:
         sub_epics = set()
         
         try:
