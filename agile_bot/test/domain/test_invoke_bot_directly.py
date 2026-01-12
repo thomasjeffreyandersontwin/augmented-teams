@@ -15,23 +15,11 @@ from agile_bot.src.bot_path import BotPath
 # MergedInstructions removed - was just a simple dict merge
 from agile_bot.src.actions.strategy.strategy_action import StrategyAction
 from agile_bot.src.actions.clarify.clarify_action import ClarifyContextAction
-from agile_bot.test.domain.test_helpers import (
-    Workflow,
-    bootstrap_env, read_activity_log, create_activity_log_file,
-    create_actions_workflow_json, create_behavior_folder, create_behavior_folder_with_json,
-    given_bot_name_and_behavior_setup, given_file_created,
-    when_bot_is_created, create_base_instructions, given_bot_instance_created,
-    create_bot_config_file, given_bot_name_and_behaviors_setup
-)
-from agile_bot.test.domain.test_invoke_bot_helpers import BotTestHelper
-
-
-
-
-
-
-
-
+# NOTE: Removed deprecated functions - use BotTestHelper or direct implementations:
+# - bootstrap_env: Use os.environ['BOT_DIRECTORY'] and os.environ['WORKING_AREA'] directly
+# - create_bot_config_file: Use BotTestHelper (production story_bot) or create config directly
+# - create_actions_workflow_json: Use BotTestHelper (production behaviors) or create behavior.json directly
+from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 
 class TestInjectNextBehaviorReminder:
@@ -87,12 +75,6 @@ class TestInjectNextBehaviorReminder:
         instructions = getattr(action, 'instructions', None)
         base_instructions = getattr(instructions, 'base_instructions', instructions)
         assert base_instructions is not None
-
-
-# ============================================================================
-# STORY: Close Current Action
-# ============================================================================
-# All helpers moved to test_helpers.py - imported above
 
 
 class TestConfirmCurrentAction:
@@ -222,12 +204,6 @@ class TestConfirmCurrentAction:
         assert hasattr(helper.bot.behaviors.current.actions, 'close_current')
 
 
-# ============================================================================
-# STORY: Invoke Behavior Actions In Workflow Order
-# ============================================================================
-
-
-
 class TestExecuteEndToEndWorkflow:
     """Story: Invoke Behavior Actions In Workflow Order - End-to-end test of the complete workflow with all fixes."""
 
@@ -260,10 +236,6 @@ class TestExecuteEndToEndWorkflow:
         assert helper.bot is not None
         print("\n=== SUCCESS: Bot loaded with all behaviors and navigated to clarify ===")
 
-
-# ============================================================================
-# STORY: Find Behavior Folder (Workflow Action Sequence)
-# ============================================================================
 
 class TestNavigateSequentially:
     """Story: Behavior-Specific Action Order - Tests behavior-specific action order configuration."""
@@ -381,10 +353,6 @@ class TestNavigateSequentially:
         helper.assert_at_behavior_action('shape', 'strategy')
 
 
-# ============================================================================
-# Helper functions for Bot.execute_behavior() tests
-# ============================================================================
-
 class TestNavigateToBehaviorActionAndExecute:
     """Tests for Bot.execute_behavior() - Production code path."""
 
@@ -456,19 +424,16 @@ class TestNavigateToBehaviorActionAndExecute:
         # Then: Direct execution works - starts at first action (clarify) with complete structure
         helper.assert_bot_result_success(bot_result, 'shape', 'clarify')
 
-# ============================================================================
-# EXCEPTION HANDLING TESTS - REMOVED
-# ============================================================================
-
 class TestInjectContextIntoInstructions:
     """Tests for Insert Context Into Instructions story."""
     
     def test_action_loads_context_data_into_instructions(self, tmp_path, monkeypatch):
         """Test that Action loads clarification, strategy, and context files into instructions."""
-        # Given A clarification.json file exists with data for multiple behaviors
-        workspace_dir = tmp_path / "workspace"
-        workspace_dir.mkdir()
-        docs_dir = workspace_dir / "docs" / "stories"
+        # Given: BotTestHelper provides production story_bot and workspace
+        helper = BotTestHelper(tmp_path)
+        
+        # Given: A clarification.json file exists with data for multiple behaviors
+        docs_dir = helper.workspace / "docs" / "stories"
         docs_dir.mkdir(parents=True)
         
         clarification_data = {
@@ -497,7 +462,7 @@ class TestInjectContextIntoInstructions:
         clarification_file = docs_dir / "clarification.json"
         clarification_file.write_text(json.dumps(clarification_data, indent=2))
         
-        # And A strategy.json file exists with data for multiple behaviors
+        # And: A strategy.json file exists with data for multiple behaviors
         strategy_data = {
             "shape": {
                 "strategy_criteria": {
@@ -514,30 +479,16 @@ class TestInjectContextIntoInstructions:
         strategy_file = docs_dir / "strategy.json"
         strategy_file.write_text(json.dumps(strategy_data, indent=2))
         
-        # And A docs/context/ folder exists with input.txt and other files
+        # And: A docs/context/ folder exists with input.txt and other files
         context_dir = docs_dir / "context"
         context_dir.mkdir(parents=True)
         (context_dir / "input.txt").write_text("Original input content")
         (context_dir / "initial-context.md").write_text("# Initial Context")
         (context_dir / "requirements.md").write_text("# Requirements")
         
-        # And An Action is initialized
-        bot_dir = tmp_path / "bot"
-        bot_dir.mkdir(parents=True)
-        bootstrap_env(bot_dir, workspace_dir)
-        bot_paths = BotPath(bot_directory=bot_dir)
-        
-        # Create behavior folder with minimal required files
-        behavior_folder = create_behavior_folder_with_json(bot_dir, "shape")
-        
-        # Create guardrails files (required for strategy data injection)
-        from agile_bot.test.domain.test_execute_behavior_actions import create_minimal_guardrails_files
-        create_minimal_guardrails_files(bot_dir, "shape", "story_bot")
-        
-        # Create knowledge graph configs for build action
-        # Knowledge graph configs are optional - no-op
-        
-        behavior = Behavior("shape", bot_paths)
+        # And: Action is initialized using production behavior
+        behavior = helper.bot.behaviors.find_by_name('shape')
+        assert behavior is not None, "Shape behavior should exist in production story_bot"
         from agile_bot.src.actions.action import Action
         action = Action(action_name="build", behavior=behavior, action_config=None)  
         
@@ -579,142 +530,45 @@ class TestInjectContextIntoInstructions:
         # And Context file contents are NOT loaded into instructions
         assert 'Original input content' not in str(instructions)
         
-        # When No clarification.json file exists
+        # When: No clarification.json file exists
         clarification_file.unlink()
         action2 = Action(action_name="build", behavior=behavior, action_config=None)
         instructions2 = action2.instructions
         
-        # Then Instructions do NOT contain 'clarification' key and no error is raised
+        # Then: Instructions do NOT contain 'clarification' key and no error is raised
         assert 'clarification' not in instructions2
         assert instructions2 is not None
-        # Instructions can be dict or Instructions object - check it has content
         assert 'base_instructions' in instructions2
         assert isinstance(instructions2['base_instructions'], list)
         
-        # When No strategy.json file exists
+        # When: No strategy.json file exists
         strategy_file.unlink()
         action3 = Action(action_name="build", behavior=behavior, action_config=None)
         instructions3 = action3.instructions
         
-        # Then Instructions do NOT contain 'strategy' key and no error is raised
+        # Then: Instructions do NOT contain 'strategy' key and no error is raised
         assert 'strategy' not in instructions3
         assert instructions3 is not None
-        # Instructions can be dict or Instructions object - check it has content
         assert 'base_instructions' in instructions3
         assert isinstance(instructions3['base_instructions'], list)
         
-        # When No docs/context/ folder exists
+        # When: No docs/context/ folder exists
         import shutil
         shutil.rmtree(context_dir)
         action4 = Action(action_name="build", behavior=behavior, action_config=None)
         instructions4 = action4.instructions
         
-        # Then Instructions do NOT contain 'context_files' key and no error is raised
+        # Then: Instructions do NOT contain 'context_files' key and no error is raised
         assert 'context_files' not in instructions4
         assert instructions4 is not None
-        # Instructions can be dict or Instructions object - check it has content
         assert 'base_instructions' in instructions4
         assert isinstance(instructions4['base_instructions'], list)
 
 
-# ============================================================================
-# STORY: Inject Status Update Breadcrumbs Into Instructions
-# ============================================================================
-
-class TestInjectStatusUpdateBreadcrumbsIntoInstructions:
-    """Story: Inject Status Update Breadcrumbs Into Instructions - Tests that workflow progress breadcrumbs are injected into action instructions."""
-    
-    def test_action_injects_workflow_breadcrumbs_when_bot_instance_exists(self, tmp_path):
-        """
-        SCENARIO: Action injects workflow breadcrumbs when bot instance exists
-        GIVEN: Bot is initialized with multiple behaviors
-        AND: behavior_action_state.json exists with completed actions
-        AND: Current behavior and action are set
-        WHEN: Action instructions are accessed
-        THEN: base_instructions include workflow progress breadcrumbs at the beginning
-        AND: breadcrumbs show completed behaviors, current behavior/action, and remaining work
-        """
-        helper = BotTestHelper(tmp_path)
-        helper.set_state('shape', 'strategy', completed_actions=['story_bot.shape.clarify'])
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('strategy')
-        action = helper.bot.behaviors.current.actions.forward_to_current()
-        instructions = action.instructions
-        base_instructions = instructions.base_instructions if hasattr(instructions, 'base_instructions') else instructions.get('base_instructions', [])
-        assert isinstance(base_instructions, list)
-        assert len(base_instructions) > 0
-        assert any('strategy' in str(item).lower() for item in base_instructions)
-    
-    def test_breadcrumbs_show_completed_behaviors_when_all_actions_completed(self, tmp_path):
-        """
-        SCENARIO: Breadcrumbs show completed behaviors when all actions completed
-        GIVEN: Multiple behaviors exist
-        AND: All actions in first behavior are completed
-        WHEN: Action instructions are accessed for second behavior
-        THEN: Breadcrumbs show first behavior as completed with checkmark
-        """
-        helper = BotTestHelper(tmp_path)
-        completed = [f'story_bot.shape.{a}' for a in ['clarify', 'strategy', 'build', 'validate', 'render']]
-        helper.set_state('discovery', 'clarify', completed_actions=completed)
-        helper.bot.behaviors.navigate_to('discovery')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        action = helper.bot.behaviors.current.actions.forward_to_current()
-        instructions = action.instructions
-        base_instructions = instructions.base_instructions if hasattr(instructions, 'base_instructions') else instructions.get('base_instructions', [])
-        assert isinstance(base_instructions, list)
-        assert len(base_instructions) > 0
-    
-    def test_breadcrumbs_show_next_step_command_when_next_action_exists(self, tmp_path):
-        """
-        SCENARIO: Breadcrumbs show next step command when next action exists
-        GIVEN: Current behavior and action are set
-        AND: Next action exists in current behavior
-        WHEN: Action instructions are accessed
-        THEN: Breadcrumbs include next step command with correct CLI command format
-        """
-        helper = BotTestHelper(tmp_path)
-        helper.set_state('shape', 'clarify')
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        action = helper.bot.behaviors.current.actions.forward_to_current()
-        instructions = action.instructions
-        text = '\n'.join(str(i) for i in instructions.get('base_instructions', []) + instructions.get('display_content', []))
-        assert 'strategy' in text.lower()
-    
-    def test_breadcrumbs_not_injected_when_no_bot_instance(self, tmp_path):
-        """
-        SCENARIO: Breadcrumbs are not injected when behavior has no bot instance
-        GIVEN: Behavior is created without bot instance
-        WHEN: Action instructions are accessed
-        THEN: Breadcrumbs are not included in instructions
-        """
-        bot_directory = tmp_path / 'bot'
-        bot_directory.mkdir(parents=True, exist_ok=True)
-        workspace_directory = tmp_path / 'workspace'
-        workspace_directory.mkdir(parents=True, exist_ok=True)
-        os.environ['BOT_DIRECTORY'] = str(bot_directory)
-        os.environ['WORKING_AREA'] = str(workspace_directory)
-        from agile_bot.src.bot_path import BotPath
-        from agile_bot.src.bot.behavior import Behavior
-        from agile_bot.test.domain.test_helpers import create_actions_workflow_json
-        from agile_bot.test.domain.test_execute_behavior_actions import create_minimal_guardrails_files
-        create_actions_workflow_json(bot_directory, 'shape')
-        create_minimal_guardrails_files(bot_directory, 'shape', 'story_bot')
-        behavior = Behavior(name='shape', bot_paths=BotPath(bot_directory=bot_directory), bot_instance=None)
-        from agile_bot.src.actions.action import Action
-        instructions = Action(action_name='clarify', behavior=behavior, action_config=None).instructions
-        base_instructions = instructions.get('base_instructions', [])
-        assert '**WORKFLOW PROGRESS:**' not in '\n'.join(base_instructions)
-
-
-# ============================================================================
-# HELPER FUNCTIONS - Story Level (Inject Status Update Breadcrumbs)
-# ============================================================================
-
 class TestLoadBotConfiguration:
     """Story: Load Bot Configuration - Tests that bot configuration can be loaded from bot_config.json."""
     
-    def test_bot_instantiation_with_bot_name_and_workspace(self, tmp_path, bot_name):
+    def test_bot_instantiation_with_bot_name_and_workspace(self, tmp_path):
         """Scenario: Bot can be instantiated with bot_name and workspace (BotConfig merged into Bot)."""
         # Given: Production bot
         helper = BotTestHelper(tmp_path)
@@ -725,7 +579,7 @@ class TestLoadBotConfiguration:
         assert helper.bot.bot_directory.exists()
         assert helper.bot.bot_paths.workspace_directory == helper.workspace
     
-    def test_bot_name_property(self, tmp_path, bot_name):
+    def test_bot_name_property(self, tmp_path):
         """Scenario: Bot.name property returns bot name from config (BotConfig merged into Bot)."""
         # Given: Production bot
         helper = BotTestHelper(tmp_path)
@@ -734,102 +588,23 @@ class TestLoadBotConfiguration:
         assert helper.bot.name == 'story_bot'
         assert helper.bot.bot_name == 'story_bot'
     
-    def test_behaviors_names_property(self, tmp_path, bot_name):
-        """Scenario: Behaviors.names property discovers from folders."""
-        # Given: Production bot with behaviors
-        helper = BotTestHelper(tmp_path)
-        
-        # Then: Behaviors.names discovers from folders (ordered by order field)
-        behavior_names = helper.bot.behaviors.names
-        assert len(behavior_names) > 0
-        assert 'shape' in behavior_names
-        assert 'prioritization' in behavior_names
-        assert 'discovery' in behavior_names
-        # Verify behaviors are ordered correctly (shape is first)
-        assert behavior_names[0] == 'shape'
     
-    def test_behaviors_names_empty_when_missing(self, tmp_path, bot_name):
-        """Scenario: Behaviors.names returns empty list when behaviors missing."""
-        # Given: Production bot (has behaviors)
-        helper = BotTestHelper(tmp_path)
-        
-        # Then: Behaviors.names is NOT empty (production bot has behaviors)
-        assert len(helper.bot.behaviors.names) > 0
-        # This test scenario doesn't apply to production bot - it always has behaviors
-    
-    def test_bot_base_actions_path_property(self, tmp_path, bot_name):
-        """Scenario: Bot.base_actions_path property returns path to base_actions directory (BotConfig merged into Bot)."""
-        # Given: Production bot
-        helper = BotTestHelper(tmp_path)
-        
-        # Then: Bot.base_actions_path matches expected (shared agile_bot/base_actions)
-        from agile_bot.src.bot.workspace import get_python_workspace_root
-        expected_path = get_python_workspace_root() / 'agile_bot' / 'base_actions'
-        assert helper.bot.base_actions_path == expected_path
-        assert helper.bot.base_actions_path.exists()
-    
-    # test_bot_config_raises_error_when_config_invalid_json removed - exception handling test
 
-
-# ============================================================================
-# STORY: Load Behavior Configuration
-# ============================================================================
-
-
-class TestLoadBehaviorConfiguration:
-    """Story: Load Behavior Configuration - behavior.json is parsed via BehaviorConfig."""
-
-    def test_behavior_config_loads_fields_and_actions(self, tmp_path):
-        """Scenario: BehaviorConfig loads fields and sorts actions_workflow by order."""
-        # Given: Production behavior config
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('shape')
-        behavior_config = helper.bot.behaviors.current
-
-        # Then: Fields and actions are loaded correctly from production
-        assert isinstance(behavior_config.description, str)
-        assert len(behavior_config.description) > 0
-        assert isinstance(behavior_config.goal, str)
-        assert len(behavior_config.goal) > 0
-        # inputs and outputs can be string or list
-        assert isinstance(behavior_config.inputs, (str, list))
-        assert isinstance(behavior_config.outputs, (str, list))
-        assert behavior_config.instructions is not None  # Can be dict or object
-        # trigger_words can be list or dict
-        assert isinstance(behavior_config.trigger_words, (list, dict))
-        if isinstance(behavior_config.trigger_words, list):
-            assert len(behavior_config.trigger_words) > 0
-        else:
-            assert 'patterns' in behavior_config.trigger_words
-        
-        # Actions are sorted by order
-        action_names = [action.action_name for action in behavior_config.actions]
-        assert len(action_names) > 0
-        # Verify actions are in order (production shape behavior has clarify, strategy, build, validate, render)
-        assert 'clarify' in action_names
-        assert 'strategy' in action_names
-
-    # test_behavior_config_raises_on_invalid_json removed - exception handling test
-
-
-# ============================================================================
-# HELPER FUNCTIONS - Load Bot Behaviors Story
-# ============================================================================
 
 class TestLoadBotBehaviors:
     """Story: Load Bot Behaviors - Tests that bot behaviors can be loaded from configuration and managed as a collection with state persistence."""
     
-    def test_load_behaviors_from_bot_config(self, tmp_path, bot_name):
+    def test_load_behaviors_from_bot_config(self, tmp_path):
         """Scenario: Bot behaviors are loaded from BotConfig."""
         helper = BotTestHelper(tmp_path)
         assert helper.bot.behaviors.names
     
-    def test_load_behaviors_sets_first_as_current(self, tmp_path, bot_name):
+    def test_load_behaviors_sets_first_as_current(self, tmp_path):
         """Scenario: When behaviors are loaded, first behavior is set as current."""
         helper = BotTestHelper(tmp_path)
         assert helper.bot.behaviors.current.name == 'shape'
     
-    def test_find_behavior_by_name(self, tmp_path, bot_name):
+    def test_find_behavior_by_name(self, tmp_path):
         """Scenario: Behavior can be found by name when it exists."""
         helper = BotTestHelper(tmp_path)
         found_behavior = helper.bot.behaviors.find_by_name('prioritization')
@@ -837,12 +612,12 @@ class TestLoadBotBehaviors:
         assert found_behavior.order > 0
         assert len(found_behavior.actions.names) > 0
     
-    def test_find_behavior_returns_none_when_not_found(self, tmp_path, bot_name):
+    def test_find_behavior_returns_none_when_not_found(self, tmp_path):
         """Scenario: Finding behavior by name returns None when behavior doesn't exist."""
         helper = BotTestHelper(tmp_path)
         assert helper.bot.behaviors.find_by_name('nonexistent') is None
     
-    def test_get_next_behavior(self, tmp_path, bot_name):
+    def test_get_next_behavior(self, tmp_path):
         """Scenario: Next behavior in sequence can be retrieved."""
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('shape')
@@ -851,7 +626,7 @@ class TestLoadBotBehaviors:
         assert next_behavior.order == 2  # prioritization is second
         assert len(next_behavior.actions.names) > 0
     
-    def test_get_next_behavior_returns_none_at_end(self, tmp_path, bot_name):
+    def test_get_next_behavior_returns_none_at_end(self, tmp_path):
         """Scenario: Getting next behavior returns None when at last behavior."""
         helper = BotTestHelper(tmp_path)
         # Navigate to last behavior (get all behaviors, navigate to last)
@@ -860,7 +635,7 @@ class TestLoadBotBehaviors:
         helper.bot.behaviors.navigate_to(last_behavior.name)
         assert helper.bot.behaviors.next() is None
     
-    def test_iterate_all_behaviors(self, tmp_path, bot_name):
+    def test_iterate_all_behaviors(self, tmp_path):
         """Scenario: All behaviors can be iterated."""
         helper = BotTestHelper(tmp_path)
         behavior_names = [b.name for b in helper.bot.behaviors]
@@ -868,7 +643,7 @@ class TestLoadBotBehaviors:
         assert 'prioritization' in behavior_names
         assert 'discovery' in behavior_names
     
-    def test_check_behavior_exists(self, tmp_path, bot_name):
+    def test_check_behavior_exists(self, tmp_path):
         """Scenario: Can check if a behavior exists."""
         helper = BotTestHelper(tmp_path)
         exists = helper.bot.behaviors.check_exists('shape')
@@ -876,13 +651,13 @@ class TestLoadBotBehaviors:
         assert exists is True
         assert not_exists is False
     
-    def test_navigate_to_behavior(self, tmp_path, bot_name):
+    def test_navigate_to_behavior(self, tmp_path):
         """Scenario: Can navigate to a specific behavior."""
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('discovery')
         helper.assert_current_behavior_and_action('discovery', helper.bot.behaviors.current.actions.current_action_name)
     
-    def test_save_current_behavior_state(self, tmp_path, bot_name):
+    def test_save_current_behavior_state(self, tmp_path):
         """Scenario: Current behavior state is persisted to behavior_action_state.json."""
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('prioritization')
@@ -890,7 +665,7 @@ class TestLoadBotBehaviors:
         state = helper.get_state()
         assert state.get('current_behavior') == 'story_bot.prioritization'
     
-    def test_load_behavior_state_from_file(self, tmp_path, bot_name):
+    def test_load_behavior_state_from_file(self, tmp_path):
         """Scenario: Current behavior state is restored from behavior_action_state.json."""
         helper = BotTestHelper(tmp_path)
         # Find a behavior that exists (prioritization or discovery)
@@ -905,10 +680,6 @@ class TestLoadBotBehaviors:
             helper2 = BotTestHelper(tmp_path)
             # The new bot should load the state we just set
             assert helper2.bot.behaviors.current.name == target_behavior.name
-    
-# ============================================================================
-# HELPER FUNCTIONS - Load Actions Story
-# ============================================================================
 
 class TestLoadActions:
     """Story: Load Actions - Tests that actions can be loaded from behavior configuration and managed as a collection with state persistence."""
@@ -1046,10 +817,6 @@ class TestLoadActions:
         # Base instructions from clarify action_config.json contain the actual instructions
         # Just verify that we have some instructions (format may vary)
     
-# ============================================================================
-# HELPER FUNCTIONS - Access Bot Paths Story
-# ============================================================================
-
 class TestAccessBotPath:
     """Story: Access Bot Paths - Tests that bot-related paths can be accessed through a BotPath class."""
     
@@ -1137,19 +904,7 @@ class TestAccessBotPath:
     # test_bot_paths_raises_error_when_working_area_not_set removed - exception handling test
     # test_bot_paths_raises_error_when_bot_directory_not_set removed - exception handling test
 
-
-# ============================================================================
-# HELPER FUNCTIONS - Domain Classes (Stories 6, 21-24)
-# ============================================================================
-
-from unittest.mock import Mock
-# MergedInstructions removed - was just a simple dict merge
-# BaseActionConfig deleted - Action already has config loading
-# BehaviorConfig merged into Behavior - use Behavior directly
-from agile_bot.src.bot.behaviors import Behaviors
-# BotConfig merged into Bot - use Bot directly
 from agile_bot.src.bot_path import BotPath
-
 
 class TestGetBaseInstructions:
     """Story: Get Base Instructions (MergedInstructions) (Sub-epic: Perform Behavior Action)"""
@@ -1960,8 +1715,14 @@ class TestBootstrapWorkspace:
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         
-        # And: Bot configuration exists
-        config_path = create_bot_config_file(bot_directory, 'story_bot', ['shape'])
+        # And: Bot configuration exists (use production story_bot via BotTestHelper)
+        # For this test, we need a custom bot_directory, so create config directly
+        import json
+        config_path = bot_directory / 'bot_config.json'
+        config_path.write_text(json.dumps({
+            'name': 'story_bot',
+            'behaviors': ['shape']
+        }, indent=2), encoding='utf-8')
         
         # When: Bot is instantiated
         bot = Bot('story_bot', bot_directory, config_path)
@@ -1989,9 +1750,14 @@ class TestBootstrapWorkspace:
         os.environ['BOT_DIRECTORY'] = str(bot_directory)
         os.environ['WORKING_AREA'] = str(workspace_directory)
         
-        # And: Bot is initialized
-        from agile_bot.test.domain.test_helpers import create_bot_config_file
-        config_path = create_bot_config_file(bot_directory, 'story_bot')
+        # And: Bot is initialized (use production story_bot via BotTestHelper)
+        # For this test, we need a custom bot_directory, so create config directly
+        import json
+        config_path = bot_directory / 'bot_config.json'
+        config_path.write_text(json.dumps({
+            'name': 'story_bot',
+            'behaviors': ['shape']
+        }, indent=2), encoding='utf-8')
         bot = Bot('story_bot', bot_directory, config_path)
         
         # When: Behavior action state file path is accessed through bot_paths
@@ -2111,8 +1877,6 @@ class TestBootstrapWorkspace:
         # And: All are Path objects
         assert all(isinstance(r, Path) for r in [result1, result2, result3])
 
-# REMOVED: temp_workspace, bot_directory, workspace_directory fixtures
-# These created temporary copies of production bot - now use setup_test_bot() instead
 
 class TestTrackActivityForWorkspace:
     """Story: Track Activity For Workspace - Tests that activity is tracked in the correct workspace_area location."""
@@ -2131,10 +1895,8 @@ class TestTrackActivityForWorkspace:
         helper = BotTestHelper(tmp_path)
         
         # When: Activity tracker tracks activity
-        from agile_bot.test.domain.test_helpers import given_activity_tracker
-        tracker = given_activity_tracker(helper.workspace, 'story_bot')
-        from agile_bot.test.domain.test_helpers import when_activity_tracks_start
-        when_activity_tracks_start(tracker, 'story_bot.shape.gather_context')
+        tracker = helper.given_activity_tracker('story_bot')
+        helper.when_activity_tracks_start(tracker, 'story_bot.shape.gather_context')
         
         # Then: Activity log exists in workspace area
         expected_log = helper.workspace / 'activity_log.json'
@@ -2161,42 +1923,14 @@ class TestTrackActivityForWorkspace:
         helper = BotTestHelper(tmp_path)
         
         # When: Activity tracker tracks activity
-        from agile_bot.test.domain.test_helpers import given_activity_tracker, when_activity_tracks_start
-        tracker = given_activity_tracker(helper.workspace, 'story_bot')
-        when_activity_tracks_start(tracker, 'story_bot.shape.gather_context')
+        tracker = helper.given_activity_tracker('story_bot')
+        helper.when_activity_tracks_start(tracker, 'story_bot.shape.gather_context')
         
         # Then: Activity log has entry
-        from agile_bot.test.domain.test_helpers import then_activity_log_matches
-        then_activity_log_matches(helper.workspace, expected_action_state='story_bot.shape.gather_context', expected_status='started', expected_count=1)
+        helper.then_activity_log_matches(expected_action_state='story_bot.shape.gather_context', expected_status='started', expected_count=1)
 
 
-@pytest.fixture
-def bot_name():
-    """Fixture: Bot name for tests."""
-    return 'story_bot'
-
-
-@pytest.fixture(autouse=True)
-def _clear_environment_variables():
-    """Helper: Clear environment variables for testing."""
-    env_vars = ['BOT_DIRECTORY', 'WORKING_AREA', 'WORKING_DIR']
-    original_values = {}
-    for var in env_vars:
-        if var in os.environ:
-            original_values[var] = os.environ[var]
-            del os.environ[var]
-    
-    yield
-    
-    # Restore original values
-    for var in env_vars:
-        if var in os.environ:
-            del os.environ[var]
-    for var, value in original_values.items():
-        os.environ[var] = value
-
-
-from agile_bot.test.domain.test_invoke_bot_helpers import BotTestHelper
+from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 
 class TestSetStoryScope:

@@ -1,13 +1,14 @@
 {
   "behaviorName": "exploration",
-  "order": 4,
-  "description": "Define acceptance criteria (When/Then) for stories to establish clear success criteria",
-  "goal": "Explore each story to create testable acceptance criteria",
-  "inputs": "story-graph.json with discovery details, user flows, domain language/concepts",
-  "outputs": "story-graph.json (with acceptance criteria), individual story files with AC",
+  "description": "Test behavior: exploration",
+  "goal": "Test goal for exploration",
+  "inputs": "Test inputs",
+  "outputs": "Test outputs",
   "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "Define acceptance criteria (When/Then) for stories to establish clear success criteria"
+    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
+    "",
+    "Test instructions for exploration."
   ],
   "actions_workflow": {
     "actions": [
@@ -15,141 +16,43 @@
         "name": "clarify",
         "order": 1,
         "next_action": "strategy",
-        "instructions": []
+        "instructions": [
+          "Follow agile_bot/base_actions/clarify/action_config.json",
+          "Test instructions for clarify in exploration"
+        ]
       },
       {
         "name": "strategy",
         "order": 2,
-        "next_action": "build",
-        "instructions": []
-      },
-      {
-        "name": "build",
-        "order": 3,
         "next_action": "validate",
         "instructions": [
-          "exploration: build acceptance criteria using domain language",
-          "Use proper domain terminology in acceptance criteria - refer to domain concepts and patterns",
-          "CRITICAL: Update the EXISTING story-graph.json file (do NOT create story-graph-explored.json or any separate file)",
-          "CRITICAL: Add/update Steps and acceptance_criteria ONLY in main epics section (single source of truth), NOT in increments section"
+          "Follow agile_bot/base_actions/strategy/action_config.json",
+          "Test instructions for strategy in exploration"
         ]
       },
       {
         "name": "validate",
-        "order": 4,
+        "order": 3,
         "next_action": "render",
         "instructions": [
-          "exploration: validate AC format, coverage, and domain language usage",
-          "Validate that acceptance criteria use proper domain terminology and reference domain concepts correctly"
+          "Follow agile_bot/base_actions/validate/action_config.json",
+          "Test instructions for validate in exploration"
         ]
       },
       {
         "name": "render",
-        "order": 5,
+        "order": 4,
         "instructions": [
-          "exploration: render feature documents with AC"
-        ]
-      },
-      {
-        "name": "rules",
-        "instructions": [
-          "Display digested rules for this behavior as AI context"
+          "Follow agile_bot/base_actions/render/action_config.json",
+          "Test instructions for render in exploration"
         ]
       }
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to exploration/acceptance criteria behavior",
+    "description": "Trigger words for exploration",
     "patterns": [
-      "start.*exploration",
-      "let.*s.*explore",
-      "begin.*exploration",
-      "do.*exploration",
-      "exploration",
-      "explore",
-      "explore.*increment",
-      "explore.*increment.*flow",
-      "explore.*stories",
-      "explore.*story",
-      "explore.*the.*stories",
-      "explore.*some.*stories",
-      "start.*exploring.*stories",
-      "let.*s.*explore.*stories",
-      "let.*s.*explore.*the.*stories",
-      "let.*s.*explore.*some.*stories",
-      "i.*d.*like.*to.*explore.*stories",
-      "i.*want.*to.*explore.*stories",
-      "want.*to.*explore.*stories",
-      "need.*to.*explore.*stories",
-      "time.*to.*explore.*stories",
-      "define.*acceptance.*criteria",
-      "acceptance.*criteria",
-      "acceptance",
-      "write.*acceptance.*criteria",
-      "create.*acceptance.*criteria",
-      "add.*acceptance.*criteria",
-      "define.*ac",
-      "write.*ac",
-      "create.*ac",
-      "walk.*through.*user.*steps",
-      "walk.*through.*steps",
-      "user.*steps",
-      "user.*flow",
-      "user.*journey",
-      "user.*path",
-      "discover.*story.*details",
-      "discover.*details",
-      "story.*details",
-      "model.*user.*behavior",
-      "user.*behavior",
-      "what.*does.*user.*do",
-      "what.*do.*users.*do",
-      "how.*does.*user",
-      "how.*do.*users",
-      "understand.*increment.*usage",
-      "understand.*usage",
-      "map.*happy.*path",
-      "happy.*path",
-      "main.*path",
-      "primary.*path",
-      "capture.*steps.*to.*complete",
-      "steps.*to.*complete",
-      "completion.*steps",
-      "refine.*acceptance.*logic",
-      "acceptance.*logic",
-      "describe.*usage.*scenario",
-      "usage.*scenario",
-      "define.*done.*for.*feature",
-      "definition.*of.*done",
-      "done.*criteria",
-      "what.*is.*done",
-      "explore.*workflow.*steps",
-      "workflow.*steps",
-      "workflow",
-      "user.*journey.*through.*feature",
-      "journey",
-      "define.*success.*criteria",
-      "success.*criteria",
-      "collaborate.*on.*acceptance",
-      "write.*acceptance.*examples",
-      "acceptance.*examples",
-      "map.*real.*world.*usage",
-      "real.*world.*usage",
-      "actual.*usage",
-      "refine.*stories",
-      "refine.*story",
-      "dive.*into.*stories",
-      "dive.*into.*story",
-      "detail.*stories",
-      "detail.*story",
-      "flesh.*out.*stories",
-      "flesh.*out.*story",
-      "elaborate.*stories",
-      "elaborate.*story",
-      "break.*down.*stories",
-      "break.*down.*story"
+      "test.*exploration"
     ]
   }
 }
-
-

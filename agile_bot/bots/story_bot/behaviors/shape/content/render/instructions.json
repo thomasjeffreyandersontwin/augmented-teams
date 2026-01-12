@@ -1,6 +1,1 @@
-{
-  "behaviorName": "shape",
-  "instructions": [
-    "Render the story map outline from story-graph.json to visual diagrams and markdown documents."
-  ]
-}
+{"behaviorName": "shape", "instructions": ["Render all story files", "Generate markdown output"]}

@@ -8,13 +8,13 @@ These tests focus on CLI-specific concerns:
 - CLI output format for scope operations (TTY, Markdown, JSON modes)
 - Delegation to domain logic
 
-Uses common helpers from: test_invoke_bot_helpers.py
+Uses common helpers from: bot_test_helper.py
 """
 import pytest
 import json
 from pathlib import Path
 from agile_bot.src.cli.cli_session import CLISession
-from agile_bot.test.domain.test_invoke_bot_helpers import (
+from agile_bot.test.domain.bot_test_helper import (
     setup_test_bot,
     create_behavior_action_state
 )

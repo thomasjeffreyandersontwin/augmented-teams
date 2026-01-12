@@ -8672,7 +8672,6 @@
         "Insert Context Into Instructions",
         "Inject Status Update Breadcrumbs Into Instructions",
         "Load Bot Configuration",
-        "Load Behavior Configuration",
         "Load Bot Behaviors",
         "Load Actions",
         "Load Base Action Configuration",

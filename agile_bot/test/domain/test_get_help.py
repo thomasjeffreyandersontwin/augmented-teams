@@ -6,15 +6,9 @@ from pathlib import Path
 from agile_bot.src.bot.bot import Bot, BotResult
 from agile_bot.src.behaviors import Behavior
 from agile_bot.src.bot_path import BotPath
-from agile_bot.test.domain.test_helpers import (
-    bootstrap_env, create_actions_workflow_json, create_behavior_folder,
-    given_bot_name_and_behavior_setup, when_bot_is_created
-)
-from agile_bot.test.domain.test_invoke_bot_helpers import (
-    setup_test_bot,
-    create_behavior_action_state
-)
-
+# NOTE: This file uses BotTestHelper instead of deprecated functions
+# Removed: bootstrap_env, create_actions_workflow_json (use BotTestHelper)
+from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 class TestGetActionInstructions:
     """
@@ -34,23 +28,30 @@ class TestGetActionInstructions:
         Domain focus: Action instructions method availability
         """
         # GIVEN: Bot has behavior with action
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.navigate_to('shape')
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
         
         # WHEN: Action is accessed
-        action = bot.behaviors.current.actions.find_by_name('clarify')
+        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
         
-        # THEN: Action has method to get instructions
+        # THEN: Complete action object with instructions capability
         assert action is not None
+        assert hasattr(action, 'action_name')
+        assert action.action_name == 'clarify'
+        assert hasattr(action, 'order')
+        assert isinstance(action.order, int)
+        assert hasattr(action, 'behavior')
         assert hasattr(action, 'get_instructions') or hasattr(action, 'instructions')
         
-        # Verify instructions can be retrieved
+        # Verify instructions can be retrieved and have structure
         if hasattr(action, 'get_instructions'):
             instructions = action.get_instructions()
             assert instructions is not None
+            assert isinstance(instructions, (dict, object))
         elif hasattr(action, 'instructions'):
             instructions = action.instructions
             assert instructions is not None
+            assert isinstance(instructions, (dict, object))
 
 
 class TestGetParameterHelp:
@@ -71,9 +72,9 @@ class TestGetParameterHelp:
         Domain focus: Parameter help retrieval
         """
         # GIVEN: Bot has behavior with action
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.navigate_to('shape')
-        action = bot.behaviors.current.actions.find_by_name('clarify')
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
         
         # WHEN: Parameter help is requested
         # Check if action has parameter help method or property
@@ -84,22 +85,30 @@ class TestGetParameterHelp:
             hasattr(action, 'get_parameters')
         )
         
-        # THEN: Action returns parameter descriptions
+        # THEN: Complete action object with parameter help capability
+        assert action is not None
+        assert action.action_name == 'clarify'
+        assert hasattr(action, 'order')
+        assert isinstance(action.order, int)
         assert has_param_help, "Action should provide parameter help"
         
-        # Try to retrieve parameter help if method exists
+        # Try to retrieve parameter help if method exists and verify structure
         if hasattr(action, 'get_parameter_help'):
             param_help = action.get_parameter_help()
             assert param_help is not None
+            assert isinstance(param_help, (dict, list, str))
         elif hasattr(action, 'parameter_help'):
             param_help = action.parameter_help
             assert param_help is not None
+            assert isinstance(param_help, (dict, list, str))
         elif hasattr(action, 'parameters'):
             params = action.parameters
             assert params is not None
+            assert isinstance(params, (dict, list))
         elif hasattr(action, 'get_parameters'):
             params = action.get_parameters()
             assert params is not None
+            assert isinstance(params, (dict, list))
 
 
 class TestGetCommandExamples:
@@ -120,9 +129,9 @@ class TestGetCommandExamples:
         Domain focus: Command examples retrieval
         """
         # GIVEN: Bot has behavior with action
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.navigate_to('shape')
-        action = bot.behaviors.current.actions.find_by_name('clarify')
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
         
         # WHEN: Command examples are requested
         # Check if action has examples method or property
@@ -133,19 +142,27 @@ class TestGetCommandExamples:
             hasattr(action, 'command_examples')
         )
         
-        # THEN: Action returns usage examples
+        # THEN: Complete action object (examples are optional)
+        assert action is not None
+        assert action.action_name == 'clarify'
+        assert hasattr(action, 'order')
+        assert isinstance(action.order, int)
         assert has_examples or True, "Action may provide command examples"
         
-        # Try to retrieve examples if method exists
+        # Try to retrieve examples if method exists and verify structure
         if hasattr(action, 'get_examples'):
             examples = action.get_examples()
             assert examples is not None
+            assert isinstance(examples, (dict, list, str))
         elif hasattr(action, 'examples'):
             examples = action.examples
             assert examples is not None
+            assert isinstance(examples, (dict, list, str))
         elif hasattr(action, 'get_command_examples'):
             examples = action.get_command_examples()
             assert examples is not None
+            assert isinstance(examples, (dict, list, str))
         elif hasattr(action, 'command_examples'):
             examples = action.command_examples
             assert examples is not None
+            assert isinstance(examples, (dict, list, str))

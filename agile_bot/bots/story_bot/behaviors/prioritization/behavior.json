@@ -1,13 +1,14 @@
 {
   "behaviorName": "prioritization",
-  "order": 2,
-  "description": "Organize stories into delivery increments based on business value, dependencies, and risk",
-  "goal": "Prioritize stories into increments for iterative delivery",
-  "inputs": "story-graph.json (shaped story map), business priorities, dependencies",
-  "outputs": "story-graph.json (with increments), story-map-increments.drawio, story-map-increments.md",
+  "description": "Test behavior: prioritization",
+  "goal": "Test goal for prioritization",
+  "inputs": "Test inputs",
+  "outputs": "Test outputs",
   "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "Organize stories into delivery increments based on business value, dependencies, and risk"
+    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
+    "",
+    "Test instructions for prioritization."
   ],
   "actions_workflow": {
     "actions": [
@@ -15,74 +16,43 @@
         "name": "clarify",
         "order": 1,
         "next_action": "strategy",
-        "instructions": []
+        "instructions": [
+          "Follow agile_bot/base_actions/clarify/action_config.json",
+          "Test instructions for clarify in prioritization"
+        ]
       },
       {
         "name": "strategy",
         "order": 2,
-        "next_action": "build",
-        "instructions": []
-      },
-      {
-        "name": "build",
-        "order": 3,
         "next_action": "validate",
         "instructions": [
-          "prioritization: build increment backlog",
-          "**When building increments, consider repeating stories where introducing similar behavior but with additional qualities mentioned in decision criteria for thin slicing spine.**",
-          "**Use adjective + Noun + Verb pattern for story names: <Adjective> <Noun> <Verb> (e.g., 'Manually Create Billing Report' vs 'Automatically Create Billing Report').**",
-          "**Name increments after the quality improvements they add (e.g., 'Automated Payment Processing', 'Dynamic Shipping Calculation', 'Admin Interface for Orders').**"
+          "Follow agile_bot/base_actions/strategy/action_config.json",
+          "Test instructions for strategy in prioritization"
         ]
       },
       {
         "name": "validate",
-        "order": 4,
+        "order": 3,
         "next_action": "render",
         "instructions": [
-          "prioritization: validate vertical slices"
+          "Follow agile_bot/base_actions/validate/action_config.json",
+          "Test instructions for validate in prioritization"
         ]
       },
       {
         "name": "render",
-        "order": 5,
+        "order": 4,
         "instructions": [
-          "prioritization: render increment backlog"
+          "Follow agile_bot/base_actions/render/action_config.json",
+          "Test instructions for render in prioritization"
         ]
       }
     ]
   },
   "trigger_words": {
-    "description": "Behavior-level trigger words - specific to prioritization/thin slicing behavior",
+    "description": "Trigger words for prioritization",
     "patterns": [
-      "start.*prioritization",
-      "let.*s.*prioritize",
-      "begin.*prioritization",
-      "do.*prioritization",
-      "prioritization",
-      "prioritize",
-      "rank.*epics",
-      "value.*based.*order",
-      "decide.*what.*first",
-      "slice.*",
-      "group.*by.*value",
-      "group.*by.*risk",
-      "group.*by.*assumption",
-      "define.*thin.*slice",
-      "organize.*map",
-      "plan.*mvp.*delivery",
-      "choose.*mvp",
-      "decide.*initial.*release",
-      "pick.*first.*slice",
-      "stack.*by.*impact",
-      "delivery.*sequence",
-      "delivery.*order",
-      "assumption.*driven.*planning",
-      "cost.*of.*delay",
-      "delivery.*strategy",
-      "validate.*risk.*first",
-      "learn.*fast.*slice",
-      "test.*value.*proposition",
-      "explore.*release.*path"
+      "test.*prioritization"
     ]
   }
 }
