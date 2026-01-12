@@ -63,7 +63,6 @@ class BotPaths:
         resolved_path = Path(new_path).expanduser().resolve()
         previous = getattr(self, '_workspace_directory', None)
         os.environ['WORKING_AREA'] = str(resolved_path)
-        os.environ['WORKING_DIR'] = str(resolved_path)
         self._workspace_directory = resolved_path
         if persist:
             self._persist_workspace_directory(resolved_path)

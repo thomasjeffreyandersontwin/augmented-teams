@@ -18,7 +18,6 @@ from agile_bot.test.domain.bot_test_helper import BotTestHelper
 # ============================================================================
 
 class TestInjectStrategyIntoInstructions:
-    """Story: Inject Strategy Into Instructions - Tests strategy injection."""
 
     def test_action_injects_decision_criteria_and_assumptions(self, tmp_path):
         """
@@ -44,7 +43,6 @@ class TestInjectStrategyIntoInstructions:
 # ============================================================================
 
 class TestStoreStrategyData:
-    """Story: Store Strategy Data - Tests that strategy data is saved to strategy.json."""
 
     def test_save_strategy_data_when_parameters_provided(self, tmp_path):
         """

@@ -2,7 +2,7 @@
 
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    export WORKING_DIR="${WORKING_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+    export WORKING_AREA="${WORKING_AREA:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
     python3 "$SCRIPT_DIR/src/crc_bot_cli.py" "$@"
     

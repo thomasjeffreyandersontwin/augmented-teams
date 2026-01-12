@@ -28,7 +28,7 @@ else:
     bot_directory = workspace_root / 'agile_bot' / 'bots' / 'story_bot'
 os.environ['BOT_DIRECTORY'] = str(bot_directory)
 
-if 'WORKING_AREA' not in os.environ and 'WORKING_DIR' not in os.environ:
+if 'WORKING_AREA' not in os.environ:
     config_path = bot_directory / 'bot_config.json'
     if config_path.exists():
         try:

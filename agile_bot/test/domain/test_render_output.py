@@ -18,7 +18,6 @@ from agile_bot.test.domain.bot_test_helper import BotTestHelper
 # ============================================================================
 
 class TestTrackActivityForRenderOutputAction:
-    """Story: Track Activity for Render Output Action - Tests activity tracking for render_output."""
 
     def test_track_activity_when_render_output_action_starts(self, tmp_path):
         # Given: Bot directory and workspace directory are set up
@@ -80,7 +79,6 @@ class TestTrackActivityForRenderOutputAction:
 # ============================================================================
 
 class TestProceedToValidateRules:
-    """Story: Proceed To Validate - Tests transition to validate action."""
 
     def test_seamless_transition_from_validate_to_render_output(self, tmp_path):
         """
@@ -127,7 +125,6 @@ class TestProceedToValidateRules:
 # ============================================================================
 
 class TestInjectRenderInstructionsAndConfigs:
-    """Story: Inject Render Instructions and Configs - Tests template variable injection."""
 
     def test_all_template_variables_are_replaced_in_instructions(self, tmp_path):
         """
@@ -184,7 +181,6 @@ class TestInjectRenderInstructionsAndConfigs:
 # ============================================================================
 
 class TestRenderOutputUsingSynchronizers:
-    """Story: Render Output Using Synchronizers - Tests automatic execution of synchronizers."""
 
     def test_synchronizers_are_executed_automatically(self, tmp_path):
         """

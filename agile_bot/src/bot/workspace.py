@@ -17,7 +17,7 @@ def get_bot_directory() -> Path:
     return Path(bot_dir.strip())
 
 def get_workspace_directory() -> Path:
-    workspace = os.environ.get('WORKING_AREA') or os.environ.get('WORKING_DIR')
+    workspace = os.environ.get('WORKING_AREA')
     if not workspace:
         raise RuntimeError('WORKING_AREA environment variable is not set. Entry points must bootstrap this before importing other modules.')
     return Path(workspace.strip())

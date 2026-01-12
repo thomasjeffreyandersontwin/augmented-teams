@@ -351,27 +351,3 @@ class Behaviors:
         state_data = {'current_behavior': f'{self.bot_name}.{behavior_obj.name}', 'current_action': f'{self.bot_name}.{behavior_obj.name}.{first_action}', 'completed_actions': [], 'timestamp': datetime.now().isoformat()}
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
-
-    def get_entry_state_result(self) -> 'BotResult':
-        from .bot import BotResult
-        return BotResult(status='requires_confirmation', behavior='', action='', data={'message': f"**ENTRY STATE**\n\nNo behavior state found. Please select a behavior to start:\n\n{chr(10).join((f'- {b}' for b in self.names))}\n\nProvide 'confirmed_behavior' in parameters to proceed.", 'behaviors': self.names, 'requires_confirmation': True})
-
-    def does_requested_match_current(self, requested_behavior: str) -> Tuple[bool, Optional[str], Optional[str]]:
-        if not self.current:
-            return (True, None, None)
-        current_behavior = self.current.name
-        requested_behavior_obj = self.find_by_name(requested_behavior)
-        requested_matched = requested_behavior_obj.name if requested_behavior_obj else None
-        next_behavior_obj = self.next()
-        expected_next = next_behavior_obj.name if next_behavior_obj else None
-        # Match if: valid behavior requested AND (staying in current OR at workflow end OR requesting next)
-        matches = (
-            requested_matched is not None
-            and (
-                requested_matched == current_behavior
-                or expected_next is None
-                or requested_matched == expected_next
-            )
-        )
-        logger.debug(f'Behavior order check: requested={requested_behavior} ({requested_matched}), current={current_behavior}, expected_next={expected_next}, matches={matches}')
-        return (matches, current_behavior, expected_next)

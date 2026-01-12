@@ -38,8 +38,6 @@ from agile_bot.test.domain.helpers import (
     InstructionsTestHelper,
     FileTestHelper
 )
-
-
 class BotTestHelper:
     """
     Test helper that provides production story_bot and workspace.

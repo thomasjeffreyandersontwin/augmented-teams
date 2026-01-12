@@ -2299,6 +2299,312 @@
                         "WHEN bot.scope.clear() is called, THEN all scope filters are removed",
                         "WHEN action executes after scope cleared, THEN action processes all content without filtering"
                       ]
+                    },
+                    {
+                      "name": "Filter Action Based on Scope",
+                      "sequential_order": 6,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestFilterActionBasedOnScope",
+                      "test_file": "test_invoke_bot_directly.py",
+                      "scenarios": [
+                        {
+                          "name": "BuildScope filters by story names",
+                          "steps": "GIVEN: Story graph with multiple stories\nWHEN: BuildScope filters with story names\nTHEN: Story graph contains only matching stories and their parent epics",
+                          "test_method": "test_build_scope_filters_by_story_names"
+                        },
+                        {
+                          "name": "BuildScope filters by epic names",
+                          "steps": "GIVEN: Story graph with multiple epics\nWHEN: BuildScope filters with epic names\nTHEN: Story graph contains only matching epics and their increments",
+                          "test_method": "test_build_scope_filters_by_epic_names"
+                        },
+                        {
+                          "name": "BuildScope filters by increment priorities",
+                          "steps": "GIVEN: Story graph with increments having different priorities\nWHEN: BuildScope filters with increment priorities\nTHEN: Story graph contains only matching increments and their stories",
+                          "test_method": "test_build_scope_filters_by_increment_priorities"
+                        },
+                        {
+                          "name": "BuildScope returns all when scope is all",
+                          "steps": "GIVEN: Story graph with multiple epics and increments\nWHEN: BuildScope filters with scope type 'all'\nTHEN: Story graph contains all epics and increments",
+                          "test_method": "test_build_scope_returns_all_when_scope_is_all"
+                        },
+                        {
+                          "name": "ValidationScope filters by story names",
+                          "steps": "GIVEN: Story graph with multiple stories\nWHEN: ValidationScope filters with story names\nTHEN: Story graph contains only matching stories and their parent epics",
+                          "test_method": "test_validation_scope_filters_by_story_names"
+                        },
+                        {
+                          "name": "ValidationScope filters by epic names",
+                          "steps": "GIVEN: Story graph with multiple epics\nWHEN: ValidationScope filters with epic names\nTHEN: Story graph contains only matching epics and their increments",
+                          "test_method": "test_validation_scope_filters_by_epic_names"
+                        },
+                        {
+                          "name": "ActionScope filters by story names",
+                          "steps": "GIVEN: Story graph with multiple stories\nWHEN: ActionScope filters with story names\nTHEN: Story graph contains only matching stories and their parent epics",
+                          "test_method": "test_action_scope_filters_by_story_names"
+                        },
+                        {
+                          "name": "ActionScope filters by epic names",
+                          "steps": "GIVEN: Story graph with multiple epics\nWHEN: ActionScope filters with epic names\nTHEN: Story graph contains only matching epics and their increments",
+                          "test_method": "test_action_scope_filters_by_epic_names"
+                        },
+                        {
+                          "name": "ActionScope returns all when scope is all",
+                          "steps": "GIVEN: Story graph with multiple epics and increments\nWHEN: ActionScope filters with scope type 'all'\nTHEN: Story graph contains all epics and increments",
+                          "test_method": "test_action_scope_returns_all_when_scope_is_all"
+                        }
+                      ],
+                      "acceptance_criteria": [
+                        "WHEN BuildScope filters with story names, THEN story graph contains only matching stories and their parent epics",
+                        "WHEN BuildScope filters with epic names, THEN story graph contains only matching epics and their increments",
+                        "WHEN BuildScope filters with increment priorities, THEN story graph contains only matching increments",
+                        "WHEN scope type is 'all', THEN story graph contains all epics and increments",
+                        "WHEN ValidationScope filters, THEN story graph is filtered correctly",
+                        "WHEN ActionScope filters, THEN story graph is filtered correctly"
+                      ]
+                    },
+                    {
+                      "name": "Filter Scope By Stories",
+                      "sequential_order": 7,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestFilterScopeByStories",
+                      "test_file": "test_invoke_bot_directly.py",
+                      "scenarios": [
+                        {
+                          "name": "Set scope to single story",
+                          "steps": "GIVEN: Story graph with multiple stories\nWHEN: Scope set to single story name\nTHEN: Only that story is in scope",
+                          "test_method": "test_set_scope_to_single_story"
+                        },
+                        {
+                          "name": "Set scope to multiple stories",
+                          "steps": "GIVEN: Story graph with multiple stories\nWHEN: Scope set to list of story names\nTHEN: Only those stories are in scope",
+                          "test_method": "test_set_scope_to_multiple_stories"
+                        },
+                        {
+                          "name": "Set scope to single epic",
+                          "steps": "GIVEN: Story graph with multiple epics\nWHEN: Scope set to epic name\nTHEN: Epic and all its children are in scope",
+                          "test_method": "test_set_scope_to_single_epic"
+                        },
+                        {
+                          "name": "Set scope to multiple epics",
+                          "steps": "GIVEN: Story graph with multiple epics\nWHEN: Scope set to list of epic names\nTHEN: All epics and their children are in scope",
+                          "test_method": "test_set_scope_to_multiple_epics"
+                        },
+                        {
+                          "name": "Set scope to sub-epic",
+                          "steps": "GIVEN: Story graph with sub-epics\nWHEN: Scope set to sub-epic name\nTHEN: Sub-epic and its children are in scope",
+                          "test_method": "test_set_scope_to_sub_epic"
+                        },
+                        {
+                          "name": "Filter returns parent epic when child story matches",
+                          "steps": "GIVEN: Story graph with epic containing story\nWHEN: Scope set to story name\nTHEN: Story and parent epic are both returned",
+                          "test_method": "test_filter_returns_parent_epic_when_child_story_matches"
+                        },
+                        {
+                          "name": "Filter returns children when parent epic matches",
+                          "steps": "GIVEN: Story graph with epic containing stories\nWHEN: Scope set to epic name\nTHEN: Epic and all child stories are returned",
+                          "test_method": "test_filter_returns_children_when_parent_epic_matches"
+                        }
+                      ],
+                      "acceptance_criteria": [
+                        "WHEN scope set to single story, THEN only that story is in scope",
+                        "WHEN scope set to multiple stories, THEN only those stories are in scope",
+                        "WHEN scope set to epic, THEN epic and all children are in scope",
+                        "WHEN scope set to story, THEN parent epic is also returned",
+                        "WHEN scope set to parent epic, THEN all children are returned"
+                      ]
+                    },
+                    {
+                      "name": "Filter Scope By Files",
+                      "sequential_order": 8,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestFilterScopeByFiles",
+                      "test_file": "test_invoke_bot_directly.py",
+                      "scenarios": [
+                        {
+                          "name": "Set scope to single folder",
+                          "steps": "GIVEN: Workspace with multiple folders\nWHEN: Scope set to single folder path\nTHEN: Only files in that folder are in scope",
+                          "test_method": "test_set_scope_to_single_folder"
+                        },
+                        {
+                          "name": "Set scope to folder with glob pattern",
+                          "steps": "GIVEN: Workspace with multiple file types\nWHEN: Scope set to glob pattern (e.g., 'src/**/*.py')\nTHEN: Only matching files are in scope",
+                          "test_method": "test_set_scope_to_folder_with_glob_pattern"
+                        },
+                        {
+                          "name": "Set scope to multiple file paths",
+                          "steps": "GIVEN: Workspace with multiple files\nWHEN: Scope set to list of file paths\nTHEN: Only those files are in scope",
+                          "test_method": "test_set_scope_to_multiple_file_paths"
+                        },
+                        {
+                          "name": "Set scope with exclude pattern",
+                          "steps": "GIVEN: Workspace with files\nWHEN: Scope set with exclude pattern (e.g., exclude=['**/test_*'])\nTHEN: Matching files are excluded from scope",
+                          "test_method": "test_set_scope_with_exclude_pattern"
+                        },
+                        {
+                          "name": "Set scope to multiple folders and patterns",
+                          "steps": "GIVEN: Workspace with multiple folders\nWHEN: Scope set to combination of folders and patterns\nTHEN: All matching files are in scope",
+                          "test_method": "test_set_scope_to_multiple_folders_and_patterns"
+                        }
+                      ],
+                      "acceptance_criteria": [
+                        "WHEN scope set to folder, THEN only files in that folder are in scope",
+                        "WHEN scope set to glob pattern, THEN only matching files are in scope",
+                        "WHEN scope set to multiple paths, THEN all specified files are in scope",
+                        "WHEN exclude pattern specified, THEN matching files are excluded"
+                      ]
+                    },
+                    {
+                      "name": "Persist Scope",
+                      "sequential_order": 9,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestPersistScope",
+                      "test_file": "test_invoke_bot_directly.py",
+                      "scenarios": [
+                        {
+                          "name": "Scope persists across bot invocations",
+                          "steps": "GIVEN: Bot with scope set\nWHEN: Bot is reloaded\nTHEN: Scope is restored from workflow state",
+                          "test_method": "test_scope_persists_across_bot_invocations"
+                        },
+                        {
+                          "name": "Scope persists after action execution",
+                          "steps": "GIVEN: Bot with scope set\nWHEN: Action executes and completes\nTHEN: Scope remains active for next action",
+                          "test_method": "test_scope_persists_after_action_execution"
+                        }
+                      ],
+                      "acceptance_criteria": [
+                        "WHEN bot is reloaded, THEN scope is restored from workflow state",
+                        "WHEN action executes, THEN scope remains active"
+                      ]
+                    },
+                    {
+                      "name": "Clear Scope",
+                      "sequential_order": 10,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestClearScope",
+                      "test_file": "test_invoke_bot_directly.py",
+                      "scenarios": [
+                        {
+                          "name": "Clear scope with show_all parameter",
+                          "steps": "GIVEN: Bot with scope set\nWHEN: Scope cleared with show_all=True\nTHEN: Scope is cleared and all content is shown",
+                          "test_method": "test_clear_scope_with_show_all_parameter"
+                        },
+                        {
+                          "name": "Clear scope without show_all parameter",
+                          "steps": "GIVEN: Bot with scope set\nWHEN: Scope cleared without show_all parameter\nTHEN: Scope is cleared",
+                          "test_method": "test_clear_scope_without_show_all_parameter"
+                        },
+                        {
+                          "name": "Actions after clear process all content",
+                          "steps": "GIVEN: Bot had scope set, then cleared\nWHEN: Action executes\nTHEN: Action processes all content without filtering",
+                          "test_method": "test_actions_after_clear_process_all_content"
+                        }
+                      ],
+                      "acceptance_criteria": [
+                        "WHEN scope cleared with show_all, THEN all content is shown",
+                        "WHEN scope cleared, THEN scope is removed",
+                        "WHEN action executes after clear, THEN all content is processed"
+                      ]
+                    },
+                    {
+                      "name": "Execute Actions With Scope",
+                      "sequential_order": 11,
+                      "connector": "and",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestExecuteActionsWithScope",
+                      "test_file": "test_invoke_bot_directly.py",
+                      "scenarios": [
+                        {
+                          "name": "Clarify with story scope succeeds",
+                          "steps": "GIVEN: Bot with story scope set\nWHEN: Clarify action executes\nTHEN: Action processes only scoped stories",
+                          "test_method": "test_clarify_with_story_scope_succeeds"
+                        },
+                        {
+                          "name": "Clarify with file scope fails",
+                          "steps": "GIVEN: Bot with file scope set\nWHEN: Clarify action attempts to execute\nTHEN: Action rejects file scope as invalid",
+                          "test_method": "test_clarify_with_file_scope_fails"
+                        },
+                        {
+                          "name": "Strategy with story scope succeeds",
+                          "steps": "GIVEN: Bot with story scope set\nWHEN: Strategy action executes\nTHEN: Action processes only scoped stories",
+                          "test_method": "test_strategy_with_story_scope_succeeds"
+                        },
+                        {
+                          "name": "Strategy with file scope fails",
+                          "steps": "GIVEN: Bot with file scope set\nWHEN: Strategy action attempts to execute\nTHEN: Action rejects file scope as invalid",
+                          "test_method": "test_strategy_with_file_scope_fails"
+                        },
+                        {
+                          "name": "Build with story scope succeeds",
+                          "steps": "GIVEN: Bot with story scope set\nWHEN: Build action executes\nTHEN: Action processes only scoped stories",
+                          "test_method": "test_build_with_story_scope_succeeds"
+                        },
+                        {
+                          "name": "Build with file scope succeeds",
+                          "steps": "GIVEN: Bot with file scope set\nWHEN: Build action executes\nTHEN: Action processes only scoped files",
+                          "test_method": "test_build_with_file_scope_succeeds"
+                        },
+                        {
+                          "name": "Validate with story scope succeeds",
+                          "steps": "GIVEN: Bot with story scope set\nWHEN: Validate action executes\nTHEN: Action validates only scoped stories",
+                          "test_method": "test_validate_with_story_scope_succeeds"
+                        },
+                        {
+                          "name": "Validate with file scope succeeds",
+                          "steps": "GIVEN: Bot with file scope set\nWHEN: Validate action executes\nTHEN: Action validates only scoped files",
+                          "test_method": "test_validate_with_file_scope_succeeds"
+                        },
+                        {
+                          "name": "Tests behavior with story scope succeeds",
+                          "steps": "GIVEN: Bot with story scope set\nWHEN: Tests action executes\nTHEN: Action processes tests mapped to scoped stories",
+                          "test_method": "test_tests_behavior_with_story_scope_succeeds"
+                        },
+                        {
+                          "name": "Tests behavior with file scope succeeds",
+                          "steps": "GIVEN: Bot with file scope set\nWHEN: Tests action executes\nTHEN: Action processes only scoped test files",
+                          "test_method": "test_tests_behavior_with_file_scope_succeeds"
+                        },
+                        {
+                          "name": "Code behavior with story scope fails",
+                          "steps": "GIVEN: Bot with story scope set\nWHEN: Code action attempts to execute\nTHEN: Action rejects story scope as invalid (code requires files)",
+                          "test_method": "test_code_behavior_with_story_scope_fails"
+                        },
+                        {
+                          "name": "Code behavior with file scope succeeds",
+                          "steps": "GIVEN: Bot with file scope set\nWHEN: Code action executes\nTHEN: Action processes only scoped files",
+                          "test_method": "test_code_behavior_with_file_scope_succeeds"
+                        }
+                      ],
+                      "acceptance_criteria": [
+                        "WHEN clarify/strategy execute with story scope, THEN action processes scoped stories",
+                        "WHEN clarify/strategy execute with file scope, THEN action rejects as invalid",
+                        "WHEN build/validate execute with story or file scope, THEN action processes scoped content",
+                        "WHEN tests execute with story or file scope, THEN action processes scoped tests",
+                        "WHEN code executes with story scope, THEN action rejects as invalid",
+                        "WHEN code executes with file scope, THEN action processes scoped files"
+                      ]
                     }
                   ]
                 }

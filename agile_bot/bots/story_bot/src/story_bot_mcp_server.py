@@ -75,7 +75,7 @@ def main():
         working_dir = get_workspace_directory()
         return {'working_dir': str(working_dir), 'message': f'Working directory from WORKING_AREA: {working_dir}'}
 
-    @mcp_server.tool(name='set_working_dir', description="Update the working directory (WORKING_AREA/WORKING_DIR). Triggers: update working directory, change working path, change working folder, set workspace")
+    @mcp_server.tool(name='set_working_dir', description="Update the working directory (WORKING_AREA). Triggers: update working directory, change working path, change working folder, set workspace")
     async def set_working_dir(new_path: str, persist: bool=True):
         if not new_path:
             return {'error': 'missing_path', 'message': 'new_path is required'}

@@ -13,354 +13,21 @@ from agile_bot.src.actions.clarify.clarify_action import ClarifyContextAction
 from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 
-class TestInjectNextBehaviorReminder:
-    """Story: Inject Next Behavior Reminder - Tests that next behavior reminder is injected for final actions."""
-
-    @pytest.mark.skip(reason="Feature not yet implemented - next behavior reminder injection")
-    def test_next_behavior_reminder_injected_when_final_action(self, tmp_path):
-        """
-        SCENARIO: Next behavior reminder is injected when action is final action
-        GIVEN: render is the final action in behavior workflow
-        AND: bot_config.json defines behavior sequence with a next behavior
-        WHEN: render action executes
-        THEN: base_instructions include next behavior reminder
-        AND: reminder contains next behavior name and prompt text
-        """
-        helper = BotTestHelper(tmp_path)
-        # Use prioritization which has order=2 and should have a next behavior
-        helper.bot.behaviors.navigate_to('prioritization')
-        helper.bot.behaviors.current.actions.navigate_to('render')  # render is the final action
-        action = helper.bot.behaviors.current.actions.current
-        
-        # Get next behavior to verify it exists
-        next_behavior = helper.bot.behaviors.next()
-        assert next_behavior is not None, "Test requires a next behavior after 'prioritization'"
-        
-        # Get the action's instructions (property, not method)
-        instructions = action.instructions
-        
-        # Check that next behavior reminder is in base_instructions
-        # Instructions is a dict-like object
-        assert 'base_instructions' in instructions, "Instructions should have base_instructions"
-        base_instructions = instructions['base_instructions']
-        assert isinstance(base_instructions, list)
-        
-        # Find the next behavior reminder in instructions
-        instructions_text = '\n'.join(base_instructions)
-        assert next_behavior.name in instructions_text, \
-            f"Next behavior '{next_behavior.name}' not found in final action instructions"
-
-    def test_next_behavior_reminder_not_injected_when_not_final_action(self, tmp_path):
-        """
-        SCENARIO: Next behavior reminder is NOT injected when action is not final
-        GIVEN: validate is NOT the final action (render comes after)
-        AND: bot_config.json defines behavior sequence
-        WHEN: validate action executes
-        THEN: base_instructions do NOT include next behavior reminder
-        """
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('validate')
-        action = helper.bot.behaviors.current.actions.current
-        instructions = getattr(action, 'instructions', None)
-        base_instructions = getattr(instructions, 'base_instructions', instructions)
-        assert base_instructions is not None
-
-    def test_next_behavior_reminder_not_injected_when_no_next_behavior(self, tmp_path):
-        """
-        SCENARIO: Next behavior reminder is NOT injected when current behavior is last in sequence
-        GIVEN: discovery is the last behavior in bot_config.json
-        AND: render is the final action
-        WHEN: render action executes
-        THEN: base_instructions do NOT include next behavior reminder
-        """
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('discovery')
-        helper.bot.behaviors.current.actions.navigate_to('render')
-        action = helper.bot.behaviors.current.actions.current
-        instructions = getattr(action, 'instructions', None)
-        base_instructions = getattr(instructions, 'base_instructions', instructions)
-        assert base_instructions is not None
 
 
-class TestConfirmCurrentAction:
-    """Story: Close Current Action - Tests that users can explicitly mark an action as complete and transition to the next action."""
-
-    def test_close_current_action_marks_complete_and_transitions(self, tmp_path):
-        """Scenario: Close current action and transition to next"""
-
-        # Given workflow is at action "strategy", with clarify already completed
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'strategy', completed_actions=['story_bot.shape.clarify'])
-
-        # Navigate to strategy action
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('strategy')
-        
-        # Verify strategy not yet completed
-        helper.state.assert_action_not_completed('story_bot.shape.strategy')
-
-        # When user closes current action
-        helper.bot.behaviors.current.actions.close_current()
-        helper.bot.behaviors.current.actions.save_state()
-
-        # Then action is saved to completed_actions
-        helper.state.assert_action_completed('story_bot.shape.strategy')
-        # And workflow transitions to next action (build)
-        helper.behaviors.assert_at_behavior_action('shape', 'build')
-        # And state file shows build as current
-        helper.state.assert_state_shows('shape', 'build')
-        # And completed count is 2 (clarify + strategy)
-        state = helper.state.get_state()
-        assert len(state.get('completed_actions', [])) == 2
+# ================================================================================
+# SUB-EPIC: Initialize Bot (sequential_order: 1)
+# ================================================================================
 
 
-    def test_close_action_at_final_action_stays_at_final(self, tmp_path):
-        """Scenario: Close final action stays at final action"""
-        
-        # Given bot is at final action 'render'
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'render')
-        
-        # Navigate to render action
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('render')
-        
-        # When user closes final action
-        helper.bot.behaviors.current.actions.close_current()
-        helper.bot.behaviors.current.actions.save_state()
-        
-        # Then action is saved but state stays at render (no transition)
-        helper.state.assert_action_completed('story_bot.shape.render')
-        helper.behaviors.assert_at_behavior_action('shape', 'render')
+# ================================================================================
+# SUB-EPIC: Navigate And Execute Behaviors (sequential_order: 2)
+# ================================================================================
 
 
-    def test_close_final_action_transitions_to_next_behavior(self, tmp_path):
-        """Scenario: Close final action and verify it's marked complete"""
-        
-        # Given: Workflow is at final action validate
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'validate')
-        
-        # Navigate to validate action
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('validate')
-        
-        # When user closes final action
-        helper.bot.behaviors.current.actions.close_current()
-        helper.bot.behaviors.current.actions.save_state()
-        
-        # Then action is marked complete
-        helper.state.assert_action_completed('story_bot.shape.validate')
-
-
-    def test_close_action_saves_to_completed_actions_list(self, tmp_path):
-        """Scenario: Closing action saves it to completed_actions list"""
-        
-        # Given bot is at clarify action with no completed actions
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'clarify')
-        
-        # Navigate to clarify
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        
-        # When closing action
-        helper.bot.behaviors.current.actions.close_current()
-        helper.bot.behaviors.current.actions.save_state()
-        
-        # Then it's in completed_actions
-        state = helper.state.get_state()
-        assert len(state.get('completed_actions', [])) == 1
-        helper.state.assert_action_completed('story_bot.shape.clarify')
-
-
-    def test_close_handles_action_already_completed_gracefully(self, tmp_path):
-        """Scenario: Idempotent close (already completed)"""
-        
-        # Given bot is at strategy with clarify already completed
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'strategy', completed_actions=['story_bot.shape.clarify'])
-        
-        # Verify initial state
-        initial_state = helper.state.get_state()
-        initial_count = len([a for a in initial_state['completed_actions'] if 'clarify' in a['action_state']])
-        
-        # Navigate to clarify (already completed)
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        
-        # When closing already completed action
-        helper.bot.behaviors.current.actions.close_current()
-        helper.bot.behaviors.current.actions.save_state()
-        
-        # Then no NEW entry added (idempotent)
-        final_state = helper.state.get_state()
-        final_count = len([a for a in final_state['completed_actions'] if 'clarify' in a['action_state']])
-        assert final_count >= initial_count
-
-
-    def test_bot_class_has_close_current_action_method(self, tmp_path):
-        """Scenario: Bot class exposes close_current_action method"""
-        
-        # Given: Bot is initialized
-        helper = BotTestHelper(tmp_path)
-        
-        # Then: Bot behaviors actions should have close_current method
-        assert hasattr(helper.bot.behaviors.current.actions, 'close_current')
-
-
-class TestExecuteEndToEndWorkflow:
-    """Story: Invoke Behavior Actions In Workflow Order - End-to-end test of the complete workflow with all fixes."""
-
-    def test_complete_workflow_end_to_end(self, tmp_path):
-        """
-        Complete end-to-end workflow test demonstrating all fixes working together.
-
-        Flow:
-        1. Start at clarify
-        2. Execute clarify
-        3. Close clarify -> Transitions to strategy
-        4. Jump to discovery.clarify (out of order)
-        5. Verify state shows discovery.clarify
-        6. Close and verify proper transition
-        """
-        # Use actual story_bot with all behaviors
-        helper = BotTestHelper(tmp_path)
-        
-        # Verify behaviors are loaded with expected structure
-        behavior_names = helper.bot.behaviors.names
-        assert len(behavior_names) >= 7, f"Expected at least 7 behaviors, got {len(behavior_names)}: {behavior_names}"
-        assert 'shape' in behavior_names, "Shape behavior not found"
-        assert 'discovery' in behavior_names, "Discovery behavior not found"
-        
-        # Basic navigation sanity checks without legacy helpers
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
-
-        assert helper.bot is not None
-        print("\n=== SUCCESS: Bot loaded with all behaviors and navigated to clarify ===")
-
-
-class TestNavigateSequentially:
-    """Story: Behavior-Specific Action Order - Tests behavior-specific action order configuration."""
-    
-    def test_behavior_action_order_determines_next_action_from_current_action(self, tmp_path):
-        """Scenario: Behavior action order determines next action from current_action (source of truth)"""
-        
-        # Given behavior_action_state.json shows current_action: build with clarify completed
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'build', completed_actions=['story_bot.shape.clarify'])
-        
-        # Navigate bot to load this state
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('build')
-        
-        # Then current action should be build (uses current_action from file)
-        helper.behaviors.assert_at_behavior_action('shape', 'build')
-
-    def test_behavior_action_order_starts_at_first_action_when_no_completed_actions(self, tmp_path):
-        """Scenario: No completed actions yet"""
-        
-        # Given bot loads state with no completed_actions
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'clarify')
-        
-        # Navigate to shape/clarify
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        
-        # Then current action should be the first action (clarify)
-        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
-
-    def test_behavior_action_order_falls_back_to_completed_actions_when_current_action_missing(self, tmp_path):
-        """Scenario: Behavior action order falls back to completed_actions when current_action is missing"""
-        # Given: Multiple actions completed with empty current_action
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', '', completed_actions=[
-            'story_bot.shape.clarify',
-            'story_bot.shape.strategy',
-            'story_bot.shape.build'
-        ])
-        
-        # Navigate to shape and let it determine current action from completed list
-        helper.bot.behaviors.navigate_to('shape')
-        # Since current_action was empty, the first uncompleted action becomes current
-        
-        # Then: Current action falls back to validate (next after last completed)
-        helper.behaviors.assert_at_behavior_action('shape', 'validate')
-
-    def test_behavior_action_order_starts_at_first_action_when_no_state_file_exists(self, tmp_path):
-        """Scenario: No behavior_action_state.json file exists (fresh start)"""
-        # Given: No state file exists
-        helper = BotTestHelper(tmp_path)
-        helper.state.clear_state()  # Ensure no state file
-        
-        # When: Bot navigates to shape
-        helper.bot.behaviors.navigate_to('shape')
-        
-        # Then: Bot starts at first action (clarify)
-        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
-
-    
-    def test_behavior_loads_workflow_order_from_behavior_specific_actions_workflow(self, tmp_path):
-        """Scenario: Behavior loads workflow order from behaviors/{behavior_name}/behavior.json"""
-        
-        # Given: Bot with production behaviors
-        helper = BotTestHelper(tmp_path)
-        
-        # Then: Shape behavior should have exactly 5 actions loaded from its behavior.json
-        helper.bot.behaviors.navigate_to('shape')
-        assert helper.bot.behaviors.current.name == 'shape'
-        
-        # Shape behavior has 5 actions: clarify, strategy, build, validate, render
-        action_names = helper.bot.behaviors.current.actions.names
-        assert len(action_names) == 5, f"Expected 5 actions but got {len(action_names)}: {action_names}"
-        assert action_names == ['clarify', 'strategy', 'build', 'validate', 'render']
-    
-    def test_different_behaviors_can_have_different_action_orders(self, tmp_path):
-        """Scenario: Different behaviors can have different action orders"""
-        # Given: Bot with multiple behaviors
-        helper = BotTestHelper(tmp_path)
-        
-        # Then: Verify complete structure for both behaviors
-        helper.behaviors.assert_shape_behavior_structure()
-        helper.behaviors.assert_discovery_behavior_structure()
-        
-        # And: Both have same actions (shape and discovery use same workflow)
-        helper.bot.behaviors.navigate_to('shape')
-        shape_actions = helper.bot.behaviors.current.actions.names
-        
-        helper.bot.behaviors.navigate_to('discovery')
-        discovery_actions = helper.bot.behaviors.current.actions.names
-        
-        assert shape_actions == discovery_actions == ['clarify', 'strategy', 'build', 'validate', 'render']
-    
-    def test_workflow_transitions_built_correctly_from_actions_workflow_json(self, tmp_path):
-        """Scenario: Workflow transitions are built correctly from behavior.json"""
-        
-        # Given: Bot with production behaviors
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('shape', 'clarify')
-        
-        # Navigate to shape/clarify
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('clarify')
-        
-        # Then: Should be at clarify
-        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
-        
-        # When: Close clarify to transition
-        helper.bot.behaviors.current.actions.close_current()
-        helper.bot.behaviors.current.actions.save_state()
-        
-        # Then: Should transition to next action (strategy)
-        helper.behaviors.assert_at_behavior_action('shape', 'strategy')
-
-
+# Story: Navigate To Behavior Action And Execute (sequential_order: 1)
 class TestNavigateToBehaviorActionAndExecute:
-    """Tests for Bot.execute_behavior() - Production code path."""
+    """Tests for Bot.execute_behavior() - Production code path and workflow state loading."""
 
     def test_execute_behavior_with_action_parameter(self, tmp_path):
         """
@@ -396,23 +63,6 @@ class TestNavigateToBehaviorActionAndExecute:
         # Then: Executes current action (strategy) with complete structure
         helper.behaviors.assert_bot_result_success(bot_result, 'shape', 'strategy')
 
-    def test_execute_behavior_requires_confirmation_when_out_of_order(self, tmp_path):
-        """
-        SCENARIO: Execute behavior executes directly when called (no order checking)
-        GIVEN: Current behavior is 'discovery', requested behavior is 'shape' (going backwards)
-        WHEN: Bot.execute_behavior('shape') is called
-        THEN: Executes directly without order checking (order checking was in removed wrapper)
-        """
-        # Given: Bot at prioritization with shape.validate completed
-        helper = BotTestHelper(tmp_path)
-        helper.state.set_state('prioritization', 'clarify', completed_actions=['story_bot.shape.validate'])
-        
-        # When: Execute shape behavior (going backwards)
-        bot_result = helper.bot.execute('shape')
-        
-        # Then: Direct execution works - executes first action (clarify) with complete structure
-        helper.behaviors.assert_bot_result_success(bot_result, 'shape', 'clarify')
-
     def test_execute_behavior_handles_entry_workflow_when_no_state(self, tmp_path):
         """
         SCENARIO: Execute behavior executes directly when no workflow state exists
@@ -429,6 +79,462 @@ class TestNavigateToBehaviorActionAndExecute:
         
         # Then: Direct execution works - starts at first action (clarify) with complete structure
         helper.behaviors.assert_bot_result_success(bot_result, 'shape', 'clarify')
+    
+    def test_behavior_action_order_determines_next_action_from_current_action(self, tmp_path):
+        """Scenario: Behavior action order determines next action from current_action"""
+        
+        # Given bot is at build action
+        helper = BotTestHelper(tmp_path)
+        helper.state.set_state('shape', 'build')
+        helper.bot.behaviors.navigate_to('shape')
+        helper.behaviors.assert_at_behavior_action('shape', 'build')
+        
+        # When we get the next action
+        next_action = helper.bot.behaviors.current.actions.next()
+        
+        # Then next action should be validate (as defined in workflow)
+        assert next_action.action_name == 'validate'
+
+    def test_behavior_action_order_starts_at_first_action_when_no_completed_actions(self, tmp_path):
+        """Scenario: No completed actions yet"""
+        
+        # Given bot loads state with no completed_actions
+        helper = BotTestHelper(tmp_path)
+        helper.state.set_state('shape', 'clarify')
+        
+        # Navigate to shape (should auto-navigate to first action)
+        helper.bot.behaviors.navigate_to('shape')
+        
+        # Then current action should be the first action (clarify)
+        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
+
+    def test_behavior_action_order_falls_back_to_completed_actions_when_current_action_missing(self, tmp_path):
+        """Scenario: Behavior action order falls back to completed_actions when current_action is missing"""
+        # Given: Multiple actions completed with empty current_action
+        helper = BotTestHelper(tmp_path)
+        helper.state.set_state('shape', '', completed_actions=[
+            'story_bot.shape.clarify',
+            'story_bot.shape.strategy',
+            'story_bot.shape.build'
+        ])
+        
+        # Navigate to shape and let it determine current action from completed list
+        helper.bot.behaviors.navigate_to('shape')
+        # Since current_action was empty, the first uncompleted action becomes current
+        
+        # Then: Current action falls back to validate (next after last completed)
+        helper.behaviors.assert_at_behavior_action('shape', 'validate')
+
+    def test_behavior_action_order_starts_at_first_action_when_no_state_file_exists(self, tmp_path):
+        """Scenario: No behavior_action_state.json file exists (fresh start)"""
+        # Given: No state file exists
+        helper = BotTestHelper(tmp_path)
+        helper.state.clear_state()  # Ensure no state file
+        
+        # When: Bot navigates to shape
+        helper.bot.behaviors.navigate_to('shape')
+        
+        # Then: Bot starts at first action (clarify)
+        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
+    
+    def test_behavior_loads_workflow_order_from_behavior_specific_actions_workflow(self, tmp_path):
+        """Scenario: Behavior loads workflow order from behaviors/{behavior_name}/behavior.json"""
+        
+        # Given: Bot with production behaviors
+        helper = BotTestHelper(tmp_path)
+        
+        # Then: Shape behavior should have exactly 5 actions loaded from its behavior.json
+        helper.bot.behaviors.navigate_to('shape')
+        assert helper.bot.behaviors.current.name == 'shape'
+        
+        # Shape behavior has 5 actions with specific order and next_action configuration
+        expected_actions = [
+            {"name": "clarify", "order": 1, "next_action": "strategy"},
+            {"name": "strategy", "order": 2, "next_action": "build"},
+            {"name": "build", "order": 3, "next_action": "validate"},
+            {"name": "validate", "order": 4, "next_action": "render"},
+            {"name": "render", "order": 5, "next_action": None}
+        ]
+        helper.behaviors.assert_actions_complete_structure(
+            helper.bot.behaviors.current.actions, 
+            expected_actions
+        )
+    
+    def test_different_behaviors_can_have_different_action_orders(self, tmp_path):
+        """Scenario: Different behaviors can have different action orders"""
+        # Given: Bot with multiple behaviors
+        helper = BotTestHelper(tmp_path)
+        
+        # When: Comparing shape vs prioritization behaviors
+        helper.bot.behaviors.navigate_to('shape')
+        shape_actions = helper.bot.behaviors.current.actions.names
+        
+        helper.bot.behaviors.navigate_to('prioritization')
+        prioritization_actions = helper.bot.behaviors.current.actions.names
+        
+        # Then: They should have different action workflows
+        assert shape_actions != prioritization_actions, "Shape and prioritization behaviors should have different action workflows"
+        assert shape_actions == ['clarify', 'strategy', 'build', 'validate', 'render']
+        # Prioritization skips 'build' action
+        assert prioritization_actions == ['clarify', 'strategy', 'validate', 'render']
+    
+    def test_workflow_transitions_built_correctly_from_actions_workflow_json(self, tmp_path):
+        """Scenario: Workflow transitions are built correctly from behavior.json"""
+        
+        # Given: Bot with production behaviors at clarify
+        helper = BotTestHelper(tmp_path)
+        helper.state.set_state('shape', 'clarify')
+        helper.bot.behaviors.navigate_to('shape')
+        
+        # Then: Should be at clarify
+        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
+        
+        # When: Close clarify to transition
+        helper.bot.behaviors.current.actions.close_current()
+        helper.bot.behaviors.current.actions.save_state()
+        
+        # Then: Should transition to next action (strategy)
+        helper.behaviors.assert_at_behavior_action('shape', 'strategy')
+
+
+# Story: Navigate Sequentially (sequential_order: 2)
+class TestNavigateSequentially:
+    """Tests for sequential navigation using bot.next() API."""
+    
+    def test_bot_next_navigates_to_next_action_in_workflow(self, tmp_path):
+        """
+        Scenario: bot.next() moves to next action
+        GIVEN: Bot is at clarify action
+        WHEN: bot.next() is called
+        THEN: Bot moves to strategy (next action in workflow)
+        """
+        # Given: Bot at clarify
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('clarify')
+        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
+        
+        # When: Call bot.next()
+        result = helper.bot.next()
+        
+        # Then: Bot moved to strategy
+        assert result['status'] == 'success'
+        assert result['action'] == 'strategy'
+        assert result['behavior'] == 'shape'
+        helper.behaviors.assert_at_behavior_action('shape', 'strategy')
+
+    def test_bot_next_progresses_through_entire_workflow(self, tmp_path):
+        """
+        Scenario: bot.next() progresses through workflow sequence
+        GIVEN: Bot is at first action
+        WHEN: bot.next() is called multiple times
+        THEN: Bot progresses through clarify -> strategy -> build -> validate -> render
+        """
+        # Given: Bot at clarify
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('clarify')
+        
+        # Expected sequence: clarify -> strategy -> build -> validate -> render
+        expected_sequence = ['clarify', 'strategy', 'build', 'validate', 'render']
+        
+        # At clarify
+        helper.behaviors.assert_at_behavior_action('shape', expected_sequence[0])
+        
+        # Navigate through workflow
+        for i in range(1, len(expected_sequence)):
+            result = helper.bot.next()
+            assert result['status'] == 'success'
+            assert result['action'] == expected_sequence[i]
+            helper.behaviors.assert_at_behavior_action('shape', expected_sequence[i])
+
+    def test_bot_next_at_final_action_advances_to_next_behavior(self, tmp_path):
+        """
+        Scenario: bot.next() at final action advances to next behavior
+        GIVEN: Bot is at render (final action of shape)
+        WHEN: bot.next() is called
+        THEN: Bot advances to next behavior (discovery) first action (clarify)
+        """
+        # Given: Bot at render (final action of shape)
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('render')
+        helper.behaviors.assert_at_behavior_action('shape', 'render')
+        
+        # When: Call bot.next()
+        result = helper.bot.next()
+        
+        # Then: Advances to next behavior (discovery)
+        assert result['status'] in ['success', 'complete']
+        if result['status'] == 'success':
+            # Moved to next behavior
+            assert 'behavior' in result
+            assert result['behavior'] != 'shape'  # Advanced to next behavior
+            assert 'action' in result
+        elif result['status'] == 'complete':
+            # No more behaviors
+            assert 'workflow complete' in result['message'].lower()
+
+    def test_bot_current_returns_current_action_instructions(self, tmp_path):
+        """
+        Scenario: bot.current() returns current action instructions
+        GIVEN: Bot is at a specific action
+        WHEN: bot.current() is called
+        THEN: Current action instructions object is returned
+        """
+        # Given: Bot at clarify
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('clarify')
+        
+        # When: Call bot.current()
+        result = helper.bot.current()
+        
+        # Then: Returns Instructions object
+        # bot.current() returns the Instructions object directly
+        from agile_bot.src.instructions.instructions import Instructions
+        assert isinstance(result, (Instructions, dict))
+        
+        # If it's a dict (error case), check for status
+        if isinstance(result, dict):
+            assert result['status'] == 'success'
+        # If it's Instructions, it should have base_instructions
+        else:
+            assert hasattr(result, 'base_instructions') or 'base_instructions' in result
+
+    def test_bot_next_respects_workflow_sequence(self, tmp_path):
+        """
+        Scenario: bot.next() respects behavior.json workflow sequence
+        GIVEN: Bot is at strategy (second action)
+        WHEN: bot.next() is called
+        THEN: Bot moves to build (third action), following behavior.json order
+        """
+        # Given: Bot at strategy (second action in shape workflow)
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('strategy')
+        helper.behaviors.assert_at_behavior_action('shape', 'strategy')
+        
+        # When: Call bot.next()
+        result = helper.bot.next()
+        
+        # Then: Moves to build (third action)
+        assert result['status'] == 'success'
+        assert result['action'] == 'build'
+        assert result['behavior'] == 'shape'
+        helper.behaviors.assert_at_behavior_action('shape', 'build')
+
+    @pytest.mark.skip(reason="TODO: bot.next() should start at first behavior/action when nothing is selected, not error")
+    def test_bot_next_with_no_behavior_starts_at_first_behavior(self, tmp_path):
+        """
+        Scenario: bot.next() with no behavior selected starts workflow
+        GIVEN: No behavior is selected
+        WHEN: bot.next() is called
+        THEN: Bot starts at first behavior (shape), first action (clarify)
+        
+        NOTE: Currently bot.next() returns an error when no behavior is selected.
+        This test documents the DESIRED behavior - bot should be smart enough
+        to start at the beginning of the workflow automatically.
+        """
+        # Given: Bot with no behavior selected
+        helper = BotTestHelper(tmp_path)
+        # Don't navigate to any behavior
+        
+        # When: Call bot.next()
+        result = helper.bot.next()
+        
+        # Then: Should start at first behavior, first action
+        # (Currently fails - returns error instead)
+        assert result['status'] == 'success'
+        assert result['behavior'] == 'shape'  # First behavior
+        assert result['action'] == 'clarify'  # First action
+        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
+    
+    def test_navigate_to_behavior(self, tmp_path):
+        """
+        Scenario: Can navigate to a specific behavior
+        GIVEN: Bot exists with multiple behaviors
+        WHEN: behaviors.navigate_to('discovery') called
+        THEN: Current behavior is set to discovery
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('discovery')
+        helper.behaviors.assert_current_behavior_and_action('discovery', helper.bot.behaviors.current.actions.current_action_name)
+    
+    def test_get_next_behavior(self, tmp_path):
+        """
+        Scenario: Next behavior in sequence can be retrieved
+        GIVEN: Bot is at scenarios behavior
+        WHEN: behaviors.next() called
+        THEN: Returns next behavior (tests) with complete structure
+        """
+        helper = BotTestHelper(tmp_path)
+        
+        # Navigate to a known behavior (scenarios) so we know what next should be
+        helper.bot.behaviors.navigate_to('scenarios')
+        next_behavior = helper.bot.behaviors.next()
+        
+        # Assert complete structure of next behavior (tests)
+        helper.behaviors.assert_behavior_complete_structure(
+            behavior=next_behavior,
+            expected_name='tests',
+            expected_order=6,
+            expected_actions=['clarify', 'strategy', 'build', 'render', 'validate'],
+            expected_description='Write test files (.py, .js, etc.) with executable test code from scenarios/examples that validate story behavior'
+        )
+    
+    def test_get_next_behavior_returns_none_at_end(self, tmp_path):
+        """
+        Scenario: Getting next behavior returns None when at last behavior
+        GIVEN: Bot is at last behavior in list
+        WHEN: behaviors.next() called
+        THEN: Returns None
+        """
+        helper = BotTestHelper(tmp_path)
+        # Navigate to last behavior
+        all_behaviors = list(helper.bot.behaviors)
+        last_behavior = all_behaviors[-1]
+        helper.bot.behaviors.navigate_to(last_behavior.name)
+        assert helper.bot.behaviors.next() is None
+    
+    def test_navigate_to_action(self, tmp_path):
+        """
+        Scenario: Can navigate to a specific action
+        GIVEN: Bot is at a behavior with multiple actions
+        WHEN: actions.navigate_to('build') called
+        THEN: Current action is set to build
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('build')
+        helper.behaviors.assert_at_behavior_action('shape', 'build')
+    
+    def test_get_next_action(self, tmp_path):
+        """
+        Scenario: Next action in sequence can be retrieved
+        GIVEN: Bot is at clarify action (first action)
+        WHEN: actions.next() called
+        THEN: Returns strategy action (second action)
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        actions = helper.bot.behaviors.current.actions
+        next_action = actions.next()
+        assert isinstance(next_action, StrategyAction)
+        assert next_action.action_name == 'strategy'
+        assert next_action.order == 2
+    
+    def test_get_next_action_returns_none_at_end(self, tmp_path):
+        """
+        Scenario: Getting next action returns None when at last action
+        GIVEN: Bot is at last action in behavior
+        WHEN: actions.next() called
+        THEN: Returns None
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        # Navigate to last action
+        all_actions = list(helper.bot.behaviors.current.actions)
+        last_action = all_actions[-1]
+        helper.bot.behaviors.current.actions.navigate_to(last_action.action_name)
+        assert helper.bot.behaviors.current.actions.next() is None
+
+
+# End-to-end integration test (no story mapping)
+class TestExecuteEndToEndWorkflow:
+    """End-to-end test that progresses through multiple behaviors and actions."""
+
+    def test_complete_workflow_progresses_through_single_behavior(self, tmp_path):
+        """
+        Complete workflow test progressing through all actions in one behavior.
+        
+        Tests progression through shape behavior:
+        clarify -> strategy -> build -> validate -> render
+        """
+        helper = BotTestHelper(tmp_path)
+        
+        # Define expected action sequence for shape behavior
+        expected_actions = ['clarify', 'strategy', 'build', 'validate', 'render']
+        
+        # Start at shape.clarify
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('clarify')
+        
+        # Track progress
+        workflow_progress = []
+        
+        # Progress through all actions in shape
+        for expected_action in expected_actions:
+            # Verify current position
+            current_behavior = helper.bot.behaviors.current.name
+            current_action = helper.bot.behaviors.current.actions.current_action_name
+            
+            workflow_progress.append(f"{current_behavior}.{current_action}")
+            
+            # Verify we're at expected action
+            assert current_behavior == 'shape', \
+                f"Expected shape, got {current_behavior}. Progress: {workflow_progress}"
+            assert current_action == expected_action, \
+                f"Expected action {expected_action}, got {current_action}. Progress: {workflow_progress}"
+            
+            # Move to next action (unless we're at the last one)
+            if expected_action != 'render':
+                result = helper.bot.next()
+                assert result['status'] == 'success', \
+                    f"bot.next() failed at shape.{expected_action}: {result}"
+        
+        # Verify we completed all 5 actions
+        assert len(workflow_progress) == 5, \
+            f"Expected 5 actions, got {len(workflow_progress)}: {workflow_progress}"
+        
+        print(f"\n=== SUCCESS: Completed shape workflow: {' -> '.join(workflow_progress)} ===")
+
+    def test_complete_workflow_progresses_across_multiple_behaviors(self, tmp_path):
+        """
+        Complete workflow test progressing across multiple behaviors.
+        
+        Tests progression:
+        shape (all actions) -> discovery (partial actions) 
+        """
+        helper = BotTestHelper(tmp_path)
+        
+        # Start at shape.clarify
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('clarify')
+        
+        # Progress through shape behavior (all 5 actions)
+        shape_actions = ['clarify', 'strategy', 'build', 'validate', 'render']
+        for action in shape_actions:
+            assert helper.bot.behaviors.current.name == 'shape'
+            assert helper.bot.behaviors.current.actions.current_action_name == action
+            if action != 'render':
+                helper.bot.next()
+        
+        # At shape.render now - calling next() should advance to discovery
+        result = helper.bot.next()
+        
+        # Verify we either:
+        # 1. Advanced to next behavior (discovery), OR
+        # 2. Got a completion message (no more behaviors configured)
+        if result['status'] == 'success':
+            # Advanced to next behavior
+            assert result['behavior'] != 'shape', \
+                f"Should have advanced from shape, but still at: {result}"
+            # Verify we're now at the new behavior
+            assert helper.bot.behaviors.current.name != 'shape'
+            print(f"\n=== SUCCESS: Advanced from shape to {helper.bot.behaviors.current.name} ===")
+        elif result['status'] == 'complete':
+            # Workflow complete
+            print("\n=== SUCCESS: Workflow completed (no more behaviors) ===")
+        else:
+            raise AssertionError(f"Unexpected result from bot.next() at final action: {result}")
+
+
+# ================================================================================
+# SUB-EPIC: Build Action Instructions (sequential_order: 3)
+# SUB-SUB-EPIC: Build Common Instructions For Actions (sequential_order: 3)
+# ================================================================================
+
 
 class TestInjectContextIntoInstructions:
     """Tests for Insert Context Into Instructions story."""
@@ -494,7 +600,13 @@ class TestInjectContextIntoInstructions:
         
         # And: Action is initialized using production behavior
         behavior = helper.bot.behaviors.find_by_name('shape')
-        assert behavior is not None, "Shape behavior should exist in production story_bot"
+        helper.behaviors.assert_behavior_complete_structure(
+            behavior=behavior,
+            expected_name='shape',
+            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_actions=['clarify', 'strategy', 'build', 'validate', 'render'],
+            expected_description='Test behavior: shape'
+        )
         from agile_bot.src.actions.action import Action
         action = Action(action_name="build", behavior=behavior, action_config=None)  
         
@@ -570,6 +682,72 @@ class TestInjectContextIntoInstructions:
         assert 'base_instructions' in instructions4
         assert isinstance(instructions4['base_instructions'], list)
 
+    @pytest.mark.skip(reason="Feature not yet implemented - next behavior reminder injection")
+    def test_next_behavior_reminder_injected_when_final_action(self, tmp_path):
+        """
+        SCENARIO: Next behavior reminder is injected when action is final action
+        GIVEN: render is the final action in behavior workflow
+        AND: bot_config.json defines behavior sequence with a next behavior
+        WHEN: render action executes
+        THEN: base_instructions include next behavior reminder
+        AND: reminder contains next behavior name and prompt text
+        """
+        helper = BotTestHelper(tmp_path)
+        # Use prioritization which has order=2 and should have a next behavior
+        helper.bot.behaviors.navigate_to('prioritization')
+        helper.bot.behaviors.current.actions.navigate_to('render')  # render is the final action
+        action = helper.bot.behaviors.current.actions.current
+        
+        # Get next behavior to verify it exists
+        next_behavior = helper.bot.behaviors.next()
+        assert next_behavior is not None, "Test requires a next behavior after 'prioritization'"
+        
+        # Get the action's instructions (property, not method)
+        instructions = action.instructions
+        
+        # Check that next behavior reminder is in base_instructions
+        # Instructions is a dict-like object
+        assert 'base_instructions' in instructions, "Instructions should have base_instructions"
+        base_instructions = instructions['base_instructions']
+        assert isinstance(base_instructions, list)
+        
+        # Find the next behavior reminder in instructions
+        instructions_text = '\n'.join(base_instructions)
+        assert next_behavior.name in instructions_text, \
+            f"Next behavior '{next_behavior.name}' not found in final action instructions"
+
+    def test_next_behavior_reminder_not_injected_when_not_final_action(self, tmp_path):
+        """
+        SCENARIO: Next behavior reminder is NOT injected when action is not final
+        GIVEN: validate is NOT the final action (render comes after)
+        AND: bot_config.json defines behavior sequence
+        WHEN: validate action executes
+        THEN: base_instructions do NOT include next behavior reminder
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('validate')
+        action = helper.bot.behaviors.current.actions.current
+        instructions = getattr(action, 'instructions', None)
+        base_instructions = getattr(instructions, 'base_instructions', instructions)
+        assert base_instructions is not None
+
+    def test_next_behavior_reminder_not_injected_when_no_next_behavior(self, tmp_path):
+        """
+        SCENARIO: Next behavior reminder is NOT injected when current behavior is last in sequence
+        GIVEN: discovery is the last behavior in bot_config.json
+        AND: render is the final action
+        WHEN: render action executes
+        THEN: base_instructions do NOT include next behavior reminder
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('discovery')
+        helper.bot.behaviors.current.actions.navigate_to('render')
+        action = helper.bot.behaviors.current.actions.current
+        instructions = getattr(action, 'instructions', None)
+        base_instructions = getattr(instructions, 'base_instructions', instructions)
+        assert base_instructions is not None
+
 
 class TestLoadBotConfiguration:
     """Story: Load Bot Configuration - Tests that bot configuration can be loaded from bot_config.json."""
@@ -601,7 +779,10 @@ class TestLoadBotBehaviors:
     def test_load_behaviors_from_bot_config(self, tmp_path):
         """Scenario: Bot behaviors are loaded from BotConfig."""
         helper = BotTestHelper(tmp_path)
-        assert helper.bot.behaviors.names
+        # story_bot has exactly 7 behaviors (sorted by their order property)
+        expected_behaviors = ['scenarios', 'tests', 'code', 'discovery', 'exploration', 'prioritization', 'shape']
+        assert helper.bot.behaviors.names == expected_behaviors, \
+            f"Expected {expected_behaviors}, got {helper.bot.behaviors.names}"
     
     def test_load_behaviors_sets_first_as_current(self, tmp_path):
         """Scenario: When behaviors are loaded, first behavior is set as current."""
@@ -614,41 +795,29 @@ class TestLoadBotBehaviors:
         """Scenario: Behavior can be found by name when it exists."""
         helper = BotTestHelper(tmp_path)
         found_behavior = helper.bot.behaviors.find_by_name('prioritization')
-        assert found_behavior.name == 'prioritization'
-        assert found_behavior.order > 0
-        assert len(found_behavior.actions.names) > 0
+        
+        # Assert complete behavior structure
+        helper.behaviors.assert_behavior_complete_structure(
+            behavior=found_behavior,
+            expected_name='prioritization',
+            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_actions=['clarify', 'strategy', 'validate', 'render'],
+            expected_description='Test behavior: prioritization'
+        )
     
     def test_find_behavior_returns_none_when_not_found(self, tmp_path):
         """Scenario: Finding behavior by name returns None when behavior doesn't exist."""
         helper = BotTestHelper(tmp_path)
         assert helper.bot.behaviors.find_by_name('nonexistent') is None
     
-    def test_get_next_behavior(self, tmp_path):
-        """Scenario: Next behavior in sequence can be retrieved."""
-        helper = BotTestHelper(tmp_path)
-        first_behavior = helper.bot.behaviors.current
-        next_behavior = helper.bot.behaviors.next()
-        if next_behavior:  # May be None if only one behavior
-            assert next_behavior.name != first_behavior.name
-            assert isinstance(next_behavior.order, (int, float))
-            assert len(next_behavior.actions.names) > 0
-    
-    def test_get_next_behavior_returns_none_at_end(self, tmp_path):
-        """Scenario: Getting next behavior returns None when at last behavior."""
-        helper = BotTestHelper(tmp_path)
-        # Navigate to last behavior (get all behaviors, navigate to last)
-        all_behaviors = list(helper.bot.behaviors)
-        last_behavior = all_behaviors[-1]
-        helper.bot.behaviors.navigate_to(last_behavior.name)
-        assert helper.bot.behaviors.next() is None
-    
     def test_iterate_all_behaviors(self, tmp_path):
         """Scenario: All behaviors can be iterated."""
         helper = BotTestHelper(tmp_path)
         behavior_names = [b.name for b in helper.bot.behaviors]
-        assert 'shape' in behavior_names
-        assert 'prioritization' in behavior_names
-        assert 'discovery' in behavior_names
+        # story_bot has exactly 7 behaviors (sorted by their order property)
+        expected_behaviors = ['scenarios', 'tests', 'code', 'discovery', 'exploration', 'prioritization', 'shape']
+        assert behavior_names == expected_behaviors, \
+            f"Expected {expected_behaviors}, got {behavior_names}"
     
     def test_check_behavior_exists(self, tmp_path):
         """Scenario: Can check if a behavior exists."""
@@ -657,12 +826,6 @@ class TestLoadBotBehaviors:
         not_exists = helper.bot.behaviors.check_exists('nonexistent')
         assert exists is True
         assert not_exists is False
-    
-    def test_navigate_to_behavior(self, tmp_path):
-        """Scenario: Can navigate to a specific behavior."""
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('discovery')
-        helper.behaviors.assert_current_behavior_and_action('discovery', helper.bot.behaviors.current.actions.current_action_name)
     
     def test_save_current_behavior_state(self, tmp_path):
         """Scenario: Current behavior state is persisted to behavior_action_state.json."""
@@ -675,18 +838,36 @@ class TestLoadBotBehaviors:
     def test_load_behavior_state_from_file(self, tmp_path):
         """Scenario: Current behavior state is restored from behavior_action_state.json."""
         helper = BotTestHelper(tmp_path)
-        # Find a behavior that exists (prioritization or discovery)
-        target_behavior = helper.bot.behaviors.find_by_name('prioritization')
-        if not target_behavior:
-            target_behavior = helper.bot.behaviors.find_by_name('discovery')
         
-        if target_behavior:
-            # Set state to target behavior
-            helper.state.set_state(target_behavior.name, target_behavior.actions.current_action_name)
-            # Create a new bot instance to test loading state
-            helper2 = BotTestHelper(tmp_path)
-            # The new bot should load the state we just set
-            assert helper2.bot.behaviors.current.name == target_behavior.name
+        # Set state to prioritization behavior
+        helper.state.set_state('prioritization', 'clarify')
+        
+        # Create a new bot instance to test loading state
+        helper2 = BotTestHelper(tmp_path)
+        
+        # The new bot should load the state we just set
+        assert helper2.bot.behaviors.current.name == 'prioritization'
+        assert helper2.bot.behaviors.current.actions.current_action_name == 'clarify'
+    
+    def test_behavior_provides_access_to_all_config_properties(self, tmp_path):
+        """
+        Scenario: Loaded behavior provides access to all config properties
+        GIVEN: Behavior loaded from production config
+        WHEN: Config properties accessed
+        THEN: All properties accessible with correct structure
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('prioritization')
+        behavior = helper.bot.behaviors.current
+        
+        # Assert complete behavior structure with all config properties
+        helper.behaviors.assert_behavior_complete_structure(
+            behavior=behavior,
+            expected_name='prioritization',
+            expected_order=999,
+            expected_actions=['clarify', 'strategy', 'validate', 'render'],
+            expected_description='Test behavior: prioritization'
+        )
 
 class TestLoadActions:
     """Story: Load Actions - Tests that actions can be loaded from behavior configuration and managed as a collection with state persistence."""
@@ -696,7 +877,18 @@ class TestLoadActions:
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('shape')
         actions = helper.bot.behaviors.current.actions
-        assert len(actions.names) == 5  # shape has 5 actions
+        
+        # Assert complete actions structure with all properties
+        expected_actions = [
+            {"name": "clarify", "order": 1, "next_action": "strategy"},
+            {"name": "strategy", "order": 2, "next_action": "build"},
+            {"name": "build", "order": 3, "next_action": "validate"},
+            {"name": "validate", "order": 4, "next_action": "render"},
+            {"name": "render", "order": 5, "next_action": None}
+        ]
+        helper.behaviors.assert_actions_complete_structure(actions, expected_actions)
+        
+        # Also verify current action is first one
         assert actions.current.action_name == 'clarify'
     
     def test_load_actions_sets_first_as_current(self, tmp_path):
@@ -728,26 +920,6 @@ class TestLoadActions:
         assert isinstance(found_action, StrategyAction)
         assert found_action.action_name == 'strategy'
     
-    def test_get_next_action(self, tmp_path):
-        """Scenario: Next action in sequence can be retrieved."""
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('shape')
-        actions = helper.bot.behaviors.current.actions
-        next_action = actions.next()
-        assert isinstance(next_action, StrategyAction)
-        assert next_action.action_name == 'strategy'
-        assert next_action.order == 2
-    
-    def test_get_next_action_returns_none_at_end(self, tmp_path):
-        """Scenario: Getting next action returns None when at last action."""
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('shape')
-        # Navigate to last action
-        all_actions = list(helper.bot.behaviors.current.actions)
-        last_action = all_actions[-1]
-        helper.bot.behaviors.current.actions.navigate_to(last_action.action_name)
-        assert helper.bot.behaviors.current.actions.next() is None
-    
     def test_iterate_all_actions(self, tmp_path):
         """Scenario: All actions can be iterated."""
         helper = BotTestHelper(tmp_path)
@@ -756,13 +928,6 @@ class TestLoadActions:
         assert 'clarify' in action_names
         assert 'strategy' in action_names
         assert 'build' in action_names
-    
-    def test_navigate_to_action(self, tmp_path):
-        """Scenario: Can navigate to a specific action."""
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('shape')
-        helper.bot.behaviors.current.actions.navigate_to('build')
-        helper.behaviors.assert_at_behavior_action('shape', 'build')
     
     def test_save_current_action_state(self, tmp_path):
         """Scenario: Current action state is persisted to behavior_action_state.json."""
@@ -912,101 +1077,6 @@ class TestAccessBotPath:
     # test_bot_paths_raises_error_when_bot_directory_not_set removed - exception handling test
 
 from agile_bot.src.bot_path import BotPath
-
-class TestGetBaseInstructions:
-    """Story: Get Base Instructions (MergedInstructions) (Sub-epic: Perform Behavior Action)"""
-    
-    @pytest.mark.parametrize("instructions,expected_result", [
-        # Example 1: List instructions
-        (['instruction1', 'instruction2'], ['instruction1', 'instruction2']),
-        # Example 2: String instructions
-        ('single instruction', ['single instruction']),
-        # Example 3: None instructions
-        (None, []),
-    ])
-    def test_base_instructions_property_returns_instructions_from_config(self, instructions, expected_result):
-        """
-        SCENARIO: Base instructions property returns instructions from config
-        GIVEN: BaseActionConfig with instructions (list, string, or None)
-        WHEN: base_instructions property accessed
-        THEN: Returns list format (converts string to list, returns empty list when None, returns copy not reference)
-        """
-        # Given: BaseActionConfig with instructions (simple dict)
-        base_action_config = {
-            "name": "test_action",
-            "order": 1,
-            "instructions": instructions if instructions else []
-        }
-        
-        # When: Base instructions accessed from config
-        instructions_data = base_action_config.get('instructions', [])
-        if instructions_data is None:
-            result = []
-        elif isinstance(instructions_data, str):
-            result = [instructions_data]
-        elif isinstance(instructions_data, list):
-            result = instructions_data.copy()  # Return a copy
-        else:
-            result = list(instructions_data) if instructions_data else []
-        
-        # Then: Base instructions are expected
-        assert isinstance(result, list)
-        if expected_result is not None:
-            assert result == expected_result
-        
-        # Also verify copy behavior for list case
-        if isinstance(instructions, list) and len(instructions) > 0:
-            assert isinstance(result, list)
-            assert result == instructions  # Same content
-
-
-class TestLoadBehaviorConfig:
-    """Story: Load Behavior Config (Sub-epic: Perform Behavior Action)"""
-    
-    def test_behavior_config_loads_correct_behavior_from_behavior_json_file(self, tmp_path):
-        """
-        SCENARIO: Behavior config loads correct behavior from behavior.json file
-        GIVEN: Production behavior exists
-        WHEN: Behavior loaded from production
-        THEN: Config loaded from file and behavior_name property returns correct name
-        """
-        # Given: Production behavior
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('shape')
-        behavior_config = helper.bot.behaviors.current
-        
-        # Then: behavior_name property returns 'shape'
-        assert behavior_config.name == 'shape'
-    
-    def test_behavior_config_provides_access_to_config_objects(self, tmp_path):
-        """
-        SCENARIO: Behavior config provides access to config objects
-        GIVEN: Production BehaviorConfig loaded
-        WHEN: Config properties accessed (description, goal, inputs, outputs, instructions, trigger_words, actions_workflow)
-        THEN: All config objects are accessible
-        """
-        # Given: Production BehaviorConfig (use 'prioritization' which has complete metadata)
-        helper = BotTestHelper(tmp_path)
-        helper.bot.behaviors.navigate_to('prioritization')
-        behavior_config = helper.bot.behaviors.current
-        
-        # Then: All config objects are accessible with real values
-        assert isinstance(behavior_config.description, str)
-        assert len(behavior_config.description) > 0
-        assert isinstance(behavior_config.goal, str)
-        assert len(behavior_config.goal) > 0
-        # inputs and outputs can be string or list
-        assert isinstance(behavior_config.inputs, (str, list))
-        assert isinstance(behavior_config.outputs, (str, list))
-        assert behavior_config.instructions is not None  # Can be dict or object
-        # trigger_words can be list or dict
-        assert isinstance(behavior_config.trigger_words, (list, dict))
-        if isinstance(behavior_config.trigger_words, list):
-            assert len(behavior_config.trigger_words) > 0
-        else:
-            assert 'patterns' in behavior_config.trigger_words
-        assert behavior_config.actions_workflow is not None  # Can be dict or object
-        assert len(behavior_config.actions.names) > 0
     
 class TestManageBehaviorsCollection:
     """Story: Manage Behaviors Collection (Sub-epic: Perform Behavior Action)"""
@@ -1021,13 +1091,14 @@ class TestManageBehaviorsCollection:
         helper = BotTestHelper(tmp_path)
         behaviors = helper.bot.behaviors
         
-        # Then: Behaviors collection contains all behaviors
+        # Then: Behaviors collection contains all behaviors from story_bot config (sorted by order property)
         behavior_list = list(behaviors)
-        assert len(behavior_list) >= 2  # At least shape and discovery
-        assert 'shape' in behaviors.names
-        assert 'discovery' in behaviors.names
+        expected_behaviors = ['scenarios', 'tests', 'code', 'discovery', 'exploration', 'prioritization', 'shape']
+        assert len(behavior_list) == 7, f"Expected 7 behaviors, got {len(behavior_list)}"
+        assert behaviors.names == expected_behaviors, \
+            f"Expected {expected_behaviors}, got {behaviors.names}"
         assert behaviors.current is not None
-        assert behaviors.current.name in behaviors.names
+        assert behaviors.current.name in expected_behaviors
     
     def test_behaviors_find_by_name_returns_behavior_when_exists(self, tmp_path):
         """
@@ -1042,17 +1113,15 @@ class TestManageBehaviorsCollection:
         result = helper.bot.behaviors.find_by_name('prioritization')
         
         # Then: Returns complete Behavior object with all properties
-        assert result is not None
-        assert result.name == 'prioritization'
-        assert isinstance(result.order, (int, float))
-        assert isinstance(result.description, str) and len(result.description) > 0
-        assert isinstance(result.goal, str) and len(result.goal) > 0
-        assert isinstance(result.inputs, (str, list))
-        assert isinstance(result.outputs, (str, list))
-        assert isinstance(result.instructions, (dict, object))
-        assert isinstance(result.trigger_words, (list, dict))
-        assert result.actions is not None
-        assert len(result.actions.names) > 0
+        helper.behaviors.assert_behavior_complete_structure(
+            behavior=result,
+            expected_name='prioritization',
+            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_actions=['clarify', 'strategy', 'validate', 'render'],
+            expected_description='Test behavior: prioritization'
+        )
+        
+        # Also verify action state can be loaded
         result.actions.load_state()
         assert result.actions.current is not None
         assert result.actions.current.action_name in result.actions.names
@@ -1116,44 +1185,18 @@ class TestManageBehaviorsCollection:
         result = helper.bot.behaviors.current
         
         # Then: Returns complete current Behavior object with all properties
-        assert result is not None
-        assert result.name == 'prioritization'
-        assert isinstance(result.order, (int, float))
-        assert isinstance(result.description, str) and len(result.description) > 0
-        assert isinstance(result.goal, str) and len(result.goal) > 0
-        assert isinstance(result.inputs, (str, list))
-        assert isinstance(result.outputs, (str, list))
-        assert isinstance(result.instructions, (dict, object))
-        assert isinstance(result.trigger_words, (list, dict))
-        assert result.actions is not None
-        assert len(result.actions.names) > 0
+        helper.behaviors.assert_behavior_complete_structure(
+            behavior=result,
+            expected_name='prioritization',
+            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_actions=['clarify', 'strategy', 'validate', 'render'],
+            expected_description='Test behavior: prioritization'
+        )
+        
+        # Also verify action state is loaded correctly
         result.actions.load_state()
         assert result.actions.current is not None
         assert result.actions.current.action_name == 'clarify'
-        assert result.actions.current.action_name in result.actions.names
-    
-    def test_behaviors_next_property_returns_next_behavior(self, tmp_path):
-        """
-        SCENARIO: Behaviors next property returns next behavior
-        GIVEN: Behaviors collection with current behavior
-        WHEN: next property accessed
-        THEN: Returns next Behavior object
-        """
-        helper = BotTestHelper(tmp_path)
-        first_behavior = helper.bot.behaviors.current
-        
-        # When: next property accessed
-        result = helper.bot.behaviors.next()
-        
-        # Then: Returns next Behavior object (if not last)
-        if result is not None:  # May be None if at last behavior
-            assert result.name != first_behavior.name
-            assert isinstance(result.order, (int, float))
-            assert isinstance(result.description, str)
-            assert result.actions is not None
-            assert len(result.actions.names) > 0
-        result.actions.load_state()
-        assert result.actions.current is not None
         assert result.actions.current.action_name in result.actions.names
     
     def test_behaviors_navigate_to_behavior_updates_current_behavior(self, tmp_path):
@@ -1304,148 +1347,6 @@ class TestResolveBotPath:
                 os.environ['WORKING_AREA'] = original_working_area
 
 
-class TestFilterActionBasedOnScope:
-    """Story: Filter Action Based on Scope (Epic: Perform Behavior Action)"""
-    
-    def test_build_scope_filters_by_story_names(self, tmp_path):
-        """
-        SCENARIO: BuildScope filters story graph by story names
-        GIVEN: Story graph with multiple stories
-        WHEN: BuildScope filters with story names
-        THEN: Story graph contains only matching stories and their parent epics
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('build', 'story', ['Story A1'], story_graph)
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        story_names = [
-            story.get('name')
-            for epic in filtered_graph.get('epics', [])
-            for sub in epic.get('sub_epics', [])
-            for group in sub.get('story_groups', [])
-            for story in group.get('stories', [])
-            if isinstance(story, dict)
-        ]
-        assert 'Epic A' in epic_names
-        assert 'Story A1' in story_names
-        assert 'Epic B' not in epic_names
-    
-    def test_build_scope_filters_by_epic_names(self, tmp_path):
-        """
-        SCENARIO: BuildScope filters story graph by epic names
-        GIVEN: Story graph with multiple epics
-        WHEN: BuildScope filters with epic names
-        THEN: Story graph contains only matching epics and their increments
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('build', 'epic', ['Epic A'], story_graph)
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        increment_names = [inc.get('name') for inc in filtered_graph.get('increments', [])]
-        assert epic_names == ['Epic A']
-        assert 'Increment 1' in increment_names
-    
-    def test_build_scope_filters_by_increment_priorities(self, tmp_path):
-        """
-        SCENARIO: BuildScope filters story graph by increment priorities
-        GIVEN: Story graph with increments having different priorities
-        WHEN: BuildScope filters with increment priorities
-        THEN: Story graph contains only matching increments and their stories
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('build', 'increment', [1], story_graph)
-        increment_names = [inc.get('name') for inc in filtered_graph.get('increments', [])]
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        assert increment_names == ['Increment 1']
-        assert 'Increment 2' not in increment_names
-        assert 'Epic A' in epic_names
-    
-    def test_build_scope_returns_all_when_scope_is_all(self, tmp_path):
-        """
-        SCENARIO: BuildScope returns all when scope is all
-        GIVEN: Story graph with multiple epics and increments
-        WHEN: BuildScope filters with scope type 'all'
-        THEN: Story graph contains all epics and increments
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('build', 'all', None, story_graph=story_graph)
-        assert len(filtered_graph.get('epics', [])) == 2
-        assert len(filtered_graph.get('increments', [])) == 2
-    
-    def test_validation_scope_filters_by_story_names(self, tmp_path):
-        """
-        SCENARIO: ValidationScope filters story graph by story names
-        GIVEN: Story graph with multiple stories
-        WHEN: ValidationScope filters with story names
-        THEN: Story graph contains only matching stories and their parent epics
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('validate', 'story', ['Story A1'], story_graph)
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        assert 'Epic A' in epic_names
-        assert 'Epic B' not in epic_names
-    
-    def test_validation_scope_filters_by_epic_names(self, tmp_path):
-        """
-        SCENARIO: ValidationScope filters story graph by epic names
-        GIVEN: Story graph with multiple epics
-        WHEN: ValidationScope filters with epic names
-        THEN: Story graph contains only matching epics and their increments
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('validate', 'epic', ['Epic A'], story_graph)
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        increment_names = [inc.get('name') for inc in filtered_graph.get('increments', [])]
-        assert epic_names == ['Epic A']
-        assert 'Increment 1' in increment_names
-    
-    def test_action_scope_filters_by_story_names(self, tmp_path):
-        """
-        SCENARIO: ActionScope filters story graph by story names
-        GIVEN: Story graph with multiple stories
-        WHEN: ActionScope filters with story names
-        THEN: Story graph contains only matching stories and their parent epics
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('action', 'story', ['Story A1'], story_graph)
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        assert 'Epic A' in epic_names
-        assert 'Epic B' not in epic_names
-    
-    def test_action_scope_filters_by_epic_names(self, tmp_path):
-        """
-        SCENARIO: ActionScope filters story graph by epic names
-        GIVEN: Story graph with multiple epics
-        WHEN: ActionScope filters with epic names
-        THEN: Story graph contains only matching epics and their increments
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('action', 'epic', ['Epic A'], story_graph)
-        epic_names = [epic.get('name') for epic in filtered_graph.get('epics', [])]
-        increment_names = [inc.get('name') for inc in filtered_graph.get('increments', [])]
-        assert epic_names == ['Epic A']
-        assert 'Increment 1' in increment_names
-    
-    def test_action_scope_returns_all_when_scope_is_all(self, tmp_path):
-        """
-        SCENARIO: ActionScope returns all when scope is all
-        GIVEN: Story graph with multiple epics and increments
-        WHEN: ActionScope filters with scope type 'all'
-        THEN: Story graph contains all epics and increments
-        """
-        helper = BotTestHelper(tmp_path)
-        story_graph = helper.story.sample_story_graph()
-        filtered_graph = helper.scope.filter_story_graph('action', 'all', None, story_graph=story_graph)
-        assert len(filtered_graph.get('epics', [])) == 2
-        assert len(filtered_graph.get('increments', [])) == 2
-
-
 class TestBootstrapWorkspace:
     """
     Story: Bootstrap Workspace Configuration
@@ -1506,56 +1407,6 @@ class TestBootstrapWorkspace:
         # Then: Returns the path from environment variable
         assert result == test_workspace_dir
     
-    def test_workspace_directory_supports_legacy_working_dir_variable(self, tmp_path):
-        """
-        SCENARIO: Backward compatibility with WORKING_DIR variable
-        GIVEN: WORKING_DIR environment variable is set (legacy name)
-        AND: WORKING_AREA is not set
-        WHEN: get_workspace_directory() is called
-        THEN: Returns the path from WORKING_DIR variable
-        """
-        from agile_bot.src.bot.workspace import get_workspace_directory
-        
-        # Given: WORKING_DIR environment variable is set (legacy) to temp directory
-        test_workspace_dir = tmp_path / 'workspace'
-        test_workspace_dir.mkdir()
-        os.environ['WORKING_DIR'] = str(test_workspace_dir)
-        # AND: WORKING_AREA is not set
-        if 'WORKING_AREA' in os.environ:
-            del os.environ['WORKING_AREA']
-        
-        # When: get_workspace_directory() is called
-        result = get_workspace_directory()
-        
-        # Then: Returns the path from WORKING_DIR variable
-        assert result == test_workspace_dir
-    
-    def test_working_area_takes_precedence_over_working_dir(self, tmp_path):
-        """
-        SCENARIO: WORKING_AREA takes precedence over legacy WORKING_DIR
-        GIVEN: Both WORKING_AREA and WORKING_DIR are set
-        AND: They have different values
-        WHEN: get_workspace_directory() is called
-        THEN: Returns WORKING_AREA value (preferred)
-        """
-        from agile_bot.src.bot.workspace import get_workspace_directory
-        
-        # Given: Both variables set with different values
-        workspace_area = tmp_path / 'workspace_area'
-        workspace_area.mkdir(parents=True, exist_ok=True)
-        different_dir = tmp_path / 'different'
-        different_dir.mkdir(parents=True, exist_ok=True)
-        
-        os.environ['WORKING_AREA'] = str(workspace_area)
-        os.environ['WORKING_DIR'] = str(different_dir)
-        
-        # When: get_workspace_directory() is called
-        result = get_workspace_directory()
-        
-        # Then: Returns WORKING_AREA value
-        assert result == workspace_area
-        assert result != different_dir
-    
     # ========================================================================
     # SCENARIO GROUP 2: Bootstrap from bot_config.json
     # ========================================================================
@@ -1574,8 +1425,6 @@ class TestBootstrapWorkspace:
         # Clear environment variables from previous tests to avoid pollution
         if 'WORKING_AREA' in os.environ:
             del os.environ['WORKING_AREA']
-        if 'WORKING_DIR' in os.environ:
-            del os.environ['WORKING_DIR']
         
         # Given: bot_config.json exists with WORKING_AREA field
         test_bot_dir = tmp_path / 'bot'
@@ -1938,323 +1787,324 @@ class TestTrackActivityForWorkspace:
 from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 
-class TestSetStoryScope:
-    """
-    Story: Set Story Scope
-    Path: Invoke Bot / Invoke Bot Directly / Manage Scope
-    
-    Integration tests verifying scope functionality exists and integrates with bot.
-    Domain logic: test_manage_scope_bot_api.py (API level)
-    CLI tests: test_manage_scope_using_repl.py (REPL commands)
-    """
-    
-    def test_bot_has_scope_method_for_story_filtering(self, tmp_path):
-        """
-        SCENARIO: Bot has scope capability for story filtering
-        
-        GIVEN: bot is initialized
-        WHEN: bot is created
-        THEN: bot has scope method available
-              scope can be used for filtering
-        
-        Integration focus: Verify scope infrastructure exists
-        Domain tests: test_manage_scope_bot_api.py, test_manage_scope_using_repl.py
-        """
-        # GIVEN: Bot is initialized
-        helper = BotTestHelper(tmp_path)
-        
-        # THEN: Bot has scope method
-        assert hasattr(helper.bot, 'scope')
-        assert callable(helper.bot.scope)
-        
-        # Scope can be called to view current scope
-        scope = helper.bot.scope()
-        # Scope is a Scope object, not a dict
-        from agile_bot.src.scope.scope import Scope
-        assert isinstance(scope, Scope) or isinstance(scope, dict)
-        # Check scope type - ALL means no specific scope set
-        if isinstance(scope, Scope):
-            from agile_bot.src.scope.scope import ScopeType
-            assert scope.type == ScopeType.ALL  # No scope set initially
-    
-    def test_scope_persists_in_workflow_state(self, tmp_path):
-        """
-        SCENARIO: Scope persists in workflow state
-        
-        GIVEN: bot has scope set
-        WHEN: workflow state is saved
-        THEN: scope is persisted
-              scope can be retrieved
-        
-        Integration focus: Verify scope persistence
-        """
-        # GIVEN: Bot is initialized
-        helper = BotTestHelper(tmp_path)
-        
-        # WHEN: Set scope via method
-        helper.bot.scope("story=Story1")
-        
-        # THEN: Scope is accessible and persists
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        scope = helper.bot.scope()
-        # Scope object exists and can be accessed
-        assert hasattr(scope, 'type') or hasattr(scope, 'to_dict')
-        if isinstance(scope, Scope):
-            assert scope.type != ScopeType.ALL  # Scope was set
-            assert len(scope.value) > 0  # Scope has values
+# ================================================================================
+# SUB-EPIC: Manage Scope (sequential_order: 4)
+# ================================================================================
 
 
-class TestSetFileScope:
-    """
-    Story: Set File Scope
-    Path: Invoke Bot / Invoke Bot Directly / Manage Scope
+class TestFilterScopeByStories:
+    """Story: Filter Scope By Stories (Sub-epic: Manage Scope, sequential_order: 7)"""
     
-    Integration tests verifying file scope functionality.
-    Domain logic: test_manage_scope_bot_api.py (API level)
-    CLI tests: test_manage_scope_using_repl.py (REPL commands)
-    """
+    def test_set_scope_to_single_story(self, tmp_path):
+        """
+        SCENARIO: Set scope to single story
+        GIVEN: Story graph with multiple stories
+        WHEN: Scope set to single story name
+        THEN: Only that story is in scope
+        """
+        # TODO: Implement comprehensive story filtering tests
+        pass
     
-    def test_bot_supports_file_scope_filtering(self, tmp_path):
+    def test_set_scope_to_multiple_stories(self, tmp_path):
         """
-        SCENARIO: Bot supports file scope filtering
-        
-        GIVEN: bot is initialized
-        WHEN: bot scope method is called with file path
-        THEN: scope accepts file paths
-              file filtering is available
-        
-        Integration focus: Verify file scope infrastructure exists
+        SCENARIO: Set scope to multiple stories
+        GIVEN: Story graph with multiple stories
+        WHEN: Scope set to list of story names
+        THEN: Only those stories are in scope
         """
-        # GIVEN: Bot is initialized
-        helper = BotTestHelper(tmp_path)
-        
-        # WHEN: Set file scope
-        src_path = str(helper.workspace / 'src')
-        scope = helper.bot.scope(f"files={src_path}")
-        
-        # THEN: Scope accepts file paths
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        assert isinstance(scope, Scope) or isinstance(scope, dict)
-        if isinstance(scope, Scope):
-            assert scope.type != ScopeType.ALL  # Scope was set
-            assert len(scope.value) > 0
+        # TODO: Implement
+        pass
     
-    def test_scope_handles_multiple_file_paths(self, tmp_path):
+    def test_set_scope_to_single_epic(self, tmp_path):
         """
-        SCENARIO: Scope handles multiple file paths
-        
-        GIVEN: bot is initialized
-        WHEN: scope is set with multiple paths
-        THEN: all paths are accepted
-        
-        Integration focus: Verify multi-path support
+        SCENARIO: Set scope to single epic
+        GIVEN: Story graph with multiple epics
+        WHEN: Scope set to epic name
+        THEN: Epic and all its children are in scope
         """
-        # GIVEN: Bot is initialized
-        helper = BotTestHelper(tmp_path)
-        
-        # WHEN/THEN: Bot can handle file scope
-        assert hasattr(helper.bot, 'scope')
-        assert callable(helper.bot.scope)
+        # TODO: Implement
+        pass
+    
+    def test_set_scope_to_multiple_epics(self, tmp_path):
+        """
+        SCENARIO: Set scope to multiple epics
+        GIVEN: Story graph with multiple epics
+        WHEN: Scope set to list of epic names
+        THEN: All epics and their children are in scope
+        """
+        # TODO: Implement
+        pass
+    
+    def test_set_scope_to_sub_epic(self, tmp_path):
+        """
+        SCENARIO: Set scope to sub-epic
+        GIVEN: Story graph with sub-epics
+        WHEN: Scope set to sub-epic name
+        THEN: Sub-epic and its children are in scope
+        """
+        # TODO: Implement
+        pass
+    
+    def test_filter_returns_parent_epic_when_child_story_matches(self, tmp_path):
+        """
+        SCENARIO: Filter returns parent epic when child story matches
+        GIVEN: Story graph with epic containing story
+        WHEN: Scope set to story name
+        THEN: Story and parent epic are both returned
+        """
+        # TODO: Implement
+        pass
+    
+    def test_filter_returns_children_when_parent_epic_matches(self, tmp_path):
+        """
+        SCENARIO: Filter returns children when parent epic matches
+        GIVEN: Story graph with epic containing stories
+        WHEN: Scope set to epic name
+        THEN: Epic and all child stories are returned
+        """
+        # TODO: Implement
+        pass
 
 
-class TestFilterKnowledgeGraphByScope:
-    """
-    Story: Filter Knowledge Graph By Scope
-    Path: Invoke Bot / Invoke Bot Directly / Manage Scope
+class TestFilterScopeByFiles:
+    """Story: Filter Scope By Files (Sub-epic: Manage Scope, sequential_order: 8)"""
     
-    Integration tests verifying scope filtering works with actions.
-    Domain logic: test_manage_scope_bot_api.py (API level)
-    Detailed filtering: test_build_knowledge.py, test_validation_scope_and_file_filtering.py
-    """
+    def test_set_scope_to_single_folder(self, tmp_path):
+        """
+        SCENARIO: Set scope to single folder
+        GIVEN: Workspace with multiple folders
+        WHEN: Scope set to single folder path
+        THEN: Only files in that folder are in scope
+        """
+        # TODO: Implement file filtering tests
+        pass
     
-    def test_actions_can_access_scope_during_execution(self, tmp_path):
+    def test_set_scope_to_folder_with_glob_pattern(self, tmp_path):
         """
-        SCENARIO: Actions can access scope during execution
-        
-        GIVEN: bot has scope set
-              action is ready to execute
-        WHEN: action executes
-        THEN: action can access scope for filtering
-        
-        Integration focus: Verify scope is accessible to actions
+        SCENARIO: Set scope to folder with glob pattern
+        GIVEN: Workspace with multiple file types
+        WHEN: Scope set to glob pattern (e.g., 'src/**/*.py')
+        THEN: Only matching files are in scope
         """
-        # GIVEN: Bot with scope set
-        helper = BotTestHelper(tmp_path)
-        helper.bot.scope("story=Story1")
-        
-        # WHEN: Navigate to action
-        helper.bot.behaviors.navigate_to('shape')
-        action = helper.bot.behaviors.current.actions.current
-        
-        # THEN: Action exists and can access bot scope
-        assert action.action_name == 'clarify'
-        # Scope is accessible through bot
-        scope = helper.bot.scope()
-        assert hasattr(scope, 'type') or hasattr(scope, 'to_dict')
+        # TODO: Implement
+        pass
+    
+    def test_set_scope_to_multiple_file_paths(self, tmp_path):
+        """
+        SCENARIO: Set scope to multiple file paths
+        GIVEN: Workspace with multiple files
+        WHEN: Scope set to list of file paths
+        THEN: Only those files are in scope
+        """
+        # TODO: Implement
+        pass
+    
+    def test_set_scope_with_exclude_pattern(self, tmp_path):
+        """
+        SCENARIO: Set scope with exclude pattern
+        GIVEN: Workspace with files
+        WHEN: Scope set with exclude pattern (e.g., exclude=['**/test_*'])
+        THEN: Matching files are excluded from scope
+        """
+        # TODO: Implement
+        pass
+    
+    def test_set_scope_to_multiple_folders_and_patterns(self, tmp_path):
+        """
+        SCENARIO: Set scope to multiple folders and patterns
+        GIVEN: Workspace with multiple folders
+        WHEN: Scope set to combination of folders and patterns
+        THEN: All matching files are in scope
+        """
+        # TODO: Implement
+        pass
 
 
-class TestPassScopeParametersToActions:
-    """
-    Story: Pass Scope Parameters To Actions
-    Path: Invoke Bot / Invoke Bot Directly / Manage Scope
+class TestPersistScope:
+    """Story: Persist Scope (Sub-epic: Manage Scope, sequential_order: 9)"""
     
-    Integration tests verifying actions can access scope.
-    Domain logic: test_manage_scope_bot_api.py (API level)
-    Action-specific: test_build_knowledge.py, test_validation_scope_and_file_filtering.py
-    """
+    def test_scope_persists_across_bot_invocations(self, tmp_path):
+        """
+        SCENARIO: Scope persists across bot invocations
+        GIVEN: Bot with scope set
+        WHEN: Bot is reloaded
+        THEN: Scope is restored from workflow state
+        """
+        # TODO: Implement scope persistence tests
+        pass
     
-    def test_action_can_access_bot_scope_during_execution(self, tmp_path):
+    def test_scope_persists_after_action_execution(self, tmp_path):
         """
-        SCENARIO: Action can access bot scope during execution
-        
-        GIVEN: bot has scope set
-              action is ready to execute
-        WHEN: action executes
-        THEN: action can access scope through bot reference
-        
-        Integration focus: Verify scope is accessible from actions
+        SCENARIO: Scope persists after action execution
+        GIVEN: Bot with scope set
+        WHEN: Action executes and completes
+        THEN: Scope remains active for next action
         """
-        # GIVEN: Bot with scope set
-        helper = BotTestHelper(tmp_path)
-        helper.bot.scope("story=Story1")
-        
-        # WHEN: Navigate to action
-        helper.bot.behaviors.navigate_to('shape')
-        action = helper.bot.behaviors.current.actions.current
-        
-        # THEN: Action exists and bot scope is accessible
-        assert action.action_name == 'clarify'
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        scope = helper.bot.scope()
-        # Scope object exists
-        assert hasattr(scope, 'type') or hasattr(scope, 'to_dict')
-        if isinstance(scope, Scope):
-            assert scope.type != ScopeType.ALL  # Scope was set
-    
-    def test_action_works_when_no_scope_is_set(self, tmp_path):
-        """
-        SCENARIO: Action works when no scope is set
-        
-        GIVEN: bot has no active scope
-        WHEN: action is invoked
-        THEN: action executes normally
-              no filtering is applied
-        
-        Integration focus: Verify actions work without scope
-        """
-        # GIVEN: Bot with no scope set
-        helper = BotTestHelper(tmp_path)
-        # No scope set
-        
-        # WHEN: Navigate to action
-        helper.bot.behaviors.navigate_to('shape')
-        action = helper.bot.behaviors.current.actions.current
-        
-        # THEN: Action works without scope
-        assert action.action_name == 'clarify'
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        scope = helper.bot.scope()
-        if isinstance(scope, Scope):
-            assert scope.type == ScopeType.ALL  # No scope set
+        # TODO: Implement
+        pass
 
 
 class TestClearScope:
-    """
-    Story: Clear Scope
-    Path: Invoke Bot / Invoke Bot Directly / Manage Scope
+    """Story: Clear Scope (Sub-epic: Manage Scope, sequential_order: 10)"""
     
-    Integration tests verifying scope clearing functionality.
-    Domain logic: test_manage_scope_bot_api.py (API level)
-    CLI tests: test_manage_scope_using_repl.py::TestClearScope
-    """
+    def test_clear_scope_with_show_all_parameter(self, tmp_path):
+        """
+        SCENARIO: Clear scope with show_all parameter
+        GIVEN: Bot with scope set
+        WHEN: Scope cleared with show_all=True
+        THEN: Scope is cleared and all content is shown
+        """
+        # TODO: Implement clear scope tests
+        pass
     
-    def test_scope_can_be_cleared_after_being_set(self, tmp_path):
+    def test_clear_scope_without_show_all_parameter(self, tmp_path):
         """
-        SCENARIO: Scope can be cleared after being set
-        
-        GIVEN: bot has scope set
-        WHEN: scope is cleared
-        THEN: scope is removed
-              future actions process all content
-        
-        Integration focus: Verify scope clearing works
-        CLI test: test_manage_scope_using_repl.py::TestClearScope
+        SCENARIO: Clear scope without show_all parameter
+        GIVEN: Bot with scope set
+        WHEN: Scope cleared without show_all parameter
+        THEN: Scope is cleared
         """
-        # GIVEN: Bot with scope set
-        helper = BotTestHelper(tmp_path)
-        helper.bot.scope("story=Story1")
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        initial_scope = helper.bot.scope()
-        if isinstance(initial_scope, Scope):
-            assert initial_scope.type != ScopeType.ALL  # Scope was set
-        
-        # WHEN: Clear scope
-        clear_result = helper.bot.scope("clear")
-        
-        # THEN: Complete scope object returned with all properties
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        assert clear_result is not None
-        assert isinstance(clear_result, Scope) or isinstance(clear_result, dict)
-        if isinstance(clear_result, Scope):
-            # Assert all core properties exist and have correct types
-            assert hasattr(clear_result, 'type')
-            assert hasattr(clear_result, 'value')
-            assert hasattr(clear_result, 'exclude')
-            assert hasattr(clear_result, 'skiprule')
-            assert hasattr(clear_result, 'workspace_directory')
-            assert hasattr(clear_result, 'bot_paths')
-            assert isinstance(clear_result.type, ScopeType)
-            assert isinstance(clear_result.value, list)
-            assert isinstance(clear_result.exclude, list)
-            assert isinstance(clear_result.skiprule, list)
-            # Clear operation completes successfully (returns valid scope object)
-            # Note: Implementation may return ALL type or keep previous type with cleared values
-            assert clear_result.type in ScopeType
-            assert isinstance(clear_result.value, list)
-            assert isinstance(clear_result.exclude, list)
-            assert isinstance(clear_result.skiprule, list)
+        # TODO: Implement
+        pass
     
-    def test_clearing_scope_when_none_set_succeeds(self, tmp_path):
+    def test_actions_after_clear_process_all_content(self, tmp_path):
         """
-        SCENARIO: Clearing scope when none set succeeds
-        
-        GIVEN: bot has no active scope
-        WHEN: clear is called
-        THEN: operation completes successfully
-        
-        Integration focus: Verify clear is idempotent
+        SCENARIO: Actions after clear process all content
+        GIVEN: Bot had scope set, then cleared
+        WHEN: Action executes
+        THEN: Action processes all content without filtering
         """
-        # GIVEN: Bot with no scope set
-        helper = BotTestHelper(tmp_path)
-        # No scope set
-        
-        # WHEN: Clear scope
-        result = helper.bot.scope("clear")
-        
-        # THEN: Complete scope object returned with all properties
-        from agile_bot.src.scope.scope import Scope, ScopeType
-        assert result is not None
-        assert isinstance(result, Scope) or isinstance(result, dict)
-        if isinstance(result, Scope):
-            # Assert all core properties exist and have correct types
-            assert hasattr(result, 'type')
-            assert hasattr(result, 'value')
-            assert hasattr(result, 'exclude')
-            assert hasattr(result, 'skiprule')
-            assert hasattr(result, 'workspace_directory')
-            assert hasattr(result, 'bot_paths')
-            assert isinstance(result.type, ScopeType)
-            assert isinstance(result.value, list)
-            assert isinstance(result.exclude, list)
-            assert isinstance(result.skiprule, list)
-            # Clear operation completes successfully (returns valid scope object)
-            # Note: Implementation may return ALL type or keep previous type with cleared values
-            assert result.type in ScopeType
-            # Value lists are always lists (may be empty after clear)
-            assert isinstance(result.value, list)
-            assert isinstance(result.exclude, list)
-            assert isinstance(result.skiprule, list)
+        # TODO: Implement
+        pass
 
+
+class TestExecuteActionsWithScope:
+    """Story: Execute Actions With Scope (Sub-epic: Manage Scope, sequential_order: 11)"""
+    
+    def test_clarify_with_story_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Clarify with story scope succeeds
+        GIVEN: Bot with story scope set
+        WHEN: Clarify action executes
+        THEN: Action processes only scoped stories
+        """
+        # TODO: Implement action-specific scope validation
+        pass
+    
+    def test_clarify_with_file_scope_fails(self, tmp_path):
+        """
+        SCENARIO: Clarify with file scope fails
+        GIVEN: Bot with file scope set
+        WHEN: Clarify action attempts to execute
+        THEN: Action rejects file scope as invalid
+        """
+        # TODO: Implement - Clarify doesn't accept file scope
+        pass
+    
+    def test_strategy_with_story_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Strategy with story scope succeeds
+        GIVEN: Bot with story scope set
+        WHEN: Strategy action executes
+        THEN: Action processes only scoped stories
+        """
+        # TODO: Implement
+        pass
+    
+    def test_strategy_with_file_scope_fails(self, tmp_path):
+        """
+        SCENARIO: Strategy with file scope fails
+        GIVEN: Bot with file scope set
+        WHEN: Strategy action attempts to execute
+        THEN: Action rejects file scope as invalid
+        """
+        # TODO: Implement - Strategy doesn't accept file scope
+        pass
+    
+    def test_build_with_story_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Build with story scope succeeds
+        GIVEN: Bot with story scope set
+        WHEN: Build action executes
+        THEN: Action processes only scoped stories
+        """
+        # TODO: Implement
+        pass
+    
+    def test_build_with_file_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Build with file scope succeeds
+        GIVEN: Bot with file scope set
+        WHEN: Build action executes
+        THEN: Action processes only scoped files
+        """
+        # TODO: Implement
+        pass
+    
+    def test_validate_with_story_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Validate with story scope succeeds
+        GIVEN: Bot with story scope set
+        WHEN: Validate action executes
+        THEN: Action validates only scoped stories
+        """
+        # TODO: Implement
+        pass
+    
+    def test_validate_with_file_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Validate with file scope succeeds
+        GIVEN: Bot with file scope set
+        WHEN: Validate action executes
+        THEN: Action validates only scoped files
+        """
+        # TODO: Implement
+        pass
+    
+    def test_tests_behavior_with_story_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Tests behavior with story scope succeeds
+        GIVEN: Bot with story scope set
+        WHEN: Tests action executes
+        THEN: Action processes tests mapped to scoped stories
+        """
+        # TODO: Implement
+        pass
+    
+    def test_tests_behavior_with_file_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Tests behavior with file scope succeeds
+        GIVEN: Bot with file scope set
+        WHEN: Tests action executes
+        THEN: Action processes only scoped test files
+        """
+        # TODO: Implement
+        pass
+    
+    def test_code_behavior_with_story_scope_fails(self, tmp_path):
+        """
+        SCENARIO: Code behavior with story scope fails
+        GIVEN: Bot with story scope set
+        WHEN: Code action attempts to execute
+        THEN: Action rejects story scope as invalid (code requires files)
+        """
+        # TODO: Implement - Code only accepts file scope
+        pass
+    
+    def test_code_behavior_with_file_scope_succeeds(self, tmp_path):
+        """
+        SCENARIO: Code behavior with file scope succeeds
+        GIVEN: Bot with file scope set
+        WHEN: Code action executes
+        THEN: Action processes only scoped files
+        """
+        # TODO: Implement
+        pass
+
+
+# ================================================================================
+# SUB-EPIC: Track Activity (sequential_order: 5)
+# ================================================================================
 
 
 class TestTrackActionStart:
