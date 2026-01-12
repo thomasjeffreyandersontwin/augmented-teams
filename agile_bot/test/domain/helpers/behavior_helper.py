@@ -641,22 +641,3 @@ class BehaviorTestHelper(BaseHelper):
             for entry in completed_actions
         ), f"Action {action_state} should be in completed_actions: {completed_actions}"
     
-    def when_action_injects(self, action, content='next_action'):
-        """Action injects content.
-        
-        Args:
-            action: Action instance
-            content: Type of content to inject ('next_action', 'questions_and_evidence', 'strategy_criteria_and_assumptions')
-        """
-        if content == 'next_action':
-            return action.inject_next_action_instructions()
-        elif content == 'questions_and_evidence':
-            from agile_bot.src.actions.action_context import ClarifyActionContext
-            result = action.do_execute(ClarifyActionContext())
-            return result
-        elif content == 'strategy_criteria_and_assumptions':
-            from agile_bot.src.actions.action_context import StrategyActionContext
-            result = action.do_execute(StrategyActionContext())
-            return result
-        else:
-            raise ValueError(f"Unknown content type: {content}")

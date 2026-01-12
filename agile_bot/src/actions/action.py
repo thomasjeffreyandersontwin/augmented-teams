@@ -634,5 +634,5 @@ class Action:
         """
         return {'message': 'Work confirmed successfully'}
 
-    def do_execute(self, context: ActionContext) -> Dict[str, Any]:
+    def do_execute(self, context: ActionContext = None) -> Dict[str, Any]:
         raise NotImplementedError('Subclasses must implement do_execute()')

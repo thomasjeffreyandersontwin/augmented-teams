@@ -1,20 +1,4 @@
-"""
-Validation Scope and File Filtering Tests
 
-Tests for defects found during validation system debugging:
-1. FileFilter.filter_files() glob pattern matching
-2. ValidationContext file discovery with scope
-3. REPL instructions command parsing CLI args
-4. Scanner path validation in rules
-5. Integration test for validate with file scope
-
-These tests ensure that the validation system correctly:
-- Filters files based on glob patterns
-- Discovers and filters files when scope is provided
-- Parses CLI arguments in REPL instructions command
-- Validates scanner paths in rule JSON files
-- Executes end-to-end validation with file scope
-"""
 import pytest
 import json
 from pathlib import Path
@@ -155,8 +139,6 @@ class TestFileFilterGlobPatternMatching:
         assert len(filtered) == 1
         assert Path('test/test_execute_in_headless_mode.py') in filtered
 
-
-
 class TestValidationContextFileDiscovery:
     """Tests for ValidationContext to ensure file discovery works with scope."""
     
@@ -219,9 +201,6 @@ class TestValidationContextFileDiscovery:
         # THEN: All files are returned
         assert len(filtered) == 3
         assert all(f in filtered for f in files)
-
-
-
 
 class TestScannerPathValidation:
     """Tests for scanner path validation in rule JSON files."""
@@ -324,8 +303,6 @@ class TestScannerPathValidation:
         # THEN: Scanner is not loaded (scanner_path is None)
         assert rule.scanner_path is None
         assert rule.scanner is None
-
-
 
 class TestBehaviorValidationType:
     """Tests for Behavior.validation_type to ensure correct validation target."""
@@ -484,8 +461,6 @@ class TestBehaviorValidationType:
         assert isinstance(files, dict)
         # Code behavior should discover 'src' files
         # (Empty dict is valid if no src files exist in test environment)
-
-
 
 class TestValidateWithFileScopeIntegration:
     """Integration test for end-to-end validation with file scope."""

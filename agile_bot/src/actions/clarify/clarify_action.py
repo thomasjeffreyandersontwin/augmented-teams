@@ -84,8 +84,10 @@ class ClarifyContextAction(Action):
         
         return {'message': 'No clarification data to save'}
 
-    def do_execute(self, context: ClarifyActionContext):
-        """Legacy execute - calls get_instructions then confirm."""
+    def do_execute(self, context: ClarifyActionContext = None):
+        """Execute clarify action - get instructions and save if answers provided."""
+        if context is None:
+            context = ClarifyActionContext()
         result = self.get_instructions(context)
         if context.answers or context.evidence_provided:
             self.save_clarification(context)

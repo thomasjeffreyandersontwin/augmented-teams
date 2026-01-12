@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from ...utils import read_json_file
 
-class KnowledgeGraphTemplate:
+class StoryGraphTemplate:
 
     def __init__(self, kg_dir: Path, template_filename: Optional[str]):
         self._kg_dir = kg_dir

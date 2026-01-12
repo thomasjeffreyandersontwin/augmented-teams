@@ -112,8 +112,7 @@ class RenderOutputAction(Action):
             'message': 'Render instructions provided to AI - documents will be rendered by AI'
         }
     
-    def do_execute(self, context: ScopeActionContext):
-        """Legacy method for backwards compatibility."""
+    def do_execute(self, context: ScopeActionContext = None):
         render_instructions = self._config_loader.load_render_instructions()
         render_specs = self._render_specs
         self._execute_synchronizers(render_specs)

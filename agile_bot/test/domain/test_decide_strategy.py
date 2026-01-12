@@ -11,10 +11,6 @@ from agile_bot.src.actions.action_context import StrategyActionContext
 from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 
-# ============================================================================
-# STORY: Inject Strategy Criteria Into Instructions
-# ============================================================================
-
 class TestDecideStrategy:
 
     def test_action_injects_decision_criteria_and_assumptions(self, tmp_path):

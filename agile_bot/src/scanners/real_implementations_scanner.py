@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class RealImplementationsScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -23,7 +23,7 @@ class RealImplementationsScanner(TestScanner):
         content, lines, tree = parsed
         
         method_violations = self._check_test_methods_call_production_code(
-            content, lines, file_path, rule_obj, knowledge_graph
+            content, lines, file_path, rule_obj, story_graph
         )
         violations.extend(method_violations)
         
@@ -33,7 +33,7 @@ class RealImplementationsScanner(TestScanner):
         return violations
     
     def _check_test_methods_call_production_code(
-        self, content: str, lines: List[str], file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]
+        self, content: str, lines: List[str], file_path: Path, rule_obj: Any, story_graph: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         violations = []
         
@@ -45,8 +45,8 @@ class RealImplementationsScanner(TestScanner):
             return violations
         
         # Find project root to determine src folder location
-        # Try knowledge_graph first, then infer from test file path
-        project_location = knowledge_graph.get('project_location', '')
+        # Try story_graph first, then infer from test file path
+        project_location = story_graph.get('project_location', '')
         if project_location:
             project_path = Path(project_location)
         else:

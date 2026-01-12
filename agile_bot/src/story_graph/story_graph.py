@@ -5,22 +5,22 @@ import logging
 from ..bot_path import BotPath
 from ..utils import read_json_file
 if TYPE_CHECKING:
-    from ..build.knowledge_graph_spec import KnowledgeGraphSpec
+    from ..build.story_graph_spec import StoryGraphSpec
 logger = logging.getLogger(__name__)
 
 class StoryGraph:
 
-    def __init__(self, bot_paths: BotPath, workspace_directory: Path, require_file: bool=True, knowledge_graph_spec: Optional['KnowledgeGraphSpec']=None):
+    def __init__(self, bot_paths: BotPath, workspace_directory: Path, require_file: bool=True, story_graph_spec: Optional['StoryGraphSpec']=None):
         self._bot_paths = bot_paths
         self._workspace_directory = workspace_directory
-        self._knowledge_graph_spec = knowledge_graph_spec
+        self._story_graph_spec = story_graph_spec
         self._require_file = require_file
         self._path = self._determine_story_graph_path()
         self._content = self._load_story_graph_content()
 
     def _determine_story_graph_path(self):
-        if self._knowledge_graph_spec:
-            config_data = self._knowledge_graph_spec.config_data
+        if self._story_graph_spec:
+            config_data = self._story_graph_spec.config_data
             config_path_value = config_data.get('path', 'docs/stories')
             docs_path = Path(config_path_value.rstrip('/'))
             output_filename = config_data.get('output', 'story-graph.json')
@@ -41,8 +41,8 @@ class StoryGraph:
         return read_json_file(self._path)
 
     @property
-    def knowledge_graph_spec(self) -> Optional['KnowledgeGraphSpec']:
-        return self._knowledge_graph_spec
+    def story_graph_spec(self) -> Optional['StoryGraphSpec']:
+        return self._story_graph_spec
 
     @property
     def content(self) -> Dict[str, Any]:

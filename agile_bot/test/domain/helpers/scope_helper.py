@@ -16,8 +16,8 @@ class ScopeTestHelper(BaseHelper):
             parameters['scope']['value'] = scope_value
 
         if scope_kind == 'build':
-            from agile_bot.src.actions.build.build_scope import BuildScope
-            return BuildScope(parameters, self.parent.bot.bot_paths).filter_story_graph(graph)
+            from agile_bot.src.scope.action_scope import ActionScope
+            return ActionScope(parameters, self.parent.bot.bot_paths).filter_story_graph(graph)
         if scope_kind == 'validate':
             from agile_bot.src.actions.validate.validation_scope import ValidationScope
             return ValidationScope(parameters, self.parent.bot.bot_paths, behavior_name).filter_story_graph(graph)

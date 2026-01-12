@@ -131,8 +131,10 @@ class StrategyAction(Action):
             lines.append(f"  - {option}")
         return lines
 
-    def do_execute(self, context: StrategyActionContext):
+    def do_execute(self, context: StrategyActionContext = None):
         """Execute strategy action - get instructions and save if decisions provided."""
+        if context is None:
+            context = StrategyActionContext()
         result = self.get_instructions(context)
         decisions = context.get_decisions()
         if decisions or context.assumptions:

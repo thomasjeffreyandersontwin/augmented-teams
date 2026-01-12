@@ -23,8 +23,8 @@ class ScopeType(Enum):
 
 
 @dataclass
-class KnowledgeGraphFilter:
-    """Filters content by knowledge graph nodes (stories, epics, sub-epics).
+class StoryGraphFilter:
+    """Filters content by story graph nodes (stories, epics, sub-epics).
     
     Used for filtering operations to specific parts of the story graph.
     Searches across ALL levels of the hierarchy (epic/sub-epic/story).
@@ -38,14 +38,14 @@ class KnowledgeGraphFilter:
             return True
         return node_name in self.search_terms
     
-    def filter_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter knowledge graph to only nodes matching this filter.
+    def filter_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter story graph to only nodes matching this filter.
         
         Searches ALL levels (epics, sub-epics, nested sub-epics, stories) regardless of where the term appears.
         Recursively handles nested sub-epics at any depth.
         """
         if not self.search_terms and not self.increments:
-            return knowledge_graph
+            return story_graph
         
         all_filter_names = self.search_terms
         
@@ -105,7 +105,7 @@ class KnowledgeGraphFilter:
             return None
         
         filtered_graph = {'epics': []}
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         
         for epic in epics:
             epic_name = epic.get('name', '')
@@ -230,7 +230,7 @@ class Scope:
         self.skiprule: List[str] = []
         
         # Internal filters
-        self._knowledge_graph_filter: Optional[KnowledgeGraphFilter] = None
+        self._story_graph_filter: Optional[StoryGraphFilter] = None
         self._file_filter: Optional[FileFilter] = None
         
         # Cached results
@@ -264,15 +264,15 @@ class Scope:
     
     def _rebuild_filters(self):
         """Rebuild internal filter objects from current criteria."""
-        self._knowledge_graph_filter = None
+        self._story_graph_filter = None
         self._file_filter = None
         
         if self.type in (ScopeType.STORY, ScopeType.INCREMENT):
             if self.type == ScopeType.STORY:
-                self._knowledge_graph_filter = KnowledgeGraphFilter(search_terms=self.value)
+                self._story_graph_filter = StoryGraphFilter(search_terms=self.value)
             elif self.type == ScopeType.INCREMENT:
                 increments = [int(v) if isinstance(v, str) and v.isdigit() else v for v in self.value]
-                self._knowledge_graph_filter = KnowledgeGraphFilter(increments=increments)
+                self._story_graph_filter = StoryGraphFilter(increments=increments)
         
         if self.type == ScopeType.FILES:
             self._file_filter = FileFilter(
@@ -314,8 +314,8 @@ class Scope:
             # Load and filter graph data
             graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
             
-            if self._knowledge_graph_filter:
-                filtered_data = self._knowledge_graph_filter.filter_knowledge_graph(graph_data)
+            if self._story_graph_filter:
+                filtered_data = self._story_graph_filter.filter_story_graph(graph_data)
             else:
                 filtered_data = graph_data
             
@@ -375,18 +375,18 @@ class Scope:
         return all_files
     
     @property
-    def knowledge_graph_filter(self) -> Optional[KnowledgeGraphFilter]:
-        return self._knowledge_graph_filter
+    def story_graph_filter(self) -> Optional[StoryGraphFilter]:
+        return self._story_graph_filter
     
     @property
     def file_filter(self) -> Optional[FileFilter]:
         return self._file_filter
     
-    def filters_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Legacy method - filters knowledge graph dict."""
-        if self._knowledge_graph_filter:
-            return self._knowledge_graph_filter.filter_knowledge_graph(knowledge_graph)
-        return knowledge_graph
+    def filters_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Legacy method - filters story graph dict."""
+        if self._story_graph_filter:
+            return self._story_graph_filter.filter_story_graph(story_graph)
+        return story_graph
     
     def filters_files(self, file_list: List[Path]) -> List[Path]:
         """Legacy method - filters file list."""

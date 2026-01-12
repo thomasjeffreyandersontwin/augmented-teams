@@ -25,8 +25,8 @@ class ScopeType(Enum):
 
 
 @dataclass
-class KnowledgeGraphFilter:
-    """Filters content by knowledge graph nodes (stories, epics, sub-epics).
+class StoryGraphFilter:
+    """Filters content by story graph nodes (stories, epics, sub-epics).
     
     Used for filtering operations to specific parts of the story graph.
     Searches across ALL levels of the hierarchy (epic/sub-epic/story).
@@ -40,14 +40,14 @@ class KnowledgeGraphFilter:
             return True
         return node_name in self.search_terms
     
-    def filter_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter knowledge graph to only nodes matching this filter.
+    def filter_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter story graph to only nodes matching this filter.
         
         Searches ALL levels (epics, sub-epics, stories) regardless of where the term appears.
         """
         # Return full graph if no filters specified
         if not self.search_terms and not self.increments:
-            return knowledge_graph
+            return story_graph
         
         # Use search_terms for flexible matching
         all_filter_names = self.search_terms
@@ -57,7 +57,7 @@ class KnowledgeGraphFilter:
             return any(filter_name.lower() in name.lower() for filter_name in all_filter_names)
         
         filtered_graph = {'epics': []}
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         
         for epic in epics:
             epic_name = epic.get('name', '')
@@ -191,7 +191,7 @@ class FileFilter:
 class Scope:
     """Scope for filtering bot operations to specific content.
     
-    Uses KnowledgeGraphFilter for story/epic/increment scoping
+    Uses StoryGraphFilter for story/epic/increment scoping
     and FileFilter for file-based scoping. Maintains backward compatibility
     with type/value/exclude API.
     
@@ -203,19 +203,19 @@ class Scope:
     skiprule: List[str] = field(default_factory=list)
     
     # New filter objects
-    _knowledge_graph_filter: Optional[KnowledgeGraphFilter] = field(default=None, repr=False)
+    _story_graph_filter: Optional[StoryGraphFilter] = field(default=None, repr=False)
     _file_filter: Optional[FileFilter] = field(default=None, repr=False)
     
     def __post_init__(self):
         """Initialize filter objects from type/value/exclude."""
-        # Create knowledge graph filter for story/epic/increment types
+        # Create story graph filter for story/epic/increment types
         if self.type in (ScopeType.STORY, ScopeType.EPIC, ScopeType.INCREMENT):
             if self.type in (ScopeType.STORY, ScopeType.EPIC):
-                self._knowledge_graph_filter = KnowledgeGraphFilter(search_terms=self.value)
+                self._story_graph_filter = StoryGraphFilter(search_terms=self.value)
             elif self.type == ScopeType.INCREMENT:
                 # Convert string values to integers
                 increments = [int(v) if isinstance(v, str) and v.isdigit() else v for v in self.value]
-                self._knowledge_graph_filter = KnowledgeGraphFilter(increments=increments)
+                self._story_graph_filter = StoryGraphFilter(increments=increments)
         
         # Create file filter for files type
         if self.type == ScopeType.FILES:
@@ -225,20 +225,20 @@ class Scope:
             )
     
     @property
-    def knowledge_graph_filter(self) -> Optional[KnowledgeGraphFilter]:
-        """Get knowledge graph filter (lazy init if needed)."""
-        return self._knowledge_graph_filter
+    def story_graph_filter(self) -> Optional[StoryGraphFilter]:
+        """Get story graph filter (lazy init if needed)."""
+        return self._story_graph_filter
     
     @property
     def file_filter(self) -> Optional[FileFilter]:
         """Get file filter (lazy init if needed)."""
         return self._file_filter
     
-    def filters_knowledge_graph(self, knowledge_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter knowledge graph using knowledge graph filter."""
-        if self._knowledge_graph_filter:
-            return self._knowledge_graph_filter.filter_knowledge_graph(knowledge_graph)
-        return knowledge_graph
+    def filters_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter story graph using story graph filter."""
+        if self._story_graph_filter:
+            return self._story_graph_filter.filter_story_graph(story_graph)
+        return story_graph
     
     def filters_files(self, file_list: List[Path]) -> List[Path]:
         """Filter file list using file filter."""
@@ -351,7 +351,7 @@ class Scope:
                 try:
                     graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
                     # Use the SAME filtering as JSON output
-                    filtered_graph = self.filters_knowledge_graph(graph_data)
+                    filtered_graph = self.filters_story_graph(graph_data)
                     # Format the filtered graph for display
                     for epic in filtered_graph.get('epics', []):
                         epic_lines = self._format_node_with_children(epic, 'epic', 0, workspace_directory, filtered_graph, epic.get('name', ''), epic.get('name', ''))

@@ -1,3 +1,3 @@
-from .scope import Scope, ScopeType, KnowledgeGraphFilter, FileFilter
+from .scope import Scope, ScopeType, StoryGraphFilter, FileFilter
 
-__all__ = ['Scope', 'ScopeType', 'KnowledgeGraphFilter', 'FileFilter']
+__all__ = ['Scope', 'ScopeType', 'StoryGraphFilter', 'FileFilter']

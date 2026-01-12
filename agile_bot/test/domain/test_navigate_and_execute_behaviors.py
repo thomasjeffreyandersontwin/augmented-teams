@@ -15,7 +15,6 @@ from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 # Story: Manage Behaviors (sequential_order: 1)
 class TestManageBehaviors:
-    """Story: Manage Behaviors Collection - Tests for navigating and managing the behaviors collection."""
     
     def test_behaviors_current_property_returns_current_behavior(self, tmp_path):
         """
@@ -175,7 +174,6 @@ class TestManageBehaviors:
 
 # Story: Manage Behavior State (sequential_order: 2)
 class TestManageBehaviorActionState:
-    """Story: Manage Behavior State - Tests for saving and loading behavior and action state."""
     
     def test_save_current_behavior_state(self, tmp_path):
         """Scenario: Current behavior state is persisted to behavior_action_state.json."""
@@ -240,7 +238,6 @@ class TestManageBehaviorActionState:
 
 # Story: Navigate To Behavior Action And Execute (sequential_order: 3)
 class TestNavigateToBehaviorActionAndExecute:
-    """Tests for Bot.execute_behavior() - Production code path and workflow state loading."""
 
     def test_execute_behavior_with_action_parameter(self, tmp_path):
         """
@@ -412,7 +409,6 @@ class TestNavigateToBehaviorActionAndExecute:
 
 # Story: Navigate Sequentially (sequential_order: 4)
 class TestNavigateSequentially:
-    """Tests for sequential navigation using bot.next() API."""
     
     def test_bot_next_navigates_to_next_action_in_workflow(self, tmp_path):
         """
@@ -654,7 +650,6 @@ class TestNavigateSequentially:
 
 # Story: Inject Context Into Instructions (sequential_order: 5)
 class TestInjectContextIntoInstructions:
-    """Tests for Insert Context Into Instructions story."""
     
     def test_action_loads_context_data_into_instructions(self, tmp_path, monkeypatch):
         """Test that Action loads clarification, strategy, and context files into instructions."""
@@ -867,7 +862,6 @@ class TestInjectContextIntoInstructions:
 
 # End-to-end integration test (no story mapping)
 class TestExecuteEndToEndWorkflow:
-    """End-to-end test that progresses through multiple behaviors and actions."""
 
     def test_complete_workflow_progresses_through_single_behavior(self, tmp_path):
         """
@@ -957,7 +951,6 @@ class TestExecuteEndToEndWorkflow:
 
 # Story: Track Activity For Workspace (sequential_order: 6)
 class TestTrackActivityForWorkspace:
-    """Story: Track Activity For Workspace - Tests that activity is tracked in the workspace directory (activity_log.json)."""
 
     def test_activity_logged_to_workspace_area_not_bot_area(self, tmp_path):
         """

@@ -1,20 +1,20 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from .knowledge_graph_template import KnowledgeGraphTemplate
+from .story_graph_template import StoryGraphTemplate
 from ...story_graph.story_graph import StoryGraph
 from ...utils import read_json_file
 if TYPE_CHECKING:
     from ...bot_path import BotPath
 
-class KnowledgeGraphSpec:
+class StoryGraphSpec:
 
     def __init__(self, kg_dir: Path, bot_paths: 'BotPath'):
         self._kg_dir = kg_dir
         self._bot_paths = bot_paths
         self._config_data: Dict[str, Any] = {}
         self._config_path: Optional[Path] = None
-        self._template: Optional[KnowledgeGraphTemplate] = None
-        self._knowledge_graph: Optional[StoryGraph] = None
+        self._template: Optional[StoryGraphTemplate] = None
+        self._story_graph: Optional[StoryGraph] = None
         self._load_config()
 
     def _get_default_config(self) -> dict:
@@ -35,11 +35,11 @@ class KnowledgeGraphSpec:
         self._config_path = config_path
 
     @property
-    def knowledge_graph(self) -> StoryGraph:
-        if self._knowledge_graph is None:
+    def story_graph(self) -> StoryGraph:
+        if self._story_graph is None:
             working_dir = self._bot_paths.workspace_directory
-            self._knowledge_graph = StoryGraph(self._bot_paths, working_dir, require_file=False, knowledge_graph_spec=self)
-        return self._knowledge_graph
+            self._story_graph = StoryGraph(self._bot_paths, working_dir, require_file=False, story_graph_spec=self)
+        return self._story_graph
 
     @property
     def output_path(self) -> str:
@@ -57,12 +57,12 @@ class KnowledgeGraphSpec:
         return template_filename
 
     @property
-    def template(self) -> Optional[KnowledgeGraphTemplate]:
+    def template(self) -> Optional[StoryGraphTemplate]:
         if self._template is None:
             template_filename = self.template_filename
             if not template_filename:
                 return None
-            self._template = KnowledgeGraphTemplate(self._kg_dir, template_filename)
+            self._template = StoryGraphTemplate(self._kg_dir, template_filename)
         return self._template
 
     @property

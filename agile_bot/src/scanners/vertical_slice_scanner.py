@@ -17,7 +17,7 @@ class VerticalSliceScanner(StoryScanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
@@ -28,7 +28,7 @@ class VerticalSliceScanner(StoryScanner):
         if not rule_obj:
             raise ValueError("rule_obj parameter is required")
         
-        increments = knowledge_graph.get('increments', [])
+        increments = story_graph.get('increments', [])
         
         for increment_idx, increment in enumerate(increments):
             increment_epics = increment.get('epics', [])

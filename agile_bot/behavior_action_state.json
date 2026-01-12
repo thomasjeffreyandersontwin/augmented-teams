@@ -1,9 +1,7 @@
 {
   "scope": {
-    "type": "story",
-    "value": [
-      "cli"
-    ],
+    "type": "all",
+    "value": [],
     "exclude": [],
     "skiprule": []
   },
@@ -30,6 +28,6 @@
     }
   ],
   "current_behavior": "story_bot.discovery",
-  "current_action": "story_bot.discovery.strategy",
-  "timestamp": "2026-01-11T22:41:44.342267"
+  "current_action": "story_bot.discovery.build",
+  "timestamp": "2026-01-12T17:33:56.232998"
 }

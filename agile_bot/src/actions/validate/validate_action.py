@@ -221,10 +221,7 @@ class ValidateRulesAction(Action):
             'validation_result': result
         }
     
-    def do_execute(self, context: ValidateActionContext):
-        """Legacy method for backwards compatibility."""
-        # Align with other actions: build full instructions via get_instructions()
-        # (runs scanners and injects results/links in _prepare_instructions)
+    def do_execute(self, context: ValidateActionContext = None):
         return self.get_instructions(context)
 
     def inject_behavior_specific_rules(self) -> Dict[str, Any]:

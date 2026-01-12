@@ -4,9 +4,9 @@ import logging
 from ..action import Action
 from ..action_context import ActionContext, ScopeActionContext
 from .knowledge import Knowledge
-from .knowledge_graph_spec import KnowledgeGraphSpec
-from .knowledge_graph_template import KnowledgeGraphTemplate
-from .build_scope import BuildScope
+from .story_graph_spec import StoryGraphSpec
+from .story_graph_template import StoryGraphTemplate
+from ...scope.action_scope import ActionScope
 from ..validate.validate_action import ValidateRulesAction
 logger = logging.getLogger(__name__)
 
@@ -31,51 +31,51 @@ class BuildKnowledgeAction(Action):
         return self._knowledge
 
     @property
-    def knowledge_graph_spec(self) -> Optional[KnowledgeGraphSpec]:
-        return self.knowledge.knowledge_graph_spec
+    def story_graph_spec(self) -> Optional[StoryGraphSpec]:
+        return self.knowledge.story_graph_spec
 
     @property
-    def knowledge_graph_template(self) -> Optional[KnowledgeGraphTemplate]:
-        return self.knowledge.knowledge_graph_template
+    def story_graph_template(self) -> Optional[StoryGraphTemplate]:
+        return self.knowledge.story_graph_template
 
     @property
     def rules(self):
         return ValidateRulesAction(behavior=self.behavior, action_config=None)
 
     def _prepare_instructions(self, instructions, context: ScopeActionContext):
-        """Prepare build instructions with knowledge graph data, rules, and scope."""
+        """Prepare build instructions with story graph data, rules, and scope."""
         # Add knowledge instructions
         instructions.update(self.knowledge.instructions)
         
         # Handle scope
-        build_scope = BuildScope.from_context(context, self.behavior.bot_paths)
-        instructions.set('scope', build_scope.scope)
-        story_names = build_scope.get_story_names(self.knowledge_graph_spec.knowledge_graph.content)
+        action_scope = ActionScope.from_context(context, self.behavior.bot_paths)
+        instructions.set('scope', action_scope.scope)
+        story_names = action_scope.get_story_names(self.story_graph_spec.story_graph.content)
         instructions.set('scope_story_names', list(story_names) if story_names else [])
         
-        # Add knowledge_graph_template and knowledge_graph_config for test compatibility
-        if self.knowledge_graph_template:
+        # Add story_graph_template and story_graph_config for test compatibility
+        if self.story_graph_template:
             # Ensure template_path is always absolute - construct from bot directory + behavior path
-            if self.knowledge_graph_template.template_path:
-                template_path_value = str(self.knowledge_graph_template.template_path.resolve())
-            elif self.knowledge_graph_spec.template_filename:
+            if self.story_graph_template.template_path:
+                template_path_value = str(self.story_graph_template.template_path.resolve())
+            elif self.story_graph_spec.template_filename:
                 # Fallback: construct absolute path from bot_directory/behaviors/{behavior}/content/knowledge_graph/{template}
                 kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'knowledge_graph'
-                template_path_value = str((kg_dir / self.knowledge_graph_spec.template_filename).resolve())
+                template_path_value = str((kg_dir / self.story_graph_spec.template_filename).resolve())
             else:
                 template_path_value = None
             
-            instructions.set('knowledge_graph_template', {
+            instructions.set('story_graph_template', {
                 'template_path': template_path_value,
-                'exists': self.knowledge_graph_template.exists
+                'exists': self.story_graph_template.exists
             })
-        if self.knowledge_graph_spec.config_data:
+        if self.story_graph_spec.config_data:
             # Use absolute path for the output file
-            output_file_path = self.knowledge_graph_spec.knowledge_graph.path
-            instructions.set('knowledge_graph_config', {
-                'output': self.knowledge_graph_spec.output_filename,
+            output_file_path = self.story_graph_spec.story_graph.path
+            instructions.set('story_graph_config', {
+                'output': self.story_graph_spec.output_filename,
                 'path': str(output_file_path.parent),  # Absolute path to directory
-                'template': self.knowledge_graph_spec.template_filename
+                'template': self.story_graph_spec.template_filename
             })
         
         # Add update/create instructions
@@ -93,24 +93,23 @@ class BuildKnowledgeAction(Action):
     def _do_confirm(self, context: ScopeActionContext) -> Dict[str, Any]:
         """Build actions - AI does the work directly."""
         return {
-            'message': 'Build instructions provided to AI - knowledge graph will be built by AI'
+            'message': 'Build instructions provided to AI - story graph will be built by AI'
         }
     
-    def do_execute(self, context: ScopeActionContext):
-        """Legacy method for backwards compatibility."""
+    def do_execute(self, context: ScopeActionContext = None):
         result = self.get_instructions(context)
         return result
 
     def _add_update_instructions(self, instructions) -> None:
-        file_exists = self.knowledge_graph_spec.knowledge_graph.path.exists()
-        instructions.set('existing_file', {'path': str(self.knowledge_graph_spec.knowledge_graph.path), 'exists': file_exists})
+        file_exists = self.story_graph_spec.story_graph.path.exists()
+        instructions.set('existing_file', {'path': str(self.story_graph_spec.story_graph.path), 'exists': file_exists})
         
         if file_exists:
             instructions.set('update_mode', True)
-            instructions.set('update_instructions', {'mode': 'update_existing', 'message': f"**CRITICAL: Output file '{self.knowledge_graph_spec.knowledge_graph.path.name}' already exists. You MUST UPDATE this existing file by adding/modifying only the content needed for this behavior. DO NOT create a new file.**", 'existing_file_path': str(self.knowledge_graph_spec.knowledge_graph.path), 'preserve_existing': self._get_preserve_existing(self.knowledge_graph_spec.knowledge_graph), 'add_or_modify': self._determine_add_or_modify_content()})
+            instructions.set('update_instructions', {'mode': 'update_existing', 'message': f"**CRITICAL: Output file '{self.story_graph_spec.story_graph.path.name}' already exists. You MUST UPDATE this existing file by adding/modifying only the content needed for this behavior. DO NOT create a new file.**", 'existing_file_path': str(self.story_graph_spec.story_graph.path), 'preserve_existing': self._get_preserve_existing(self.story_graph_spec.story_graph), 'add_or_modify': self._determine_add_or_modify_content()})
         else:
             instructions.set('create_mode', True)
-            instructions.set('create_instructions', {'mode': 'create_new', 'message': f"**CRITICAL: Output file '{self.knowledge_graph_spec.knowledge_graph.path.name}' does not exist. You MUST CREATE this file with the complete structure based on the provided template and rules.**", 'output_file_path': str(self.knowledge_graph_spec.knowledge_graph.path)})
+            instructions.set('create_instructions', {'mode': 'create_new', 'message': f"**CRITICAL: Output file '{self.story_graph_spec.story_graph.path.name}' does not exist. You MUST CREATE this file with the complete structure based on the provided template and rules.**", 'output_file_path': str(self.story_graph_spec.story_graph.path)})
 
     def _get_preserve_existing(self, story_graph) -> list:
         return [item for item in ['epics' if story_graph.has_epics else None, 'increments' if story_graph.has_increments else None, 'domain_concepts' if story_graph.has_domain_concepts else None] if item is not None]
@@ -124,7 +123,7 @@ class BuildKnowledgeAction(Action):
         base_instructions = instructions.get('base_instructions', [])
         new_instructions = []
         
-        template = self.knowledge_graph_template
+        template = self.story_graph_template
         description_lines_list = []
         schema_explanation_lines = []
         
@@ -165,12 +164,12 @@ class BuildKnowledgeAction(Action):
                             schema_explanation_lines.append(f"{key}: {str(value)}")
             
             # Get output filename and path
-            output_filename = self.knowledge_graph_spec.output_filename if self.knowledge_graph_spec else 'knowledge-graph.json'
-            output_path = str(self.knowledge_graph_spec.knowledge_graph.path.parent) if self.knowledge_graph_spec else ''
+            output_filename = self.story_graph_spec.output_filename if self.story_graph_spec else 'story-graph.json'
+            output_path = str(self.story_graph_spec.story_graph.path.parent) if self.story_graph_spec else ''
             
             # Create description text for template file and output instructions
             description_lines_list = [
-                f"Review the template file at `{template_reference}`. It shows the exact structure (fields, nesting, types) that your knowledge graph output must follow during this behavior. Read this file to understand the required schema.",
+                f"Review the template file at `{template_reference}`. It shows the exact structure (fields, nesting, types) that your story graph output must follow during this behavior. Read this file to understand the required schema.",
                 "",
                 f"Create `{output_filename}` if it does not exist. Place file at `{output_path}/`. Using the template for guidance.",
                 "",
@@ -227,7 +226,7 @@ class BuildKnowledgeAction(Action):
                     line = line.replace('{{schema}}', f'**Schema:** Story graph template at `{schema_path}`')
                 # Replace {{description}} placeholder
                 if '{{description}}' in line:
-                    line = line.replace('{{description}}', f'**Task:** Build {self.behavior.name} knowledge graph from clarification and strategy data')
+                    line = line.replace('{{description}}', f'**Task:** Build {self.behavior.name} story graph from clarification and strategy data')
             # Keep all custom instructions
             new_instructions.append(line)
         

@@ -10,14 +10,8 @@ from agile_bot.src.bot_path import BotPath
 # Removed: bootstrap_env, create_actions_workflow_json (use BotTestHelper)
 from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
-class TestGetActionInstructions:
-    """
-    Story: Get Action Instructions
-    Path: Invoke Bot / Invoke Bot Directly / Get Help
-    
-    Domain focus: Action instructions retrieval at domain level
-    """
-    
+class TestGetHelp:
+
     def test_action_has_instructions_method(self, tmp_path):
         """
         SCENARIO: Verify actions can provide instructions
@@ -53,14 +47,6 @@ class TestGetActionInstructions:
             assert instructions is not None
             assert isinstance(instructions, (dict, object))
 
-
-class TestGetParameterHelp:
-    """
-    Story: Get Parameter Help
-    Path: Invoke Bot / Invoke Bot Directly / Get Help
-    
-    Domain focus: Action parameter help retrieval at domain level
-    """
     
     def test_action_provides_parameter_help(self, tmp_path):
         """
@@ -116,14 +102,6 @@ class TestGetParameterHelp:
             assert params is not None
             assert isinstance(params, (dict, list))
 
-
-class TestGetCommandExamples:
-    """
-    Story: Get Command Examples
-    Path: Invoke Bot / Invoke Bot Directly / Get Help
-    
-    Domain focus: Action command examples retrieval at domain level
-    """
     
     def test_action_provides_command_examples(self, tmp_path):
         """

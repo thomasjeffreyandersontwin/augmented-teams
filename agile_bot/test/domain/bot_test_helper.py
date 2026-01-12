@@ -1,23 +1,4 @@
-"""
-Bot Test Helper
 
-Provides BotTestHelper class for bot setup and testing.
-
-All domain-specific methods are now in sub-helpers:
-- state: State management
-- behaviors: Behavior and action management
-- guardrails: Guardrails setup
-- clarify: Clarify action
-- strategy: Strategy action
-- build: Build action and knowledge graph
-- validate: Validate action, scanners, and rules
-- render: Render action
-- activity: Activity logging and tracking
-- story: Story graph and story map
-- scope: Scope and filtering
-- instructions: Generic instruction methods
-- files: File and directory management
-"""
 import json
 import os
 from pathlib import Path
@@ -57,28 +38,21 @@ class BotTestHelper:
             workspace_directory: Optional workspace directory (defaults to tmp_path / 'workspace')
             bot_directory: Optional custom bot directory (defaults to production story_bot)
         """
-        # Use custom bot directory if provided, otherwise use production story_bot
         if bot_directory is not None:
             self.bot_directory = bot_directory
             self.bot_directory.mkdir(parents=True, exist_ok=True)
         else:
-            # Get the actual story_bot directory (always the same)
             repo_root = Path(__file__).parent.parent.parent.parent
             self.bot_directory = repo_root / 'agile_bot' / 'bots' / 'story_bot'
         
-        # Create temp workspace directory for state files (default to tmp_path / 'workspace')
         self.workspace = workspace_directory if workspace_directory is not None else tmp_path / 'workspace'
         self.workspace.mkdir(parents=True, exist_ok=True)
 
-        # Bootstrap environment (set environment variables directly)
         os.environ['BOT_DIRECTORY'] = str(self.bot_directory)
         os.environ['WORKING_AREA'] = str(self.workspace)
         
-        # Load the actual bot (always story_bot with all behaviors)
-        # For custom bot_directory, create config in root; for production, check root then config/
         if bot_directory is not None:
             config_path = self.bot_directory / 'bot_config.json'
-            # If custom bot_directory and no config exists, create minimal bot_config.json
             if not config_path.exists():
                 import json
                 config_data = {
@@ -91,16 +65,12 @@ class BotTestHelper:
             if not config_path.exists():
                 config_path = self.bot_directory / 'config' / 'bot_config.json'
         
-        # DON'T update bot_config.json - production bot already has all behaviors
-        # and we shouldn't modify production files from tests
-        
         self.bot = Bot(
             bot_name='story_bot',
             bot_directory=self.bot_directory,
             config_path=config_path
         )
         
-        # Initialize sub-helpers
         self.state = StateTestHelper(parent=self)
         self.behaviors = BehaviorTestHelper(parent=self)
         self.guardrails = GuardrailsTestHelper(parent=self)
@@ -125,10 +95,7 @@ class BotTestHelper:
         if bot_directory:
             self.bot_directory = bot_directory
         elif not hasattr(self, 'bot_directory') or self.bot_directory is None:
-            # If use_custom_bot was True, bot_directory should already be set
-            # Otherwise, create default custom bot directory
             from pathlib import Path as P
-            # Try to infer tmp_path from workspace
             tmp_path = self.workspace.parent if self.workspace.name == 'workspace' else self.workspace
             self.bot_directory = tmp_path / 'bot'
         
@@ -138,11 +105,9 @@ class BotTestHelper:
             self.workspace = workspace_directory
             self.workspace.mkdir(parents=True, exist_ok=True)
         
-        # Bootstrap environment (set environment variables directly)
         os.environ['BOT_DIRECTORY'] = str(self.bot_directory)
         os.environ['WORKING_AREA'] = str(self.workspace)
         
-        # Create bot if it doesn't exist yet
         if self.bot is None:
             config_path = self.bot_directory / 'bot_config.json'
             if not config_path.exists():

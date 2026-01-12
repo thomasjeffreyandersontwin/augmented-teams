@@ -15,7 +15,6 @@ from agile_bot.test.domain.bot_test_helper import BotTestHelper
 
 # Story: Resolve Bot Paths (sequential_order: 4)
 class TestResolveBotPath:
-    """Story: Resolve Bot Paths - Tests that bot-related paths can be resolved from environment and accessed."""
     
     def test_bot_paths_resolves_bot_and_workspace_directories_from_environment(self, tmp_path):
         """
@@ -98,7 +97,6 @@ class TestResolveBotPath:
 
 # Story: Load Bot Configuration (sequential_order: 1)
 class TestLoadBot:
-    """Story: Load Bot - Tests that bot can be loaded from bot_config.json."""
     
     def test_bot_instantiation_with_bot_name_and_workspace(self, tmp_path):
         """Scenario: Bot can be instantiated with bot_name and workspace (BotConfig merged into Bot)."""
@@ -122,7 +120,6 @@ class TestLoadBot:
     
 # Story: Load Bot Behaviors (sequential_order: 2)
 class TestLoadBotBehaviors:
-    """Story: Load Bot Behaviors - Tests that bot behaviors can be loaded from configuration and managed as a collection with state persistence."""
     
     def test_load_behaviors_from_bot_config(self, tmp_path):
         """Scenario: Bot behaviors are loaded from BotConfig."""
@@ -160,7 +157,6 @@ class TestLoadBotBehaviors:
         )
 
 class TestLoadActions:
-    """Story: Load Actions - Tests that actions can be loaded from behavior configuration and managed as a collection with state persistence."""
     
     def test_load_actions_from_behavior_config(self, tmp_path):
         """Scenario: Actions are loaded and available."""

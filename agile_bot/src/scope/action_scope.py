@@ -1,8 +1,11 @@
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional, Set, TYPE_CHECKING
 from ..bot_path import BotPath
 from .scoping_parameter import ScopingParameter
 from ..story_graph.nodes import StoryMap, Story
+
+if TYPE_CHECKING:
+    from ..actions.action_context import ScopeActionContext
 
 class ActionScope:
 
@@ -11,6 +14,23 @@ class ActionScope:
         self._bot_paths = bot_paths
         self._scope_config: Dict[str, Any] = {}
         self._build_scope()
+    
+    @classmethod
+    def from_context(cls, context: 'ScopeActionContext', bot_paths: Optional[BotPath] = None) -> 'ActionScope':
+        """Create ActionScope from ScopeActionContext.
+        
+        Args:
+            context: ScopeActionContext with typed scope
+            bot_paths: Optional BotPath instance
+            
+        Returns:
+            ActionScope instance
+        """
+        params = {}
+        if context.scope:
+            params['scope'] = context.scope.to_dict()
+        
+        return cls(params, bot_paths)
 
     def _handle_scope_parameter(self, scope_value: Any) -> None:
         if not isinstance(scope_value, dict):
@@ -59,6 +79,10 @@ class ActionScope:
             if value is None or key == 'scope':
                 continue
             self._handle_custom_parameter(key, value)
+        
+        # Default to 'all' if no scope configured
+        if not self._scope_config:
+            self._scope_config['all'] = True
 
     def _handle_custom_parameter(self, key: str, value: Any):
         self._scope_config[key] = value
@@ -67,16 +91,16 @@ class ActionScope:
     def scope(self) -> Dict[str, Any]:
         return self._scope_config
 
-    def get_story_names(self, knowledge_graph: Dict[str, Any]) -> Optional[Set[str]]:
+    def get_story_names(self, story_graph: Dict[str, Any]) -> Optional[Set[str]]:
         if self._scope_config.get('all') is True or not self._scope_config:
             return None
         
-        story_map = StoryMap(knowledge_graph)
+        story_map = StoryMap(story_graph)
         story_names = set()
         
         self._collect_story_names_from_scope(story_names)
         self._collect_story_names_from_epics(story_map, story_names)
-        self._collect_story_names_from_increments(knowledge_graph, story_names)
+        self._collect_story_names_from_increments(story_graph, story_names)
         
         return story_names if story_names else None
 
@@ -99,28 +123,28 @@ class ActionScope:
             if epic:
                 story_names.update(s.name for s in epic.all_stories)
 
-    def _collect_story_names_from_increments(self, knowledge_graph: Dict[str, Any], story_names: Set[str]) -> None:
+    def _collect_story_names_from_increments(self, story_graph: Dict[str, Any], story_names: Set[str]) -> None:
         if 'increment_priorities' in self._scope_config:
             priorities = self._scope_config['increment_priorities']
             priorities_list = priorities if isinstance(priorities, list) else [priorities]
             for priority in priorities_list:
-                story_names.update(self._find_increment_stories_by_priority(knowledge_graph, priority))
+                story_names.update(self._find_increment_stories_by_priority(story_graph, priority))
         
         if 'increment_names' in self._scope_config:
             names = self._scope_config['increment_names']
             names_list = names if isinstance(names, list) else [names]
             for name in names_list:
-                story_names.update(self._find_increment_stories_by_name(knowledge_graph, name))
+                story_names.update(self._find_increment_stories_by_name(story_graph, name))
 
-    def _find_increment_stories_by_priority(self, knowledge_graph: Dict[str, Any], priority: int) -> Set[str]:
-        increments = knowledge_graph.get('increments', [])
+    def _find_increment_stories_by_priority(self, story_graph: Dict[str, Any], priority: int) -> Set[str]:
+        increments = story_graph.get('increments', [])
         for increment in increments:
             if increment.get('priority') == priority:
                 return self._extract_story_names_from_increment(increment)
         return set()
 
-    def _find_increment_stories_by_name(self, knowledge_graph: Dict[str, Any], increment_name: str) -> Set[str]:
-        increments = knowledge_graph.get('increments', [])
+    def _find_increment_stories_by_name(self, story_graph: Dict[str, Any], increment_name: str) -> Set[str]:
+        increments = story_graph.get('increments', [])
         for increment in increments:
             if increment.get('name') == increment_name:
                 return self._extract_story_names_from_increment(increment)
