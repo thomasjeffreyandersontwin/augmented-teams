@@ -17,9 +17,6 @@
     "python.testing.cwd":  "",
     "python.testing.autoTestDiscoverOnSaveEnabled":  true,
     "cursor.ai.autoAcceptFileWrites":  true,
-    "cursor.general.autoAcceptFileWrites":  true,
-    "files.readonlyInclude": {
-        "agile_bot/bots/**/*.json": true,
-        "agile_bot/base_actions/**/*.json": true
-    }
+    "cursor.general.autoAcceptFileWrites":  true
+   
 }
