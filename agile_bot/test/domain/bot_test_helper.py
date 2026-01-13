@@ -7,6 +7,7 @@ from agile_bot.src.bot.bot import Bot
 from agile_bot.test.domain.helpers import (
     StateTestHelper,
     BehaviorTestHelper,
+    NavigationTestHelper,
     GuardrailsTestHelper,
     ClarifyTestHelper,
     StrategyTestHelper,
@@ -74,6 +75,7 @@ class BotTestHelper:
         
         self.state = StateTestHelper(parent=self)
         self.behaviors = BehaviorTestHelper(parent=self)
+        self.navigation = NavigationTestHelper(parent=self)
         self.guardrails = GuardrailsTestHelper(parent=self)
         self.clarify = ClarifyTestHelper(parent=self)
         self.strategy = StrategyTestHelper(parent=self)

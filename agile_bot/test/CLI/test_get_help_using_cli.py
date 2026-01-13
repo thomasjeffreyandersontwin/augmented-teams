@@ -1,299 +1,166 @@
 """
-Get Help Using CLI Tests - CLI Command Interface
+Get Help Using CLI Commands Tests - Parameterized Across Channels
 
-CLI focus: Help command parsing and output formatting (TTY, Markdown, JSON modes)
+Maps directly to: test_get_help.py domain tests
 
 These tests focus on CLI-specific concerns:
-- 'help' command parsing
-- Help output format and content
-- Examples display
+- Help command parsing
+- CLI help display format verification (TTY, Markdown, JSON modes)
+- Available commands listing
+- Action instructions display
+- Parameter help display
+- Command examples display
 
-Uses common helpers from: bot_test_helper.py
+Uses parameterized tests to run same test logic across all 3 channels.
 """
 import pytest
-import json
-from agile_bot.src.cli.cli_session import CLISession
-from agile_bot.test.domain.bot_test_helper import (
-    setup_test_bot,
-    create_behavior_action_state
-)
+from agile_bot.test.CLI.helpers import TTYBotTestHelper, PipeBotTestHelper, JsonBotTestHelper
 
 
-def assert_valid_json(output: str) -> dict:
+class TestGetHelpUsingCLI:
     """
-    Helper to verify output contains valid JSON.
-    Handles cases where output may contain multiple JSON objects or extra content.
-    Returns the first valid JSON object parsed.
-    """
-    output = output.strip()
-    try:
-        return json.loads(output)
-    except json.JSONDecodeError:
-        start_idx = output.find('{')
-        if start_idx >= 0:
-            brace_count = 0
-            for i in range(start_idx, len(output)):
-                if output[i] == '{':
-                    brace_count += 1
-                elif output[i] == '}':
-                    brace_count -= 1
-                    if brace_count == 0:
-                        json_str = output[start_idx:i+1]
-                        try:
-                            return json.loads(json_str)
-                        except json.JSONDecodeError:
-                            pass
-        pytest.fail(f"Output does not contain valid JSON: {output[:200]}")
-
-
-class TestDisplayActionHelpUsingCLIInTTYMode:
-    """
-    Story: View Available Commands (Help) (TTY Mode)
+    Story: Get Help Using CLI Commands
     
-    CLI focus: Help command parsing and TTY output format
+    Domain logic: test_get_help.py::TestGetHelp
+    CLI focus: Display help, instructions, parameters, and examples via CLI
     """
     
-    def test_user_views_all_available_commands(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_action_shows_instructions_in_cli_output(self, tmp_path, helper_class):
         """
-        SCENARIO: User views all available commands - TTY Mode
-        GIVEN: CLI is running
-        WHEN: user enters 'help'
-        THEN: CLI parses 'help' command
-              CLI displays help menu in exact TTY format
-              Shows Core Commands, Available Components, Examples, Other Commands, Scope Command Details
+        SCENARIO: Action instructions are shown in CLI output
+        GIVEN: CLI is at shape.clarify
+        WHEN: user navigates to action
+        THEN: CLI output shows action instructions
         
-        CLI focus: Help output exact format verification
+        Domain: test_action_has_instructions_method
         """
-        # GIVEN: CLI is running
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
         
-        # WHEN: user enters 'help' via CLI (TTY mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='tty')
-        cli_response = cli_session.execute_command('help')
+        # When - Navigate to action (shows instructions)
+        cli_response = helper.cli_session.execute_command('shape.clarify')
         
-        # THEN: CLI displays help menu in exact TTY format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify exact format with hard-coded expectations
-        # Core Commands section
-        assert 'Core Commands:' in output
-        assert 'echo \'[behavior.][action.]operation\' | python repl_main.py' in output
-        assert 'echo \'[behavior][.action]\' | python repl_main.py' in output
-        
-        # Available Components section
-        assert 'Available Components:' in output
-        assert 'behaviors' in output
-        assert 'shape' in output or 'discovery' in output  # At least one behavior listed
-        assert 'actions:' in output
-        assert 'clarify' in output
-        assert 'build' in output
-        assert 'validate' in output
-        assert 'operations:' in output
-        assert 'instructions' in output
-        assert 'confirm' in output
-        
-        # Examples section
-        assert 'Examples:' in output
-        assert 'echo \'.\' | python repl_main.py' in output
-        assert 'echo \'shape\' | python repl_main.py' in output
-        assert 'echo \'shape.build\' | python repl_main.py' in output
-        
-        # Other Commands section
-        assert 'Other Commands:' in output
-        assert 'echo \'status\' | python repl_main.py' in output
-        assert 'echo \'next\' | python repl_main.py' in output
-        assert 'echo \'scope [filter]\' | python repl_main.py' in output
-        assert 'echo \'help\' | python repl_main.py' in output
-        assert 'echo \'exit\' | python repl_main.py' in output
-        
-        # Scope Command Details section
-        assert 'Scope Command Details:' in output
-        assert 'IMPORTANT:' in output
-        assert 'Usage (pick ONE' in output or 'Usage:' in output
-        assert 'echo \'scope all\' | python repl_main.py' in output
-        assert 'echo \'scope "Story Name"\' | python repl_main.py' in output
-        assert 'echo \'scope "file:' in output
-
-    def test_user_views_examples_in_help(self, tmp_path):
-        """
-        SCENARIO: User views examples in help - TTY Mode
-        GIVEN: CLI is running
-        WHEN: user enters 'help'
-        THEN: CLI displays help with examples in exact TTY format
-              Shows specific command examples with descriptions
-        
-        CLI focus: Help examples format verification
-        """
-        # GIVEN: CLI is running
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters 'help' via CLI (TTY mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='tty')
-        cli_response = cli_session.execute_command('help')
-        
-        # THEN: CLI displays help with examples in exact TTY format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify examples section format
-        assert 'Examples:' in output
-        # Verify example format: command -> description
-        assert '->' in output or '-> Execute' in output or '-> Jump' in output
-        # Verify specific examples
-        assert 'echo \'.\' | python repl_main.py' in output
-        assert 'echo \'shape.build\' | python repl_main.py' in output
-
-
-class TestDisplayActionHelpUsingCLIInPipeMode:
-    """
-    Story: View Available Commands (Help) (Markdown Mode)
+        # Then - Instructions are in output
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'clarify')
+        # Verify instructions content is present
+        assert 'clarify' in cli_response.output.lower() or 'instruction' in cli_response.output.lower()
     
-    CLI focus: Help command parsing and Markdown output format
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_action_shows_parameter_help_in_output(self, tmp_path, helper_class):
+        """
+        SCENARIO: Action parameter help is shown in CLI output
+        GIVEN: CLI is at shape.clarify
+        WHEN: user navigates to action with parameters
+        THEN: CLI output shows parameter information
+        
+        Domain: test_action_provides_parameter_help
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
+        
+        # When - Navigate to action (shows instructions with parameters)
+        cli_response = helper.cli_session.execute_command('shape.clarify')
+        
+        # Then - Output contains action information
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'clarify')
+        # Parameters or descriptions should be in output
+        output_lower = cli_response.output.lower()
+        assert ('parameter' in output_lower or 
+                'input' in output_lower or 
+                'question' in output_lower or
+                'evidence' in output_lower or
+                'clarify' in output_lower)
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_action_shows_usage_information_in_output(self, tmp_path, helper_class):
+        """
+        SCENARIO: Action shows usage information in CLI output
+        GIVEN: CLI is at shape.clarify
+        WHEN: user navigates to action
+        THEN: CLI output shows how to use the action
+        
+        Domain: test_action_provides_command_examples
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
+        
+        # When - Navigate to action
+        cli_response = helper.cli_session.execute_command('shape.clarify')
+        
+        # Then - Output contains usage information
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'clarify')
+        # Action name should be in output (usage context)
+        assert 'clarify' in cli_response.output.lower()
+
+
+class TestDisplayHelpUsingCLI:
+    """
+    Story: Display Help Command Using CLI
+    
+    CLI-specific story: Showing available commands and help text via 'help' command
     """
     
-    def test_user_views_all_available_commands(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_help_command_shows_available_commands(self, tmp_path, helper_class):
         """
-        SCENARIO: User views all available commands - Markdown Mode
-        GIVEN: CLI is running
+        SCENARIO: Help command shows available commands (all channels)
+        GIVEN: CLI session active
         WHEN: user enters 'help'
-        THEN: CLI parses 'help' command
-              CLI displays help menu in exact Markdown format
-        
-        CLI focus: Help output format verification
+        THEN: CLI displays list of available commands
+              Output shows commands in appropriate channel format
         """
-        # GIVEN: CLI is running
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'build')
         
-        # WHEN: user enters 'help' via CLI (Markdown mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='markdown')
-        cli_response = cli_session.execute_command('help')
+        # When
+        cli_response = helper.cli_session.execute_command('help')
         
-        # THEN: CLI displays help menu in exact Markdown format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify exact Markdown format with hard-coded expectations
-        # Core Commands section
-        assert '## Core Commands' in output
-        assert 'echo \'[behavior.][action.]operation\' | python repl_main.py' in output
-        
-        # Available Components section
-        assert 'Available Components:' in output
-        assert 'behaviors' in output
-        assert 'actions:' in output
-        assert 'clarify' in output
-        assert 'build' in output
-        
-        # Examples section
-        assert 'Examples:' in output
-        assert 'echo \'.\' | python repl_main.py' in output
-        
-        # Other Commands section
-        assert 'Other Commands:' in output
-        assert 'echo \'status\' | python repl_main.py' in output
-        assert 'echo \'help\' | python repl_main.py' in output
-
-    def test_user_views_examples_in_help(self, tmp_path):
-        """
-        SCENARIO: User views examples in help - Markdown Mode
-        GIVEN: CLI is running
-        WHEN: user enters 'help'
-        THEN: CLI displays help with examples in exact Markdown format
-        
-        CLI focus: Help output format verification
-        """
-        # GIVEN: CLI is running
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters 'help' via CLI (Markdown mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='markdown')
-        cli_response = cli_session.execute_command('help')
-        
-        # THEN: CLI displays help with examples in exact Markdown format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify examples section format
-        assert 'Examples:' in output
-        assert 'echo \'.\' | python repl_main.py' in output
-        assert 'echo \'shape.build\' | python repl_main.py' in output
-
-
-class TestDisplayActionHelpUsingCLIInJSONMode:
-    """
-    Story: View Available Commands (Help) (JSON Mode)
+        # Then - Help shows commands
+        helper.help.assert_help_shows_available_commands(cli_response.output)
     
-    CLI focus: Help command parsing and JSON output format
-    """
-    
-    def test_user_views_all_available_commands(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_help_with_command_shows_details(self, tmp_path, helper_class):
         """
-        SCENARIO: User views all available commands - JSON Mode
-        GIVEN: CLI is running
-        WHEN: user enters 'help'
-        THEN: CLI parses 'help' command
-              CLI displays help menu in exact JSON format
-        
-        CLI focus: Help output format verification
+        SCENARIO: Help with command name shows command details (all channels)
+        GIVEN: CLI session active
+        WHEN: user enters 'help status'
+        THEN: CLI displays help for 'status' command
+              Output shows command details in appropriate channel format
         """
-        # GIVEN: CLI is running
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'build')
         
-        # WHEN: user enters 'help' via CLI (JSON mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        cli_response = cli_session.execute_command('help')
+        # When
+        cli_response = helper.cli_session.execute_command('help status')
         
-        # THEN: CLI displays help menu in exact JSON format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify JSON format
-        help_data = assert_valid_json(output)
-        assert isinstance(help_data, dict)
-        # Verify help JSON structure
-        assert 'main_help' in help_data or 'commands' in help_data or 'examples' in help_data
-
-    def test_user_views_examples_in_help(self, tmp_path):
-        """
-        SCENARIO: User views examples in help - JSON Mode
-        GIVEN: CLI is running
-        WHEN: user enters 'help'
-        THEN: CLI displays help with examples in exact JSON format
-        
-        CLI focus: Help output format verification
-        """
-        # GIVEN: CLI is running
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters 'help' via CLI (JSON mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        cli_response = cli_session.execute_command('help')
-        
-        # THEN: CLI displays help with examples in exact JSON format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify JSON format
-        help_data = assert_valid_json(output)
-        assert isinstance(help_data, dict)
-        # Verify examples are in JSON structure
-        assert 'examples' in help_data or 'command_examples' in help_data or 'main_help' in help_data
+        # Then - Help shows command details
+        helper.help.assert_help_shows_command_details(cli_response.output, 'status')

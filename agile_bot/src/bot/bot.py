@@ -372,6 +372,7 @@ class Bot:
             if behavior.action_names:
                 first_action = behavior.action_names[0]
                 behavior.actions.navigate_to(first_action)
+                self.behaviors.save_state()  # Persist state
                 return {
                     'status': 'success',
                     'message': f'Moved to {behavior.name}.{first_action}',
@@ -391,6 +392,7 @@ class Bot:
             if current_index < len(action_names) - 1:
                 next_action = action_names[current_index + 1]
                 behavior.actions.navigate_to(next_action)
+                self.behaviors.save_state()  # Persist state
                 return {
                     'status': 'success',
                     'message': f'Moved to {behavior.name}.{next_action}',
@@ -435,6 +437,7 @@ class Bot:
             if current_index > 0:
                 prev_action = action_names[current_index - 1]
                 behavior.actions.navigate_to(prev_action)
+                self.behaviors.save_state()  # Persist state
                 return {
                     'status': 'success',
                     'message': f'Moved back to {behavior.name}.{prev_action}',
@@ -508,6 +511,64 @@ class Bot:
             'behavior': behavior_name,
             'action': current_action_name,
             'result': 'Action execution complete'
+        }
+
+    def tree(self) -> str:
+        """Display behavior hierarchy tree.
+        
+        Returns:
+            String representation of all behaviors and their actions
+        """
+        lines = []
+        behaviors_list = list(self.behaviors)
+        
+        for i, behavior in enumerate(behaviors_list):
+            is_last_behavior = (i == len(behaviors_list) - 1)
+            behavior_prefix = "└──" if is_last_behavior else "├──"
+            is_current_behavior = (self.behaviors.current and behavior.name == self.behaviors.current.name)
+            behavior_marker = "➤ " if is_current_behavior else ""
+            lines.append(f"{behavior_prefix} {behavior_marker}{behavior.name}")
+            
+            # Show actions
+            action_names = behavior.action_names
+            for j, action in enumerate(action_names):
+                is_last_action = (j == len(action_names) - 1)
+                action_prefix = "    └──" if is_last_behavior else "│   └──" if is_last_action else "│   ├──"
+                if not is_last_behavior and not is_last_action:
+                    action_prefix = "│   ├──"
+                is_current_action = (is_current_behavior and 
+                                   behavior.actions.current_action_name == action)
+                action_marker = "➤ " if is_current_action else ""
+                lines.append(f"{action_prefix} {action_marker}{action}")
+        
+        return "\n".join(lines)
+    
+    def pos(self) -> Dict[str, Any]:
+        """Get current position (behavior.action).
+        
+        Returns:
+            Dict with current behavior and action
+        """
+        if not self.behaviors.current:
+            return {
+                'status': 'error',
+                'message': 'No behavior is currently active'
+            }
+        
+        behavior = self.behaviors.current
+        action = behavior.actions.current_action_name
+        
+        if not action:
+            return {
+                'status': 'error',
+                'message': f'No action is currently active in {behavior.name}'
+            }
+        
+        return {
+            'status': 'success',
+            'behavior': behavior.name,
+            'action': action,
+            'position': f'{behavior.name}.{action}'
         }
 
     def __getattr__(self, name: str):

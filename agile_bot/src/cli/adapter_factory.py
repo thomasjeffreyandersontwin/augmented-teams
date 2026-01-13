@@ -122,8 +122,8 @@ class AdapterFactory:
         """
         domain_type = type(domain_object).__name__
         
-        # Fallback for dict/list - use generic JSON adapter
-        if domain_type in ('dict', 'list'):
+        # Fallback for dict/list/str - use generic adapter
+        if domain_type in ('dict', 'list', 'str'):
             from agile_bot.src.cli.adapters import GenericAdapter
             return GenericAdapter(domain_object, channel)
         

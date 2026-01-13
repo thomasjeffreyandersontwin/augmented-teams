@@ -186,7 +186,27 @@ class GenericAdapter(ChannelAdapter):
         return json.loads(data)
     
     def _format_tty(self) -> str:
-        """Format data for TTY output."""
+        """Format data for TTY output with ANSI formatting."""
+        # For execution results (dicts with status/behavior/action), format nicely
+        if isinstance(self.data, dict):
+            # Check if it's an execution result
+            if 'status' in self.data and 'behavior' in self.data and 'action' in self.data:
+                lines = []
+                lines.append(f"\x1b[1mStatus:\x1b[0m {self.data['status']}")
+                lines.append(f"\x1b[1mBehavior:\x1b[0m {self.data['behavior']}")
+                lines.append(f"\x1b[1mAction:\x1b[0m {self.data['action']}")
+                if 'message' in self.data:
+                    lines.append(f"\x1b[1mMessage:\x1b[0m {self.data['message']}")
+                if 'result' in self.data:
+                    lines.append(f"\x1b[1mResult:\x1b[0m {self.data['result']}")
+                return '\n'.join(lines)
+            else:
+                # Generic dict formatting
+                lines = []
+                for key, value in self.data.items():
+                    lines.append(f"\x1b[1m{key}:\x1b[0m {value}")
+                return '\n'.join(lines)
+        # For lists/other types, use JSON as fallback
         import json
         return json.dumps(self.data, indent=2)
     

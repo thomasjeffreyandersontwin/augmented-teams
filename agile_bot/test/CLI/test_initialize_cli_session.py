@@ -1,630 +1,530 @@
 """
-Initialize CLI Session Tests - CLI Initialization Interface
+Initialize CLI Session Tests - Parameterized Across Channels
 
-Tests for CLI session initialization stories:
-- Launch CLI in Interactive Mode
-- Launch CLI in Pipe Mode
-- Detect and Configure TTY/Non-TTY Input for CLI
-- Load and Display Workspace Context in CLI
+Maps directly to: test_initialize_bot.py domain tests
 
-CLI focus: Session initialization, TTY detection, mode configuration
-Uses common helpers from: bot_test_helper.py
+These tests focus on CLI-specific concerns:
+- Session initialization and configuration
+- Mode detection (TTY, Pipe, JSON)
+- Bot and workspace loading
+- Bot paths resolution via CLI
+- Bot configuration loading via CLI
+- Behaviors and actions loading via CLI
 
-Note: Some advanced features (adapters, display_current_state) not yet implemented in CLISession.
-These tests will be enhanced once domain classes are created in Phase 2.3.
+Uses parameterized tests to run same test logic across all 3 channels.
 """
 import pytest
-import json
 import sys
-from pathlib import Path
-from agile_bot.src.cli.cli_session import CLISession
-from agile_bot.test.domain.bot_test_helper import (
-    setup_test_bot,
-    create_behavior_action_state
-)
+from agile_bot.test.CLI.helpers import TTYBotTestHelper, PipeBotTestHelper, JsonBotTestHelper
 
 
-def create_story_graph(workspace_directory):
-    """Create a story graph file in workspace"""
-    stories_dir = workspace_directory / 'docs' / 'stories'
-    stories_dir.mkdir(parents=True, exist_ok=True)
-    
-    story_graph = {
-        "epics": [
-            {
-                "name": "Test Epic",
-                "stories": ["Test Story 1", "Test Story 2"]
-            }
-        ]
-    }
-    (stories_dir / 'story-graph.json').write_text(json.dumps(story_graph))
-    return stories_dir / 'story-graph.json'
-
-
-class TestStartCLISessionInTTYMode:
+# ============================================================================
+# STORY: Resolve Bot Paths
+# Maps to: TestResolveBotPath in test_initialize_bot.py (5 tests)
+# ============================================================================
+class TestResolveBotPathUsingCLI:
     """
-    Story: Launch CLI in Interactive Mode (TTY Mode)
+    Story: Resolve Bot Paths Using CLI
     
-    CLI focus: Session initialization in interactive mode with TTY adapters
+    Domain logic: test_initialize_bot.py::TestResolveBotPath
+    CLI focus: Verify bot paths accessible via CLI session
     """
     
-    def test_cli_launches_in_interactive_mode(self, tmp_path, monkeypatch):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_resolves_bot_and_workspace_directories(self, tmp_path, helper_class):
         """
-        SCENARIO: CLI launches in interactive mode
-        GIVEN: CLISession is configured for interactive mode
-        WHEN: user runs CLI
-        THEN: CLISession wraps Bot
-              CLI can execute commands
+        SCENARIO: CLI session resolves bot and workspace directories
+        GIVEN: CLI session initialized
+        WHEN: Bot paths accessed via CLI
+        THEN: Directories resolved correctly
         
-        CLI focus: Interactive mode initialization
+        Domain: test_bot_paths_resolves_bot_and_workspace_directories_from_environment
         """
-        # GIVEN: Interactive mode (TTY detected)
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then - Bot paths accessible via CLI session
+        assert helper.cli_session.bot.bot_paths.bot_directory == helper.domain.bot_directory
+        assert helper.cli_session.bot.bot_paths.workspace_directory == helper.domain.workspace
+        assert helper.cli_session.bot.bot_paths.bot_directory.exists()
+        assert helper.cli_session.bot.bot_paths.workspace_directory.exists()
+        assert (helper.cli_session.bot.bot_paths.bot_directory / 'bot_config.json').exists()
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_base_actions_directory_accessible(self, tmp_path, helper_class):
+        """
+        SCENARIO: Base actions directory accessible via CLI session
+        GIVEN: CLI session initialized
+        WHEN: base_actions_directory accessed via CLI
+        THEN: Returns real agile_bot/base_actions path
+        
+        Domain: test_bot_paths_base_actions_directory_property
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then
+        from agile_bot.src.bot.workspace import get_base_actions_directory
+        expected_base_actions = get_base_actions_directory()
+        assert helper.cli_session.bot.bot_paths.base_actions_directory == expected_base_actions
+        assert helper.cli_session.bot.bot_paths.base_actions_directory.exists()
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_python_workspace_root_accessible(self, tmp_path, helper_class):
+        """
+        SCENARIO: Python workspace root accessible via CLI session
+        GIVEN: CLI session initialized
+        WHEN: python_workspace_root accessed via CLI
+        THEN: Returns Python workspace root path
+        
+        Domain: test_bot_paths_python_workspace_root_property
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then
+        from pathlib import Path
+        assert isinstance(helper.cli_session.bot.bot_paths.python_workspace_root, Path)
+        assert helper.cli_session.bot.bot_paths.python_workspace_root.exists()
+        assert (helper.cli_session.bot.bot_paths.python_workspace_root / 'agile_bot').exists()
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_find_repo_root_method_works(self, tmp_path, helper_class):
+        """
+        SCENARIO: find_repo_root method works via CLI session
+        GIVEN: CLI session initialized
+        WHEN: find_repo_root() called via CLI
+        THEN: Returns repository root path
+        
+        Domain: test_bot_paths_find_repo_root_method
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # When
+        repo_root = helper.cli_session.bot.bot_paths.find_repo_root()
+        
+        # Then
+        from pathlib import Path
+        assert isinstance(repo_root, Path)
+        assert repo_root.exists()
+        assert (repo_root / 'agile_bot').exists()
+        assert (repo_root / 'agile_bot' / 'bots' / 'story_bot').exists()
+
+
+# ============================================================================
+# STORY: Load Bot Configuration
+# Maps to: TestLoadBot in test_initialize_bot.py
+# ============================================================================
+class TestLoadBotUsingCLI:
+    """
+    Story: Load Bot Configuration Using CLI
+    
+    Domain logic: test_initialize_bot.py::TestLoadBot
+    CLI focus: Verify bot configuration loaded and accessible via CLI
+    """
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_loads_bot_with_name_and_workspace(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session loads bot with name and workspace
+        GIVEN: CLI session initialized
+        WHEN: Bot accessed via CLI
+        THEN: Bot has correct name and workspace
+        
+        Domain: test_bot_instantiation_with_bot_name_and_workspace
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then
+        assert helper.cli_session.bot.bot_name == 'story_bot'
+        assert helper.cli_session.bot.name == 'story_bot'
+        assert helper.cli_session.bot.bot_directory.exists()
+        assert helper.cli_session.bot.bot_paths.workspace_directory == helper.domain.workspace
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_bot_name_property_accessible(self, tmp_path, helper_class):
+        """
+        SCENARIO: Bot name property accessible via CLI session
+        GIVEN: CLI session initialized
+        WHEN: Bot name accessed
+        THEN: Returns correct bot name
+        
+        Domain: test_bot_name_property
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then
+        assert helper.cli_session.bot.name == 'story_bot'
+        assert helper.cli_session.bot.bot_name == 'story_bot'
+
+
+# ============================================================================
+# STORY: Load Bot Behaviors
+# Maps to: TestLoadBotBehaviors in test_initialize_bot.py
+# ============================================================================
+class TestLoadBotBehaviorsUsingCLI:
+    """
+    Story: Load Bot Behaviors Using CLI
+    
+    Domain logic: test_initialize_bot.py::TestLoadBotBehaviors
+    CLI focus: Verify behaviors loaded and accessible via CLI commands
+    """
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_loads_behaviors_from_config(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session loads behaviors from bot config
+        GIVEN: CLI session initialized
+        WHEN: Behaviors accessed
+        THEN: All behaviors loaded correctly
+        
+        Domain: test_load_behaviors_from_bot_config
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then
+        expected_behaviors = {'scenarios', 'tests', 'code', 'discovery', 'exploration', 'prioritization', 'shape'}
+        assert set(helper.cli_session.bot.behaviors.names) == expected_behaviors
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_sets_first_behavior_as_current(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session sets first behavior as current
+        GIVEN: CLI session initialized
+        WHEN: Current behavior accessed
+        THEN: First behavior is current
+        
+        Domain: test_load_behaviors_sets_first_as_current
+        """
+        # Given/When
+        helper = helper_class(tmp_path)
+        
+        # Then - Validate complete current behavior structure
+        current_behavior = helper.cli_session.bot.behaviors.current
+        helper.behaviors.assert_behavior_has_properties(current_behavior)
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_behavior_config_properties_accessible(self, tmp_path, helper_class):
+        """
+        SCENARIO: Behavior config properties accessible via CLI session
+        GIVEN: CLI session at prioritization behavior
+        WHEN: Behavior config properties accessed
+        THEN: All properties accessible with correct structure
+        
+        Domain: test_behavior_provides_access_to_all_config_properties
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('prioritization', 'clarify')
+        
+        # When - Navigate to prioritization
+        cli_response = helper.cli_session.execute_command('prioritization')
+        
+        # Then - Behavior config accessible
+        behavior = helper.cli_session.bot.behaviors.current
+        helper.domain.behaviors.assert_behavior_complete_structure(
+            behavior=behavior,
+            expected_name='prioritization',
+            expected_order=2,
+            expected_actions=['clarify', 'strategy', 'validate', 'render'],
+            expected_description='Organize stories into delivery increments based on business value, dependencies, and risk'
+        )
+
+
+# ============================================================================
+# STORY: Load Actions
+# Maps to: TestLoadActions in test_initialize_bot.py
+# ============================================================================
+class TestLoadActionsUsingCLI:
+    """
+    Story: Load Actions Using CLI
+    
+    Domain logic: test_initialize_bot.py::TestLoadActions
+    CLI focus: Verify actions loaded and accessible via CLI navigation
+    """
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_loads_actions_from_behavior_config(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session loads actions from behavior config
+        GIVEN: CLI session at shape behavior
+        WHEN: Actions accessed
+        THEN: All actions loaded correctly
+        
+        Domain: test_load_actions_from_behavior_config
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
+        
+        # When - Navigate to shape to ensure it's loaded
+        cli_response = helper.cli_session.execute_command('shape')
+        
+        # Then - Actions accessible
+        actions = helper.cli_session.bot.behaviors.current.actions
+        expected_actions = {'clarify', 'strategy', 'build', 'validate', 'render'}
+        actual_actions = {a.action_name for a in actions._actions}
+        assert actual_actions == expected_actions
+        assert actions.current.action_name == 'clarify'
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_sets_first_action_as_current(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session sets first action as current
+        GIVEN: CLI session at shape behavior
+        WHEN: Current action accessed
+        THEN: First action is current
+        
+        Domain: test_load_actions_sets_first_as_current
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
+        
+        # When
+        cli_response = helper.cli_session.execute_command('shape')
+        
+        # Then
+        assert helper.cli_session.bot.behaviors.current.actions.current_action_name == 'clarify'
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_action_instructions_accessible(self, tmp_path, helper_class):
+        """
+        SCENARIO: Action instructions accessible via CLI session
+        GIVEN: CLI session at shape.clarify
+        WHEN: Action instructions accessed
+        THEN: Merged instructions from base and behavior available
+        
+        Domain: test_action_merges_instructions_from_base_and_behavior
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
+        
+        # When - Navigate to shape
+        cli_response = helper.cli_session.execute_command('shape')
+        
+        # Then - Action instructions accessible
+        actions = helper.cli_session.bot.behaviors.current.actions
+        clarify_action = actions.find_by_name('clarify')
+        
+        assert clarify_action.action_name == 'clarify'
+        
+        # Validate complete instructions structure
+        instructions = clarify_action.instructions
+        assert 'base_instructions' in instructions
+        base_instructions_list = instructions['base_instructions']
+        assert isinstance(base_instructions_list, list)
+        assert len(base_instructions_list) > 0, "base_instructions should contain instruction content"
+
+
+# ============================================================================
+# STORY: Initialize CLI Session
+# CLI-specific story
+# ============================================================================
+class TestInitializeCLISession:
+    """
+    Story: Initialize CLI Session
+    
+    CLI-specific story: Starting a CLI session with bot and workspace
+    """
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_initializes_bot(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session initializes bot (all channels)
+        GIVEN: Bot and workspace configured
+        WHEN: CLISession is created
+        THEN: Session wraps bot
+              Bot is accessible via session
+        """
+        # Given/When - Helper creates CLI session internally
+        helper = helper_class(tmp_path)
+        
+        # Then - Validate complete bot structure
+        bot = helper.cli_session.bot
+        assert bot.bot_name == 'story_bot'
+        assert bot.behaviors is not None
+        assert len(bot.behaviors.names) > 0
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_loads_existing_state(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session loads existing state (all channels)
+        GIVEN: Bot with saved state
+        WHEN: CLISession is created
+        THEN: Bot loads previous state
+              Current position restored
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('discovery', 'validate')
+        
+        # When - Execute command to verify state loaded
+        cli_response = helper.cli_session.execute_command('discovery')
+        
+        # Then - Bot at expected position
+        helper.domain.behaviors.assert_at_behavior_action('discovery', 'validate')
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_can_execute_commands(self, tmp_path, helper_class):
+        """
+        SCENARIO: CLI session can execute commands (all channels)
+        GIVEN: Initialized CLI session
+        WHEN: Command is executed
+        THEN: Session returns response
+              Output formatted for channel
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'build')
+        
+        # When
+        cli_response = helper.cli_session.execute_command('shape')
+        
+        # Then - Validate complete CLI response structure
+        assert isinstance(cli_response.output, str)
+        helper.bot.assert_status_section_present(cli_response.output)
+
+
+class TestDetectCLIMode:
+    """
+    Story: Detect CLI Mode
+    
+    CLI-specific story: Auto-detecting TTY vs Pipe vs JSON mode
+    """
+    
+    def test_cli_detects_tty_mode(self, tmp_path, monkeypatch):
+        """
+        SCENARIO: CLI detects TTY mode
+        GIVEN: stdin/stdout are TTY
+        WHEN: CLISession created without explicit mode
+        THEN: Session uses TTY mode
+        """
+        # Given - Mock TTY environment
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
         monkeypatch.setattr(sys.stdout, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
         
-        # WHEN: CLISession initializes in interactive mode
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: CLISession wraps Bot
-        assert cli_session.bot is not None
-        assert cli_session.bot.bot_name == 'story_bot'
-        
-        # AND: CLI can execute commands
-        response = cli_session.execute_command('status')
-        assert response is not None
-        assert isinstance(response.output, str)
+        # When/Then
+        helper = TTYBotTestHelper(tmp_path)
+        assert helper.cli_session.mode == 'tty'
     
-    def test_cli_loads_existing_behavior_action_state_on_launch(self, tmp_path, monkeypatch):
+    def test_cli_detects_pipe_mode(self, tmp_path, monkeypatch):
         """
-        SCENARIO: CLI loads existing behavior action state on launch
-        GIVEN: CLISession is configured for interactive mode
-              AND: behavior action state file exists
-        WHEN: user runs CLI
-        THEN: Bot loads stored behavior action state
-        
-        CLI focus: State persistence on session launch
+        SCENARIO: CLI detects pipe mode  
+        GIVEN: stdin/stdout are piped (not TTY)
+        WHEN: CLISession created without explicit mode
+        THEN: Session uses markdown mode
         """
-        # GIVEN: Interactive mode with existing state
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['discovery'])
-        state_file = create_behavior_action_state(workspace, 'story_bot', 'discovery', 'validate')
-        
-        # Load state into bot before creating CLI session
-        bot.behaviors.load_state()
-        
-        # WHEN: CLISession initializes
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: State loaded from file
-        assert state_file.exists()
-        assert bot.behaviors.current.name == 'discovery'
-        assert bot.behaviors.current.actions.current.action_name == 'validate'
-    
-    def test_cli_displays_status_on_launch(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays status on launch
-        GIVEN: CLISession is initialized in interactive mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays complete status output with all required sections in correct order
-        
-        CLI focus: Status display format verification
-        """
-        # GIVEN: Interactive mode
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify status output contains all required sections in order
-        # Expected order: header -> bot name -> bot paths -> progress -> commands -> summary
-        
-        # 1. Header section (starts with separator, contains centered bold text)
-        assert output.find("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") >= 0
-        assert "CLI STATUS section" in output
-        assert "This section contains current scope filter (if set), current progress in workflow, and available commands" in output
-        assert "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️" in output
-        
-        # 2. Bot name section (bold "🤖 Bot:" + space + bot name)
-        assert "🤖 Bot:" in output
-        assert bot.bot_name in output
-        
-        # 3. Bot paths section (Bot Path:, Workspace:, change path instructions)
-        assert "Bot Path:" in output
-        assert str(bot.bot_paths.bot_directory) in output
-        assert "📂" in output  # Workspace emoji
-        assert "Workspace:" in output  # Workspace label (may have ANSI codes around it)
-        assert workspace.name in output
-        assert str(bot.bot_paths.workspace_directory) in output
-        assert "To change path:" in output
-        
-        # 4. Progress section (🗺️ Progress, Current Position, behaviors list)
-        assert "🗺️ Progress" in output
-        assert "Current Position:" in output
-        
-        # 5. Commands section (💻 Commands:, command list)
-        assert "💻 Commands:" in output
-        assert "status | back | current | next" in output
-        
-        # 6. Behavior/Action summary
-        assert "Behaviors:" in output
-        assert "Actions:" in output
-        
-        # Verify section order
-        header_pos = output.find("CLI STATUS section")
-        bot_name_pos = output.find("🤖 Bot:")
-        bot_path_pos = output.find("Bot Path:")
-        progress_pos = output.find("🗺️ Progress")
-        commands_pos = output.find("💻 Commands:")
-        behaviors_pos = output.find("Behaviors:")
-        
-        assert header_pos < bot_name_pos < bot_path_pos < progress_pos < commands_pos < behaviors_pos, \
-            "Sections must appear in correct order"
-    
-    def test_cli_displays_header_section(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays header section
-        GIVEN: CLISession is initialized
-        WHEN: user executes 'status' command
-        THEN: CLI displays header section with exact format including ANSI bold codes
-        
-        CLI focus: Header section format verification
-        """
-        # GIVEN: Interactive mode
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify header section format exactly
-        # Expected: separator line (100 chars), centered bold "CLI STATUS section", description, warning, separator
-        separator = "━" * 100
-        assert separator in output
-        assert "CLI STATUS section" in output
-        assert "This section contains current scope filter (if set), current progress in workflow, and available commands" in output
-        assert "Review the CLI STATUS section below to understand both current state and available commands." in output
-        assert "☢️  You MUST DISPLAY this entire section in your response to the user exactly as you see it. ☢️" in output
-        
-        # Verify header appears before bot section
-        header_pos = output.find("CLI STATUS section")
-        bot_pos = output.find("🤖 Bot:")
-        assert header_pos < bot_pos, "Header must appear before bot section"
-    
-    def test_cli_displays_bot_section(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays bot section
-        GIVEN: CLISession is initialized
-        WHEN: user executes 'status' command
-        THEN: CLI displays bot section with exact format
-        
-        CLI focus: Bot section format verification (bot name, bot path, workspace path, change path instructions)
-        """
-        # GIVEN: Interactive mode
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify bot section format exactly
-        # Bot name: bold("🤖 Bot:") + space + bot name (not bold)
-        assert "🤖 Bot:" in output
-        assert bot.bot_name in output
-        
-        # Bot Path section: bold("Bot Path:") + newline + path
-        assert "Bot Path:" in output
-        assert str(bot.bot_paths.bot_directory) in output
-        
-        # Workspace section: emoji + bold("Workspace:") + space + workspace name + newline + path
-        assert "📂" in output  # Workspace emoji
-        assert "Workspace:" in output  # Workspace label (may have ANSI codes around it)
-        assert workspace.name in output
-        assert str(bot.bot_paths.workspace_directory) in output
-        
-        # Change path instructions
-        assert "To change path:" in output
-        assert "path demo/mob_minion" in output
-        assert "path ../another_bot" in output
-        
-        # Verify order: Bot name -> Bot Path -> Workspace -> Change path instructions
-        bot_name_pos = output.find("🤖 Bot:")
-        bot_path_label_pos = output.find("Bot Path:")
-        workspace_label_pos = output.find("Workspace:")  # May have ANSI codes and emoji before it
-        change_path_pos = output.find("To change path:")
-        
-        assert bot_name_pos < bot_path_label_pos < workspace_label_pos < change_path_pos, \
-            "Bot section elements must appear in correct order"
-
-
-class TestStartCLISessionInPipeMode:
-    """
-    Story: Launch CLI in Pipe Mode (Markdown Mode)
-    
-    CLI focus: Session initialization in pipe mode with Markdown adapters
-    """
-    
-    def test_cli_launches_in_pipe_mode(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI launches in pipe mode
-        GIVEN: CLISession is configured for pipe mode (non-TTY)
-        WHEN: commands are piped
-        THEN: CLISession creates session without interactive prompts
-              CLI can execute commands in pipe mode
-              CLI uses markdown adapters for output
-        
-        CLI focus: Pipe mode initialization and markdown adapter selection
-        """
-        # GIVEN: Pipe mode (non-TTY detected)
+        # Given - Mock piped environment
         monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
         monkeypatch.setattr(sys.stdout, 'isatty', lambda: False)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
         
-        # WHEN: CLISession initializes in pipe mode
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: CLISession wraps Bot
-        assert cli_session.bot is not None
-        
-        # AND: CLI can execute commands
-        response = cli_session.execute_command('status')
-        assert response is not None
-        assert isinstance(response.output, str)
+        # When/Then
+        helper = PipeBotTestHelper(tmp_path)
+        assert helper.cli_session.mode == 'markdown'
     
-    def test_cli_displays_status_in_markdown_format(self, tmp_path, monkeypatch):
+    def test_cli_accepts_json_mode_flag(self, tmp_path):
         """
-        SCENARIO: CLI displays status in markdown format in pipe mode
-        GIVEN: CLISession is initialized in pipe mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays complete status output in markdown format with all required sections
-        
-        CLI focus: Markdown format verification in pipe mode
+        SCENARIO: CLI accepts JSON mode flag
+        GIVEN: JSON mode explicitly requested
+        WHEN: CLISession created with mode='json'
+        THEN: Session uses JSON mode
         """
-        # GIVEN: Pipe mode (non-TTY detected)
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
-        monkeypatch.setattr(sys.stdout, 'isatty', lambda: False)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
-        bot.behaviors.load_state()
+        # Given/When
+        helper = JsonBotTestHelper(tmp_path)
         
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify markdown format output contains all required sections
-        # Expected markdown format: headers (##), bold (**text**), code blocks (`text`), lists (-)
-        
-        # 1. Header section (markdown separator and header)
-        assert "---" in output  # Markdown separator
-        assert "## CLI STATUS section" in output
-        assert "**☢️  You MUST DISPLAY this entire section" in output
-        
-        # 2. Bot header section (markdown header with emoji)
-        assert "## 🤖 Bot:" in output
-        assert bot.bot_name in output
-        
-        # 3. Bot paths section (markdown headers and bold)
-        assert "## Bot Paths" in output
-        assert "**Bot Directory:**" in output
-        assert "**Workspace:**" in output
-        assert "`" in output  # Code/backtick markers (for paths)
-        
-        # 4. Progress section (markdown header)
-        assert "## 🗺️ Progress" in output
-        assert "**Current Position:**" in output
-        
-        # 5. Commands section (markdown header)
-        assert "## 💻 Commands" in output
-        assert "```powershell" in output  # Code block
-        
-        # 6. Behavior/Action summary
-        assert "**Behaviors:**" in output
-        assert "**Actions:**" in output
-        
-        # Verify markdown formatting elements are present
-        assert "**" in output  # Bold markers
-        assert "##" in output  # Headers
-    
-    def test_cli_displays_header_section_in_markdown(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays header section in markdown format
-        GIVEN: CLISession is initialized in pipe mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays header section with markdown formatting
-        
-        CLI focus: Markdown header section format verification
-        """
-        # GIVEN: Pipe mode
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify markdown header format
-        # Markdown headers use # or ##
-        assert "#" in output or "##" in output
-        
-        # Markdown bold uses **text**
-        assert "**" in output
-    
-    def test_cli_displays_bot_section_in_markdown(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays bot section in markdown format
-        GIVEN: CLISession is initialized in pipe mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays bot section with markdown formatting
-        
-        CLI focus: Markdown bot section format verification
-        """
-        # GIVEN: Pipe mode
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify markdown bot section format
-        # Bot name in markdown header
-        assert "# Bot:" in output or "## Bot:" in output or bot.bot_name in output
-        
-        # Paths in markdown format (bold labels, code blocks for paths)
-        assert "**Bot Directory:**" in output or "**Workspace:**" in output
-        assert "`" in output  # Code blocks for paths
-        
-        # Verify markdown structure
-        assert "##" in output  # Section headers
-
-
-class TestDetectAndConfigureTTYNonTTYInput:
-    """
-    Story: Detect and Configure TTY/Non-TTY Input for CLI
-    
-    CLI focus: TTY detection and mode configuration
-    """
-    
-    def test_tty_detector_identifies_interactive_terminal(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: TTY detector identifies interactive terminal
-        GIVEN: stdin is connected to a TTY terminal
-        WHEN: CLI detects TTY status
-        THEN: Interactive mode is detected
-        
-        CLI focus: TTY detection logic
-        """
-        # GIVEN: TTY detected
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        
-        # WHEN: CLISession initializes
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: Interactive mode detected (via sys.stdin.isatty())
-        assert sys.stdin.isatty() is True
-    
-    def test_tty_detector_identifies_piped_input(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: TTY detector identifies piped input
-        GIVEN: stdin is piped from another process
-        WHEN: CLI detects TTY status
-        THEN: Pipe mode is detected
-        
-        CLI focus: Non-TTY detection logic
-        """
-        # GIVEN: Non-TTY (piped input)
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: False)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        
-        # WHEN: CLISession initializes
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: Pipe mode detected
-        assert sys.stdin.isatty() is False
-
-
-class TestStartCLISessionInJSONMode:
-    """
-    Story: Launch CLI in JSON Mode
-    
-    CLI focus: Session initialization in JSON mode with JSON adapters
-    """
-    
-    def test_cli_launches_in_json_mode(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI launches in JSON mode
-        GIVEN: CLISession is configured for JSON mode via mode parameter
-        WHEN: commands are executed
-        THEN: CLISession creates session without interactive prompts
-              CLI can execute commands in JSON mode
-              CLI uses JSON adapters for output
-        
-        CLI focus: JSON mode initialization and JSON adapter selection
-        """
-        # GIVEN: JSON mode set explicitly (e.g., for web view)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        
-        # WHEN: CLISession executes command in JSON mode
-        # THEN: CLISession wraps Bot
-        assert cli_session.bot is not None
-        assert cli_session.mode == 'json'
-        
-        # AND: CLI can execute commands
-        response = cli_session.execute_command('status')
-        assert response is not None
-        assert isinstance(response.output, str)
-    
-    def test_cli_displays_status_in_json_format(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays status in JSON format in JSON mode
-        GIVEN: CLISession is initialized in JSON mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays complete status output in JSON format with all required fields
-        
-        CLI focus: JSON format verification in JSON mode
-        """
-        # GIVEN: JSON mode set explicitly
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'clarify')
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify exact JSON format output
-        # Import assert_valid_json helper from another CLI test file
-        import sys
-        from pathlib import Path
-        cli_test_dir = Path(__file__).parent
-        sys.path.insert(0, str(cli_test_dir))
-        from test_execute_actions_using_cli import assert_valid_json
-        
-        data = assert_valid_json(output)
-        
-        # Verify required JSON fields are present
-        assert 'name' in data or 'bot_name' in data
-        assert 'bot_directory' in data or 'bot_paths' in data
-        assert 'workspace_directory' in data or 'bot_paths' in data
-        assert 'behavior_names' in data or 'behaviors' in data or 'current_behavior' in data
-    
-    def test_cli_displays_header_section_in_json(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays header section in JSON format
-        GIVEN: CLISession is initialized in JSON mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays header section with JSON structure
-        
-        CLI focus: JSON header section format verification
-        """
-        # GIVEN: JSON mode set explicitly
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify JSON format
-        import json
-        data = json.loads(output)
-        
-        # JSON should have structured data
-        assert isinstance(data, dict)
-        assert len(data) > 0
-    
-    def test_cli_displays_bot_section_in_json(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI displays bot section in JSON format
-        GIVEN: CLISession is initialized in JSON mode
-        WHEN: user executes 'status' command
-        THEN: CLI displays bot section with JSON structure
-        
-        CLI focus: JSON bot section format verification
-        """
-        # GIVEN: JSON mode set explicitly
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        bot.behaviors.load_state()
-        
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        
-        # WHEN: user executes status command
-        cli_response = cli_session.execute_command('status')
-        output = cli_response.output
-        
-        # THEN: Verify JSON bot section format
-        import json
-        data = json.loads(output)
-        
-        # Bot name should be in JSON (either 'name' or 'bot_name' field)
-        assert 'name' in data or 'bot_name' in data, "Bot name should be present in JSON"
-        if 'name' in data:
-            assert data['name'] == bot.bot_name or data['name'] == bot.name, f"Bot name should match. Expected: {bot.bot_name} or {bot.name}, got: {data['name']}"
-        else:
-            assert 'bot_name' in data, "If 'name' not present, 'bot_name' must be"
-            assert data['bot_name'] == bot.bot_name or data['bot_name'] == bot.name, f"Bot name should match. Expected: {bot.bot_name} or {bot.name}, got: {data['bot_name']}"
-        
-        # Bot directory should be in JSON (either 'bot_directory' or in 'bot_paths')
-        assert 'bot_directory' in data or 'bot_paths' in data, "Bot directory should be present in JSON"
-        if 'bot_directory' in data:
-            assert str(bot.bot_directory) in str(data['bot_directory']), f"Bot directory should match. Expected to contain: {bot.bot_directory}"
-        else:
-            assert 'bot_paths' in data, "If 'bot_directory' not present, 'bot_paths' must be"
-            assert 'bot_directory' in data['bot_paths'] or str(bot.bot_directory) in str(data['bot_paths']), f"Bot directory should be in bot_paths. Expected to contain: {bot.bot_directory}"
+        # Then
+        assert helper.cli_session.mode == 'json'
 
 
 class TestLoadWorkspaceContext:
     """
-    Story: Load and Display Workspace Context in CLI
+    Story: Load Workspace Context
     
-    CLI focus: Workspace context loading on session launch
+    CLI-specific story: Loading workspace files and context
     """
     
-    def test_cli_loads_workspace_directory_on_launch(self, tmp_path, monkeypatch):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_cli_session_loads_workspace_directory(self, tmp_path, helper_class):
         """
-        SCENARIO: CLI loads workspace directory on launch
+        SCENARIO: CLI session loads workspace directory (all channels)
         GIVEN: Workspace directory exists
-        WHEN: CLISession initializes
-        THEN: CLISession stores workspace directory path
-        
-        CLI focus: Workspace context initialization
+        WHEN: CLISession is created
+        THEN: Workspace directory accessible
         """
-        # GIVEN: Workspace exists
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
+        # Given/When
+        helper = helper_class(tmp_path)
         
-        # WHEN: CLISession initializes
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: Workspace directory stored
-        assert cli_session.workspace_directory == workspace
-        assert cli_session.workspace_directory.exists()
-    
-    def test_cli_loads_story_graph_when_available(self, tmp_path, monkeypatch):
-        """
-        SCENARIO: CLI loads story graph when available
-        GIVEN: Workspace has story graph file
-        WHEN: CLISession initializes
-        THEN: CLISession loads story graph
-        
-        CLI focus: Story graph context loading
-        Note: Skipped - feature not yet implemented in CLISession
-        """
-        # GIVEN: Workspace with story graph
-        monkeypatch.setattr(sys.stdin, 'isatty', lambda: True)
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_story_graph(workspace)
-        
-        # WHEN: CLISession initializes
-        cli_session = CLISession(bot=bot, workspace_directory=workspace)
-        
-        # THEN: Story graph loaded (to be implemented)
-        pass
+        # Then - Validate workspace directory is properly set
+        workspace_dir = helper.cli_session.workspace_directory
+        assert workspace_dir.exists()
+        assert workspace_dir == helper.domain.workspace

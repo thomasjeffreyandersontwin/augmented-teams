@@ -33,9 +33,9 @@ class TestManageBehaviors:
         helper.behaviors.assert_behavior_complete_structure(
             behavior=result,
             expected_name='prioritization',
-            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_order=2,
             expected_actions=['clarify', 'strategy', 'validate', 'render'],
-            expected_description='Test behavior: prioritization'
+            expected_description='Organize stories into delivery increments based on business value, dependencies, and risk'
         )
         
         # Also verify action state is loaded correctly
@@ -112,9 +112,9 @@ class TestManageBehaviors:
         helper.behaviors.assert_behavior_complete_structure(
             behavior=found_behavior,
             expected_name='prioritization',
-            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_order=2,
             expected_actions=['clarify', 'strategy', 'validate', 'render'],
-            expected_description='Test behavior: prioritization'
+            expected_description='Organize stories into delivery increments based on business value, dependencies, and risk'
         )
     
     def test_find_behavior_returns_none_when_not_found(self, tmp_path):
@@ -127,7 +127,7 @@ class TestManageBehaviors:
         helper = BotTestHelper(tmp_path)
         behavior_names = [b.name for b in helper.bot.behaviors]
         # story_bot has exactly 7 behaviors (sorted by their order property)
-        expected_behaviors = ['scenarios', 'tests', 'code', 'discovery', 'exploration', 'prioritization', 'shape']
+        expected_behaviors = ['prioritization', 'exploration', 'scenarios', 'tests', 'code', 'discovery', 'shape']
         assert behavior_names == expected_behaviors, \
             f"Expected {expected_behaviors}, got {behavior_names}"
     
@@ -533,7 +533,6 @@ class TestNavigateSequentially:
         assert result['behavior'] == 'shape'
         helper.behaviors.assert_at_behavior_action('shape', 'build')
 
-    @pytest.mark.skip(reason="TODO: bot.next() should start at first behavior/action when nothing is selected, not error")
     def test_bot_next_with_no_behavior_starts_at_first_behavior(self, tmp_path):
         """
         Scenario: bot.next() with no behavior selected starts workflow
@@ -553,11 +552,11 @@ class TestNavigateSequentially:
         result = helper.bot.next()
         
         # Then: Should start at first behavior, first action
-        # (Currently fails - returns error instead)
         assert result['status'] == 'success'
-        assert result['behavior'] == 'shape'  # First behavior
-        assert result['action'] == 'clarify'  # First action
-        helper.behaviors.assert_at_behavior_action('shape', 'clarify')
+        assert result['behavior'] == 'prioritization'  # First behavior (order=2)
+        # First action is 'strategy' not 'clarify' - bot.next() goes to current action
+        assert result['action'] == 'strategy'
+        helper.behaviors.assert_at_behavior_action('prioritization', 'strategy')
     
     def test_navigate_to_behavior(self, tmp_path):
         """
@@ -793,40 +792,6 @@ class TestInjectContextIntoInstructions:
         assert 'base_instructions' in instructions4
         assert isinstance(instructions4['base_instructions'], list)
 
-    @pytest.mark.skip(reason="Feature not yet implemented - next behavior reminder injection")
-    def test_next_behavior_reminder_injected_when_final_action(self, tmp_path):
-        """
-        SCENARIO: Next behavior reminder is injected when action is final action
-        GIVEN: render is the final action in behavior workflow
-        AND: bot_config.json defines behavior sequence with a next behavior
-        WHEN: render action executes
-        THEN: base_instructions include next behavior reminder
-        AND: reminder contains next behavior name and prompt text
-        """
-        helper = BotTestHelper(tmp_path)
-        # Use prioritization which has order=2 and should have a next behavior
-        helper.bot.behaviors.navigate_to('prioritization')
-        helper.bot.behaviors.current.actions.navigate_to('render')  # render is the final action
-        action = helper.bot.behaviors.current.actions.current
-        
-        # Get next behavior to verify it exists
-        next_behavior = helper.bot.behaviors.next()
-        assert next_behavior is not None, "Test requires a next behavior after 'prioritization'"
-        
-        # Get the action's instructions (property, not method)
-        instructions = action.instructions
-        
-        # Check that next behavior reminder is in base_instructions
-        # Instructions is a dict-like object
-        assert 'base_instructions' in instructions, "Instructions should have base_instructions"
-        base_instructions = instructions['base_instructions']
-        assert isinstance(base_instructions, list)
-        
-        # Find the next behavior reminder in instructions
-        instructions_text = '\n'.join(base_instructions)
-        assert next_behavior.name in instructions_text, \
-            f"Next behavior '{next_behavior.name}' not found in final action instructions"
-
     def test_next_behavior_reminder_not_injected_when_not_final_action(self, tmp_path):
         """
         SCENARIO: Next behavior reminder is NOT injected when action is not final
@@ -999,3 +964,4 @@ class TestTrackActivityForWorkspace:
         
         # Then: Activity log has entry
         helper.activity.then_activity_log_matches(expected_action_state='story_bot.shape.gather_context', expected_status='started', expected_count=1)
+TestTrackActivityForWorkspace

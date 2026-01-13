@@ -5,6 +5,7 @@ Domain-specific helper classes for testing.
 """
 from .base_helper import BaseTestHelper
 from .behavior_helper import BehaviorTestHelper
+from .navigation_helper import NavigationTestHelper
 from .state_helper import StateTestHelper
 from .guardrails_helper import GuardrailsTestHelper
 from .clarify_helper import ClarifyTestHelper
@@ -22,6 +23,7 @@ from .file_helper import FileTestHelper
 __all__ = [
     'BaseTestHelper',
     'BehaviorTestHelper',
+    'NavigationTestHelper',
     'StateTestHelper',
     'GuardrailsTestHelper',
     'ClarifyTestHelper',

@@ -74,14 +74,14 @@ class CLISession:
             else:
                 result = attr  # It's a property (e.g., scope, bot_path)
                 
-                # Special case: If result is a Behavior object, navigate to it
+                # Special case: If result is a Behavior object, execute it with current action
                 from agile_bot.src.behaviors.behavior import Behavior
                 is_behavior = isinstance(result, Behavior)
                 
                 if is_behavior:
-                    self.bot.behaviors.navigate_to(result.name)
-                    result = self.bot.behaviors.current
-                    is_navigation_command = True  # Navigating to behavior = navigation command
+                    # Execute behavior with current action (bot.execute handles navigation)
+                    result = self.bot.execute(result.name, None)
+                    is_navigation_command = True  # Executing behavior = navigation command
         else:
             # Check if it's an action shortcut (route to current behavior's action)
             result = self._handle_action_shortcut(verb, args)
@@ -206,7 +206,7 @@ class CLISession:
         """Route behavior or behavior.action commands to bot.
         
         Handles:
-        - "behavior" -> bot.behaviors.navigate_to(behavior)
+        - "behavior" -> bot.execute(behavior, None) [executes current action]
         - "behavior.action" -> bot.execute(behavior, action)
         - "behavior.action.operation" -> bot.execute(behavior, action, operation)
         """
@@ -218,15 +218,14 @@ class CLISession:
             if hasattr(self.bot, 'execute'):
                 return self.bot.execute(behavior_name, action_name)
         else:
-            # Single word - try as behavior name
-            if hasattr(self.bot, 'behaviors') and hasattr(self.bot.behaviors, 'navigate_to'):
-                try:
-                    self.bot.behaviors.navigate_to(command)
-                    # Return the behavior object after navigation
-                    return self.bot.behaviors.current
-                except ValueError:
-                    # Not a valid behavior name
-                    pass
+            # Single word - try as behavior name and execute current action
+            if hasattr(self.bot, 'execute'):
+                # bot.execute with None action will use current action
+                result = self.bot.execute(command, None)
+                # Check if it's an error (behavior not found)
+                if isinstance(result, dict) and result.get('status') == 'error':
+                    raise ValueError(result.get('message', 'Unknown error'))
+                return result
         raise ValueError(f"Unknown command: {command}")
     
     def _handle_action_shortcut(self, action_name: str, args: str) -> Any:

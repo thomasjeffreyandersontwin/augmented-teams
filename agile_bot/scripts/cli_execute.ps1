@@ -37,8 +37,17 @@ $WORKSPACE_ROOT = Split-Path -Parent $AGILE_BOT_DIR
 
 # Set environment variables using relative paths
 $env:PYTHONPATH = $WORKSPACE_ROOT
-$env:BOT_DIRECTORY = Join-Path (Join-Path $AGILE_BOT_DIR "bots") "story_bot"
-$env:WORKING_AREA = $AGILE_BOT_DIR
+
+# BOT_DIRECTORY should be set by the calling script (bot-specific wrapper)
+# If not set, default to story_bot for backward compatibility
+if (-not $env:BOT_DIRECTORY) {
+    $env:BOT_DIRECTORY = Join-Path (Join-Path $AGILE_BOT_DIR "bots") "story_bot"
+}
+
+# Set WORKING_AREA if not already set
+if (-not $env:WORKING_AREA) {
+    $env:WORKING_AREA = $AGILE_BOT_DIR
+}
 
 # Launch CLI using relative path
 $CLI_PATH = Join-Path (Join-Path (Join-Path $AGILE_BOT_DIR "src") "cli") "cli_main.py"

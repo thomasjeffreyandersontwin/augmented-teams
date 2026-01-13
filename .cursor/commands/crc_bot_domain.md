@@ -1,10 +1,10 @@
 # crc_bot_domain - Navigate to Domain Behavior
 
 ## Navigate to Behavior
-$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\crc_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'domain' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\crc_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'domain' | python agile_bot/src/cli/cli_main.py
 
 ## Navigate to Specific Action
-$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\crc_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'domain.${1|rules|clarify|strategy|build|validate|render|}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\crc_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'domain.${1|rules|clarify|strategy|build|validate|render|}' | python agile_bot/src/cli/cli_main.py
 
 ## Available Actions:
 

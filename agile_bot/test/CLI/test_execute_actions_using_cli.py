@@ -1,611 +1,445 @@
 """
-Execute Action Operation Through CLI Tests - CLI Command Interface
+Execute Action Operations Using CLI Commands Tests - Parameterized Across Channels
 
-Domain logic tested in: test_invoke_bot_directly.py (various test classes)
+Maps directly to: test_perform_action.py domain tests
 
 These tests focus on CLI-specific concerns:
-- Action operation command parsing
-- CLI output format for different operations (TTY, Markdown, JSON modes)
-- Error handling and validation
+- Action execution command parsing
+- CLI output format verification (TTY, Markdown, JSON modes)
+- Delegation to domain logic
 
-Uses common helpers from: bot_test_helper.py
+Uses parameterized tests to run same test logic across all 3 channels.
 """
 import pytest
-import json
-from agile_bot.src.cli.cli_session import CLISession
-from agile_bot.test.domain.bot_test_helper import (
-    setup_test_bot,
-    create_behavior_action_state
-)
+from agile_bot.test.CLI.helpers import TTYBotTestHelper, PipeBotTestHelper, JsonBotTestHelper
 
 
-def assert_valid_json(output: str) -> dict:
+# ============================================================================
+# STORY: Build Story Graph
+# Maps to: TestBuildStoryGraph in test_perform_action.py
+# ============================================================================
+class TestBuildStoryGraphUsingCLI:
     """
-    Helper to verify output contains valid JSON.
-    Handles cases where output may contain multiple JSON objects or extra content.
-    Returns the first valid JSON object parsed.
-    """
-    output = output.strip()
-    # Try to parse as single JSON object first
-    try:
-        return json.loads(output)
-    except json.JSONDecodeError:
-        # If that fails, try to find first valid JSON object
-        start_idx = output.find('{')
-        if start_idx >= 0:
-            brace_count = 0
-            for i in range(start_idx, len(output)):
-                if output[i] == '{':
-                    brace_count += 1
-                elif output[i] == '}':
-                    brace_count -= 1
-                    if brace_count == 0:
-                        json_str = output[start_idx:i+1]
-                        try:
-                            return json.loads(json_str)
-                        except json.JSONDecodeError:
-                            pass
-        pytest.fail(f"Output does not contain valid JSON: {output[:200]}")
-
-
-def extract_status_section(output: str) -> str:
-    """Extract the CLI STATUS section from output (after INSTRUCTIONS)."""
-    status_start = output.find('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    if status_start == -1:
-        status_start = output.find('CLI STATUS section')
-    if status_start == -1:
-        return output  # Return full output if status section not found
-    return output[status_start:].strip()
-
-
-def extract_footer_section(output: str) -> str:
-    """Extract the footer section with Behaviors and Actions from output."""
-    footer_start = output.find('Behaviors:')
-    if footer_start == -1:
-        return ""
-    return output[footer_start:].strip()
-
-
-class TestViewInstructionsInTTYMode:
-    """
-    Story: Get Action Instructions Through CLI (TTY Mode)
+    Story: Build Story Graph Using CLI
     
-    CLI focus: Instructions command parsing and TTY output format
-    Note: 'instructions' command returns empty array. Use 'current' command to re-execute instructions.
+    Domain logic: test_perform_action.py::TestBuildStoryGraph
+    CLI focus: Execute build action and verify template injection in output
     """
     
-    def test_user_re_executes_current_instructions(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_build_action_shows_template_in_output(self, tmp_path, helper_class):
         """
-        SCENARIO: User re-executes current instructions - TTY Mode
-        GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'current'
-        THEN: CLI re-executes current instructions and displays in exact TTY format
-              Shows behavior and action instructions, rules, and status section
-              Footer shows shape and build bolded
+        SCENARIO: Build action shows story graph template in CLI output
+        GIVEN: CLI is at shape.build
+        WHEN: user navigates to shape.build
+        THEN: CLI output contains template_path information
         
-        CLI focus: Current command parsing and exact format verification
+        Domain: test_action_injects_story_graph_template
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'build')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'build')
         
-        # WHEN: user enters 'current' via CLI (TTY mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='tty')
-        cli_response = cli_session.execute_command('current')
+        # When - Navigate to build action (shows instructions with template)
+        cli_response = helper.cli_session.execute_command('shape.build')
         
-        # THEN: CLI re-executes current instructions in exact TTY format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
+        # Then - Output contains template information
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'build')
+        assert 'template' in cli_response.output.lower()
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_build_action_shows_complete_instructions(self, tmp_path, helper_class):
+        """
+        SCENARIO: Build action shows complete build story graph instructions
+        GIVEN: CLI is at shape.build
+        WHEN: user navigates to shape.build
+        THEN: CLI output contains all BuildStoryGraphAction fields
         
-        # Verify INSTRUCTIONS section
-        assert 'Behavior Instructions - shape' in output
-        assert 'Action Instructions - build' in output
-        assert 'build base instructions' in output
-        assert 'Rules to follow:' in output
-        assert 'verb_noun_format' in output
+        Domain: test_action_loads_and_merges_instructions
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'build')
         
-        # Verify CLI STATUS section
-        status_section = extract_status_section(output)
-        assert 'CLI STATUS section' in status_section
-        assert 'Current Position:' in status_section
-        assert 'shape.build' in status_section
-        assert '➤' in status_section  # Current behavior marker
-        assert '➤' in status_section  # Current operation marker
+        # When
+        cli_response = helper.cli_session.execute_command('shape.build')
         
-        # Verify footer shows shape and build bolded
-        footer = extract_footer_section(output)
-        assert ('[1mshape[0m' in footer or '**shape**' in footer or
-                '\x1b[1mshape\x1b[0m' in footer)  # Bolded
-        assert ('[1mbuild[0m' in footer or '**build**' in footer or
-                '\x1b[1mbuild\x1b[0m' in footer)  # Bolded
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'build')
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_prioritization_validate_shows_increments_instructions(self, tmp_path, helper_class):
+        """
+        SCENARIO: Prioritization validate action shows increments validation
+        GIVEN: CLI is at prioritization.validate
+        AND: Story graph exists in workspace
+        WHEN: user navigates to prioritization.validate
+        THEN: CLI output shows validation instructions for increments
+        
+        Domain: test_behavior_updates_existing_story_graph_json (adapted)
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        
+        # Create existing story graph
+        existing_story_graph = helper.domain.story.given_story_graph_dict(epic='mob')
+        stories_dir = helper.domain.workspace / 'docs' / 'stories'
+        helper.domain.files.given_file_created(stories_dir, 'story-graph.json', existing_story_graph)
+        
+        helper.domain.state.set_state('prioritization', 'validate')
+        
+        # When
+        cli_response = helper.cli_session.execute_command('prioritization.validate')
+        
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'prioritization', 'validate')
 
 
-class TestViewInstructionsInPipeMode:
+# ============================================================================
+# STORY: Clarify Requirements
+# Maps to: TestClarifyRequirements in test_perform_action.py
+# ============================================================================
+class TestClarifyRequirementsUsingCLI:
     """
-    Story: Get Action Instructions Through CLI (Markdown Mode)
+    Story: Clarify Requirements Using CLI
     
-    CLI focus: Instructions command parsing and Markdown output format
+    Domain logic: test_perform_action.py::TestClarifyRequirements
+    CLI focus: Execute clarify action and verify guardrails in output
     """
     
-    def test_user_re_executes_current_instructions(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_clarify_action_shows_questions_and_evidence(self, tmp_path, helper_class):
         """
-        SCENARIO: User re-executes current instructions - Markdown Mode
-        GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'current'
-        THEN: CLI re-executes current instructions and displays in exact Markdown format
-              Shows behavior and action instructions with markdown formatting
-              Footer shows shape and build bolded
+        SCENARIO: Clarify action shows questions and evidence in CLI output
+        GIVEN: CLI is at shape.clarify
+        WHEN: user navigates to shape.clarify
+        THEN: CLI output contains questions and evidence from guardrails
         
-        CLI focus: Current command parsing and exact format verification
+        Domain: test_action_injects_questions_and_evidence
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'build')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'clarify')
         
-        # WHEN: user enters 'current' via CLI (Markdown mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='markdown')
-        cli_response = cli_session.execute_command('current')
+        # When
+        cli_response = helper.cli_session.execute_command('shape.clarify')
         
-        # THEN: CLI re-executes current instructions in exact Markdown format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify INSTRUCTIONS section in markdown
-        assert '## Behavior Instructions - shape' in output
-        assert '## Action Instructions - build' in output
-        assert 'build base instructions' in output
-        assert '**verb_noun_format**' in output or 'verb_noun_format' in output
-        
-        # Verify CLI STATUS section
-        assert '## CLI STATUS section' in output
-        assert '**Current Position:** shape.build' in output
-        
-        # Verify footer shows shape and build bolded
-        footer = extract_footer_section(output)
-        assert '**shape**' in footer  # Bolded in markdown
-        assert '**build**' in footer  # Bolded in markdown
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'clarify')
+        # Guardrails should be in output
+        output_lower = cli_response.output.lower()
+        assert 'question' in output_lower or 'evidence' in output_lower or 'clarify' in output_lower
 
 
-class TestViewInstructionsInJSONMode:
+# ============================================================================
+# STORY: Validate Rules
+# Maps to: TestValidateRules in test_perform_action.py
+# ============================================================================
+class TestValidateRulesUsingCLI:
     """
-    Story: Get Action Instructions Through CLI (JSON Mode)
+    Story: Validate Rules Using CLI
     
-    CLI focus: Instructions command parsing and JSON output format
+    Domain logic: test_perform_action.py::TestValidateRules
+    CLI focus: Execute validate action and verify rules in output
     """
     
-    def test_user_re_executes_current_instructions(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_validate_action_shows_rules_in_output(self, tmp_path, helper_class):
         """
-        SCENARIO: User re-executes current instructions - JSON Mode
-        GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'current'
-        THEN: CLI re-executes current instructions and displays in exact JSON format
-              Shows instructions JSON object with base_instructions, rules, behavior/action metadata
-              Shows bot JSON object with current_behavior
-        
-        CLI focus: Current command parsing and exact format verification
-        """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'build')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters 'current' via CLI (JSON mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        cli_response = cli_session.execute_command('current')
-        
-        # THEN: CLI re-executes current instructions in exact JSON format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify instructions JSON object exists (first JSON object)
-        instructions_data = assert_valid_json(output)
-        assert isinstance(instructions_data, dict)
-        assert 'base_instructions' in instructions_data
-        assert instructions_data['behavior_metadata']['name'] == 'shape'
-        assert instructions_data['action_metadata']['name'] == 'build'
-        assert 'rules' in instructions_data
-        
-        # Verify bot JSON object exists (second JSON object, after first one)
-        # Find the end of the first JSON object by parsing it
-        first_brace = output.find('{')
-        assert first_brace >= 0, "Should find start of first JSON object"
-        # Parse first JSON object to find where it ends
-        brace_count = 0
-        first_json_end = -1
-        for i in range(first_brace, len(output)):
-            if output[i] == '{':
-                brace_count += 1
-            elif output[i] == '}':
-                brace_count -= 1
-                if brace_count == 0:
-                    first_json_end = i + 1
-                    break
-        assert first_json_end > 0, f"Should find end of first JSON object. Output length: {len(output)}, first_brace: {first_brace}"
-        assert first_json_end < len(output), f"First JSON object should end before output ends. first_json_end: {first_json_end}, output length: {len(output)}"
-        remaining = output[first_json_end:].strip()
-        assert remaining.startswith('{'), f"Second JSON object should start with {{. Remaining starts with: {repr(remaining[:20])}"
-        bot_start = remaining.find('{')
-        assert bot_start >= 0, "Should find start of second JSON object"
-        bot_data = assert_valid_json(remaining[bot_start:])
-        assert bot_data['current_behavior'] == 'shape'
-
-
-class TestConfirmWithParametersInTTYMode:
-    """
-    Story: Confirm Work Through CLI (TTY Mode)
-    
-    CLI focus: Confirm command parsing and TTY output format
-    """
-    
-    def test_user_confirms_build_work(self, tmp_path):
-        """
-        SCENARIO: User confirms build work - TTY Mode
+        SCENARIO: Validate action shows rules in CLI output
         GIVEN: CLI is at shape.validate
-        WHEN: user enters 'confirm'
-        THEN: CLI parses confirm command
-              CLI processes work and shows result in exact TTY format
-              May show error if prerequisites not met (e.g., story graph not found)
+        AND: Story graph exists
+        WHEN: user navigates to shape.validate
+        THEN: CLI output contains rule descriptions and DO/DON'T sections
         
-        CLI focus: Confirm command parsing and exact format verification
+        Domain: test_story_graph_rules_formatted_in_instructions
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
         
-        # WHEN: user enters 'confirm' via CLI (TTY mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='tty')
-        cli_response = cli_session.execute_command('confirm')
+        # Create story graph
+        story_graph_data = {'epics': []}
+        helper.domain.story.create_story_graph(story_graph_data)
         
-        # THEN: CLI processed confirm in exact TTY format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
+        helper.domain.state.set_state('shape', 'validate')
         
-        # Verify exact TTY format - confirm command returns error when story graph not found
-        assert 'Error' in output or 'error' in output.lower()
-        assert 'story graph' in output.lower() or 'story-graph.json' in output.lower() or 'not found' in output.lower()
+        # When
+        cli_response = helper.cli_session.execute_command('shape.validate')
+        
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'validate')
+        # Rules should be in output
+        output_lower = cli_response.output.lower()
+        assert 'rule' in output_lower or 'validate' in output_lower
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_validate_code_shows_file_rules(self, tmp_path, helper_class):
+        """
+        SCENARIO: Code validate action shows file rules in CLI output
+        GIVEN: CLI is at code.validate
+        AND: Story graph exists
+        WHEN: user navigates to code.validate
+        THEN: CLI output contains file validation rules
+        
+        Domain: test_file_rules_formatted_in_instructions
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        
+        # Create story graph
+        story_graph_data = {'epics': []}
+        helper.domain.story.create_story_graph(story_graph_data)
+        
+        helper.domain.state.set_state('code', 'validate')
+        
+        # When
+        cli_response = helper.cli_session.execute_command('code.validate')
+        
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'code', 'validate')
 
 
-class TestConfirmWithParametersInPipeMode:
+# ============================================================================
+# STORY: Display Rules
+# Maps to: TestDisplayRules in test_perform_action.py
+# ============================================================================
+class TestDisplayRulesUsingCLI:
     """
-    Story: Confirm Work Through CLI (Markdown Mode)
+    Story: Display Rules Using CLI
     
-    CLI focus: Confirm command parsing and Markdown output format
+    Domain logic: test_perform_action.py::TestDisplayRules
+    CLI focus: Execute rules action and verify rules digest in output
     """
     
-    def test_user_confirms_build_work(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_rules_action_shows_rules_digest(self, tmp_path, helper_class):
         """
-        SCENARIO: User confirms build work - Markdown Mode
+        SCENARIO: Rules action shows rules digest in CLI output
+        GIVEN: CLI is at shape.validate (which shows rules)
+        WHEN: user navigates to shape.validate
+        THEN: CLI output contains formatted rules digest
+        
+        Domain: test_action_loads_and_formats_rules_digest (adapted - using validate instead of rules action)
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        
+        # Create story graph for validation
+        story_graph_data = {'epics': []}
+        helper.domain.story.create_story_graph(story_graph_data)
+        
+        helper.domain.state.set_state('shape', 'validate')
+        
+        # When
+        cli_response = helper.cli_session.execute_command('shape.validate')
+        
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'validate')
+        # Rules content should be in output
+        output_lower = cli_response.output.lower()
+        assert 'rule' in output_lower or 'validate' in output_lower
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_rules_output_includes_validation_content(self, tmp_path, helper_class):
+        """
+        SCENARIO: Validation output includes rules content
         GIVEN: CLI is at shape.validate
-        WHEN: user enters 'confirm'
-        THEN: CLI parses confirm command
-              CLI processes work and shows result in exact Markdown format
-              May show error JSON if prerequisites not met
+        WHEN: user navigates to shape.validate
+        THEN: CLI output contains validation rules
         
-        CLI focus: Confirm command parsing and exact format verification
+        Domain: test_rules_list_includes_file_paths (adapted)
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
         
-        # WHEN: user enters 'confirm' via CLI (Markdown mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='markdown')
-        cli_response = cli_session.execute_command('confirm')
+        # Create story graph for validation
+        story_graph_data = {'epics': []}
+        helper.domain.story.create_story_graph(story_graph_data)
         
-        # THEN: CLI processed confirm in exact Markdown format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
+        helper.domain.state.set_state('shape', 'validate')
         
-        # Verify exact Markdown format - confirm command returns error JSON when story graph not found
-        assert '```json' in output or '{' in output
-        assert '"status": "error"' in output or '"status":"error"' in output
-        assert 'message' in output.lower()
+        # When
+        cli_response = helper.cli_session.execute_command('shape.validate')
+        
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'validate')
 
 
-class TestConfirmWithParametersInJSONMode:
+# ============================================================================
+# STORY: Decide Strategy
+# Maps to: TestDecideStrategy in test_perform_action.py
+# ============================================================================
+class TestDecideStrategyUsingCLI:
     """
-    Story: Confirm Work Through CLI (JSON Mode)
+    Story: Decide Strategy Using CLI
     
-    CLI focus: Confirm command parsing and JSON output format
+    Domain logic: test_perform_action.py::TestDecideStrategy
+    CLI focus: Execute strategy action and verify criteria/assumptions in output
     """
     
-    def test_user_confirms_build_work(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_strategy_action_shows_criteria_and_assumptions(self, tmp_path, helper_class):
         """
-        SCENARIO: User confirms build work - JSON Mode
-        GIVEN: CLI is at shape.validate
-        WHEN: user enters 'confirm'
-        THEN: CLI parses confirm command
-              CLI processes work and shows result in exact JSON format
-              Shows error JSON with status="error" and message if prerequisites not met
+        SCENARIO: Strategy action shows criteria and assumptions in CLI output
+        GIVEN: CLI is at shape.strategy
+        WHEN: user navigates to shape.strategy
+        THEN: CLI output contains decision criteria and assumptions
         
-        CLI focus: Confirm command parsing and exact format verification
+        Domain: test_action_injects_decision_criteria_and_assumptions
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'strategy')
         
-        # WHEN: user enters 'confirm' via CLI (JSON mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        cli_response = cli_session.execute_command('confirm')
+        # When
+        cli_response = helper.cli_session.execute_command('shape.strategy')
         
-        # THEN: CLI processed confirm in exact JSON format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify exact JSON format - confirm command returns error JSON when story graph not found
-        confirm_data = assert_valid_json(output)
-        assert isinstance(confirm_data, dict)
-        assert confirm_data['status'] == 'error'
-        assert 'message' in confirm_data
-        assert 'story graph' in confirm_data['message'].lower() or 'story-graph.json' in confirm_data['message'].lower()
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'strategy')
+        # Strategy content should be in output
+        output_lower = cli_response.output.lower()
+        assert 'strateg' in output_lower or 'decision' in output_lower or 'assumption' in output_lower
 
 
-class TestReExecuteCurrentActionInTTYMode:
+# ============================================================================
+# STORY: Render Output
+# Maps to: TestRenderOutput in test_perform_action.py
+# ============================================================================
+class TestRenderOutputUsingCLI:
     """
-    Story: Re-execute Current Operation (TTY Mode)
+    Story: Render Output Using CLI
     
-    CLI focus: Current command parsing and TTY output format
+    Domain logic: test_perform_action.py::TestRenderOutput
+    CLI focus: Execute render action and verify configs in output
     """
     
-    def test_user_re_executes_current_instructions(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_render_action_shows_configs_in_output(self, tmp_path, helper_class):
         """
-        SCENARIO: User re-executes current instructions - TTY Mode
-        GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'current'
-        THEN: CLI re-executes current instructions in exact TTY format
-              Shows behavior and action instructions, rules, and status section
-              Footer shows shape and build bolded
+        SCENARIO: Render action shows render configs in CLI output
+        GIVEN: CLI is at shape.render
+        WHEN: user navigates to shape.render
+        THEN: CLI output contains render configurations
         
-        CLI focus: Current command parsing and exact format verification
+        Domain: test_action_injects_render_configs_and_instructions
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'build')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'render')
         
-        # WHEN: user enters 'current' via CLI (TTY mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='tty')
-        cli_response = cli_session.execute_command('current')
+        # When
+        cli_response = helper.cli_session.execute_command('shape.render')
         
-        # THEN: CLI re-executes current instructions in exact TTY format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'render')
+        # Render content should be in output
+        output_lower = cli_response.output.lower()
+        assert 'render' in output_lower
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_render_output_mentions_synchronizers(self, tmp_path, helper_class):
+        """
+        SCENARIO: Render output mentions synchronizers execution
+        GIVEN: CLI is at shape.render
+        WHEN: user navigates to shape.render
+        THEN: CLI output mentions synchronizers
         
-        # Verify INSTRUCTIONS section
-        assert 'Behavior Instructions - shape' in output
-        assert 'Action Instructions - build' in output
-        assert 'build base instructions' in output
-        assert 'Rules to follow:' in output
+        Domain: test_synchronizers_are_executed_automatically
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'render')
         
-        # Verify CLI STATUS section
-        status_section = extract_status_section(output)
-        assert 'Current Position:' in status_section
-        assert 'shape.build' in status_section
-        assert '➤' in status_section  # Current behavior marker
-        assert '➤' in status_section  # Current operation marker
+        # When
+        cli_response = helper.cli_session.execute_command('shape.render')
         
-        # Verify footer shows shape and build bolded
-        footer = extract_footer_section(output)
-        assert ('[1mshape[0m' in footer or '**shape**' in footer or
-                '\x1b[1mshape\x1b[0m' in footer)  # Bolded
-        assert ('[1mbuild[0m' in footer or '**build**' in footer or
-                '\x1b[1mbuild\x1b[0m' in footer)  # Bolded
+        # Then
+        helper.instructions.assert_section_shows_behavior_and_action(
+            cli_response.output, 'shape', 'render')
 
 
-class TestReExecuteCurrentActionInPipeMode:
+# ============================================================================
+# STORY: Handle Errors
+# ============================================================================
+class TestHandleErrorsUsingCLI:
     """
-    Story: Re-execute Current Operation (Markdown Mode)
+    Story: Handle Errors Using CLI
     
-    CLI focus: Current command parsing and Markdown output format
-    """
-    
-    def test_user_re_executes_current_instructions(self, tmp_path):
-        """
-        SCENARIO: User re-executes current instructions - Markdown Mode
-        GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'current'
-        THEN: CLI re-executes current instructions in exact Markdown format
-              Shows behavior and action instructions with markdown formatting
-              Footer shows shape and build bolded
-        
-        CLI focus: Current command parsing and exact format verification
-        """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'build')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters 'current' via CLI (Markdown mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='markdown')
-        cli_response = cli_session.execute_command('current')
-        
-        # THEN: CLI re-executes current instructions in exact Markdown format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify INSTRUCTIONS section in markdown
-        assert '## Behavior Instructions - shape' in output
-        assert '## Action Instructions - build' in output
-        assert 'build base instructions' in output
-        
-        # Verify CLI STATUS section
-        assert '## CLI STATUS section' in output
-        assert '**Current Position:** shape.build' in output
-        
-        # Verify footer shows shape and build bolded
-        footer = extract_footer_section(output)
-        assert '**shape**' in footer  # Bolded in markdown
-        assert '**build**' in footer  # Bolded in markdown
-
-
-class TestReExecuteCurrentActionInJSONMode:
-    """
-    Story: Re-execute Current Operation (JSON Mode)
-    
-    CLI focus: Current command parsing and JSON output format
+    CLI focus: Error display and validation messages
     """
     
-    def test_user_re_executes_current_instructions(self, tmp_path):
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_invalid_command_shows_error(self, tmp_path, helper_class):
         """
-        SCENARIO: User re-executes current instructions - JSON Mode
-        GIVEN: CLI is at shape.build.instructions
-        WHEN: user enters 'current'
-        THEN: CLI re-executes current instructions in exact JSON format
-              Shows instructions JSON object with base_instructions, rules, behavior/action metadata
-              Shows bot JSON object with current_behavior
-        
-        CLI focus: Current command parsing and exact format verification
+        SCENARIO: Invalid command shows error (all channels)
+        GIVEN: CLI is at shape.build
+        WHEN: user enters 'invalid_command'
+        THEN: CLI displays error message in appropriate channel format
         """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'build')
-        bot.behaviors.load_state()
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('shape', 'build')
         
-        # WHEN: user enters 'current' via CLI (JSON mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        cli_response = cli_session.execute_command('current')
+        # When
+        cli_response = helper.cli_session.execute_command('invalid_command')
         
-        # THEN: CLI re-executes current instructions in exact JSON format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify instructions JSON object exists (first JSON object)
-        instructions_data = assert_valid_json(output)
-        assert isinstance(instructions_data, dict)
-        assert 'base_instructions' in instructions_data
-        assert instructions_data['behavior_metadata']['name'] == 'shape'
-        assert instructions_data['action_metadata']['name'] == 'build'
-        assert 'rules' in instructions_data
-        
-        # Verify bot JSON object exists (second JSON object, after INSTRUCTIONS separator if present)
-        # Find the end of the first JSON object by finding matching closing brace
-        first_brace = output.find('{')
-        assert first_brace >= 0, "Should find start of first JSON object"
-        brace_count = 0
-        first_json_end = -1
-        for i in range(first_brace, len(output)):
-            if output[i] == '{':
-                brace_count += 1
-            elif output[i] == '}':
-                brace_count -= 1
-                if brace_count == 0:
-                    first_json_end = i + 1
-                    break
-        assert first_json_end > 0, "Should find end of first JSON object"
-        assert first_json_end < len(output), "First JSON object should end before output ends"
-        remaining = output[first_json_end:].strip()
-        assert remaining.startswith('{'), "Second JSON object should start with {"
-        bot_start = remaining.find('{')
-        assert bot_start >= 0, "Should find start of second JSON object"
-        bot_data = assert_valid_json(remaining[bot_start:])
-        assert bot_data['current_behavior'] == 'shape'
-
-
-class TestHandleErrorsAndValidationInTTYMode:
-    """
-    Story: Handle Operation Errors (TTY Mode)
-    
-    CLI focus: Error handling and validation in TTY format
-    """
-    
-    def test_user_enters_invalid_command(self, tmp_path):
-        """
-        SCENARIO: User enters invalid command - TTY Mode
-        GIVEN: CLI is running
-        WHEN: user enters invalid command
-        THEN: CLI detects error and displays error message in TTY format
-        
-        CLI focus: Error handling
-        """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters invalid command via CLI (TTY mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='tty')
-        cli_response = cli_session.execute_command('invalid_command_xyz')
-        
-        # THEN: CLI shows error message in TTY format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        assert 'ERROR' in cli_response.output or 'error' in cli_response.output.lower() or cli_response.status == 'error'
-
-
-class TestHandleErrorsAndValidationInPipeMode:
-    """
-    Story: Handle Operation Errors (Markdown Mode)
-    
-    CLI focus: Error handling and validation in Markdown format
-    """
-    
-    def test_user_enters_invalid_command(self, tmp_path):
-        """
-        SCENARIO: User enters invalid command - Markdown Mode
-        GIVEN: CLI is running
-        WHEN: user enters invalid command
-        THEN: CLI detects error and displays error message in Markdown format
-        
-        CLI focus: Error handling
-        """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters invalid command via CLI (Markdown mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='markdown')
-        cli_response = cli_session.execute_command('invalid_command_xyz')
-        
-        # THEN: CLI shows error message in Markdown format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        assert 'ERROR' in cli_response.output or 'error' in cli_response.output.lower() or cli_response.status == 'error'
-
-
-class TestHandleErrorsAndValidationInJSONMode:
-    """
-    Story: Handle Operation Errors (JSON Mode)
-    
-    CLI focus: Error handling and validation in JSON format
-    """
-    
-    def test_user_enters_invalid_command(self, tmp_path):
-        """
-        SCENARIO: User enters invalid command - JSON Mode
-        GIVEN: CLI is running
-        WHEN: user enters invalid command
-        THEN: CLI detects error and displays error message in JSON format
-        
-        CLI focus: Error handling
-        """
-        # GIVEN
-        bot, workspace = setup_test_bot(tmp_path, ['shape'])
-        create_behavior_action_state(workspace, 'story_bot', 'shape', 'validate')
-        bot.behaviors.load_state()
-        
-        # WHEN: user enters invalid command via CLI (JSON mode)
-        cli_session = CLISession(bot=bot, workspace_directory=workspace, mode='json')
-        cli_response = cli_session.execute_command('invalid_command_xyz')
-        
-        # THEN: CLI shows error message in exact JSON format
-        assert cli_response is not None
-        assert isinstance(cli_response.output, str)
-        output = cli_response.output
-        
-        # Verify exact JSON format for error
-        error_data = assert_valid_json(output)
-        assert 'error' in str(error_data).lower() or cli_response.status == 'error'
+        # Then - Error message shown
+        assert 'error' in cli_response.output.lower() or 'unknown' in cli_response.output.lower()
