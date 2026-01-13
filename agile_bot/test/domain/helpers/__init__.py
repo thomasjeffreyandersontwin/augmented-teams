@@ -11,6 +11,7 @@ from .clarify_helper import ClarifyTestHelper
 from .strategy_helper import StrategyTestHelper
 from .build_helper import BuildTestHelper
 from .validate_helper import ValidateTestHelper
+from .rules_helper import RulesTestHelper
 from .render_helper import RenderTestHelper
 from .activity_helper import ActivityTestHelper
 from .story_helper import StoryTestHelper
@@ -27,6 +28,7 @@ __all__ = [
     'StrategyTestHelper',
     'BuildTestHelper',
     'ValidateTestHelper',
+    'RulesTestHelper',
     'RenderTestHelper',
     'ActivityTestHelper',
     'StoryTestHelper',

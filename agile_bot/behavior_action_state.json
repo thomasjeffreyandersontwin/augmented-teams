@@ -27,7 +27,7 @@
       "timestamp": "2026-01-10T10:01:14.930274"
     }
   ],
-  "current_behavior": "story_bot.discovery",
-  "current_action": "story_bot.discovery.build",
-  "timestamp": "2026-01-12T19:47:13.256636"
+  "current_behavior": "story_bot.tests",
+  "current_action": "story_bot.tests.clarify",
+  "timestamp": "2026-01-12T20:20:13.780727"
 }

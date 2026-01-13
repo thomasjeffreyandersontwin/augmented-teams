@@ -438,6 +438,134 @@ class TestValidateRules:
 
 
 # ============================================================================
+# STORY: Display Rules
+# ============================================================================
+class TestDisplayRules:
+    """Tests that rules are properly loaded and formatted for display."""
+    
+    def test_action_loads_and_formats_rules_digest(self, tmp_path):
+        """
+        SCENARIO: Action loads and formats rules digest
+        GIVEN: Production story_bot with tests behavior (has rules)
+        WHEN: Rules action executes
+        THEN: Instructions contain formatted rules digest with descriptions, priorities, DO/DON'T sections
+        """
+        # GIVEN: Production story_bot with tests behavior (has rules)
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('tests')
+        behavior = helper.bot.behaviors.current
+        
+        # AND: Rules action from production behavior
+        from agile_bot.src.rules.rules_action import RulesAction
+        from agile_bot.src.actions.action_context import RulesActionContext
+        action = RulesAction(behavior=behavior, action_config=None)
+        
+        # WHEN: Rules action executes
+        result = action.do_execute(RulesActionContext())
+        
+        # THEN: Instructions contain formatted rules digest
+        helper.rules.assert_rules_instructions(result)
+    
+    def test_rules_list_includes_file_paths(self, tmp_path):
+        """
+        SCENARIO: Rules list includes file paths for each rule
+        GIVEN: Production story_bot with tests behavior (has rules)
+        WHEN: Rules action executes
+        THEN: Display includes rule names with their file paths
+        """
+        # GIVEN: Production story_bot with tests behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('tests')
+        behavior = helper.bot.behaviors.current
+        
+        # AND: Rules action
+        from agile_bot.src.rules.rules_action import RulesAction
+        from agile_bot.src.actions.action_context import RulesActionContext
+        action = RulesAction(behavior=behavior, action_config=None)
+        
+        # WHEN: Rules action executes
+        result = action.do_execute(RulesActionContext())
+        
+        # THEN: Display includes file paths
+        helper.rules.assert_rules_list_contains_file_paths(result)
+    
+    def test_all_behavior_rules_included_in_digest(self, tmp_path):
+        """
+        SCENARIO: All behavior rules are included in the digest
+        GIVEN: Production story_bot with tests behavior (has multiple rules)
+        WHEN: Rules action executes
+        THEN: All rules from behavior are included in digest
+        """
+        # GIVEN: Production story_bot with tests behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('tests')
+        behavior = helper.bot.behaviors.current
+        
+        # AND: Rules action
+        from agile_bot.src.rules.rules_action import RulesAction
+        from agile_bot.src.actions.action_context import RulesActionContext
+        action = RulesAction(behavior=behavior, action_config=None)
+        
+        # WHEN: Rules action executes
+        result = action.do_execute(RulesActionContext())
+        
+        # THEN: All rules included (tests behavior has 25 rules)
+        helper.rules.assert_rules_digest_contains_all_rules(result, expected_rule_count=20)
+    
+    def test_user_message_included_when_provided(self, tmp_path):
+        """
+        SCENARIO: User message is included in instructions when provided
+        GIVEN: Production story_bot with tests behavior
+        AND: User message requesting specific rule information
+        WHEN: Rules action executes with message
+        THEN: Instructions include user message
+        """
+        # GIVEN: Production story_bot with tests behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('tests')
+        behavior = helper.bot.behaviors.current
+        
+        # AND: User message
+        user_message = "Show me the rules for test organization"
+        
+        # AND: Rules action
+        from agile_bot.src.rules.rules_action import RulesAction
+        from agile_bot.src.actions.action_context import RulesActionContext
+        action = RulesAction(behavior=behavior, action_config=None)
+        
+        # WHEN: Rules action executes with message
+        context = RulesActionContext(message=user_message)
+        result = action.do_execute(context)
+        
+        # THEN: Instructions include user message
+        helper.rules.assert_user_message_included(result, user_message)
+    
+    def test_no_user_message_section_when_empty(self, tmp_path):
+        """
+        SCENARIO: No user message section when message is empty
+        GIVEN: Production story_bot with tests behavior
+        WHEN: Rules action executes without message
+        THEN: Instructions do not include user message section
+        """
+        # GIVEN: Production story_bot with tests behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('tests')
+        behavior = helper.bot.behaviors.current
+        
+        # AND: Rules action
+        from agile_bot.src.rules.rules_action import RulesAction
+        from agile_bot.src.actions.action_context import RulesActionContext
+        action = RulesAction(behavior=behavior, action_config=None)
+        
+        # WHEN: Rules action executes without message
+        context = RulesActionContext(message=None)
+        result = action.do_execute(context)
+        
+        # THEN: No user message section in instructions
+        helper.rules.assert_no_user_message_when_empty(result)
+
+
+# ============================================================================
 # STORY: Decide Strategy
 # ============================================================================
 class TestDecideStrategy:
