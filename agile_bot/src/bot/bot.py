@@ -252,31 +252,70 @@ class Bot:
             scope_filter: Complete folder path or story name to filter by, or None to view current scope
         
         Returns:
-            Scope domain object
+            Dict with status, message, and scope data when setting scope, or Scope object when viewing
         """
         from ..scope.scope import ScopeType
         import os
         
         if scope_filter is None:
-            # Return current scope instance
+            # Return current scope instance for property access
             return self._scope
+        
+        # Track if this is a clear operation
+        is_clear = False
+        
+        # Strip "set" or "clear" keywords from CLI commands
+        scope_filter_lower = scope_filter.lower().strip()
+        if scope_filter_lower.startswith('set '):
+            scope_filter = scope_filter[4:].strip()  # Remove "set " prefix
+        elif scope_filter_lower == 'clear':
+            # Clear scope
+            is_clear = True
+            self._scope.clear()
+            self._scope.save()
+            return {
+                'status': 'success',
+                'message': 'Scope cleared',
+                'scope': {
+                    'type': 'all',
+                    'target': []
+                }
+            }
         
         if scope_filter.lower() == 'all':
             # Clear scope
             self._scope.clear()
             self._scope.save()
-            return self._scope
+            return {
+                'status': 'success',
+                'message': 'Scope cleared (set to all)',
+                'scope': {
+                    'type': 'all',
+                    'target': []
+                }
+            }
         
         if scope_filter.lower() == 'showall':
             # Show all - set to SHOW_ALL type
             self._scope.filter(ScopeType.SHOW_ALL, [])
             self._scope.save()
-            return self._scope
+            return {
+                'status': 'success',
+                'message': 'Scope set to show all',
+                'scope': {
+                    'type': 'showAll',
+                    'target': []
+                }
+            }
         
         # Parse scope filter
-        # Handle prefixed scope syntax (story=, epic=, increment=, files=, file:, files:)
+        # Handle multiple formats:
+        # 1. "story=TestStory" or "story:TestStory" (delimited)
+        # 2. "story TestStory" (space-separated)
+        # 3. "TestStory" (auto-detect)
+        
         if '=' in scope_filter or ':' in scope_filter:
-            # Determine delimiter (= or :)
+            # Format: story=TestStory or story:TestStory
             if '=' in scope_filter:
                 delimiter = '='
                 prefix, value_part = scope_filter.split('=', 1)
@@ -293,26 +332,76 @@ class Bot:
                 scope_type = ScopeType.FILES
             elif prefix in ('story', 'epic'):  # Both map to STORY (searches all levels)
                 scope_type = ScopeType.STORY
+                # Use the original prefix for the message
+                prefix = 'story' if prefix == 'story' else 'epic'
             elif prefix == 'increment':
                 scope_type = ScopeType.INCREMENT
             else:
                 # Unknown prefix, treat as story
                 scope_type = ScopeType.STORY
+                prefix = 'story'
+        elif ' ' in scope_filter:
+            # Format: story TestStory (space-separated)
+            parts = scope_filter.split(None, 1)  # Split on first whitespace
+            potential_prefix = parts[0].lower()
+            
+            # Check if first word is a valid scope type
+            if potential_prefix in ('story', 'epic', 'increment', 'file', 'files'):
+                prefix = potential_prefix
+                value_part = parts[1] if len(parts) > 1 else ''
+                scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
+                
+                # Map prefix to scope type
+                if prefix in ('file', 'files'):
+                    scope_type = ScopeType.FILES
+                elif prefix in ('story', 'epic'):
+                    scope_type = ScopeType.STORY
+                elif prefix == 'increment':
+                    scope_type = ScopeType.INCREMENT
+                else:
+                    scope_type = ScopeType.STORY
+            else:
+                # Not a recognized prefix, treat whole thing as value
+                scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
+                # Auto-detect based on value
+                looks_like_path = any(
+                    os.path.isabs(v) or '\\' in v or '/' in v 
+                    for v in scope_values
+                )
+                if looks_like_path:
+                    scope_type = ScopeType.FILES
+                    prefix = 'files'
+                else:
+                    scope_type = ScopeType.STORY
+                    prefix = 'story'
         else:
-            # No prefix - auto-detect based on value
+            # No delimiter or space - auto-detect based on value
             scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
             # Auto-detect if this looks like a file path
             looks_like_path = any(
                 os.path.isabs(v) or '\\' in v or '/' in v 
                 for v in scope_values
             )
-            scope_type = ScopeType.FILES if looks_like_path else ScopeType.STORY
+            if looks_like_path:
+                scope_type = ScopeType.FILES
+                prefix = 'files'
+            else:
+                scope_type = ScopeType.STORY
+                prefix = 'story'
         
         # Update scope filter
         self._scope.filter(scope_type, scope_values)
         self._scope.save()
         
-        return self._scope
+        # Return wrapped response
+        return {
+            'status': 'success',
+            'message': f'Scope set to {prefix}: {", ".join(scope_values)}',
+            'scope': {
+                'type': prefix,
+                'target': scope_values
+            }
+        }
     
     def path(self, directory: Optional[str] = None) -> Dict[str, Any]:
         """Set or view the working directory.

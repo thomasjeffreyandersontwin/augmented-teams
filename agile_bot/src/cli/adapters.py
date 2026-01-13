@@ -150,47 +150,41 @@ class MarkdownProgressAdapter(MarkdownAdapter):
             return '[ ]'
 
 
-class GenericAdapter(ChannelAdapter):
-    """
-    Generic adapter for dict/list objects that don't have custom domain objects yet.
-    Used as a fallback during refactoring.
-    """
+class GenericJSONAdapter(JSONAdapter):
+    """Generic JSON adapter for dict/list objects without custom domain objects."""
     
-    def __init__(self, data: Any, channel: str):
-        """
-        Initialize generic adapter.
-        
-        Args:
-            data: Dict or list to adapt
-            channel: Output channel ('json', 'tty', 'markdown')
-        """
+    def __init__(self, data: Any):
         self.data = data
-        self.channel = channel
+    
+    def to_dict(self) -> Dict:
+        """Return data as-is if dict, otherwise wrap it."""
+        if isinstance(self.data, dict):
+            return self.data
+        return {'data': self.data}
+
+
+class GenericTTYAdapter(TTYAdapter):
+    """Generic TTY adapter for dict/list objects without custom domain objects."""
+    
+    def __init__(self, data: Any):
+        self.data = data
     
     def serialize(self) -> str:
-        """Serialize data based on channel."""
-        if self.channel == 'json':
-            import json
-            return json.dumps(self.data, indent=2)
-        elif self.channel == 'tty':
-            return self._format_tty()
-        elif self.channel == 'markdown':
-            return self._format_markdown()
-        else:
-            import json
-            return json.dumps(self.data, indent=2)
-    
-    def deserialize(self, data: str) -> Any:
-        """Deserialize string to data."""
-        import json
-        return json.loads(data)
-    
-    def _format_tty(self) -> str:
         """Format data for TTY output with ANSI formatting."""
-        # For execution results (dicts with status/behavior/action), format nicely
         if isinstance(self.data, dict):
+            # Check if it's a scope response (status/message/scope)
+            if 'scope' in self.data and isinstance(self.data['scope'], dict):
+                scope_data = self.data['scope']
+                scope_type = scope_data.get('type', 'all')
+                target = scope_data.get('target', [])
+                
+                if target:
+                    target_str = ', '.join(str(t) for t in target)
+                    return f"\x1b[1mScope:\x1b[0m {scope_type}: {target_str}"
+                else:
+                    return f"\x1b[1mScope:\x1b[0m {scope_type}"
             # Check if it's an execution result
-            if 'status' in self.data and 'behavior' in self.data and 'action' in self.data:
+            elif 'status' in self.data and 'behavior' in self.data and 'action' in self.data:
                 lines = []
                 lines.append(f"\x1b[1mStatus:\x1b[0m {self.data['status']}")
                 lines.append(f"\x1b[1mBehavior:\x1b[0m {self.data['behavior']}")
@@ -210,7 +204,40 @@ class GenericAdapter(ChannelAdapter):
         import json
         return json.dumps(self.data, indent=2)
     
-    def _format_markdown(self) -> str:
+    def parse_command_text(self, text: str) -> tuple[str, str]:
+        """Parse command text."""
+        parts = text.split(maxsplit=1)
+        verb = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+        return verb, args
+
+
+class GenericMarkdownAdapter(MarkdownAdapter):
+    """Generic Markdown adapter for dict/list objects without custom domain objects."""
+    
+    def __init__(self, data: Any):
+        self.data = data
+    
+    def serialize(self) -> str:
         """Format data for Markdown output."""
+        # Check if it's a scope response
+        if isinstance(self.data, dict) and 'scope' in self.data and isinstance(self.data['scope'], dict):
+            scope_data = self.data['scope']
+            scope_type = scope_data.get('type', 'all')
+            target = scope_data.get('target', [])
+            
+            if target:
+                target_str = ', '.join(str(t) for t in target)
+                return f"**Scope:** {scope_type}: {target_str}"
+            else:
+                return f"**Scope:** {scope_type}"
+        # For other dicts, wrap in JSON code fences
         import json
         return f"```json\n{json.dumps(self.data, indent=2)}\n```"
+    
+    def parse_command_text(self, text: str) -> tuple[str, str]:
+        """Parse command text."""
+        parts = text.split(maxsplit=1)
+        verb = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+        return verb, args

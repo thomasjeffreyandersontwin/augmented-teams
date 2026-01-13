@@ -47,29 +47,75 @@ Each view:
 
 **HTML Parsing:** Use `jsdom` (minimal dependency) or `happy-dom` (lighter alternative)
 
+## Test Approach: Clone and Adapt, NOT Invent
+
+**CRITICAL PRINCIPLE:** We are NOT creating new test scenarios. We are adapting existing, proven CLI tests to validate HTML rendering.
+
+### Source Test Files (Python)
+- `agile_bot/test/CLI/test_navigate_behaviors_using_cli_commands.py` (~656 lines)
+- `agile_bot/test/CLI/test_manage_scope_using_cli.py` (~470 lines)
+- `agile_bot/test/CLI/test_execute_actions_using_cli.py`
+- `agile_bot/test/CLI/test_get_help_using_cli.py`
+- `agile_bot/test/CLI/test_initialize_cli_session.py`
+
+### Target Test Files (JavaScript) - TO BE CREATED
+
+**Status Legend:**
+- ✅ EXISTS: File exists with tests
+- 📝 PARTIAL: File exists but incomplete
+- ❌ MISSING: File needs to be created
+
+| JavaScript Panel Test File | Status | Source CLI Test | Stories/Tests to Adapt |
+|----------------------------|--------|-----------------|------------------------|
+| `test_navigate_and_execute.js` | 📝 PARTIAL | `test_navigate_behaviors_using_cli_commands.py` | TestManageBehaviors (11 tests)<br>TestNavigateActions (9 tests)<br>TestExecuteActions (8 tests) - MISSING |
+| `test_manage_scope.js` | 📝 PARTIAL | `test_manage_scope_using_cli.py` | TestCreateScope (2 tests)<br>TestFilterScopeByStories (6 tests)<br>TestFilterScopeByFiles (many tests) - MISSING<br>TestPersistScope - MISSING<br>TestClearScope - MISSING |
+| `test_display_instructions.js` | 📝 PARTIAL | `test_execute_actions_using_cli.py` | TestDisplayInstructions - PARTIAL |
+| `test_manage_panel_session.js` | 📝 PARTIAL | `test_initialize_cli_session.py` | TestInitializeBot - PARTIAL |
+| `test_get_help.js` | ❌ MISSING | `test_get_help_using_cli.py` | TestGetHelp - ALL MISSING |
+
+### Missing Test Coverage
+
+**Immediate Priorities:**
+1. Complete `test_navigate_and_execute.js` - Missing TestExecuteActions (8 tests)
+2. Complete `test_manage_scope.js` - Missing ~30 tests for files/persist/clear
+3. Create `test_get_help.js` - Missing entirely
+
+**Each adapted test MUST:**
+- Reference source Python test in docstring
+- Use same Given-When-Then structure
+- Validate HTML rendering (not CLI output)
+- Call same domain operations through panel views
+
 ## Test Structure - Mirroring CLI Tests
 
 ### Directory Structure
 
 ```
-agile_bot/src/panel/
+agile_bot/
 ├── test/
-│   ├── helpers/
-│   │   ├── bot_view_test_helper.js       # Creates views with real CLI
-│   │   ├── behaviors_view_test_helper.js
-│   │   ├── scope_view_test_helper.js
-│   │   ├── instructions_view_test_helper.js
-│   │   └── html_assertions.js
-│   ├── bot_view.test.js
-│   ├── behaviors_view.test.js
-│   ├── scope_view.test.js
-│   ├── instructions_view.test.js
-│   └── panel_view.test.js
-├── bot_view.js
-├── behaviors_view.js
-├── scope_view.js
-├── instructions_view.js
-└── panel_view.js                         # Base class with CLI integration
+│   ├── CLI/                              # CLI tests (existing)
+│   ├── domain/                           # Domain tests (existing)
+│   └── panel/                            # Panel tests (existing, needs completion)
+│       ├── helpers/
+│       │   ├── bot_view_test_helper.js
+│       │   ├── behaviors_view_test_helper.js
+│       │   ├── scope_view_test_helper.js
+│       │   ├── instructions_view_test_helper.js
+│       │   └── html_assertions.js
+│       ├── mock_vscode.js               # Mock VS Code API (existing)
+│       ├── test_navigate_and_execute.js # (existing - partial)
+│       ├── test_manage_scope.js         # (existing - partial)
+│       ├── test_display_instructions.js # (existing - partial)
+│       ├── test_manage_panel_session.js # (existing - partial)
+│       └── test_get_help.js             # (MISSING)
+└── src/
+    └── panel/
+        ├── bot/
+        │   └── bot_view.js
+        ├── behaviors_view.js
+        ├── scope_view.js
+        ├── instructions_view.js
+        └── panel_view.js
 ```
 
 ### Test Helper Pattern (Mirrors Python CLI Helpers)
@@ -152,102 +198,121 @@ class BotViewTestHelper {
 module.exports = BotViewTestHelper;
 ```
 
-### Given-When-Then Test Format (Class-Based with Real CLI)
+### Given-When-Then Test Format - ADAPTING EXISTING CLI TESTS
 
+**CRITICAL:** We are NOT inventing new tests. We are cloning and adapting existing CLI tests to JavaScript for panel HTML rendering.
+
+**Source Tests:** `agile_bot/test/CLI/test_navigate_behaviors_using_cli_commands.py`
+
+**Mapping:**
+- Python CLI tests validate CLI output format (TTY/Markdown/JSON)
+- JavaScript panel tests validate HTML rendering from JSON
+- Same test scenarios, same domain logic, different presentation layer
+
+#### Example: Adapting TestManageBehaviorsUsingCLI
+
+**Python CLI Test (Source):**
+```python
+# From: test_navigate_behaviors_using_cli_commands.py
+class TestManageBehaviorsUsingCLI:
+    """Story: Manage Behaviors Using CLI"""
+    
+    @pytest.mark.parametrize("helper_class", [TTYBotTestHelper, PipeBotTestHelper, JsonBotTestHelper])
+    def test_cli_current_behavior_accessible(self, tmp_path, helper_class):
+        """
+        Domain: test_behaviors_current_property_returns_current_behavior
+        CLI: Current behavior accessible via status command
+        """
+        helper = helper_class(tmp_path)
+        helper.domain.state.set_state('prioritization', 'clarify')
+        
+        cli_response = helper.cli_session.execute_command('status')
+        
+        assert helper.cli_session.bot.behaviors.current.name == 'prioritization'
+        assert cli_response is not None
+```
+
+**JavaScript Panel Test (Adapted):**
 ```javascript
-// test/behaviors_view.test.js
+// TO BE CREATED: test/panel/test_navigate_behaviors.js
+// Adapts: test_navigate_behaviors_using_cli_commands.py
 
-const { test, before, after } = require('node:test');
+const { test, after } = require('node:test');
 const assert = require('node:assert');
-const BehaviorsViewTestHelper = require('./helpers/behaviors_view_test_helper');
-const { parseHTML } = require('./helpers/html_assertions');
+const path = require('path');
+const BotView = require('../../src/bot/bot_view');
 
-class TestBehaviorsView {
-    
-    constructor(workspaceDir) {
-        this.helper = new BehaviorsViewTestHelper(workspaceDir, 'story_bot');
+const activeBotViews = [];
+
+after(() => {
+    for (const botView of activeBotViews) {
+        botView.cleanup();
     }
+    setTimeout(() => process.exit(0), 100);
+});
+
+function setupTestWorkspace() {
+    return path.join(__dirname, '../../..');
+}
+
+function getBotDirectory() {
+    const repoRoot = path.join(__dirname, '../../..');
+    return path.join(repoRoot, 'agile_bot', 'bots', 'story_bot');
+}
+
+test('TestManageBehaviors', { concurrency: false }, async (t) => {
     
-    async setup() {
-        // Initialize persistent CLI session - views will use this
-        await this.helper.initializeCLI();
-    }
+    await t.test('test_panel_current_behavior_visible_in_hierarchy', async () => {
+        /**
+         * GIVEN: Bot at prioritization.clarify
+         * WHEN: Panel renders hierarchy
+         * THEN: Current behavior marked in HTML
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        await botView.execute('prioritization.clarify');
+        await botView.refreshBehaviors();
+        const html = botView.getBehaviorsHTML();
+        
+        const behaviors = parseBehaviors(html);
+        assert.strictEqual(behaviors.current, 'prioritization');
+        assert.ok(html.includes('class="current"'));
+    });
     
-    teardown() {
-        // Cleanup CLI after all tests
-        this.helper.cleanupCLI();
-    }
+    await t.test('test_panel_navigate_to_behavior_updates_hierarchy', async () => {
+        /**
+         * GIVEN: Bot initialized
+         * WHEN: User clicks discovery behavior
+         * THEN: Discovery becomes current in HTML
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        await botView.execute('discovery');
+        await botView.refreshBehaviors();
+        const html = botView.getBehaviorsHTML();
+        
+        const behaviors = parseBehaviors(html);
+        assert.strictEqual(behaviors.current, 'discovery');
+    });
+});
     
-    // Story: Display Behavior Hierarchy
-    async testSingleBehaviorWithActions() {
-        // GIVEN: Create BotView with real CLI
-        const view = this.helper.createBotView();
-        
-        // WHEN: Navigate to shape and refresh (view uses its CLI internally)
-        await view.navigateToBehavior('shape');
-        await view.refresh();  // View gets JSON from CLI
-        const html = view.getBehaviorsHTML();  // View renders HTML
-        
-        // THEN: HTML contains behavior and actions from real CLI
-        this.helper.assertBehaviorPresent(html, 'shape');
-        ['clarify', 'strategy', 'validate', 'build', 'render'].forEach(action => {
-            this.helper.assertActionPresent(html, 'shape', action);
-        });
-    }
-    
-    async testMultipleBehaviors() {
-        // GIVEN: BotView with real CLI
-        const view = this.helper.createBotView();
-        
-        // WHEN: Refresh view (gets current state from CLI)
-        await view.refresh();
-        const html = view.getBehaviorsHTML();
-        
-        // THEN: HTML contains all behaviors from CLI
-        ['prioritization', 'shape', 'discovery', 'exploration'].forEach(behavior => {
-            this.helper.assertBehaviorPresent(html, behavior);
-        });
-    }
-    
-    async testCurrentBehaviorMarked() {
-        // GIVEN: BotView at specific behavior
-        const view = this.helper.createBotView();
-        await view.navigateToBehavior('shape');
-        
-        // WHEN: Refresh and render
-        await view.refresh();
-        const html = view.getBehaviorsHTML();
-        
-        // THEN: Current behavior has marker
-        this.helper.assertCurrentBehaviorMarked(html, 'shape');
-    }
-    
-    // Story: Navigate Behavior Action
-    async testClickingBehaviorExpandsActions() {
-        // GIVEN: BotView with behaviors
-        const view = this.helper.createBotView();
-        await view.refresh();
-        
-        // WHEN: User clicks behavior (simulate expansion)
-        view.expandBehavior('shape');  // View's own method
-        const html = view.getBehaviorsHTML();
-        
-        // THEN: Behavior is expanded, actions are visible
-        this.helper.assertBehaviorExpanded(html, 'shape');
-        this.helper.assertActionsVisible(html, 'shape');
-    }
-    
-    // Story: Execute Behavior Action
     async testActionDisplaysExecuteButton() {
-        // GIVEN: BotView with actions
+        /**
+         * GIVEN: Bot at shape behavior with actions
+         * WHEN: Panel renders hierarchy
+         * THEN: Each action has execute button
+         */
         const view = this.helper.createBotView();
         await view.navigateToBehavior('shape');
         await view.refresh();
-        
-        // WHEN: View renders
         const html = view.getBehaviorsHTML();
         
-        // THEN: Each action has execute button
         const doc = parseHTML(html);
         const actionElements = doc.querySelectorAll('[data-action]');
         actionElements.forEach(actionEl => {
@@ -317,15 +382,16 @@ class TestDisplayBehaviorHierarchy {
     }
     
     async testSingleBehaviorWithActions() {
-        // GIVEN: Create view with real CLI
+        /**
+         * GIVEN: Bot at shape behavior
+         * WHEN: View renders
+         * THEN: HTML contains behavior with all actions
+         */
         const view = this.helper.createBotView();
+        await view.navigateToBehavior('shape');
+        await view.refresh();
+        const html = view.render();
         
-        // WHEN: View uses its built-in methods to get data from CLI and render
-        await view.navigateToBehavior('shape'); // View's own method
-        await view.refresh();                    // View's own method to get JSON
-        const html = view.render();             // View's own method to render HTML
-        
-        // THEN: HTML contains expected structure from REAL CLI
         this.helper.assertBehaviorPresent(html, 'shape');
         this.helper.assertActionsPresent(html, 'shape', 
             ['clarify', 'strategy', 'validate', 'build', 'render']);
@@ -881,25 +947,31 @@ render() {
 ```
 
 #### 22. **self_documenting_tests**
-Tests document through code structure. Don't add verbose comments.
+Tests document through scenario block at top, then clean code. NO inline comments explaining steps.
 
 ```javascript
-// ✅ GOOD: Self-documenting
+// ✅ GOOD: Scenario block + clean code
 testSingleBehaviorWithFiveActions() {
+    /**
+     * GIVEN: Bot at shape behavior with five actions
+     * WHEN: Panel renders hierarchy
+     * THEN: HTML shows behavior with all five actions
+     */
     const botJSON = loadJSONFixture('bot_with_shape_behavior');
     const view = helper.createBehaviorsView(botJSON.behaviors);
     const html = view.render();
     helper.assertActionsPresent(html, 'shape', ['clarify', 'strategy', 'validate', 'build', 'render']);
 }
 
-// ❌ BAD: Verbose unnecessary comments
+// ❌ BAD: No scenario + inline comments explaining code
 testSingleBehavior() {
-    // This test checks if the view renders correctly
     // First we load the fixture
     const botJSON = loadJSONFixture('bot.json');
     // Then we create the view
     const view = new BehaviorsView(botJSON);
-    // ... WRONG - comments are noise
+    // Then we render it
+    const html = view.render();
+    // ... WRONG - inline comments are noise
 }
 ```
 
@@ -1128,96 +1200,81 @@ When creating or reviewing panel tests, validate against ALL 25 rules:
 // test/behaviors_view.test.js
 // Rule: place_imports_at_top - all imports at top, grouped
 
-// Standard library
 const { test, before, after } = require('node:test');
 const assert = require('node:assert');
-
-// Third-party
 const { JSDOM } = require('jsdom');
-
-// Local
 const BehaviorsViewTestHelper = require('./helpers/behaviors_view_test_helper');
 
-// Rule: use_class_based_organization - class = story
-// Rule: use_domain_language - class name uses domain vocabulary
 class TestDisplayBehaviorHierarchy {
     
     constructor(workspaceDir) {
         this.helper = new BehaviorsViewTestHelper(workspaceDir, 'story_bot');
     }
     
-    // Rule: helper_extraction_and_reuse - setup extracted to method
     async setup() {
-        // Initialize persistent CLI session ONCE - views will use it
         await this.helper.initializeCLI();
     }
     
     teardown() {
-        // Cleanup CLI after all tests complete
         this.helper.cleanupCLI();
     }
     
-    // Rule: use_exact_variable_names - names match spec
-    // Rule: orchestrator_pattern - method under 20 lines, Given-When-Then flow
-    // Rule: create_parameterized_tests_for_scenarios - explicit method name
     async testSingleBehaviorWithFiveActions() {
-        // Rule: use_given_when_then_helpers - structured flow
-        // GIVEN: BotView with real CLI at shape behavior
-        const view = this.helper.createBotView(); // Rule: standard_test_data_sets
+        /**
+         * GIVEN: Bot at shape behavior with five actions
+         * WHEN: Panel renders hierarchy
+         * THEN: HTML shows behavior with all five actions marked correctly
+         */
+        const view = this.helper.createBotView();
         await view.navigateToBehavior('shape');
-        
-        // Rule: call_production_code_directly - calling real view with real CLI
-        // WHEN: View refreshes and renders HTML
-        await view.refresh();  // View uses its CLI to get JSON
+        await view.refresh();
         const html = view.getBehaviorsHTML();
         
-        // Rule: assert_full_results - asserting complete structure
-        // Rule: test_observable_behavior - testing public API output
-        // THEN: HTML contains expected structure from real CLI
         this.helper.assertBehaviorPresent(html, 'shape');
         this.helper.assertActionsPresent(html, 'shape', 
             ['clarify', 'strategy', 'validate', 'build', 'render']);
         this.helper.assertCurrentBehaviorMarked(html, 'shape');
     }
     
-    // Rule: cover_all_behavior_paths - separate test for different scenario
     async testMultipleBehaviorsInPriorityOrder() {
-        // GIVEN: BotView with multiple behaviors via real CLI
+        /**
+         * GIVEN: Bot with multiple behaviors
+         * WHEN: Panel renders hierarchy
+         * THEN: Behaviors appear in priority order with current marked
+         */
         const view = this.helper.createBotView();
-        
-        // WHEN: View refreshes and renders
         await view.refresh();
         const html = view.getBehaviorsHTML();
         
-        // THEN: HTML contains behaviors in correct order from CLI
         this.helper.assertBehaviorsInOrder(html, 
             ['prioritization', 'shape', 'discovery', 'exploration']);
         this.helper.assertCurrentBehaviorMarked(html, 'shape');
     }
     
-    // Rule: use_ascii_only - test name uses ASCII, not Unicode checkmark
     async testCompletedActionsMarked() {
-        // GIVEN: BotView with completed actions
+        /**
+         * GIVEN: Bot with completed actions
+         * WHEN: Panel renders hierarchy
+         * THEN: Completed actions show checkmark indicator
+         */
         const view = this.helper.createBotView();
         await view.navigateToBehavior('shape');
-        await view.navigateToAction('strategy'); // Complete clarify, move to strategy
-        
-        // Rule: no_defensive_code_in_tests - no if-checks, direct calls
-        // WHEN: View refreshes and renders
+        await view.navigateToAction('strategy');
         await view.refresh();
         const html = view.getBehaviorsHTML();
         
-        // THEN: Completed actions are marked
         this.helper.assertBehaviorPresent(html, 'shape');
         this.helper.assertActionsCompleted(html, 'shape', ['clarify']);
     }
     
-    // Rule: cover_all_behavior_paths - failure scenario
     async testThrowsErrorWhenCLIUnavailable() {
-        // GIVEN: Helper with no CLI initialized
+        /**
+         * GIVEN: Helper with no CLI initialized
+         * WHEN: Attempting to create view
+         * THEN: Error thrown indicating CLI not available
+         */
         const newHelper = new BehaviorsViewTestHelper(process.cwd(), 'story_bot');
         
-        // WHEN/THEN: Creating view without CLI throws error
         assert.throws(
             () => newHelper.createBotView(),
             { message: /CLI not initialized/ }
@@ -1225,9 +1282,6 @@ class TestDisplayBehaviorHierarchy {
     }
 }
 
-// Rule: self_documenting_tests - code structure shows what's tested
-// Rule: match_specification_scenarios - test names match story scenarios
-// Run all tests
 const workspaceDir = process.env.TEST_WORKSPACE || process.cwd();
 const suite = new TestDisplayBehaviorHierarchy(workspaceDir);
 
@@ -1251,7 +1305,14 @@ test('TestDisplayBehaviorHierarchy.testThrowsErrorWhenCLIUnavailable', async () 
 });
 ```
 
-**Rules Demonstrated:** 16 of 25 rules shown in this example. All 25 must be validated against every test file.
+**This example follows ALL 25 test rules:**
+- Self-documenting code structure (no verbose comments)
+- Clean functions under 20 lines
+- Explicit test method names
+- No defensive code
+- Direct production code calls
+- ASCII-only output
+- Helper-based assertions
 
 **Key Architecture:** 
 - Views use their built-in CLI integration

@@ -37,6 +37,18 @@ class PipeBotHelper:
         assert has_content, \
             f"CLI STATUS section has no content in output:\n{output[:500]}"
     
+    def assert_scope_response_present(self, output: str):
+        """
+        Validate COMPLETE scope response in Markdown format.
+        
+        Expected format:
+        **Scope:** story: Story1
+        or
+        **Scope:** all
+        """
+        assert '**Scope:**' in output, \
+            f"Missing scope response in Markdown output:\n{output[:500]}"
+    
     def assert_error_shows_behavior_not_found(self, output: str, behavior: str):
         """
         Validate COMPLETE error message format in Markdown.
@@ -327,6 +339,19 @@ class PipeHelpHelper:
             f"Missing command '{command}' in help output:\n{output[:500]}"
 
 
+class PipeBehaviorsHelper:
+    """Helper for behaviors - validates behavior object properties"""
+    
+    def __init__(self, parent):
+        self.parent = parent
+    
+    def assert_behavior_has_properties(self, behavior):
+        """Validate behavior has expected properties."""
+        assert behavior is not None, "Behavior should not be None"
+        assert hasattr(behavior, 'name'), "Behavior should have 'name' property"
+        assert hasattr(behavior, 'actions'), "Behavior should have 'actions' property"
+
+
 class PipeBotTestHelper(CLIBotTestHelper):
     """Pipe/Markdown channel helper - validates complete markdown structures"""
     
@@ -337,3 +362,4 @@ class PipeBotTestHelper(CLIBotTestHelper):
         self.scope = PipeScopeHelper(self)
         self.navigation = PipeNavigationHelper(self)
         self.help = PipeHelpHelper(self)
+        self.behaviors = PipeBehaviorsHelper(self)

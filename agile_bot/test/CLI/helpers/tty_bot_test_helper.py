@@ -42,6 +42,24 @@ class TTYBotHelper:
         assert has_content, \
             f"CLI STATUS section has no content:\n{output[:500]}"
     
+    def assert_scope_response_present(self, output: str):
+        """
+        Validate COMPLETE scope response in TTY format.
+        
+        Expected format (with ANSI codes):
+        \x1b[1mScope:\x1b[0m story: Story1
+        or
+        [1mScope:[0m all
+        """
+        # Check for scope with ANSI codes (both full and simplified)
+        scope_present = (
+            'Scope:' in output or
+            '\x1b[1mScope:\x1b[0m' in output or
+            '[1mScope:[0m' in output
+        )
+        assert scope_present, \
+            f"Missing scope response in TTY output:\n{output[:500]}"
+    
     def assert_error_shows_behavior_not_found(self, output: str, behavior: str):
         """
         Validate COMPLETE error message format in TTY with color codes.
@@ -243,14 +261,18 @@ class TTYScopeHelper:
         """
         Validate COMPLETE scope display format in TTY.
         
-        Expected format:
-        Scope: story: Story1, Story2
+        Expected format (with ANSI codes):
+        \x1b[1mScope:\x1b[0m story: Story1, Story2
         or
-        Scope: epic: EpicA
+        [1mScope:[0m story: Story1, Story2
         """
-        expected_scope_start = f"Scope: {scope_type}:"
-        assert expected_scope_start in output, \
-            f"Missing complete scope line start '{expected_scope_start}' in output:\n{output[:500]}"
+        # Check for scope with ANSI codes (both full and simplified)
+        scope_present = (
+            f'\x1b[1mScope:\x1b[0m {scope_type}:' in output or
+            f'[1mScope:[0m {scope_type}:' in output
+        )
+        assert scope_present, \
+            f"Missing complete scope line with ANSI codes for type '{scope_type}' in output:\n{output[:500]}"
         
         assert target in output, \
             f"Missing target '{target}' in scope display:\n{output[:500]}"
@@ -326,6 +348,19 @@ class TTYHelpHelper:
             f"Missing command '{command}' in help output:\n{output[:500]}"
 
 
+class TTYBehaviorsHelper:
+    """Helper for behaviors - validates behavior object properties"""
+    
+    def __init__(self, parent):
+        self.parent = parent
+    
+    def assert_behavior_has_properties(self, behavior):
+        """Validate behavior has expected properties."""
+        assert behavior is not None, "Behavior should not be None"
+        assert hasattr(behavior, 'name'), "Behavior should have 'name' property"
+        assert hasattr(behavior, 'actions'), "Behavior should have 'actions' property"
+
+
 class TTYBotTestHelper(CLIBotTestHelper):
     """TTY channel helper - validates complete TTY structures with ANSI codes and box drawing"""
     
@@ -336,3 +371,4 @@ class TTYBotTestHelper(CLIBotTestHelper):
         self.scope = TTYScopeHelper(self)
         self.navigation = TTYNavigationHelper(self)
         self.help = TTYHelpHelper(self)
+        self.behaviors = TTYBehaviorsHelper(self)

@@ -66,6 +66,42 @@ class JsonBotHelper:
         assert actual['status'] in ['success', 'error'], \
             f"'status' must be 'success' or 'error', got '{actual['status']}'.\nActual JSON: {actual}"
     
+    def assert_scope_response_present(self, output: str):
+        """
+        Validate COMPLETE scope response JSON structure.
+        
+        Standard structure:
+        {
+          "status": "success",
+          "message": "Scope set to...",
+          "scope": {
+            "type": "story",
+            "target": ["Story1"]
+          }
+        }
+        """
+        actual = self._parse_json(output)
+        
+        # Validate required fields
+        required_fields = ['status', 'scope']
+        for field in required_fields:
+            assert field in actual, \
+                f"Missing required field '{field}'.\nExpected: {required_fields}\nActual: {actual}"
+        
+        # Validate status
+        assert actual['status'] in ['success', 'error'], \
+            f"'status' must be 'success' or 'error', got '{actual['status']}'.\nActual JSON: {actual}"
+        
+        # Validate scope structure
+        assert isinstance(actual['scope'], dict), \
+            f"Field 'scope' must be dict, got {type(actual['scope']).__name__}.\nActual JSON: {actual}"
+        
+        # Validate scope has required fields
+        scope_fields = ['type', 'target']
+        for field in scope_fields:
+            assert field in actual['scope'], \
+                f"Missing required scope field '{field}'.\nExpected: {scope_fields}\nActual scope: {actual['scope']}"
+    
     def assert_error_shows_behavior_not_found(self, output: str, behavior: str):
         """
         Validate COMPLETE error JSON structure by comparing JSON objects.
@@ -456,6 +492,19 @@ class JsonHelpHelper:
             f"Missing command '{command}' in help output:\n{output[:500]}"
 
 
+class JsonBehaviorsHelper:
+    """Helper for behaviors - validates behavior object properties"""
+    
+    def __init__(self, parent):
+        self.parent = parent
+    
+    def assert_behavior_has_properties(self, behavior):
+        """Validate behavior has expected properties."""
+        assert behavior is not None, "Behavior should not be None"
+        assert hasattr(behavior, 'name'), "Behavior should have 'name' property"
+        assert hasattr(behavior, 'actions'), "Behavior should have 'actions' property"
+
+
 class JsonBotTestHelper(CLIBotTestHelper):
     """JSON channel helper - validates complete JSON structures"""
     
@@ -466,3 +515,4 @@ class JsonBotTestHelper(CLIBotTestHelper):
         self.scope = JsonScopeHelper(self)
         self.navigation = JsonNavigationHelper(self)
         self.help = JsonHelpHelper(self)
+        self.behaviors = JsonBehaviorsHelper(self)

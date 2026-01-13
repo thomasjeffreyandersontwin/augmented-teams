@@ -55,7 +55,9 @@ class TestCreateScopeUsingCLI:
         cli_response = helper.cli_session.execute_command(scope_cmd)
         
         # Then - Validate complete scope response structure
-        helper.bot.assert_status_section_present(cli_response.output)
+        helper.bot.assert_scope_response_present(cli_response.output)
+        # Also verify scope type is in output
+        assert scope_type in cli_response.output.lower()
     
     @pytest.mark.parametrize("helper_class", [
         TTYBotTestHelper,
@@ -116,7 +118,7 @@ class TestFilterScopeByStoriesUsingCLI:
         cli_response = helper.cli_session.execute_command('scope set all')
         
         # Then - Validate complete scope response for 'all' scope
-        helper.bot.assert_status_section_present(cli_response.output)
+        helper.bot.assert_scope_response_present(cli_response.output)
         assert 'all' in cli_response.output.lower()
     
     @pytest.mark.parametrize("helper_class", [
@@ -314,7 +316,7 @@ class TestPersistScopeUsingCLI:
         cli_response2 = helper.cli_session.execute_command('shape')
         
         # Then - Both commands succeed (scope persists)
-        helper.bot.assert_status_section_present(cli_response1.output)
+        helper.bot.assert_scope_response_present(cli_response1.output)
         helper.bot.assert_status_section_present(cli_response2.output)
 
 
@@ -353,7 +355,7 @@ class TestClearScopeUsingCLI:
         cli_response2 = helper.cli_session.execute_command('scope clear')
         
         # Then - Validate complete clear scope response
-        helper.bot.assert_status_section_present(cli_response2.output)
+        helper.bot.assert_scope_response_present(cli_response2.output)
 
 
 # ============================================================================
