@@ -10,184 +10,6 @@ from .base_helper import BaseHelper
 class BehaviorTestHelper(BaseHelper):
     """Helper for behavior and action management, workflows, and verification"""
     
-    def create_behavior_json(self, behavior_name: str, actions: list = None, **kwargs):
-        """Create behavior.json file for a behavior.
-        
-        Args:
-            behavior_name: Name of the behavior
-            actions: Optional list of action definitions. If None, uses default actions.
-            **kwargs: Additional fields to include in behavior.json (description, goal, inputs, outputs, 
-                     baseActionsPath, instructions, etc.)
-        
-        Returns:
-            Path to the created behavior.json file
-            
-        Raises:
-            RuntimeError: If attempting to write to production story_bot
-        """
-        behavior_dir = self.parent.bot_directory / 'behaviors' / behavior_name
-        behavior_dir.mkdir(parents=True, exist_ok=True)
-        behavior_file = behavior_dir / 'behavior.json'
-        
-        # Safety check: prevent writing to production story_bot behavior.json files
-        if self._is_production_story_bot_path(behavior_file):
-            raise RuntimeError(
-                f"TEST SAFETY: Attempted to write behavior.json to production story_bot directory: {behavior_file}\n"
-                f"Tests should use temporary directories (tmp_path fixture) instead of production directories."
-            )
-        
-        if actions is None:
-            # Default actions
-            actions = [
-                {"name": "clarify", "order": 1, "next_action": "strategy"},
-                {"name": "strategy", "order": 2, "next_action": "build"},
-                {"name": "build", "order": 3, "next_action": "validate"},
-                {"name": "validate", "order": 4, "next_action": "render"},
-                {"name": "render", "order": 5}
-            ]
-        
-        # Handle instructions - can be list or dict
-        instructions = kwargs.get('instructions')
-        if instructions is None:
-            instructions = {}
-        elif isinstance(instructions, list):
-            # Convert list to dict format if needed, or keep as list
-            instructions = instructions
-        
-        behavior_config = {
-            "behaviorName": behavior_name,
-            "description": kwargs.get('description', f"Test behavior: {behavior_name}"),
-            "goal": kwargs.get('goal', f"Test goal for {behavior_name}"),
-            "inputs": kwargs.get('inputs', "Test inputs"),
-            "outputs": kwargs.get('outputs', "Test outputs"),
-            "instructions": instructions,
-            "actions_workflow": {
-                "actions": actions
-            }
-        }
-        
-        # Add any additional fields from kwargs (baseActionsPath, etc.)
-        for key, value in kwargs.items():
-            if key not in ['description', 'goal', 'inputs', 'outputs', 'instructions']:
-                behavior_config[key] = value
-        
-        behavior_file.write_text(json.dumps(behavior_config, indent=2), encoding='utf-8')
-        return behavior_file
-    
-    def create_behavior_folder(self, folder_name: str) -> Path:
-        """Create behavior folder in bot directory.
-        
-        Args:
-            folder_name: Name of behavior folder
-        
-        Returns:
-            Path to behavior directory
-        """
-        behavior_dir = self.parent.bot_directory / 'behaviors' / folder_name
-        behavior_dir.mkdir(parents=True, exist_ok=True)
-        return behavior_dir
-    
-    def create_behavior_folder_with_json(self, folder_name: str) -> Path:
-        """Create behavior folder with behavior.json file.
-        
-        Args:
-            folder_name: Name of behavior folder
-        
-        Returns:
-            Path to behavior directory
-        
-        Raises:
-            RuntimeError: If attempting to write to production story_bot
-        """
-        behavior_folder = self.create_behavior_folder(folder_name)
-        behavior_file = behavior_folder / 'behavior.json'
-        
-        # Safety check: prevent writing to production story_bot behavior.json files
-        if self._is_production_story_bot_path(behavior_file):
-            raise RuntimeError(
-                f"TEST SAFETY: Attempted to write behavior.json to production story_bot directory: {behavior_file}\n"
-                f"Tests should use temporary directories (tmp_path fixture) instead of production directories."
-            )
-        
-        # Create minimal behavior.json
-        behavior_config = {
-            "behaviorName": folder_name,
-            "description": f"Test behavior: {folder_name}",
-            "actions_workflow": {
-                "actions": []
-            }
-        }
-        behavior_file.write_text(json.dumps(behavior_config, indent=2), encoding='utf-8')
-        return behavior_folder
-    
-    def _is_production_story_bot_path(self, path: Path) -> bool:
-        """Check if path is in the production story_bot directory.
-        
-        Prevents tests from accidentally overwriting production behavior.json files.
-        
-        Args:
-            path: Path to check
-            
-        Returns:
-            True if path is in production story_bot, False otherwise
-        """
-        try:
-            path = path.resolve()
-            path_str = str(path).replace('\\', '/')
-            
-            # Get the repo root (agile_bot/test/domain/bot_test_helper.py -> repo root is 3 levels up)
-            repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
-            story_bot_behaviors = (repo_root / 'agile_bot' / 'bots' / 'story_bot' / 'behaviors').resolve()
-            
-            # Check if path is under the production story_bot/behaviors directory
-            return str(path).startswith(str(story_bot_behaviors))
-        except Exception:
-            return False
-    
-    def create_action_config(self, action_name: str, config_data: dict) -> Path:
-        """Create action_config.json file for a base action.
-        
-        Args:
-            action_name: Name of the action (e.g., 'clarify', 'validate')
-            config_data: Dictionary of config data to write to the file
-        
-        Returns:
-            Path to the created action_config.json file
-        """
-        # Get base_actions directory from agile_bot/base_actions
-        repo_root = Path(__file__).parent.parent.parent.parent.parent
-        base_actions_dir = repo_root / 'agile_bot' / 'base_actions' / action_name
-        base_actions_dir.mkdir(parents=True, exist_ok=True)
-        config_file = base_actions_dir / 'action_config.json'
-        config_file.write_text(json.dumps(config_data, indent=2), encoding='utf-8')
-        return config_file
-    
-    def create_base_instructions(self):
-        """Create base action configs in agile_bot/base_actions.
-        
-        Uses the shared agile_bot/base_actions directory.
-        """
-        repo_root = Path(__file__).parent.parent.parent.parent.parent
-        base_actions = repo_root / 'agile_bot' / 'base_actions'
-        
-        actions = ['clarify', 'strategy', 'build', 'validate', 'render']
-        orders = [1, 2, 3, 4, 5]
-        next_actions = ['strategy', 'build', 'validate', 'render', None]
-        
-        for action, order, next_action in zip(actions, orders, next_actions):
-            action_dir = base_actions / action
-            action_dir.mkdir(parents=True, exist_ok=True)
-            config = {
-                'name': action,
-                'workflow': True,
-                'order': order,
-                'instructions': [f'{action} base instructions']
-            }
-            if next_action:
-                config['next_action'] = next_action
-            config_file = action_dir / 'action_config.json'
-            config_file.write_text(json.dumps(config), encoding='utf-8')
-    
     def create_base_action_instructions(self, action: str) -> Path:
         """Get base action config path for specific action.
         
@@ -209,25 +31,6 @@ class BehaviorTestHelper(BaseHelper):
         if not config_file.exists():
             raise RuntimeError(f"Base action config missing: {config_file}. Tests should rely on existing base actions.")
         return config_file
-    
-    def create_behavior_action_instructions(self, behavior: str, action: str) -> Path:
-        """Create behavior-specific action instructions.
-        
-        Args:
-            behavior: Behavior name
-            action: Action name
-        
-        Returns:
-            Path to instructions.json file
-        """
-        instructions_dir = self.parent.bot_directory / 'behaviors' / behavior / action
-        instructions_dir.mkdir(parents=True, exist_ok=True)
-        
-        instructions_file = instructions_dir / 'instructions.json'
-        instructions_file.write_text(json.dumps({
-            'instructions': [f'{behavior}.{action} specific instructions']
-        }), encoding='utf-8')
-        return instructions_file
     
     def assert_at_behavior_action(self, behavior_name: str, action_name: str):
         """Assert bot is at specified behavior and action."""
@@ -469,9 +272,6 @@ class BehaviorTestHelper(BaseHelper):
         # Create activity log file
         self.parent.activity.create_activity_log_file()
         
-        # Create guardrails files (required by Guardrails class initialization)
-        self.parent.guardrails.create_minimal_guardrails_files(behavior)
-        
         # If action is 'build', create story graph config structure
         if action_name == 'build':
             from agile_bot.test.domain.test_build_knowledge import given_setup
@@ -515,9 +315,6 @@ class BehaviorTestHelper(BaseHelper):
         
         # Create activity log file
         self.parent.activity.create_activity_log_file()
-        
-        # Create guardrails files
-        self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
         # If action is 'build', create story graph config structure
         if action_name == 'build':
@@ -573,7 +370,6 @@ class BehaviorTestHelper(BaseHelper):
         
         # Use production behaviors - no need to create behavior.json files
         # Production story_bot already has all behaviors configured
-        self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
         # If build action is involved, create story graph config structure
         if source_action == 'build' or dest_action == 'build':
@@ -610,7 +406,6 @@ class BehaviorTestHelper(BaseHelper):
         
         # Use production behaviors - no need to create behavior.json files
         # Production story_bot already has all behaviors configured
-        self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
         # If behavior has 'build' action, create story graph configs
         if action_name == 'build':
