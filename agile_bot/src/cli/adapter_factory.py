@@ -122,10 +122,21 @@ class AdapterFactory:
         """
         domain_type = type(domain_object).__name__
         
-        # Fallback for dict/list - use generic JSON adapter
-        if domain_type in ('dict', 'list'):
-            from agile_bot.src.cli.adapters import GenericAdapter
-            return GenericAdapter(domain_object, channel)
+        # Fallback for dict/list/str - use channel-specific generic adapter
+        if domain_type in ('dict', 'list', 'str'):
+            if channel == 'json':
+                from agile_bot.src.cli.adapters import GenericJSONAdapter
+                return GenericJSONAdapter(domain_object)
+            elif channel == 'tty':
+                from agile_bot.src.cli.adapters import GenericTTYAdapter
+                return GenericTTYAdapter(domain_object)
+            elif channel == 'markdown':
+                from agile_bot.src.cli.adapters import GenericMarkdownAdapter
+                return GenericMarkdownAdapter(domain_object)
+            else:
+                # Default to JSON for unknown channels
+                from agile_bot.src.cli.adapters import GenericJSONAdapter
+                return GenericJSONAdapter(domain_object)
         
         key = (domain_type, channel)
         

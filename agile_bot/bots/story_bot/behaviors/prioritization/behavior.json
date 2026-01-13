@@ -1,14 +1,13 @@
 {
   "behaviorName": "prioritization",
-  "description": "Test behavior: prioritization",
-  "goal": "Test goal for prioritization",
-  "inputs": "Test inputs",
-  "outputs": "Test outputs",
+  "order": 2,
+  "description": "Organize stories into delivery increments based on business value, dependencies, and risk",
+  "goal": "Prioritize and sequence stories into actionable delivery increments",
+  "inputs": "Story map from shape phase",
+  "outputs": "Prioritized story map with delivery increments defined",
   "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
-    "",
-    "Test instructions for prioritization."
+    "Organize stories into delivery increments based on business value, dependencies, and risk"
   ],
   "actions_workflow": {
     "actions": [
@@ -16,43 +15,39 @@
         "name": "clarify",
         "order": 1,
         "next_action": "strategy",
-        "instructions": [
-          "Follow agile_bot/base_actions/clarify/action_config.json",
-          "Test instructions for clarify in prioritization"
-        ]
+        "instructions": []
       },
       {
         "name": "strategy",
         "order": 2,
         "next_action": "validate",
-        "instructions": [
-          "Follow agile_bot/base_actions/strategy/action_config.json",
-          "Test instructions for strategy in prioritization"
-        ]
+        "instructions": []
       },
       {
         "name": "validate",
         "order": 3,
         "next_action": "render",
         "instructions": [
-          "Follow agile_bot/base_actions/validate/action_config.json",
-          "Test instructions for validate in prioritization"
+          "prioritization: validate increment organization and dependencies"
         ]
       },
       {
         "name": "render",
         "order": 4,
         "instructions": [
-          "Follow agile_bot/base_actions/render/action_config.json",
-          "Test instructions for render in prioritization"
+          "prioritization: render increment documentation"
         ]
       }
     ]
   },
   "trigger_words": {
-    "description": "Trigger words for prioritization",
+    "description": "Behavior-level trigger words - specific to prioritization behavior",
     "patterns": [
-      "test.*prioritization"
+      "prioritize.*stories",
+      "organize.*increments",
+      "sequence.*delivery",
+      "plan.*increments",
+      "rank.*stories"
     ]
   }
 }

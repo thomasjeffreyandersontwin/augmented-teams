@@ -1,14 +1,13 @@
 {
   "behaviorName": "exploration",
-  "description": "Test behavior: exploration",
-  "goal": "Test goal for exploration",
-  "inputs": "Test inputs",
-  "outputs": "Test outputs",
+  "order": 4,
+  "description": "Explore and document story implementation details with acceptance criteria and scenarios",
+  "goal": "Document detailed acceptance criteria and high-level scenarios for story implementation",
+  "inputs": "Elaborated stories from discovery phase",
+  "outputs": "Stories with detailed acceptance criteria and initial scenarios",
   "baseActionsPath": "agile_bot/base_actions",
   "instructions": [
-    "**BEHAVIOR WORKFLOW INSTRUCTIONS:**",
-    "",
-    "Test instructions for exploration."
+    "Explore story implementation details and document acceptance criteria with initial scenarios"
   ],
   "actions_workflow": {
     "actions": [
@@ -16,43 +15,47 @@
         "name": "clarify",
         "order": 1,
         "next_action": "strategy",
-        "instructions": [
-          "Follow agile_bot/base_actions/clarify/action_config.json",
-          "Test instructions for clarify in exploration"
-        ]
+        "instructions": []
       },
       {
         "name": "strategy",
         "order": 2,
+        "next_action": "build",
+        "instructions": []
+      },
+      {
+        "name": "build",
+        "order": 3,
         "next_action": "validate",
         "instructions": [
-          "Follow agile_bot/base_actions/strategy/action_config.json",
-          "Test instructions for strategy in exploration"
+          "exploration: document acceptance criteria and scenarios"
         ]
       },
       {
         "name": "validate",
-        "order": 3,
+        "order": 4,
         "next_action": "render",
         "instructions": [
-          "Follow agile_bot/base_actions/validate/action_config.json",
-          "Test instructions for validate in exploration"
+          "exploration: validate acceptance criteria completeness"
         ]
       },
       {
         "name": "render",
-        "order": 4,
+        "order": 5,
         "instructions": [
-          "Follow agile_bot/base_actions/render/action_config.json",
-          "Test instructions for render in exploration"
+          "exploration: render acceptance criteria documentation"
         ]
       }
     ]
   },
   "trigger_words": {
-    "description": "Trigger words for exploration",
+    "description": "Behavior-level trigger words - specific to exploration behavior",
     "patterns": [
-      "test.*exploration"
+      "explore.*story",
+      "acceptance.*criteria",
+      "define.*criteria",
+      "document.*scenarios",
+      "story.*exploration"
     ]
   }
 }

@@ -10,23 +10,6 @@ from .base_helper import BaseHelper
 class ValidateTestHelper(BaseHelper):
     """Helper for validate action, scanners, and rules testing"""
     
-    def create_validation_rules(self, behavior: str, rules: list) -> Path:
-        """Create validation rules in behavior folder.
-        
-        Args:
-            behavior: Behavior name
-            rules: List of rules
-        
-        Returns:
-            Path to validation_rules.json file
-        """
-        rules_dir = self.parent.bot_directory / 'behaviors' / behavior / '3_rules'
-        rules_dir.mkdir(parents=True, exist_ok=True)
-        
-        rules_file = rules_dir / 'validation_rules.json'
-        rules_file.write_text(json.dumps({'rules': rules}), encoding='utf-8')
-        return rules_file
-    
     def assert_validate_instructions(self, instructions):
         """Assert ValidateRulesAction injected all required fields with actual rule content.
         

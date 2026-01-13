@@ -252,31 +252,70 @@ class Bot:
             scope_filter: Complete folder path or story name to filter by, or None to view current scope
         
         Returns:
-            Scope domain object
+            Dict with status, message, and scope data when setting scope, or Scope object when viewing
         """
         from ..scope.scope import ScopeType
         import os
         
         if scope_filter is None:
-            # Return current scope instance
+            # Return current scope instance for property access
             return self._scope
+        
+        # Track if this is a clear operation
+        is_clear = False
+        
+        # Strip "set" or "clear" keywords from CLI commands
+        scope_filter_lower = scope_filter.lower().strip()
+        if scope_filter_lower.startswith('set '):
+            scope_filter = scope_filter[4:].strip()  # Remove "set " prefix
+        elif scope_filter_lower == 'clear':
+            # Clear scope
+            is_clear = True
+            self._scope.clear()
+            self._scope.save()
+            return {
+                'status': 'success',
+                'message': 'Scope cleared',
+                'scope': {
+                    'type': 'all',
+                    'target': []
+                }
+            }
         
         if scope_filter.lower() == 'all':
             # Clear scope
             self._scope.clear()
             self._scope.save()
-            return self._scope
+            return {
+                'status': 'success',
+                'message': 'Scope cleared (set to all)',
+                'scope': {
+                    'type': 'all',
+                    'target': []
+                }
+            }
         
         if scope_filter.lower() == 'showall':
             # Show all - set to SHOW_ALL type
             self._scope.filter(ScopeType.SHOW_ALL, [])
             self._scope.save()
-            return self._scope
+            return {
+                'status': 'success',
+                'message': 'Scope set to show all',
+                'scope': {
+                    'type': 'showAll',
+                    'target': []
+                }
+            }
         
         # Parse scope filter
-        # Handle prefixed scope syntax (story=, epic=, increment=, files=, file:, files:)
+        # Handle multiple formats:
+        # 1. "story=TestStory" or "story:TestStory" (delimited)
+        # 2. "story TestStory" (space-separated)
+        # 3. "TestStory" (auto-detect)
+        
         if '=' in scope_filter or ':' in scope_filter:
-            # Determine delimiter (= or :)
+            # Format: story=TestStory or story:TestStory
             if '=' in scope_filter:
                 delimiter = '='
                 prefix, value_part = scope_filter.split('=', 1)
@@ -293,26 +332,76 @@ class Bot:
                 scope_type = ScopeType.FILES
             elif prefix in ('story', 'epic'):  # Both map to STORY (searches all levels)
                 scope_type = ScopeType.STORY
+                # Use the original prefix for the message
+                prefix = 'story' if prefix == 'story' else 'epic'
             elif prefix == 'increment':
                 scope_type = ScopeType.INCREMENT
             else:
                 # Unknown prefix, treat as story
                 scope_type = ScopeType.STORY
+                prefix = 'story'
+        elif ' ' in scope_filter:
+            # Format: story TestStory (space-separated)
+            parts = scope_filter.split(None, 1)  # Split on first whitespace
+            potential_prefix = parts[0].lower()
+            
+            # Check if first word is a valid scope type
+            if potential_prefix in ('story', 'epic', 'increment', 'file', 'files'):
+                prefix = potential_prefix
+                value_part = parts[1] if len(parts) > 1 else ''
+                scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
+                
+                # Map prefix to scope type
+                if prefix in ('file', 'files'):
+                    scope_type = ScopeType.FILES
+                elif prefix in ('story', 'epic'):
+                    scope_type = ScopeType.STORY
+                elif prefix == 'increment':
+                    scope_type = ScopeType.INCREMENT
+                else:
+                    scope_type = ScopeType.STORY
+            else:
+                # Not a recognized prefix, treat whole thing as value
+                scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
+                # Auto-detect based on value
+                looks_like_path = any(
+                    os.path.isabs(v) or '\\' in v or '/' in v 
+                    for v in scope_values
+                )
+                if looks_like_path:
+                    scope_type = ScopeType.FILES
+                    prefix = 'files'
+                else:
+                    scope_type = ScopeType.STORY
+                    prefix = 'story'
         else:
-            # No prefix - auto-detect based on value
+            # No delimiter or space - auto-detect based on value
             scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
             # Auto-detect if this looks like a file path
             looks_like_path = any(
                 os.path.isabs(v) or '\\' in v or '/' in v 
                 for v in scope_values
             )
-            scope_type = ScopeType.FILES if looks_like_path else ScopeType.STORY
+            if looks_like_path:
+                scope_type = ScopeType.FILES
+                prefix = 'files'
+            else:
+                scope_type = ScopeType.STORY
+                prefix = 'story'
         
         # Update scope filter
         self._scope.filter(scope_type, scope_values)
         self._scope.save()
         
-        return self._scope
+        # Return wrapped response
+        return {
+            'status': 'success',
+            'message': f'Scope set to {prefix}: {", ".join(scope_values)}',
+            'scope': {
+                'type': prefix,
+                'target': scope_values
+            }
+        }
     
     def path(self, directory: Optional[str] = None) -> Dict[str, Any]:
         """Set or view the working directory.
@@ -372,6 +461,7 @@ class Bot:
             if behavior.action_names:
                 first_action = behavior.action_names[0]
                 behavior.actions.navigate_to(first_action)
+                self.behaviors.save_state()  # Persist state
                 return {
                     'status': 'success',
                     'message': f'Moved to {behavior.name}.{first_action}',
@@ -391,6 +481,7 @@ class Bot:
             if current_index < len(action_names) - 1:
                 next_action = action_names[current_index + 1]
                 behavior.actions.navigate_to(next_action)
+                self.behaviors.save_state()  # Persist state
                 return {
                     'status': 'success',
                     'message': f'Moved to {behavior.name}.{next_action}',
@@ -435,6 +526,7 @@ class Bot:
             if current_index > 0:
                 prev_action = action_names[current_index - 1]
                 behavior.actions.navigate_to(prev_action)
+                self.behaviors.save_state()  # Persist state
                 return {
                     'status': 'success',
                     'message': f'Moved back to {behavior.name}.{prev_action}',
@@ -508,6 +600,64 @@ class Bot:
             'behavior': behavior_name,
             'action': current_action_name,
             'result': 'Action execution complete'
+        }
+
+    def tree(self) -> str:
+        """Display behavior hierarchy tree.
+        
+        Returns:
+            String representation of all behaviors and their actions
+        """
+        lines = []
+        behaviors_list = list(self.behaviors)
+        
+        for i, behavior in enumerate(behaviors_list):
+            is_last_behavior = (i == len(behaviors_list) - 1)
+            behavior_prefix = "└──" if is_last_behavior else "├──"
+            is_current_behavior = (self.behaviors.current and behavior.name == self.behaviors.current.name)
+            behavior_marker = "➤ " if is_current_behavior else ""
+            lines.append(f"{behavior_prefix} {behavior_marker}{behavior.name}")
+            
+            # Show actions
+            action_names = behavior.action_names
+            for j, action in enumerate(action_names):
+                is_last_action = (j == len(action_names) - 1)
+                action_prefix = "    └──" if is_last_behavior else "│   └──" if is_last_action else "│   ├──"
+                if not is_last_behavior and not is_last_action:
+                    action_prefix = "│   ├──"
+                is_current_action = (is_current_behavior and 
+                                   behavior.actions.current_action_name == action)
+                action_marker = "➤ " if is_current_action else ""
+                lines.append(f"{action_prefix} {action_marker}{action}")
+        
+        return "\n".join(lines)
+    
+    def pos(self) -> Dict[str, Any]:
+        """Get current position (behavior.action).
+        
+        Returns:
+            Dict with current behavior and action
+        """
+        if not self.behaviors.current:
+            return {
+                'status': 'error',
+                'message': 'No behavior is currently active'
+            }
+        
+        behavior = self.behaviors.current
+        action = behavior.actions.current_action_name
+        
+        if not action:
+            return {
+                'status': 'error',
+                'message': f'No action is currently active in {behavior.name}'
+            }
+        
+        return {
+            'status': 'success',
+            'behavior': behavior.name,
+            'action': action,
+            'position': f'{behavior.name}.{action}'
         }
 
     def __getattr__(self, name: str):

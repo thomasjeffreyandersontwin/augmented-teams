@@ -7,11 +7,13 @@ from agile_bot.src.bot.bot import Bot
 from agile_bot.test.domain.helpers import (
     StateTestHelper,
     BehaviorTestHelper,
+    NavigationTestHelper,
     GuardrailsTestHelper,
     ClarifyTestHelper,
     StrategyTestHelper,
     BuildTestHelper,
     ValidateTestHelper,
+    RulesTestHelper,
     RenderTestHelper,
     ActivityTestHelper,
     StoryTestHelper,
@@ -73,11 +75,13 @@ class BotTestHelper:
         
         self.state = StateTestHelper(parent=self)
         self.behaviors = BehaviorTestHelper(parent=self)
+        self.navigation = NavigationTestHelper(parent=self)
         self.guardrails = GuardrailsTestHelper(parent=self)
         self.clarify = ClarifyTestHelper(parent=self)
         self.strategy = StrategyTestHelper(parent=self)
         self.build = BuildTestHelper(parent=self)
         self.validate = ValidateTestHelper(parent=self)
+        self.rules = RulesTestHelper(parent=self)
         self.render = RenderTestHelper(parent=self)
         self.activity = ActivityTestHelper(parent=self)
         self.story = StoryTestHelper(parent=self)

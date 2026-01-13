@@ -28,7 +28,9 @@
     ]
   },
   "scripts": {
-    "test": "node --test test/*.js"
+    "test": "node --test ../../test/panel/test_*.js",
+    "test:watch": "node --test --watch ../../test/panel/test_*.js",
+    "test:verbose": "node --test ../../test/panel/test_*.js --test-reporter=spec"
   },
   "files": [
     "extension.js",
@@ -39,5 +41,8 @@
     "scope_view.js",
     "instructions_view.js",
     "img/**/*.png"
-  ]
+  ],
+  "devDependencies": {
+    "jsdom": "^27.4.0"
+  }
 }

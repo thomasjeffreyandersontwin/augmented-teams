@@ -56,7 +56,6 @@
                                                       "    state = {'current': current, 'completed_actions': completed}",
                                                       "    assert state['current'].startswith('shape')  # WRONG - partial assertion"
                                                   ]
-                                  },
                                   }
                               ]
              },

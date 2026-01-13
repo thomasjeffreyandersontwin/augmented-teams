@@ -32,6 +32,10 @@ class StateTestHelper(BaseTestHelper):
         
         state_file = self.workspace / 'behavior_action_state.json'
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
+        
+        # Reload the bot state from the file
+        self.parent.bot.behaviors.load_state()
+        
         return state_file
     
     def get_state(self) -> dict:
