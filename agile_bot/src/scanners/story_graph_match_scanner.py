@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class StoryGraphMatchScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -22,15 +22,15 @@ class StoryGraphMatchScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        story_names = self._extract_story_names(knowledge_graph)
+        story_names = self._extract_story_names(story_graph)
         
         violations.extend(self._check_test_classes_match_stories(tree, story_names, file_path, rule_obj))
         
         return violations
     
-    def _extract_story_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+    def _extract_story_names(self, story_graph: Dict[str, Any]) -> List[str]:
         story_names = []
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             sub_epics = epic.get('sub_epics', [])
             for sub_epic in sub_epics:

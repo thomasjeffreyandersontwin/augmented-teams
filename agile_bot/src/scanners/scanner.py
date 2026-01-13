@@ -17,7 +17,7 @@ class Scanner(ABC):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
@@ -35,7 +35,7 @@ class Scanner(ABC):
         # Scan each file using unified scan_file() method
         for file_path in all_files:
             if file_path and file_path.exists() and file_path.is_file():
-                file_violations = self.scan_file(file_path, rule_obj, knowledge_graph)
+                file_violations = self.scan_file(file_path, rule_obj, story_graph)
                 file_violations_list = file_violations if isinstance(file_violations, list) else [file_violations] if file_violations else []
                 
                 if file_violations_list:
@@ -55,7 +55,7 @@ class Scanner(ABC):
         self,
         file_path: 'Path',
         rule_obj: Any = None,
-        knowledge_graph: Optional[Dict[str, Any]] = None
+        story_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         # Default implementation - subclasses should override
         return self._empty_violation_list()

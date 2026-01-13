@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from .story_graph_template import StoryGraphTemplate
+from .knowledge_graph_template import StoryGraphTemplate
 from ...story_graph.story_graph import StoryGraph
 from ...utils import read_json_file
 if TYPE_CHECKING:

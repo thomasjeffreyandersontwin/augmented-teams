@@ -16,7 +16,7 @@ class DomainScanner(Scanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
@@ -30,7 +30,7 @@ class DomainScanner(Scanner):
             raise ValueError("rule_obj parameter is required for DomainScanner")
         
         violations = []
-        story_graph_data = knowledge_graph.get('story_graph', knowledge_graph)
+        story_graph_data = story_graph.get('story_graph', story_graph)
         story_map = StoryMap(story_graph_data)
         
         # Domain scanners should ONLY scan domain concepts

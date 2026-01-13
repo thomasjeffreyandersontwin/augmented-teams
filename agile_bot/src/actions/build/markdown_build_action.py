@@ -1,18 +1,18 @@
 """
-Markdown adapter for BuildKnowledgeAction.
+Markdown adapter for BuildStoryGraphAction.
 """
 
 from agile_bot.src.actions.markdown_action import MarkdownAction
-from agile_bot.src.actions.build.build_action import BuildKnowledgeAction
+from agile_bot.src.actions.build.build_action import BuildStoryGraphAction
 
 class MarkdownBuildAction(MarkdownAction):
-    """Serializes BuildKnowledgeAction to Markdown - uses base class for status display."""
+    """Serializes BuildStoryGraphAction to Markdown - uses base class for status display."""
     
-    def __init__(self, action: BuildKnowledgeAction, is_current: bool = False, is_completed: bool = False):
+    def __init__(self, action: BuildStoryGraphAction, is_current: bool = False, is_completed: bool = False):
         super().__init__(action, is_current, is_completed)
     
     def serialize(self) -> str:
-        """Convert BuildKnowledgeAction to Markdown string - uses base class for status display."""
+        """Convert BuildStoryGraphAction to Markdown string - uses base class for status display."""
         return super().serialize()
     
     

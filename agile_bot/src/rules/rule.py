@@ -114,7 +114,7 @@ class Rule:
             return False
         return issubclass(self._scanner, TestScanner) or issubclass(self._scanner, CodeScanner)
 
-    def scan(self, knowledge_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]]=None, on_file_scanned: Optional[Any]=None, skip_cross_file: bool=False, changed_files: Optional[Dict[str, List[Path]]]=None, status_writer: Optional[Any]=None, max_cross_file_comparisons: int=20) -> Dict[str, Any]:
+    def scan(self, story_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]]=None, on_file_scanned: Optional[Any]=None, skip_cross_file: bool=False, changed_files: Optional[Dict[str, List[Path]]]=None, status_writer: Optional[Any]=None, max_cross_file_comparisons: int=20) -> Dict[str, Any]:
         if not self.has_scanner:
             return {}
         files = files or {}
@@ -128,7 +128,7 @@ class Rule:
         self._initialize_scan_state()
         try:
             scanner_instance = self._get_scanner_instance()
-            self._execute_file_by_file_scan(scanner_instance, knowledge_graph, test_files, code_files, on_file_scanned)
+            self._execute_file_by_file_scan(scanner_instance, story_graph, test_files, code_files, on_file_scanned)
             # Cross-file scan uses the same scoped files - all_test_files/all_code_files are already scoped
             self._execute_cross_file_scan(scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer, max_cross_file_comparisons)
             return self._build_scan_result()
@@ -150,8 +150,8 @@ class Rule:
         self._scanner_execution_status = 'EXECUTION_SUCCESS'
         return scanner_instance
 
-    def _execute_file_by_file_scan(self, scanner_instance, knowledge_graph, test_files, code_files, on_file_scanned):
-        violations_file_by_file = scanner_instance.scan(knowledge_graph, rule_obj=self, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
+    def _execute_file_by_file_scan(self, scanner_instance, story_graph, test_files, code_files, on_file_scanned):
+        violations_file_by_file = scanner_instance.scan(story_graph, rule_obj=self, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
         if violations_file_by_file is not None:
             if isinstance(violations_file_by_file, list):
                 self._file_by_file_violations = violations_file_by_file

@@ -245,15 +245,15 @@ class InstructionsSection extends PanelView {
         }
         
         // 4. BUILD - Only show during build action
-        const buildRelatedKeys = ['schema', 'knowledge_graph_template', 'knowledge_graph_config', 'rules', 'build_instructions'];
+        const buildRelatedKeys = ['schema', 'story_graph_template', 'story_graph_config', 'rules', 'build_instructions'];
         const hasBuildData = buildRelatedKeys.some(key => instructions[key]);
         if (hasBuildData && currentActionName === 'build') {
             let schemaData = instructions.schema || instructions.build_instructions?.schema || {};
-            if (instructions.knowledge_graph_template) {
-                schemaData = { ...schemaData, ...instructions.knowledge_graph_template };
+            if (instructions.story_graph_template) {
+                schemaData = { ...schemaData, ...instructions.story_graph_template };
             }
-            if (instructions.knowledge_graph_config) {
-                schemaData = { ...schemaData, ...instructions.knowledge_graph_config };
+            if (instructions.story_graph_config) {
+                schemaData = { ...schemaData, ...instructions.story_graph_config };
             }
             restructured.build_instructions = {
                 schema: Object.keys(schemaData).length > 0 ? schemaData : null,
@@ -497,7 +497,7 @@ class InstructionsSection extends PanelView {
         
         // Schema
         if (value.schema) {
-            html += '<h3>Knowledge Graph Schema</h3>';
+            html += '<h3>Story Graph Schema</h3>';
             html += '<pre>' + this.escapeHtml(JSON.stringify(value.schema, null, 2)) + '</pre>';
         }
         

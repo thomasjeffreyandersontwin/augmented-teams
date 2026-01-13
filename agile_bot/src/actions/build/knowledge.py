@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING
-from .story_graph_spec import StoryGraphSpec
+from .knowledge_graph_spec import StoryGraphSpec
 if TYPE_CHECKING:
     from ...bot_path import BotPath
     from ...bot.behavior import Behavior

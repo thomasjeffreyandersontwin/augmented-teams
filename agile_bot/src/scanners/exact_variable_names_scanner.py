@@ -11,7 +11,7 @@ from .resources.ast_elements import Functions
 
 class ExactVariableNamesScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -20,7 +20,7 @@ class ExactVariableNamesScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        domain_concepts = self._extract_domain_concepts(knowledge_graph)
+        domain_concepts = self._extract_domain_concepts(story_graph)
         
         functions = Functions(tree)
         for function in functions.get_many_functions:
@@ -29,9 +29,9 @@ class ExactVariableNamesScanner(TestScanner):
         
         return violations
     
-    def _extract_domain_concepts(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+    def _extract_domain_concepts(self, story_graph: Dict[str, Any]) -> List[str]:
         concepts = []
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             domain_concepts_list = epic.get('domain_concepts', [])
             for concept in domain_concepts_list:

@@ -33,7 +33,7 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
             r'# scanner ignore',  # Explicit ignore comment
         ]
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Dict[str, Any] = None) -> List[Violation]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Dict[str, Any] = None) -> List[Violation]:
         violations = []
         
         # Use self.rule_obj directly - let code fail if not set

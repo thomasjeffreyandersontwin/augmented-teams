@@ -21,7 +21,7 @@ class ResourceOrientedCodeScanner(CodeScanner):
     Uses NLTK to detect agent nouns (Manager, Loader, Handler, etc.)
     """
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         # No violations in single-file scan - all checking happens in cross-file scan
         return []
     

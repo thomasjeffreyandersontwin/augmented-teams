@@ -14,14 +14,14 @@ class TestScanner(Scanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
         on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         # Use base Scanner.scan() which combines files and calls scan_file() for each
-        return super().scan(knowledge_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
+        return super().scan(story_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
     
     def _empty_violation_list(self) -> List[Dict[str, Any]]:
         """Helper method for default empty implementations."""
@@ -31,7 +31,7 @@ class TestScanner(Scanner):
         self,
         file_path: Path,
         rule_obj: Any = None,
-        knowledge_graph: Optional[Dict[str, Any]] = None
+        story_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         # Default implementation - subclasses must override
         return self._empty_violation_list()

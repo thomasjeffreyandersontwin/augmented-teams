@@ -8,7 +8,7 @@ class SpineOptionalScanner(StoryScanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
@@ -19,7 +19,7 @@ class SpineOptionalScanner(StoryScanner):
         
         violations = []
         from .story_map import StoryMap
-        story_map = StoryMap(knowledge_graph)
+        story_map = StoryMap(story_graph)
         
         for epic in story_map.epics():
             for node in story_map.walk(epic):

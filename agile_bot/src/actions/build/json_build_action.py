@@ -1,16 +1,16 @@
 """
-JSON adapter for BuildKnowledgeAction.
+JSON adapter for BuildStoryGraphAction.
 """
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
-from agile_bot.src.actions.build.build_action import BuildKnowledgeAction
+from agile_bot.src.actions.build.build_action import BuildStoryGraphAction
 
 
 class JSONBuildAction(JSONAdapter):
-    """Serializes BuildKnowledgeAction to JSON - exposes all BuildKnowledgeAction properties."""
+    """Serializes BuildStoryGraphAction to JSON - exposes all BuildStoryGraphAction properties."""
     
-    def __init__(self, action: BuildKnowledgeAction, is_current: bool = False, is_completed: bool = False):
+    def __init__(self, action: BuildStoryGraphAction, is_current: bool = False, is_completed: bool = False):
         self.action = action
         self.is_current = is_current
         self.is_completed = is_completed
@@ -49,22 +49,22 @@ class JSONBuildAction(JSONAdapter):
         return self.action.behavior
     
     @property
-    def knowledge(self):
+    def story_graph_data(self):
         """Build-specific property."""
-        return self.action.knowledge
+        return self.action.story_graph_data
     
     @property
-    def knowledge_graph_spec(self):
+    def story_graph_spec(self):
         """Build-specific property."""
-        return self.action.knowledge_graph_spec
+        return self.action.story_graph_spec
     
     @property
-    def knowledge_graph_template(self):
+    def story_graph_template(self):
         """Build-specific property."""
-        return self.action.knowledge_graph_template
+        return self.action.story_graph_template
     
     def to_dict(self) -> dict:
-        """Convert BuildKnowledgeAction to dict."""
+        """Convert BuildStoryGraphAction to dict."""
         result = {
             'action_name': self.action.action_name,
             'description': self.action.description,
@@ -77,21 +77,21 @@ class JSONBuildAction(JSONAdapter):
         }
         
         # Add build-specific properties
-        if self.action.knowledge:
-            result['knowledge'] = {
-                'has_spec': self.action.knowledge_graph_spec is not None,
-                'has_template': self.action.knowledge_graph_template is not None
+        if self.action.story_graph_data:
+            result['story_graph_data'] = {
+                'has_spec': self.action.story_graph_spec is not None,
+                'has_template': self.action.story_graph_template is not None
             }
             
-            if self.action.knowledge_graph_spec:
-                result['knowledge_graph_spec'] = {
-                    'path': str(self.action.knowledge_graph_spec.config_path),
-                    'output': self.action.knowledge_graph_spec.config_data.get('output', 'story-graph.json')
+            if self.action.story_graph_spec:
+                result['story_graph_spec'] = {
+                    'path': str(self.action.story_graph_spec.config_path),
+                    'output': self.action.story_graph_spec.config_data.get('output', 'story-graph.json')
                 }
             
-            if self.action.knowledge_graph_template:
-                result['knowledge_graph_template'] = {
-                    'path': str(self.action.knowledge_graph_template.template_path)
+            if self.action.story_graph_template:
+                result['story_graph_template'] = {
+                    'path': str(self.action.story_graph_template.template_path)
                 }
         
         return result

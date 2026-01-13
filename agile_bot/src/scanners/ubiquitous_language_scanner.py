@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class UbiquitousLanguageScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -23,7 +23,7 @@ class UbiquitousLanguageScanner(TestScanner):
         content, lines, tree = parsed
         
         # Extract domain entities (classes/nouns) from story graph
-        domain_entities = self._extract_domain_entities_from_story_graph(knowledge_graph)
+        domain_entities = self._extract_domain_entities_from_story_graph(story_graph)
         
         # Extract classes being tested from the test file
         classes_under_test = self._extract_classes_under_test(tree, content, lines)
@@ -40,18 +40,18 @@ class UbiquitousLanguageScanner(TestScanner):
         
         return violations
     
-    def _extract_domain_entities_from_story_graph(self, knowledge_graph: Dict[str, Any]) -> Set[str]:
+    def _extract_domain_entities_from_story_graph(self, story_graph: Dict[str, Any]) -> Set[str]:
         """
         Extract domain entity names (nouns/classes) from story graph.
         Look in domain_concepts sections for entity names.
         """
-        if not knowledge_graph:
+        if not story_graph:
             return set()
         
         entities = set()
         
         # Extract from all epics
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             self._extract_from_node(epic, entities)
         

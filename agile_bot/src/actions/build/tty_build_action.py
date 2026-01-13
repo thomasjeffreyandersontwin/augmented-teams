@@ -1,14 +1,14 @@
 """
-TTY adapter for BuildKnowledgeAction.
+TTY adapter for BuildStoryGraphAction.
 """
 
 from agile_bot.src.actions.tty_action import TTYAction
-from agile_bot.src.actions.build.build_action import BuildKnowledgeAction
+from agile_bot.src.actions.build.build_action import BuildStoryGraphAction
 
 class TTYBuildAction(TTYAction):
-    """Serializes BuildKnowledgeAction to TTY - exposes all BuildKnowledgeAction properties."""
+    """Serializes BuildStoryGraphAction to TTY - exposes all BuildStoryGraphAction properties."""
     
-    def __init__(self, action: BuildKnowledgeAction, is_current: bool = False, is_completed: bool = False):
+    def __init__(self, action: BuildStoryGraphAction, is_current: bool = False, is_completed: bool = False):
         super().__init__(action, is_current, is_completed)
     
     # Expose ALL domain properties
@@ -41,22 +41,22 @@ class TTYBuildAction(TTYAction):
         return self.action.behavior
     
     @property
-    def knowledge(self):
+    def story_graph_data(self):
         """Build-specific property."""
-        return self.action.knowledge
+        return self.action.story_graph_data
     
     @property
-    def knowledge_graph_spec(self):
+    def story_graph_spec(self):
         """Build-specific property."""
-        return self.action.knowledge_graph_spec
+        return self.action.story_graph_spec
     
     @property
-    def knowledge_graph_template(self):
+    def story_graph_template(self):
         """Build-specific property."""
-        return self.action.knowledge_graph_template
+        return self.action.story_graph_template
     
     def serialize(self) -> str:
-        """Convert BuildKnowledgeAction to TTY string - uses base class for status display."""
+        """Convert BuildStoryGraphAction to TTY string - uses base class for status display."""
         return super().serialize()
     
     

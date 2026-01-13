@@ -14,15 +14,15 @@ class ClassBasedOrganizationScanner(TestScanner):
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         return []  # Test scanning happens in scan_test_file, not scan_story_node
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
             return violations
         
-        sub_epic_names = self._extract_sub_epic_names(knowledge_graph)
+        sub_epic_names = self._extract_sub_epic_names(story_graph)
         file_name = file_path.stem  # Without .py extension
-        violation = self._check_file_name_matches_sub_epic(file_name, sub_epic_names, file_path, rule_obj, knowledge_graph)
+        violation = self._check_file_name_matches_sub_epic(file_name, sub_epic_names, file_path, rule_obj, story_graph)
         if violation:
             violations.append(violation)
         
@@ -32,7 +32,7 @@ class ClassBasedOrganizationScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        story_names = self._extract_story_names(knowledge_graph)
+        story_names = self._extract_story_names(story_graph)
         
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -45,16 +45,16 @@ class ClassBasedOrganizationScanner(TestScanner):
                         if isinstance(item, ast.FunctionDef):
                             if item.name.startswith('test_'):
                                 violation = self._check_method_name_matches_scenario(
-                                    item.name, node.name, story_names, knowledge_graph, file_path, rule_obj
+                                    item.name, node.name, story_names, story_graph, file_path, rule_obj
                                 )
                                 if violation:
                                     violations.append(violation)
         
         return violations
     
-    def _extract_story_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+    def _extract_story_names(self, story_graph: Dict[str, Any]) -> List[str]:
         story_names = []
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             self._extract_story_names_recursive(epic, story_names)
         return story_names
@@ -103,12 +103,12 @@ class ClassBasedOrganizationScanner(TestScanner):
         return None
     
     def _check_method_name_matches_scenario(self, method_name: str, class_name: str, story_names: List[str], 
-                                           knowledge_graph: Dict[str, Any], file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
+                                           story_graph: Dict[str, Any], file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         scenario_name_from_method = method_name[5:] if method_name.startswith('test_') else method_name
         
         if len(scenario_name_from_method) < 20:  # Very short names are likely abbreviated
-            # Try to find matching epic/story/scenario from knowledge graph
-            expected_name = self._find_expected_scenario_name(scenario_name_from_method, knowledge_graph, class_name)
+            # Try to find matching epic/story/scenario from story graph
+            expected_name = self._find_expected_scenario_name(scenario_name_from_method, story_graph, class_name)
             
             if expected_name:
                 # No code snippet for method-level naming violations (method definition line)
@@ -129,7 +129,7 @@ class ClassBasedOrganizationScanner(TestScanner):
         
         return None
     
-    def _find_expected_scenario_name(self, method_name: str, knowledge_graph: Dict[str, Any], class_name: str) -> Optional[str]:
+    def _find_expected_scenario_name(self, method_name: str, story_graph: Dict[str, Any], class_name: str) -> Optional[str]:
         # Reconstruct full method name with 'test_' prefix for test_method field comparison
         full_method_name = f"test_{method_name}" if not method_name.startswith('test_') else method_name
         method_name_norm = self._normalize_name(method_name)
@@ -137,7 +137,7 @@ class ClassBasedOrganizationScanner(TestScanner):
         story_name_from_class = class_name[4:] if class_name.startswith('Test') else class_name
         story_name_normalized = self._normalize_name(story_name_from_class)
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         
         best_match = None
         best_match_type = None  # 'scenario', 'story', 'sub_epic', 'epic'
@@ -283,9 +283,9 @@ class ClassBasedOrganizationScanner(TestScanner):
         generic_names = ['TestToolGeneration', 'TestValidation', 'TestHelpers', 'TestUtils']
         return class_name in generic_names
     
-    def _extract_epic_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+    def _extract_epic_names(self, story_graph: Dict[str, Any]) -> List[str]:
         epic_names = []
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             epic_name = epic.get('name', '')
             if epic_name:
@@ -294,9 +294,9 @@ class ClassBasedOrganizationScanner(TestScanner):
                 epic_names.append(snake_case)
         return epic_names
     
-    def _extract_sub_epic_names(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+    def _extract_sub_epic_names(self, story_graph: Dict[str, Any]) -> List[str]:
         sub_epic_names = []
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             self._extract_sub_epic_names_recursive(epic.get('sub_epics', []), sub_epic_names)
         return sub_epic_names
@@ -331,7 +331,7 @@ class ClassBasedOrganizationScanner(TestScanner):
         name = re.sub(r'[^a-zA-Z0-9_]', '', name)
         return name.lower()
     
-    def _check_file_name_matches_sub_epic(self, file_name: str, sub_epic_names: List[str], file_path: Path, rule_obj: Any, knowledge_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _check_file_name_matches_sub_epic(self, file_name: str, sub_epic_names: List[str], file_path: Path, rule_obj: Any, story_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         name_without_prefix = file_name[5:] if file_name.startswith('test_') else file_name
         
         # CRITICAL: Both file name and sub-epic names must use the same normalization
@@ -345,7 +345,7 @@ class ClassBasedOrganizationScanner(TestScanner):
         if matches:
             return None
         
-        epic_names = self._extract_epic_names(knowledge_graph)
+        epic_names = self._extract_epic_names(story_graph)
         epic_matches = [name for name in epic_names if name_normalized == name or name_normalized in name or name in name_normalized]
         
         # If file name matches an epic name, check if it's a helper file or spans multiple sub-epics
@@ -353,12 +353,12 @@ class ClassBasedOrganizationScanner(TestScanner):
             if self._is_helper_file_only(file_path):
                 return None  # No violation - epic-level helper file is OK
             
-            sub_epics_spanned = self._get_sub_epics_spanned_by_test_methods(file_path, knowledge_graph)
+            sub_epics_spanned = self._get_sub_epics_spanned_by_test_methods(file_path, story_graph)
             if len(sub_epics_spanned) > 1:
                 return None  # No violation - epic-level test file spanning multiple sub-epics is OK
         
         # File name doesn't match any sub-epic or epic - check if methods span multiple sub-epics
-        sub_epics_spanned = self._get_sub_epics_spanned_by_test_methods(file_path, knowledge_graph)
+        sub_epics_spanned = self._get_sub_epics_spanned_by_test_methods(file_path, story_graph)
         
         # If methods span multiple sub-epics, it's OK (cross-sub-epic test file)
         if len(sub_epics_spanned) > 1:
@@ -379,7 +379,7 @@ class ClassBasedOrganizationScanner(TestScanner):
             severity='error'
         ).to_dict()
     
-    def _get_sub_epics_spanned_by_test_methods(self, file_path: Path, knowledge_graph: Dict[str, Any]) -> set:
+    def _get_sub_epics_spanned_by_test_methods(self, file_path: Path, story_graph: Dict[str, Any]) -> set:
         sub_epics = set()
         
         try:
@@ -396,7 +396,7 @@ class ClassBasedOrganizationScanner(TestScanner):
                             if isinstance(item, ast.FunctionDef):
                                 if item.name.startswith('test_'):
                                     # Find which sub-epic this method belongs to
-                                    sub_epic = self._find_sub_epic_for_method(item.name, class_name, knowledge_graph)
+                                    sub_epic = self._find_sub_epic_for_method(item.name, class_name, story_graph)
                                     if sub_epic:
                                         sub_epics.add(self._to_snake_case(sub_epic))
         except (SyntaxError, UnicodeDecodeError) as e:
@@ -405,12 +405,12 @@ class ClassBasedOrganizationScanner(TestScanner):
         
         return sub_epics
     
-    def _find_sub_epic_for_method(self, method_name: str, class_name: str, knowledge_graph: Dict[str, Any]) -> Optional[str]:
+    def _find_sub_epic_for_method(self, method_name: str, class_name: str, story_graph: Dict[str, Any]) -> Optional[str]:
         method_name_norm = self._normalize_name(method_name)
         story_name_from_class = class_name[4:] if class_name.startswith('Test') else class_name
         story_name_normalized = self._normalize_name(story_name_from_class)
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         
         for epic in epics:
             sub_epics = epic.get('sub_epics', [])

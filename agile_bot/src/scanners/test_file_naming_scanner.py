@@ -113,7 +113,7 @@ class TestFileNamingScanner(TestScanner):
                             if isinstance(item, ast.FunctionDef):
                                 if item.name.startswith('test_'):
                                     # Find which sub-epic this method belongs to
-                                    sub_epic = self._find_sub_epic_for_method(item.name, class_name, knowledge_graph)
+                                    sub_epic = self._find_sub_epic_for_method(item.name, class_name, story_graph)
                                     if sub_epic:
                                         sub_epics.add(self._to_snake_case(sub_epic))
         except (SyntaxError, UnicodeDecodeError) as e:
@@ -121,12 +121,12 @@ class TestFileNamingScanner(TestScanner):
         
         return sub_epics
     
-    def _find_sub_epic_for_method(self, method_name: str, class_name: str, knowledge_graph: Dict[str, Any]) -> Optional[str]:
+    def _find_sub_epic_for_method(self, method_name: str, class_name: str, story_graph: Dict[str, Any]) -> Optional[str]:
         method_name_norm = self._to_snake_case(method_name)
         story_name_from_class = class_name[4:] if class_name.startswith('Test') else class_name
         story_name_normalized = self._to_snake_case(story_name_from_class)
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         
         for epic in epics:
             sub_epics = epic.get('sub_epics', [])

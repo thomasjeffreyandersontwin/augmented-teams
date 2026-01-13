@@ -57,7 +57,7 @@ class InstructionsTestHelper(BaseHelper):
                 elif isinstance(validator, list):
                     assert instructions[key] in validator, f"'{key}' should be one of {validator}"
     
-    def assert_config_path_matches(self, instructions, config_path, config_key='knowledge_graph_config'):
+    def assert_config_path_matches(self, instructions, config_path, config_key='story_graph_config'):
         """Assert config path matches expected."""
         if config_key not in instructions:
             return

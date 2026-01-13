@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class BusinessReadableTestNamesScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -22,7 +22,7 @@ class BusinessReadableTestNamesScanner(TestScanner):
             return violations
         
         content, lines, tree = parsed
-        domain_language = self._extract_domain_language(knowledge_graph)
+        domain_language = self._extract_domain_language(story_graph)
         
         functions = Functions(tree)
         for function in functions.get_many_functions:
@@ -41,7 +41,7 @@ class BusinessReadableTestNamesScanner(TestScanner):
         if violation:
             violations.append(violation)
     
-    def _extract_domain_language(self, knowledge_graph: Dict[str, Any]) -> set:
+    def _extract_domain_language(self, story_graph: Dict[str, Any]) -> set:
         domain_terms = set()
         
         common_domain_terms = {
@@ -56,10 +56,10 @@ class BusinessReadableTestNamesScanner(TestScanner):
         }
         domain_terms.update(common_domain_terms)
         
-        if not knowledge_graph:
+        if not story_graph:
             return domain_terms
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
                 self._extract_domain_terms_from_epic(epic, domain_terms)

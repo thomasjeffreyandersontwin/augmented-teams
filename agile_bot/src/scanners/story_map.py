@@ -258,8 +258,8 @@ class Story(StoryNode):
 
 class StoryMap:
     
-    def __init__(self, knowledge_graph: Dict[str, Any]):
-        self.knowledge_graph = knowledge_graph
+    def __init__(self, story_graph: Dict[str, Any]):
+        self.story_graph = story_graph
     
     @classmethod
     def from_bot(cls, bot: Any) -> 'StoryMap':
@@ -281,12 +281,12 @@ class StoryMap:
             raise FileNotFoundError(f"Story graph not found at {story_graph_path}")
         
         with open(story_graph_path, 'r', encoding='utf-8') as f:
-            knowledge_graph = json.load(f)
+            story_graph = json.load(f)
         
-        return cls(knowledge_graph)
+        return cls(story_graph)
     
     def epics(self) -> List[Epic]:
-        epics_data = self.knowledge_graph.get('epics', [])
+        epics_data = self.story_graph.get('epics', [])
         return [Epic(epic_data, epic_idx) for epic_idx, epic_data in enumerate(epics_data)]
     
     def find_epic_by_name(self, epic_name: str) -> 'Epic':

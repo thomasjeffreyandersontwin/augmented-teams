@@ -6,8 +6,8 @@ from .story_map import StoryNode, Story, StoryMap
 from .violation import Violation
 
 
-def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
-    scope_config = knowledge_graph.get('_validation_scope', {})
+def _get_story_names_from_scope(story_graph: Dict[str, Any]) -> Set[str]:
+    scope_config = story_graph.get('_validation_scope', {})
     
     if scope_config.get('all') is True:
         return None
@@ -15,7 +15,7 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
     if not scope_config:
         return None
     
-    story_map = StoryMap(knowledge_graph)
+    story_map = StoryMap(story_graph)
     story_names = set()
     
     if 'story_names' in scope_config:
@@ -37,7 +37,7 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
         priorities = scope_config['increment_priorities']
         priorities = priorities if isinstance(priorities, list) else [priorities]
         for priority in priorities:
-            story_names.update(_get_increment_story_names(knowledge_graph, priority))
+            story_names.update(_get_increment_story_names(story_graph, priority))
     
     if 'story_names' in scope_config or 'increment_priorities' in scope_config or 'epic_names' in scope_config:
         return story_names
@@ -45,8 +45,8 @@ def _get_story_names_from_scope(knowledge_graph: Dict[str, Any]) -> Set[str]:
     return None
 
 
-def _get_increment_story_names(knowledge_graph: Dict[str, Any], priority: int) -> Set[str]:
-    increments = knowledge_graph.get('increments', [])
+def _get_increment_story_names(story_graph: Dict[str, Any], priority: int) -> Set[str]:
+    increments = story_graph.get('increments', [])
     for increment in increments:
         inc_priority = increment.get('priority', 999)
         if isinstance(inc_priority, str):
@@ -95,17 +95,17 @@ class ScenariosOnStoryDocsScanner(StoryScanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
         on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         # Determine in-scope story names
-        self._in_scope_story_names = _get_story_names_from_scope(knowledge_graph)
+        self._in_scope_story_names = _get_story_names_from_scope(story_graph)
         
         # Call parent scan method (pass through test_files and code_files)
-        return super().scan(knowledge_graph, rule_obj, test_files=test_files, code_files=code_files)
+        return super().scan(story_graph, rule_obj, test_files=test_files, code_files=code_files)
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []

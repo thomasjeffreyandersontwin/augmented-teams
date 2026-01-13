@@ -31,8 +31,8 @@ class JSONScope(JSONAdapter):
         return self.scope.skiprule
     
     @property
-    def knowledge_graph_filter(self):
-        return self.scope.knowledge_graph_filter
+    def story_graph_filter(self):
+        return self.scope.story_graph_filter
     
     @property
     def file_filter(self):

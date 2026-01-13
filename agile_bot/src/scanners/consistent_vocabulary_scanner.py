@@ -9,7 +9,7 @@ from collections import defaultdict
 
 class ConsistentVocabularyScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -18,15 +18,15 @@ class ConsistentVocabularyScanner(TestScanner):
         
         content, lines, tree = parsed
         
-        domain_terms = self._extract_domain_terms(knowledge_graph)
+        domain_terms = self._extract_domain_terms(story_graph)
         
         violations.extend(self._check_vocabulary_consistency(content, domain_terms, file_path, rule_obj))
         
         return violations
     
-    def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> List[str]:
+    def _extract_domain_terms(self, story_graph: Dict[str, Any]) -> List[str]:
         terms = []
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             epic_name = epic.get('name', '')
             if epic_name:

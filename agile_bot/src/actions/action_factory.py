@@ -18,7 +18,7 @@ class ActionFactory:
         action_module_mapping = {
             'clarify': ('clarify', 'clarify_action', 'ClarifyContextAction'),
             'strategy': ('strategy', 'strategy_action', 'StrategyAction'),
-            'build': ('build', 'build_action', 'BuildKnowledgeAction'),
+            'build': ('build', 'build_action', 'BuildStoryGraphAction'),
             'validate': ('validate', 'validate_action', 'ValidateRulesAction'),
             'render': ('render', 'render_action', 'RenderOutputAction'),
             'rules': ('rules', 'rules_action', 'RulesAction'),
@@ -56,7 +56,7 @@ class ActionFactory:
         if action_name == 'rules':
             return 'agile_bot.src.rules.rules_action.RulesAction'
         
-        action_module_mapping = {'clarify': ('clarify', 'clarify_action', 'ClarifyContextAction'), 'strategy': ('strategy', 'strategy_action', 'StrategyAction'), 'decide_strategy': ('strategy', 'strategy_action', 'StrategyAction'), 'build': ('build', 'build_action', 'BuildKnowledgeAction'), 'build_knowledge': ('build', 'build_action', 'BuildKnowledgeAction'), 'validate': ('validate', 'validate_action', 'ValidateRulesAction'), 'render': ('render', 'render_action', 'RenderOutputAction'), 'render_output': ('render', 'render_action', 'RenderOutputAction')}
+        action_module_mapping = {'clarify': ('clarify', 'clarify_action', 'ClarifyContextAction'), 'strategy': ('strategy', 'strategy_action', 'StrategyAction'), 'decide_strategy': ('strategy', 'strategy_action', 'StrategyAction'), 'build': ('build', 'build_action', 'BuildStoryGraphAction'), 'build_knowledge': ('build', 'build_action', 'BuildStoryGraphAction'), 'validate': ('validate', 'validate_action', 'ValidateRulesAction'), 'render': ('render', 'render_action', 'RenderOutputAction'), 'render_output': ('render', 'render_action', 'RenderOutputAction')}
         mapping = action_module_mapping.get(action_name)
         if mapping:
             module_name, module_file, class_name = mapping

@@ -117,7 +117,7 @@ class ValidationExecutor:
 
     def _add_violation_summary_to_instructions(self, action_instructions, violation_summary):
         if violation_summary:
-            edit_instructions = ['Based on code scanner diagnostics, edit the knowledge graph to fix violations:', *violation_summary, 'Review each violation and update the knowledge graph accordingly.']
+            edit_instructions = ['Based on code scanner diagnostics, edit the story graph to fix violations:', *violation_summary, 'Review each violation and update the story graph accordingly.']
             action_instructions.extend(edit_instructions)
 
     def _build_instructions_dict(self, action_instructions, processed_rules, report_path, report_link):

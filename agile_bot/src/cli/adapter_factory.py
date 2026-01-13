@@ -78,10 +78,10 @@ class AdapterFactory:
         ('ValidateRulesAction', 'tty'): ('agile_bot.src.actions.validate.tty_validate_action', 'TTYValidateAction'),
         ('ValidateRulesAction', 'markdown'): ('agile_bot.src.actions.validate.markdown_validate_action', 'MarkdownValidateAction'),
         
-        # BuildKnowledgeAction (specific)
-        ('BuildKnowledgeAction', 'json'): ('agile_bot.src.actions.build.json_build_action', 'JSONBuildAction'),
-        ('BuildKnowledgeAction', 'tty'): ('agile_bot.src.actions.build.tty_build_action', 'TTYBuildAction'),
-        ('BuildKnowledgeAction', 'markdown'): ('agile_bot.src.actions.build.markdown_build_action', 'MarkdownBuildAction'),
+        # BuildStoryGraphAction (specific)
+        ('BuildStoryGraphAction', 'json'): ('agile_bot.src.actions.build.json_build_action', 'JSONBuildAction'),
+        ('BuildStoryGraphAction', 'tty'): ('agile_bot.src.actions.build.tty_build_action', 'TTYBuildAction'),
+        ('BuildStoryGraphAction', 'markdown'): ('agile_bot.src.actions.build.markdown_build_action', 'MarkdownBuildAction'),
         
         # ClarifyContextAction (specific)
         ('ClarifyContextAction', 'json'): ('agile_bot.src.actions.clarify.json_clarify_action', 'JSONClarifyAction'),

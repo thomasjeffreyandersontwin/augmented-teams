@@ -36,11 +36,11 @@ class FileTestHelper(BaseHelper):
             docs_dir.mkdir(parents=True, exist_ok=True)
             return docs_dir
         
-        elif directory_type == 'knowledge_graph':
+        elif directory_type == 'story_graph':
             if not behavior:
-                raise ValueError("behavior parameter required for knowledge_graph directory")
+                raise ValueError("behavior parameter required for story_graph directory")
             behavior_dir = directory / 'behaviors' / behavior
-            kg_dir = behavior_dir / 'content' / 'knowledge_graph'
+            kg_dir = behavior_dir / 'content' / 'story_graph'
             kg_dir.mkdir(parents=True, exist_ok=True)
             return kg_dir
         
@@ -49,11 +49,11 @@ class FileTestHelper(BaseHelper):
             docs_dir.mkdir(parents=True, exist_ok=True)
             return docs_dir
         
-        elif directory_type == 'knowledge_graph_prioritization':
+        elif directory_type == 'story_graph_prioritization':
             if not behavior:
-                raise ValueError("behavior parameter required for knowledge_graph_prioritization directory")
+                raise ValueError("behavior parameter required for story_graph_prioritization directory")
             behavior_dir = directory / 'behaviors' / behavior
-            kg_dir = behavior_dir / 'content' / 'knowledge_graph'
+            kg_dir = behavior_dir / 'content' / 'story_graph'
             kg_dir.mkdir(parents=True, exist_ok=True)
             return kg_dir
         

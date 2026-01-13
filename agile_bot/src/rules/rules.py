@@ -22,7 +22,7 @@ class ValidationCallbacks:
 
 @dataclass
 class ValidationContext:
-    knowledge_graph: Dict[str, Any]
+    story_graph: Dict[str, Any]
     files: Dict[str, List[Path]]
     callbacks: ValidationCallbacks
     skiprule: List[str]
@@ -38,12 +38,12 @@ class ValidationContext:
     @classmethod
     def from_action_context(cls, behavior, context: 'ValidateActionContext', callbacks: Optional[ValidationCallbacks] = None) -> 'ValidationContext':
         knowledge = Knowledge(behavior)
-        story_graph = StoryGraph(behavior.bot_paths, behavior.bot_paths.workspace_directory, knowledge_graph_spec=knowledge.knowledge_graph_spec)
+        story_graph = StoryGraph(behavior.bot_paths, behavior.bot_paths.workspace_directory, story_graph_spec=knowledge.story_graph_spec)
         validation_scope = ValidationScope.from_context(context, behavior.bot_paths, behavior_name=behavior.name)
         
-        knowledge_graph_content = story_graph.content
+        story_graph_content = story_graph.content
         if context.scope:
-            knowledge_graph_content = validation_scope.filter_story_graph(knowledge_graph_content)
+            story_graph_content = validation_scope.filter_story_graph(story_graph_content)
         
         # Get files - either from scope filter or discover all
         files = cls._get_files_for_validation(behavior, context)
@@ -52,7 +52,7 @@ class ValidationContext:
         exclude = context.scope.exclude if context.scope else []
         
         return cls(
-            knowledge_graph=knowledge_graph_content,
+            story_graph=story_graph_content,
             files=files,
             callbacks=callbacks or ValidationCallbacks(),
             skiprule=skiprule,
@@ -411,7 +411,7 @@ class Rules:
             context.callbacks.on_scanner_start(rule.rule_file, scanner_path)
         try:
             max_cross_file = getattr(context, 'max_cross_file_comparisons', 20)
-            scanner_results = rule.scan(context.knowledge_graph, all_files or files, on_file_scanned=context.callbacks.on_file_scanned, skip_cross_file=context.skip_cross_file, changed_files=changed_files, status_writer=context.status_writer, max_cross_file_comparisons=max_cross_file)
+            scanner_results = rule.scan(context.story_graph, all_files or files, on_file_scanned=context.callbacks.on_file_scanned, skip_cross_file=context.skip_cross_file, changed_files=changed_files, status_writer=context.status_writer, max_cross_file_comparisons=max_cross_file)
             rule_result['scanner_results'] = self._convert_violations_to_dicts(scanner_results)
             return self._process_scanner_result(rule, rule_result, scanner_results, scanner_path, scanner_name, logger)
         except Exception as e:
@@ -440,8 +440,8 @@ class Rules:
             return self._execute_validation(context)
         return self._execute_validation(self._create_legacy_context(context, files, callbacks, skiprule, exclude))
 
-    def _create_legacy_context(self, knowledge_graph: Dict, files: Optional[Dict], callbacks: Optional[ValidationCallbacks], skiprule: Optional[List[str]], exclude: Optional[List[str]]) -> ValidationContext:
-        return ValidationContext(knowledge_graph=knowledge_graph, files=files or {}, callbacks=callbacks or ValidationCallbacks(), skiprule=skiprule or [], exclude=exclude or [], skip_cross_file=True, all_files=False, behavior=self.behavior, bot_paths=getattr(self, 'bot_paths', None), working_dir=Path.cwd())
+    def _create_legacy_context(self, story_graph: Dict, files: Optional[Dict], callbacks: Optional[ValidationCallbacks], skiprule: Optional[List[str]], exclude: Optional[List[str]]) -> ValidationContext:
+        return ValidationContext(story_graph=story_graph, files=files or {}, callbacks=callbacks or ValidationCallbacks(), skiprule=skiprule or [], exclude=exclude or [], skip_cross_file=True, all_files=False, behavior=self.behavior, bot_paths=getattr(self, 'bot_paths', None), working_dir=Path.cwd())
 
     def _execute_validation(self, context: ValidationContext) -> List[Dict[str, Any]]:
         logger = logging.getLogger(__name__)

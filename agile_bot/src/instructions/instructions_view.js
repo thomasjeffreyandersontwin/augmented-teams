@@ -232,21 +232,21 @@ class InstructionsSection extends PanelView {
             };
         }
 
-        // 4. BUILD - Knowledge Graph + Rules (ONLY show during build action)
-        const buildRelatedKeys = ['schema', 'knowledge_graph_template', 'knowledge_graph_config', 'rules', 'build_instructions'];
+        // 4. BUILD - Story Graph + Rules (ONLY show during build action)
+        const buildRelatedKeys = ['schema', 'story_graph_template', 'story_graph_config', 'rules', 'build_instructions'];
         const hasBuildData = buildRelatedKeys.some(key => instructions[key]);
         if (hasBuildData && currentAction === 'build') {
-            // Merge knowledge_graph_template and knowledge_graph_config into a single schema object
+            // Merge story_graph_template and story_graph_config into a single schema object
             let schemaData = instructions.schema || instructions.build_instructions?.schema || {};
         
-            // Merge knowledge_graph_template fields
-            if (instructions.knowledge_graph_template) {
-                schemaData = { ...schemaData, ...instructions.knowledge_graph_template };
+            // Merge story_graph_template fields
+            if (instructions.story_graph_template) {
+                schemaData = { ...schemaData, ...instructions.story_graph_template };
             }
             
-            // Merge knowledge_graph_config fields
-            if (instructions.knowledge_graph_config) {
-                schemaData = { ...schemaData, ...instructions.knowledge_graph_config };
+            // Merge story_graph_config fields
+            if (instructions.story_graph_config) {
+                schemaData = { ...schemaData, ...instructions.story_graph_config };
             }
             
             restructured.build_instructions = {
@@ -615,23 +615,23 @@ class InstructionsSection extends PanelView {
     }
 
     _formatBuildInstructions(value) {
-        // Format build-specific instructions - Knowledge Graph and Rules only
+        // Format build-specific instructions - Story Graph and Rules only
         if (typeof value !== 'object' || !value) {
             return this.escapeHtml(String(value));
         }
         
         let html = '';
         
-        // Knowledge Graph Section - collapsible
+        // Story Graph Section - collapsible
         if (value.schema) {
             html += '<div style="margin-bottom: 8px;">';
             html += '<div style="margin-bottom: 8px; cursor: pointer; display: flex; align-items: center;" onclick="toggleSection(\'build-kg-section\')">';
             html += '<span class="expand-icon" style="margin-right: 8px; font-size: 20px; transition: transform 0.15s;">▸</span>';
-            html += '<strong style="font-size: 14px;">Knowledge Graph</strong>';
+            html += '<strong style="font-size: 14px;">Story Graph</strong>';
             html += '</div>';
             html += '<div id="build-kg-section" class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">';
             html += '<div style="padding-left: 14px;">';
-            html += this._formatBuildKnowledgeGraph(value.schema);
+            html += this._formatBuildStoryGraph(value.schema);
             html += '</div>';
             html += '</div>';
             html += '</div>';
@@ -655,7 +655,7 @@ class InstructionsSection extends PanelView {
         return html;
     }
 
-    _formatBuildKnowledgeGraph(data) {
+    _formatBuildStoryGraph(data) {
         if (!data) return '';
 
         // Merge all items into one - get template, output filename, path directory, and exists
@@ -798,7 +798,7 @@ class InstructionsSection extends PanelView {
             });
         }
 
-        // Render Config Section - similar to Knowledge Graph
+        // Render Config Section - similar to Story Graph
         if (value.render_config) {
             const configs = Array.isArray(value.render_config) ? value.render_config : [value.render_config];
             

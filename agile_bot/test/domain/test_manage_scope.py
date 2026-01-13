@@ -157,56 +157,180 @@ class TestFilterScopeByStories:
         helper.scope.assert_story_graph_contains_epic(filtered_graph, 'Epic A')
 
 class TestFilterScopeByFiles:
+    """Tests for FileFilter functionality within scope operations."""
     
-    def test_set_scope_to_single_folder(self, tmp_path):
-        """
-        SCENARIO: Set scope to single folder
-        GIVEN: Workspace with multiple folders
-        WHEN: Scope set to single folder path
-        THEN: Only files in that folder are in scope
-        """
-        # TODO: Implement file filtering tests
-        pass
+    def test_file_filter_includes_matching_files(self):
+        """FileFilter includes files matching include patterns."""
+        from agile_bot.src.scope import FileFilter
+        from pathlib import Path
+        
+        files = [
+            Path('test/test_file1.py'),
+            Path('test/test_file2.py'),
+            Path('src/source_file.py'),
+            Path('docs/readme.md')
+        ]
+        
+        file_filter = FileFilter(include_patterns=['**/test*.py'])
+        filtered = file_filter.filter_files(files)
+        
+        assert len(filtered) == 2
+        assert Path('test/test_file1.py') in filtered
+        assert Path('test/test_file2.py') in filtered
+        assert Path('src/source_file.py') not in filtered
     
-    def test_set_scope_to_folder_with_glob_pattern(self, tmp_path):
+    def test_file_filter_excludes_matching_files(self):
         """
-        SCENARIO: Set scope to folder with glob pattern
-        GIVEN: Workspace with multiple file types
-        WHEN: Scope set to glob pattern (e.g., 'src/**/*.py')
-        THEN: Only matching files are in scope
+        SCENARIO: FileFilter excludes files matching exclude patterns
+        GIVEN: A list of files and a FileFilter with exclude patterns
+        WHEN: filter_files() is called
+        THEN: Files matching exclude patterns are removed
         """
-        # TODO: Implement
-        pass
+        from agile_bot.src.scope import FileFilter
+        from pathlib import Path
+        
+        # GIVEN: A list of files
+        files = [
+            Path('test/test_file1.py'),
+            Path('test/test_file2.py'),
+            Path('test/__pycache__/cached.pyc'),
+            Path('test/.pytest_cache/file.py')
+        ]
+        
+        # AND: A FileFilter with exclude pattern for cache files
+        file_filter = FileFilter(exclude_patterns=['**/__pycache__/**', '**/.pytest_cache/**'])
+        
+        # WHEN: filter_files() is called
+        filtered = file_filter.filter_files(files)
+        
+        # THEN: Cache files are excluded
+        assert len(filtered) == 2
+        assert Path('test/test_file1.py') in filtered
+        assert Path('test/test_file2.py') in filtered
     
-    def test_set_scope_to_multiple_file_paths(self, tmp_path):
+    def test_file_filter_combines_include_and_exclude(self):
         """
-        SCENARIO: Set scope to multiple file paths
-        GIVEN: Workspace with multiple files
-        WHEN: Scope set to list of file paths
-        THEN: Only those files are in scope
+        SCENARIO: FileFilter combines include and exclude patterns
+        GIVEN: A list of files and a FileFilter with both include and exclude patterns
+        WHEN: filter_files() is called
+        THEN: Files must match include AND not match exclude
         """
-        # TODO: Implement
-        pass
+        from agile_bot.src.scope import FileFilter
+        from pathlib import Path
+        
+        # GIVEN: A list of files
+        files = [
+            Path('test/test_execute_in_headless_mode.py'),
+            Path('test/test_monitor_session.py'),
+            Path('test/test_helpers.py'),
+            Path('src/source.py')
+        ]
+        
+        # AND: A FileFilter with include for test files and exclude for helpers
+        file_filter = FileFilter(
+            include_patterns=['**/test*.py'],
+            exclude_patterns=['**/*helpers*.py']
+        )
+        
+        # WHEN: filter_files() is called
+        filtered = file_filter.filter_files(files)
+        
+        # THEN: Test files are included except helpers
+        assert len(filtered) == 2
+        assert Path('test/test_execute_in_headless_mode.py') in filtered
+        assert Path('test/test_monitor_session.py') in filtered
+        assert Path('test/test_helpers.py') not in filtered
     
-    def test_set_scope_with_exclude_pattern(self, tmp_path):
+    def test_file_filter_returns_all_when_no_patterns(self):
         """
-        SCENARIO: Set scope with exclude pattern
-        GIVEN: Workspace with files
-        WHEN: Scope set with exclude pattern (e.g., exclude=['**/test_*'])
-        THEN: Matching files are excluded from scope
+        SCENARIO: FileFilter returns all files when no patterns specified
+        GIVEN: A list of files and a FileFilter with no patterns
+        WHEN: filter_files() is called
+        THEN: All files are returned
         """
-        # TODO: Implement
-        pass
+        from agile_bot.src.scope import FileFilter
+        from pathlib import Path
+        
+        # GIVEN: A list of files
+        files = [
+            Path('test/test_file1.py'),
+            Path('src/source.py'),
+            Path('docs/readme.md')
+        ]
+        
+        # AND: A FileFilter with no patterns
+        file_filter = FileFilter()
+        
+        # WHEN: filter_files() is called
+        filtered = file_filter.filter_files(files)
+        
+        # THEN: All files are returned
+        assert len(filtered) == 3
+        assert all(f in filtered for f in files)
     
-    def test_set_scope_to_multiple_folders_and_patterns(self, tmp_path):
+    def test_file_filter_handles_specific_file_paths(self):
         """
-        SCENARIO: Set scope to multiple folders and patterns
-        GIVEN: Workspace with multiple folders
-        WHEN: Scope set to combination of folders and patterns
-        THEN: All matching files are in scope
+        SCENARIO: FileFilter handles specific file paths (not just globs)
+        GIVEN: A list of files and a FileFilter with specific file path
+        WHEN: filter_files() is called
+        THEN: Only the specific file is included
         """
-        # TODO: Implement
-        pass
+        from agile_bot.src.scope import FileFilter
+        from pathlib import Path
+        
+        # GIVEN: A list of files
+        files = [
+            Path('test/test_execute_in_headless_mode.py'),
+            Path('test/test_monitor_session.py'),
+            Path('test/test_helpers.py')
+        ]
+        
+        # AND: A FileFilter with specific file path
+        file_filter = FileFilter(include_patterns=['**/test_execute_in_headless_mode.py'])
+        
+        # WHEN: filter_files() is called
+        filtered = file_filter.filter_files(files)
+        
+        # THEN: Only the specific file is included
+        assert len(filtered) == 1
+        assert Path('test/test_execute_in_headless_mode.py') in filtered
+    
+    def test_file_discovery_and_filtering_integration(self):
+        """
+        SCENARIO: File discovery and filtering work together
+        GIVEN: A FileDiscovery component and a FileFilter
+        WHEN: Files are discovered and then filtered
+        THEN: Only matching files are returned
+        
+        This test verifies the integration between FileDiscovery and FileFilter,
+        which was the core fix for the validation scope bug.
+        """
+        from agile_bot.src.scope import FileFilter
+        from pathlib import Path
+        
+        # GIVEN: A list of discovered files (simulating FileDiscovery output)
+        discovered_files = [
+            Path('test/test_execute_in_headless_mode.py'),
+            Path('test/test_monitor_session.py'),
+            Path('test/test_helpers.py'),
+            Path('test/__pycache__/cached.pyc')
+        ]
+        
+        # AND: A FileFilter for specific files
+        file_filter = FileFilter(
+            include_patterns=['**/test_execute_in_headless_mode.py', '**/test_monitor_session.py'],
+            exclude_patterns=['**/__pycache__/**']
+        )
+        
+        # WHEN: Files are filtered
+        filtered_files = file_filter.filter_files(discovered_files)
+        
+        # THEN: Only matching files are returned
+        assert len(filtered_files) == 2
+        assert Path('test/test_execute_in_headless_mode.py') in filtered_files
+        assert Path('test/test_monitor_session.py') in filtered_files
+        assert Path('test/test_helpers.py') not in filtered_files
+        assert Path('test/__pycache__/cached.pyc') not in filtered_files
 
 class TestPersistScope:
     
@@ -271,13 +395,16 @@ class TestExecuteActionsWithScope:
         WHEN: Instructions are retrieved
         THEN: Instructions contain scope configuration
         """
-        from agile_bot.src.actions.action_context import ScopeActionContext, Scope, ScopeType
+        from agile_bot.src.actions.action_context import ScopeActionContext
+        from agile_bot.src.scope import Scope, StoryGraphFilter
         
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('shape')
         action = helper.bot.behaviors.current.actions.find_by_name('build')
         
-        scope = Scope(type=ScopeType.STORY, value=['Story1', 'Story2'])
+        from agile_bot.src.scope import ScopeType
+        scope = Scope(workspace_directory=tmp_path)
+        scope.filter(type=ScopeType.STORY, value=['Story1', 'Story2'])
         context = ScopeActionContext(scope=scope)
         
         instructions = action.get_instructions(context)
@@ -293,7 +420,8 @@ class TestExecuteActionsWithScope:
         WHEN: Instructions are retrieved
         THEN: No errors occur and scope is processed
         """
-        from agile_bot.src.actions.action_context import ValidateActionContext, Scope, ScopeType
+        from agile_bot.src.actions.action_context import ValidateActionContext
+        from agile_bot.src.scope import Scope, StoryGraphFilter
         
         helper = BotTestHelper(tmp_path)
         
@@ -305,7 +433,9 @@ class TestExecuteActionsWithScope:
         helper.bot.behaviors.navigate_to('exploration')
         action = helper.bot.behaviors.current.actions.find_by_name('validate')
         
-        scope = Scope(type=ScopeType.STORY, value=['Story1'])
+        from agile_bot.src.scope import ScopeType
+        scope = Scope(workspace_directory=tmp_path)
+        scope.filter(type=ScopeType.STORY, value=['Story1'])
         context = ValidateActionContext(scope=scope)
         
         # Should not raise an error
@@ -321,13 +451,15 @@ class TestExecuteActionsWithScope:
         WHEN: Instructions are retrieved
         THEN: No errors occur (render supports ScopeActionContext)
         """
-        from agile_bot.src.actions.action_context import ScopeActionContext, Scope, ScopeType
+        from agile_bot.src.actions.action_context import ScopeActionContext
+        from agile_bot.src.scope import Scope, ScopeType
         
         helper = BotTestHelper(tmp_path)
         helper.bot.behaviors.navigate_to('exploration')
         action = helper.bot.behaviors.current.actions.find_by_name('render')
         
-        scope = Scope(type=ScopeType.STORY, value=['Story1'])
+        scope = Scope(workspace_directory=tmp_path)
+        scope.filter(type=ScopeType.STORY, value=['Story1'])
         context = ScopeActionContext(scope=scope)
         
         # Should not raise an error

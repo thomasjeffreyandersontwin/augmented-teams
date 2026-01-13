@@ -472,7 +472,7 @@ class BehaviorTestHelper(BaseHelper):
         # Create guardrails files (required by Guardrails class initialization)
         self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
-        # If action is 'build', create knowledge graph config structure
+        # If action is 'build', create story graph config structure
         if action_name == 'build':
             from agile_bot.test.domain.test_build_knowledge import given_setup
             kg_dir = given_setup('directory_structure', self.parent.bot_directory, behavior=behavior)
@@ -519,7 +519,7 @@ class BehaviorTestHelper(BaseHelper):
         # Create guardrails files
         self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
-        # If action is 'build', create knowledge graph config structure
+        # If action is 'build', create story graph config structure
         if action_name == 'build':
             from agile_bot.test.domain.test_build_knowledge import given_setup
             kg_dir = given_setup('directory_structure', self.parent.bot_directory, behavior=behavior)
@@ -575,7 +575,7 @@ class BehaviorTestHelper(BaseHelper):
         # Production story_bot already has all behaviors configured
         self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
-        # If build action is involved, create knowledge graph config structure
+        # If build action is involved, create story graph config structure
         if source_action == 'build' or dest_action == 'build':
             from agile_bot.test.domain.test_build_knowledge import given_setup
             kg_dir = given_setup('directory_structure', self.parent.bot_directory, behavior=behavior)
@@ -612,7 +612,7 @@ class BehaviorTestHelper(BaseHelper):
         # Production story_bot already has all behaviors configured
         self.parent.guardrails.create_minimal_guardrails_files(behavior)
         
-        # If behavior has 'build' action, create knowledge graph configs
+        # If behavior has 'build' action, create story graph configs
         if action_name == 'build':
             from agile_bot.test.domain.test_build_knowledge import given_setup
             kg_dir = given_setup('directory_structure', self.parent.bot_directory, behavior=behavior)

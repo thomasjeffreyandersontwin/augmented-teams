@@ -16,11 +16,11 @@ class IntentionRevealingNamesScanner(CodeScanner):
     
     def __init__(self):
         super().__init__()
-        self.knowledge_graph = None
+        self.story_graph = None
     
-    def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None, test_files: Optional[List['Path']] = None, code_files: Optional[List['Path']] = None, on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
-        self.knowledge_graph = knowledge_graph
-        return super().scan(knowledge_graph, rule_obj, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
+    def scan(self, story_graph: Dict[str, Any], rule_obj: Any = None, test_files: Optional[List['Path']] = None, code_files: Optional[List['Path']] = None, on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
+        self.story_graph = story_graph
+        return super().scan(story_graph, rule_obj, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
     
     # Acceptable domain terms that are well-known and intention-revealing
     ACCEPTABLE_DOMAIN_TERMS = {
@@ -38,16 +38,16 @@ class IntentionRevealingNamesScanner(CodeScanner):
         'result',  # Acceptable as return value name
     }
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
             return violations
         
-        # Extract domain terms from knowledge graph (using enhanced extraction from CodeScanner base class)
+        # Extract domain terms from story graph (using enhanced extraction from CodeScanner base class)
         domain_terms = set()
-        if self.knowledge_graph:
-            domain_terms = self._extract_domain_terms(self.knowledge_graph)
+        if self.story_graph:
+            domain_terms = self._extract_domain_terms(self.story_graph)
         
         parsed = self._read_and_parse_file(file_path)
         if not parsed:

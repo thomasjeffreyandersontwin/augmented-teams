@@ -26,7 +26,7 @@ class DomainLanguageCodeScanner(CodeScanner):
     
     def __init__(self):
         super().__init__()
-        self.knowledge_graph = None
+        self.story_graph = None
     
     def _is_builder_class_with_domain_prefix(self, class_name: Optional[str]) -> bool:
         if not class_name:
@@ -39,19 +39,19 @@ class DomainLanguageCodeScanner(CodeScanner):
                     return True
         return False
     
-    def scan(self, knowledge_graph: Dict[str, Any], rule_obj: Any = None, test_files: Optional[List['Path']] = None, code_files: Optional[List['Path']] = None, on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
-        self.knowledge_graph = knowledge_graph
-        return super().scan(knowledge_graph, rule_obj, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
+    def scan(self, story_graph: Dict[str, Any], rule_obj: Any = None, test_files: Optional[List['Path']] = None, code_files: Optional[List['Path']] = None, on_file_scanned: Optional[Any] = None) -> List[Dict[str, Any]]:
+        self.story_graph = story_graph
+        return super().scan(story_graph, rule_obj, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         if not file_path.exists():
             return violations
         
         domain_terms = set()
-        if self.knowledge_graph:
-            domain_terms = self._extract_domain_terms(self.knowledge_graph)
+        if self.story_graph:
+            domain_terms = self._extract_domain_terms(self.story_graph)
         
         # Generic names that are acceptable in specific contexts
         generic_names = {'self', 'result', 'value', 'data', 'item', 'obj', 'workspace', 'root', 'path', 'config'}

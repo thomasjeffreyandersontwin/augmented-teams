@@ -12,7 +12,7 @@ class CodeScanner(Scanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
@@ -22,26 +22,26 @@ class CodeScanner(Scanner):
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
         # Use base Scanner.scan() which combines files and calls scan_file() for each
-        violations = super().scan(knowledge_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
+        violations = super().scan(story_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
         return violations
     
     def scan_file(
         self,
         file_path: Path,
         rule_obj: Any = None,
-        knowledge_graph: Optional[Dict[str, Any]] = None
+        story_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
-        # Store knowledge_graph in instance for scanners that need it
+        # Store story_graph in instance for scanners that need it
         # Assign directly - let AttributeError propagate if self doesn't support it
-        self.knowledge_graph = knowledge_graph
+        self.story_graph = story_graph
         
         # Default implementation - subclasses must override
         return []
     
-    def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> set:
+    def _extract_domain_terms(self, story_graph: Dict[str, Any]) -> set:
         domain_terms = set()
         
         # These are domain concepts, not technical jargon
@@ -57,10 +57,10 @@ class CodeScanner(Scanner):
         }
         domain_terms.update(common_domain_terms)
         
-        if not knowledge_graph:
+        if not story_graph:
             return domain_terms
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
                 epic_name = epic.get('name', '')

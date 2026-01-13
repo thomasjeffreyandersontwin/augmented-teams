@@ -9,7 +9,7 @@ class StoryScanner(Scanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List['Path']] = None,
         code_files: Optional[List['Path']] = None,
@@ -19,7 +19,7 @@ class StoryScanner(Scanner):
             raise ValueError("rule_obj parameter is required for StoryScanner")
         
         violations = []
-        story_graph_data = knowledge_graph.get('story_graph', knowledge_graph)
+        story_graph_data = story_graph.get('story_graph', story_graph)
         story_map = StoryMap(story_graph_data)
         
         # Story scanners should only scan story/epic/sub-epic nodes, NOT domain concepts

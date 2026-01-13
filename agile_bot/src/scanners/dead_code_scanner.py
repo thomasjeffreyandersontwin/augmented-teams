@@ -22,7 +22,7 @@ class DeadCodeScanner(CodeScanner):
     
     def scan(
         self, 
-        knowledge_graph: Dict[str, Any], 
+        story_graph: Dict[str, Any], 
         rule_obj: Any = None,
         test_files: Optional[List[Path]] = None,
         code_files: Optional[List[Path]] = None,
@@ -109,7 +109,7 @@ class DeadCodeScanner(CodeScanner):
         self,
         file_path: Path,
         rule_obj: Any = None,
-        knowledge_graph: Optional[Dict[str, Any]] = None
+        story_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """Scan a single file for dead code within that file only.
         
@@ -295,7 +295,7 @@ class DeadCodeScanner(CodeScanner):
         
         # Delegate to scan() which already does cross-file analysis
         return self.scan(
-            knowledge_graph={},
+            story_graph={},
             rule_obj=rule_obj,
             test_files=all_tests,
             code_files=all_code,

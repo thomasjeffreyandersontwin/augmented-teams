@@ -71,8 +71,8 @@ class ValidateRulesAction(Action):
         
         instructions._data['base_instructions'] = new_instructions
         
-        # Add knowledge graph config and template paths for reference (same as build action)
-        kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'knowledge_graph'
+        # Add story graph config and template paths for reference (same as build action)
+        kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'story_graph'
         
         # Find config file
         config_files = list(kg_dir.glob('*.json')) if kg_dir.exists() else []
@@ -157,9 +157,9 @@ class ValidateRulesAction(Action):
             elif scope_type == 'files':
                 return f"file(s): {', '.join(scope_value)}"
             else:
-                return "all epics, sub-epics, stories, and domain concepts in the knowledge graph"
+                return "all epics, sub-epics, stories, and domain concepts in the story graph"
         else:
-            return "all epics, sub-epics, stories, and domain concepts in the knowledge graph"
+            return "all epics, sub-epics, stories, and domain concepts in the story graph"
 
     def _format_rules_with_file_paths(self) -> str:
         """Format rules with file paths for AI to read and analyze."""

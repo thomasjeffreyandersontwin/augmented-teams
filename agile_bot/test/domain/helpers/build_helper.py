@@ -1,6 +1,6 @@
 """
 Build Test Helper
-Handles build action, knowledge graphs, templates, configs + build-specific instruction assertions
+Handles build action, story graphs, templates, configs + build-specific instruction assertions
 """
 import json
 from pathlib import Path
@@ -8,7 +8,7 @@ from .base_helper import BaseHelper
 
 
 class BuildTestHelper(BaseHelper):
-    """Helper for build action, knowledge graphs, and templates testing"""
+    """Helper for build action, story graphs, and templates testing"""
     
     def assert_build_scope_contains(self, build_scope, expected_key: str, expected_value):
         """Assert BuildScope contains expected key-value pair.
@@ -33,21 +33,21 @@ class BuildTestHelper(BaseHelper):
         for key, value in expected_scope_contains.items():
             self.assert_build_scope_contains(build_scope, key, value)
     
-    def assert_build_knowledge_instructions(self, instructions):
-        """Assert BuildKnowledgeAction injected all required fields.
+    def assert_build_story_graph_instructions(self, instructions):
+        """Assert BuildStoryGraphAction injected all required fields.
         
         Args:
-            instructions: Instructions object from BuildKnowledgeAction
+            instructions: Instructions object from BuildStoryGraphAction
         """
         # Check base instructions exist
         base_instructions = instructions.get('base_instructions', [])
         assert base_instructions, "base_instructions should be present"
         
-        # Check BuildKnowledgeAction-specific fields
+        # Check BuildStoryGraphAction-specific fields
         assert instructions.get('scope') is not None, "scope should be set"
         assert instructions.get('scope_story_names') is not None, "scope_story_names should be set"
-        assert instructions.get('knowledge_graph_template') is not None, "knowledge_graph_template should be set"
-        assert instructions.get('knowledge_graph_config') is not None, "knowledge_graph_config should be set"
+        assert instructions.get('story_graph_template') is not None, "story_graph_template should be set"
+        assert instructions.get('story_graph_config') is not None, "story_graph_config should be set"
         assert instructions.get('existing_file') is not None, "existing_file should be set"
         
         # Check that either update_mode or create_mode is set

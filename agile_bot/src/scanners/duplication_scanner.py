@@ -105,7 +105,7 @@ class DuplicationScanner(CodeScanner):
         except Exception as e:
             logger.debug(f"Cache write failed for {file_path}: {e}")
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         _safe_print(f"[DuplicationScanner.scan_code_file] Called for: {file_path}")

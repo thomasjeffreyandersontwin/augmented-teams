@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class SpecificationMatchScanner(TestScanner):
     
-    def scan_file(self, file_path: Path, rule_obj: Any = None, knowledge_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         violations = []
         
         parsed = self._read_and_parse_file(file_path)
@@ -29,9 +29,9 @@ class SpecificationMatchScanner(TestScanner):
         
         violations.extend(self._check_assertions(tree, content, file_path, rule_obj))
         
-        # NEW: Knowledge graph integration - match tests to specification
-        if knowledge_graph:
-            violations.extend(self._check_specification_matches(tree, content, file_path, rule_obj, knowledge_graph))
+        # NEW: Story graph integration - match tests to specification
+        if story_graph:
+            violations.extend(self._check_specification_matches(tree, content, file_path, rule_obj, story_graph))
         
         return violations
     
@@ -186,7 +186,7 @@ class SpecificationMatchScanner(TestScanner):
         return ""
     
     def _check_specification_matches(self, tree: ast.AST, content: str, file_path: Path, 
-                                    rule_obj: Any, knowledge_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+                                    rule_obj: Any, story_graph: Dict[str, Any]) -> List[Dict[str, Any]]:
         violations = []
         
         test_methods = []
@@ -194,13 +194,13 @@ class SpecificationMatchScanner(TestScanner):
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                 test_methods.append(node)
         
-        domain_terms = self._extract_domain_terms(knowledge_graph)
+        domain_terms = self._extract_domain_terms(story_graph)
         
         for test_method in test_methods:
             scenario = self._extract_scenario_from_docstring(test_method)
             
-            # Find matching story/scenario in knowledge graph
-            matching_story = self._find_matching_story(scenario, test_method.name, knowledge_graph)
+            # Find matching story/scenario in story graph
+            matching_story = self._find_matching_story(scenario, test_method.name, story_graph)
             
             if matching_story:
                 variable_matches = self._check_variable_matches(test_method, matching_story, domain_terms, rule_obj, file_path)
@@ -218,13 +218,13 @@ class SpecificationMatchScanner(TestScanner):
         
         return violations
     
-    def _extract_domain_terms(self, knowledge_graph: Dict[str, Any]) -> set:
+    def _extract_domain_terms(self, story_graph: Dict[str, Any]) -> set:
         domain_terms = set()
         
-        if not knowledge_graph:
+        if not story_graph:
             return domain_terms
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
                 epic_name = epic.get('name', '')
@@ -332,8 +332,8 @@ class SpecificationMatchScanner(TestScanner):
         
         return None
     
-    def _find_matching_story(self, scenario: Optional[str], test_name: str, knowledge_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        if not knowledge_graph:
+    def _find_matching_story(self, scenario: Optional[str], test_name: str, story_graph: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not story_graph:
             return None
         
         scenario_name = None
@@ -345,7 +345,7 @@ class SpecificationMatchScanner(TestScanner):
         
         test_keywords = set(self._extract_words_from_text(test_name))
         
-        epics = knowledge_graph.get('epics', [])
+        epics = story_graph.get('epics', [])
         for epic in epics:
             if isinstance(epic, dict):
                 sub_epics = epic.get('sub_epics', [])

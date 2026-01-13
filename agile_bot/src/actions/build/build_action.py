@@ -4,13 +4,13 @@ import logging
 from ..action import Action
 from ..action_context import ActionContext, ScopeActionContext
 from .knowledge import Knowledge
-from .story_graph_spec import StoryGraphSpec
-from .story_graph_template import StoryGraphTemplate
+from .knowledge_graph_spec import StoryGraphSpec
+from .knowledge_graph_template import StoryGraphTemplate
 from ...scope.action_scope import ActionScope
 from ..validate.validate_action import ValidateRulesAction
 logger = logging.getLogger(__name__)
 
-class BuildKnowledgeAction(Action):
+class BuildStoryGraphAction(Action):
     context_class: Type[ActionContext] = ScopeActionContext
 
     def __init__(self, behavior=None, action_config=None):
@@ -23,7 +23,7 @@ class BuildKnowledgeAction(Action):
 
     @action_name.setter
     def action_name(self, value: str):
-        raise AttributeError('action_name is read-only for BuildKnowledgeAction')
+        raise AttributeError('action_name is read-only for BuildStoryGraphAction')
 
     @property
     def knowledge(self) -> Optional[Knowledge]:
@@ -59,8 +59,8 @@ class BuildKnowledgeAction(Action):
             if self.story_graph_template.template_path:
                 template_path_value = str(self.story_graph_template.template_path.resolve())
             elif self.story_graph_spec.template_filename:
-                # Fallback: construct absolute path from bot_directory/behaviors/{behavior}/content/knowledge_graph/{template}
-                kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'knowledge_graph'
+                # Fallback: construct absolute path from bot_directory/behaviors/{behavior}/content/story_graph/{template}
+                kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'story_graph'
                 template_path_value = str((kg_dir / self.story_graph_spec.template_filename).resolve())
             else:
                 template_path_value = None
@@ -130,7 +130,7 @@ class BuildKnowledgeAction(Action):
         if template and template.exists:
             template_path = template.template_path
             if template_path:
-                # Create relative path reference: bot_name/behaviors/behavior_name/content/knowledge_graph/template_filename
+                # Create relative path reference: bot_name/behaviors/behavior_name/content/story_graph/template_filename
                 bot_dir = self.behavior.bot_paths.bot_directory
                 try:
                     if template_path.is_absolute():
@@ -140,16 +140,16 @@ class BuildKnowledgeAction(Action):
                             template_reference = f"{self.behavior.bot_name}/{str(rel_path).replace('\\', '/')}"
                         except ValueError:
                             # If can't make relative, construct the expected path
-                            template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/knowledge_graph/{template_path.name}"
+                            template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/story_graph/{template_path.name}"
                     else:
                         # Already relative, prepend bot_name
                         template_reference = f"{self.behavior.bot_name}/{str(template_path).replace('\\', '/')}"
                 except Exception:
                     # Fallback to constructing the expected path
-                    template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/knowledge_graph/{template_path.name if template_path else 'template.json'}"
+                    template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/story_graph/{template_path.name if template_path else 'template.json'}"
             else:
                 # No template path available
-                template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/knowledge_graph/template.json"
+                template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/story_graph/template.json"
             
             # Extract schema explanation from template's _explanation field
             template_content = template.template_content
