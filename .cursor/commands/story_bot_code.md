@@ -1,10 +1,10 @@
 # story_bot_code - Navigate to Code Behavior
 
 ## Navigate to Behavior
-$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\story_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'code' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\story_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'code' | python agile_bot/src/cli/cli_main.py
 
 ## Navigate to Specific Action
-$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\story_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'code.${1|rules|build|validate|}' | python agile_bot/bots/base_bot/src/repl_cli/repl_main.py
+$env:BOT_DIRECTORY = 'C:\dev\augmented-teams\agile_bot\bots\story_bot'; $env:PYTHONPATH = 'C:\dev\augmented-teams'; echo 'code.${1|rules|build|validate|}' | python agile_bot/src/cli/cli_main.py
 
 ## Available Actions:
 
