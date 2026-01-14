@@ -23,20 +23,21 @@ class BotViewTestHelper {
     
     /**
      * Create BotView instance with real CLI
-     * @param {Object} [botJSON] - Optional initial bot JSON (default: empty object)
      * @param {Object} [webview] - Optional webview override
      * @param {Object} [extensionUri] - Optional extensionUri override
      * @returns {BotView} - BotView instance
      */
-    createBotView(botJSON = {}, webview = null, extensionUri = null) {
+    createBotView(webview = null, extensionUri = null) {
         const BotView = require('../../../src/bot/bot_view');
-        // BotView constructor: (botJSON, cli, workspaceDirectory, botDirectory, panelVersion, webview, extensionUri)
+        const PanelView = require('../../../src/panel/panel_view');
+        
+        // Initialize shared CLI if not already initialized
+        if (!PanelView.getCLI()) {
+            PanelView.initializeCLI(this.workspaceDir, this.botDir);
+        }
+        
+        // BotView constructor: (webview, extensionUri)
         return new BotView(
-            botJSON,                     // botJSON
-            null,                        // cli (will be created by PanelView)
-            this.workspaceDir,           // workspaceDirectory
-            this.botDir,                 // botDirectory
-            '0.1.0',                     // panelVersion
             webview || this.webview,     // webview
             extensionUri || this.extensionUri  // extensionUri
         );

@@ -15,23 +15,10 @@ class PathsSection extends PanelView {
      * @param {Object} botJSON - Bot JSON from CLI (contains bot_paths or workspace_directory, bot_directory)
      * @param {Object} cli - CLI instance (can be null)
      * @param {string} workspaceDirectory - Workspace directory path
+     * @param {string} botDirectory - Bot directory path
      */
-    constructor(botJSON, cli, workspaceDirectory) {
-        super(cli, workspaceDirectory);
-        this.botData = botJSON;
-        this.workspaceDirectory = botJSON.workspace_directory || workspaceDirectory || '';
-        this.botDirectory = botJSON.bot_directory || '';
-    }
-    
-    /**
-     * Update paths data.
-     * 
-     * @param {Object} botJSON - Updated bot JSON
-     */
-    update(botJSON) {
-        this.botData = botJSON;
-        this.workspaceDirectory = botJSON.workspace_directory || this.workspaceDirectory || '';
-        this.botDirectory = botJSON.bot_directory || '';
+    constructor() {
+        super();
     }
     
     /**
@@ -76,10 +63,11 @@ class PathsSection extends PanelView {
      * 
      * @returns {string} HTML string
      */
-    render() {
+    async render() {
+        const botData = await this.execute('status');
         const maxPathLength = 80;
-        const safeWorkspaceDir = this.escapeHtml(this.workspaceDirectory);
-        const safeBotDir = this.escapeHtml(this.botDirectory);
+        const safeWorkspaceDir = this.escapeHtml(botData.workspace_directory || PanelView.getWorkspaceDir() || '');
+        const safeBotDir = this.escapeHtml(botData.bot_directory || PanelView.getBotDir() || '');
         const displayWorkspaceDir = this.truncatePath(safeWorkspaceDir, maxPathLength);
         const displayBotDir = this.truncatePath(safeBotDir, maxPathLength);
         

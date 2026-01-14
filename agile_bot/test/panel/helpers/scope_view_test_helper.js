@@ -18,12 +18,16 @@ class ScopeViewTestHelper {
     
     /**
      * Create ScopeView instance
-     * @param {Object} scopeData - Scope data from CLI
      * @returns {ScopeView} - ScopeView instance
      */
-    createScopeView(scopeData) {
+    createScopeView() {
         const ScopeView = require('../../../src/scope/scope_view');
-        return new ScopeView(scopeData, null, this.workspaceDir, null, null);
+        const path = require('path');
+        const PanelView = require('../../../src/panel/panel_view');
+        const botDir = path.join(this.workspaceDir, 'agile_bot', 'bots', 'story_bot');
+        // Initialize singleton CLI
+        PanelView.initializeCLI(this.workspaceDir, botDir);
+        return new ScopeView(null, null);
     }
     
     // ========================================================================
@@ -113,13 +117,12 @@ class ScopeViewTestHelper {
     // ========================================================================
     
     /**
-     * Render scope view to HTML
-     * @param {Object} scopeData - Scope data
-     * @returns {string} - Rendered HTML
+     * Render scope view to HTML - uses REAL CLI
+     * @returns {Promise<string>} - Rendered HTML
      */
-    render_html(scopeData) {
-        const view = this.createScopeView(scopeData);
-        return view.render();
+    async render_html() {
+        const view = this.createScopeView();
+        return await view.render();
     }
     
     // ========================================================================

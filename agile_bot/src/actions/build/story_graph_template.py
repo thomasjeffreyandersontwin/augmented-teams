@@ -4,8 +4,8 @@ from ...utils import read_json_file
 
 class StoryGraphTemplate:
 
-    def __init__(self, kg_dir: Path, template_filename: Optional[str]):
-        self._kg_dir = kg_dir
+    def __init__(self, sg_dir: Path, template_filename: Optional[str]):
+        self._sg_dir = sg_dir
         self._template_filename = template_filename
         self._template_content: Dict[str, Any] = {}
         self._template_path: Optional[Path] = None
@@ -14,7 +14,7 @@ class StoryGraphTemplate:
     def _load_template(self):
         if not self._template_filename:
             return
-        template_path = self._kg_dir / self._template_filename
+        template_path = self._sg_dir / self._template_filename
         if not template_path.exists():
             return
         self._template_content = read_json_file(template_path)

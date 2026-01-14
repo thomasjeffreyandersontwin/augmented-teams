@@ -10,29 +10,24 @@ const PanelView = require('../panel/panel_view');
 
 class BehaviorsView extends PanelView {
     /**
-     * Behaviors view.
+     * Behaviors view - gets data from singleton CLI.
      * 
-     * @param {Array} behaviorsJSON - Behaviors array from bot JSON
-     * @param {Object} cli - CLI instance (can be null)
-     * @param {string} workspaceDirectory - Workspace directory path
      * @param {Object} webview - VS Code webview instance (optional)
      * @param {Object} extensionUri - Extension URI (optional)
      */
-    constructor(behaviorsJSON, cli, workspaceDirectory, webview, extensionUri) {
-        super(cli, workspaceDirectory);
-        this.behaviorsData = behaviorsJSON || [];
+    constructor(webview, extensionUri) {
+        super();
         this.expansionState = {};
         this.webview = webview || null;
         this.extensionUri = extensionUri || null;
     }
     
     /**
-     * Update behaviors data.
-     * 
-     * @param {Array} behaviorsJSON - Updated behaviors array
+     * Get behaviors data from CLI
      */
-    update(behaviorsJSON) {
-        this.behaviorsData = behaviorsJSON || [];
+    async getBehaviors() {
+        const botData = await this.execute('status');
+        return botData.behaviors?.all_behaviors || [];
     }
     
     /**
@@ -81,11 +76,13 @@ class BehaviorsView extends PanelView {
     }
     
     /**
-     * Render behaviors hierarchy HTML.
+     * Render behaviors hierarchy HTML - gets own data from CLI.
      * 
-     * @returns {string} HTML string
+     * @returns {Promise<string>} HTML string
      */
-    render() {
+    async render() {
+        const botData = await this.execute('status');
+        const behaviorsData = botData.behaviors?.all_behaviors || [];
         const vscode = require('vscode');
         
         // Get the proper webview URIs for icons
@@ -131,11 +128,11 @@ class BehaviorsView extends PanelView {
             }
         }
         
-        if (!this.behaviorsData || this.behaviorsData.length === 0) {
+        if (!behaviorsData || behaviorsData.length === 0) {
             return this.renderEmpty(feedbackIconPath, gearIconPath, leftIconPath, pointerIconPath, rightIconPath);
         }
         
-        const behaviorsHtml = this.behaviorsData.map((behavior, bIdx) => {
+        const behaviorsHtml = behaviorsData.map((behavior, bIdx) => {
             return this.renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath);
         }).join('');
         
@@ -325,7 +322,7 @@ class BehaviorsView extends PanelView {
         const behaviorDisplay = behaviorExpanded ? 'block' : 'none';
         
         const behaviorActiveClass = isCurrent ? ' active' : '';
-        let html = `<div class="collapsible-header card-item${behaviorActiveClass}" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${behaviorIconSrc}" alt="${behaviorIconAlt}" style="width: 12px; height: 12px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${behaviorName}')">${behaviorMarker}${behaviorName}</span></div>`;
+        let html = `<div class="collapsible-header card-item${behaviorActiveClass}" data-behavior="${behaviorName}" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${behaviorIconSrc}" alt="${behaviorIconAlt}" style="width: 12px; height: 12px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${behaviorName}')">${behaviorMarker}${behaviorName}</span></div>`;
         
         // Always create collapsible content, even if empty
         const actionsArray = behavior.actions?.all_actions || behavior.actions || [];
@@ -363,7 +360,7 @@ class BehaviorsView extends PanelView {
         
         const actionTooltip = action.description ? this.escapeHtml(action.description) : '';
         const actionId = `action-${bIdx}-${aIdx}`;
-        const actionName = this.escapeHtml(action.name || '');
+        const actionName = this.escapeHtml(action.action_name || action.name || '');
         
         // Expansion logic:
         // 1. If we have saved state for this item, use it (user's explicit choice)

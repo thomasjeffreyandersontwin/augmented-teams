@@ -12,26 +12,13 @@ class ScopeSection extends PanelView {
     /**
      * Scope section view.
      * 
-     * @param {Object} scopeJSON - Scope JSON from bot (contains type, filter, content, graphLinks)
-     * @param {Object} cli - CLI instance (can be null)
-     * @param {string} workspaceDirectory - Workspace directory path
      * @param {Object} webview - VS Code webview instance (optional)
      * @param {Object} extensionUri - Extension URI (optional)
      */
-    constructor(scopeJSON, cli, workspaceDirectory, webview, extensionUri) {
-        super(cli, workspaceDirectory);
-        this.scopeData = scopeJSON || { type: 'all', filter: '', content: null, graphLinks: [] };
+    constructor(webview, extensionUri) {
+        super();
         this.webview = webview || null;
         this.extensionUri = extensionUri || null;
-    }
-    
-    /**
-     * Update scope data.
-     * 
-     * @param {Object} scopeJSON - Updated scope JSON
-     */
-    update(scopeJSON) {
-        this.scopeData = scopeJSON || { type: 'all', filter: '', content: null, graphLinks: [] };
     }
     
     /**
@@ -72,7 +59,9 @@ class ScopeSection extends PanelView {
      * 
      * @returns {string} HTML string
      */
-    render() {
+    async render() {
+        const botData = await this.execute('status');
+        const scopeData = botData.scope || { type: 'all', filter: '', content: null, graphLinks: [] };
         const vscode = require('vscode');
         
         // Get the proper webview URIs for icons
@@ -114,26 +103,26 @@ class ScopeSection extends PanelView {
             }
         }
         
-        const linksHtml = this.scopeData.graphLinks && this.scopeData.graphLinks.length > 0
-            ? this.scopeData.graphLinks.map(link => 
+        const linksHtml = scopeData.graphLinks && scopeData.graphLinks.length > 0
+            ? scopeData.graphLinks.map(link => 
                 `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(link.url)}')" style="color: var(--vscode-foreground); text-decoration: none; margin-left: 6px; font-size: 12px;">${this.escapeHtml(link.text).toLowerCase()}</a>`
             ).join('')
             : '';
         
         let contentHtml = '';
         let contentSummary = '';
-        if ((this.scopeData.type === 'story' || this.scopeData.type === 'showAll') && this.scopeData.content) {
-            contentHtml = this.renderStoryTree(this.scopeData.content, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath);
-            contentSummary = `${this.scopeData.content.length} epic${this.scopeData.content.length !== 1 ? 's' : ''}`;
-        } else if (this.scopeData.type === 'files' && this.scopeData.content) {
-            contentHtml = this.renderFileList(this.scopeData.content);
-            contentSummary = `${this.scopeData.content.length} file${this.scopeData.content.length !== 1 ? 's' : ''}`;
+        if ((scopeData.type === 'story' || scopeData.type === 'showAll') && scopeData.content) {
+            contentHtml = this.renderStoryTree(scopeData.content, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath);
+            contentSummary = `${scopeData.content.length} epic${scopeData.content.length !== 1 ? 's' : ''}`;
+        } else if (scopeData.type === 'files' && scopeData.content) {
+            contentHtml = this.renderFileList(scopeData.content);
+            contentSummary = `${scopeData.content.length} file${scopeData.content.length !== 1 ? 's' : ''}`;
         } else {
             contentHtml = '<div class="empty-state">All files in workspace</div>';
             contentSummary = 'all files';
         }
         
-        const filterValue = this.escapeHtml(this.scopeData.filter || '');
+        const filterValue = this.escapeHtml(scopeData.filter || '');
         const hasFilter = filterValue.length > 0;
         
         return `

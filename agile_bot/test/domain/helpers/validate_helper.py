@@ -135,35 +135,35 @@ class ValidateTestHelper(BaseHelper):
     # ACTION HELPERS - Execute scanners (deterministic, no conditionals)
     # ========================================================================
     
-    def scan_with_rule(self, rule, knowledge_graph, files_dict=None):
+    def scan_with_rule(self, rule, story_graph, files_dict=None):
         """Scan using rule.scan() method.
         
         Args:
             rule: Rule object with scanner
-            knowledge_graph: KG dict
+            story_graph: KG dict
             files_dict: Optional files dict with 'test' and/or 'src' keys
             
         Returns:
             List of violations
         """
-        scanner_results = rule.scan(knowledge_graph, files=files_dict)
+        scanner_results = rule.scan(story_graph, files=files_dict)
         return self._extract_violations_from_results(scanner_results)
     
-    def scan_test_files(self, scanner, test_files, rule, knowledge_graph):
+    def scan_test_files(self, scanner, test_files, rule, story_graph):
         """Scan test files using scanner.scan_test_file().
         
         Args:
             scanner: Scanner instance
             test_files: List of Path objects
             rule: Rule object
-            knowledge_graph: KG dict
+            story_graph: KG dict
             
         Returns:
             List of violations
         """
         violations = []
         for test_file_path in test_files:
-            file_violations = scanner.scan_test_file(test_file_path, rule, knowledge_graph)
+            file_violations = scanner.scan_test_file(test_file_path, rule, story_graph)
             violations.extend(file_violations)
         return violations
     

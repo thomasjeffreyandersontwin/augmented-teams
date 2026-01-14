@@ -3,9 +3,9 @@ from typing import Dict, Any, Optional, Type
 import logging
 from ..action import Action
 from ..action_context import ActionContext, ScopeActionContext
-from .knowledge import Knowledge
-from .knowledge_graph_spec import StoryGraphSpec
-from .knowledge_graph_template import StoryGraphTemplate
+from .story_graph_data import StoryGraphData
+from .story_graph_spec import StoryGraphSpec
+from .story_graph_template import StoryGraphTemplate
 from ...scope.action_scope import ActionScope
 from ..validate.validate_action import ValidateRulesAction
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class BuildStoryGraphAction(Action):
 
     def __init__(self, behavior=None, action_config=None):
         super().__init__(behavior=behavior, action_config=action_config)
-        self._knowledge = Knowledge(self.behavior)
+        self._story_graph_data = StoryGraphData(self.behavior)
 
     @property
     def action_name(self) -> str:
@@ -26,17 +26,17 @@ class BuildStoryGraphAction(Action):
         raise AttributeError('action_name is read-only for BuildStoryGraphAction')
 
     @property
-    def knowledge(self) -> Optional[Knowledge]:
-        self._knowledge = Knowledge(self.behavior)
-        return self._knowledge
+    def story_graph_data(self) -> Optional[StoryGraphData]:
+        self._story_graph_data = StoryGraphData(self.behavior)
+        return self._story_graph_data
 
     @property
     def story_graph_spec(self) -> Optional[StoryGraphSpec]:
-        return self.knowledge.story_graph_spec
+        return self.story_graph_data.story_graph_spec
 
     @property
     def story_graph_template(self) -> Optional[StoryGraphTemplate]:
-        return self.knowledge.story_graph_template
+        return self.story_graph_data.story_graph_template
 
     @property
     def rules(self):
@@ -44,8 +44,8 @@ class BuildStoryGraphAction(Action):
 
     def _prepare_instructions(self, instructions, context: ScopeActionContext):
         """Prepare build instructions with story graph data, rules, and scope."""
-        # Add knowledge instructions
-        instructions.update(self.knowledge.instructions)
+        # Add story graph data instructions
+        instructions.update(self.story_graph_data.instructions)
         
         # Handle scope
         action_scope = ActionScope.from_context(context, self.behavior.bot_paths)

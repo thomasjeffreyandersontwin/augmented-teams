@@ -12,32 +12,15 @@ class BotHeaderView extends PanelView {
     /**
      * Bot header view.
      * 
-     * @param {Object} botJSON - Bot JSON from CLI
-     * @param {Object} cli - CLI instance (can be null)
-     * @param {string} workspaceDirectory - Workspace directory path
      * @param {string} panelVersion - Panel extension version (optional)
      * @param {Object} webview - VS Code webview instance (optional)
      * @param {Object} extensionUri - Extension URI (optional)
      */
-    constructor(botJSON, cli, workspaceDirectory, panelVersion, webview, extensionUri) {
-        super(cli, workspaceDirectory);
-        this.botData = botJSON;
-        this.availableBots = botJSON.available_bots || [];
-        this.currentBot = botJSON.name || botJSON.bot_name || 'story_bot';
+    constructor(panelVersion, webview, extensionUri) {
+        super();
         this.panelVersion = panelVersion || null;
         this.webview = webview || null;
         this.extensionUri = extensionUri || null;
-    }
-    
-    /**
-     * Update bot data.
-     * 
-     * @param {Object} botJSON - Updated bot JSON
-     */
-    update(botJSON) {
-        this.botData = botJSON;
-        this.availableBots = botJSON.available_bots || [];
-        this.currentBot = botJSON.name || botJSON.bot_name || 'story_bot';
     }
     
     /**
@@ -87,14 +70,17 @@ class BotHeaderView extends PanelView {
      * 
      * @returns {string} HTML string
      */
-    render() {
+    async render() {
+        const botData = await this.execute('status');
         const vscode = require('vscode');
         const maxPathLength = 80;
         
         // AC: Escape HTML entities for all paths
-        const safeBotName = this.escapeHtml(this.botData.name || this.currentBot);
-        const safeBotDir = this.escapeHtml(this.botData.botDirectory || this.botData.bot_directory || '');
-        const safeWorkspaceDir = this.escapeHtml(this.botData.workspaceDirectory || this.botData.workspace_directory || this.workspaceDirectory || '');
+        const currentBot = botData.name || botData.bot_name || 'story_bot';
+        const availableBots = botData.available_bots || [];
+        const safeBotName = this.escapeHtml(currentBot);
+        const safeBotDir = this.escapeHtml(botData.bot_directory || '');
+        const safeWorkspaceDir = this.escapeHtml(botData.workspace_directory || '');
         
         // AC: Truncate very long directory paths
         const displayBotDir = this.truncatePath(safeBotDir, maxPathLength);
@@ -102,9 +88,9 @@ class BotHeaderView extends PanelView {
         
         // Build bot selector links
         let botLinksHtml = '';
-        if (this.availableBots && this.availableBots.length > 0) {
-            botLinksHtml = this.availableBots.map(botName => {
-                const isActive = botName === this.currentBot;
+        if (availableBots && availableBots.length > 0) {
+            botLinksHtml = availableBots.map(botName => {
+                const isActive = botName === currentBot;
                 const activeClass = isActive ? ' active' : '';
                 return `<a href="javascript:void(0)" class="bot-link${activeClass}" onclick="switchBot('${this.escapeHtml(botName)}')">${this.escapeHtml(botName)}</a>`;
             }).join('\n                ');

@@ -1,17 +1,17 @@
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING
-from .knowledge_graph_spec import StoryGraphSpec
+from .story_graph_spec import StoryGraphSpec
 if TYPE_CHECKING:
     from ...bot_path import BotPath
     from ...bot.behavior import Behavior
 
-class Knowledge:
+class StoryGraphData:
 
     def __init__(self, behavior: 'Behavior'):
         self._behavior = behavior
-        kg_dir = behavior.folder / 'content' / 'knowledge_graph'
-        self._kg_dir = kg_dir
-        self.story_graph_spec = StoryGraphSpec(self._kg_dir, behavior.bot_paths)
+        sg_dir = behavior.folder / 'content' / 'story_graph'
+        self._sg_dir = sg_dir
+        self.story_graph_spec = StoryGraphSpec(self._sg_dir, behavior.bot_paths)
         self.story_graph_template = self.story_graph_spec.template
 
     @property

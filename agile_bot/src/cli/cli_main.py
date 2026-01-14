@@ -68,14 +68,18 @@ def main():
         print(f"ERROR: Failed to initialize bot: {e}", file=sys.stderr)
         sys.exit(1)
     
-    cli_session = CLISession(bot=bot, workspace_directory=workspace_directory)
+    # Check if we're in JSON mode (for Node.js panel integration)
+    json_mode = os.environ.get('CLI_MODE', '').lower() == 'json'
+    mode = 'json' if json_mode else None
+    
+    cli_session = CLISession(bot=bot, workspace_directory=workspace_directory, mode=mode)
     
     is_piped = not sys.stdin.isatty()
     
-    # In piped mode, check if command contains --format json
+    # In piped mode (but not JSON mode), check if command contains --format json
     # If so, skip header entirely (for pure JSON output)
-    suppress_header = False
-    if is_piped:
+    suppress_header = json_mode  # Always suppress header in JSON mode
+    if is_piped and not json_mode:
         try:
             # Read stdin to check for --format json
             import io
@@ -131,7 +135,19 @@ def main():
         print("```")
         print("")
     
-    if is_piped:
+    if json_mode:
+        # JSON mode: Stay running, read commands line-by-line, output JSON only
+        # This mode is used by the Node.js panel for continuous interaction
+        try:
+            for line in sys.stdin:
+                command = line.strip()
+                if command:
+                    response = cli_session.execute_command(command)
+                    print(response.output)
+                    sys.stdout.flush()
+        except (KeyboardInterrupt, EOFError):
+            pass
+    elif is_piped:
         try:
             command = sys.stdin.read().strip()
             if command:

@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 def read_json_file(file_path: Path) -> Dict[str, Any]:
     if not file_path.exists():
         raise FileNotFoundError(f'File not found: {file_path}')
-    return json.loads(file_path.read_text(encoding='utf-8'))
+    return json.loads(file_path.read_text(encoding='utf-8-sig'))
 
 class TerminalFormatter:
     RESET = '\x1b[0m'

@@ -1,4 +1,4 @@
-{
+﻿{
   "epics": [
     {
       "name": "Build Agile Bots",
@@ -3048,7 +3048,7 @@
                   ],
                   "story_type": "user",
                   "test_file": "test_decide_planning_criteria.py",
-                  "test_class": "TestProceedToBuildKnowledge",
+                  "test_class": "TestProceedToBuildStoryGraph",
                   "acceptance_criteria": [
                     "WHEN PlanningAction completes execution",
                     "WHEN Human says action is done",
@@ -3114,15 +3114,15 @@
           "sequential_order": 3.0,
           "domain_concepts": [
             {
-              "name": "BuildKnowledgeAction",
+              "name": "BuildStoryGraphAction",
               "responsibilities": [
                 {
-                  "name": "Inject knowledge graph template",
+                  "name": "Inject story graph template",
                   "collaborators": [
                     "Behavior",
                     "Content",
-                    "Knowledge Graph Spec",
-                    "Knowledge Graph"
+                    "story graph Spec",
+                    "story graph"
                   ]
                 },
                 {
@@ -3134,11 +3134,11 @@
                   ]
                 },
                 {
-                  "name": "Save Knowledge graph",
+                  "name": "Save story graph",
                   "collaborators": [
                     "Behavior",
                     "Content",
-                    "Knowledge Graph"
+                    "story graph"
                   ]
                 }
               ]
@@ -3163,9 +3163,9 @@
                   ]
                 },
                 {
-                  "name": "Save knowledge graph",
+                  "name": "Save story graph",
                   "collaborators": [
-                    "Knowledge Graph"
+                    "story graph"
                   ]
                 },
                 {
@@ -3208,21 +3208,21 @@
                   ]
                 },
                 {
-                  "name": "Inject Knowledge Graph Template and Builder Instructions",
+                  "name": "Inject story graph Template and Builder Instructions",
                   "sequential_order": 2,
                   "connector": "opt",
                   "users": [
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestInjectKnowledgeGraphTemplateForBuildKnowledge",
+                  "test_class": "TestInjectStoryGraphTemplateForBuildStoryGraph",
                   "acceptance_criteria": [
                     "WHEN Build Knowledge Action executes",
-                    "THEN Action loads knowledge graph template from behavior/content/knowledge_graph/",
-                    "AND Action injects knowledge graph template path into instructions",
-                    "AND knowledge_graph_template field is present in instructions",
+                    "THEN Action loads story graph template from behavior/content/story_graph/",
+                    "AND Action injects story graph template path into instructions",
+                    "AND story_graph_template field is present in instructions",
                     "AND template file path exists and is accessible",
-                    "WHEN knowledge graph template does not exist",
+                    "WHEN story graph template does not exist",
                     "THEN Action raises FileNotFoundError with appropriate error message"
                   ]
                 },
@@ -3234,15 +3234,15 @@
                     "Bot Behavior"
                   ],
                   "story_type": "user",
-                  "test_class": "TestTrackActivityForBuildKnowledgeAction",
+                  "test_class": "TestTrackActivityForBuildStoryGraphAction",
                   "acceptance_criteria": [
-                    "WHEN BuildKnowledgeAction executes",
+                    "WHEN BuildStoryGraphAction executes",
                     "THEN Action creates activity entry with timestamp, action name, behavior name",
                     "AND Activity entry appended to {project_area}/activity_log.json"
                   ]
                 },
                 {
-                  "name": "Update Existing Knowledge Graph",
+                  "name": "Update Existing story graph",
                   "sequential_order": 4,
                   "connector": "opt",
                   "users": [
@@ -3250,7 +3250,7 @@
                   ],
                   "story_type": "user",
                   "test_file": "test_build_knowledge.py",
-                  "test_class": "TestUpdateExistingKnowledgeGraph",
+                  "test_class": "TestUpdateExistingStoryGraph",
                   "acceptance_criteria": [
                     "WHEN Build Knowledge Action updates existing story graph",
                     "THEN Action updates existing story-graph.json file",
@@ -3275,9 +3275,9 @@
                   "story_type": "user",
                   "test_class": "TestProceedToRenderOutput",
                   "acceptance_criteria": [
-                    "WHEN BuildKnowledgeAction completes execution",
-                    "THEN BuildKnowledgeAction saves Workflow State (per \"Saves Behavior State\" story)",
-                    "AND BuildKnowledgeAction submits content for saving",
+                    "WHEN BuildStoryGraphAction completes execution",
+                    "THEN BuildStoryGraphAction saves Workflow State (per \"Saves Behavior State\" story)",
+                    "AND BuildStoryGraphAction submits content for saving",
                     "AND Workflow automatically proceeds to render_output (auto_progress: true, no human confirmation needed)"
                   ]
                 },
@@ -3290,14 +3290,14 @@
                   ],
                   "story_type": "user",
                   "acceptance_criteria": [
-                    "WHEN BuildKnowledgeAction it's the initial pass of building the knowledge graphTHEN Build Knowledge Action invokes the Validate Rules action to understand if what is generated violates any rules\n(see Validate Knowledge & Content Against Rules)",
-                    "WHEN Validate Rules action is finsihed generateing the validation report THEN the BuildKnowledgeAction goes through all of the violations to determine if any corrective action needs to be taken AND the system updates the knowledge graph based on the recommendations.",
-                    "WHEN BuildKnowledgeAction Is finished making corrections.\nTHEN BuildKnowledgeAction tells AI to notify the user of what corrections it made as part of presenting the fact that it's done building knowledge."
+                    "WHEN BuildStoryGraphAction it's the initial pass of building the story graphTHEN Build Knowledge Action invokes the Validate Rules action to understand if what is generated violates any rules\n(see Validate Knowledge & Content Against Rules)",
+                    "WHEN Validate Rules action is finsihed generateing the validation report THEN the BuildStoryGraphAction goes through all of the violations to determine if any corrective action needs to be taken AND the system updates the story graph based on the recommendations.",
+                    "WHEN BuildStoryGraphAction Is finished making corrections.\nTHEN BuildStoryGraphAction tells AI to notify the user of what corrections it made as part of presenting the fact that it's done building knowledge."
                   ],
                   "scenarios": [
                     {
                       "name": "Build knowledge forwards to validate action bot and receives enhanced instructions",
-                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating knowledge graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Action is 'build_knowledge'\nAnd Knowledge graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd Behavior has validation rules '{validation_rules}'\nAnd Validation rules have code scanners '{code_scanners}'\nAnd Code scanners are stubbed to return '{code_scanner_output}'\nWhen Build knowledge action forwards to validate_action_bot with knowledge graph at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nThen Validate action bot runs stubbed code scanners '{code_scanners}' against knowledge graph\nAnd Stubbed scanners return '{code_scanner_output}'\nAnd Validation report is generated with '{code_scanner_output}'\nAnd Enhanced instructions are returned to build_knowledge action\nAnd Enhanced instructions contain '{enhanced_instructions}'",
+                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating story graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Action is 'build_knowledge'\nAnd story graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd Behavior has validation rules '{validation_rules}'\nAnd Validation rules have code scanners '{code_scanners}'\nAnd Code scanners are stubbed to return '{code_scanner_output}'\nWhen Build knowledge action forwards to validate_action_bot with story graph at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nThen Validate action bot runs stubbed code scanners '{code_scanners}' against story graph\nAnd Stubbed scanners return '{code_scanner_output}'\nAnd Validation report is generated with '{code_scanner_output}'\nAnd Enhanced instructions are returned to build_knowledge action\nAnd Enhanced instructions contain '{enhanced_instructions}'",
                       "test_method": "test_build_knowledge_forwards_to_validate_action_bot_and_receives_enhanced_instructions"
                     }
                   ]
@@ -3319,7 +3319,7 @@
                   ]
                 },
                 {
-                  "name": "Filter Knowledge Graph",
+                  "name": "Filter story graph",
                   "sequential_order": 8,
                   "connector": "or",
                   "users": [
@@ -3327,10 +3327,10 @@
                   ],
                   "story_type": "user",
                   "test_file": "test_build_knowledge.py",
-                  "test_class": "TestFilterKnowledgeGraph",
+                  "test_class": "TestFilterStoryGraph",
                   "acceptance_criteria": [
-                    "WHEN Knowledge graph needs filtering",
-                    "THEN Action filters knowledge graph by scope",
+                    "WHEN story graph needs filtering",
+                    "THEN Action filters story graph by scope",
                     "AND Filtered graph contains only relevant content"
                   ]
                 }
@@ -3376,7 +3376,7 @@
                   "collaborators": [
                     "Behavior",
                     "Content",
-                    "Knowledge Graph"
+                    "story graph"
                   ]
                 }
               ]
@@ -3388,7 +3388,7 @@
                   "name": "Render complex output",
                   "collaborators": [
                     "Template",
-                    "Knowledge Graph",
+                    "story graph",
                     "Transformer"
                   ]
                 },
@@ -3447,9 +3447,9 @@
                   ]
                 },
                 {
-                  "name": "Save knowledge graph",
+                  "name": "Save story graph",
                   "collaborators": [
-                    "Knowledge Graph"
+                    "story graph"
                   ]
                 },
                 {
@@ -3780,7 +3780,7 @@
                   "collaborators": [
                     "Behavior",
                     "Content",
-                    "Knowledge Graph",
+                    "story graph",
                     "Rendered Outputs"
                   ]
                 }
@@ -3792,7 +3792,7 @@
                 {
                   "name": "Validate content",
                   "collaborators": [
-                    "Knowledge Graph",
+                    "story graph",
                     "Violations"
                   ]
                 },
@@ -3975,13 +3975,13 @@
                   "scenarios": [
                     {
                       "name": "Scanner discovery extracts metadata and registers scanners",
-                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating knowledge graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nGiven Rule files exist at '{rule_file_paths}'\nAnd Rule files contain '{rule_file_content}'\nWhen Scanner discovery is executed for rule files at '{rule_file_paths}'\nThen Scanners are discovered: '{registered_scanners}'\nAnd Scanner class found status is '{scanner_class_found}'\nAnd Scanner metadata is extracted from rule file with content '{rule_file_content}'\nAnd Scanner metadata is '{scanner_metadata}'\nAnd Scanners '{registered_scanners}' are registered in catalog for behaviors '{behaviors}'\nAnd Catalog structure is '{catalog_structure}'\nAnd Catalog size is '{catalog_size}'",
+                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating story graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nGiven Rule files exist at '{rule_file_paths}'\nAnd Rule files contain '{rule_file_content}'\nWhen Scanner discovery is executed for rule files at '{rule_file_paths}'\nThen Scanners are discovered: '{registered_scanners}'\nAnd Scanner class found status is '{scanner_class_found}'\nAnd Scanner metadata is extracted from rule file with content '{rule_file_content}'\nAnd Scanner metadata is '{scanner_metadata}'\nAnd Scanners '{registered_scanners}' are registered in catalog for behaviors '{behaviors}'\nAnd Catalog structure is '{catalog_structure}'\nAnd Catalog size is '{catalog_size}'",
                       "test_method": "test_scanner_discovery_extracts_metadata_and_registers_scanners"
                     }
                   ]
                 },
                 {
-                  "name": "Run Scanners against Knowledge Graph",
+                  "name": "Run Scanners against story graph",
                   "sequential_order": 2,
                   "connector": "and",
                   "users": [
@@ -3989,37 +3989,37 @@
                   ],
                   "story_type": "user",
                   "test_file": "test_validate_knowledge_and_content_against_rules.py",
-                  "test_class": "TestRunScannersAgainstKnowledgeGraph",
+                  "test_class": "TestRunScannersAgainstStoryGraph",
                   "acceptance_criteria": [
-                    "WHEN scanners are executed against knowledge graph THEN violations are detected at exact line numbers",
+                    "WHEN scanners are executed against story graph THEN violations are detected at exact line numbers",
                     "WHEN violations are detected THEN violation details include rule_name, location, violation_message, and severity",
                     "WHEN multiple scanners execute THEN violations from all scanners are aggregated"
                   ],
                   "scenarios": [
                     {
-                      "name": "Scanners detect violations in knowledge graph",
-                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating knowledge graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Scanners are discovered and registered for {behavior} and {rule file}:\n  - Common rules: 'agile_bot/bots/test_story_bot/rules/'\n  - Behavior rules: 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Knowledge graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nGiven Knowledge graph contains '{knowledge_graph_problems}'\nAnd Rule file is '{rule_file}'\nWhen Scanners are executed against knowledge graph containing '{knowledge_graph_problems}'\nThen Violations are detected at '{expected_violation_line}'\nAnd Violation details are '{expected_violation_details}'\nAnd Report format is '{expected_report_format}'\nAnd Report structure is '{expected_report_structure}'",
-                      "test_method": "test_scanners_detect_violations_in_knowledge_graph"
+                      "name": "Scanners detect violations in story graph",
+                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating story graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Scanners are discovered and registered for {behavior} and {rule file}:\n  - Common rules: 'agile_bot/bots/test_story_bot/rules/'\n  - Behavior rules: 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd story graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nGiven story graph contains '{story_graph_problems}'\nAnd Rule file is '{rule_file}'\nWhen Scanners are executed against story graph containing '{story_graph_problems}'\nThen Violations are detected at '{expected_violation_line}'\nAnd Violation details are '{expected_violation_details}'\nAnd Report format is '{expected_report_format}'\nAnd Report structure is '{expected_report_structure}'",
+                      "test_method": "test_scanners_detect_violations_in_story_graph"
                     },
                     {
                       "name": "Single scanner execution detects violations",
-                      "steps": "Given Knowledge graph contains '{knowledge_graph_problems}'\nAnd Scanner '{scanner}' is selected for execution\nWhen Single scanner '{scanner}' is executed against knowledge graph containing '{knowledge_graph_problems}'\nThen Violation line is '{expected_violation_line}'\nAnd Violation details are '{expected_violation_details}'",
+                      "steps": "Given story graph contains '{story_graph_problems}'\nAnd Scanner '{scanner}' is selected for execution\nWhen Single scanner '{scanner}' is executed against story graph containing '{story_graph_problems}'\nThen Violation line is '{expected_violation_line}'\nAnd Violation details are '{expected_violation_details}'",
                       "test_method": "test_single_scanner_execution_detects_violations"
                     },
                     {
                       "name": "Multiple scanners execute and aggregate violations",
-                      "steps": "Given Scanners are discovered and registered\nAnd Knowledge graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd Knowledge graph contains '{knowledge_graph_problems}'\nAnd Multiple scanners '{scanners}' are selected for execution\nWhen Multiple scanners '{scanners}' are executed against knowledge graph containing '{knowledge_graph_problems}'\nThen Violations per scanner are '{expected_violations_per_scanner}'\nAnd Total violations are '{expected_total_violations}'",
+                      "steps": "Given Scanners are discovered and registered\nAnd story graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd story graph contains '{story_graph_problems}'\nAnd Multiple scanners '{scanners}' are selected for execution\nWhen Multiple scanners '{scanners}' are executed against story graph containing '{story_graph_problems}'\nThen Violations per scanner are '{expected_violations_per_scanner}'\nAnd Total violations are '{expected_total_violations}'",
                       "test_method": "test_multiple_scanners_execute_and_aggregate_violations"
                     },
                     {
                       "name": "Scanner execution order and isolation",
-                      "steps": "Given Scanners are discovered and registered\nAnd Knowledge graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd Knowledge graph contains '{knowledge_graph_problems}'\nAnd Scanner execution order is '{scanner_execution_order}'\nAnd Scanner failure behavior is '{scanner_failure_behavior}'\nWhen Scanners execute in '{scanner_execution_order}' order against knowledge graph containing '{knowledge_graph_problems}'\nThen Result is '{expected_result}'",
+                      "steps": "Given Scanners are discovered and registered\nAnd story graph exists at 'agile_bot/bots/test_story_bot/docs/stories/story-graph.json'\nAnd story graph contains '{story_graph_problems}'\nAnd Scanner execution order is '{scanner_execution_order}'\nAnd Scanner failure behavior is '{scanner_failure_behavior}'\nWhen Scanners execute in '{scanner_execution_order}' order against story graph containing '{story_graph_problems}'\nThen Result is '{expected_result}'",
                       "test_method": "test_scanner_execution_order_and_isolation"
                     }
                   ]
                 },
                 {
-                  "name": "Run AST Scanners against Knowledge Graph (OUT OF SCOPE)",
+                  "name": "Run AST Scanners against story graph (OUT OF SCOPE)",
                   "sequential_order": 3,
                   "connector": "or",
                   "users": [
@@ -4043,7 +4043,7 @@
                   "acceptance_criteria": [
                     "WHEN ValidateRulesAction receives scope parameter",
                     "THEN Action validates only files matching scope",
-                    "AND Action respects test_file, code_file, or knowledge_graph scope"
+                    "AND Action respects test_file, code_file, or story_graph scope"
                   ]
                 },
                 {
@@ -4064,7 +4064,7 @@
                   "scenarios": [
                     {
                       "name": "Violation report generation in different formats",
-                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating knowledge graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Scanners have executed against knowledge graph\nGiven Violations have been detected: '{violations_data}'\nAnd Report format is '{report_format}'\nWhen Violation report is generated with violations '{violations_data}' and format '{report_format}'\nThen Report structure is '{expected_report_structure}'",
+                      "steps": "Given Agent is initialized with agent_name='test_story_bot'\nAnd Project has finished generating story graph\nAnd Behavior is '{behavior_name}'\nAnd Common rules directory exists at 'agile_bot/bots/test_story_bot/rules/'\nAnd Behavior rules directory exists at 'agile_bot/bots/test_story_bot/behaviors/{behavior_number}_{behavior_name}/3_rules/'\nAnd Scanners have executed against story graph\nGiven Violations have been detected: '{violations_data}'\nAnd Report format is '{report_format}'\nWhen Violation report is generated with violations '{violations_data}' and format '{report_format}'\nThen Report structure is '{expected_report_structure}'",
                       "test_method": "test_violation_report_generation_in_different_formats"
                     },
                     {
@@ -4132,7 +4132,7 @@
       "stories": [
         "Generate Behavior Tools",
         "Generate MCP Bot Server",
-        "Inject Knowledge Graph Template and Builder Instructions",
+        "Inject story graph Template and Builder Instructions",
         "Track Activity for Build Knowledge Action",
         "Proceed To Render Output",
         "Track Activity for Gather Context Action",
@@ -4170,7 +4170,7 @@
       "priority": 6,
       "stories": [
         "Load Story Graph Into Memory",
-        "Update Existing Knowledge Graph",
+        "Update Existing story graph",
         "Save Final Assumptions and Decisions",
         "Store Clarification Data",
         "Inject Guardrails As Part Of Clarify Requirements",
@@ -4189,7 +4189,7 @@
       "stories": [
         "Inject Validation Rules for Validate Rules Action",
         "Discovers Scanners",
-        "Run Scanners against Knowledge Graph",
+        "Run Scanners against story graph",
         "Track Activity for Validate Rules Action",
         "Handle Validate Rules Exceptions",
         "Run All Scanners",
@@ -4217,7 +4217,7 @@
       "priority": 8,
       "stories": [
         "Create Build Scope",
-        "Filter Knowledge Graph",
+        "Filter story graph",
         "Inject Render Instructions And Configs",
         "Get Render Instructions",
         "Merge Base And Render Instructions",

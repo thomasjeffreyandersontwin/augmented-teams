@@ -17,21 +17,17 @@ const { test, after } = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
 const { BotViewTestHelper, BehaviorsViewTestHelper } = require('./helpers');
-
-// Track bot views for cleanup
-const activeBotViews = [];
+const PanelView = require('../../src/panel/panel_view');
 
 after(() => {
-    for (const botView of activeBotViews) {
+    PanelView.cleanupSharedCLI();
+    setTimeout(() => {
         try {
-            if (botView.cleanup) {
-                botView.cleanup();
-            }
+            process.exit(0);
         } catch (e) {
-            // Ignore cleanup errors
+            // Ignore
         }
-    }
-    setTimeout(() => process.exit(0), 100);
+    }, 100);
 });
 
 // Rule: use_class_based_organization
@@ -50,7 +46,6 @@ class TestNavigateBehaviorAction {
          * AND: Current behavior marker appears on shape
          */
         const botView = this.botHelper.createBotView();
-        activeBotViews.push(botView);
         
         // Wait for CLI initialization
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -99,7 +94,6 @@ class TestNavigateBehaviorAction {
          * AND: Current action marker appears on strategy
          */
         const botView = this.botHelper.createBotView();
-        activeBotViews.push(botView);
         
         await new Promise(resolve => setTimeout(resolve, 1500));
         
@@ -141,7 +135,6 @@ class TestNavigateBehaviorAction {
          * AND: Current marker moves to new position
          */
         const botView = this.botHelper.createBotView();
-        activeBotViews.push(botView);
         
         await new Promise(resolve => setTimeout(resolve, 1500));
         
@@ -196,7 +189,6 @@ class TestNavigateBehaviorAction {
          * AND: State persists across commands
          */
         const botView = this.botHelper.createBotView();
-        activeBotViews.push(botView);
         
         await new Promise(resolve => setTimeout(resolve, 1500));
         

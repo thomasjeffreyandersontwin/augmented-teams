@@ -1,6 +1,6 @@
-{
+﻿{
   "name": "render_output",
-  "description": "Render output documents and artifacts from knowledge graph using templates and synchronizers",
+  "description": "Render output documents and artifacts from story graph using templates and synchronizers",
   "workflow": true,
   "order": 6,
   "auto_confirm": true,

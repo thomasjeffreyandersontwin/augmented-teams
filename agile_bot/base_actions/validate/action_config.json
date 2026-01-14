@@ -1,6 +1,6 @@
-{
+﻿{
   "name": "validate_rules",
-  "description": "Validate knowledge graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
+  "description": "Validate story graph and/or artifacts against behavior-specific rules, checking for violations and compliance",
   "workflow": true,
   "order": 5,
   "auto_confirm": false,
@@ -11,7 +11,7 @@
     "{{scanner_output}}",
     "",
     "Carefully review all scanner-reported violations as follows:",
-    "1. For each violation message, locate the corresponding element in the knowledge graph.",
+    "1. For each violation message, locate the corresponding element in the story graph.",
     "2. Open the relevant rule file and read all DO and DON'T examples thoroughly.",
     "3. Decide if the violation is **Valid** (truly a rule breach per examples) or a **False Positive** (explain why if so).",
     "4. Determine the **Root Cause** (e.g., 'incorrect concept naming', 'missing actor', etc.).",
@@ -40,7 +40,7 @@
     "**Column Guide:**",
     "- **Theme**: Grouping category (e.g., 'naming violations', 'missing behavior', 'mechanism-oriented language')",
     "- **Rule**: Name of the rule being violated",
-    "- **Location**: Path in knowledge graph (e.g., `epics[1].sub_epics[0].name`) or file path",
+    "- **Location**: Path in story graph (e.g., `epics[1].sub_epics[0].name`) or file path",
     "- **Valid/FP**: Valid if rule breach, False Positive if incorrectly flagged (explain why)",
     "- **Source**: Scanner (detected by automated scanner), Manual (found during AI review), Both (flagged by scanner AND confirmed by manual review)",
     "- **Root Cause**: Underlying reason for the violation",

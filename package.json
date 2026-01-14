@@ -1,4 +1,12 @@
 {
+  "name": "augmented-teams",
+  "version": "1.0.0",
+  "description": "Augmented Teams - Agile Bot System",
+  "scripts": {
+    "test": "node --test agile_bot/test/panel/**/*.js",
+    "test:panel": "node --test agile_bot/test/panel/test_*.js",
+    "test:smoke": "node --test agile_bot/test/panel/test_smoke.js"
+  },
   "devDependencies": {
     "jsdom": "^27.4.0"
   }

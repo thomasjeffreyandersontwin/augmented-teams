@@ -17,66 +17,47 @@ class BotView extends PanelView {
     /**
      * Main panel orchestrator.
      * 
-     * @param {Object} botJSON - Bot JSON from CLI (status command returns Bot object)
-     * @param {Object} cli - CLI instance for subprocess communication (can be null)
-     * @param {string} workspaceDirectory - Workspace directory path
-     * @param {string} botDirectory - Bot directory path (optional)
+     * @param {string} panelVersion - Panel extension version (optional)
+     * @param {Object} webview - VS Code webview instance (optional)
+     * @param {Object} extensionUri - Extension URI (optional)
      */
-    constructor(botJSON, cli, workspaceDirectory, botDirectory, panelVersion, webview, extensionUri) {
-        super(cli, workspaceDirectory, botDirectory);
-        this.botData = botJSON;
+    constructor(panelVersion, webview, extensionUri) {
+        super();
         this.panelVersion = panelVersion || null;
         this.webview = webview || null;
         this.extensionUri = extensionUri || null;
         
-        // Initialize domain views
-        this.headerView = new BotHeaderView(botJSON, cli, workspaceDirectory, this.panelVersion, webview, extensionUri);
-        this.pathsSection = new PathsSection(botJSON, cli, workspaceDirectory);
-        // Behaviors JSON structure: { current: string, names: string[], all_behaviors: array }
-        const behaviorsData = botJSON.behaviors?.all_behaviors || [];
-        this.behaviorsView = new BehaviorsView(behaviorsData, cli, workspaceDirectory, webview, extensionUri);
-        this.scopeSection = new ScopeSection(botJSON.scope || {}, cli, workspaceDirectory, webview, extensionUri);
-        this.instructionsSection = new InstructionsSection(
-            botJSON.instructions || {}, 
-            botJSON.current_action || null,
-            cli, 
-            workspaceDirectory,
-            webview,
-            extensionUri
-        );
+        // Initialize domain views - they get data from singleton CLI
+        this.headerView = new BotHeaderView(this.panelVersion, webview, extensionUri);
+        this.pathsSection = new PathsSection();
+        this.behaviorsView = new BehaviorsView(webview, extensionUri);
+        this.scopeSection = new ScopeSection(webview, extensionUri);
+        this.instructionsSection = new InstructionsSection(webview, extensionUri);
     }
     
     /**
      * Render complete bot view HTML.
      * 
-     * @returns {string} Complete HTML string
+     * @returns {Promise<string>} Complete HTML string
      */
-    render() {
+    async render() {
+        const [header, paths, behaviors, scope, instructions] = await Promise.all([
+            this.headerView.render(),
+            this.pathsSection.render(),
+            this.behaviorsView.render(),
+            this.scopeSection.render(),
+            this.instructionsSection.render()
+        ]);
+        
         return `
             <div class="bot-view">
-                ${this.headerView.render()}
-                ${this.pathsSection.render()}
-                ${this.behaviorsView.render()}
-                ${this.scopeSection.render()}
-                ${this.instructionsSection.render()}
+                ${header}
+                ${paths}
+                ${behaviors}
+                ${scope}
+                ${instructions}
             </div>
         `;
-    }
-    
-    /**
-     * Update bot data and refresh all domain views.
-     * 
-     * @param {Object} botJSON - Updated bot JSON
-     */
-    update(botJSON) {
-        this.botData = botJSON;
-        this.headerView.update(botJSON);
-        this.pathsSection.update(botJSON);
-        // Behaviors JSON structure: { current: string, names: string[], all_behaviors: array }
-        const behaviorsData = botJSON.behaviors?.all_behaviors || [];
-        this.behaviorsView.update(behaviorsData);
-        this.scopeSection.update(botJSON.scope || {});
-        this.instructionsSection.update(botJSON.instructions || {}, botJSON.current_action || null);
     }
     
     /**

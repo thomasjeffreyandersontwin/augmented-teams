@@ -1,4 +1,4 @@
-Base Bot
+﻿Base Bot
     Executes Actions: Workflow,Behavior,Action
     Track activity: Behavior,Action
     Route to behaviors and actions: Router,Trigger Words
@@ -65,15 +65,15 @@ PlanningAction
     Inject planning instructions: Behavior,Guardrails,Planning
     Inject decision criteria and assumptions: Behavior,Guardrails,Decision Criteria,Assumptions,Recommended Human Activity
 
-BuildKnowledgeAction
-    Inject knowledge graph template: Behavior,Content,Knowledge Graph Spec,Knowledge Graph
+BuildStoryGraphAction
+    Inject story graph template: Behavior,Content,story graph Spec,story graph
     Inject builder instructions: Behavior,Content,Build Instructions
-    Save Knowledge graph: Behavior,Content,Knowledge Graph
+    Save story graph: Behavior,Content,story graph
 
 Content
     Render outputs: Template,Renderer,Render Spec
     Synchronize formats: Synchronizer,Extractor,Synchronizer Spec
-    Save knowledge graph: Knowledge Graph
+    Save story graph: story graph
     Load rendered content: na
     Present rendered content: na
 
@@ -81,10 +81,10 @@ RenderOutputAction
     Inject render output instructions: Behavior,Content,Render Spec,Renderer
     Inject templates: Behavior,Content,Render Spec,Template
     Inject transformers: Behavior,Content,Transformer
-    Load + inject structured content: Behavior,Content,Knowledge Graph
+    Load + inject structured content: Behavior,Content,story graph
 
 Renderer
-    Render complex output: Template,Knowledge Graph,Transformer
+    Render complex output: Template,story graph,Transformer
     Render outputs using components in context: AI Chat,Template,Content
 
 Template
@@ -95,10 +95,10 @@ Template
 ValidateRulesAction
     Inject common bot rules: Base Bot,Rules,Common Rules
     Inject behavior specific rules: Behavior,Rules,Behavior Rules
-    Load + inject content for validation: Behavior,Content,Knowledge Graph,Rendered Outputs
+    Load + inject content for validation: Behavior,Content,story graph,Rendered Outputs
 
 Rule
-    Validate content: Knowledge Graph,Violations
+    Validate content: story graph,Violations
     Find behavior specific rules from context: Behavior
     Find common bot rules from context: Base Bot
     Load + inject diagnostics results: AI Chat,Violations,Corrections

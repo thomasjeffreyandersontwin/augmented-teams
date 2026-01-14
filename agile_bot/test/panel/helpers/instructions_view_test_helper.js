@@ -23,16 +23,14 @@ class InstructionsViewTestHelper {
      * @param {Object} [extensionUri] - Optional extension URI
      * @returns {InstructionsView} - InstructionsView instance
      */
-    createInstructionsView(instructionsData, webview = null, extensionUri = null) {
+    createInstructionsView() {
         const InstructionsView = require('../../../src/instructions/instructions_view');
-        return new InstructionsView(
-            instructionsData,
-            null,  // currentAction
-            null,  // cli
-            this.workspaceDir,
-            webview,
-            extensionUri
-        );
+        const path = require('path');
+        const PanelView = require('../../../src/panel/panel_view');
+        const botDir = path.join(this.workspaceDir, 'agile_bot', 'bots', 'story_bot');
+        // Initialize singleton CLI
+        PanelView.initializeCLI(this.workspaceDir, botDir);
+        return new InstructionsView(null, null);
     }
     
     // ========================================================================
@@ -141,11 +139,16 @@ class InstructionsViewTestHelper {
     /**
      * Render instructions view to HTML
      * @param {Object} instructionsData - Instructions data
+     * @param {Array} [trackingArray] - Optional array to track views for cleanup
      * @returns {string} - Rendered HTML
      */
-    render_html(instructionsData) {
-        const view = this.createInstructionsView(instructionsData);
-        return view.render();
+    /**
+     * Render instructions view to HTML - uses REAL CLI
+     * @returns {Promise<string>} - Rendered HTML
+     */
+    async render_html() {
+        const view = this.createInstructionsView();
+        return await view.render();
     }
     
     // ========================================================================

@@ -19,23 +19,16 @@ class BehaviorsViewTestHelper {
     
     /**
      * Create BehaviorsView instance
-     * @param {Object} behaviorsData - Behaviors data from CLI
-     * @param {Object} [cli] - Optional CLI instance
      * @returns {BehaviorsView} - BehaviorsView instance
      */
-    createBehaviorsView(behaviorsData, cli = null) {
+    createBehaviorsView() {
         const path = require('path');
         const BehaviorsView = require('../../../src/behaviors/behaviors_view');
-        // BehaviorsView constructor: (behaviorsJSON, cli, workspaceDirectory, botDirectory, webview, extensionUri)
+        const PanelView = require('../../../src/panel/panel_view');
         const botDir = path.join(this.workspaceDir, 'agile_bot', 'bots', this.botName);
-        return new BehaviorsView(
-            behaviorsData,
-            cli,
-            this.workspaceDir,
-            botDir,
-            null,  // webview
-            null   // extensionUri
-        );
+        // Initialize singleton CLI
+        PanelView.initializeCLI(this.workspaceDir, botDir);
+        return new BehaviorsView(null, null);
     }
     
     // ========================================================================
@@ -90,13 +83,12 @@ class BehaviorsViewTestHelper {
     // ========================================================================
     
     /**
-     * Render behaviors view to HTML
-     * @param {Object} behaviorsData - Behaviors data
-     * @returns {string} - Rendered HTML
+     * Render behaviors view to HTML - uses REAL CLI
+     * @returns {Promise<string>} - Rendered HTML
      */
-    render_html(behaviorsData) {
-        const view = this.createBehaviorsView(behaviorsData);
-        return view.render();
+    async render_html() {
+        const view = this.createBehaviorsView();
+        return await view.render();
     }
     
     // ========================================================================
@@ -232,7 +224,7 @@ class BehaviorsViewTestHelper {
     assert_behaviors_in_order(html, behaviorNames) {
         let lastIndex = -1;
         for (const behaviorName of behaviorNames) {
-            const index = html.indexOf(behaviorName);
+            const index = html.indexOf(behaviorName, lastIndex + 1);
             assert.ok(index > lastIndex, 
                 `Behavior "${behaviorName}" should appear after previous behavior in hierarchy`);
             lastIndex = index;

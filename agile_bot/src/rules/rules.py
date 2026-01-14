@@ -8,7 +8,7 @@ from pathlib import Path
 from .rule import Rule
 from .rule_loader import RuleLoader
 from .rule_filter import RuleFilter
-from ..actions.build.knowledge import Knowledge
+from ..actions.build.story_graph_data import StoryGraphData
 from ..story_graph.story_graph import StoryGraph
 from ..actions.validate.validation_scope import ValidationScope
 if TYPE_CHECKING:
@@ -37,8 +37,8 @@ class ValidationContext:
 
     @classmethod
     def from_action_context(cls, behavior, context: 'ValidateActionContext', callbacks: Optional[ValidationCallbacks] = None) -> 'ValidationContext':
-        knowledge = Knowledge(behavior)
-        story_graph = StoryGraph(behavior.bot_paths, behavior.bot_paths.workspace_directory, story_graph_spec=knowledge.story_graph_spec)
+        story_graph_data = StoryGraphData(behavior)
+        story_graph = StoryGraph(behavior.bot_paths, behavior.bot_paths.workspace_directory, story_graph_spec=story_graph_data.story_graph_spec)
         validation_scope = ValidationScope.from_context(context, behavior.bot_paths, behavior_name=behavior.name)
         
         story_graph_content = story_graph.content

@@ -16,22 +16,17 @@ const { test, after } = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
 const { BotViewTestHelper, BehaviorsViewTestHelper } = require('./helpers');
+const PanelView = require('../../src/panel/panel_view');
 
-// Track bot views for cleanup
-const activeBotViews = [];
-
-// Cleanup after all tests
 after(() => {
-    for (const botView of activeBotViews) {
+    PanelView.cleanupSharedCLI();
+    setTimeout(() => {
         try {
-            if (botView.cleanup) {
-                botView.cleanup();
-            }
+            process.exit(0);
         } catch (e) {
-            // Ignore cleanup errors
+            // Ignore
         }
-    }
-    setTimeout(() => process.exit(0), 100);
+    }, 100);
 });
 
 class TestPanelSmokeTest {
@@ -47,7 +42,6 @@ class TestPanelSmokeTest {
          * THEN: CLI subprocess spawns successfully
          */
         const botView = this.botHelper.createBotView();
-        activeBotViews.push(botView);
         
         // Wait for CLI initialization
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -63,7 +57,6 @@ class TestPanelSmokeTest {
          * THEN: CLI returns bot state JSON
          */
         const botView = this.botHelper.createBotView();
-        activeBotViews.push(botView);
         
         // Wait for CLI initialization
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -87,20 +80,15 @@ class TestPanelSmokeTest {
          * WHEN: BehaviorsView renders
          * THEN: HTML is generated without errors
          */
-        const behaviorData = this.behaviorsHelper.create_behavior_with_actions(
-            'shape',
-            ['clarify', 'strategy', 'validate']
-        );
-        
-        const html = this.behaviorsHelper.render_html([behaviorData]);
+        const html = await this.behaviorsHelper.render_html();
         
         assert.ok(typeof html === 'string', 'Should return HTML string');
         assert.ok(html.length > 0, 'HTML should not be empty');
         
         this.behaviorsHelper.assert_behavior_with_actions(
             html,
-            'shape',
-            ['clarify', 'strategy', 'validate']
+            'prioritization',
+            ['clarify', 'strategy', 'validate', 'render']
         );
     }
 }

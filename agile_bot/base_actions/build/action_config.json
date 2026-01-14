@@ -1,6 +1,6 @@
-{
+﻿{
   "name": "build_knowledge",
-  "description": "Build knowledge graph from content area and render using knowledge graph renderer",
+  "description": "Build story graph from content area and render using story graph renderer",
   "workflow": true,
   "order": 4,
   "next_action": "validate_output",
@@ -19,7 +19,7 @@
     "- `template-file.json` - Output schema/structure",
     "",
     "**3. Execute Build**",
-    "1. Load config, instructions, and template (injected as 'knowledge_graph_template')",
+    "1. Load config, instructions, and template (injected as 'story_graph_template')",
     "2. Check if output file exists - read it FIRST",
     "3. Follow instructions.json - match template structure exactly (check '_explanation' section)",
     "4. Apply context from Step 1",

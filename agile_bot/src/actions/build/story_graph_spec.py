@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from .knowledge_graph_template import StoryGraphTemplate
+from .story_graph_template import StoryGraphTemplate
 from ...story_graph.story_graph import StoryGraph
 from ...utils import read_json_file
 if TYPE_CHECKING:
@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 class StoryGraphSpec:
 
-    def __init__(self, kg_dir: Path, bot_paths: 'BotPath'):
-        self._kg_dir = kg_dir
+    def __init__(self, sg_dir: Path, bot_paths: 'BotPath'):
+        self._sg_dir = sg_dir
         self._bot_paths = bot_paths
         self._config_data: Dict[str, Any] = {}
         self._config_path: Optional[Path] = None
@@ -21,11 +21,11 @@ class StoryGraphSpec:
         return {'path': 'docs/stories', 'output': 'story-graph.json', 'template': None}
 
     def _load_config(self):
-        if not self._kg_dir.exists():
+        if not self._sg_dir.exists():
             self._config_data = self._get_default_config()
             self._config_path = None
             return
-        config_files = list(self._kg_dir.glob('*.json'))
+        config_files = list(self._sg_dir.glob('*.json'))
         if not config_files:
             self._config_data = self._get_default_config()
             self._config_path = None
@@ -62,7 +62,7 @@ class StoryGraphSpec:
             template_filename = self.template_filename
             if not template_filename:
                 return None
-            self._template = StoryGraphTemplate(self._kg_dir, template_filename)
+            self._template = StoryGraphTemplate(self._sg_dir, template_filename)
         return self._template
 
     @property

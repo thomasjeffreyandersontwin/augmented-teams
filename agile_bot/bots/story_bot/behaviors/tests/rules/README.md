@@ -1,4 +1,4 @@
-# pytest Given When Then Orchestrator Pattern - Test Rules
+﻿# pytest Given When Then Orchestrator Pattern - Test Rules
 
 ## Overview
 
@@ -271,7 +271,7 @@ class Handler:  # Not in domain!
 
 # DON'T: Generic method names
 def execute_with_guardrails():  # Domain says 'inject_questions_and_evidence'!
-def execute_with_templates():  # Domain says 'inject_knowledge_graph_template'!
+def execute_with_templates():  # Domain says 'inject_story_graph_template'!
 def process():  # What does it process? Use domain verb!
 def handle_request():  # 'handle' not in domain!
 ```

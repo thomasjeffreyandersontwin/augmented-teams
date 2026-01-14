@@ -32,7 +32,7 @@
     "**COMMON ACTIONS (available in most behaviors):**",
     "- clarify: Gather context and clarify requirements (first action in workflow)",
     "- strategy: Determine planning approach and criteria",
-    "- build: Build knowledge graph and content",
+    "- build: Build story graph and content",
     "- render: Generate output documents",
     "- validate: Validate against behavior-specific rules",
     "",

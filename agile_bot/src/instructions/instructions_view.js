@@ -14,31 +14,14 @@ class InstructionsSection extends PanelView {
     /**
      * Instructions section view.
      * 
-     * @param {Object} instructionsJSON - Instructions JSON from bot
-     * @param {Object} currentAction - Current action object (optional)
-     * @param {Object} cli - CLI instance (can be null)
-     * @param {string} workspaceDirectory - Workspace directory path
      * @param {Object} webview - VS Code webview instance (optional)
      * @param {Object} extensionUri - Extension URI (optional)
      */
-    constructor(instructionsJSON, currentAction, cli, workspaceDirectory, webview, extensionUri) {
-        super(cli, workspaceDirectory);
-        this.instructionsData = instructionsJSON || {};
-        this.currentAction = currentAction || null;
+    constructor(webview, extensionUri) {
+        super();
         this.promptContent = '';
         this.webview = webview || null;
         this.extensionUri = extensionUri || null;
-    }
-    
-    /**
-     * Update instructions data.
-     * 
-     * @param {Object} instructionsJSON - Updated instructions JSON
-     * @param {Object} currentAction - Updated current action (optional)
-     */
-    update(instructionsJSON, currentAction) {
-        this.instructionsData = instructionsJSON || {};
-        this.currentAction = currentAction || null;
     }
     
     /**
@@ -73,13 +56,16 @@ class InstructionsSection extends PanelView {
      * 
      * @returns {string} HTML string
      */
-    render() {
-        if (!this.instructionsData || Object.keys(this.instructionsData).length === 0) {
+    async render() {
+        const botData = await this.execute('status');
+        const instructionsData = botData.instructions || {};
+        
+        if (!instructionsData || Object.keys(instructionsData).length === 0) {
             return '';
         }
-
+        
         // Merge behavior instructions into base_instructions at the top
-        let instructions = { ...this.instructionsData };
+        let instructions = { ...instructionsData };
         if (instructions.behavior && instructions.base_instructions) {
             // Combine behavior at the top of base_instructions
             if (Array.isArray(instructions.behavior) && Array.isArray(instructions.base_instructions)) {
