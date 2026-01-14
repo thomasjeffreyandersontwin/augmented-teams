@@ -6,7 +6,7 @@
  * Story: Change Workspace Path
  */
 
-const PanelView = require('../panel_view');
+const PanelView = require('./panel_view');
 
 class PathsSection extends PanelView {
     /**
@@ -15,25 +15,10 @@ class PathsSection extends PanelView {
      * @param {Object} botJSON - Bot JSON from CLI (contains bot_paths or workspace_directory, bot_directory)
      * @param {Object} cli - CLI instance (can be null)
      * @param {string} workspaceDirectory - Workspace directory path
+     * @param {string} botDirectory - Bot directory path
      */
-    constructor(botJSON, cli, workspaceDirectory, webview, extensionUri) {
-        super(cli, workspaceDirectory);
-        this.botData = botJSON;
-        this.workspaceDirectory = botJSON.workspace_directory || workspaceDirectory || '';
-        this.botDirectory = botJSON.bot_directory || '';
-        this.webview = webview;
-        this.extensionUri = extensionUri;
-    }
-    
-    /**
-     * Update paths data.
-     * 
-     * @param {Object} botJSON - Updated bot JSON
-     */
-    update(botJSON) {
-        this.botData = botJSON;
-        this.workspaceDirectory = botJSON.workspace_directory || this.workspaceDirectory || '';
-        this.botDirectory = botJSON.bot_directory || '';
+    constructor() {
+        super();
     }
     
     /**
@@ -78,10 +63,20 @@ class PathsSection extends PanelView {
      * 
      * @returns {string} HTML string
      */
-    render() {
+    async render() {
+        console.log('[PathsSection] Starting render');
+        console.log('[PathsSection] Executing status command...');
+        const botData = await this.execute('status');
+        console.log('[PathsSection] Status response:', JSON.stringify(botData).substring(0, 300));
+        
+        // NO FALLBACKS - let it fail if data is missing
+        if (!botData) throw new Error('[PathsSection] botData is null/undefined');
+        if (!botData.workspace_directory) throw new Error('[PathsSection] No workspace_directory in response');
+        if (!botData.bot_directory) throw new Error('[PathsSection] No bot_directory in response');
+        
         const maxPathLength = 80;
-        const safeWorkspaceDir = this.escapeHtml(this.workspaceDirectory);
-        const safeBotDir = this.escapeHtml(this.botDirectory);
+        const safeWorkspaceDir = this.escapeHtml(botData.workspace_directory);
+        const safeBotDir = this.escapeHtml(botData.bot_directory);
         const displayWorkspaceDir = this.truncatePath(safeWorkspaceDir, maxPathLength);
         const displayBotDir = this.truncatePath(safeBotDir, maxPathLength);
         

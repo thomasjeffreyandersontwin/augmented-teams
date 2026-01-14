@@ -77,11 +77,11 @@ while ($retryCount -lt $maxRetries -and -not $writeSuccess) {
 }
 Write-Host "      Done: package.json updated" -ForegroundColor Green
 
-Write-Host "[2/6] Cleaning up old VSIX files..." -ForegroundColor Cyan
+Write-Host "[2/4] Cleaning up old VSIX files..." -ForegroundColor Cyan
 Remove-Item *.vsix -ErrorAction SilentlyContinue
 Write-Host "      Done: Old VSIX files removed" -ForegroundColor Green
 
-Write-Host "[3/6] Packaging extension..." -ForegroundColor Cyan
+Write-Host "[3/4] Packaging extension..." -ForegroundColor Cyan
 npx @vscode/vsce package --allow-missing-repository --allow-star-activation | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Packaging failed!" -ForegroundColor Red
@@ -89,8 +89,9 @@ if ($LASTEXITCODE -ne 0) {
     }
 Write-Host "      Done: Extension packaged: bot-panel-$newVersion.vsix" -ForegroundColor Green
 
-Write-Host "[4/6] Uninstalling old extension..." -ForegroundColor Cyan
-cursor --uninstall-extension agilebot.bot-panel | Out-Null
+Write-Host "[4/4] Uninstalling old extension..." -ForegroundColor Cyan
+$cursorCli = "C:\Users\thoma\AppData\Local\Programs\cursor\resources\app\bin\cursor.cmd"
+& $cursorCli --uninstall-extension agilebot.bot-panel | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      Warning: Uninstall warning (may not be installed)" -ForegroundColor Yellow
 } else {
@@ -98,11 +99,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Also uninstall the old repl-status-panel if it exists
-cursor --uninstall-extension agilebot.repl-status-panel | Out-Null
+& $cursorCli --uninstall-extension agilebot.repl-status-panel | Out-Null
 
-Write-Host "[5/6] Installing new extension..." -ForegroundColor Cyan
+Write-Host "Installing new extension..." -ForegroundColor Cyan
 $vsixPath = Join-Path $panelDir "bot-panel-$newVersion.vsix"
-cursor --install-extension "$vsixPath" | Out-Null
+& $cursorCli --install-extension "$vsixPath" | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Installation failed!" -ForegroundColor Red
     exit 1
@@ -116,7 +117,7 @@ Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Extension upgraded: $currentVersion -> $newVersion" -ForegroundColor Green
 Write-Host ""
-Write-Host "[6/6] Reloading Cursor window..." -ForegroundColor Cyan
+Write-Host "Reloading Cursor window..." -ForegroundColor Cyan
 
 # Give extension time to register
 Start-Sleep -Seconds 1

@@ -6,12 +6,12 @@
  * Story: Open Panel, Display Session Status
  */
 
-const PanelView = require('../panel/panel_view');
+const PanelView = require('./panel_view');
 const BotHeaderView = require('./bot_header_view');
 const PathsSection = require('./paths_section');
-const BehaviorsView = require('../behaviors/behaviors_view');
-const ScopeSection = require('../scope/scope_view');
-const InstructionsSection = require('../instructions/instructions_view');
+const BehaviorsView = require('./behaviors_view');
+const ScopeSection = require('./scope_view');
+const InstructionsSection = require('./instructions_view');
 
 class BotView extends PanelView {
     /**

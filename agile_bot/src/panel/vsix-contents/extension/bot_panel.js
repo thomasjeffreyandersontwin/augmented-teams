@@ -9,7 +9,7 @@
 const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
-const BotView = require("./bot_view");
+const BotView = require("../bot/bot_view");
 const PanelView = require("./panel_view");
 
 class BotPanel {
@@ -341,7 +341,7 @@ class BotPanel {
         try {
           if (fs.existsSync(packageJsonPath)) {
             console.log(`[BotPanel] Found package.json at: ${packageJsonPath}`);
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
             if (packageJson.version) {
               console.log(`[BotPanel] Panel version: ${packageJson.version}`);
               return packageJson.version;
@@ -364,7 +364,7 @@ class BotPanel {
     BotPanel.currentPanel = undefined;
 
     // Clean up BotView
-      this._botView = null;
+    this._botView = null;
 
     // Clean up singleton CLI (safe since BotPanel is singleton)
     console.log("[BotPanel] Cleaning up singleton CLI");

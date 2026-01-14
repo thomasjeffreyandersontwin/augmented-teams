@@ -6,7 +6,7 @@
  * Story: Display Story Scope Hierarchy, Filter Story Scope
  */
 
-const PanelView = require('./panel_view');
+const PanelView = require('../panel/panel_view');
 
 class ScopeSection extends PanelView {
     /**

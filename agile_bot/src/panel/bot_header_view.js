@@ -6,7 +6,7 @@
  * Story: Open Panel, Display Session Status, Switch Bot
  */
 
-const PanelView = require('../panel/panel_view');
+const PanelView = require('./panel_view');
 
 class BotHeaderView extends PanelView {
     /**
@@ -71,9 +71,6 @@ class BotHeaderView extends PanelView {
      * @returns {string} HTML string
      */
     async render() {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_header_view.js:73',message:'render() ENTRY',data:{panelVersion:this.panelVersion,hasWebview:!!this.webview,hasExtensionUri:!!this.extensionUri},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'VERSION'})}).catch(()=>{});
-        // #endregion
         console.log('[BotHeaderView] Starting render');
         console.log('[BotHeaderView] Panel version:', this.panelVersion);
         console.log('[BotHeaderView] Has webview:', !!this.webview);
@@ -146,15 +143,11 @@ class BotHeaderView extends PanelView {
             ? `<span style="font-size: 14px; opacity: 0.7; margin-left: 6px;">v${this.escapeHtml(this.panelVersion)}</span>`
             : '';
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_header_view.js:146',message:'Before return HTML',data:{panelVersion:this.panelVersion,versionHtml:versionHtml,versionHtmlLength:versionHtml.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'VERSION'})}).catch(()=>{});
-        // #endregion
-        
         return `
     <div class="section card-primary" style="border-top: none; padding-top: 0;">
         <div class="main-header">
             ${imagePath ? `<img src="${imagePath}" class="main-header-icon" alt="Company Icon" onerror="console.error('Failed to load icon:', this.src); this.style.border='1px solid red';" />` : ''}
-            <span class="main-header-title">Agile Bots <span style="color: red; font-weight: bold;">TEST-v0.1.49</span> ${versionHtml}</span>
+            <span class="main-header-title">Agile Bots ${versionHtml}</span>
             <button class="main-header-refresh" onclick="refreshStatus()" title="Refresh">
                 ${refreshIconPath ? `<img src="${refreshIconPath}" style="width: 36px; height: 36px; object-fit: contain; filter: saturate(1.3) brightness(0.95) hue-rotate(-5deg);" alt="Refresh" />` : ''}
             </button>

@@ -7,41 +7,31 @@
  */
 
 const PanelView = require('./panel_view');
-const vscode = require('vscode');
 
 class BehaviorsView extends PanelView {
     /**
-     * Behaviors view.
+     * Behaviors view - gets data from singleton CLI.
      * 
-     * @param {Array} behaviorsJSON - Behaviors array from bot JSON
-     * @param {Object} cli - CLI instance (can be null)
-     * @param {string} workspaceDirectory - Workspace directory path
-     * @param {Object} webview - VS Code webview instance (required for image URIs)
-     * @param {Object} extensionUri - VS Code extension URI (required for image URIs)
+     * @param {Object} webview - VS Code webview instance (optional)
+     * @param {Object} extensionUri - Extension URI (optional)
      */
-    constructor(behaviorsJSON, cli, workspaceDirectory, webview, extensionUri) {
-        try {
-            console.log(`[BehaviorsView] Constructor called - webview: ${!!webview}, extensionUri: ${!!extensionUri}`);
-            super(cli, workspaceDirectory);
-            this.behaviorsData = behaviorsJSON || [];
-            this.expansionState = {};
-            this.webview = webview;
-            this.extensionUri = extensionUri;
-            console.log("[BehaviorsView] Constructor completed successfully");
-        } catch (error) {
-            console.error(`[BehaviorsView] ERROR in constructor: ${error.message}`);
-            console.error(`[BehaviorsView] ERROR stack: ${error.stack}`);
-            throw error;
-        }
+    constructor(webview, extensionUri) {
+        super();
+        this.expansionState = {};
+        this.webview = webview || null;
+        this.extensionUri = extensionUri || null;
     }
     
     /**
-     * Update behaviors data.
-     * 
-     * @param {Array} behaviorsJSON - Updated behaviors array
+     * Get behaviors data from CLI
      */
-    update(behaviorsJSON) {
-        this.behaviorsData = behaviorsJSON || [];
+    async getBehaviors() {
+        const botData = await this.execute('status');
+        // NO FALLBACKS - let it fail if data is missing
+        if (!botData) throw new Error('[BehaviorsView] botData is null/undefined');
+        if (!botData.behaviors) throw new Error('[BehaviorsView] No behaviors in response');
+        if (!botData.behaviors.all_behaviors) throw new Error('[BehaviorsView] No all_behaviors in response');
+        return botData.behaviors.all_behaviors;
     }
     
     /**
@@ -65,69 +55,94 @@ class BehaviorsView extends PanelView {
     }
     
     /**
-     * Get image URI for a given image filename.
-     * 
-     * @param {string} filename - Image filename (e.g., 'gear.png')
-     * @returns {string} Image URI string or empty string if webview/extensionUri not available
-     */
-    getImageUri(filename) {
-        try {
-            if (!this.webview || !this.extensionUri) {
-                console.warn(`[BehaviorsView] getImageUri(${filename}) - webview or extensionUri not available`);
-                return '';
-            }
-            const uri = this.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'img', filename));
-            const uriString = uri.toString();
-            console.log(`[BehaviorsView] getImageUri(${filename}) - returning URI string: ${uriString}`);
-            return uriString;
-        } catch (error) {
-            console.error(`[BehaviorsView] ERROR in getImageUri(${filename}): ${error.message}`);
-            console.error(`[BehaviorsView] ERROR stack: ${error.stack}`);
-            return '';
-        }
-    }
-    
-    /**
      * Get status marker for behavior/action/operation.
      * 
      * @param {boolean} isCurrent - Is current item
      * @param {boolean} isCompleted - Is completed item
+     * @param {string} tickIconPath - Tick icon path (optional)
+     * @param {string} notTickedIconPath - Not ticked icon path (optional)
      * @returns {string} Marker HTML
      */
-    getStatusMarker(isCurrent, isCompleted) {
-        if (!this.webview || !this.extensionUri) {
-            return '<span class="status-marker"></span>';
-        }
+    getStatusMarker(isCurrent, isCompleted, tickIconPath, notTickedIconPath) {
         if (isCurrent) {
-            const arrowUri = this.getImageUri('right.png');
-            return `<img src="${arrowUri}" class="status-marker marker-current" style="width: 16px; height: 16px;" />`;
+            return tickIconPath 
+                ? `<img src="${tickIconPath}" alt="Current" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />`
+                : '';
         } else if (isCompleted) {
-            const tickUri = this.getImageUri('tick.png');
-            return `<img src="${tickUri}" class="status-marker marker-completed" style="width: 16px; height: 16px;" />`;
+            return tickIconPath 
+                ? `<img src="${tickIconPath}" alt="Completed" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />`
+                : '';
         } else {
-            const notTickedUri = this.getImageUri('not_ticked.png');
-            return `<img src="${notTickedUri}" class="status-marker marker-pending" style="width: 16px; height: 16px;" />`;
+            return notTickedIconPath 
+                ? `<img src="${notTickedIconPath}" alt="Pending" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />`
+                : '';
         }
     }
     
     /**
-     * Render behaviors hierarchy HTML.
+     * Render behaviors hierarchy HTML - gets own data from CLI.
      * 
-     * @returns {string} HTML string
+     * @returns {Promise<string>} HTML string
      */
-    render() {
-        if (!this.behaviorsData || this.behaviorsData.length === 0) {
-            return this.renderEmpty();
+    async render() {
+        const botData = await this.execute('status');
+        // NO FALLBACKS - let it fail if data is missing
+        if (!botData) throw new Error('[BehaviorsView] botData is null/undefined');
+        if (!botData.behaviors) throw new Error('[BehaviorsView] No behaviors in response');
+        if (!botData.behaviors.all_behaviors) throw new Error('[BehaviorsView] No all_behaviors in response');
+        const behaviorsData = botData.behaviors.all_behaviors;
+        const vscode = require('vscode');
+        
+        // Get the proper webview URIs for icons
+        let feedbackIconPath = '';
+        let gearIconPath = '';
+        let plusIconPath = '';
+        let subtractIconPath = '';
+        let tickIconPath = '';
+        let notTickedIconPath = '';
+        let leftIconPath = '';
+        let pointerIconPath = '';
+        let rightIconPath = '';
+        if (this.webview && this.extensionUri) {
+            try {
+                const feedbackUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'feedback.png');
+                feedbackIconPath = this.webview.asWebviewUri(feedbackUri).toString();
+                
+                const gearUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'gear.png');
+                gearIconPath = this.webview.asWebviewUri(gearUri).toString();
+                
+                const plusUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'plus.png');
+                plusIconPath = this.webview.asWebviewUri(plusUri).toString();
+                
+                const subtractUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'subtract.png');
+                subtractIconPath = this.webview.asWebviewUri(subtractUri).toString();
+                
+                const tickUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'tick.png');
+                tickIconPath = this.webview.asWebviewUri(tickUri).toString();
+                
+                const notTickedUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'not_ticked.png');
+                notTickedIconPath = this.webview.asWebviewUri(notTickedUri).toString();
+                
+                const leftUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'left.png');
+                leftIconPath = this.webview.asWebviewUri(leftUri).toString();
+                
+                const pointerUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'pointer.png');
+                pointerIconPath = this.webview.asWebviewUri(pointerUri).toString();
+                
+                const rightUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'right.png');
+                rightIconPath = this.webview.asWebviewUri(rightUri).toString();
+            } catch (err) {
+                console.error('Failed to create icon URIs:', err);
+            }
         }
         
-        const behaviorsHtml = this.behaviorsData.map((behavior, bIdx) => {
-            return this.renderBehavior(behavior, bIdx);
-        }).join('');
+        if (!behaviorsData || behaviorsData.length === 0) {
+            return this.renderEmpty(feedbackIconPath, gearIconPath, leftIconPath, pointerIconPath, rightIconPath);
+        }
         
-        const gearUri = this.getImageUri('gear.png');
-        const leftUri = this.getImageUri('left.png');
-        const rightUri = this.getImageUri('right.png');
-        const bullseyeUri = this.getImageUri('bullseye.png');
+        const behaviorsHtml = behaviorsData.map((behavior, bIdx) => {
+            return this.renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath);
+        }).join('');
         
         return `
     <div class="section card-primary">
@@ -143,7 +158,7 @@ class BehaviorsView extends PanelView {
                 user-select: none;
             ">
                 <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
-                ${gearUri ? `<img src="${gearUri}" style="margin-right: 8px; width: 20px; height: 20px;" />` : ''}
+                ${feedbackIconPath ? `<img src="${feedbackIconPath}" style="margin-right: 8px; width: 36px; height: 36px; object-fit: contain;" alt="Behavior Icon" />` : (gearIconPath ? `<img src="${gearIconPath}" style="margin-right: 8px; width: 36px; height: 36px; object-fit: contain;" alt="Behavior Icon" />` : '')}
                 <span style="font-weight: 600; font-size: 20px;">Behavior Action Status</span>
             </div>
             <div id="behaviors-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
@@ -163,7 +178,7 @@ class BehaviorsView extends PanelView {
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                        ">${leftUri ? `<img src="${leftUri}" style="width: 16px; height: 16px;" />` : ''}</button>
+                        ">${leftIconPath ? `<img src="${leftIconPath}" style="width: 20px; height: 20px; object-fit: contain;" alt="Back" />` : ''}</button>
                         <button onclick="executeNavigationCommand('current')" title="Current - Show current action details" style="
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
@@ -177,7 +192,7 @@ class BehaviorsView extends PanelView {
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                        ">${bullseyeUri ? `<img src="${bullseyeUri}" style="width: 16px; height: 16px;" />` : ''}</button>
+                        ">${pointerIconPath ? `<img src="${pointerIconPath}" style="width: 20px; height: 20px; object-fit: contain;" alt="Current" />` : ''}</button>
                         <button onclick="executeNavigationCommand('next')" title="Next - Advance to next action" style="
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
@@ -191,7 +206,7 @@ class BehaviorsView extends PanelView {
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                        ">${rightUri ? `<img src="${rightUri}" style="width: 16px; height: 16px;" />` : ''}</button>
+                        ">${rightIconPath ? `<img src="${rightIconPath}" style="width: 20px; height: 20px; object-fit: contain;" alt="Next" />` : ''}</button>
                     </div>
                 </div>
             </div>
@@ -202,14 +217,14 @@ class BehaviorsView extends PanelView {
     /**
      * Render empty state.
      * 
+     * @param {string} feedbackIconPath - Feedback icon path
+     * @param {string} gearIconPath - Gear icon path
+     * @param {string} leftIconPath - Left icon path
+     * @param {string} pointerIconPath - Pointer icon path
+     * @param {string} rightIconPath - Right icon path
      * @returns {string} HTML string
      */
-    renderEmpty() {
-        const gearUri = this.getImageUri('gear.png');
-        const leftUri = this.getImageUri('left.png');
-        const rightUri = this.getImageUri('right.png');
-        const bullseyeUri = this.getImageUri('bullseye.png');
-        
+    renderEmpty(feedbackIconPath, gearIconPath, leftIconPath, pointerIconPath, rightIconPath) {
         return `
     <div class="section card-primary">
         <div class="collapsible-section expanded">
@@ -224,7 +239,7 @@ class BehaviorsView extends PanelView {
                 user-select: none;
             ">
                 <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
-                ${gearUri ? `<img src="${gearUri}" style="margin-right: 8px; width: 20px; height: 20px;" />` : ''}
+                ${feedbackIconPath ? `<img src="${feedbackIconPath}" style="margin-right: 8px; width: 36px; height: 36px; object-fit: contain;" alt="Behavior Icon" />` : (gearIconPath ? `<img src="${gearIconPath}" style="margin-right: 8px; width: 36px; height: 36px; object-fit: contain;" alt="Behavior Icon" />` : '')}
                 <span style="font-weight: 600; font-size: 20px;">Behavior Action Status</span>
             </div>
             <div id="behaviors-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
@@ -244,7 +259,7 @@ class BehaviorsView extends PanelView {
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                        ">${leftUri ? `<img src="${leftUri}" style="width: 16px; height: 16px;" />` : ''}</button>
+                        ">${leftIconPath ? `<img src="${leftIconPath}" style="width: 20px; height: 20px; object-fit: contain;" alt="Back" />` : ''}</button>
                         <button onclick="executeNavigationCommand('current')" title="Current - Show current action details" style="
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
@@ -258,7 +273,7 @@ class BehaviorsView extends PanelView {
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                        ">${bullseyeUri ? `<img src="${bullseyeUri}" style="width: 16px; height: 16px;" />` : ''}</button>
+                        ">${pointerIconPath ? `<img src="${pointerIconPath}" style="width: 20px; height: 20px; object-fit: contain;" alt="Current" />` : ''}</button>
                         <button onclick="executeNavigationCommand('next')" title="Next - Advance to next action" style="
                             background-color: var(--vscode-button-secondaryBackground);
                             color: var(--vscode-button-secondaryForeground);
@@ -272,7 +287,7 @@ class BehaviorsView extends PanelView {
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                        ">${rightUri ? `<img src="${rightUri}" style="width: 16px; height: 16px;" />` : ''}</button>
+                        ">${rightIconPath ? `<img src="${rightIconPath}" style="width: 20px; height: 20px; object-fit: contain;" alt="Next" />` : ''}</button>
                     </div>
                 </div>
             </div>
@@ -285,44 +300,43 @@ class BehaviorsView extends PanelView {
      * 
      * @param {Object} behavior - Behavior object
      * @param {number} bIdx - Behavior index
+     * @param {string} plusIconPath - Plus icon path
+     * @param {string} subtractIconPath - Subtract icon path
+     * @param {string} tickIconPath - Tick icon path
+     * @param {string} notTickedIconPath - Not ticked icon path
      * @returns {string} HTML string
      */
-    renderBehavior(behavior, bIdx) {
-        const isCurrent = behavior.is_current || false;
-        const isCompleted = behavior.is_completed || false;
-        const behaviorMarker = this.getStatusMarker(isCurrent, isCompleted);
+    renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath) {
+        const isCurrent = behavior.isCurrent || behavior.is_current || false;
+        const isCompleted = behavior.isCompleted || behavior.is_completed || false;
+        const behaviorMarker = isCurrent 
+            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Current" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '')
+            : isCompleted
+            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Completed" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '')
+            : (notTickedIconPath ? `<img src="${notTickedIconPath}" alt="Pending" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '');
+        
         const behaviorTooltip = behavior.description ? this.escapeHtml(behavior.description) : '';
         const behaviorId = `behavior-${bIdx}`;
         const behaviorName = this.escapeHtml(behavior.name || '');
         
-        // Get plus/subtract icon paths
-        const plusIconPath = this.getImageUri('plus.png');
-        const subtractIconPath = this.getImageUri('subtract.png');
-        
-        // Expansion logic: expand if current or completed
+        // Expansion logic:
+        // 1. If we have saved state for this item, use it (user's explicit choice)
+        // 2. Otherwise, expand if current or completed (don't auto-collapse completed items)
         const hasExpansionState = this.expansionState && (behaviorId in this.expansionState);
         const behaviorExpanded = hasExpansionState ? this.expansionState[behaviorId] : (isCurrent || isCompleted);
-        const behaviorDisplay = behaviorExpanded ? 'block' : 'none';
         const behaviorIconSrc = behaviorExpanded ? subtractIconPath : plusIconPath;
         const behaviorIconAlt = behaviorExpanded ? 'Collapse' : 'Expand';
         const behaviorIconClass = behaviorExpanded ? 'expanded' : '';
+        const behaviorDisplay = behaviorExpanded ? 'block' : 'none';
         
         const behaviorActiveClass = isCurrent ? ' active' : '';
-        let html = `<div class="collapsible-header card-item${behaviorActiveClass}" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${behaviorIconSrc}" alt="${behaviorIconAlt}" style="width: 12px; height: 12px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${behaviorName}')">${behaviorMarker}${behaviorName}</span></div>`;
+        let html = `<div class="collapsible-header card-item${behaviorActiveClass}" data-behavior="${behaviorName}" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${behaviorIconSrc}" alt="${behaviorIconAlt}" style="width: 12px; height: 12px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${behaviorName}')">${behaviorMarker}${behaviorName}</span></div>`;
         
-        // Render actions - check both array format and {all_actions: [...]} format
-        // Old renderer uses: behavior.actions directly (assumes it's an array)
-        let actionsArray = [];
-        if (behavior.actions) {
-            if (Array.isArray(behavior.actions)) {
-                actionsArray = behavior.actions;
-            } else if (behavior.actions.all_actions && Array.isArray(behavior.actions.all_actions)) {
-                actionsArray = behavior.actions.all_actions;
-            }
-        }
-        const hasActions = actionsArray.length > 0;
+        // Always create collapsible content, even if empty
+        const actionsArray = behavior.actions?.all_actions || behavior.actions || [];
+        const hasActions = Array.isArray(actionsArray) && actionsArray.length > 0;
         const actionsHtml = hasActions ? actionsArray.map((action, aIdx) => {
-            return this.renderAction(action, bIdx, aIdx, behaviorName);
+            return this.renderAction(action, bIdx, aIdx, behaviorName, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath);
         }).join('') : '';
         
         html += `<div id="${behaviorId}" class="collapsible-content" style="display: ${behaviorDisplay};">${actionsHtml}</div>`;
@@ -337,36 +351,43 @@ class BehaviorsView extends PanelView {
      * @param {number} bIdx - Behavior index
      * @param {number} aIdx - Action index
      * @param {string} behaviorName - Behavior name (escaped)
+     * @param {string} plusIconPath - Plus icon path
+     * @param {string} subtractIconPath - Subtract icon path
+     * @param {string} tickIconPath - Tick icon path
+     * @param {string} notTickedIconPath - Not ticked icon path
      * @returns {string} HTML string
      */
-    renderAction(action, bIdx, aIdx, behaviorName) {
-        const isCurrent = action.is_current || false;
-        const isCompleted = action.is_completed || false;
-        const actionMarker = this.getStatusMarker(isCurrent, isCompleted);
+    renderAction(action, bIdx, aIdx, behaviorName, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath) {
+        const isCurrent = action.isCurrent || action.is_current || false;
+        const isCompleted = action.isCompleted || action.is_completed || false;
+        const actionMarker = isCurrent
+            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Current" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '')
+            : isCompleted
+            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Completed" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '')
+            : (notTickedIconPath ? `<img src="${notTickedIconPath}" alt="Pending" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '');
+        
         const actionTooltip = action.description ? this.escapeHtml(action.description) : '';
         const actionId = `action-${bIdx}-${aIdx}`;
-        const actionName = this.escapeHtml(action.name || '');
+        const actionName = this.escapeHtml(action.action_name || action.name || '');
         
-        // Get plus/subtract icon paths
-        const plusIconPath = this.getImageUri('plus.png');
-        const subtractIconPath = this.getImageUri('subtract.png');
-        
-        // Expansion logic: expand if current or completed
+        // Expansion logic:
+        // 1. If we have saved state for this item, use it (user's explicit choice)
+        // 2. Otherwise, expand if current or completed (don't auto-collapse completed items)
         const hasActionExpansionState = this.expansionState && (actionId in this.expansionState);
         const actionExpanded = hasActionExpansionState ? this.expansionState[actionId] : (isCurrent || isCompleted);
-        const actionDisplay = actionExpanded ? 'block' : 'none';
         const actionIconSrc = actionExpanded ? subtractIconPath : plusIconPath;
         const actionIconAlt = actionExpanded ? 'Collapse' : 'Expand';
         const actionIconClass = actionExpanded ? 'expanded' : '';
+        const actionDisplay = actionExpanded ? 'block' : 'none';
         
         const actionActiveClass = isCurrent ? ' active' : '';
         let actionHtml = `<div class="collapsible-header action-item card-item${actionActiveClass}" title="${actionTooltip}"><span id="${actionId}-icon" class="${actionIconClass}" style="display: inline-block; min-width: 9px; cursor: pointer;" onclick="toggleCollapse('${actionId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${actionIconSrc}" alt="${actionIconAlt}" style="width: 9px; height: 9px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToAction('${behaviorName}', '${actionName}')">${actionMarker}${actionName}</span></div>`;
         
-        // Render operations - handle both array format and {all_operations: [...]} format
+        // Always create collapsible content, even if empty
         const operationsArray = action.operations?.all_operations || (Array.isArray(action.operations) ? action.operations : []);
         const hasOperations = operationsArray.length > 0;
         const operationsHtml = hasOperations ? operationsArray.map(op => {
-            return this.renderOperation(op, behaviorName, actionName);
+            return this.renderOperation(op, behaviorName, actionName, tickIconPath, notTickedIconPath);
         }).join('') : '';
         
         actionHtml += `<div id="${actionId}" class="collapsible-content" style="display: ${actionDisplay};">${operationsHtml}</div>`;
@@ -380,20 +401,27 @@ class BehaviorsView extends PanelView {
      * @param {Object} op - Operation object
      * @param {string} behaviorName - Behavior name (escaped)
      * @param {string} actionName - Action name (escaped)
+     * @param {string} tickIconPath - Tick icon path
+     * @param {string} notTickedIconPath - Not ticked icon path
      * @returns {string} HTML string
      */
-    renderOperation(op, behaviorName, actionName) {
-        const isCurrent = op.is_current || false;
-        const isCompleted = op.is_completed || false;
-        const opMarker = this.getStatusMarker(isCurrent, isCompleted);
+    renderOperation(op, behaviorName, actionName, tickIconPath, notTickedIconPath) {
+        const isCurrent = op.isCurrent || op.is_current || false;
+        const isCompleted = op.isCompleted || op.is_completed || false;
+        const opMarker = isCurrent
+            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Current" style="width: 15px; height: 15px; vertical-align: middle; margin-right: 6px;" />` : '')
+            : isCompleted
+            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Completed" style="width: 15px; height: 15px; vertical-align: middle; margin-right: 6px;" />` : '')
+            : (notTickedIconPath ? `<img src="${notTickedIconPath}" alt="Pending" style="width: 15px; height: 15px; vertical-align: middle; margin-right: 6px;" />` : '');
         const opTooltip = op.description ? this.escapeHtml(op.description) : '';
         const opName = this.escapeHtml(op.name || '');
         const opClasses = ['operation-item', 'card-item'];
         if (isCurrent) {
             opClasses.push('active');
         }
-        
-        return `<div class="${opClasses.join(' ')}" title="${opTooltip}" onclick="navigateAndExecute('${behaviorName}', '${actionName}', '${opName}')" style="cursor: pointer; text-decoration: underline;">${opMarker}${opName}</div>`;
+        // Make all operations clickable
+        const clickHandler = ` onclick="navigateAndExecute('${behaviorName}', '${actionName}', '${opName}')" style="cursor: pointer; text-decoration: underline;"`;
+        return `<div class="${opClasses.join(' ')}" title="${opTooltip}"${clickHandler}>${opMarker}${opName}</div>`;
     }
     
     /**
