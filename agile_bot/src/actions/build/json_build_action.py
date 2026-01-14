@@ -77,7 +77,7 @@ class JSONBuildAction(JSONAdapter):
         }
         
         # Add build-specific properties
-        if self.action.story_graph_data:
+        if self.action.story_graph_spec:
             result['story_graph_data'] = {
                 'has_spec': self.action.story_graph_spec is not None,
                 'has_template': self.action.story_graph_template is not None

@@ -1,1 +1,0 @@
-python test_bot_cli.py --behavior discovery --action ${1:}${2:+ }${2:}
