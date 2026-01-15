@@ -440,32 +440,21 @@ class Scope:
         return scope
     
     def save(self):
-        """Save scope to bot state file."""
-        state_file = self.workspace_directory / 'behavior_action_state.json'
+        """Save scope to scope.json file."""
+        scope_file = self.workspace_directory / 'scope.json'
         
-        if state_file.exists():
-            try:
-                state_data = json.loads(state_file.read_text())
-            except (json.JSONDecodeError, IOError):
-                state_data = {}
-        else:
-            state_data = {}
-        
-        state_data['scope'] = self.to_dict()
-        
-        state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(json.dumps(state_data, indent=2))
+        scope_file.parent.mkdir(parents=True, exist_ok=True)
+        scope_file.write_text(json.dumps(self.to_dict(), indent=2))
     
     def load(self):
-        """Load scope from bot state file."""
-        state_file = self.workspace_directory / 'behavior_action_state.json'
+        """Load scope from scope.json file."""
+        scope_file = self.workspace_directory / 'scope.json'
         
-        if not state_file.exists():
+        if not scope_file.exists():
             return
         
         try:
-            state_data = json.loads(state_file.read_text())
-            scope_data = state_data.get('scope')
+            scope_data = json.loads(scope_file.read_text())
             
             if scope_data:
                 # Update this instance from loaded data

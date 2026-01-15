@@ -1,33 +1,10 @@
 {
   "scope": {
-    "type": "all",
-    "value": [],
-    "exclude": [],
-    "skiprule": []
+    "type": "story",
+    "value": [
+      "Manage Behaviors"
+    ]
   },
-  "completed_actions": [
-    {
-      "action_state": "story_bot.arrange.clarify",
-      "timestamp": "2026-01-11T01:28:47.212482"
-    },
-    {
-      "action_state": "story_bot.arrange.strategy",
-      "timestamp": "2026-01-11T01:28:47.212482"
-    },
-    {
-      "action_state": "story_bot.arrange.validate",
-      "timestamp": "2026-01-11T01:28:47.212482"
-    },
-    {
-      "action_state": "story_bot.arrange.render",
-      "timestamp": "2026-01-11T01:28:47.212482"
-    },
-    {
-      "action_state": "story_bot.shape.render",
-      "timestamp": "2026-01-11T12:03:26.363304"
-    }
-  ],
-  "current_behavior": "story_bot.prioritization",
-  "current_action": "story_bot.prioritization.clarify",
-  "timestamp": "2026-01-13T23:46:14.765262"
+  "current_behavior": "story_bot.shape",
+  "current_action": "story_bot.shape.clarify"
 }

@@ -21,7 +21,8 @@ Generate Bot Tools functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Generator creates bot tool for test_bot (happy_path)
+<a id="scenario-generator-creates-bot-tool-for-test_bot"></a>
+### Scenario: [Generator creates bot tool for test_bot](#scenario-generator-creates-bot-tool-for-test_bot) (happy_path)
 
 **Steps:**
 ```gherkin

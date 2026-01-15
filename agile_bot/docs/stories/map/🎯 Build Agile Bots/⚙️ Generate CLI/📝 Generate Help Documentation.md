@@ -15,8 +15,8 @@ Generate Help Documentation functionality for the mob minion system.
 
 ### Behavioral Acceptance Criteria
 
-- **When** generator creates HelpVisitor,
-  **then** it generates command reference with all CLI commands
+- **When** generator creates HelpReplVisitor,
+  **then** it generates command reference with all REPL commands
 
 - **When** help is generated,
   **then** it includes parameter reference with descriptions for all action parameters

@@ -143,7 +143,7 @@ class ScopeSection extends PanelView {
                     <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
                     ${magnifyingGlassIconPath ? `<img src="${magnifyingGlassIconPath}" style="margin-right: 8px; width: 28px; height: 28px; object-fit: contain;" alt="Scope Icon" />` : ''}
                     <span style="font-weight: 600; font-size: 20px;">Scope</span>
-                    ${hasFilter && clearIconPath ? `<button onclick="event.stopPropagation(); clearScopeFilter();" style="
+                    <button onclick="event.stopPropagation(); clearScopeFilter();" style="
                         background: transparent;
                         border: none;
                         padding: 4px 8px;
@@ -152,26 +152,13 @@ class ScopeSection extends PanelView {
                         display: flex;
                         align-items: center;
                         transition: opacity 0.15s ease;
+                        font-size: 12px;
                     " 
                     onmouseover="this.style.opacity='0.7'" 
                     onmouseout="this.style.opacity='1'"
                     title="Clear scope filter (show all)">
-                        <img src="${clearIconPath}" style="width: 24px; height: 24px; object-fit: contain;" alt="Clear Filter" />
-                    </button>` : hasFilter ? `<button onclick="event.stopPropagation(); clearScopeFilter();" style="
-                        background: transparent;
-                        border: none;
-                        padding: 4px 8px;
-                        margin-left: 6px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        transition: opacity 0.15s ease;
-                    " 
-                    onmouseover="this.style.opacity='0.7'" 
-                    onmouseout="this.style.opacity='1'"
-                    title="Clear scope filter (show all)">
-                        ✕
-                    </button>` : ''}
+                        Show All
+                    </button>
                 </div>
                 ${linksHtml ? `<div onclick="event.stopPropagation();" style="display: flex; align-items: center;">${linksHtml}</div>` : ''}
             </div>
@@ -225,16 +212,22 @@ class ScopeSection extends PanelView {
                 
                 html += `<div id="${featureId}" class="collapsible-content" style="display: none;">`;
                 
-                // Render nested features if they exist
-                if (feature.features && feature.features.length > 0) {
-                    feature.features.forEach((nestedFeature, nestedIndex) => {
+                // Render nested features (sub_epics) if they exist
+                const nestedFeatures = feature.sub_epics || feature.features || [];
+                if (nestedFeatures.length > 0) {
+                    nestedFeatures.forEach((nestedFeature, nestedIndex) => {
                         renderFeature(nestedFeature, nestedIndex, featureId, depth + 1);
                     });
                 }
                 
-                // Render stories if they exist
-                if (feature.stories && feature.stories.length > 0) {
-                    feature.stories.forEach((story, storyIndex) => {
+                // Render stories if they exist (may be in story_groups or directly in stories)
+                let stories = feature.stories || [];
+                if (!stories.length && feature.story_groups) {
+                    // Flatten story_groups into stories array
+                    stories = feature.story_groups.flatMap(group => group.stories || []);
+                }
+                if (stories.length > 0) {
+                    stories.forEach((story, storyIndex) => {
                         const storyId = `${featureId}-story-${storyIndex}`;
                         const storyIcon = pageIconPath ? `<img src="${pageIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Story" />` : '';
                         
@@ -294,7 +287,9 @@ class ScopeSection extends PanelView {
                 html += '</div>'; // Close feature collapsible-content
             };
             
-            epic.features.forEach((feature, featureIndex) => {
+            // Use sub_epics instead of features (actual JSON structure)
+            const subEpics = epic.sub_epics || epic.features || [];
+            subEpics.forEach((feature, featureIndex) => {
                 renderFeature(feature, featureIndex, `epic-${epicIndex}`, 0);
             });
             html += '</div>'; // Close epic collapsible-content

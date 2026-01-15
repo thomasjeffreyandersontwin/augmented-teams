@@ -268,45 +268,48 @@ class Bot:
         scope_filter_lower = scope_filter.lower().strip()
         if scope_filter_lower.startswith('set '):
             scope_filter = scope_filter[4:].strip()  # Remove "set " prefix
-        elif scope_filter_lower == 'clear':
+            scope_filter_lower = scope_filter.lower().strip()  # Recalculate after removing "set"
+        
+        # Strip surrounding quotes (single or double) from the filter value
+        scope_filter = scope_filter.strip()
+        if (scope_filter.startswith('"') and scope_filter.endswith('"')) or \
+           (scope_filter.startswith("'") and scope_filter.endswith("'")):
+            scope_filter = scope_filter[1:-1]
+            scope_filter_lower = scope_filter.lower().strip()  # Recalculate after stripping quotes
+        
+        if scope_filter_lower == 'clear':
             # Clear scope
             is_clear = True
             self._scope.clear()
             self._scope.save()
-            return {
-                'status': 'success',
-                'message': 'Scope cleared',
-                'scope': {
-                    'type': 'all',
-                    'target': []
-                }
-            }
+            from ..scope.scope_command_result import ScopeCommandResult
+            return ScopeCommandResult(
+                status='success',
+                message='Scope cleared',
+                scope=self._scope
+            )
         
         if scope_filter.lower() == 'all':
             # Clear scope
             self._scope.clear()
             self._scope.save()
-            return {
-                'status': 'success',
-                'message': 'Scope cleared (set to all)',
-                'scope': {
-                    'type': 'all',
-                    'target': []
-                }
-            }
+            from ..scope.scope_command_result import ScopeCommandResult
+            return ScopeCommandResult(
+                status='success',
+                message='Scope cleared (set to all)',
+                scope=self._scope
+            )
         
         if scope_filter.lower() == 'showall':
             # Show all - set to SHOW_ALL type
             self._scope.filter(ScopeType.SHOW_ALL, [])
             self._scope.save()
-            return {
-                'status': 'success',
-                'message': 'Scope set to show all',
-                'scope': {
-                    'type': 'showAll',
-                    'target': []
-                }
-            }
+            from ..scope.scope_command_result import ScopeCommandResult
+            return ScopeCommandResult(
+                status='success',
+                message='Scope set to show all',
+                scope=self._scope
+            )
         
         # Parse scope filter
         # Handle multiple formats:
@@ -393,15 +396,24 @@ class Bot:
         self._scope.filter(scope_type, scope_values)
         self._scope.save()
         
-        # Return wrapped response
-        return {
-            'status': 'success',
-            'message': f'Scope set to {prefix}: {", ".join(scope_values)}',
-            'scope': {
-                'type': prefix,
-                'target': scope_values
-            }
-        }
+        # Return a ScopeCommandResult object that will be serialized properly
+        from ..scope.scope_command_result import ScopeCommandResult
+        return ScopeCommandResult(
+            status='success',
+            message=f'Scope set to {prefix}: {", ".join(scope_values)}',
+            scope=self._scope
+        )
+    
+    def workspace(self, directory: Optional[str] = None) -> Dict[str, Any]:
+        """Alias for path command - set or view the working directory.
+        
+        Args:
+            directory: Path to set as working directory, or None to view current path
+        
+        Returns:
+            Dict with path information or updated path status
+        """
+        return self.path(directory)
     
     def path(self, directory: Optional[str] = None) -> Dict[str, Any]:
         """Set or view the working directory.
@@ -432,8 +444,12 @@ class Bot:
                 'message': f'Directory does not exist: {new_path}'
             }
         
-        # Update the bot paths
-        self.bot_paths._workspace_directory = new_path
+        # Update the bot paths (with persistence)
+        self.bot_paths.update_workspace_directory(new_path, persist=True)
+        
+        # Reload scope for new workspace
+        self._scope = Scope(self.bot_paths.workspace_directory, self.bot_paths)
+        self._scope.load()
         
         return {
             'status': 'success',

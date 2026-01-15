@@ -9,20 +9,36 @@ from nltk.corpus import wordnet as wn
 from nltk import pos_tag, word_tokenize
 
 # Download required NLTK data if not already present
+# Use a short timeout to avoid hanging on network issues
+import socket
+_original_timeout = socket.getdefaulttimeout()
+socket.setdefaulttimeout(2)  # 2 second timeout for downloads
+
 try:
     nltk.data.find('corpora/wordnet')
 except LookupError:
+    try:
     nltk.download('wordnet', quiet=True)
+    except:
+        pass  # Skip if download fails
 
 try:
     nltk.data.find('tokenizers/punkt_tab')
 except LookupError:
+    try:
     nltk.download('punkt_tab', quiet=True)
+    except:
+        pass  # Skip if download fails
 
 try:
     nltk.data.find('taggers/averaged_perceptron_tagger_eng')
 except LookupError:
+    try:
     nltk.download('averaged_perceptron_tagger_eng', quiet=True)
+    except:
+        pass  # Skip if download fails
+
+socket.setdefaulttimeout(_original_timeout)  # Restore original timeout
 
 
 class VocabularyHelper:

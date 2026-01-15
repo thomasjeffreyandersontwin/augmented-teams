@@ -25,7 +25,7 @@ Generate Command Definitions functionality for the mob minion system.
   **then** generator extracts parameters from each action's context_class
 
 - **When** metadata is collected,
-  **then** CommandVisitor generates navigate commands for all behaviors and actions
+  **then** ReplCommandVisitor generates navigate commands for all behaviors and actions
 
 - **When** commands are generated,
   **then** scope commands are created for scope.type, scope.value, scope.exclude

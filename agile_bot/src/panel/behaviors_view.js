@@ -370,6 +370,14 @@ class BehaviorsView extends PanelView {
         const actionId = `action-${bIdx}-${aIdx}`;
         const actionName = this.escapeHtml(action.action_name || action.name || '');
         
+        // Check if action has operations (only current behavior actions have operations)
+        const operationsArray = action.operations?.all_operations || (Array.isArray(action.operations) ? action.operations : []);
+        const hasOperations = operationsArray.length > 0;
+        
+        // Only show expand/collapse icon if action has operations
+        let expandIconHtml = '';
+        let actionDisplay = 'none';
+        if (hasOperations) {
         // Expansion logic:
         // 1. If we have saved state for this item, use it (user's explicit choice)
         // 2. Otherwise, expand if current or completed (don't auto-collapse completed items)
@@ -378,14 +386,12 @@ class BehaviorsView extends PanelView {
         const actionIconSrc = actionExpanded ? subtractIconPath : plusIconPath;
         const actionIconAlt = actionExpanded ? 'Collapse' : 'Expand';
         const actionIconClass = actionExpanded ? 'expanded' : '';
-        const actionDisplay = actionExpanded ? 'block' : 'none';
+            actionDisplay = actionExpanded ? 'block' : 'none';
+            expandIconHtml = `<span id="${actionId}-icon" class="${actionIconClass}" style="display: inline-block; min-width: 9px; cursor: pointer;" onclick="toggleCollapse('${actionId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${actionIconSrc}" alt="${actionIconAlt}" style="width: 9px; height: 9px; vertical-align: middle;" />` : ''}</span> `;
+        }
         
         const actionActiveClass = isCurrent ? ' active' : '';
-        let actionHtml = `<div class="collapsible-header action-item card-item${actionActiveClass}" title="${actionTooltip}"><span id="${actionId}-icon" class="${actionIconClass}" style="display: inline-block; min-width: 9px; cursor: pointer;" onclick="toggleCollapse('${actionId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${actionIconSrc}" alt="${actionIconAlt}" style="width: 9px; height: 9px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToAction('${behaviorName}', '${actionName}')">${actionMarker}${actionName}</span></div>`;
-        
-        // Always create collapsible content, even if empty
-        const operationsArray = action.operations?.all_operations || (Array.isArray(action.operations) ? action.operations : []);
-        const hasOperations = operationsArray.length > 0;
+        let actionHtml = `<div class="collapsible-header action-item card-item${actionActiveClass}" title="${actionTooltip}">${expandIconHtml}<span style="cursor: pointer; text-decoration: underline;" onclick="navigateToAction('${behaviorName}', '${actionName}')">${actionMarker}${actionName}</span></div>`;
         const operationsHtml = hasOperations ? operationsArray.map(op => {
             return this.renderOperation(op, behaviorName, actionName, tickIconPath, notTickedIconPath);
         }).join('') : '';

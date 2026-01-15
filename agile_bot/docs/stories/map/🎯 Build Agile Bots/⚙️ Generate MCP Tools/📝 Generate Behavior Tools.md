@@ -21,7 +21,8 @@ Generate Behavior Tools functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Generator creates behavior tools for test_bot with 4 behaviors (happy_path)
+<a id="scenario-generator-creates-behavior-tools-for-test_bot-with-4-behaviors"></a>
+### Scenario: [Generator creates behavior tools for test_bot with 4 behaviors](#scenario-generator-creates-behavior-tools-for-test_bot-with-4-behaviors) (happy_path)
 
 **Steps:**
 ```gherkin

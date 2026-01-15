@@ -27,7 +27,8 @@ Restart MCP Server To Load Code Changes functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Clear Python bytecode cache (happy_path)
+<a id="scenario-clear-python-bytecode-cache"></a>
+### Scenario: [Clear Python bytecode cache](#scenario-clear-python-bytecode-cache) (happy_path)
 
 **Steps:**
 ```gherkin

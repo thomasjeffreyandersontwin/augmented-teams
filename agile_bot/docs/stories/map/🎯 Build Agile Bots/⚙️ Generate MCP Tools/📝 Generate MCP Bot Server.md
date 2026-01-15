@@ -25,7 +25,8 @@ Generate MCP Bot Server functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Generator creates MCP server for test_bot (happy_path)
+<a id="scenario-generator-creates-mcp-server-for-test_bot"></a>
+### Scenario: [Generator creates MCP server for test_bot](#scenario-generator-creates-mcp-server-for-test_bot) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -36,7 +37,8 @@ Then Generator creates MCP Server instance with unique server name
 ```
 
 
-### Scenario: Generator fails when Bot Config is missing (happy_path)
+<a id="scenario-generator-fails-when-bot-config-is-missing"></a>
+### Scenario: [Generator fails when Bot Config is missing](#scenario-generator-fails-when-bot-config-is-missing) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -47,7 +49,8 @@ Then Generator raises FileNotFoundError and does not create MCP Server instance
 ```
 
 
-### Scenario: Generator fails when Bot Config is malformed (happy_path)
+<a id="scenario-generator-fails-when-bot-config-is-malformed"></a>
+### Scenario: [Generator fails when Bot Config is malformed](#scenario-generator-fails-when-bot-config-is-malformed) (happy_path)
 
 **Steps:**
 ```gherkin

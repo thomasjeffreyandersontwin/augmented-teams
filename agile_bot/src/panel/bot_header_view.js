@@ -211,6 +211,20 @@ class BotHeaderView extends PanelView {
             // For now, just return success
             return { success: true, bot: eventData.botName };
         }
+        if (eventType === 'updateWorkspace') {
+            // Execute CLI command to change workspace
+            const workspacePath = eventData.workspacePath;
+            PanelView._log(`[BotHeaderView] Executing workspace command: workspace ${workspacePath}`);
+            
+            try {
+                const result = await this.execute(`workspace ${workspacePath}`);
+                PanelView._log(`[BotHeaderView] Workspace command result: ${JSON.stringify(result)}`);
+                return result;
+            } catch (error) {
+                PanelView._log(`[BotHeaderView] ERROR executing workspace command: ${error.message}`);
+                throw error;
+            }
+        }
         throw new Error(`Unknown event type: ${eventType}`);
     }
 }

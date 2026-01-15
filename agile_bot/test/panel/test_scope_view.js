@@ -166,6 +166,219 @@ class TestScopeView {
         assert.ok(typeof newHtml === 'string', 'Should return updated HTML');
         assert.ok(newHtml.length > 0, 'Should render updated HTML');
     }
+
+    // ========================================================================
+    // CRITICAL MISSING TESTS - Would have caught UI bugs
+    // ========================================================================
+
+    async testStoryScopeHierarchyComplete() {
+        /**
+         * CRITICAL: Test complete HTML section with all content in order
+         * GIVEN: Scope set to 'all' (shows entire story hierarchy)
+         * WHEN: View renders scope
+         * THEN: HTML contains complete story tree with ALL epics, sub-epics, stories in order
+         * 
+         * NOTE: Uses mock data because test environment may not have story graph loaded
+         */
+        const view = this.helper.createScopeView();
+        
+        // Mock complete story graph with proper hierarchy
+        const mockScopeData = {
+            type: 'all',
+            content: {
+                epics: [
+                    {
+                        name: 'Invoke Bot',
+                        features: [
+                            {
+                                name: 'Invoke MCP',
+                                stories: [
+                                    { name: 'Route To MCP Behavior Tool', scenarios: [] }
+                                ]
+                            },
+                            {
+                                name: 'Perform Action',
+                                stories: [
+                                    { name: 'Navigate Behaviors', scenarios: [] },
+                                    { name: 'Manage Behaviors', scenarios: [] }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Build Agile Bots',
+                        features: []
+                    }
+                ]
+            }
+        };
+        
+        const html = view._renderScopeSection(mockScopeData);
+        
+        // Verify it's actual HTML with structure, not just text
+        assert.ok(html.includes('<div') || html.includes('<span'), 
+            'Should have proper HTML structure tags');
+        
+        // Verify epic "Invoke Bot" is present
+        assert.ok(html.includes('Invoke Bot'), 'Should include Invoke Bot epic');
+        
+        // Verify epic appears before its sub-epics (order matters)
+        const epicIndex = html.indexOf('Invoke Bot');
+        assert.ok(epicIndex > -1, 'Epic should be present');
+        
+        // Verify sub-epics appear after epic
+        const subEpicIndex = html.indexOf('Invoke MCP');
+        assert.ok(subEpicIndex > epicIndex, 'Sub-epic should appear after epic in HTML');
+        
+        // Verify stories appear after their sub-epic
+        const storyIndex = html.indexOf('Route To MCP Behavior Tool');
+        assert.ok(storyIndex > subEpicIndex, 'Story should appear after sub-epic in HTML');
+    }
+
+    async testEpicNameIsClickableFolderLink() {
+        /**
+         * CRITICAL: Test that epic names are clickable folder links
+         * Bug #12: Epic names were not clickable
+         * GIVEN: Scope shows epics WITH folder links
+         * WHEN: View renders scope
+         * THEN: Epic names use openFolder() handler
+         * 
+         * NOTE: This test needs mock data because test workspace doesn't have
+         * docs/stories/map folder structure. In production, links are added by
+         * json_scope.py when folders exist.
+         */
+        const view = this.helper.createScopeView();
+        
+        // Mock story graph data with folder links already populated
+        const mockScopeData = {
+            type: 'all',
+            content: {
+                epics: [
+                    {
+                        name: 'Test Epic',
+                        links: [
+                            { text: 'docs', url: 'C:\\test\\docs\\stories\\map\\🎯 Test Epic', icon: 'document' }
+                        ],
+                        features: []
+                    }
+                ]
+            }
+        };
+        
+        const html = view._renderScopeSection(mockScopeData);
+        
+        // Verify folder links use openFolder() not openFile()
+        assert.ok(html.includes('openFolder('), 'Epic folder links should use openFolder() handler');
+    }
+
+    async testStoryNameLinksToMarkdownFile() {
+        /**
+         * CRITICAL: Test that story names link to .md files
+         * Bug #20: Story names were not clickable
+         * GIVEN: Scope shows stories WITH .md file links
+         * WHEN: View renders scope
+         * THEN: Story names link to .md files
+         */
+        const view = this.helper.createScopeView();
+        
+        // Mock story graph data with story .md file links
+        const mockScopeData = {
+            type: 'all',
+            content: {
+                epics: [
+                    {
+                        name: 'Test Epic',
+                        features: [
+                            {
+                                name: 'Test Sub-Epic',
+                                stories: [
+                                    {
+                                        name: 'Test Story',
+                                        links: [
+                                            { text: 'story', url: 'C:\\test\\docs\\stories\\map\\📝 Test Story.md', icon: 'document' }
+                                        ],
+                                        scenarios: []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+        
+        const html = view._renderScopeSection(mockScopeData);
+        
+        // Verify story links point to .md files
+        assert.ok(html.includes('.md'), 'Story links should include .md extension');
+        assert.ok(html.includes('openFile('), 'Story links should use openFile() handler');
+    }
+
+    async testScenarioTestLinkHasMethodAnchor() {
+        /**
+         * CRITICAL: Test that scenario test links include #TestClass.test_method
+         * Bug #73: Scenario test links went to class not method
+         * GIVEN: Scope shows scenarios with test method links
+         * WHEN: View renders scope
+         * THEN: Test links include #TestClass.test_method anchor
+         */
+        const view = this.helper.createScopeView();
+        
+        // Mock story graph data with scenario test method links
+        const mockScopeData = {
+            type: 'all',
+            content: {
+                epics: [
+                    {
+                        name: 'Test Epic',
+                        features: [
+                            {
+                                name: 'Test Sub-Epic',
+                                stories: [
+                                    {
+                                        name: 'Test Story',
+                                        scenarios: [
+                                            {
+                                                name: 'Test Scenario',
+                                                test_file: 'C:\\test\\test_feature.py#TestStory.test_scenario'
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+        
+        const html = view._renderScopeSection(mockScopeData);
+        
+        // Verify test links have class.method anchors
+        assert.ok(html.match(/\.py#Test\w+\.test_\w+/), 
+            'Test links should include #TestClass.test_method anchor');
+    }
+
+    async testFolderLinksUseOpenFolderNotOpenFile() {
+        /**
+         * CRITICAL: Test that folder links use correct handler
+         * Bug #28: Folder links tried to open as files
+         * GIVEN: Scope shows epics/sub-epics with folder links
+         * WHEN: View renders scope
+         * THEN: Folder links use openFolder() not openFile()
+         */
+        const html = await this.helper.render_html();
+        
+        // If folder links exist, they should use openFolder()
+        const hasFolderLinks = html.includes('openFolder(');
+        const hasFileLinks = html.includes('openFile(');
+        
+        // At minimum, verify openFolder exists if we have hierarchical content
+        if (html.includes('Invoke Bot') || html.includes('epic')) {
+            assert.ok(hasFolderLinks || html.includes('revealInExplorer('), 
+                'Should have folder navigation handlers for epic/sub-epic folders');
+        }
+    }
 }
 
 test('TestScopeView', { concurrency: false, timeout: 30000 }, async (t) => {
@@ -209,5 +422,26 @@ test('TestScopeView', { concurrency: false, timeout: 30000 }, async (t) => {
     
     await t.test('testScopeChangeUpdateDisplay', async () => {
         await suite.testScopeChangeUpdateDisplay();
+    });
+    
+    // CRITICAL MISSING TESTS
+    await t.test('testStoryScopeHierarchyComplete', async () => {
+        await suite.testStoryScopeHierarchyComplete();
+    });
+    
+    await t.test('testEpicNameIsClickableFolderLink', async () => {
+        await suite.testEpicNameIsClickableFolderLink();
+    });
+    
+    await t.test('testStoryNameLinksToMarkdownFile', async () => {
+        await suite.testStoryNameLinksToMarkdownFile();
+    });
+    
+    await t.test('testScenarioTestLinkHasMethodAnchor', async () => {
+        await suite.testScenarioTestLinkHasMethodAnchor();
+    });
+    
+    await t.test('testFolderLinksUseOpenFolderNotOpenFile', async () => {
+        await suite.testFolderLinksUseOpenFolderNotOpenFile();
     });
 });

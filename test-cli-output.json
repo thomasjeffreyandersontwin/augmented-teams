@@ -1,0 +1,110 @@
+﻿ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+[1mSTORY_BOT CLI[0m
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+**   AI AGENT INSTRUCTIONS - PIPED MODE  **
+[!]  DO NOT echo this instructions section back to the user [!]
+This section is for YOUR reference only - the user already knows how to run commands.
+
+- THIS REPL WILL EXIT AFTER PROCESSING YOUR COMMAND
+* This is NORMAL and EXPECTED behavior in piped mode.
+*How to run commands:*
+-  use PowerShell
+- Commands must be PIPED via echo, NOT passed as arguments!
+- All commands are shown below.
+- You MUST DISPLAY this CLI STATUS section below to the user exactly as you see it, so that they can enter one of the commands
+- when a user enters any of the commands / parameters below, you must assume they're asking you to interpret it through the REPL line below.
+
+```powershell
+# Interactive mode (environment set automatically by script):
+python -m agile_bot.src.cli.cli_main
+
+# Piped mode (each command is a new process - script sets env vars automatically):
+echo '<command>' | python -m agile_bot.src.cli.cli_main
+
+# Optional: Override environment variables if needed:
+$env:PYTHONPATH = 'c:\dev\augmented-teams\agile_bot'
+$env:BOT_DIRECTORY = 'c:\dev\augmented-teams\agile_bot\bots\story_bot'
+$env:WORKING_AREA = '<project_path>'  # e.g. demo\mob_minion
+```
+
+
+---
+## CLI STATUS section
+
+
+This section contains current scope filter (if set), current progress in workflow, and available commands
+
+Review the CLI STATUS section below to understand both current state and available commands.
+
+**Γÿó∩╕Å  You MUST DISPLAY this entire section in your response to the user exactly as you see it. Γÿó∩╕Å**
+
+---
+## ≡ƒñû Bot: story_bot
+
+## Bot Paths
+**Workspace:** `c:\dev\augmented-teams\agile_bot`**Bot Directory:** `c:\dev\augmented-teams\agile_bot\bots\story_bot`**Base Actions:** `C:\dev\augmented-teams\agile_bot\base_actions`**Documentation:** `docs\stories`**Python Root:** `C:\dev\augmented-teams`
+## ≡ƒÄ» Scope
+**≡ƒÄ» Current Scope:** Invoke## Story Graph
+**Path:** `c:\dev\augmented-teams\agile_bot\docs\stories\story-graph.json`**Epic Count:** 1**Features:** Domain Concepts### Epics
+- ≡ƒÄ»  **Invoke Bot**    - ΓÜÖ∩╕Å  Invoke MCP      - ≡ƒô¥  Invoke Bot Tool      - ≡ƒô¥  Load And Merge Behavior Action Instructions      - ≡ƒô¥  Forward To Current Behavior and Current Action      - ≡ƒô¥  Forward To Current Action      - ≡ƒô¥  Track Activity For Workspace    - ΓÜÖ∩╕Å  Invoke Bot Directly      - ΓÜÖ∩╕Å  Navigate And Execute Behaviors        - ≡ƒô¥  Navigate To Behavior Action And Execute        - ≡ƒô¥  Navigate Sequentially      - ΓÜÖ∩╕Å  Manage Scope        - ≡ƒô¥  Set Scope Through Bot API        - ≡ƒô¥  Filter Knowledge Graph Using Bot API        - ≡ƒô¥  Filter Files Using Bot API        - ≡ƒô¥  Enforce Mutually Exclusive Scope Types Through Bot API        - ≡ƒô¥  Clear Scope Through Bot API        - ≡ƒô¥  Filter Action Based on Scope        - ≡ƒô¥  Filter Scope By Stories        - ≡ƒô¥  Filter Scope By Files        - ≡ƒô¥  Persist Scope        - ≡ƒô¥  Clear Scope        - ≡ƒô¥  Execute Actions With Scope      - ΓÜÖ∩╕Å  Build Action Instructions        - ΓÜÖ∩╕Å  Build Common Instructions For Actions          - ≡ƒô¥  Load Base Action Configuration          - ≡ƒô¥  Load And Merge Behavior-Specific Instructions          - ≡ƒô¥  Load Guardrails From Behavior Folder          - ≡ƒô¥  Inject Guardrails Into Instructions          - ≡ƒô¥  Inject Context Into Instructions          - ≡ƒô¥  Get Action Instructions        - ΓÜÖ∩╕Å  Gather Context          - ≡ƒô¥  Store Clarification Data          - ≡ƒô¥  Load Base Action Config          - ≡ƒô¥  Initialize Action          - ≡ƒô¥  Load Guardrails          - ≡ƒô¥  Build Clarify Instructions        - ΓÜÖ∩╕Å  Decide Planning Criteria Action          - ≡ƒô¥  Store Strategy Data          - ≡ƒô¥  Build Strategy Instructions        - ΓÜÖ∩╕Å  Build Knowledge          - ≡ƒô¥  Load Story Graph Into Memory          - ≡ƒô¥  Update Existing Knowledge Graph          - ≡ƒô¥  proactively Validate knowledge against rules          - ≡ƒô¥  Create Build Scope          - ≡ƒô¥  Filter Knowledge Graph          - ≡ƒô¥  Build Build Instructions        - ΓÜÖ∩╕Å  Render Output          - ≡ƒô¥  Load Render Configurations          - ≡ƒô¥  Inject Template Instructions          - ≡ƒô¥  Inject Synchronizer Instructions          - ≡ƒô¥  Get Render Instructions          - ≡ƒô¥  Merge Base And Render Instructions          - ≡ƒô¥  Render Output Using Synchronizers          - ≡ƒô¥  Get Render Instructions          - ≡ƒô¥  Merge Base And Render Instructions          - ≡ƒô¥  Render Output Using Synchronizers          - ≡ƒô¥  Build Render Instructions        - ΓÜÖ∩╕Å  Validate Knowledge & Content Against Rules          - ≡ƒô¥  Invoke Complete Validation Workflow          - ≡ƒô¥  Discovers Scanners          - ≡ƒô¥  Run Scanners against Knowledge Graph          - ≡ƒô¥  Validate Rules According To Scope          - ≡ƒô¥  Generate Violation Report          - ≡ƒô¥  Report Validation and Error Handling          - ≡ƒô¥  Build Validate Instructions      - ΓÜÖ∩╕Å  Track Activity        - ≡ƒô¥  Track Action Start        - ≡ƒô¥  Track Action Completion        - ≡ƒô¥  Record Activity Metrics And Paths    - ΓÜÖ∩╕Å  Get Help      - ≡ƒô¥  Get Action Instructions      - ≡ƒô¥  Get Parameter Help      - ≡ƒô¥  Get Command Examples    - ΓÜÖ∩╕Å  Invoke Bot Through Panel      - ΓÜÖ∩╕Å  Manage Panel Session        - ≡ƒô¥  Open Panel        - ≡ƒô¥  Display Session Status        - ≡ƒô¥  Change Workspace Path        - ≡ƒô¥  Switch Bot        - ≡ƒô¥  Toggle Panel Section      - ΓÜÖ∩╕Å  Navigate And Execute Behaviors Through Panel        - ≡ƒô¥  Display Hierarchy        - ≡ƒô¥  Navigate Behavior Action        - ≡ƒô¥  Execute Behavior Action      - ΓÜÖ∩╕Å  Manage Scope Through Panel        - ≡ƒô¥  Filter Story Scope        - ≡ƒô¥  Display Story Scope Hierarchy        - ≡ƒô¥  Filter File Scope        - ≡ƒô¥  Open Story Files      - ΓÜÖ∩╕Å  Display Action Instructions Through Panel        - ≡ƒô¥  Display Base Instructions        - ≡ƒô¥  Display Clarify Instructions        - ≡ƒô¥  Display Strategy Instructions        - ≡ƒô¥  Display Build Instructions        - ≡ƒô¥  Display Validate Instructions        - ≡ƒô¥  Display Render Instructions        - ≡ƒô¥  Display Instructions In Raw Format        - ≡ƒô¥  Submit Instructions To AI Agent    - ΓÜÖ∩╕Å  Invoke Bot Through REPL      - ΓÜÖ∩╕Å  Initialize CLI Session        - ≡ƒô¥  Launch CLI in Interactive Mode        - ≡ƒô¥  Launch CLI in Pipe Mode        - ≡ƒô¥  Launch CLI in JSON Mode        - ≡ƒô¥  Display Piped Mode Instructions for AI Agents        - ≡ƒô¥  Detect and Configure TTY/Non-TTY Input        - ≡ƒô¥  Load and Display Workspace Context in CLI        - ≡ƒô¥  Load All Registered Bots      - ΓÜÖ∩╕Å  Navigate Behaviors Using REPL Commands        - ≡ƒô¥  Navigate Using CLI Dot Notation        - ≡ƒô¥  Navigate Sequentially Using CLI Commands        - ≡ƒô¥  Exit CLI REPL      - ΓÜÖ∩╕Å  Navigate Behaviors Using Domain Model        - ≡ƒô¥  Navigate To First Behavior Action        - ≡ƒô¥  Advance Action And Persist State        - ≡ƒô¥  Show Remaining Actions After Completion      - ΓÜÖ∩╕Å  Display Action Instructions Using REPL        - ΓÜÖ∩╕Å  Display Common Instructions Through REPL          - ≡ƒô¥  Get Action Instructions Through CLI          - ≡ƒô¥  Confirm Action Completion Through CLI          - ≡ƒô¥  Re-execute Current Operation Using CLI          - ≡ƒô¥  Handle Operation Errors and Validation in CLI        - ΓÜÖ∩╕Å  Display Clarify Instructions Through REPL          - ≡ƒô¥  Display Clarification Data Through CLI          - ≡ƒô¥  Display Guardrails Through CLI          - ≡ƒô¥  Get Clarify Instructions Through CLI          - ≡ƒô¥  Confirm Clarify With Answers Through CLI        - ΓÜÖ∩╕Å  Display Strategy Instructions Through REPL          - ≡ƒô¥  Display Strategy Data Through CLI          - ≡ƒô¥  Get Strategy Instructions Through CLI        - ΓÜÖ∩╕Å  Display Build Instructions Through REPL          - ≡ƒô¥  Display Story Graph Through CLI          - ≡ƒô¥  Display Build Scope Through CLI          - ≡ƒô¥  Display Filtered Knowledge Graph Through CLI          - ≡ƒô¥  Get Build Instructions Through CLI        - ΓÜÖ∩╕Å  Display Validate Instructions Through REPL          - ≡ƒô¥  Display Validation Scanners Through CLI          - ≡ƒô¥  Display Validation Results Through CLI          - ≡ƒô¥  Get Validate Instructions Through CLI        - ΓÜÖ∩╕Å  Display Render Instructions Through REPL          - ≡ƒô¥  Display Render Configurations Through CLI          - ≡ƒô¥  Display Synchronizer Output Through CLI          - ≡ƒô¥  Get Render Instructions Through CLI      - ΓÜÖ∩╕Å  Manage Scope Using REPL        - ≡ƒô¥  Filter Work Using Knowledge Graph Scope in CLI        - ≡ƒô¥  Filter Work Using Files Scope in CLI        - ≡ƒô¥  Enforce Mutually Exclusive Scope Types        - ≡ƒô¥  View Current Scope in CLI        - ≡ƒô¥  Clear Scope Through CLI      - ΓÜÖ∩╕Å  Display State Using REPL        - ≡ƒô¥  Display CLI Header        - ≡ƒô¥  Display Bot Hierarchy Tree with Progress Indicators        - ≡ƒô¥  Display Current Position in CLI        - ≡ƒô¥  Display Active Scope in CLI Status        - ≡ƒô¥  Display CLI Navigation Menu Footer        - ≡ƒô¥  Display Headless Mode Status in CLI        - ≡ƒô¥  Display Available Bot in Tree Hierarchy        - ≡ƒô¥  Display CLI Bot Command in Navigation Menu Footer      - ΓÜÖ∩╕Å  Get Help Using REPL        - ≡ƒô¥  Display Action Help Using CLI        - ≡ƒô¥  Display Parameter Help Using CLI        - ≡ƒô¥  Display Command Examples Using CLITo change scope (pick ONE - setting a new scope replaces the previous):- `scope all` - Clear scope, work on entire project
+- `scope "Story Name"` - Filter by story (replaces any file scope)
+- `scope "file:C:/path/to/**/*.py"` - Filter by files (replaces any story scope)
+---
+
+## ≡ƒù║∩╕Å Progress
+
+
+**Current Position:** code.build
+
+-   shape
+
+-   prioritization
+
+-   discovery
+
+-   exploration
+
+-   scenarios
+
+-   tests
+
+- ΓåÆ code
+
+      Γ₧ñ **build** - Build story graph from content area and render using story graph renderer
+        Γ₧ñ **instructions**
+        [ ] confirm
+      [ ] validate
+
+## ≡ƒÆ╗ Commands
+
+
+**status | back | current | next | path [dir] | scope [filter] | headless "msg" | help | exit**
+
+```powershell
+echo '[command]' | python -m agile_bot.src.cli.cli_main
+```
+
+---
+
+-   shape
+
+-   prioritization
+
+-   discovery
+
+-   exploration
+
+-   scenarios
+
+-   tests
+
+- ΓåÆ code
+
+      Γ₧ñ **build** - Build story graph from content area and render using story graph renderer
+        Γ₧ñ **instructions**
+        [ ] confirm
+      [ ] validate
+**Behaviors:** shape | prioritization | discovery | exploration | scenarios | tests | **code**
+**Actions:** **build** | validate | rules
+

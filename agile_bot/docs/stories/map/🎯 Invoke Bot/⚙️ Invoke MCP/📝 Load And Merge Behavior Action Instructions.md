@@ -23,7 +23,8 @@ Load And Merge Behavior Action Instructions functionality for the mob minion sys
 
 ## Scenarios
 
-### Scenario: Action Loads And Merges Instructions (happy_path)
+<a id="scenario-action-loads-and-merges-instructions"></a>
+### Scenario: [Action Loads And Merges Instructions](#scenario-action-loads-and-merges-instructions) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -33,7 +34,8 @@ Then Instructions are loaded from both locations and merged
 ```
 
 
-### Scenario: Action uses Instructions class to merge base and behavior instructions (happy_path)
+<a id="scenario-action-uses-instructions-class-to-merge-base-and-behavior-instructions"></a>
+### Scenario: [Action uses Instructions class to merge base and behavior instructions](#scenario-action-uses-instructions-class-to-merge-base-and-behavior-instructions) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -43,7 +45,8 @@ Then Action uses Instructions class to merge instructions
 ```
 
 
-### Scenario: Action uses MergedInstructions class when render instructions present (happy_path)
+<a id="scenario-action-uses-mergedinstructions-class-when-render-instructions-present"></a>
+### Scenario: [Action uses MergedInstructions class when render instructions present](#scenario-action-uses-mergedinstructions-class-when-render-instructions-present) (happy_path)
 
 **Steps:**
 ```gherkin

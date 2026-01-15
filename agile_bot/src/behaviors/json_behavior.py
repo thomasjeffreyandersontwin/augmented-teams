@@ -73,8 +73,25 @@ class JSONBehavior(BaseBehaviorAdapter, JSONAdapter):
             'order': self.behavior.order,
             'is_current': self.is_current
         }
+        
+        # For current behavior: include full action details via adapter
         if self.is_current and self._actions_adapter and hasattr(self._actions_adapter, 'to_dict'):
             result['actions'] = self._actions_adapter.to_dict()
+        # For non-current behaviors: include minimal action list for panel display
+        elif self.behavior.actions:
+            result['actions'] = {
+                'all_actions': [
+                    {
+                        'action_name': action.action_name,
+                        'description': action.description,
+                        'order': action.order,
+                        'is_current': False,
+                        'is_completed': self.behavior.actions.is_action_completed(action.action_name)
+                    }
+                    for action in self.behavior.actions
+                ]
+            }
+        
         return result
     
     def deserialize(self, data: str) -> Behavior:

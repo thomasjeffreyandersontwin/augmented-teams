@@ -101,7 +101,7 @@ def build_test_file_link(test_file: str, workspace_directory: Path, story_file_p
     if not test_file:
         return ""
     try:
-        from agile_bot.src.bot_path.workspace import get_python_workspace_root
+        from agile_bot.src.bot.workspace import get_python_workspace_root
         workspace_root = get_python_workspace_root()
         test_file_path = workspace_root / 'agile_bot' / 'test' / test_file
         if not test_file_path.exists():
@@ -145,7 +145,7 @@ def build_test_class_link(test_file: str, test_class: str, workspace_directory: 
         return ""
     
     try:
-        from agile_bot.src.bot_path.workspace import get_python_workspace_root
+        from agile_bot.src.bot.workspace import get_python_workspace_root
         workspace_root = get_python_workspace_root()
         test_file_path = workspace_root / 'agile_bot' / 'test' / test_file
         if not test_file_path.exists():
@@ -188,7 +188,7 @@ def build_test_class_link(test_file: str, test_class: str, workspace_directory: 
         # Use relative path with line number using #L format
         # VS Code/Cursor markdown links use #L123 format for line numbers
         try:
-            from agile_bot.src.bot_path.workspace import get_python_workspace_root
+            from agile_bot.src.bot.workspace import get_python_workspace_root
             workspace_root = get_python_workspace_root()
             rel_path = test_file_path.relative_to(workspace_root)
             rel_path_str = str(rel_path).replace('\\', '/')
@@ -218,7 +218,7 @@ def build_test_method_link(test_file: str, test_method: str, workspace_directory
         return ""
     
     try:
-        from agile_bot.src.bot_path.workspace import get_python_workspace_root
+        from agile_bot.src.bot.workspace import get_python_workspace_root
         workspace_root = get_python_workspace_root()
         test_file_path = workspace_root / 'agile_bot' / 'test' / test_file
         if not test_file_path.exists():
@@ -261,7 +261,7 @@ def build_test_method_link(test_file: str, test_method: str, workspace_directory
         # Use relative path with line number using #L format
         # VS Code/Cursor markdown links use #L123 format for line numbers
         try:
-            from agile_bot.src.bot_path.workspace import get_python_workspace_root
+            from agile_bot.src.bot.workspace import get_python_workspace_root
             workspace_root = get_python_workspace_root()
             rel_path = test_file_path.relative_to(workspace_root)
             rel_path_str = str(rel_path).replace('\\', '/')

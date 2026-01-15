@@ -77,6 +77,23 @@ class TestInstructionsView {
         // Empty is valid - instructions only appear when action is executed
     }
 
+    async testInstructionsSectionAlwaysVisible() {
+        /**
+         * BUG #7: Instructions section completely missing when empty
+         * GIVEN: Empty instructions data
+         * WHEN: View renders
+         * THEN: HTML contains Instructions section with empty state message (NOT empty string)
+         */
+        const html = await this.helper.render_html();
+        
+        // BUG: Currently returns empty string when no instructions
+        // SHOULD: Always show section with "No instructions available" message
+        assert.ok(html.length > 0, 'Should return non-empty HTML');
+        assert.ok(html.includes('Instructions'), 'Should contain Instructions header');
+        assert.ok(html.includes('No instructions available') || html.includes('Run an action'), 
+            'Should show empty state message when no instructions');
+    }
+
     async testInstructionsWithCommandList() {
         /**
          * GIVEN: Real CLI status (no instructions)

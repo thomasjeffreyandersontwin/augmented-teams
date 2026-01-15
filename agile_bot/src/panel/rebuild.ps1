@@ -1,6 +1,17 @@
 # Rebuild and reinstall Bot Panel extension
 # Usage: .\rebuild.ps1
 
+# Increment patch version in package.json
+Write-Host "Incrementing version number..." -ForegroundColor Cyan
+$packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
+$version = [version]$packageJson.version
+$newVersion = "{0}.{1}.{2}" -f $version.Major, $version.Minor, ($version.Build + 1)
+$packageJson.version = $newVersion
+$jsonContent = $packageJson | ConvertTo-Json -Depth 100
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$PWD\package.json", $jsonContent, $utf8NoBom)
+Write-Host "Version updated: $($version) -> $newVersion" -ForegroundColor Green
+
 Write-Host "Cleaning up old VSIX files..." -ForegroundColor Cyan
 Remove-Item *.vsix -ErrorAction SilentlyContinue
 
@@ -25,7 +36,12 @@ if ($vsix) {
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`nExtension rebuilt and installed!" -ForegroundColor Green
-        Write-Host "Reload Cursor window to activate changes (Ctrl+R or Cmd+R)" -ForegroundColor Yellow
+        Write-Host "Reloading Cursor window..." -ForegroundColor Yellow
+        
+        # Reload the window using VS Code command
+        cursor --reuse-window --command "workbench.action.reloadWindow"
+        
+        Write-Host "Window reload command sent!" -ForegroundColor Green
     } else {
         Write-Host "ERROR: Installation failed!" -ForegroundColor Red
         exit 1

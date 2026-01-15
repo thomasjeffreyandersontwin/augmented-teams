@@ -8,7 +8,7 @@
 
 const PanelView = require('../panel/panel_view');
 const BotHeaderView = require('./bot_header_view');
-const PathsSection = require('./paths_section');
+// PathsSection removed - workspace is now shown in BotHeaderView to avoid duplication
 const BehaviorsView = require('../behaviors/behaviors_view');
 const ScopeSection = require('../scope/scope_view');
 const InstructionsSection = require('../instructions/instructions_view');
@@ -29,7 +29,7 @@ class BotView extends PanelView {
         
         // Initialize domain views - they get data from singleton CLI
         this.headerView = new BotHeaderView(this.panelVersion, webview, extensionUri);
-        this.pathsSection = new PathsSection();
+        // PathsSection removed - workspace shown in header to avoid duplication (Bug #1)
         this.behaviorsView = new BehaviorsView(webview, extensionUri);
         this.scopeSection = new ScopeSection(webview, extensionUri);
         this.instructionsSection = new InstructionsSection(webview, extensionUri);
@@ -46,9 +46,7 @@ class BotView extends PanelView {
         const header = await this.headerView.render();
         console.log('[BotView] Header rendered, length:', header.length);
         
-        console.log('[BotView] Rendering paths...');
-        const paths = await this.pathsSection.render();
-        console.log('[BotView] Paths rendered, length:', paths.length);
+        // PathsSection removed - workspace shown in header (Bug #1 fix)
         
         console.log('[BotView] Rendering behaviors...');
         const behaviors = await this.behaviorsView.render();
@@ -65,7 +63,6 @@ class BotView extends PanelView {
         const finalHtml = `
             <div class="bot-view">
                 ${header}
-                ${paths}
                 ${behaviors}
                 ${scope}
                 ${instructions}
@@ -141,7 +138,12 @@ class BotView extends PanelView {
             case 'updateScope':
                 return await this.scopeSection.handleEvent('updateFilter', eventData);
             case 'updateWorkspace':
-                return await this.pathsSection.handleEvent('updateWorkspace', eventData);
+                // PathsSection removed - workspace handled by header (Bug #1 fix)
+                console.log('[BotView] Received updateWorkspace event, delegating to headerView');
+                console.log('[BotView] eventData:', JSON.stringify(eventData, null, 2));
+                const result = await this.headerView.handleEvent('updateWorkspace', eventData);
+                console.log('[BotView] headerView result:', JSON.stringify(result, null, 2));
+                return result;
             case 'switchBot':
                 return await this.headerView.handleEvent('switchBot', eventData);
             default:

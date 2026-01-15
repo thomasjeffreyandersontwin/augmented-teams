@@ -12,12 +12,20 @@ import os
 import re
 import sys
 
-# Add base_bot to path for imports
-base_bot_path = Path(__file__).parent.parent.parent.parent.parent / 'base_bot' / 'src'
-if str(base_bot_path) not in sys.path:
-    sys.path.insert(0, str(base_bot_path))
+# Import utils from agile_bot.src
+from agile_bot.src.utils import build_test_file_link, build_test_class_link, build_test_method_link
 
-from utils import build_test_file_link, build_test_class_link, build_test_method_link
+
+def create_scenario_anchor(scenario_name: str) -> str:
+    """Create a markdown anchor ID from scenario name."""
+    # Normalize for markdown anchor: lowercase, replace spaces/special chars with hyphens
+    anchor = scenario_name.lower()
+    # Replace spaces and common special characters with hyphens
+    anchor = re.sub(r'[^\w\s-]', '', anchor)
+    anchor = re.sub(r'[-\s]+', '-', anchor)
+    # Remove leading/trailing hyphens
+    anchor = anchor.strip('-')
+    return f"scenario-{anchor}"
 
 
 def format_acceptance_criteria(ac_list):
@@ -185,8 +193,23 @@ def format_scenarios(scenarios_list, common_background=None, story_test_file='',
                     f"{rows}\n"
                 )
 
+        # Create anchor ID for scenario (normalized to match markdown auto-generated anchors)
+        scenario_anchor = create_scenario_anchor(name)
+        
+        # Format test link separately (if exists) - keep as separate link after scenario type
+        test_link_display = f" {scenario_test_link}" if scenario_test_link else ""
+        
+        # VS Code markdown preview generates anchors from header text.
+        # To ensure links work reliably, we:
+        # 1. Place explicit anchor tag right before header (for external links from panel)
+        # 2. Use plain text in header so VS Code generates compatible anchor
+        # 3. Make the scenario name itself a clickable link that points to the anchor
+        # The header format: "### Scenario: [Name](#anchor) (type)" 
+        # VS Code will generate anchor from the rendered text "Scenario: Name (type)"
+        # But our explicit anchor tag ensures the link target exists regardless.
+        scenario_name_link = f"[{name}](#{scenario_anchor})"
         formatted.append(
-            f"### Scenario: {name} ({scenario_type}){scenario_test_link}\n\n**Steps:**\n```gherkin\n{steps_text}\n```\n{examples_block}"
+            f"<a id=\"{scenario_anchor}\"></a>\n### Scenario: {scenario_name_link} ({scenario_type}){test_link_display}\n\n**Steps:**\n```gherkin\n{steps_text}\n```\n{examples_block}"
         )
     
     return "\n\n".join(formatted)

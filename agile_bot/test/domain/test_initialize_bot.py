@@ -125,7 +125,7 @@ class TestLoadBotBehaviors:
         """Scenario: Bot behaviors are loaded from BotConfig."""
         helper = BotTestHelper(tmp_path)
         # story_bot has exactly 7 behaviors (sorted by their order property)
-        expected_behaviors = ['prioritization', 'exploration', 'scenarios', 'tests', 'code', 'discovery', 'shape']
+        expected_behaviors = ['shape', 'prioritization', 'discovery', 'exploration', 'scenarios', 'tests', 'code']
         assert helper.bot.behaviors.names == expected_behaviors, \
             f"Expected {expected_behaviors}, got {helper.bot.behaviors.names}"
     

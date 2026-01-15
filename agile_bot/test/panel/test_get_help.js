@@ -171,6 +171,7 @@ class TestGetHelpThroughPanel {
 test('TestGetHelpThroughPanel', { concurrency: false, timeout: 30000 }, async (t) => {
     // Initialize shared CLI once for all tests
     PanelView.initializeCLI(workspaceDir, botDir);
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     const suite = new TestGetHelpThroughPanel(workspaceDir);
     

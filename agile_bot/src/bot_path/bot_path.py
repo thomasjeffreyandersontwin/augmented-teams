@@ -83,6 +83,11 @@ class BotPath:
     def documentation_path(self) -> Path:
         return self._documentation_path
 
+    @property
+    def test_path(self) -> Path:
+        """Return the relative path to the test directory."""
+        return Path('test')
+
     def find_repo_root(self) -> Path:
         return self.python_workspace_root
 

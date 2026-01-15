@@ -60,9 +60,8 @@ class InstructionsSection extends PanelView {
         const botData = await this.execute('status');
         const instructionsData = botData.instructions || {};
         
-        if (!instructionsData || Object.keys(instructionsData).length === 0) {
-            return '';
-        }
+        // Always render section structure - show empty state if no instructions
+        // (Remove early return that was hiding the entire section)
 
         // Merge behavior instructions into base_instructions at the top
         let instructions = { ...instructionsData };
@@ -282,12 +281,11 @@ class InstructionsSection extends PanelView {
             return true;
         });
 
-        if (validKeys.length === 0) {
-            return '';
-        }
+        // If no valid instructions, show empty state instead of hiding section
+        const hasInstructions = validKeys.length > 0;
 
-        // Generate collapsible sections for each property
-        const sections = validKeys.map((key, index) => {
+        // Generate collapsible sections for each property (or empty state)
+        const sections = hasInstructions ? validKeys.map((key, index) => {
             const value = instructions[key];
             const config = propertyConfig[key] || { 
                 name: this._formatPropertyName(key), 
@@ -348,7 +346,7 @@ class InstructionsSection extends PanelView {
             </div>
           </div>
         </div>`;
-        }).join('');
+        }).join('') : '<div class="empty-state" style="padding: 10px 5px; color: var(--vscode-descriptionForeground); font-style: italic;">No instructions available. Run an action command to see instructions here.</div>';
 
         // Escape prompt content for safe embedding in HTML attribute
         const promptContentStr = typeof this.promptContent === 'string' ? this.promptContent : (this.promptContent ? String(this.promptContent) : '');

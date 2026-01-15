@@ -127,7 +127,7 @@ class TestManageBehaviors:
         helper = BotTestHelper(tmp_path)
         behavior_names = [b.name for b in helper.bot.behaviors]
         # story_bot has exactly 7 behaviors (sorted by their order property)
-        expected_behaviors = ['prioritization', 'exploration', 'scenarios', 'tests', 'code', 'discovery', 'shape']
+        expected_behaviors = ['shape', 'prioritization', 'discovery', 'exploration', 'scenarios', 'tests', 'code']
         assert behavior_names == expected_behaviors, \
             f"Expected {expected_behaviors}, got {behavior_names}"
     
@@ -553,10 +553,10 @@ class TestNavigateSequentially:
         
         # Then: Should start at first behavior, first action
         assert result['status'] == 'success'
-        assert result['behavior'] == 'prioritization'  # First behavior (order=2)
-        # First action is 'strategy' not 'clarify' - bot.next() goes to current action
+        assert result['behavior'] == 'shape'  # First behavior (order=1)
+        # bot.next() goes to current action which may not be the first
         assert result['action'] == 'strategy'
-        helper.behaviors.assert_at_behavior_action('prioritization', 'strategy')
+        helper.behaviors.assert_at_behavior_action('shape', 'strategy')
     
     def test_navigate_to_behavior(self, tmp_path):
         """
@@ -714,7 +714,7 @@ class TestInjectContextIntoInstructions:
         helper.behaviors.assert_behavior_complete_structure(
             behavior=behavior,
             expected_name='shape',
-            expected_order=999,  # No explicit order in behavior.json, defaults to 999
+            expected_order=1,  # Shape behavior has order=1
             expected_actions=['clarify', 'strategy', 'build', 'validate', 'render'],
             expected_description='Test behavior: shape'
         )

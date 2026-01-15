@@ -8,7 +8,6 @@
 
 const PanelView = require('./panel_view');
 const BotHeaderView = require('./bot_header_view');
-const PathsSection = require('./paths_section');
 const BehaviorsView = require('./behaviors_view');
 const ScopeSection = require('./scope_view');
 const InstructionsSection = require('./instructions_view');
@@ -29,7 +28,6 @@ class BotView extends PanelView {
         
         // Initialize domain views - they get data from singleton CLI
         this.headerView = new BotHeaderView(this.panelVersion, webview, extensionUri);
-        this.pathsSection = new PathsSection();
         this.behaviorsView = new BehaviorsView(webview, extensionUri);
         this.scopeSection = new ScopeSection(webview, extensionUri);
         this.instructionsSection = new InstructionsSection(webview, extensionUri);
@@ -46,10 +44,6 @@ class BotView extends PanelView {
         const header = await this.headerView.render();
         console.log('[BotView] Header rendered, length:', header.length);
         
-        console.log('[BotView] Rendering paths...');
-        const paths = await this.pathsSection.render();
-        console.log('[BotView] Paths rendered, length:', paths.length);
-        
         console.log('[BotView] Rendering behaviors...');
         const behaviors = await this.behaviorsView.render();
         console.log('[BotView] Behaviors rendered, length:', behaviors.length);
@@ -65,7 +59,6 @@ class BotView extends PanelView {
         const finalHtml = `
             <div class="bot-view">
                 ${header}
-                ${paths}
                 ${behaviors}
                 ${scope}
                 ${instructions}
@@ -94,19 +87,10 @@ class BotView extends PanelView {
         
         // For "scope" command, return scope data with bot
         if (command === 'scope' && response.scope) {
-            // Update botData with the bot portion
-            if (response.bot) {
-                this.update(response.bot);
-            }
             return response;
         }
         
         // For action commands, return unified response (contains execution, instructions, bot)
-        // Update botData with the bot portion
-        if (response.bot) {
-            this.update(response.bot);
-        }
-        
         return response;
     }
     
@@ -116,12 +100,8 @@ class BotView extends PanelView {
      * @returns {Promise<Object>} Updated bot JSON
      */
     async refresh() {
-        if (!this.cli) {
-            throw new Error('CLI instance required for refresh');
-        }
         // "status" command returns the Bot object itself
         const botJSON = await this.execute('status');
-        this.update(botJSON);
         return botJSON;
     }
     
@@ -141,7 +121,7 @@ class BotView extends PanelView {
             case 'updateScope':
                 return await this.scopeSection.handleEvent('updateFilter', eventData);
             case 'updateWorkspace':
-                return await this.pathsSection.handleEvent('updateWorkspace', eventData);
+                return await this.headerView.handleEvent('updateWorkspace', eventData);
             case 'switchBot':
                 return await this.headerView.handleEvent('switchBot', eventData);
             default:

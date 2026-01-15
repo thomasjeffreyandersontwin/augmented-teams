@@ -22,9 +22,9 @@ Generate CLI Entry Point functionality for the mob minion system.
   **then** it sets BOT_DIRECTORY and PYTHONPATH environment variables
 
 - **When** script is generated,
-  **then** it launches the CLI entry point (python -m agile_bot.src.cli.cli_main) for the specific bot
+  **then** it launches repl_main.py for the specific bot
 
-- **When** CLI is launched,
+- **When** REPL is launched,
   **then** it includes TTY detection, state display, command parsing, and execution
 
 ## Scenarios

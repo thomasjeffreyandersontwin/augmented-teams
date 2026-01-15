@@ -73,6 +73,14 @@ class JSONBot(BaseBotAdapter, JSONAdapter):
         }
         if self._behaviors_adapter:
             result['behaviors'] = self._behaviors_adapter.to_dict() if hasattr(self._behaviors_adapter, 'to_dict') else {}
+        
+        # Include scope if available
+        if hasattr(self.bot, '_scope') and self.bot._scope:
+            # Serialize scope using its adapter
+            from agile_bot.src.cli.adapter_factory import AdapterFactory
+            scope_adapter = AdapterFactory.create(self.bot._scope, 'json')
+            result['scope'] = scope_adapter.to_dict()
+        
         return result
     
     def deserialize(self, data: str) -> dict:

@@ -23,7 +23,7 @@ class BehaviorsView extends PanelView {
     }
     
     /**
-     * Get behaviors data from CLI
+     * Get behaviors data from CLI and sort in canonical order (Bug #2 fix)
      */
     async getBehaviors() {
         const botData = await this.execute('status');
@@ -31,7 +31,27 @@ class BehaviorsView extends PanelView {
         if (!botData) throw new Error('[BehaviorsView] botData is null/undefined');
         if (!botData.behaviors) throw new Error('[BehaviorsView] No behaviors in response');
         if (!botData.behaviors.all_behaviors) throw new Error('[BehaviorsView] No all_behaviors in response');
-        return botData.behaviors.all_behaviors;
+        
+        // Bug #2: Sort behaviors in canonical order
+        const canonicalOrder = ['shape', 'prioritization', 'discovery', 'exploration', 'scenarios', 'test', 'code'];
+        const behaviors = botData.behaviors.all_behaviors;
+        
+        return behaviors.sort((a, b) => {
+            const aName = (a.name || '').toLowerCase();
+            const bName = (b.name || '').toLowerCase();
+            const aIndex = canonicalOrder.indexOf(aName);
+            const bIndex = canonicalOrder.indexOf(bName);
+            
+            // If both are in canonical order, sort by index
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            // If only one is in canonical order, it comes first
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            // If neither is in canonical order, maintain original order
+            return 0;
+        });
     }
     
     /**
@@ -90,7 +110,20 @@ class BehaviorsView extends PanelView {
         if (!botData) throw new Error('[BehaviorsView] botData is null/undefined');
         if (!botData.behaviors) throw new Error('[BehaviorsView] No behaviors in response');
         if (!botData.behaviors.all_behaviors) throw new Error('[BehaviorsView] No all_behaviors in response');
-        const behaviorsData = botData.behaviors.all_behaviors;
+        let behaviorsData = botData.behaviors.all_behaviors;
+        
+        // Sort behaviors in canonical order: shape, prioritization, discovery, exploration, scenarios, test, code
+        const canonicalOrder = ['shape', 'prioritization', 'discovery', 'exploration', 'scenarios', 'test', 'code'];
+        behaviorsData = behaviorsData.sort((a, b) => {
+            // Normalize "tests" to "test" for sorting
+            const normalizeName = (name) => name.toLowerCase() === 'tests' ? 'test' : name.toLowerCase();
+            const aIndex = canonicalOrder.indexOf(normalizeName(a.name));
+            const bIndex = canonicalOrder.indexOf(normalizeName(b.name));
+            const aPos = aIndex === -1 ? 999 : aIndex;
+            const bPos = bIndex === -1 ? 999 : bIndex;
+            return aPos - bPos;
+        });
+        
         const vscode = require('vscode');
         
         // Get the proper webview URIs for icons
@@ -317,7 +350,10 @@ class BehaviorsView extends PanelView {
         
         const behaviorTooltip = behavior.description ? this.escapeHtml(behavior.description) : '';
         const behaviorId = `behavior-${bIdx}`;
-        const behaviorName = this.escapeHtml(behavior.name || '');
+        // Normalize "tests" to "test" for display
+        const rawName = behavior.name || '';
+        const normalizedName = rawName.toLowerCase() === 'tests' ? 'test' : rawName;
+        const behaviorName = this.escapeHtml(normalizedName);
         
         // Expansion logic:
         // 1. If we have saved state for this item, use it (user's explicit choice)

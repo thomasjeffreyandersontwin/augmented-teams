@@ -55,6 +55,26 @@ class ScopeSection extends PanelView {
     }
     
     /**
+     * Create scenario anchor ID from scenario name (matches synchronizer format).
+     * 
+     * @param {string} scenarioName - Scenario name
+     * @returns {string} Anchor ID
+     */
+    createScenarioAnchor(scenarioName) {
+        if (typeof scenarioName !== 'string') {
+            scenarioName = String(scenarioName);
+        }
+        // Normalize for markdown anchor: lowercase, replace spaces/special chars with hyphens
+        let anchor = scenarioName.toLowerCase();
+        // Replace spaces and common special characters with hyphens
+        anchor = anchor.replace(/[^\w\s-]/g, '');
+        anchor = anchor.replace(/[-\s]+/g, '-');
+        // Remove leading/trailing hyphens
+        anchor = anchor.replace(/^-+|-+$/g, '');
+        return `scenario-${anchor}`;
+    }
+    
+    /**
      * Render scope section HTML.
      * 
      * @returns {string} HTML string
@@ -73,6 +93,7 @@ class ScopeSection extends PanelView {
         let epicIconPath = '';
         let pageIconPath = '';
         let testTubeIconPath = '';
+        let documentIconPath = '';
         if (this.webview && this.extensionUri) {
             try {
                 const magnifyingGlassUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'magnifying_glass.png');
@@ -96,8 +117,11 @@ class ScopeSection extends PanelView {
                 const pageUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'page.png');
                 pageIconPath = this.webview.asWebviewUri(pageUri).toString();
                 
-                // test_tube.png doesn't exist - skip it
-                testTubeIconPath = '';
+                const testTubeUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'test_tube.png');
+                testTubeIconPath = this.webview.asWebviewUri(testTubeUri).toString();
+                
+                const documentUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'document.png');
+                documentIconPath = this.webview.asWebviewUri(documentUri).toString();
             } catch (err) {
                 console.error('Failed to create icon URIs:', err);
             }
@@ -112,8 +136,10 @@ class ScopeSection extends PanelView {
         let contentHtml = '';
         let contentSummary = '';
         if ((scopeData.type === 'story' || scopeData.type === 'showAll') && scopeData.content) {
-            contentHtml = this.renderStoryTree(scopeData.content, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath);
-            contentSummary = `${scopeData.content.length} epic${scopeData.content.length !== 1 ? 's' : ''}`;
+            // content is an object with 'epics' property, not directly an array
+            const epics = scopeData.content.epics || [];
+            contentHtml = this.renderStoryTree(epics, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath, documentIconPath, plusIconPath, subtractIconPath);
+            contentSummary = `${epics.length} epic${epics.length !== 1 ? 's' : ''}`;
         } else if (scopeData.type === 'files' && scopeData.content) {
             contentHtml = this.renderFileList(scopeData.content);
             contentSummary = `${scopeData.content.length} file${scopeData.content.length !== 1 ? 's' : ''}`;
@@ -182,8 +208,8 @@ class ScopeSection extends PanelView {
                         <input type="text" id="scopeFilterInput" 
                                value="${filterValue}" 
                                placeholder="Epic or Story name"
-                               onchange="updateFilter(this.value)"
-                               onkeydown="if(event.key === 'Enter') { event.preventDefault(); updateFilter(this.value); }" />
+                               onchange="console.log('[ScopeInput] onchange fired with:', this.value); updateFilter(this.value)"
+                               onkeydown="console.log('[ScopeInput] Key pressed:', event.key, 'Value:', this.value); if(event.key === 'Enter') { event.preventDefault(); console.log('[ScopeInput] Enter key - calling updateFilter'); updateFilter(this.value); }" />
                     </div>
                     ${contentHtml}
                 </div>
@@ -193,49 +219,149 @@ class ScopeSection extends PanelView {
     }
     
     /**
-     * Render story tree (epics -> features -> stories -> scenarios).
+     * Render story tree (epics -> sub-epics -> stories -> scenarios).
      * 
      * @param {Array} epics - Epics array
      * @returns {string} HTML string
      */
-    renderStoryTree(epics, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath) {
+    renderStoryTree(epics, gearIconPath, epicIconPath, pageIconPath, testTubeIconPath, documentIconPath, plusIconPath, subtractIconPath) {
         return epics.map((epic, epicIndex) => {
             const epicId = `epic-${epicIndex}`;
             const epicIcon = epicIconPath ? `<img src="${epicIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Epic" />` : '';
+            
+            // Find document and test links for epic
+            const epicDocLink = epic.links && epic.links.find(l => l.icon === 'document');
+            const epicTestLink = epic.links && epic.links.find(l => l.icon === 'test_tube');
+            
+            // Make epic name a hyperlink if document exists
+            const epicNameHtml = epicDocLink 
+                ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(epicDocLink.url)}')">${this.escapeHtml(epic.name)}</a>`
+                : this.escapeHtml(epic.name);
+            
+            // Render test tube icon for epic test link
+            const epicTestIcon = (epicTestLink && testTubeIconPath)
+                ? ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(epicTestLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`
+                : '';
+            
             let html = `<div style="margin-top: 8px; font-size: 12px;">
         <span class="collapsible-header" onclick="toggleCollapse('${epicId}')" style="cursor: pointer; user-select: none;">
-          <span id="${epicId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${epicIcon}${this.escapeHtml(epic.name)}
+          <span id="${epicId}-icon" style="display: inline-block; min-width: 9px;" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}"><img class="collapse-icon" src="${plusIconPath}" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${epicIcon}${epicNameHtml}${epicTestIcon}
         </span>
       </div>`;
             
             html += `<div id="${epicId}" class="collapsible-content" style="display: none;">`;
-            // Helper function to recursively render a feature (can have nested features)
-            const renderFeature = (feature, featureIndex, parentPath, depth = 0) => {
-                const featureId = `${parentPath}-${featureIndex}`;
-                const featureIcon = gearIconPath ? `<img src="${gearIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Feature" />` : '';
-                const featureLinks = (feature.links && feature.links.length > 0) 
-                    ? ' ' + feature.links.map(link => 
-                        `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
-                    ).join(' ')
+            // Helper function to recursively render a sub-epic (can be nested any number of levels)
+            const renderSubEpic = (subEpic, subEpicIndex, parentPath, depth = 0) => {
+                const subEpicId = `${parentPath}-${subEpicIndex}`;
+                const subEpicIcon = gearIconPath ? `<img src="${gearIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Sub-Epic" />` : '';
+                
+                // Find document and test links
+                const subEpicDocLink = subEpic.links && subEpic.links.find(l => l.icon === 'document');
+                const subEpicTestLink = subEpic.links && subEpic.links.find(l => l.icon === 'test_tube');
+                
+                // Make sub-epic name a hyperlink if document exists
+                const subEpicNameHtml = subEpicDocLink
+                    ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(subEpicDocLink.url)}')">${this.escapeHtml(subEpic.name)}</a>`
+                    : this.escapeHtml(subEpic.name);
+                
+                // Only render test tube icon for test links
+                const subEpicTestIcon = (subEpicTestLink && testTubeIconPath)
+                    ? ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(subEpicTestLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`
                     : '';
                 
-                const marginLeft = 7 + (depth * 7); // Increase margin for nested features
+                const marginLeft = 7 + (depth * 7); // Increase margin for nested sub-epics
                 
-                html += `<div style="margin-left: ${marginLeft}px; margin-top: 4px; font-size: 12px;"><span class="collapsible-header" onclick="toggleCollapse('${featureId}')" style="cursor: pointer; user-select: none;"><span id="${featureId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${featureIcon}${this.escapeHtml(feature.name)}${featureLinks}</span></div>`;
+                html += `<div style="margin-left: ${marginLeft}px; margin-top: 4px; font-size: 12px;"><span class="collapsible-header" onclick="toggleCollapse('${subEpicId}')" style="cursor: pointer; user-select: none;"><span id="${subEpicId}-icon" style="display: inline-block; min-width: 9px;" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}"><img class="collapse-icon" src="${plusIconPath}" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> ${subEpicIcon}${subEpicNameHtml}${subEpicTestIcon}</span></div>`;
                 
-                html += `<div id="${featureId}" class="collapsible-content" style="display: none;">`;
+                html += `<div id="${subEpicId}" class="collapsible-content" style="display: none;">`;
                 
-                // Render nested features if they exist
-                if (feature.features && feature.features.length > 0) {
-                    feature.features.forEach((nestedFeature, nestedIndex) => {
-                        renderFeature(nestedFeature, nestedIndex, featureId, depth + 1);
+                // Render nested sub_epics if they exist (recursive)
+                const nestedSubEpics = subEpic.sub_epics || [];
+                if (nestedSubEpics.length > 0) {
+                    nestedSubEpics.forEach((nested, nestedIndex) => {
+                        renderSubEpic(nested, nestedIndex, subEpicId, depth + 1);
                     });
                 }
                 
-                // Render stories if they exist
-                if (feature.stories && feature.stories.length > 0) {
-                    feature.stories.forEach((story, storyIndex) => {
-                        const storyId = `${featureId}-story-${storyIndex}`;
+                // Render story_groups with stories if they exist
+                if (subEpic.story_groups && subEpic.story_groups.length > 0) {
+                    subEpic.story_groups.forEach(storyGroup => {
+                        if (storyGroup.stories && storyGroup.stories.length > 0) {
+                            storyGroup.stories.forEach((story, storyIndex) => {
+                                const storyId = `${subEpicId}-story-${storyIndex}`;
+                                const storyIcon = pageIconPath ? `<img src="${pageIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Story" />` : '';
+                                
+                                // Check if story has scenarios - if so, make it collapsible
+                                const hasScenarios = story.scenarios && story.scenarios.length > 0;
+                                
+                                html += `<div style="margin-left: ${marginLeft + 7}px; margin-top: 2px; font-size: 12px;">`;
+                                
+                                if (hasScenarios) {
+                                    // Collapsible story with scenarios
+                                    html += `<span class="collapsible-header" onclick="toggleCollapse('${storyId}')" style="cursor: pointer; user-select: none;">`;
+                                    html += `<span id="${storyId}-icon" style="display: inline-block; min-width: 9px;" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}"><img class="collapse-icon" src="${plusIconPath}" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> `;
+                                }
+                                
+                                // Find story doc link (if exists)
+                                const storyDocLink = story.links && story.links.find(l => l.text === 'story');
+                                
+                                if (storyDocLink) {
+                                    html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyDocLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
+                                } else {
+                                    html += `${storyIcon}${this.escapeHtml(story.name)}`;
+                                }
+                                
+                                // Render test tube icon for test link
+                                if (story.links && story.links.length > 0) {
+                                    const testLink = story.links.find(l => l.icon === 'test_tube');
+                                    if (testLink && testTubeIconPath) {
+                                        html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                                    }
+                                }
+                                
+                                if (hasScenarios) {
+                                    html += `</span>`; // Close collapsible-header span
+                                }
+                                
+                                html += '</div>';
+                                
+                                // Render scenarios if they exist
+                                if (hasScenarios) {
+                                    html += `<div id="${storyId}" class="collapsible-content" style="display: none;">`;
+                                    story.scenarios.forEach((scenario, scenarioIndex) => {
+                                        html += `<div style="margin-left: ${marginLeft + 21}px; margin-top: 2px; font-size: 12px;">`;
+                                        
+                                        // Create scenario anchor ID from scenario name (matches synchronizer format)
+                                        const scenarioAnchor = this.createScenarioAnchor(scenario.name);
+                                        
+                                        // Link scenario name to story file with scenario anchor
+                                        if (storyDocLink) {
+                                            const scenarioLink = `${storyDocLink.url}#${scenarioAnchor}`;
+                                            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenarioLink)}')">${this.escapeHtml(scenario.name)}</a>`;
+                                        } else {
+                                            // No story doc link - just display scenario name
+                                            html += `${this.escapeHtml(scenario.name)}`;
+                                        }
+                                        
+                                        // Render test tube icon for test link (separate from scenario name link)
+                                        // Scenarios have test_method, backend sets test_file with full path + anchor when test_method exists
+                                        if (scenario.test_file && testTubeIconPath) {
+                                            html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenario.test_file)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                                        }
+                                        
+                                        html += '</div>';
+                                    });
+                                    html += '</div>'; // Close scenario collapsible-content
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // LEGACY: Also check for direct stories array (old format)
+                if (subEpic.stories && subEpic.stories.length > 0) {
+                    subEpic.stories.forEach((story, storyIndex) => {
+                        const storyId = `${subEpicId}-story-${storyIndex}`;
                         const storyIcon = pageIconPath ? `<img src="${pageIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Story" />` : '';
                         
                         // Check if story has scenarios - if so, make it collapsible
@@ -246,21 +372,24 @@ class ScopeSection extends PanelView {
                         if (hasScenarios) {
                             // Collapsible story with scenarios
                             html += `<span class="collapsible-header" onclick="toggleCollapse('${storyId}')" style="cursor: pointer; user-select: none;">`;
-                            html += `<span id="${storyId}-icon" style="display: inline-block; min-width: 9px;"><img class="collapse-icon" src="" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> `;
+                            html += `<span id="${storyId}-icon" style="display: inline-block; min-width: 9px;" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}"><img class="collapse-icon" src="${plusIconPath}" data-state="collapsed" style="width: 9px; height: 9px; vertical-align: middle;" alt="Expand" /></span> `;
                         }
                         
-                        if (story.links && story.links.length > 0) {
-                            // First link is the story file itself
-                            const storyLink = story.links[0];
-                            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
-                            // Remaining links are test files, etc.
-                            if (story.links.length > 1) {
-                                html += ' ' + story.links.slice(1).map(link => 
-                                    `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(link.url)}')">[${this.escapeHtml(link.text)}]</a>`
-                                ).join(' ');
-                            }
+                        // Find story doc link (if exists)
+                        const storyDocLink = story.links && story.links.find(l => l.text === 'story');
+                        
+                        if (storyDocLink) {
+                            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyDocLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
                         } else {
                             html += `${storyIcon}${this.escapeHtml(story.name)}`;
+                        }
+                        
+                        // Render test tube icon for test link
+                        if (story.links && story.links.length > 0) {
+                            const testLink = story.links.find(l => l.icon === 'test_tube');
+                            if (testLink && testTubeIconPath) {
+                                html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                            }
                         }
                         
                         if (hasScenarios) {
@@ -273,15 +402,24 @@ class ScopeSection extends PanelView {
                         if (hasScenarios) {
                             html += `<div id="${storyId}" class="collapsible-content" style="display: none;">`;
                             story.scenarios.forEach((scenario, scenarioIndex) => {
-                                const testTubeIcon = testTubeIconPath ? `<img src="${testTubeIconPath}" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" alt="Scenario" />` : '';
                                 html += `<div style="margin-left: ${marginLeft + 21}px; margin-top: 2px; font-size: 12px;">`;
                                 
-                                // scenario.test_file now contains the complete absolute path with #test_method
-                                if (scenario.test_file) {
-                                    html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenario.test_file)}')">${testTubeIcon}${this.escapeHtml(scenario.name)}</a>`;
+                                // Create scenario anchor ID from scenario name (matches synchronizer format)
+                                const scenarioAnchor = this.createScenarioAnchor(scenario.name);
+                                
+                                // Link scenario name to story file with scenario anchor
+                                if (storyDocLink) {
+                                    const scenarioLink = `${storyDocLink.url}#${scenarioAnchor}`;
+                                    html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenarioLink)}')">${this.escapeHtml(scenario.name)}</a>`;
                                 } else {
-                                    // No link - just display scenario name
-                                    html += `${testTubeIcon}${this.escapeHtml(scenario.name)}`;
+                                    // No story doc link - just display scenario name
+                                    html += `${this.escapeHtml(scenario.name)}`;
+                                }
+                                
+                                // Render test tube icon for test link (separate from scenario name link)
+                                // Scenarios have test_method, backend sets test_file with full path + anchor when test_method exists
+                                if (scenario.test_file && testTubeIconPath) {
+                                    html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenario.test_file)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
                                 }
                                 
                                 html += '</div>';
@@ -291,11 +429,13 @@ class ScopeSection extends PanelView {
                     });
                 }
                 
-                html += '</div>'; // Close feature collapsible-content
+                html += '</div>'; // Close sub-epic collapsible-content
             };
             
-            epic.features.forEach((feature, featureIndex) => {
-                renderFeature(feature, featureIndex, `epic-${epicIndex}`, 0);
+            // Render sub-epics under this epic
+            const subEpics = epic.sub_epics || [];
+            subEpics.forEach((subEpic, subEpicIndex) => {
+                renderSubEpic(subEpic, subEpicIndex, `epic-${epicIndex}`, 0);
             });
             html += '</div>'; // Close epic collapsible-content
             
@@ -324,8 +464,11 @@ class ScopeSection extends PanelView {
      */
     async handleEvent(eventType, eventData) {
         if (eventType === 'updateFilter') {
-            // Update filter logic would go here
-            return { success: true, filter: eventData.filter };
+            const filterValue = eventData.filter || '';
+            // Execute scope command with filter value
+            const command = filterValue ? `scope "${filterValue}"` : 'scope';
+            const result = await this.execute(command);
+            return result;
         }
         throw new Error(`Unknown event type: ${eventType}`);
     }

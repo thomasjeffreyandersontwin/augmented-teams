@@ -56,11 +56,18 @@ class CLISession:
         # Parse command
         verb, args = self._parse_command(command)
         
+        # Check for --format json flag and set mode
+        if args and ('--format json' in args or '--format=json' in args):
+            # Set mode to json (stays that way until changed)
+            self.mode = 'json'
+            # Strip --format json from args
+            args = args.replace('--format json', '').replace('--format=json', '').strip()
+        
         # Check for exit command
         cli_terminated = verb == 'exit'
         
         # Track if this command changes navigation state (should auto-display status)
-        is_navigation_command = verb in ('next', 'back', 'current', 'scope')
+        is_navigation_command = verb in ('next', 'back', 'current', 'scope', 'path', 'workspace')
         
         # Special case: "status" just returns the bot itself
         if verb == 'status':
@@ -139,56 +146,87 @@ class CLISession:
         
         # For navigation commands, auto-execute instructions and append full bot status
         if is_navigation_command and not cli_terminated:
-            output_parts = [output]
-            
-            # Check if navigation succeeded
-            navigation_succeeded = True
-            if isinstance(result, dict) and 'status' in result:
-                navigation_succeeded = result['status'] not in ['error', 'at_start', 'at_end']
-            
-            # Check if result is already an Instructions object (from "current" command)
-            # to avoid printing instructions twice
-            from agile_bot.src.instructions.instructions import Instructions
-            result_is_instructions = isinstance(result, Instructions)
-            
-            # If navigation succeeded and result isn't already instructions, 
-            # auto-execute instructions for new position
-            # This applies to: next, back, scope changes, and behavior.action navigation
-            if navigation_succeeded and not result_is_instructions:
-                instructions_result = self.bot.current()
+            # JSON mode: build unified structure { execution, instructions?, bot }
+            # Text mode: concatenate text outputs with banners
+            if self.mode == 'json':
+                import json
+                # Parse the initial result JSON
+                result_data = json.loads(output) if isinstance(output, str) else output
+                unified_response = {}
                 
-                # Check if we got an Instructions object or an error dict
-                if isinstance(instructions_result, dict) and 'status' in instructions_result and instructions_result['status'] == 'error':
-                    # Error getting instructions - show error message in appropriate format
-                    error_message = instructions_result.get('message', 'Unknown error')
-                    if self.mode == 'json':
-                        import json
-                        error_dict = {
-                            'status': 'error',
-                            'message': error_message
-                        }
-                        output_parts.append(json.dumps(error_dict, indent=2))
+                # Add the navigation result (scope, navigation, etc.)
+                if isinstance(result_data, dict):
+                    unified_response.update(result_data)
+                
+                # Check if navigation succeeded
+                navigation_succeeded = True
+                if isinstance(result, dict) and 'status' in result:
+                    navigation_succeeded = result['status'] not in ['error', 'at_start', 'at_end']
+                
+                # Check if result is already an Instructions object
+                from agile_bot.src.instructions.instructions import Instructions
+                result_is_instructions = isinstance(result, Instructions)
+                
+                # Add instructions if navigation succeeded
+                if navigation_succeeded and not result_is_instructions:
+                    instructions_result = self.bot.current()
+                    
+                    if isinstance(instructions_result, dict) and 'status' in instructions_result and instructions_result['status'] == 'error':
+                        # Error getting instructions
+                        unified_response['instructions_error'] = instructions_result.get('message', 'Unknown error')
                     else:
+                        # Got Instructions object - serialize to dict
+                        instructions_adapter = self._get_adapter_for_domain(instructions_result)
+                        instructions_json = instructions_adapter.serialize()
+                        instructions_data = json.loads(instructions_json) if isinstance(instructions_json, str) else instructions_json
+                        unified_response['instructions'] = instructions_data
+                
+                # Always add full bot status
+                status_adapter = self._get_adapter_for_domain(self.bot)
+                status_json = status_adapter.serialize()
+                status_data = json.loads(status_json) if isinstance(status_json, str) else status_json
+                unified_response['bot'] = status_data
+                
+                output = json.dumps(unified_response, indent=2)
+            else:
+                # Text mode: concatenate with banners (original behavior)
+                output_parts = [output]
+                
+                # Check if navigation succeeded
+                navigation_succeeded = True
+                if isinstance(result, dict) and 'status' in result:
+                    navigation_succeeded = result['status'] not in ['error', 'at_start', 'at_end']
+                
+                # Check if result is already an Instructions object
+                from agile_bot.src.instructions.instructions import Instructions
+                result_is_instructions = isinstance(result, Instructions)
+                
+                # Add instructions if navigation succeeded
+                if navigation_succeeded and not result_is_instructions:
+                    instructions_result = self.bot.current()
+                    
+                    if isinstance(instructions_result, dict) and 'status' in instructions_result and instructions_result['status'] == 'error':
+                        # Error getting instructions
+                        error_message = instructions_result.get('message', 'Unknown error')
                         output_parts.append("")
                         output_parts.append(f"ERROR: {error_message}")
-                else:
-                    # Got Instructions object - use adapter to serialize
-                    output_parts.append("")
-                    output_parts.append("=" * 100)
-                    output_parts.append("INSTRUCTIONS")
-                    output_parts.append("=" * 100)
-                    
-                    # Use adapter to format the Instructions object
-                    instructions_adapter = self._get_adapter_for_domain(instructions_result)
-                    output_parts.append(instructions_adapter.serialize())
-            
-            # Always append full bot status after navigation commands
-            status_adapter = self._get_adapter_for_domain(self.bot)
-            status_output = status_adapter.serialize()
-            output_parts.append("")
-            output_parts.append(status_output)
-            
-            output = '\n'.join(output_parts)
+                    else:
+                        # Got Instructions object - add banner and serialize
+                        output_parts.append("")
+                        output_parts.append("=" * 100)
+                        output_parts.append("INSTRUCTIONS")
+                        output_parts.append("=" * 100)
+                        
+                        instructions_adapter = self._get_adapter_for_domain(instructions_result)
+                        output_parts.append(instructions_adapter.serialize())
+                
+                # Always append full bot status
+                status_adapter = self._get_adapter_for_domain(self.bot)
+                status_output = status_adapter.serialize()
+                output_parts.append("")
+                output_parts.append(status_output)
+                
+                output = '\n'.join(output_parts)
         
         return CLICommandResponse(
             output=output,

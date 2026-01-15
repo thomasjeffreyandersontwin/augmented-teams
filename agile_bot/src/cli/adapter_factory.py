@@ -30,6 +30,9 @@ class AdapterFactory:
         ('Scope', 'tty'): ('agile_bot.src.scope.tty_scope', 'TTYScope'),
         ('Scope', 'markdown'): ('agile_bot.src.scope.markdown_scope', 'MarkdownScope'),
         
+        # ScopeCommandResult domain (wraps scope command responses)
+        ('ScopeCommandResult', 'json'): ('agile_bot.src.scope.json_scope_command_result', 'JSONScopeCommandResult'),
+        
         # Navigation domain
         ('NavigationResult', 'json'): ('agile_bot.src.navigation.json_navigation', 'JSONNavigation'),
         ('NavigationResult', 'tty'): ('agile_bot.src.navigation.tty_navigation', 'TTYNavigation'),

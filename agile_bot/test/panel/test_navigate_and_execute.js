@@ -15,30 +15,14 @@ Module.prototype.require = function(...args) {
     return originalRequire.apply(this, args);
 };
 
-const { test, after } = require('node:test');
+const { test, before, after } = require('node:test');
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const BotView = require('../../src/bot/bot_view');
+const PanelView = require('../../src/panel/panel_view');
 const BehaviorsView = require('../../src/behaviors/behaviors_view');
-
-// Track all bot views to ensure cleanup
-const activeBotViews = [];
-
-// Force exit after all tests complete
-after(() => {
-    // Clean up any remaining bot views
-    for (const botView of activeBotViews) {
-        try {
-            botView.cleanup();
-        } catch (e) {
-            // Ignore cleanup errors
-        }
-    }
-    // Force exit to prevent hanging
-    setTimeout(() => process.exit(0), 100);
-});
 
 function setupTestWorkspace() {
     // Use actual workspace root so CLI script can be found
@@ -51,6 +35,20 @@ function getBotDirectory() {
     const repoRoot = path.join(__dirname, '../../..');
     return path.join(repoRoot, 'agile_bot', 'bots', 'story_bot');
 }
+
+// Initialize CLI once before all tests
+before(async () => {
+    const workspaceDir = setupTestWorkspace();
+    const botDir = getBotDirectory();
+    PanelView.initializeCLI(workspaceDir, botDir);
+    // Give CLI time to start and output ready message
+    await new Promise(resolve => setTimeout(resolve, 1500));
+});
+
+// Force exit after all tests complete
+after(() => {
+    setTimeout(() => process.exit(0), 100);
+});
 
 test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
     
@@ -72,7 +70,7 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Bot has multiple behaviors with completed and pending actions
@@ -85,7 +83,7 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             
             // When Panel renders hierarchy section
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Then User sees behavior names (shape, discovery)
             assert(html.includes('shape') || behaviorsJSON.some(b => b.name === 'shape'));
@@ -188,17 +186,10 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             assert(html.includes('Behavior Action Status'));
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -217,14 +208,14 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Panel displays collapsed behavior tree
             const botJSON = await botView.execute('status');
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify behavior has collapse/expand icon with onclick handler
             assert(/<span[^>]*id="behavior-[^"]*-icon"[^>]*onclick="toggleCollapse\('behavior-[^"]*'\)"[^>]*>/.test(html));
@@ -242,17 +233,10 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             assert(/onclick="toggleCollapse\([^)]*\)"/.test(html) || html.includes('toggleCollapse'));
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -272,7 +256,7 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Shape behavior is expanded showing actions
@@ -283,7 +267,7 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Find current behavior (should have actions)
             const currentBehavior = behaviorsJSON.find(b => b.is_current) || behaviorsJSON[0];
@@ -311,17 +295,10 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             assert(/onclick="toggleCollapse\([^)]*\)"/.test(html) || html.includes('toggleCollapse'));
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
 });
@@ -344,7 +321,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Panel displays behavior hierarchy and Bot is at shape.clarify
@@ -355,7 +332,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify action links have navigation handlers
             assert(/<span[^>]*onclick="navigateToAction\([^)]*\)"[^>]*>/.test(html));
@@ -383,17 +360,10 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             assert(/<div[^>]*class="[^"]*collapsible-header[^"]*action-item[^"]*card-item[^"]*"[^>]*>/.test(updatedHtml));
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -412,7 +382,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Bot is at shape.clarify
@@ -425,7 +395,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // Verify next button exists with proper handler
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             assert(/<button[^>]*onclick="executeNavigationCommand\('next'\)"[^>]*title="Next[^"]*"[^>]*>/.test(html));
             
             // When User clicks next button - ACTUALLY EXECUTE THE COMMAND
@@ -457,17 +427,10 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
                 'Should display new current action');
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -486,7 +449,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Bot is at shape.strategy
@@ -498,7 +461,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // Verify back button exists with proper handler
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             assert(/<button[^>]*onclick="executeNavigationCommand\('back'\)"[^>]*title="Back[^"]*"[^>]*>/.test(html));
             
             // When User clicks back button - ACTUALLY EXECUTE THE COMMAND
@@ -527,17 +490,10 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
                 'Should display previous action as current');
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -555,7 +511,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Bot is at shape.clarify
@@ -566,7 +522,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify current button exists with proper handler
             assert(/<button[^>]*onclick="executeNavigationCommand\('current'\)"[^>]*title="Current[^"]*"[^>]*>/.test(html));
@@ -588,17 +544,10 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
                 'Should display current action details');
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -615,14 +564,14 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Bot is at last action of last behavior
             const botJSON = await botView.execute('status');
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify next button exists (disabled state would be handled by extension)
             assert(/<button[^>]*onclick="executeNavigationCommand\('next'\)"[^>]*>/.test(html));
@@ -632,17 +581,10 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // (Disabled state would be handled by extension JavaScript, verified by presence of button)
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
 });
@@ -667,7 +609,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Panel displays behavior hierarchy and Bot is at shape.clarify
@@ -678,7 +620,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify behavior links have navigation handlers
             assert(/<span[^>]*onclick="navigateToBehavior\([^)]*\)"[^>]*>/.test(html));
@@ -722,17 +664,10 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             assert(currentAction || botJSON.current_action || botJSON.behaviors, 'Should have bot data after navigation attempt');
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -753,7 +688,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Panel displays expanded shape behavior and Bot is at shape.clarify
@@ -764,7 +699,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify action links have navigation handlers
             assert(/<span[^>]*onclick="navigateToAction\([^)]*\)"[^>]*>/.test(html));
@@ -794,17 +729,10 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             assert(updatedHtml.length > 0, 'Should render HTML for strategy action');
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
     
@@ -822,7 +750,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
         const botDir = getBotDirectory();
         
         const botView = new BotView({}, null, tmpPath, botDir);
-        activeBotViews.push(botView);
+        // tracking removed
         
         try {
             // Given Panel displays expanded shape.clarify action
@@ -831,7 +759,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             const botJSON = await botView.execute('status');
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
-            const html = view.render();
+            const html = await view.render();
             
             // Verify operation items have execute handlers
             assert(/<div[^>]*class="[^"]*operation-item[^"]*card-item[^"]*"[^>]*onclick="navigateAndExecute\([^)]*\)"[^>]*>/.test(html));
@@ -853,17 +781,10 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             assert(/<div[^>]*class="[^"]*operation-item[^"]*"[^>]*>/.test(html));
         } finally {
             if (botView) {
-                botView.cleanup();
-                const index = activeBotViews.indexOf(botView);
-                if (index > -1) activeBotViews.splice(index, 1);
+                // cleanup removed
+                
             }
-            // Small delay to ensure process is killed before deleting directory
-            await new Promise(resolve => setTimeout(resolve, 50));
-            try {
-                fs.rmSync(tmpPath, { recursive: true, force: true });
-            } catch (e) {
-                // Ignore cleanup errors
-            }
+            
         }
     });
 });

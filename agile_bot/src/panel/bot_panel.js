@@ -18,6 +18,30 @@ class BotPanel {
 
   constructor(panel, workspaceRoot, extensionUri) {
     try {
+      // Setup file logging first
+      const logFile = 'c:\\dev\\augmented-teams\\panel-debug.log';
+      this._log = (msg) => {
+        const timestamp = new Date().toISOString();
+        try {
+          fs.appendFileSync(logFile, `${timestamp} ${msg}\n`);
+        } catch (e) {
+          console.error('[BotPanel] Failed to write to log file:', e);
+        }
+        console.log(msg);
+      };
+      
+      this._displayError = (errorMsg) => {
+        this._log('[BotPanel] Displaying error in webview: ' + errorMsg);
+        vscode.window.showErrorMessage('Bot Panel Error: ' + errorMsg);
+        if (this._panel && this._panel.webview) {
+          this._panel.webview.postMessage({
+            command: 'displayError',
+            error: errorMsg
+          });
+        }
+      };
+      
+      this._log("[BotPanel] Constructor invoked");
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:19',message:'Constructor ENTRY',data:{workspaceRoot,hasPanel:!!panel,hasExtensionUri:!!extensionUri},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D'})}).catch(()=>{});
       // #endregion
@@ -46,7 +70,7 @@ class BotPanel {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:43',message:'Before initializeCLI',data:{workspaceRoot,botDirectory},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
       // #endregion
-      PanelView.initializeCLI(workspaceRoot, botDirectory);
+      PanelView.initializeCLI(workspaceRoot, botDirectory, this.logFilePath);
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:43',message:'After initializeCLI',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
       // #endregion
@@ -100,17 +124,21 @@ class BotPanel {
     );
 
     // Handle messages from the webview
+    this._log('[BotPanel] Registering onDidReceiveMessage handler');
     this._panel.webview.onDidReceiveMessage(
       (message) => {
+        this._log('[BotPanel] *** MESSAGE HANDLER FIRED ***');
+        this._log('[BotPanel] Received message from webview: ' + message.command + ' ' + JSON.stringify(message));
         switch (message.command) {
           case "refresh":
             this._update().catch(err => console.error(`[BotPanel] Refresh error: ${err.message}`));
             return;
           case "openFile":
             if (message.filePath) {
-              const cleanPath = message.filePath.split('#')[0];
-              const fragment = message.filePath.includes('#') 
-                ? message.filePath.split('#')[1] 
+              const rawPath = message.filePath;
+              const cleanPath = rawPath.split('#')[0];
+              const fragment = rawPath.includes('#') 
+                ? rawPath.split('#')[1] 
                 : null;
               
               let lineNumber = null;
@@ -124,19 +152,34 @@ class BotPanel {
                 }
               }
               
-              const absolutePath = path.isAbsolute(cleanPath) 
-                ? cleanPath 
-                : path.join(this._workspaceRoot, cleanPath);
+              // Normalize file path; handle file:// URIs and encoded characters
+              let absolutePath;
+              if (cleanPath.startsWith('file://')) {
+                absolutePath = vscode.Uri.parse(cleanPath).fsPath;
+              } else {
+                const decoded = decodeURIComponent(cleanPath);
+                absolutePath = path.isAbsolute(decoded) 
+                  ? decoded 
+                  : path.join(this._workspaceRoot, decoded);
+              }
               const fileUri = vscode.Uri.file(absolutePath);
               
-              const fileExtension = cleanPath.split('.').pop().toLowerCase();
-              const binaryOrSpecialExtensions = ['drawio', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'svg'];
-              
-              if (binaryOrSpecialExtensions.includes(fileExtension)) {
-                vscode.commands.executeCommand('vscode.open', fileUri).catch((error) => {
-                  vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
+              // Check if path is a directory
+              const fs = require('fs');
+              if (fs.existsSync(absolutePath) && fs.statSync(absolutePath).isDirectory()) {
+                // Reveal directory in VS Code file explorer
+                vscode.commands.executeCommand('revealInExplorer', fileUri).catch((error) => {
+                  vscode.window.showErrorMessage(`Failed to reveal folder: ${message.filePath}\n${error.message}`);
                 });
               } else {
+                const fileExtension = cleanPath.split('.').pop().toLowerCase();
+                const binaryOrSpecialExtensions = ['drawio', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'svg'];
+                
+                if (binaryOrSpecialExtensions.includes(fileExtension)) {
+                  vscode.commands.executeCommand('vscode.open', fileUri).catch((error) => {
+                    vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
+                  });
+                } else {
                 vscode.workspace.openTextDocument(fileUri).then(
                   (doc) => {
                     if (symbolName) {
@@ -174,16 +217,8 @@ class BotPanel {
                     vscode.window.showErrorMessage(`Failed to open file: ${message.filePath}\n${error.message}`);
                   }
                 );
+                }
               }
-            }
-            return;
-          case "updateFilter":
-            if (message.filter !== undefined) {
-              this._botView?.scopeSection?.handleEvent('updateFilter', { filter: message.filter })
-                .then(() => this._update())
-                .catch((error) => {
-                  vscode.window.showErrorMessage(`Failed to update scope: ${error.message}`);
-                });
             }
             return;
           case "clearScopeFilter":
@@ -193,14 +228,66 @@ class BotPanel {
                 vscode.window.showErrorMessage(`Failed to clear scope: ${error.message}`);
               });
             return;
-          case "updateWorkspace":
-            if (message.workspacePath) {
-              this._botView?.pathsSection?.handleEvent('updateWorkspace', { workspacePath: message.workspacePath })
+          case "updateFilter":
+            this._log('[BotPanel] Received updateFilter: ' + message.filter);
+            this._log('[BotPanel] _botView is: ' + this._botView);
+            
+            if (!this._botView) {
+              const errorMsg = '_botView is null, cannot execute scope command';
+              this._log('[BotPanel] ERROR: ' + errorMsg);
+              this._displayError(errorMsg);
+              return;
+            }
+            
+            if (message.filter && message.filter.trim()) {
+              const scopeCmd = `scope ${message.filter.trim()}`;
+              this._log('[BotPanel] Executing scope command: ' + scopeCmd);
+              
+              this._botView.execute(scopeCmd)
+                .then((result) => {
+                  this._log('[BotPanel] Scope filter applied, result: ' + JSON.stringify(result).substring(0, 200));
+                  return this._update();
+                })
                 .then(() => {
+                  this._log('[BotPanel] Update completed after scope filter');
+                })
+                .catch((err) => {
+                  const errorMsg = 'Scope filter failed: ' + err.message;
+                  this._log('[BotPanel] ERROR: ' + errorMsg);
+                  this._log('[BotPanel] ERROR stack: ' + err.stack);
+                  this._displayError(errorMsg + '\n\nStack:\n' + err.stack);
+                  throw err; // Re-throw to crash the panel as requested
+                });
+            } else {
+              // Empty filter = clear filter
+              this._log('[BotPanel] Clearing scope filter');
+              
+              this._botView.execute('scope all')
+                .then((result) => {
+                  this._log('[BotPanel] Scope cleared successfully');
+                  return this._update();
+                })
+                .catch((err) => {
+                  const errorMsg = 'Clear scope failed: ' + err.message;
+                  this._log('[BotPanel] ERROR: ' + errorMsg);
+                  this._log('[BotPanel] ERROR stack: ' + err.stack);
+                  this._displayError(errorMsg + '\n\nStack:\n' + err.stack);
+                  throw err; // Re-throw to crash the panel as requested
+                });
+            }
+            return;
+          case "updateWorkspace":
+            this._log('[BotPanel] Received updateWorkspace message: ' + message.workspacePath);
+            if (message.workspacePath) {
+              this._botView?.handleEvent('updateWorkspace', { workspacePath: message.workspacePath })
+                .then((result) => {
+                  this._log('[BotPanel] updateWorkspace result: ' + JSON.stringify(result));
                   this._workspaceRoot = message.workspacePath;
                   return this._update();
                 })
                 .catch((error) => {
+                  this._log('[BotPanel] ERROR updateWorkspace: ' + error.message);
+                  this._log('[BotPanel] ERROR stack: ' + error.stack);
                   vscode.window.showErrorMessage(`Failed to update workspace: ${error.message}`);
                 });
             }
@@ -382,9 +469,12 @@ class BotPanel {
   }
 
   async _update() {
+    console.log('[BotPanel] _update() called');
+    this._log('[BotPanel] _update() called - hasBotView: ' + !!this._botView);
     try {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:384',message:'_update() ENTRY',data:{hasBotView:!!this._botView},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+      console.log('[BotPanel] Fetching bot status...');
       // #endregion
       console.log("[BotPanel] _update() called");
       const webview = this._panel.webview;
@@ -393,6 +483,7 @@ class BotPanel {
       // Initialize BotView if needed (uses singleton CLI)
       if (!this._botView) {
         console.log("[BotPanel] Creating BotView");
+        this._log('[BotPanel] Creating BotView');
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:394',message:'Before new BotView()',data:{panelVersion:this._panelVersion,hasWebview:!!webview,hasExtensionUri:!!this._extensionUri},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
         // #endregion
@@ -402,9 +493,11 @@ class BotPanel {
           fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:394',message:'After new BotView()',data:{botViewCreated:!!this._botView},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
           console.log("[BotPanel] BotView created successfully");
+          this._log('[BotPanel] BotView created successfully');
         } catch (botViewError) {
           console.error(`[BotPanel] ERROR creating BotView: ${botViewError.message}`);
           console.error(`[BotPanel] ERROR stack: ${botViewError.stack}`);
+          this._log(`[BotPanel] ERROR creating BotView: ${botViewError.message}`);
           // #region agent log
           fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:394',message:'BotView construction failed',data:{error:botViewError.message,stack:botViewError.stack},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
@@ -423,6 +516,7 @@ class BotPanel {
       // #endregion
       this._panel.webview.html = html;
       console.log("[BotPanel] _update() completed successfully");
+      this._log('[BotPanel] _update() completed successfully');
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:407',message:'_update() EXIT success',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
       // #endregion
@@ -430,6 +524,7 @@ class BotPanel {
     } catch (err) {
       console.error(`[BotPanel] ERROR in _update: ${err.message}`);
       console.error(`[BotPanel] ERROR stack: ${err.stack}`);
+      this._log(`[BotPanel] ERROR in _update: ${err.message} | Stack: ${err.stack}`);
       vscode.window.showErrorMessage(`Bot Panel Update Error: ${err.message}`);
       this._panel.webview.html = this._getWebviewContent(`
         <div style="padding: 20px; color: var(--vscode-errorForeground);">
@@ -840,6 +935,8 @@ class BotPanel {
     
     <script>
         const vscode = acquireVsCodeApi();
+        console.log('[WebView] vscode API acquired:', !!vscode);
+        console.log('[WebView] vscode.postMessage available:', typeof vscode.postMessage);
         
         function toggleSection(sectionId) {
             const content = document.getElementById(sectionId);
@@ -908,11 +1005,18 @@ class BotPanel {
         }
         
         function updateFilter(filterValue) {
-            vscode.postMessage({
+            console.log('[WebView] updateFilter called with:', filterValue);
+            const message = {
                 command: 'updateFilter',
                 filter: filterValue
-            });
+            };
+            console.log('[WebView] Sending message:', message);
+            vscode.postMessage(message);
+            console.log('[WebView] postMessage sent');
         }
+        
+        // Test if updateFilter is defined
+        console.log('[WebView] updateFilter function exists:', typeof updateFilter);
         
         function clearScopeFilter() {
             vscode.postMessage({
@@ -962,6 +1066,47 @@ class BotPanel {
                 command: 'refresh'
             });
         }
+        
+        function updateWorkspace(workspacePath) {
+            console.log('[WebView] updateWorkspace called with:', workspacePath);
+            vscode.postMessage({
+                command: 'updateWorkspace',
+                workspacePath: workspacePath
+            });
+        }
+        
+        function switchBot(botName) {
+            console.log('[WebView] switchBot called with:', botName);
+            vscode.postMessage({
+                command: 'switchBot',
+                botName: botName
+            });
+        }
+        
+        // Listen for messages from extension host (e.g. error displays)
+        window.addEventListener('message', event => {
+            const message = event.data;
+            console.log('[WebView] Received message from extension:', message);
+            
+            if (message.command === 'displayError') {
+                // Display error prominently in the panel
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'position: fixed; top: 10px; left: 10px; right: 10px; z-index: 10000; background: #f44336; color: white; padding: 16px; border-radius: 4px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 80vh; overflow-y: auto;';
+                errorDiv.textContent = '[ERROR] ' + message.error;
+                
+                // Add close button
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = 'Close';
+                closeBtn.style.cssText = 'background: white; color: #f44336; border: none; padding: 8px 16px; margin-top: 12px; cursor: pointer; border-radius: 3px; font-weight: bold;';
+                closeBtn.onclick = () => errorDiv.remove();
+                errorDiv.appendChild(closeBtn);
+                
+                document.body.appendChild(errorDiv);
+                
+                // Auto-remove after 30 seconds
+                setTimeout(() => errorDiv.remove(), 30000);
+            }
+        });
     </script>
 </body>
 </html>`;

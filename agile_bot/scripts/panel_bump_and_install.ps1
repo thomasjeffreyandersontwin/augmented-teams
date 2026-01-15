@@ -11,7 +11,8 @@ $ErrorActionPreference = 'Stop'
 
 # Navigate to panel directory using relative paths
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$panelDir = Join-Path (Join-Path $scriptDir "src") "panel"
+$agileDir = Split-Path -Parent $scriptDir
+$panelDir = Join-Path (Join-Path $agileDir "src") "panel"
 Set-Location $panelDir
 
 Write-Host "================================" -ForegroundColor Cyan
@@ -54,7 +55,9 @@ Write-Host ""
 Write-Host "[1/6] Updating package.json..." -ForegroundColor Cyan
 $packageJsonContent = Get-Content "package.json" -Raw
 $packageJsonContent = $packageJsonContent -replace "`"version`": `"$currentVersion`"", "`"version`": `"$newVersion`""
-Set-Content "package.json" -Value $packageJsonContent -NoNewline
+# Write without BOM to avoid vsce JSON parse errors
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText("package.json", $packageJsonContent, $utf8NoBom)
 Write-Host "      Done: package.json updated" -ForegroundColor Green
 
 # Package extension
@@ -68,7 +71,7 @@ Write-Host "      Done: Extension packaged: bot-panel-$newVersion.vsix" -Foregro
 
 # Uninstall old extension
 Write-Host "[3/6] Uninstalling old extension..." -ForegroundColor Cyan
-code --uninstall-extension agilebot.bot-panel | Out-Null
+cursor --uninstall-extension agilebot.bot-panel | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      Warning: Uninstall warning (may not be installed)" -ForegroundColor Yellow
 } else {
@@ -79,7 +82,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "[4/6] Installing new extension..." -ForegroundColor Cyan
 $vsixPath = Join-Path $panelDir "bot-panel-$newVersion.vsix"
 $vsixPath = (Resolve-Path $vsixPath).Path
-code --install-extension "$vsixPath" | Out-Null
+cursor --install-extension "$vsixPath" --force | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Installation failed!" -ForegroundColor Red
     exit 1
@@ -93,8 +96,25 @@ Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Extension upgraded: $currentVersion -> $newVersion" -ForegroundColor Green
 Write-Host ""
-Write-Host "[5/6] Please reload VS Code window manually:" -ForegroundColor Cyan
+
+# Auto-reload window using VS Code IPC
+Write-Host "[5/6] Reloading Cursor window..." -ForegroundColor Cyan
+try {
+    # Find the Cursor window and send reload command
+    # This uses VS Code's command URI scheme
+    $reloadCmd = "cursor://command/workbench.action.reloadWindow"
+    Start-Process $reloadCmd -ErrorAction SilentlyContinue
+    
+    # Give it a moment
+    Start-Sleep -Milliseconds 500
+    
+    Write-Host "      Done: Window reload triggered" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Extension v$newVersion will be active momentarily!" -ForegroundColor Green
+} catch {
+    Write-Host "      Warning: Could not auto-reload. Please reload manually:" -ForegroundColor Yellow
 Write-Host "      Press Ctrl+Shift+P -> Developer: Reload Window" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Extension v$newVersion will be active after reload!" -ForegroundColor Green
+}
 Write-Host ""

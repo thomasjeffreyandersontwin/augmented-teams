@@ -27,7 +27,8 @@ Generate Behavior Action Tools functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: Tools generated for each behavior action (happy_path)
+<a id="scenario-tools-generated-for-each-behavior-action"></a>
+### Scenario: [Tools generated for each behavior action](#scenario-tools-generated-for-each-behavior-action) (happy_path)
 
 **Steps:**
 ```gherkin

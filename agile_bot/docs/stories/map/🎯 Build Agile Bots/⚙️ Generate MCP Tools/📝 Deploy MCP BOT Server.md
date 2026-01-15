@@ -29,7 +29,8 @@ Deploy MCP BOT Server functionality for the mob minion system.
 
 ## Scenarios
 
-### Scenario: MCP server deployed with tools (happy_path)
+<a id="scenario-mcp-server-deployed-with-tools"></a>
+### Scenario: [MCP server deployed with tools](#scenario-mcp-server-deployed-with-tools) (happy_path)
 
 **Steps:**
 ```gherkin

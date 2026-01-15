@@ -97,19 +97,25 @@ class BotHeaderView extends PanelView {
         const safeBotName = this.escapeHtml(currentBot);
         const safeBotDir = this.escapeHtml(botData.bot_directory);
         const safeWorkspaceDir = this.escapeHtml(botData.workspace_directory);
+        console.log('[BotHeaderView] workspace_directory from status:', botData.workspace_directory);
+        console.log('[BotHeaderView] Escaped workspace_directory:', safeWorkspaceDir);
         
         // AC: Truncate very long directory paths
         const displayBotDir = this.truncatePath(safeBotDir, maxPathLength);
         const displayWorkspaceDir = this.truncatePath(safeWorkspaceDir, maxPathLength);
+        console.log('[BotHeaderView] Display workspace_directory:', displayWorkspaceDir);
         
-        // Build bot selector links
+        // Build bot selector links with pipe separators (Bug #3 fix)
         let botLinksHtml = '';
         if (availableBots && availableBots.length > 0) {
-            botLinksHtml = availableBots.map(botName => {
+            botLinksHtml = availableBots.map((botName, index) => {
                 const isActive = botName === currentBot;
                 const activeClass = isActive ? ' active' : '';
-                return `<a href="javascript:void(0)" class="bot-link${activeClass}" onclick="switchBot('${this.escapeHtml(botName)}')">${this.escapeHtml(botName)}</a>`;
-            }).join('\n                ');
+                const link = `<a href="javascript:void(0)" class="bot-link${activeClass}" onclick="switchBot('${this.escapeHtml(botName)}')">${this.escapeHtml(botName)}</a>`;
+                // Add pipe separator before all links except the first one
+                const separator = index > 0 ? '<span style="opacity: 0.5; margin: 0 6px;">|</span>' : '';
+                return separator + link;
+            }).join('');
         }
         
         // Get the proper webview URIs for images (bundled in extension)
@@ -217,6 +223,42 @@ class BotHeaderView extends PanelView {
             // Switch bot logic would go here
             // For now, just return success
             return { success: true, bot: eventData.botName };
+        }
+        if (eventType === 'updateWorkspace') {
+            console.log('[BotHeaderView] updateWorkspace event received');
+            // Execute CLI command to update workspace path
+            const newPath = eventData.workspacePath;
+            console.log('[BotHeaderView] New workspace path:', newPath);
+            if (!newPath) {
+                throw new Error('No workspace path provided');
+            }
+            
+            // Execute path command to update workspace (no quotes - CLI parser handles path as arg)
+            console.log('[BotHeaderView] Executing path command:', `path ${newPath}`);
+            const pathResult = await this.execute(`path ${newPath}`);
+            console.log('[BotHeaderView] Path command result:', JSON.stringify(pathResult, null, 2));
+            
+            // Check if path command failed
+            if (pathResult && pathResult.status === 'error') {
+                throw new Error(pathResult.message || 'Failed to update workspace');
+            }
+            
+            // Update the static workspace directory
+            const PanelView = require('../panel/panel_view');
+            console.log('[BotHeaderView] Updating PanelView._workspaceDir to:', newPath);
+            PanelView._workspaceDir = newPath;
+            
+            // Refresh bot status to get updated workspace_directory
+            console.log('[BotHeaderView] Fetching updated status...');
+            const botStatus = await this.execute('status');
+            console.log('[BotHeaderView] Status workspace_directory:', botStatus.workspace_directory);
+            
+            const result = { 
+                success: true, 
+                workspace: botStatus.workspace_directory || newPath 
+            };
+            console.log('[BotHeaderView] Returning result:', JSON.stringify(result, null, 2));
+            return result;
         }
         throw new Error(`Unknown event type: ${eventType}`);
     }

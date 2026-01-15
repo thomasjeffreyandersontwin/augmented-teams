@@ -15,7 +15,7 @@ Generate Cursor Commands functionality for the mob minion system.
 
 ### Behavioral Acceptance Criteria
 
-- **When** generator creates CursorCommandVisitor,
+- **When** generator creates CursorReplVisitor,
   **then** it follows existing visitor pattern
 
 - **When** visitor generates shortcuts,

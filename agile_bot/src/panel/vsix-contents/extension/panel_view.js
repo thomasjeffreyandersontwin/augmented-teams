@@ -1,14 +1,15 @@
 /**
  * Base class for all panel views.
- * Provides singleton CLI access - views don't need parameters passed around.
+ * Provides CLI command execution - each command spawns a new Python process.
+ * This is the proven legacy approach that works reliably.
  */
 
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 class PanelView {
-    // Singleton CLI instance shared by all views
-    static _sharedCLI = null;
+    // Workspace/bot configuration (shared across views)
     static _workspaceDir = null;
     static _botDir = null;
     static _commandQueue = [];
@@ -17,36 +18,49 @@ class PanelView {
     
     /**
      * Base class for all panel views.
-     * Views access singleton CLI - no parameters needed.
+     * Views access CLI execution - no parameters needed.
      */
     constructor() {
         // Views just inherit from base
     }
     
     /**
-     * Initialize singleton CLI (call once at startup)
-     * @param {string} workspaceDirectory - Workspace root path
-     * @param {string} botDirectory - Bot directory path
+     * Log to file for debugging
      */
-    static initializeCLI(workspaceDirectory, botDirectory) {
-        if (!PanelView._sharedCLI) {
-            PanelView._workspaceDir = workspaceDirectory;
-            PanelView._botDir = botDirectory || process.env.BOT_DIRECTORY;
-            
-            if (!PanelView._botDir) {
-            throw new Error('BOT_DIRECTORY environment variable must be set or botDirectory must be provided');
+    static _log(message) {
+        // Skip logging if no log file path configured (e.g., in tests)
+        if (!PanelView._logFilePath) {
+            return;
         }
         
-            PanelView._spawnCLI();
+        try {
+            const timestamp = new Date().toISOString();
+            const logMessage = `${timestamp} [PanelView] ${message}\n`;
+            fs.appendFileSync(PanelView._logFilePath, logMessage, 'utf8');
+        } catch (err) {
+            console.error('[PanelView] Failed to write to log file:', err);
         }
-        return PanelView._sharedCLI;
     }
     
     /**
-     * Get singleton CLI instance
+     * Initialize CLI configuration (call once at startup)
+     * @param {string} workspaceDirectory - Workspace root path
+     * @param {string} botDirectory - Bot directory path
+     * @param {string} logFilePath - Path to log file
      */
-    static getCLI() {
-        return PanelView._sharedCLI;
+    static initializeCLI(workspaceDirectory, botDirectory, logFilePath) {
+        PanelView._workspaceDir = workspaceDirectory;
+        PanelView._botDir = botDirectory || process.env.BOT_DIRECTORY;
+        PanelView._logFilePath = logFilePath;
+        
+        if (!PanelView._botDir) {
+            throw new Error('BOT_DIRECTORY environment variable must be set or botDirectory must be provided');
+        }
+        
+        console.log('[PanelView] CLI configuration initialized:', {
+            workspaceDir: PanelView._workspaceDir,
+            botDir: PanelView._botDir
+        });
     }
     
     /**
@@ -64,237 +78,189 @@ class PanelView {
     }
     
     /**
-     * Execute command on singleton CLI
-     */
-    async execute(command) {
-        const cli = PanelView.getCLI();
-        if (!cli) {
-            // Auto-initialize if not done yet
-            if (PanelView._workspaceDir || process.env.WORKING_AREA) {
-                PanelView.initializeCLI(
-                    PanelView._workspaceDir || process.env.WORKING_AREA || process.cwd(),
-                    process.env.BOT_DIRECTORY
-                );
-            } else {
-                throw new Error('CLI not initialized. Call PanelView.initializeCLI() first.');
-            }
-        }
-        return await PanelView._sendCommand(command);
-    }
-    
-    /**
-     * Cleanup shared CLI instance (for tests).
+     * Cleanup (for tests).
      */
     static cleanupSharedCLI() {
-        if (PanelView._sharedCLI) {
-            try {
-                const proc = PanelView._sharedCLI;
-                proc.stdout.removeAllListeners();
-                proc.stderr.removeAllListeners();
-                proc.removeAllListeners();
-                proc.kill('SIGKILL');
-            } catch (e) {
-                // Ignore errors
-            }
-            PanelView._sharedCLI = null;
-            PanelView._workspaceDir = null;
-            PanelView._botDir = null;
-            PanelView._commandQueue = [];
-            PanelView._processingCommand = false;
-            PanelView._firstCommandSent = false;
-        }
+        // Legacy approach has no persistent process to clean up
+        PanelView._workspaceDir = null;
+        PanelView._botDir = null;
     }
     
     /**
-     * Spawn Python CLI subprocess (static singleton).
+     * Execute command by spawning a new Python process (legacy approach).
+     * Each command gets its own process - simple, reliable, no synchronization issues.
      */
-    static _spawnCLI() {
-        const workspaceRoot = PanelView._workspaceDir || process.env.WORKING_AREA || process.cwd();
-        const cliPath = path.join(workspaceRoot, 'agile_bot', 'src', 'cli', 'cli_main.py');
+    async execute(command) {
+        PanelView._log(`=== EXECUTE START ===`);
+        PanelView._log(`Command: "${command}"`);
         
-        console.log('[PanelView] _spawnCLI called with:', {
-            _workspaceDir: PanelView._workspaceDir,
-            _botDir: PanelView._botDir,
-            workspaceRoot: workspaceRoot,
-            cliPath: cliPath
-        });
-        
-        // Verify CLI path exists
-        try {
-            const fs = require('fs');
-            if (!fs.existsSync(cliPath)) {
-                console.error(`[PanelView] CLI script NOT found at: ${cliPath}`);
-                throw new Error(`CLI script not found at: ${cliPath}`);
-            }
-            console.log(`[PanelView] CLI script verified at: ${cliPath}`);
-        } catch (err) {
-            console.error('[PanelView] CLI path check error:', err);
-            throw new Error(`Cannot find CLI script: ${cliPath}. Please ensure you're in the correct workspace.`);
+        if (!PanelView._workspaceDir) {
+            const error = 'CLI not initialized. Call PanelView.initializeCLI() first.';
+            PanelView._log(`ERROR: ${error}`);
+            throw new Error(error);
         }
         
-        const env = {
-            ...process.env,
-            PYTHONPATH: workspaceRoot,
-            BOT_DIRECTORY: PanelView._botDir,
-            WORKING_AREA: workspaceRoot,
-            CLI_MODE: 'json'
-        };
+        console.log(`[PanelView] Executing command: "${command}"`);
         
-        console.log('[PanelView] Spawning CLI with env:', {
-            python: 'python',
-            cliPath: cliPath,
-            workspaceRoot: workspaceRoot,
-            botDirectory: PanelView._botDir,
-            cwd: workspaceRoot,
-            CLI_MODE: 'json'
-        });
-        
-        PanelView._sharedCLI = spawn('python', [cliPath], {
-            cwd: workspaceRoot,
-            env: env,
-            stdio: ['pipe', 'pipe', 'pipe']
-        });
-        
-        console.log('[PanelView] CLI spawn initiated, PID:', PanelView._sharedCLI.pid);
-        
-        PanelView._sharedCLI.on('error', (err) => {
-            console.error('[PanelView] Python process spawn error:', err);
-            throw new Error(`Failed to spawn Python process: ${err.message}`);
-        });
-        
-        PanelView._sharedCLI.stderr.on('data', (data) => {
-            const errorText = data.toString();
-            console.error('[PanelView] Python stderr:', errorText);
-            if (errorText.includes('Traceback')) {
-                console.error('[PanelView] Python process crashed!');
-            }
-        });
-        
-        PanelView._sharedCLI.stdout.on('data', (data) => {
-            console.log('[PanelView] Python stdout (raw):', data.toString().substring(0, 200));
-        });
-        
-        PanelView._sharedCLI.on('exit', (code, signal) => {
-            console.log(`[PanelView] Python process exited with code ${code}, signal ${signal}`);
-        });
-        
-        console.log('[PanelView] CLI spawn complete');
-        return PanelView._sharedCLI;
-    }
-    
-    /**
-     * Send command to singleton CLI
-     */
-    static async _sendCommand(command) {
-        const cli = PanelView._sharedCLI;
-        if (!cli || cli.killed || cli.exitCode !== null) {
-            throw new Error('CLI process not available');
-        }
-        
-        // Queue command
         return new Promise((resolve, reject) => {
-            PanelView._commandQueue.push({ command, resolve, reject });
-            PanelView._processNextCommand();
-        });
-    }
-    
-    /**
-     * Process command queue (static)
-     */
-    static async _processNextCommand() {
-        if (PanelView._processingCommand || PanelView._commandQueue.length === 0) {
-            return;
-        }
-        
-        PanelView._processingCommand = true;
-        const { command, resolve, reject } = PanelView._commandQueue.shift();
-        const cli = PanelView._sharedCLI;
-        
-        try {
-            // Wait for process to be ready (first command)
-            if (!PanelView._firstCommandSent) {
-                await new Promise(r => setTimeout(r, 500));
-                PanelView._firstCommandSent = true;
+            const workspaceRoot = PanelView._workspaceDir;
+            const cliPath = path.join(workspaceRoot, 'agile_bot', 'src', 'cli', 'cli_main.py');
+            
+            PanelView._log(`CLI path: ${cliPath}`);
+            PanelView._log(`Workspace root: ${workspaceRoot}`);
+            PanelView._log(`Bot directory: ${PanelView._botDir}`);
+            
+            // Verify CLI path exists
+            try {
+                if (!fs.existsSync(cliPath)) {
+                    const error = `CLI script not found at: ${cliPath}`;
+                    PanelView._log(`ERROR: ${error}`);
+                    throw new Error(error);
+                }
+            } catch (err) {
+                const error = `Cannot find CLI script: ${cliPath}`;
+                PanelView._log(`ERROR: ${error}`);
+                reject(new Error(error));
+                return;
             }
             
-            let buffer = '';
-            let dataTimeout = null;
+            const env = {
+                ...process.env,
+                PYTHONPATH: workspaceRoot,
+                BOT_DIRECTORY: PanelView._botDir,
+                // DO NOT set WORKING_AREA - let bot use its own saved workspace
+                CLI_MODE: 'json',  // Use JSON mode for panel
+                SUPPRESS_CLI_HEADER: '1'  // Skip header for pure JSON output
+            };
             
-            const timeout = setTimeout(() => {
-                if (dataTimeout) clearTimeout(dataTimeout);
-                cli.stdout.removeListener('data', stdoutHandler);
-                cli.stderr.removeListener('data', stderrHandler);
-                PanelView._processingCommand = false;
-                console.error('[PanelView] Command timeout:', { command, buffer, processAlive: !cli.killed });
-                reject(new Error(`Timeout waiting for JSON response. Buffer: ${buffer}`));
-                PanelView._processNextCommand();
-            }, 10000);
+            PanelView._log('Spawning Python process...');
+            console.log('[PanelView] Spawning Python process for command');
             
-            const stdoutHandler = (data) => {
-                buffer += data.toString();
-                console.log(`[PanelView] Command "${command}" - stdout chunk:`, data.toString().substring(0, 100));
-                console.log(`[PanelView] Buffer length: ${buffer.length}`);
-                if (dataTimeout) clearTimeout(dataTimeout);
+            const pythonProcess = spawn('python', [cliPath], {
+                cwd: workspaceRoot,
+                env: env,
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+            
+            let stdout = '';
+            let stderr = '';
+            let timedOut = false;
+            
+            // Set timeout (30 seconds like legacy)
+            const timeoutId = setTimeout(() => {
+                timedOut = true;
+                pythonProcess.kill();
+                const error = 'Python process timed out after 30 seconds';
+                PanelView._log(`ERROR: ${error}`);
+                reject(new Error(error));
+            }, 30000);
+            
+            // Send command via stdin and close it (this makes Python process exit after running command)
+            try {
+                const commandWithFormat = command.includes('--format json') ? command : `${command} --format json`;
+                PanelView._log(`Sending to CLI: "${commandWithFormat}"`);
+                pythonProcess.stdin.write(commandWithFormat + '\n');
+                pythonProcess.stdin.end(); // Close stdin - tells Python we're done sending input
+                PanelView._log('Command written to stdin, stdin closed');
+                console.log('[PanelView] Command written to stdin, stdin closed');
+            } catch (err) {
+                clearTimeout(timeoutId);
+                const error = `Failed to communicate with Python process: ${err.message}`;
+                PanelView._log(`ERROR: ${error}`);
+                reject(new Error(error));
+                return;
+            }
+            
+            // Collect stdout
+            pythonProcess.stdout.on('data', (data) => {
+                const chunk = data.toString();
+                stdout += chunk;
+                PanelView._log(`STDOUT chunk (${chunk.length} bytes): ${chunk.substring(0, 200)}...`);
+            });
+            
+            // Collect stderr
+            pythonProcess.stderr.on('data', (data) => {
+                const chunk = data.toString();
+                stderr += chunk;
+                PanelView._log(`STDERR chunk: ${chunk}`);
+            });
+            
+            // Handle process error
+            pythonProcess.on('error', (err) => {
+                clearTimeout(timeoutId);
+                const error = `Python process error: ${err.message}`;
+                PanelView._log(`ERROR: ${error}`);
+                console.error('[PanelView] Python process error:', err);
+                reject(new Error(error));
+            });
+            
+            // Handle process completion
+            pythonProcess.on('close', (code) => {
+                clearTimeout(timeoutId);
                 
-                // Find complete JSON object
-                let depth = 0, start = -1;
-                for (let i = 0; i < buffer.length; i++) {
-                    if (buffer[i] === '{') {
-                        if (depth === 0) start = i;
-                        depth++;
-                    } else if (buffer[i] === '}') {
-                        depth--;
-                        if (depth === 0 && start !== -1) {
-                            try {
-                                const jsonData = JSON.parse(buffer.substring(start, i + 1));
-                                console.log(`[PanelView] Command "${command}" - JSON parsed successfully`);
-                                console.log(`[PanelView] JSON keys:`, Object.keys(jsonData));
-                                if (jsonData.bot) {
-                                    console.log(`[PanelView] Bot data keys:`, Object.keys(jsonData.bot));
-                                }
-                                dataTimeout = setTimeout(() => {
-                                    clearTimeout(timeout);
-                                    cli.stdout.removeListener('data', stdoutHandler);
-                                    cli.stderr.removeListener('data', stderrHandler);
-                                    PanelView._processingCommand = false;
-                                    console.log(`[PanelView] Resolving command "${command}" with data`);
-                                    resolve(jsonData);
-                                    PanelView._processNextCommand();
-                                }, 200);
-                                return;
-                            } catch (e) {
-                                console.error(`[PanelView] JSON parse error:`, e.message);
-                                start = -1;
-                            }
-                        }
+                if (timedOut) {
+                    return; // Already rejected
+                }
+                
+                PanelView._log(`Python process closed with exit code: ${code}`);
+                PanelView._log(`STDOUT length: ${stdout.length} bytes`);
+                PanelView._log(`STDERR length: ${stderr.length} bytes`);
+                PanelView._log(`Full STDOUT: ${stdout}`);
+                if (stderr) {
+                    PanelView._log(`Full STDERR: ${stderr}`);
+                }
+                
+                console.log('[PanelView] Python process closed', {
+                    exitCode: code,
+                    stdoutLength: stdout.length,
+                    stderrLength: stderr.length
+                });
+                
+                if (stderr) {
+                    console.error('[PanelView] Python stderr:', stderr);
+                }
+                
+                if (code !== 0 && stderr) {
+                    const error = `Python CLI failed (exit ${code}): ${stderr}`;
+                    PanelView._log(`ERROR: ${error}`);
+                    reject(new Error(error));
+                    return;
+                }
+                
+                if (!stdout || stdout.trim().length === 0) {
+                    const error = 'No output from Python CLI';
+                    PanelView._log(`ERROR: ${error}`);
+                    reject(new Error(error));
+                    return;
+                }
+                
+                // Parse JSON response
+                try {
+                    // Find the JSON object in the output (skip any header text)
+                    const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) {
+                        const error = 'No JSON found in CLI output';
+                        PanelView._log(`ERROR: ${error}`);
+                        reject(new Error(error));
+                        return;
                     }
+                    
+                    PanelView._log(`JSON extracted: ${jsonMatch[0].substring(0, 500)}...`);
+                    const jsonData = JSON.parse(jsonMatch[0]);
+                    PanelView._log(`JSON parsed successfully`);
+                    PanelView._log(`=== EXECUTE SUCCESS ===`);
+                    console.log('[PanelView] Command executed successfully, JSON parsed');
+                    resolve(jsonData);
+                } catch (parseError) {
+                    const error = `Failed to parse CLI JSON output: ${parseError.message}`;
+                    PanelView._log(`ERROR: ${error}`);
+                    PanelView._log(`Raw output (first 500 chars): ${stdout.substring(0, 500)}`);
+                    console.error('[PanelView] JSON parse error:', parseError.message);
+                    console.error('[PanelView] Raw output:', stdout.substring(0, 500));
+                    reject(new Error(error));
                 }
-            };
-            
-            const stderrHandler = (data) => {
-                const errorText = data.toString();
-                if (errorText.includes('ERROR:') || errorText.includes('Traceback')) {
-                    clearTimeout(timeout);
-                    cli.stdout.removeListener('data', stdoutHandler);
-                    cli.stderr.removeListener('data', stderrHandler);
-                    PanelView._processingCommand = false;
-                    reject(new Error(`Python error: ${errorText}`));
-                    PanelView._processNextCommand();
-                }
-            };
-            
-            cli.stdout.on('data', stdoutHandler);
-            cli.stderr.on('data', stderrHandler);
-            
-            console.log(`[PanelView] Sending command to CLI: "${command}"`);
-            cli.stdin.write(command.trim() + '\n');
-            if (cli.stdin.flush) cli.stdin.flush();
-            console.log(`[PanelView] Command written to stdin`);
-        } catch (error) {
-            PanelView._processingCommand = false;
-            reject(error);
-            PanelView._processNextCommand();
-        }
+            });
+        });
     }
     
     /**

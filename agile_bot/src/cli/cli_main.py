@@ -72,24 +72,24 @@ def main():
     json_mode = os.environ.get('CLI_MODE', '').lower() == 'json'
     mode = 'json' if json_mode else None
     
-    cli_session = CLISession(bot=bot, workspace_directory=workspace_directory, mode=mode)
-    
     is_piped = not sys.stdin.isatty()
     
-    # In piped mode (but not JSON mode), check if command contains --format json
-    # If so, skip header entirely (for pure JSON output)
-    suppress_header = json_mode  # Always suppress header in JSON mode
+    # In piped mode, peek at stdin to check for --format json flag
     if is_piped and not json_mode:
-        try:
-            # Read stdin to check for --format json
-            import io
-            stdin_data = sys.stdin.read()
-            suppress_header = '--format json' in stdin_data or '--format=json' in stdin_data
-            # Restore stdin for later reading
-            sys.stdin = io.StringIO(stdin_data)
-        except:
-            # If read fails, just print header normally
-            pass
+        # Read first line to check for --format json
+        first_line = sys.stdin.readline().strip()
+        if '--format json' in first_line or '--format=json' in first_line:
+            json_mode = True
+            mode = 'json'
+        # Put the line back by creating new stdin from it + rest of input
+        import io
+        remaining_input = sys.stdin.read()
+        sys.stdin = io.StringIO(first_line + '\n' + remaining_input)
+    
+    cli_session = CLISession(bot=bot, workspace_directory=workspace_directory, mode=mode)
+    
+    # Check if we should suppress header (for panel integration or explicit JSON output)
+    suppress_header = json_mode or os.environ.get('SUPPRESS_CLI_HEADER', '') == '1'
     
     # Print header (unless suppressed for JSON output)
     if not suppress_header:
@@ -143,8 +143,7 @@ def main():
                 command = line.strip()
                 if command:
                     response = cli_session.execute_command(command)
-                    print(response.output)
-                    sys.stdout.flush()
+                    print(response.output, flush=True)
         except (KeyboardInterrupt, EOFError):
             pass
     elif is_piped:
