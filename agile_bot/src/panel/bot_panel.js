@@ -229,6 +229,13 @@ class BotPanel {
                 vscode.window.showErrorMessage(`Failed to clear scope: ${error.message}`);
               });
             return;
+          case "showAllScope":
+            this._botView?.execute('scope showall')
+              .then(() => this._update())
+              .catch((error) => {
+                vscode.window.showErrorMessage(`Failed to show all: ${error.message}`);
+              });
+            return;
           case "updateFilter":
             this._log('[BotPanel] Received updateFilter: ' + message.filter);
             this._log('[BotPanel] _botView is: ' + this._botView);
@@ -1138,6 +1145,13 @@ class BotPanel {
         function clearScopeFilter() {
             vscode.postMessage({
                 command: 'clearScopeFilter'
+            });
+        }
+        
+        function showAllScope() {
+            console.log('[WebView] showAllScope called');
+            vscode.postMessage({
+                command: 'showAllScope'
             });
         }
         

@@ -22,3 +22,10 @@ class MarkdownScopeCommandResult(MarkdownAdapter):
         
         # Return the markdown representation
         return scope_markdown
+    
+    def parse_command_text(self, text: str) -> tuple[str, str]:
+        """Parse command text into verb and params."""
+        parts = text.split(maxsplit=1)
+        verb = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+        return verb, args

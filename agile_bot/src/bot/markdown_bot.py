@@ -22,8 +22,17 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
     
     @property
     def name(self):
-        """Returns formatted bot name header."""
-        return MarkdownAdapter.format_header(self, 2, f"🤖 Bot: {self.bot.name}").strip()
+        """Returns formatted bot name header with registered bots."""
+        lines = []
+        lines.append(MarkdownAdapter.format_header(self, 2, f"🤖 Bot: {self.bot.name}").strip())
+        # Show registered bots
+        registered_bots = self.bot.bots
+        if registered_bots and len(registered_bots) > 1:
+            bot_list = ' | '.join(registered_bots)
+            lines.append("")
+            lines.append(f"**Registered:** {bot_list}")
+            lines.append(f"**To change bots:** `bot <name>`")
+        return '\n'.join(lines)
     
     @property
     def bot_paths(self):
@@ -53,7 +62,7 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
         lines = []
         lines.append(MarkdownAdapter.format_header(self, 2, "💻 Commands"))
         lines.append("")
-        lines.append("**status | back | current | next | path [dir] | scope [filter] | headless \"msg\" | help | exit**")
+        lines.append("**status | back | current | next | path [dir] | scope [filter] | bot [name] | help | exit**")
         lines.append("")
         lines.append("```powershell")
         lines.append("echo '[command]' | python -m agile_bot.src.cli.cli_main")

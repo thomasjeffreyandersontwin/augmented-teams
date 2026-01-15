@@ -23,6 +23,9 @@ class BotResult:
         self.executed_instructions_from = f'{behavior}/{action}'
 
 class Bot:
+    # Class-level registry for bot switching
+    _active_bot_instance: Optional['Bot'] = None
+    _active_bot_name: Optional[str] = None
 
     def __init__(self, bot_name: str, bot_directory: Path, config_path: Path):
         # #region agent log
@@ -31,6 +34,10 @@ class Bot:
         self.name = bot_name
         self.bot_name = bot_name
         self.config_path = Path(config_path)
+        
+        # Register this bot as the active one
+        Bot._active_bot_instance = self
+        Bot._active_bot_name = bot_name
         # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'bot.py:28','message':'Before BotPaths creation','data':{'bot_directory_to_pass':str(bot_directory)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
         # #endregion
@@ -171,17 +178,16 @@ class Bot:
         """Return the currently active bot instance.
         
         Returns:
-            The current Bot instance (self)
+            The active Bot instance from the class-level registry
         """
-        return self
+        return Bot._active_bot_instance if Bot._active_bot_instance else self
     
     @active_bot.setter
     def active_bot(self, bot_name: str):
         """Switch to a different registered bot.
         
-        This is a domain-level property that validates bot switching logic.
-        The actual bot instance switching must be handled at the CLI/Panel layer
-        because Bot instances are stateful and created at initialization.
+        Creates a new Bot instance for the specified bot and updates the
+        class-level registry so all subsequent calls return the new instance.
         
         Args:
             bot_name: Name of the bot to switch to
@@ -198,15 +204,22 @@ class Bot:
             )
         
         # If switching to current bot, no action needed
-        if bot_name == self.bot_name:
+        if bot_name == Bot._active_bot_name:
             return
         
-        # For actual switching, the CLI/Panel layer needs to create a new Bot instance
-        # This setter validates the request but cannot change self
-        # The calling code should catch this and instantiate a new Bot
-        raise NotImplementedError(
-            f"Bot switching to '{bot_name}' validated successfully. "
-            f"CLI/Panel layer must instantiate new Bot instance."
+        # Create new Bot instance for the target bot
+        bots_parent_dir = self.bot_paths.bot_directory.parent
+        new_bot_dir = bots_parent_dir / bot_name
+        new_config_path = new_bot_dir / 'bot_config.json'
+        
+        if not new_config_path.exists():
+            raise FileNotFoundError(f"Bot config not found at {new_config_path}")
+        
+        # Create new Bot instance (this will auto-register via __init__)
+        Bot(
+            bot_name=bot_name,
+            bot_directory=new_bot_dir,
+            config_path=new_config_path
         )
 
     def help(self, topic: Optional[str] = None):

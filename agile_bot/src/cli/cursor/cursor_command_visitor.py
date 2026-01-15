@@ -151,6 +151,9 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
             "## Path",
             f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo 'path ${{1:project_path}}' | python -m agile_bot.src.cli.cli_main",
             "",
+            "## Change Bot",
+            f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo 'bot ${{1:bot_name}}' | python -m agile_bot.src.cli.cli_main",
+            "",
             "## Exit",
             f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo 'exit' | python -m agile_bot.src.cli.cli_main",
         ]

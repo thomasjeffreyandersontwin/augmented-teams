@@ -87,6 +87,7 @@ class ScopeSection extends PanelView {
         // Get the proper webview URIs for icons
         let magnifyingGlassIconPath = '';
         let clearIconPath = '';
+        let showAllIconPath = '';
         let plusIconPath = '';
         let subtractIconPath = '';
         let gearIconPath = '';
@@ -101,6 +102,9 @@ class ScopeSection extends PanelView {
                 
                 // clear.png doesn't exist - skip it
                 clearIconPath = '';
+                
+                const showAllUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'show_all.png');
+                showAllIconPath = this.webview.asWebviewUri(showAllUri).toString();
                 
                 const plusUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'plus.png');
                 plusIconPath = this.webview.asWebviewUri(plusUri).toString();
@@ -169,6 +173,21 @@ class ScopeSection extends PanelView {
                     <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
                     ${magnifyingGlassIconPath ? `<img src="${magnifyingGlassIconPath}" style="margin-right: 8px; width: 28px; height: 28px; object-fit: contain;" alt="Scope Icon" />` : ''}
                     <span style="font-weight: 600; font-size: 20px;">Scope</span>
+                    ${showAllIconPath ? `<button onclick="event.stopPropagation(); showAllScope();" style="
+                        background: transparent;
+                        border: none;
+                        padding: 4px 8px;
+                        margin-left: 12px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        transition: opacity 0.15s ease;
+                    " 
+                    onmouseover="this.style.opacity='0.7'" 
+                    onmouseout="this.style.opacity='1'"
+                    title="Show all scope (scope showall)">
+                        <img src="${showAllIconPath}" style="width: 28px; height: 28px; object-fit: contain;" alt="Show All" />
+                    </button>` : ''}
                     ${hasFilter && clearIconPath ? `<button onclick="event.stopPropagation(); clearScopeFilter();" style="
                         background: transparent;
                         border: none;

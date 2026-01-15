@@ -1,8 +1,6 @@
 {
-  "type": "story",
-  "value": [
-    "Invoke Bot"
-  ],
+  "type": "all",
+  "value": [],
   "exclude": [],
   "skiprule": []
 }

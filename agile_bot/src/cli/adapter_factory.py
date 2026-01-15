@@ -32,6 +32,8 @@ class AdapterFactory:
         
         # ScopeCommandResult domain (wraps scope command responses)
         ('ScopeCommandResult', 'json'): ('agile_bot.src.scope.json_scope_command_result', 'JSONScopeCommandResult'),
+        ('ScopeCommandResult', 'tty'): ('agile_bot.src.scope.tty_scope_command_result', 'TTYScopeCommandResult'),
+        ('ScopeCommandResult', 'markdown'): ('agile_bot.src.scope.markdown_scope_command_result', 'MarkdownScopeCommandResult'),
         
         # Navigation domain
         ('NavigationResult', 'json'): ('agile_bot.src.navigation.json_navigation', 'JSONNavigation'),

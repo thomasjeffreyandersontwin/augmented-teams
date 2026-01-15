@@ -207,9 +207,18 @@ class BotHeaderView extends PanelView {
      */
     async handleEvent(eventType, eventData) {
         if (eventType === 'switchBot') {
-            // Switch bot logic would go here
-            // For now, just return success
-            return { success: true, bot: eventData.botName };
+            // Execute CLI command to switch bot
+            const botName = eventData.botName;
+            PanelView._log(`[BotHeaderView] Switching bot to: ${botName}`);
+            
+            try {
+                const result = await this.execute(`bot ${botName}`);
+                PanelView._log(`[BotHeaderView] Bot switch result: ${JSON.stringify(result)}`);
+                return result;
+            } catch (error) {
+                PanelView._log(`[BotHeaderView] ERROR switching bot: ${error.message}`);
+                throw error;
+            }
         }
         if (eventType === 'updateWorkspace') {
             // Execute CLI command to change workspace

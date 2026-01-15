@@ -73,6 +73,33 @@ class CLISession:
         # Special case: "status" just returns the bot itself
         if verb == 'status':
             result = self.bot
+        # Special case: "bot" switches to a different bot
+        elif verb == 'bot':
+            if not args:
+                # No bot name provided - show current bot and available bots
+                result = {
+                    'status': 'info',
+                    'current_bot': self.bot.bot_name,
+                    'registered_bots': self.bot.bots,
+                    'message': f"Current bot: {self.bot.bot_name}. Available bots: {', '.join(self.bot.bots)}. Usage: bot <name>"
+                }
+            else:
+                # Switch to specified bot
+                target_bot_name = args.strip()
+                try:
+                    self.bot.active_bot = target_bot_name
+                    # Update self.bot to reference the new active bot
+                    self.bot = self.bot.active_bot
+                    result = {
+                        'status': 'success',
+                        'message': f'Switched to bot: {target_bot_name}',
+                        'bot_name': target_bot_name
+                    }
+                except ValueError as e:
+                    result = {
+                        'status': 'error',
+                        'message': str(e)
+                    }
         # Special case: "save" calls bot.save() with parsed parameters
         elif verb == 'save':
             params = self._parse_save_params(args)

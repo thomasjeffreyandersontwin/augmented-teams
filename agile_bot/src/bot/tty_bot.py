@@ -22,8 +22,17 @@ class TTYBot(BaseBotAdapter, TTYAdapter):
     # Expose ALL domain properties as FORMATTED display strings
     @property
     def name(self):
-        """Returns formatted bot name header."""
-        return f"{self.add_bold('🤖 Bot:')} {self.bot.name}"
+        """Returns formatted bot name header with registered bots."""
+        lines = []
+        # Show current bot and registered bots
+        registered_bots = self.bot.bots
+        if registered_bots:
+            bot_list = ' | '.join(registered_bots)
+            lines.append(f"{self.add_bold('🤖 Bot:')} {self.bot.name} | {self.add_bold('Registered:')} {bot_list}")
+            lines.append(f"{self.add_bold('To change bots:')} bot <name>")
+        else:
+            lines.append(f"{self.add_bold('🤖 Bot:')} {self.bot.name}")
+        return '\n'.join(lines)
     
     @property
     def bot_name(self):
@@ -106,7 +115,7 @@ class TTYBot(BaseBotAdapter, TTYAdapter):
         """Returns available commands quick reference."""
         lines = []
         lines.append(self.add_bold('💻 Commands:'))
-        lines.append(self.add_bold("status | back | current | next | path [dir] | scope [filter] | headless \"msg\" | help | exit"))
+        lines.append(self.add_bold("status | back | current | next | path [dir] | scope [filter] | bot [name] | help | exit"))
         lines.append("")
         lines.append("// Run")
         lines.append("echo '[command]' | python repl_main.py")
