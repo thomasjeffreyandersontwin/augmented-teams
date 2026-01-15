@@ -385,16 +385,42 @@ class BotPanel {
                 ? instructionsContent.join('\n') 
                 : instructionsContent;
               
-              // Send to Cursor chat using the commands API
-              vscode.commands.executeCommand('cursor.sendToChat', contentStr)
-                .then(() => {
-                  vscode.window.showInformationMessage('Instructions submitted to chat!');
-                }, (error) => {
-                  // If cursor.sendToChat doesn't exist, try alternative method
-                  vscode.env.clipboard.writeText(contentStr).then(() => {
-                    vscode.window.showInformationMessage('Instructions copied to clipboard! Paste into chat.');
+              // Copy to clipboard
+              vscode.env.clipboard.writeText(contentStr).then(() => {
+                // Open Cursor chat panel
+                vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus')
+                  .then(() => {
+                    // Wait a moment for chat to focus, then paste automatically
+                    setTimeout(() => {
+                      vscode.commands.executeCommand('editor.action.clipboardPasteAction')
+                        .then(() => {
+                          vscode.window.showInformationMessage('Instructions pasted to chat!');
+                        })
+                        .catch(() => {
+                          vscode.window.showInformationMessage('Instructions copied! Press Ctrl+V to paste.');
+                        });
+                    }, 300);
+                  })
+                  .catch(() => {
+                    // Fallback: try alternative chat command
+                    vscode.commands.executeCommand('workbench.action.chat.open')
+                      .then(() => {
+                        setTimeout(() => {
+                          vscode.commands.executeCommand('editor.action.clipboardPasteAction')
+                            .then(() => {
+                              vscode.window.showInformationMessage('Instructions pasted to chat!');
+                            })
+                            .catch(() => {
+                              vscode.window.showInformationMessage('Instructions copied! Press Ctrl+V to paste.');
+                            });
+                        }, 300);
+                      })
+                      .catch(() => {
+                        // Chat not available, just show clipboard message
+                        vscode.window.showInformationMessage('Instructions copied to clipboard! Paste into chat.');
+                      });
                   });
-                });
+              });
             } else {
               vscode.window.showWarningMessage('No instructions available to submit.');
             }

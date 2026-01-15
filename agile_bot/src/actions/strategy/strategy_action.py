@@ -66,12 +66,12 @@ class StrategyAction(Action):
                 combined_assumptions['typical_assumptions'] = assumptions_template
         
         # Add saved decisions
-        saved_decisions = saved_behavior_data.get('strategy_criteria', {}).get('decisions_made', {})
+        saved_decisions = saved_behavior_data.get('decisions', {})
         if saved_decisions:
             combined_strategy_criteria['decisions_made'] = saved_decisions
         
         # Add saved assumptions
-        saved_assumptions = saved_behavior_data.get('assumptions', {}).get('assumptions_made', [])
+        saved_assumptions = saved_behavior_data.get('assumptions', [])
         if saved_assumptions:
             combined_assumptions['assumptions_made'] = saved_assumptions
         
@@ -113,25 +113,55 @@ class StrategyAction(Action):
         if strategy_criteria:
             output_lines.append("")
             output_lines.append("**Decisions:**")
-            for criteria_key, criteria_data in strategy_criteria.items():
+            
+            # First show criteria template (if available)
+            criteria_template = strategy_criteria.get('criteria', {})
+            if criteria_template:
+                for criteria_key, criteria_data in criteria_template.items():
+                    output_lines.append("")
+                    question = criteria_data.get('question', '')
+                    if question:
+                        output_lines.append(f"**{criteria_key}:** {question}")
+                    else:
+                        output_lines.append(f"**{criteria_key}:**")
+                    options = criteria_data.get('options', [])
+                    if options:
+                        for option in options:
+                            output_lines.extend(self._format_option(option))
+            
+            # Then show saved decisions
+            saved_decisions = strategy_criteria.get('decisions', {})
+            if saved_decisions:
                 output_lines.append("")
-                question = criteria_data.get('question', '')
-                if question:
-                    output_lines.append(f"**{criteria_key}:** {question}")
-                else:
-                    output_lines.append(f"**{criteria_key}:**")
-                options = criteria_data.get('options', [])
-                if options:
-                    for option in options:
-                        output_lines.extend(self._format_option(option))
+                output_lines.append("**Your Decisions:**")
+                for decision_key, decision_value in saved_decisions.items():
+                    output_lines.append("")
+                    output_lines.append(f"**{decision_key}:**")
+                    if isinstance(decision_value, list):
+                        for item in decision_value:
+                            output_lines.append(f"  - {item}")
+                    else:
+                        output_lines.append(f"  {decision_value}")
         
         # Format assumptions
-        assumptions = instructions_dict.get('assumptions', [])
+        assumptions = instructions_dict.get('assumptions', {})
         if assumptions:
             output_lines.append("")
             output_lines.append("**Assumptions:**")
-            for assumption in assumptions:
-                output_lines.append(f"- {assumption}")
+            
+            # Show template assumptions
+            typical_assumptions = assumptions.get('typical_assumptions', [])
+            if typical_assumptions:
+                for assumption in typical_assumptions:
+                    output_lines.append(f"- {assumption}")
+            
+            # Show saved assumptions  
+            saved_assumptions = assumptions.get('assumptions', [])
+            if saved_assumptions:
+                output_lines.append("")
+                output_lines.append("**Your Assumptions:**")
+                for assumption in saved_assumptions:
+                    output_lines.append(f"- {assumption}")
         
         return "\n".join(output_lines)
 

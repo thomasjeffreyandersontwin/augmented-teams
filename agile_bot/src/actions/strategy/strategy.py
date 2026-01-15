@@ -20,5 +20,5 @@ class Strategy:
         """
         strategy_criteria_dict = {}
         for key, criteria in self.strategy_criterias.strategy_criterias.items():
-            strategy_criteria_dict[key] = {'question': criteria.question, 'options': criteria.options, 'outcome': criteria.outcome}
+            strategy_criteria_dict[key] = criteria.to_dict()
         return {'strategy_criteria': strategy_criteria_dict, 'assumptions': self.assumptions.assumptions}

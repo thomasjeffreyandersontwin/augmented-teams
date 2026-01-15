@@ -113,23 +113,51 @@ class TTYInstructions(TTYAdapter):
             if strategy_criteria:
                 output_lines.append("")
                 output_lines.append(self.add_bold("Decisions:"))
-                for criteria_key, criteria_data in strategy_criteria.items():
-                    output_lines.append("")
-                    question = criteria_data.get('question', '')
-                    if question:
-                        output_lines.append(f"{self.add_bold(f'{criteria_key}:')} {question}")
-                    else:
-                        output_lines.append(self.add_bold(f"{criteria_key}:"))
-                    options = criteria_data.get('options', [])
-                    if options:
-                        for option in options:
-                            output_lines.extend(self._format_strategy_option(option))
+                
+                # Get saved decisions
+                saved_decisions = strategy_criteria.get('decisions', {})
+                
+                # Show criteria with options, mark selected ones
+                criteria_template = strategy_criteria.get('criteria', {})
+                if criteria_template:
+                    for criteria_key, criteria_data in criteria_template.items():
+                        output_lines.append("")
+                        question = criteria_data.get('question', '')
+                        if question:
+                            output_lines.append(f"{self.add_bold(f'{criteria_key}:')} {question}")
+                        else:
+                            output_lines.append(self.add_bold(f"{criteria_key}:"))
+                        
+                        # Get the selected value for this criterion
+                        selected_value = saved_decisions.get(criteria_key) if saved_decisions else None
+                        
+                        options = criteria_data.get('options', [])
+                        if options:
+                            for option in options:
+                                output_lines.extend(self._format_strategy_option(option, selected_value))
             
             if assumptions:
                 output_lines.append("")
                 output_lines.append(self.add_bold("Assumptions:"))
-                for assumption in assumptions:
-                    output_lines.append(f"- {assumption}")
+                
+                # Show template assumptions
+                if isinstance(assumptions, dict):
+                    typical_assumptions = assumptions.get('typical_assumptions', [])
+                    if typical_assumptions:
+                        for assumption in typical_assumptions:
+                            output_lines.append(f"- {assumption}")
+                    
+                    # Show saved assumptions
+                    saved_assumptions = assumptions.get('assumptions', [])
+                    if saved_assumptions:
+                        output_lines.append("")
+                        output_lines.append(self.add_bold("Your Assumptions:"))
+                        for assumption in saved_assumptions:
+                            output_lines.append(f"- {assumption}")
+                elif isinstance(assumptions, list):
+                    # Legacy format - just a list of assumptions
+                    for assumption in assumptions:
+                        output_lines.append(f"- {assumption}")
         
         # Add display content (action-specific formatted content)
         display_content = instructions_dict.get('display_content', [])
@@ -139,20 +167,33 @@ class TTYInstructions(TTYAdapter):
         
         return "\n".join(output_lines)
     
-    def _format_strategy_option(self, option) -> list:
-        """Format a single decision criteria option for display."""
+    def _format_strategy_option(self, option, selected_value=None) -> list:
+        """Format a single decision criteria option for display, marking if selected."""
         lines = []
+        option_text = option if isinstance(option, str) else option.get('description', option.get('name', ''))
+        
+        # Check if this option is selected
+        is_selected = False
+        if selected_value:
+            if isinstance(selected_value, list):
+                is_selected = option_text in selected_value
+            else:
+                is_selected = option_text == selected_value or option_text.startswith(selected_value.split(' – ')[0])
+        
         if isinstance(option, dict):
             name = option.get('name', '')
             description = option.get('description', '')
             if name:
-                lines.append(f"  - {self.add_bold(name)}")
+                marker = "  ✓ " if is_selected else "  - "
+                lines.append(f"{marker}{self.add_bold(name) if is_selected else name}")
                 if description:
                     lines.append(f"    {description}")
             elif description:
-                lines.append(f"  - {description}")
+                marker = "  ✓ " if is_selected else "  - "
+                lines.append(f"{marker}{self.add_bold(description) if is_selected else description}")
         elif isinstance(option, str):
-            lines.append(f"  - {option}")
+            marker = "  ✓ " if is_selected else "  - "
+            lines.append(f"{marker}{self.add_bold(option) if is_selected else option}")
         return lines
     
     def parse_command_text(self, text: str) -> tuple[str, str]:

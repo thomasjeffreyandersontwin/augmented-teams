@@ -48,3 +48,11 @@ class StrategyCriteria:
     @outcome.setter
     def outcome(self, value: Optional[Any]):
         self._outcome = value
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert StrategyCriteria to a dictionary for JSON serialization."""
+        return {
+            'question': self.question,
+            'options': self.options,
+            'outcome': self.outcome
+        }

@@ -58,24 +58,30 @@ Write-Host ""
 # Update package.json
 Write-Host "[1/6] Updating package.json..." -ForegroundColor Cyan
 $packageJsonContent = Get-Content $packageJsonPath -Raw
-$packageJsonContent = $packageJsonContent -replace "`"version`": `"$currentVersion`"", "`"version`": `"$newVersion`""
+$packageJsonContent = $packageJsonContent -replace "`"version`":\s*`"$currentVersion`"", "`"version`": `"$newVersion`""
 # Write without BOM to avoid vsce JSON parse errors
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($packageJsonPath, $packageJsonContent, $utf8NoBom)
+# Give filesystem time to sync
+Start-Sleep -Milliseconds 200
 Write-Host "      Done: package.json updated" -ForegroundColor Green
 
 # Package extension
 Write-Host "[2/6] Packaging extension..." -ForegroundColor Cyan
-npx @vscode/vsce package --allow-missing-repository --allow-star-activation | Out-Null
+# Remove old vsix files first
+Remove-Item "$panelDir\bot-panel-*.vsix" -Force -ErrorAction SilentlyContinue
+npx @vscode/vsce package --allow-missing-repository --allow-star-activation > $null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Packaging failed!" -ForegroundColor Red
     exit 1
 }
+# Verify the file was created
+Start-Sleep -Milliseconds 500
 Write-Host "      Done: Extension packaged: bot-panel-$newVersion.vsix" -ForegroundColor Green
 
 # Uninstall old extension
 Write-Host "[3/6] Uninstalling old extension..." -ForegroundColor Cyan
-cursor --uninstall-extension agilebot.bot-panel | Out-Null
+cursor --uninstall-extension agilebot.bot-panel > $null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      Warning: Uninstall warning (may not be installed)" -ForegroundColor Yellow
 } else {
@@ -85,8 +91,11 @@ if ($LASTEXITCODE -ne 0) {
 # Install new extension
 Write-Host "[4/6] Installing new extension..." -ForegroundColor Cyan
 $vsixPath = Join-Path $panelDir "bot-panel-$newVersion.vsix"
-$vsixPath = (Resolve-Path $vsixPath).Path
-cursor --install-extension "$vsixPath" --force | Out-Null
+if (-not (Test-Path $vsixPath)) {
+    Write-Host "      ERROR: VSIX file not found: $vsixPath" -ForegroundColor Red
+    exit 1
+}
+cursor --install-extension "$vsixPath" --force > $null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Installation failed!" -ForegroundColor Red
     exit 1

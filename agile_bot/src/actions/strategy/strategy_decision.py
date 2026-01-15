@@ -17,8 +17,8 @@ class StrategyDecision(JsonPersistent):
         
         # Get existing decisions and assumptions for this behavior
         behavior_data = existing_data.get(self.behavior_name, {})
-        existing_decisions = behavior_data.get('strategy_criteria', {}).get('decisions_made', {})
-        existing_assumptions = behavior_data.get('assumptions', {}).get('assumptions_made', [])
+        existing_decisions = behavior_data.get('decisions', {})
+        existing_assumptions = behavior_data.get('assumptions', [])
         
         # Merge new decisions with existing (new decisions override existing ones)
         merged_decisions = {**existing_decisions, **self.decisions_made}
@@ -29,12 +29,8 @@ class StrategyDecision(JsonPersistent):
         
         # Only save the user's decisions and assumptions, not the criteria template
         new_data = {
-            'strategy_criteria': {
-                'decisions_made': merged_decisions
-            }, 
-            'assumptions': {
-                'assumptions_made': merged_assumptions
-            }
+            'decisions': merged_decisions,
+            'assumptions': merged_assumptions
         }
         merged_data = self.merge(existing_data, new_data, self.behavior_name)
         super().save(merged_data)

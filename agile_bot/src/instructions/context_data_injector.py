@@ -29,12 +29,11 @@ class ContextDataInjector:
         )
 
     def inject_strategy_data(self, instructions: Dict[str, Any]) -> list:
-        return self._inject_data(
-            instructions,
-            StrategyDecision.load_all,
-            'strategy',
-            []
-        )
+        # Strategy data injection is handled by StrategyAction._prepare_instructions()
+        # which sets 'strategy_criteria' and 'assumptions' keys directly.
+        # We should NOT set a 'strategy' key here as it conflicts with that.
+        # Other actions that need strategy context will use 'strategy_criteria' and 'assumptions' keys.
+        return []
 
     def inject_context_files(self, instructions: Dict[str, Any]) -> list:
         bot_paths = self.behavior.bot_paths

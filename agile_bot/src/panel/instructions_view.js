@@ -283,20 +283,26 @@ class InstructionsSection extends PanelView {
         }
 
         // 2. CLARIFY - Q&A + Evidence
-        // Only show when action is 'clarify'
+        // ALWAYS show when there's saved clarification data (visible on all pages as context)
+        // ALSO show when in clarify action even if no saved data yet (for editing)
         const currentAction = instructions.action_instructions?.name || currentActionFromResponse || '';
-        const hasClarificationData = instructions.clarify_instructions?.clarification_data || 
-                                    instructions.clarification ||
-                                    (instructions.guardrails?.required_context?.key_questions);
+        const savedClarification = instructions.clarification;
+        const isInClarifyAction = currentAction === 'clarify';
         
-        // Only show clarify section when we're in clarify action
-        if (hasClarificationData && currentAction === 'clarify') {
+        // Check if we have saved answers or if we're in clarify action
+        const hasSavedAnswers = savedClarification && 
+                               savedClarification.key_questions && 
+                               savedClarification.key_questions.answers &&
+                               Object.keys(savedClarification.key_questions.answers).length > 0;
+        
+        const showClarifySection = hasSavedAnswers || isInClarifyAction;
+        
+        if (showClarifySection) {
             // Transform clarification.json structure to array format for rendering
             let clarificationDataArray = [];
             
             // Check if we have saved clarification data (from clarification.json)
-            const savedClarification = instructions.clarification;
-            if (savedClarification && savedClarification.key_questions && savedClarification.key_questions.answers) {
+            if (hasSavedAnswers) {
                 // Convert answers object to array of {question, answer} objects
                 const answers = savedClarification.key_questions.answers;
                 clarificationDataArray = Object.keys(answers).map(question => ({
@@ -305,8 +311,8 @@ class InstructionsSection extends PanelView {
                 }));
             }
             
-            // If no saved data, create empty entries for guardrail questions
-            if (clarificationDataArray.length === 0 && instructions.guardrails?.required_context?.key_questions) {
+            // If no saved data but we're in clarify action, create empty entries for guardrail questions
+            if (clarificationDataArray.length === 0 && isInClarifyAction && instructions.guardrails?.required_context?.key_questions) {
                 const questions = instructions.guardrails.required_context.key_questions;
                 clarificationDataArray = questions.map(q => ({
                     question: q,
@@ -334,32 +340,71 @@ class InstructionsSection extends PanelView {
             };
         }
 
-        // 3. STRATEGY - Decision Criteria + Assumptions (ONLY show during strategy action or when saved strategy exists)
-        const hasStrategyData = currentAction === 'strategy' || 
-                            instructions.strategy_instructions?.strategy_data || 
-                            instructions.strategy;
-        if (hasStrategyData) {
+        // 3. STRATEGY - Decision Criteria + Assumptions
+        // ALWAYS show when there's saved strategy data (visible on all pages as context)
+        // ALSO show when in strategy action even if no saved data yet (for editing)
+        const savedStrategy = instructions.strategy;
+        const isInStrategyAction = currentAction === 'strategy';
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/8c521aea-7def-453b-baa0-70f06cfd0592',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'instructions_view.js:346',message:'strategy data received',data:{has_savedStrategy:!!savedStrategy,savedStrategy_keys:savedStrategy?Object.keys(savedStrategy):null,isInStrategyAction:isInStrategyAction,full_instructions_keys:Object.keys(instructions)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+        
+        // Check if we have saved decisions or assumptions
+        const hasSavedDecisions = savedStrategy && 
+                                 savedStrategy.strategy_criteria && 
+                                 savedStrategy.strategy_criteria.decisions_made &&
+                                 Object.keys(savedStrategy.strategy_criteria.decisions_made).length > 0;
+        
+        const hasSavedAssumptions = savedStrategy && 
+                                   savedStrategy.assumptions && 
+                                   savedStrategy.assumptions.assumptions_made &&
+                                   savedStrategy.assumptions.assumptions_made.length > 0;
+        
+        const showStrategySection = hasSavedDecisions || hasSavedAssumptions || isInStrategyAction;
+        
+        if (showStrategySection) {
             // Extract saved strategy data from strategy.json
-            const savedStrategy = instructions.strategy;
             let strategyCriteriaData = {};
             let decisionsMade = {};
             let assumptionsMade = [];
             
             if (savedStrategy && savedStrategy.strategy_criteria) {
-                // Get criteria (questions and options)
-                strategyCriteriaData = savedStrategy.strategy_criteria.criteria || {};
-                // Get decisions made
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/8c521aea-7def-453b-baa0-70f06cfd0592',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'instructions_view.js:372',message:'savedStrategy.strategy_criteria details',data:{strategy_criteria_keys:Object.keys(savedStrategy.strategy_criteria),has_criteria:!!savedStrategy.strategy_criteria.criteria,has_decisions_made:!!savedStrategy.strategy_criteria.decisions_made},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H8'})}).catch(()=>{});
+                // #endregion
+                
+                // Get criteria (questions and options) - only needed if in strategy action
+                if (isInStrategyAction) {
+                    strategyCriteriaData = savedStrategy.strategy_criteria.criteria || {};
+                }
+                // Get decisions made - always show if available
                 decisionsMade = savedStrategy.strategy_criteria.decisions_made || {};
             }
             
             if (savedStrategy && savedStrategy.assumptions) {
-                // Get assumptions made
+                // Get assumptions made - always show if available
                 assumptionsMade = savedStrategy.assumptions.assumptions_made || [];
             }
             
-            // Fallback to guardrails if no saved data
-            if (Object.keys(strategyCriteriaData).length === 0) {
-                strategyCriteriaData = instructions.strategy_criteria || instructions.guardrails?.decision_criteria || {};
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/8c521aea-7def-453b-baa0-70f06cfd0592',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'instructions_view.js:380',message:'extracted strategy data',data:{strategyCriteriaData_keys:Object.keys(strategyCriteriaData),decisionsMade_keys:Object.keys(decisionsMade),assumptionsMade_length:assumptionsMade.length,showStrategySection:showStrategySection},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H5'})}).catch(()=>{});
+            // #endregion
+            
+            // Fallback to guardrails if no saved data and we're in strategy action
+            if (Object.keys(strategyCriteriaData).length === 0 && isInStrategyAction) {
+                const fallbackData = instructions.strategy_criteria || instructions.guardrails?.decision_criteria || {};
+                
+                // If fallbackData has nested 'criteria' key, extract it; otherwise use as-is
+                if (fallbackData.criteria) {
+                    strategyCriteriaData = fallbackData.criteria;
+                } else {
+                    strategyCriteriaData = fallbackData;
+                }
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/8c521aea-7def-453b-baa0-70f06cfd0592',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'instructions_view.js:391',message:'fallback criteria from instructions',data:{from_strategy_criteria:!!instructions.strategy_criteria,from_guardrails:!!instructions.guardrails?.decision_criteria,had_nested_criteria:!!fallbackData.criteria,strategyCriteriaData_keys:Object.keys(strategyCriteriaData)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H8'})}).catch(()=>{});
+                // #endregion
             }
             
             restructured.strategy_instructions = {

@@ -101,26 +101,62 @@ class MarkdownInstructions(MarkdownAdapter):
             output_lines.append("")
             output_lines.append("### Decisions")
             output_lines.append("")
-            for criteria_key, criteria_data in strategy_criteria.items():
-                question = criteria_data.get('question', '')
-                if question:
-                    output_lines.append(f"**{criteria_key}:** {question}")
-                else:
-                    output_lines.append(f"**{criteria_key}:**")
+            
+            # First show criteria template (if available)
+            criteria_template = strategy_criteria.get('criteria', {})
+            if criteria_template:
+                for criteria_key, criteria_data in criteria_template.items():
+                    question = criteria_data.get('question', '')
+                    if question:
+                        output_lines.append(f"**{criteria_key}:** {question}")
+                    else:
+                        output_lines.append(f"**{criteria_key}:**")
+                    output_lines.append("")
+                    options = criteria_data.get('options', [])
+                    if options:
+                        for option in options:
+                            output_lines.extend(self._format_strategy_option(option))
+                    output_lines.append("")
+            
+            # Then show saved decisions
+            saved_decisions = strategy_criteria.get('decisions', {})
+            if saved_decisions:
+                output_lines.append("**Your Decisions:**")
                 output_lines.append("")
-                options = criteria_data.get('options', [])
-                if options:
-                    for option in options:
-                        output_lines.extend(self._format_strategy_option(option))
-                output_lines.append("")
+                for decision_key, decision_value in saved_decisions.items():
+                    output_lines.append(f"**{decision_key}:**")
+                    if isinstance(decision_value, list):
+                        for item in decision_value:
+                            output_lines.append(f"  - {item}")
+                    else:
+                        output_lines.append(f"  {decision_value}")
+                    output_lines.append("")
         
-        assumptions = instructions_dict.get('assumptions', [])
+        assumptions = instructions_dict.get('assumptions', {})
         if assumptions:
             output_lines.append("")
             output_lines.append("### Assumptions")
             output_lines.append("")
-            for assumption in assumptions:
-                output_lines.append(f"- {assumption}")
+            
+            # Show template assumptions
+            if isinstance(assumptions, dict):
+                typical_assumptions = assumptions.get('typical_assumptions', [])
+                if typical_assumptions:
+                    for assumption in typical_assumptions:
+                        output_lines.append(f"- {assumption}")
+                
+                # Show saved assumptions
+                saved_assumptions = assumptions.get('assumptions', [])
+                if saved_assumptions:
+                    output_lines.append("")
+                    output_lines.append("**Your Assumptions:**")
+                    output_lines.append("")
+                    for assumption in saved_assumptions:
+                        output_lines.append(f"- {assumption}")
+            elif isinstance(assumptions, list):
+                # Legacy format - just a list of assumptions
+                for assumption in assumptions:
+                    output_lines.append(f"- {assumption}")
         
         # Add display content
         display_content = instructions_dict.get('display_content', [])
