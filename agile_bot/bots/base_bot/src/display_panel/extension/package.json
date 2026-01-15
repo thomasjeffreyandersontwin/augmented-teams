@@ -2,7 +2,7 @@
   "name": "repl-status-panel",
   "displayName": "REPL Status Display Panel",
   "description": "Visual dashboard for REPL CLI status showing workflow, scope, and commands",
-  "version": "0.24.105",
+  "version": "0.24.132",
   "publisher": "agilebot",
   "repository": {
     "type": "git",
@@ -23,7 +23,7 @@
       {
         "command": "agilebot.showStatus",
         "title": "Show Bot Status Dashboard",
-        "category": "AgilBot"
+        "category": "AgileBot"
       }
     ]
   }

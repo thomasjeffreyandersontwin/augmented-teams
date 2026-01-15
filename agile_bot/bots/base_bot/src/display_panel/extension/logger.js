@@ -5,8 +5,9 @@ const fs = require("fs");
 const path = require("path");
 
 class Logger {
-  constructor(logPath) {
+  constructor(logPath, verbose = false) {
     this.logPath = logPath;
+    this.verbose = verbose;
     this.ensureLogDir();
     this.log("=== NEW SESSION ===");
   }
@@ -22,7 +23,7 @@ class Logger {
     const timestamp = new Date().toISOString();
     let logLine = `[${timestamp}] ${message}`;
     
-    if (data !== null) {
+    if (data !== null && this.verbose) {
       if (typeof data === "string") {
         logLine += `\n${data}`;
       } else {
@@ -30,7 +31,7 @@ class Logger {
       }
     }
     
-    logLine += "\n\n";
+    logLine += "\n";    
     
     fs.appendFileSync(this.logPath, logLine);
   }

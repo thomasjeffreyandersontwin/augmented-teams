@@ -170,8 +170,10 @@ class StatusDataProvider {
           return;
         }
 
-        this.logger.log("Raw CLI output received (first 500 chars):", stdout.substring(0, 500));
-        this.logger.log("Raw CLI output received (FULL OUTPUT):", stdout);
+        this.logger.log("Raw CLI output received (first 500 chars): " + stdout.substring(0, 500));
+        if (this.logger.verbose) {
+            this.logger.log("Raw CLI output received (FULL OUTPUT):", stdout);
+          }
         resolve(stdout);
       });
     });
