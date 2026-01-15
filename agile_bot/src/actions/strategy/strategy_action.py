@@ -39,15 +39,66 @@ class StrategyAction(Action):
         This method adds only the behavior-specific data.
         """
         strategy_data = self.strategy.instructions
-        # Store strategy data (criteria, assumptions) as separate keys
-        if strategy_data:
-            instructions.update(strategy_data)
         
         # Load saved strategy decisions if they exist
         saved_data = StrategyDecision.load_all(self.behavior.bot_paths)
-        if saved_data and self.behavior.name in saved_data:
-            # Include saved strategy data in instructions for panel display
-            instructions.set('strategy', saved_data[self.behavior.name])
+        saved_behavior_data = saved_data.get(self.behavior.name, {}) if saved_data else {}
+        
+        # Build combined strategy structure that includes both template and saved data
+        combined_strategy_criteria = {}
+        combined_assumptions = {}
+        
+        if strategy_data:
+            # Get criteria template
+            criteria_template = strategy_data.get('strategy_criteria', {})
+            combined_strategy_criteria['criteria'] = criteria_template
+            
+            # Get assumptions template
+            assumptions_template = strategy_data.get('assumptions', {})
+            if isinstance(assumptions_template, dict):
+                # If it has 'typical_assumptions' key already, use it
+                if 'typical_assumptions' in assumptions_template:
+                    combined_assumptions['typical_assumptions'] = assumptions_template.get('typical_assumptions', [])
+                else:
+                    # Otherwise, treat the whole dict as the typical assumptions list
+                    combined_assumptions['typical_assumptions'] = assumptions_template
+            elif isinstance(assumptions_template, list):
+                combined_assumptions['typical_assumptions'] = assumptions_template
+        
+        # Add saved decisions
+        saved_decisions = saved_behavior_data.get('strategy_criteria', {}).get('decisions_made', {})
+        if saved_decisions:
+            combined_strategy_criteria['decisions_made'] = saved_decisions
+        
+        # Add saved assumptions
+        saved_assumptions = saved_behavior_data.get('assumptions', {}).get('assumptions_made', [])
+        if saved_assumptions:
+            combined_assumptions['assumptions_made'] = saved_assumptions
+        
+        # Set combined data in instructions
+        if combined_strategy_criteria:
+            instructions.set('strategy_criteria', combined_strategy_criteria)
+        if combined_assumptions:
+            instructions.set('assumptions', combined_assumptions)
+    
+        # Also load saved clarifications so they're visible on strategy page
+        try:
+            from ..clarify.requirements_clarifications import RequirementsClarifications
+            from ..clarify.required_context import RequiredContext
+            
+            required_context = RequiredContext(self.behavior.folder)
+            clarifications = RequirementsClarifications(
+                behavior_name=self.behavior.name,
+                bot_paths=self.behavior.bot_paths,
+                required_context=required_context,
+                key_questions_answered={},
+                evidence_provided={}
+            )
+            saved_clarifications = clarifications.load()
+            if saved_clarifications and self.behavior.name in saved_clarifications:
+                instructions.set('clarification', saved_clarifications[self.behavior.name])
+        except Exception:
+            pass  # Silently skip if can't load clarifications
     
     def _format_instructions_for_display(self, instructions) -> str:
         """Format strategy data for REPL display."""

@@ -73,6 +73,19 @@ class CLISession:
         # Special case: "status" just returns the bot itself
         if verb == 'status':
             result = self.bot
+        # Special case: "save" calls bot.save() with parsed parameters
+        elif verb == 'save':
+            params = self._parse_save_params(args)
+            result = self.bot.save(**params)
+            # Save returns a dict - serialize directly in JSON mode
+            if self.mode == 'json':
+                import json
+                output = json.dumps(result, indent=2)
+                return CLICommandResponse(
+                    output=output,
+                    status=result.get('status', 'success'),
+                    cli_terminated=False
+                )
         # Route to Bot method using reflection
         elif hasattr(self.bot, verb):
             attr = getattr(self.bot, verb)
@@ -261,6 +274,13 @@ class CLISession:
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""
         return verb, args
+    
+    def _parse_save_params(self, args_string: str) -> Dict[str, Any]:
+        """Parse save parameters from command arguments.
+        
+        Delegates to _parse_action_params since save uses the same parameter format.
+        """
+        return self._parse_action_params(args_string)
     
     def _parse_action_params(self, args_string: str) -> Dict[str, Any]:
         """Parse action parameters from command arguments.

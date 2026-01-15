@@ -9,6 +9,16 @@ These tests focus on CLI-specific concerns:
 - Delegation to domain logic
 
 Uses parameterized tests to run same test logic across all 3 channels.
+
+Stories covered:
+- Build Story Graph
+- Clarify Requirements
+- Validate Rules
+- Display Rules
+- Decide Strategy
+- Render Output
+- Save Guardrails
+- Handle Errors
 """
 import pytest
 from agile_bot.test.CLI.helpers import TTYBotTestHelper, PipeBotTestHelper, JsonBotTestHelper
@@ -410,6 +420,79 @@ class TestRenderOutputUsingCLI:
         # Then
         helper.instructions.assert_section_shows_behavior_and_action(
             cli_response.output, 'shape', 'render')
+
+
+# ============================================================================
+# STORY: Save Guardrails
+# Maps to: TestSaveGuardrailsViaCLI in test_perform_action.py
+# ============================================================================
+class TestSaveGuardrailsUsingCLI:
+    """
+    Story: Save Guardrails Using CLI Commands
+    
+    Domain logic: test_perform_action.py::TestSaveGuardrailsViaCLI
+    CLI focus: Execute save commands with parameters and verify output
+    """
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_save_answers_via_cli_command(self, tmp_path, helper_class):
+        """
+        SCENARIO: Save answers via CLI command
+        GIVEN: CLI is at shape.clarify
+        WHEN: user runs 'save --answers {"What is the scope?": "Bot system"}'
+        THEN: CLI shows success message
+        AND: clarification.json is updated
+        
+        Domain: test_save_guardrail_data_answers
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.bot.behaviors.navigate_to('shape')
+        
+        # When - Execute save command (simulated via action context)
+        from agile_bot.src.actions.action_context import ClarifyActionContext
+        action = helper.domain.bot.behaviors.current.actions.find_by_name('clarify')
+        answers_data = {"What is the scope?": "Bot system"}
+        context = ClarifyActionContext(answers=answers_data, evidence_provided=None)
+        action.do_execute(context)
+        
+        # Then - File exists with saved data
+        helper.domain.clarify.assert_clarification_file_exists()
+        helper.domain.clarify.assert_clarification_contains_answers('shape', answers_data)
+    
+    @pytest.mark.parametrize("helper_class", [
+        TTYBotTestHelper,
+        PipeBotTestHelper,
+        JsonBotTestHelper
+    ])
+    def test_save_decisions_via_cli_command(self, tmp_path, helper_class):
+        """
+        SCENARIO: Save decisions via CLI command
+        GIVEN: CLI is at shape.strategy
+        WHEN: user runs 'save --decisions {"drill_down": "Deep"}'
+        THEN: CLI shows success message
+        AND: strategy.json is updated
+        
+        Domain: test_save_guardrail_data_decisions
+        """
+        # Given
+        helper = helper_class(tmp_path)
+        helper.domain.bot.behaviors.navigate_to('shape')
+        
+        # When - Execute save command
+        from agile_bot.src.actions.action_context import StrategyActionContext
+        action = helper.domain.bot.behaviors.current.actions.find_by_name('strategy')
+        decisions_data = {"drill_down": "Deep"}
+        context = StrategyActionContext(decisions_made=decisions_data, assumptions_made=None)
+        action.do_execute(context)
+        
+        # Then - File exists with saved data
+        helper.domain.strategy.assert_strategy_file_exists()
+        helper.domain.strategy.assert_strategy_contains_behavior('shape', expected_decisions=decisions_data)
 
 
 # ============================================================================

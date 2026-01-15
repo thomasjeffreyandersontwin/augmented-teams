@@ -531,6 +531,60 @@ class Action:
             # Silently skip if guardrails can't be loaded
             pass
     
+        # Load ALL saved guardrail data (clarifications and strategy) so they're visible on all pages
+        self._load_all_saved_guardrails(instructions)
+    
+    def _load_all_saved_guardrails(self, instructions):
+        """Load all saved guardrail data (clarifications and strategy) for visibility on all pages.
+        
+        This ensures that once clarifications are answered or strategy decisions are made,
+        they are visible on ALL pages (clarify, build, validate, render), not just their own page.
+        """
+        if not self.behavior:
+            return
+        
+        try:
+            # Load saved clarification data
+            from .clarify.requirements_clarifications import RequirementsClarifications
+            from .clarify.required_context import RequiredContext
+            
+            # Try to get required_context
+            required_context = None
+            if hasattr(self.behavior, 'guardrails') and hasattr(self.behavior.guardrails, 'required_context'):
+                required_context = self.behavior.guardrails.required_context
+            else:
+                # Fallback to loading from behavior folder
+                required_context = RequiredContext(self.behavior.folder)
+            
+            clarifications = RequirementsClarifications(
+                behavior_name=self.behavior.name,
+                bot_paths=self.behavior.bot_paths,
+                required_context=required_context,
+                key_questions_answered={},
+                evidence_provided={}
+            )
+            saved_clarifications = clarifications.load()
+            if saved_clarifications and self.behavior.name in saved_clarifications:
+                # Include saved clarification data in instructions for panel display
+                instructions.set('clarification', saved_clarifications[self.behavior.name])
+        except Exception as e:
+            # Log but don't fail
+            import logging
+            logging.getLogger(__name__).debug(f'Could not load saved clarifications: {e}')
+        
+        try:
+            # Load saved strategy decisions
+            from .strategy.strategy_decision import StrategyDecision
+            
+            saved_strategy = StrategyDecision.load_all(self.behavior.bot_paths)
+            if saved_strategy and self.behavior.name in saved_strategy:
+                # Include saved strategy data in instructions for panel display
+                instructions.set('strategy', saved_strategy[self.behavior.name])
+        except Exception as e:
+            # Log but don't fail
+            import logging
+            logging.getLogger(__name__).debug(f'Could not load saved strategy decisions: {e}')
+    
     def _add_behavior_action_metadata(self, instructions):
         """Add behavior and action metadata as separate properties for JSON output."""
         # Add behavior metadata (using keys that TTY adapter expects)

@@ -14,11 +14,28 @@ class StrategyDecision(JsonPersistent):
 
     def save(self):
         existing_data = self.load()
-        original_strategy_criteria = {}
-        for key, criteria in self.strategy.strategy_criterias.strategy_criterias.items():
-            original_strategy_criteria[key] = {'question': criteria.question, 'options': criteria.options}
-        original_assumptions = self.strategy.assumptions.assumptions
-        new_data = {'strategy_criteria': {'criteria': original_strategy_criteria, 'decisions_made': self.decisions_made}, 'assumptions': {'typical_assumptions': original_assumptions, 'assumptions_made': self.assumptions_made}}
+        
+        # Get existing decisions and assumptions for this behavior
+        behavior_data = existing_data.get(self.behavior_name, {})
+        existing_decisions = behavior_data.get('strategy_criteria', {}).get('decisions_made', {})
+        existing_assumptions = behavior_data.get('assumptions', {}).get('assumptions_made', [])
+        
+        # Merge new decisions with existing (new decisions override existing ones)
+        merged_decisions = {**existing_decisions, **self.decisions_made}
+        
+        # Merge assumptions - for now, replace with new assumptions if provided
+        # (Could be extended to append instead of replace)
+        merged_assumptions = self.assumptions_made if self.assumptions_made else existing_assumptions
+        
+        # Only save the user's decisions and assumptions, not the criteria template
+        new_data = {
+            'strategy_criteria': {
+                'decisions_made': merged_decisions
+            }, 
+            'assumptions': {
+                'assumptions_made': merged_assumptions
+            }
+        }
         merged_data = self.merge(existing_data, new_data, self.behavior_name)
         super().save(merged_data)
 

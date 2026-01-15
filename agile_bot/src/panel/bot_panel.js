@@ -376,23 +376,44 @@ class BotPanel {
             }
             return;
           case "sendToChat":
+            // Get the instructions content from the message or fetch it
+            const instructionsContent = message.content || PanelView._lastResponse?.instructions?.display_content;
+            
+            if (instructionsContent) {
+              // Convert array to string if needed
+              const contentStr = Array.isArray(instructionsContent) 
+                ? instructionsContent.join('\n') 
+                : instructionsContent;
+              
+              // Send to Cursor chat using the commands API
+              vscode.commands.executeCommand('cursor.sendToChat', contentStr)
+                .then(() => {
+                  vscode.window.showInformationMessage('Instructions submitted to chat!');
+                }, (error) => {
+                  // If cursor.sendToChat doesn't exist, try alternative method
+                  vscode.env.clipboard.writeText(contentStr).then(() => {
+                    vscode.window.showInformationMessage('Instructions copied to clipboard! Paste into chat.');
+                  });
+                });
+            } else {
+              vscode.window.showWarningMessage('No instructions available to submit.');
+            }
+            
+            // Also execute the submit CLI command for tracking
             this._botView?.execute('submit')
-              .then(() => {
-                vscode.window.showInformationMessage('Instructions submitted to chat!');
-              })
               .catch((error) => {
-                vscode.window.showErrorMessage(`Submit failed: ${error.message}`);
+                console.error(`Submit tracking failed: ${error.message}`);
               });
             return;
           case "saveClarifyAnswers":
             if (message.answers) {
               this._log(`[BotPanel] saveClarifyAnswers -> ${JSON.stringify(message.answers)}`);
               const answersJson = JSON.stringify(message.answers).replace(/'/g, "\\'");
-              const cmd = `clarify --answers '${answersJson}'`;
+              const cmd = `save --answers '${answersJson}'`;
               this._botView?.execute(cmd)
                 .then(() => {
                   this._log(`[BotPanel] saveClarifyAnswers success`);
-                  return this._update();
+                  vscode.window.showInformationMessage('Answers saved successfully');
                 })
                 .catch((error) => {
                   this._log(`[BotPanel] saveClarifyAnswers ERROR: ${error.message}`);
@@ -404,11 +425,11 @@ class BotPanel {
             if (message.evidence_provided) {
               this._log(`[BotPanel] saveClarifyEvidence -> ${JSON.stringify(message.evidence_provided)}`);
               const evidenceJson = JSON.stringify(message.evidence_provided).replace(/'/g, "\\'");
-              const cmd = `clarify --evidence_provided '${evidenceJson}'`;
+              const cmd = `save --evidence_provided '${evidenceJson}'`;
               this._botView?.execute(cmd)
                 .then(() => {
                   this._log(`[BotPanel] saveClarifyEvidence success`);
-                  return this._update();
+                  vscode.window.showInformationMessage('Evidence saved successfully');
                 })
                 .catch((error) => {
                   this._log(`[BotPanel] saveClarifyEvidence ERROR: ${error.message}`);
@@ -419,20 +440,15 @@ class BotPanel {
           case "saveStrategyDecision":
             if (message.criteriaKey && message.selectedOption) {
               this._log(`[BotPanel] saveStrategyDecision -> ${message.criteriaKey}: ${message.selectedOption}`);
-              // Load existing decisions, update one, and save all
-              this._botView?.execute('status')
-                .then((statusResult) => {
-                  const currentBehavior = statusResult.behavior;
-                  // Build decisions object with just this one decision
-                  const decisions = {};
-                  decisions[message.criteriaKey] = message.selectedOption;
-                  const decisionsJson = JSON.stringify(decisions).replace(/'/g, "\\'");
-                  const cmd = `${currentBehavior}.strategy --decisions '${decisionsJson}'`;
-                  return this._botView?.execute(cmd);
-                })
+              // Build decisions object with just this one decision
+              const decisions = {};
+              decisions[message.criteriaKey] = message.selectedOption;
+              const decisionsJson = JSON.stringify(decisions).replace(/'/g, "\\'");
+              const cmd = `save --decisions '${decisionsJson}'`;
+              this._botView?.execute(cmd)
                 .then(() => {
                   this._log(`[BotPanel] saveStrategyDecision success`);
-                  return this._update();
+                  vscode.window.showInformationMessage('Strategy decision saved successfully');
                 })
                 .catch((error) => {
                   this._log(`[BotPanel] saveStrategyDecision ERROR: ${error.message}`);
@@ -444,15 +460,11 @@ class BotPanel {
             if (message.assumptions) {
               this._log(`[BotPanel] saveStrategyAssumptions -> ${JSON.stringify(message.assumptions)}`);
               const assumptionsJson = JSON.stringify(message.assumptions).replace(/'/g, "\\'");
-              this._botView?.execute('status')
-                .then((statusResult) => {
-                  const currentBehavior = statusResult.behavior;
-                  const cmd = `${currentBehavior}.strategy --assumptions '${assumptionsJson}'`;
-                  return this._botView?.execute(cmd);
-                })
+              const cmd = `save --assumptions '${assumptionsJson}'`;
+              this._botView?.execute(cmd)
                 .then(() => {
                   this._log(`[BotPanel] saveStrategyAssumptions success`);
-                  return this._update();
+                  vscode.window.showInformationMessage('Strategy assumptions saved successfully');
                 })
                 .catch((error) => {
                   this._log(`[BotPanel] saveStrategyAssumptions ERROR: ${error.message}`);
@@ -1170,7 +1182,23 @@ class BotPanel {
                 command: 'sendToChat'
             });
         }
-        
+
+        function sendInstructionsToChat(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            console.log('[WebView] sendInstructionsToChat triggered');
+            const promptContent = window._promptContent || '';
+            if (!promptContent) {
+                console.warn('[WebView] No prompt content available to submit');
+                return;
+            }
+            vscode.postMessage({
+                command: 'sendToChat',
+                content: promptContent
+            });
+        }
+
         function refreshStatus() {
             vscode.postMessage({
                 command: 'refresh'
@@ -1198,10 +1226,9 @@ class BotPanel {
             console.log('[WebView] saveClarifyAnswers triggered');
             const answers = {};
             const answerElements = document.querySelectorAll('[id^="clarify-answer-"]');
-            const questionElements = document.querySelectorAll('.input-header');
             
-            answerElements.forEach((textarea, idx) => {
-                const question = questionElements[idx]?.textContent?.trim();
+            answerElements.forEach((textarea) => {
+                const question = textarea.getAttribute('data-question');
                 const answer = textarea.value?.trim();
                 if (question && answer) {
                     answers[question] = answer;

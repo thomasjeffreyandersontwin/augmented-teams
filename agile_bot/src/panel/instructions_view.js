@@ -50,6 +50,18 @@ class InstructionsSection extends PanelView {
         return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
     
+    escapeForAttribute(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+    
     /**
      * Render instructions section HTML.
      * Always renders the section structure, even if empty (for consistent UI).
@@ -65,7 +77,48 @@ class InstructionsSection extends PanelView {
         // Fallback to status if no cached instructions
         if (!instructionsData || Object.keys(instructionsData).length === 0) {
             const botData = await this.execute('status');
-            instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+            
+            // Check if there's a current behavior and action
+            const currentBehavior = botData?.behaviors?.current_behavior || botData?.current_behavior;
+            const currentAction = botData?.behaviors?.current_action || botData?.current_action;
+            
+            // If we have a current behavior/action, execute it to get instructions
+            if (currentBehavior && currentAction) {
+                try {
+                    const actionResponse = await this.execute('current');
+                    instructionsData = actionResponse?.instructions || {};
+                    currentActionFromResponse = currentAction;
+                } catch (error) {
+                    console.error('[InstructionsSection] Failed to load current action instructions:', error);
+                    instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+                }
+            } else {
+                // No current action - auto-navigate to first behavior's first action
+                console.log('[InstructionsSection] No current action, auto-navigating to first action');
+                const behaviors = botData?.behaviors?.behaviors || botData?.bot?.behaviors?.behaviors || [];
+                if (behaviors.length > 0) {
+                    const firstBehavior = behaviors[0];
+                    const firstBehaviorName = firstBehavior.name || firstBehavior.behavior_name;
+                    const firstAction = firstBehavior.actions?.[0]?.name || firstBehavior.actions?.[0];
+                    
+                    if (firstBehaviorName && firstAction) {
+                        try {
+                            console.log(`[InstructionsSection] Auto-navigating to ${firstBehaviorName}.${firstAction}`);
+                            const actionResponse = await this.execute(`${firstBehaviorName}.${firstAction}`);
+                            instructionsData = actionResponse?.instructions || {};
+                            currentActionFromResponse = firstAction;
+                        } catch (error) {
+                            console.error('[InstructionsSection] Failed to auto-navigate to first action:', error);
+                            instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+                        }
+                    } else {
+                        instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+                    }
+                } else {
+                    instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+                }
+            }
+            
             currentActionFromResponse = currentActionFromResponse ||
                 botData?.current_action ||
                 botData?.behaviors?.current_action ||
@@ -155,8 +208,8 @@ class InstructionsSection extends PanelView {
                 const storyUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'story.png');
                 storyIconPath = this.webview.asWebviewUri(storyUri).toString();
                 
-                // bot submit.png doesn't exist - skip it
-                botSubmitIconPath = '';
+                const submitUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'submit.png');
+                botSubmitIconPath = this.webview.asWebviewUri(submitUri).toString();
             } catch (err) {
                 console.error('Failed to create icon URIs:', err);
             }
@@ -484,11 +537,10 @@ class InstructionsSection extends PanelView {
                     transition: all 0.15s ease;
                     width: 48px;
                     height: 48px;
-                    ${!promptContentStr ? 'opacity: 0.5; cursor: not-allowed;' : ''}
                 " 
                 onmouseover="this.style.backgroundColor='rgba(255, 140, 0, 0.3)'" 
                 onmouseout="this.style.backgroundColor='rgba(255, 140, 0, 0.15)'"
-                title="${promptContentStr ? 'Submit instructions to chat' : 'Run instructions command first'}">
+                title="Submit instructions to chat">
                     ${botSubmitIconPath ? `<img src="${botSubmitIconPath}" style="width: 100%; height: 100%; object-fit: contain;" alt="Submit to Chat" />` : ''}
                 </button>
                 <script>
@@ -599,7 +651,7 @@ class InstructionsSection extends PanelView {
                 if (questionText) {
                     html += `<div class="input-container" style="margin-top: ${idx > 0 ? '12px' : '0'};">`;
                     html += `<div class="input-header">${this.escapeHtml(questionText)}</div>`;
-                    html += `<textarea id="clarify-answer-${idx}" rows="3" onblur="saveClarifyAnswers()" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(answerText)}</textarea>`;
+                    html += `<textarea id="clarify-answer-${idx}" data-question="${this.escapeForAttribute(questionText)}" rows="3" onblur="saveClarifyAnswers()" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(answerText)}</textarea>`;
                     html += `</div>`;
                 }
             });

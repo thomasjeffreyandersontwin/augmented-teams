@@ -69,7 +69,9 @@ class JSONBot(BaseBotAdapter, JSONAdapter):
             'bot_directory': str(self.bot.bot_directory),
             'workspace_directory': str(self.bot.workspace_directory),
             'behavior_names': self.bot.behaviors.names if self.bot.behaviors else [],
-            'current_behavior': self.bot.behaviors.current.name if self.bot.behaviors and self.bot.behaviors.current else None
+            'current_behavior': self.bot.behaviors.current.name if self.bot.behaviors and self.bot.behaviors.current else None,
+            'current_action': self.bot.current_action_name if hasattr(self.bot, 'current_action_name') else None,
+            'available_bots': self._get_available_bots()
         }
         if self._behaviors_adapter:
             result['behaviors'] = self._behaviors_adapter.to_dict() if hasattr(self._behaviors_adapter, 'to_dict') else {}
@@ -82,6 +84,24 @@ class JSONBot(BaseBotAdapter, JSONAdapter):
             result['scope'] = scope_adapter.to_dict()
         
         return result
+    
+    def _get_available_bots(self) -> list:
+        """Get list of available bots from registry.json."""
+        from pathlib import Path
+        try:
+            # Find bots directory (should be agile_bot/bots/)
+            bot_dir = Path(self.bot.bot_directory)
+            bots_dir = bot_dir.parent  # Go up one level from specific bot to bots directory
+            registry_path = bots_dir / 'registry.json'
+            
+            if registry_path.exists():
+                with open(registry_path, 'r') as f:
+                    registry = json.load(f)
+                    return list(registry.keys())
+            return []
+        except Exception as e:
+            # If anything fails, just return empty list
+            return []
     
     def deserialize(self, data: str) -> dict:
         """Parse JSON string to dict."""

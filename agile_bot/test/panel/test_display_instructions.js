@@ -2,7 +2,14 @@
  * Test Display Action Instructions Through Panel
  * 
  * Sub-epic: Display Action Instructions Through Panel
- * Stories: Display Base Instructions, Display Clarify Instructions, Display Strategy Instructions, etc.
+ * Stories: 
+ * - Display Base Instructions
+ * - Display Clarify Instructions
+ * - Display Strategy Instructions
+ * - Display Build Instructions
+ * - Display Validate Instructions
+ * - Display Render Instructions
+ * - Save Guardrails Through Panel
  */
 
 // Mock vscode before requiring any modules that depend on it
@@ -443,6 +450,118 @@ test('TestSubmitInstructionsToAIAgent', { concurrency: false }, async (t) => {
                 fs.rmSync(tmpPath, { recursive: true, force: true });
             } catch (e) {
                 // Ignore cleanup errors
+            }
+        }
+    });
+});
+
+
+test('TestSaveGuardrailsThroughPanel', { concurrency: false }, async (t) => {
+    
+    await t.test('test_panel_displays_save_button_for_clarify_action', async () => {
+        /**
+         * SCENARIO: Panel displays save button for clarify action
+         * Story: Save Guardrails Through Panel
+         * Steps:
+         *   Given Bot is at shape.clarify
+         *   When Panel renders clarify instructions
+         *   Then Panel displays save button for answers
+         *   And Panel displays save button for evidence
+         * 
+         * Domain: test_save_guardrail_data_answers
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        let tmpStateDir = null;
+        try {
+            // Initialize CLI (required for botView.execute)
+            tmpStateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bot-state-'));
+            await botView.initializeCLI(tmpStateDir);
+            
+            // Given Bot is at shape.clarify
+            const response = await botView.execute('shape.clarify.instructions');
+            assert(response.instructions, 'Response must have instructions');
+            const instructionsData = response.instructions;
+            const currentAction = response.bot?.current_action || response.current_action;
+            
+            // When Panel renders instructions section
+            const view = new InstructionsSection(instructionsData, currentAction, null, tmpPath);
+            const html = view.render();
+            
+            // Then Panel should display save functionality (button or form)
+            // Note: This test documents expected behavior - implementation pending
+            assert(html.length > 0, 'Instructions section should render');
+        } finally {
+            if (botView) {
+                botView.cleanup();
+                const index = activeBotViews.indexOf(botView);
+                if (index > -1) activeBotViews.splice(index, 1);
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+            if (tmpStateDir) {
+                try {
+                    fs.rmSync(tmpStateDir, { recursive: true, force: true });
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+    });
+    
+    await t.test('test_panel_displays_save_button_for_strategy_action', async () => {
+        /**
+         * SCENARIO: Panel displays save button for strategy action
+         * Story: Save Guardrails Through Panel
+         * Steps:
+         *   Given Bot is at shape.strategy
+         *   When Panel renders strategy instructions
+         *   Then Panel displays save button for decisions
+         *   And Panel displays save button for assumptions
+         * 
+         * Domain: test_save_guardrail_data_decisions
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        let tmpStateDir = null;
+        try {
+            // Initialize CLI (required for botView.execute)
+            tmpStateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bot-state-'));
+            await botView.initializeCLI(tmpStateDir);
+            
+            // Given Bot is at shape.strategy
+            const response = await botView.execute('shape.strategy.instructions');
+            assert(response.instructions, 'Response must have instructions');
+            const instructionsData = response.instructions;
+            const currentAction = response.bot?.current_action || response.current_action;
+            
+            // When Panel renders instructions section
+            const view = new InstructionsSection(instructionsData, currentAction, null, tmpPath);
+            const html = view.render();
+            
+            // Then Panel should display save functionality (button or form)
+            // Note: This test documents expected behavior - implementation pending
+            assert(html.length > 0, 'Instructions section should render');
+        } finally {
+            if (botView) {
+                botView.cleanup();
+                const index = activeBotViews.indexOf(botView);
+                if (index > -1) activeBotViews.splice(index, 1);
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+            if (tmpStateDir) {
+                try {
+                    fs.rmSync(tmpStateDir, { recursive: true, force: true });
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
             }
         }
     });

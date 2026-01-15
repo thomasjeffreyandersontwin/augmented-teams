@@ -49,6 +49,15 @@ class ClarifyContextAction(Action):
             # Include saved clarification data in instructions for panel display
             instructions.set('clarification', saved_data[self.behavior.name])
     
+        # Also load saved strategy decisions so they're visible on clarify page
+        try:
+            from ..strategy.strategy_decision import StrategyDecision
+            saved_strategy = StrategyDecision.load_all(self.behavior.bot_paths)
+            if saved_strategy and self.behavior.name in saved_strategy:
+                instructions.set('strategy', saved_strategy[self.behavior.name])
+        except Exception:
+            pass  # Silently skip if can't load strategy
+    
 
     def do_execute(self, context: ClarifyActionContext = None):
         """Execute clarify action - get instructions and save if answers provided."""

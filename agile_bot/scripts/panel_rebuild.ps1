@@ -53,16 +53,19 @@ Write-Host ""
 
 # Update package.json
 Write-Host "[1/6] Updating package.json..." -ForegroundColor Cyan
-$packageJsonContent = Get-Content "package.json" -Raw
+$packageJsonPath = Join-Path $panelDir "package.json"
+$packageJsonContent = Get-Content $packageJsonPath -Raw
 $packageJsonContent = $packageJsonContent -replace "`"version`": `"$currentVersion`"", "`"version`": `"$newVersion`""
 
-# Retry logic for file write (in case file is locked)
+# Write without BOM to avoid vsce JSON parse errors
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $maxRetries = 3
 $retryCount = 0
 $writeSuccess = $false
 while ($retryCount -lt $maxRetries -and -not $writeSuccess) {
     try {
-        Set-Content "package.json" -Value $packageJsonContent -NoNewline -ErrorAction Stop
+        [System.IO.File]::WriteAllText($packageJsonPath, $packageJsonContent, $utf8NoBom)
+        Start-Sleep -Milliseconds 100  # Give filesystem time to flush
         $writeSuccess = $true
     } catch {
         $retryCount++
@@ -75,18 +78,38 @@ while ($retryCount -lt $maxRetries -and -not $writeSuccess) {
         }
     }
 }
-Write-Host "      Done: package.json updated" -ForegroundColor Green
+
+# Verify the version was actually updated
+$verifyContent = Get-Content $packageJsonPath -Raw
+if ($verifyContent -match "`"version`": `"$newVersion`"") {
+    Write-Host "      Done: package.json updated to v$newVersion" -ForegroundColor Green
+} else {
+    Write-Host "      ERROR: package.json update verification failed!" -ForegroundColor Red
+    Write-Host "      Expected version: $newVersion" -ForegroundColor Yellow
+    Write-Host "      package.json may be open in editor - please close it and try again" -ForegroundColor Yellow
+    exit 1
+}
+
 
 Write-Host "[2/4] Cleaning up old VSIX files..." -ForegroundColor Cyan
-Remove-Item *.vsix -ErrorAction SilentlyContinue
+Get-ChildItem -Filter "*.vsix" | Remove-Item -Force -ErrorAction SilentlyContinue
 Write-Host "      Done: Old VSIX files removed" -ForegroundColor Green
 
 Write-Host "[3/4] Packaging extension..." -ForegroundColor Cyan
-npx @vscode/vsce package --allow-missing-repository --allow-star-activation | Out-Null
+$packageOutput = npx @vscode/vsce package --allow-missing-repository --allow-star-activation 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Packaging failed!" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "      Output: $packageOutput" -ForegroundColor Red
+    exit 1
+}
+
+# Verify the VSIX file was created
+$expectedVsix = "bot-panel-$newVersion.vsix"
+if (-not (Test-Path $expectedVsix)) {
+    Write-Host "      ERROR: VSIX file was not created: $expectedVsix" -ForegroundColor Red
+    Write-Host "      Package output: $packageOutput" -ForegroundColor Yellow
+    exit 1
+}
 Write-Host "      Done: Extension packaged: bot-panel-$newVersion.vsix" -ForegroundColor Green
 
 Write-Host "[4/4] Uninstalling old extension..." -ForegroundColor Cyan
@@ -103,9 +126,18 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Installing new extension..." -ForegroundColor Cyan
 $vsixPath = Join-Path $panelDir "bot-panel-$newVersion.vsix"
-& $cursorCli --install-extension "$vsixPath" | Out-Null
+# Verify VSIX exists before installing
+if (-not (Test-Path $vsixPath)) {
+    Write-Host "      ERROR: VSIX file not found: $vsixPath" -ForegroundColor Red
+    Write-Host "      Current directory: $(Get-Location)" -ForegroundColor Yellow
+    Write-Host "      Files in directory:" -ForegroundColor Yellow
+    Get-ChildItem -Filter "*.vsix" | ForEach-Object { Write-Host "        - $($_.Name)" -ForegroundColor Yellow }
+    exit 1
+}
+$installOutput = & $cursorCli --install-extension "$vsixPath" --force 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "      ERROR: Installation failed!" -ForegroundColor Red
+    Write-Host "      Output: $installOutput" -ForegroundColor Red
     exit 1
 }
 Write-Host "      Done: Extension v$newVersion installed" -ForegroundColor Green

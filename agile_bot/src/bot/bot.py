@@ -602,6 +602,117 @@ class Bot:
                 'status': 'error',
                 'message': f'Error executing {behavior_name}.{action.action_name}: {str(e)}'
             }
+    
+    def save(self, answers: Optional[Dict[str, str]] = None,
+             evidence_provided: Optional[Dict[str, str]] = None,
+             decisions: Optional[Dict[str, str]] = None,
+             assumptions: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Save guardrail data (answers, evidence, decisions, assumptions) for current behavior.
+        
+        Args:
+            answers: Question-answer pairs for clarification
+            evidence_provided: Evidence key-value pairs for clarification
+            decisions: Criteria-decision pairs for strategy
+            assumptions: List of assumption strings for strategy
+        
+        Returns:
+            Status dict with success/error message
+        """
+        from ..actions.clarify.requirements_clarifications import RequirementsClarifications
+        from ..actions.clarify.required_context import RequiredContext
+        from ..actions.strategy.strategy_decision import StrategyDecision
+        from ..actions.strategy.strategy import Strategy
+        
+        current_behavior = self.behaviors.current
+        if not current_behavior:
+            return {
+                'status': 'error',
+                'message': 'No current behavior set'
+            }
+        
+        try:
+            saved_items = []
+            
+            if answers or evidence_provided:
+                required_context = RequiredContext(current_behavior.folder)
+                clarifications = RequirementsClarifications(
+                    behavior_name=current_behavior.name,
+                    bot_paths=current_behavior.bot_paths,
+                    required_context=required_context,
+                    key_questions_answered=answers or {},
+                    evidence_provided=evidence_provided or {},
+                    context=None
+                )
+                clarifications.save()
+                if answers:
+                    saved_items.append('answers')
+                if evidence_provided:
+                    saved_items.append('evidence')
+            
+            if decisions or assumptions:
+                strategy = Strategy(current_behavior.folder)
+                strategy_decision = StrategyDecision(
+                    behavior_name=current_behavior.name,
+                    bot_paths=current_behavior.bot_paths,
+                    strategy=strategy,
+                    decisions_made=decisions or {},
+                    assumptions_made=assumptions or []
+                )
+                strategy_decision.save()
+                if decisions:
+                    saved_items.append('decisions')
+                if assumptions:
+                    saved_items.append('assumptions')
+            
+            if not saved_items:
+                return {
+                    'status': 'error',
+                    'message': 'No data provided to save'
+                }
+            
+            return {
+                'status': 'success',
+                'message': f"Saved {', '.join(saved_items)} for {current_behavior.name}",
+                'behavior': current_behavior.name,
+                'saved': saved_items
+            }
+        
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Error saving: {str(e)}'
+            }
+    
+    def submit(self) -> Dict[str, Any]:
+        """Submit current action instructions to AI agent.
+        
+        This is a tracking method that marks instructions as submitted to the chat.
+        The actual submission to chat happens in the panel/UI layer.
+        
+        Returns:
+            Status dict with success message and current context
+        """
+        current_behavior = self.behaviors.current
+        if not current_behavior:
+            return {
+                'status': 'error',
+                'message': 'No current behavior set'
+            }
+        
+        current_action = current_behavior.actions.current_action_name
+        if not current_action:
+            return {
+                'status': 'error',
+                'message': 'No current action set'
+            }
+        
+        return {
+            'status': 'success',
+            'message': f'Instructions submitted for {current_behavior.name}.{current_action}',
+            'behavior': current_behavior.name,
+            'action': current_action,
+            'timestamp': datetime.now().isoformat()
+        }
 
     def tree(self) -> str:
         """Display behavior hierarchy tree.

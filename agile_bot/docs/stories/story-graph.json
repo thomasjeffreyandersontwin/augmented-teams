@@ -3758,6 +3758,94 @@
                           "test_method": "test_executed_synchronizers_info_in_instructions"
                         }
                       ]
+                    },
+                    {
+                      "name": "Save Guardrails",
+                      "sequential_order": 7,
+                      "connector": "and",
+                      "users": ["System"],
+                      "story_type": "user",
+                      "test_class": "TestSaveGuardrailsViaCLI",
+                      "scenarios": [
+                        {
+                          "name": "Save answers to clarification file",
+                          "steps": [
+                            "Given Bot is at shape behavior",
+                            "And Behavior has clarify action",
+                            "When Action saves answers with question What is the scope of this work as Building bot system",
+                            "Then System loads existing clarification.json for shape behavior",
+                            "And System merges new answer with existing answers",
+                            "And System saves updated clarification.json to workspace docs folder",
+                            "And File contains shape behavior section with saved answer"
+                          ],
+                          "test_method": "test_save_guardrail_data_answers"
+                        },
+                        {
+                          "name": "Save evidence to clarification file",
+                          "steps": [
+                            "Given Bot is at shape behavior",
+                            "And Behavior has clarify action",
+                            "When Action saves evidence with Requirements doc as spec.md and User interviews as notes.md",
+                            "Then System loads existing clarification.json for shape behavior",
+                            "And System merges new evidence with existing evidence",
+                            "And System saves updated clarification.json to workspace docs folder",
+                            "And File contains shape behavior section with saved evidence"
+                          ],
+                          "test_method": "test_save_guardrail_data_evidence"
+                        },
+                        {
+                          "name": "Save decisions to strategy file",
+                          "steps": [
+                            "Given Bot is at shape behavior",
+                            "And Behavior has strategy action",
+                            "When Action saves decisions with drill_down_approach as Dig deep on system interactions",
+                            "Then System loads existing strategy.json for shape behavior",
+                            "And System merges new decision with existing decisions",
+                            "And System saves updated strategy.json to workspace docs folder",
+                            "And File contains shape behavior section with saved decision"
+                          ],
+                          "test_method": "test_save_guardrail_data_decisions"
+                        },
+                        {
+                          "name": "Save assumptions to strategy file",
+                          "steps": [
+                            "Given Bot is at shape behavior",
+                            "And Behavior has strategy action",
+                            "When Action saves assumptions with Focus on user flow over internal systems",
+                            "Then System loads existing strategy.json for shape behavior",
+                            "And System merges new assumption with existing assumptions",
+                            "And System saves updated strategy.json to workspace docs folder",
+                            "And File contains shape behavior section with saved assumption"
+                          ],
+                          "test_method": "test_save_guardrail_data_assumptions"
+                        },
+                        {
+                          "name": "Merge preserves existing answer fields",
+                          "steps": [
+                            "Given clarification.json contains existing answers for shape behavior",
+                            "And Existing answers include What is the scope of this work as Building bot system",
+                            "And Existing answers include Who are the target users as AI Agents",
+                            "When Action saves updated answer Who are the target users as Developers and AI Agents",
+                            "Then System preserves What is the scope of this work as Building bot system",
+                            "And System overwrites Who are the target users to Developers and AI Agents",
+                            "And clarification.json contains both answers with new value for updated field"
+                          ],
+                          "test_method": "test_merge_with_existing_answers"
+                        },
+                        {
+                          "name": "Merge preserves existing decision fields",
+                          "steps": [
+                            "Given strategy.json contains existing decisions for shape behavior",
+                            "And Existing decisions include drill_down_approach as High and wide across all epics",
+                            "And Existing decisions include depth_of_shaping as Extensive",
+                            "When Action saves updated decision drill_down_approach as Dig deep on system interactions",
+                            "Then System preserves depth_of_shaping as Extensive",
+                            "And System overwrites drill_down_approach to Dig deep on system interactions",
+                            "And strategy.json contains both decisions with new value for updated field"
+                          ],
+                          "test_method": "test_merge_with_existing_decisions"
+                        }
+                      ]
                     }
                   ]
                 }
@@ -5341,7 +5429,10 @@
                       ],
                       "scenarios": [
                         {
+                          "name": "Panel shows story_bot and multiple bots available",
+                          "type": "happy_path",
                           "title": "User selects different bot from dropdown",
+                          "test_method": "test_panel_shows_story_bot_and_multiple_bots_available",
                           "steps": [
                             "Given Panel is open showing story_bot",
                             "And Multiple bots are available (story_bot, crc_bot)",
@@ -5353,7 +5444,10 @@
                           ]
                         },
                         {
+                          "name": "User switches to crc_bot",
+                          "type": "happy_path",
                           "title": "User switches bot and panel preserves workspace",
+                          "test_method": "test_user_switches_to_crc_bot",
                           "steps": [
                             "Given Panel is open with story_bot at workspace c:/dev/project_a",
                             "When User switches to crc_bot",
@@ -6307,6 +6401,47 @@
                             "When User clicks submit button",
                             "Then Instructions are also sent to AI chat"
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Save Guardrails Through Panel",
+                      "sequential_order": 9,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestSaveGuardrailsThroughPanel",
+                      "acceptance_criteria": [
+                        "WHEN User fills in answers in panel form",
+                        "THEN System validates input format",
+                        "AND System enables submit button",
+                        "WHEN User clicks submit for answers",
+                        "THEN System saves answers to clarification.json under current behavior",
+                        "AND System merges with existing answers",
+                        "AND System displays success message"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "Panel displays save button for clarify action",
+                          "steps": [
+                            "Given Bot is at shape.clarify",
+                            "When Panel renders clarify instructions",
+                            "Then Panel displays save button for answers",
+                            "And Panel displays save button for evidence"
+                          ],
+                          "test_method": "test_panel_displays_save_button_for_clarify_action"
+                        },
+                        {
+                          "title": "Panel displays save button for strategy action",
+                          "steps": [
+                            "Given Bot is at shape.strategy",
+                            "When Panel renders strategy instructions",
+                            "Then Panel displays save button for decisions",
+                            "And Panel displays save button for assumptions"
+                          ],
+                          "test_method": "test_panel_displays_save_button_for_strategy_action"
                         }
                       ]
                     }
@@ -7470,18 +7605,40 @@
                       ]
                     },
                     {
-                      "name": "Load All Registered Bots",
+                      "name": "Switch Registered Bots",
                       "sequential_order": 6,
                       "connector": "and",
                       "users": [
                         "CLI"
                       ],
                       "story_type": "system",
+                      "test_class": "TestSwitchRegisteredBots",
                       "acceptance_criteria": [
-                        "WHEN CLI initializes\nTHEN CLI loads bot from configured bot directory",
-                        "WHEN bot directory is specified\nTHEN CLI loads bot configuration from bot_config.json",
-                        "WHEN bot config is missing\nTHEN CLI displays error message AND exits gracefully",
-                        "WHEN bot is loaded\nTHEN CLI makes bot available for use"
+                        "WHEN CLI STATUS section is displayed\nTHEN CLI shows current bot name followed by pipe-separated list of all registered bots AND format is: Bot: <current_bot> | Registered: <bot1> | <bot2> | <bot3>",
+                        "WHEN CLI STATUS section is displayed\nTHEN CLI shows bot switching instructions AND format is: To change bots: bot <name>",
+                        "WHEN user enters bot <name> command AND bot name is registered\nTHEN CLI switches to the specified bot AND updates CLI STATUS section to show new current bot",
+                        "WHEN user enters bot <name> command AND bot name is not registered\nTHEN CLI displays error message AND shows list of available registered bots AND keeps current bot active",
+                        "WHEN bot is switched\nTHEN CLI loads bot configuration from bot_config.json AND makes bot behaviors and actions available"
+                      ],
+                      "scenarios": [
+                        {
+                          "name": "Display Registered Bots in CLI STATUS",
+                          "type": "happy_path",
+                          "steps": [],
+                          "test_method": "test_display_registered_bots_in_cli_status"
+                        },
+                        {
+                          "name": "Switch to Valid Registered Bot",
+                          "type": "happy_path",
+                          "steps": [],
+                          "test_method": "test_switch_to_valid_registered_bot"
+                        },
+                        {
+                          "name": "Attempt to Switch to Unregistered Bot",
+                          "type": "error_path",
+                          "steps": [],
+                          "test_method": "test_attempt_to_switch_to_unregistered_bot"
+                        }
                       ],
                       "optional": false,
                       "priority": 1
@@ -7733,6 +7890,34 @@
                               "test_method": "test_handle_operation_errors_gracefully"
                             }
                           ]
+                        },
+                        {
+                          "name": "Submit Instructions Through CLI",
+                          "sequential_order": 5,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_execute_actions_using_repl.py",
+                          "test_class": "TestSubmitInstructionsThroughCLI",
+                          "acceptance_criteria": [
+                            "WHEN User executes submit command",
+                            "THEN System tracks instruction submission",
+                            "AND System returns success status with timestamp"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "User submits current action instructions",
+                              "steps": "GIVEN: CLI is at shape.clarify\nWHEN: user enters 'submit'\nTHEN: CLI tracks instruction submission\nAND: CLI returns success message with behavior and action\nAND: CLI includes timestamp of submission",
+                              "test_method": "test_user_submits_current_action_instructions"
+                            },
+                            {
+                              "name": "Submit command fails when no current action",
+                              "steps": "GIVEN: CLI has no current action set\nWHEN: user enters 'submit'\nTHEN: CLI displays error message\nAND: Error indicates no current action",
+                              "test_method": "test_submit_command_fails_when_no_current_action"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -7865,6 +8050,48 @@
                               "name": "Get strategy instructions with criteria",
                               "steps": "GIVEN: CLI is at shape.strategy.instructions\nWHEN: user enters 'shape.strategy.instructions'\nTHEN: CLI displays planning criteria and assumptions",
                               "test_method": "test_get_strategy_instructions_with_criteria"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Execute Actions Through REPL",
+                  "sequential_order": 3.5,
+                  "test_file": "test_execute_actions_using_cli.py",
+                  "story_groups": [
+                    {
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
+                        {
+                          "name": "Save Guardrails Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSaveGuardrailsUsingCLI",
+                          "acceptance_criteria": [
+                            "WHEN user runs save command with answers parameter",
+                            "THEN CLI saves answers to clarification.json under current behavior",
+                            "AND CLI merges with existing answers",
+                            "WHEN user runs save command with decisions parameter",
+                            "THEN CLI saves decisions to strategy.json under current behavior"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "Save answers via CLI command",
+                              "steps": "GIVEN: CLI is at shape.clarify\nWHEN: user runs 'save --answers {\"What is the scope?\": \"Bot system\"}'\nTHEN: CLI shows success message\nAND: clarification.json is updated",
+                              "test_method": "test_save_answers_via_cli_command"
+                            },
+                            {
+                              "name": "Save decisions via CLI command",
+                              "steps": "GIVEN: CLI is at shape.strategy\nWHEN: user runs 'save --decisions {\"drill_down\": \"Deep\"}'\nTHEN: CLI shows success message\nAND: strategy.json is updated",
+                              "test_method": "test_save_decisions_via_cli_command"
                             }
                           ]
                         }
@@ -8762,6 +8989,48 @@
                       "test_method": "test_action_merges_instructions_from_base_and_behavior"
                     }
                   ]
+                },
+                {
+                  "name": "Manage Bot Registry",
+                  "sequential_order": 5,
+                  "connector": "or",
+                  "users": [
+                    "Bot Behavior"
+                  ],
+                  "story_type": "system",
+                  "test_class": "TestManageBotRegistry",
+                  "scenarios": [
+                    {
+                      "name": "Get List of Registered Bots",
+                      "type": "happy_path",
+                      "steps": [],
+                      "test_method": "test_get_list_of_registered_bots"
+                    },
+                    {
+                      "name": "Get Active Bot",
+                      "type": "happy_path",
+                      "steps": [],
+                      "test_method": "test_get_active_bot"
+                    },
+                    {
+                      "name": "Set Active Bot to Registered Bot",
+                      "type": "happy_path",
+                      "steps": [],
+                      "test_method": "test_set_active_bot_to_registered_bot"
+                    },
+                    {
+                      "name": "Attempt to Set Unregistered Bot",
+                      "type": "error_path",
+                      "steps": [],
+                      "test_method": "test_attempt_to_set_unregistered_bot"
+                    },
+                    {
+                      "name": "Set Active Bot to Current Bot",
+                      "type": "happy_path",
+                      "steps": [],
+                      "test_method": "test_set_active_bot_to_current_bot"
+                    }
+                  ]
                 }
               ]
             }
@@ -8985,23 +9254,6 @@
         "Navigate to Bot using CLI Dot Notation",
         "Display Available Bot in Tree Hierarchy",
         "Display CLI Bot Command in Navigation Menu Footer"
-      ]
-    },
-    {
-      "name": "Execute In Headless Mode",
-      "priority": 14,
-      "description": "Headless mode execution for CLI operations, actions, and behaviors",
-      "stories": [
-        "Add Headless Mode To Help",
-        "Add Headless Mode To Status",
-        "Execute Direct Instructions",
-        "Execute Single Operation",
-        "Execute Complete Action",
-        "Execute Complete Behavior",
-        "Monitor Execution",
-        "Surface Block Reason",
-        "Report Completion",
-        "Recover and Report Failures"
       ]
     }
   ]

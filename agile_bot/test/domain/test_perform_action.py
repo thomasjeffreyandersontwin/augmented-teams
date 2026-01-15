@@ -1,12 +1,17 @@
 """
-Perform Action Tests
+Domain Tests for Execute Behavior Actions Epic
 
-Tests for all stories in the 'Perform Action' sub-epic, covering:
-- Build Story Graph
-- Clarify Requirements
-- Validate Rules
-- Decide Strategy
-- Render Output
+Tests for domain/core logic stories, covering:
+- Perform Action sub-epic:
+  - Build Story Graph
+  - Clarify Requirements
+  - Validate Rules
+  - Display Rules
+  - Decide Strategy
+  - Render Output
+  - Submit Instructions
+- Domain sub-epic:
+  - Save Guardrails
 """
 import pytest
 from pathlib import Path
@@ -766,3 +771,269 @@ class TestRenderOutput:
         
         base_instructions = '\n'.join(result.get('base_instructions', []))
         assert 'Synchronizers Already Executed' in base_instructions or 'render' in base_instructions.lower()
+
+
+# ============================================================================
+# STORY: Save Guardrails (Domain Layer)
+# ============================================================================
+class TestSaveGuardrailsViaCLI:
+    """
+    Tests for saving guardrail data - domain/core logic.
+    
+    Maps to story: Save Guardrails
+    Sub-epic: Domain
+    Epic: Execute Behavior Actions
+    """
+    
+    def test_save_guardrail_data_answers(self, tmp_path):
+        """
+        SCENARIO: Save guardrail data (answers parameter)
+        GIVEN: Bot is at shape behavior
+        WHEN: User runs save command with answers parameter
+        THEN: System saves answers to clarification.json under current behavior
+        AND: System merges with existing answers
+        """
+        # Given: Bot is at shape behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
+        
+        # When: User runs save command with answers
+        answers_data = {"What is the scope of this work?": "Building bot system"}
+        context = ClarifyActionContext(answers=answers_data, evidence_provided=None)
+        action.do_execute(context)
+        
+        # Then: System loads existing clarification.json for current behavior
+        # And: System merges new data with existing data
+        # And: System saves updated data to clarification.json
+        helper.clarify.assert_clarification_file_exists()
+        helper.clarify.assert_clarification_contains_answers('shape', answers_data)
+    
+    def test_save_guardrail_data_evidence(self, tmp_path):
+        """
+        SCENARIO: Save guardrail data (evidence_provided parameter)
+        GIVEN: Bot is at shape behavior
+        WHEN: User runs save command with evidence parameter
+        THEN: System saves evidence to clarification.json under current behavior
+        """
+        # Given: Bot is at shape behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
+        
+        # When: User runs save command with evidence
+        evidence_data = {
+            "Requirements doc": "spec.md",
+            "User interviews": "notes.md"
+        }
+        context = ClarifyActionContext(answers=None, evidence_provided=evidence_data)
+        action.do_execute(context)
+        
+        # Then: System saves evidence to clarification.json
+        helper.clarify.assert_clarification_file_exists()
+        helper.clarify.assert_clarification_contains_evidence('shape', evidence_data)
+    
+    def test_save_guardrail_data_decisions(self, tmp_path):
+        """
+        SCENARIO: Save guardrail data (decisions parameter)
+        GIVEN: Bot is at shape behavior
+        WHEN: User runs save command with decisions parameter
+        THEN: System saves decisions to strategy.json under current behavior
+        """
+        # Given: Bot is at shape behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('strategy')
+        
+        # When: User runs save command with decisions
+        decisions_data = {"drill_down_approach": "Dig deep on system interactions"}
+        context = StrategyActionContext(decisions_made=decisions_data, assumptions_made=None)
+        action.do_execute(context)
+        
+        # Then: System saves decisions to strategy.json
+        helper.strategy.assert_strategy_file_exists()
+        helper.strategy.assert_strategy_contains_behavior('shape', expected_decisions=decisions_data)
+    
+    def test_save_guardrail_data_assumptions(self, tmp_path):
+        """
+        SCENARIO: Save guardrail data (assumptions parameter)
+        GIVEN: Bot is at shape behavior
+        WHEN: User runs save command with assumptions parameter
+        THEN: System saves assumptions to strategy.json under current behavior
+        """
+        # Given: Bot is at shape behavior
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('strategy')
+        
+        # When: User runs save command with assumptions
+        assumptions_data = ["Focus on user flow over internal systems"]
+        context = StrategyActionContext(decisions_made=None, assumptions_made=assumptions_data)
+        action.do_execute(context)
+        
+        # Then: System saves assumptions to strategy.json
+        helper.strategy.assert_strategy_file_exists()
+        helper.strategy.assert_strategy_contains_behavior('shape', expected_assumptions=assumptions_data)
+    
+    def test_merge_with_existing_answers(self, tmp_path):
+        """
+        SCENARIO: Merge with existing data (answers)
+        GIVEN: Guardrail file contains existing data for shape behavior
+        WHEN: User runs save command with new data
+        THEN: System preserves existing values for other fields
+        AND: System overwrites only the provided field
+        AND: Result matches merged_result
+        """
+        # Given: Existing data in clarification.json
+        helper = BotTestHelper(tmp_path)
+        existing_data = {
+            'shape': {
+                'key_questions': {
+                    'questions': [],
+                    'answers': {
+                        "What is the scope of this work?": "Building bot system",
+                        "Who are the target users?": "AI Agents"
+                    }
+                },
+                'evidence': {
+                    'required': [],
+                    'provided': {}
+                }
+            }
+        }
+        helper.clarify.given_existing_clarification_data(existing_data)
+        
+        # When: User runs save command with new data (overwrites one field)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('clarify')
+        new_answers = {"Who are the target users?": "Developers and AI Agents"}
+        context = ClarifyActionContext(answers=new_answers, evidence_provided=None)
+        action.do_execute(context)
+        
+        # Then: System preserves existing values for other fields
+        # And: System overwrites only the provided field
+        expected_merged = {
+            "What is the scope of this work?": "Building bot system",
+            "Who are the target users?": "Developers and AI Agents"
+        }
+        helper.clarify.assert_clarification_contains_answers('shape', expected_merged)
+    
+    def test_merge_with_existing_decisions(self, tmp_path):
+        """
+        SCENARIO: Merge with existing data (decisions)
+        GIVEN: Guardrail file contains existing data for shape behavior
+        WHEN: User runs save command with new data
+        THEN: System preserves existing values for other fields
+        AND: System overwrites only the provided field
+        AND: Result matches merged_result
+        """
+        # Given: Existing data in strategy.json
+        helper = BotTestHelper(tmp_path)
+        existing_data = {
+            'shape': {
+                'strategy_criteria': {
+                    'criteria': {},
+                    'decisions_made': {
+                        "drill_down_approach": "High and wide across all epics",
+                        "depth_of_shaping": "Extensive"
+                    }
+                },
+                'assumptions': {
+                    'typical_assumptions': [],
+                    'assumptions_made': []
+                }
+            }
+        }
+        helper.strategy.given_existing_strategy_data(existing_data)
+        
+        # When: User runs save command with new data (overwrites one field)
+        helper.bot.behaviors.navigate_to('shape')
+        action = helper.bot.behaviors.current.actions.find_by_name('strategy')
+        new_decisions = {"drill_down_approach": "Dig deep on system interactions"}
+        context = StrategyActionContext(decisions_made=new_decisions, assumptions_made=None)
+        action.do_execute(context)
+        
+        # Then: System preserves existing values for other fields
+        # And: System overwrites only the provided field
+        expected_merged = {
+            "drill_down_approach": "Dig deep on system interactions",
+            "depth_of_shaping": "Extensive"
+        }
+        helper.strategy.assert_strategy_contains_behavior('shape', expected_decisions=expected_merged)
+
+
+# ============================================================================
+# STORY: Submit Instructions
+# ============================================================================
+class TestSubmitInstructions:
+
+    def test_submit_tracks_instruction_submission(self, tmp_path):
+        """
+        SCENARIO: Submit tracks instruction submission
+        GIVEN: Bot is at shape.clarify
+        WHEN: User calls submit() method
+        THEN: System returns success status with behavior and action
+        AND: System includes timestamp of submission
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        helper.bot.behaviors.current.actions.navigate_to('clarify')
+        
+        result = helper.bot.submit()
+        
+        assert result['status'] == 'success', f"Expected success status, got {result.get('status')}"
+        assert result['behavior'] == 'shape', f"Expected behavior 'shape', got {result.get('behavior')}"
+        assert result['action'] == 'clarify', f"Expected action 'clarify', got {result.get('action')}"
+        assert 'timestamp' in result, "Expected timestamp in result"
+        assert result['message'] == 'Instructions submitted for shape.clarify'
+
+    def test_submit_fails_when_no_current_behavior(self, tmp_path):
+        """
+        SCENARIO: Submit fails when no current behavior
+        GIVEN: Bot has no current behavior set
+        WHEN: User calls submit() method
+        THEN: System returns error status
+        AND: Error indicates no current behavior
+        """
+        helper = BotTestHelper(tmp_path)
+        # Don't navigate to any behavior
+        
+        result = helper.bot.submit()
+        
+        assert result['status'] == 'error', f"Expected error status, got {result.get('status')}"
+        assert 'No current behavior' in result['message'], f"Expected 'No current behavior' in message, got {result.get('message')}"
+
+    def test_submit_fails_when_no_current_action(self, tmp_path):
+        """
+        SCENARIO: Submit fails when no current action
+        GIVEN: Bot is at behavior but no action is set
+        WHEN: User calls submit() method
+        THEN: System returns error status
+        AND: Error indicates no current action
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('shape')
+        # Don't navigate to any action
+        
+        result = helper.bot.submit()
+        
+        assert result['status'] == 'error', f"Expected error status, got {result.get('status')}"
+        assert 'No current action' in result['message'], f"Expected 'No current action' in message, got {result.get('message')}"
+
+    def test_submit_works_with_different_behaviors_and_actions(self, tmp_path):
+        """
+        SCENARIO: Submit works with different behaviors and actions
+        GIVEN: Bot is at prioritization.build
+        WHEN: User calls submit() method
+        THEN: System returns success with correct behavior and action
+        """
+        helper = BotTestHelper(tmp_path)
+        helper.bot.behaviors.navigate_to('prioritization')
+        helper.bot.behaviors.current.actions.navigate_to('build')
+        
+        result = helper.bot.submit()
+        
+        assert result['status'] == 'success'
+        assert result['behavior'] == 'prioritization'
+        assert result['action'] == 'build'
+        assert 'timestamp' in result

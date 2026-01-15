@@ -1,10 +1,13 @@
 # Bump version, rebuild, and reinstall the Bot Panel extension
-# Usage: .\panel_bump_and_install.ps1 [patch|minor|major]
-# Default: patch (0.1.0 -> 0.1.1)
+# Usage: .\panel_bump_and_install.ps1 [patch|minor|major] [-NoReload]
+# Default: patch (0.1.0 -> 0.1.1), auto-reloads window
+# -NoReload: Skip automatic window reload (requires manual reload)
 
 param(
     [ValidateSet('patch', 'minor', 'major')]
-    [string]$BumpType = 'patch'
+    [string]$BumpType = 'patch',
+    
+    [switch]$NoReload = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,7 +24,8 @@ Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Read current version from package.json
-$packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
+$packageJsonPath = Join-Path $panelDir "package.json"
+$packageJson = Get-Content $packageJsonPath -Raw | ConvertFrom-Json
 $currentVersion = $packageJson.version
 Write-Host "Current version: $currentVersion" -ForegroundColor Yellow
 
@@ -53,11 +57,11 @@ Write-Host ""
 
 # Update package.json
 Write-Host "[1/6] Updating package.json..." -ForegroundColor Cyan
-$packageJsonContent = Get-Content "package.json" -Raw
+$packageJsonContent = Get-Content $packageJsonPath -Raw
 $packageJsonContent = $packageJsonContent -replace "`"version`": `"$currentVersion`"", "`"version`": `"$newVersion`""
 # Write without BOM to avoid vsce JSON parse errors
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText("package.json", $packageJsonContent, $utf8NoBom)
+[System.IO.File]::WriteAllText($packageJsonPath, $packageJsonContent, $utf8NoBom)
 Write-Host "      Done: package.json updated" -ForegroundColor Green
 
 # Package extension
@@ -97,24 +101,30 @@ Write-Host ""
 Write-Host "Extension upgraded: $currentVersion -> $newVersion" -ForegroundColor Green
 Write-Host ""
 
-# Auto-reload window using VS Code IPC
-Write-Host "[5/6] Reloading Cursor window..." -ForegroundColor Cyan
-try {
-    # Find the Cursor window and send reload command
-    # This uses VS Code's command URI scheme
-    $reloadCmd = "cursor://command/workbench.action.reloadWindow"
-    Start-Process $reloadCmd -ErrorAction SilentlyContinue
-    
-    # Give it a moment
-    Start-Sleep -Milliseconds 500
-    
-    Write-Host "      Done: Window reload triggered" -ForegroundColor Green
+# Auto-reload window by default
+if (-not $NoReload) {
+    Write-Host "[5/6] Reloading Cursor window..." -ForegroundColor Cyan
+    try {
+        # Find the Cursor window and send reload command
+        # This uses VS Code's command URI scheme
+        $reloadCmd = "cursor://command/workbench.action.reloadWindow"
+        Start-Process $reloadCmd -ErrorAction SilentlyContinue
+        
+        # Give it a moment
+        Start-Sleep -Milliseconds 500
+        
+        Write-Host "      Done: Window reload triggered" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Extension v$newVersion will be active momentarily!" -ForegroundColor Green
+    } catch {
+        Write-Host "      Warning: Could not auto-reload. Please reload manually:" -ForegroundColor Yellow
+        Write-Host "      Press Ctrl+Shift+P -> Developer: Reload Window" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "Extension installed successfully!" -ForegroundColor Green
+    Write-Host "The extension may activate automatically, or you can reload when ready:" -ForegroundColor Cyan
+    Write-Host "  Ctrl+Shift+P -> Developer: Reload Window" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Extension v$newVersion will be active momentarily!" -ForegroundColor Green
-} catch {
-    Write-Host "      Warning: Could not auto-reload. Please reload manually:" -ForegroundColor Yellow
-Write-Host "      Press Ctrl+Shift+P -> Developer: Reload Window" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "Extension v$newVersion will be active after reload!" -ForegroundColor Green
+    Write-Host "To skip auto-reload: .\panel_bump_and_install.ps1 -NoReload" -ForegroundColor DarkGray
 }
 Write-Host ""
