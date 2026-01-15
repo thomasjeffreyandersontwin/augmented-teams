@@ -15,6 +15,7 @@ class PanelView {
     static _commandQueue = [];
     static _processingCommand = false;
     static _firstCommandSent = false;
+    static _lastResponse = null;
     
     /**
      * Base class for all panel views.
@@ -247,6 +248,11 @@ class PanelView {
                     
                     PanelView._log(`JSON extracted: ${jsonMatch[0].substring(0, 500)}...`);
                     const jsonData = JSON.parse(jsonMatch[0]);
+                    // Cache last non-status response so views (e.g., instructions) can re-use it without re-running commands
+                    // Avoid overwriting navigation/instruction responses with plain status (which lacks instructions)
+                    if (command !== 'status') {
+                        PanelView._lastResponse = jsonData;
+                    }
                     PanelView._log(`JSON parsed successfully`);
                     PanelView._log(`=== EXECUTE SUCCESS ===`);
                     console.log('[PanelView] Command executed successfully, JSON parsed');

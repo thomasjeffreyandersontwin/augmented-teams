@@ -241,25 +241,27 @@ class CLISession:
         return verb, args
     
     def _route_to_behavior_action(self, command: str) -> Any:
-        """Route behavior or behavior.action commands to bot.
+        """Route behavior or behavior.action or behavior.action.operation commands to bot.
         
-        Handles:
-        - "behavior" -> bot.execute(behavior, None) [executes current action]
-        - "behavior.action" -> bot.execute(behavior, action)
-        - "behavior.action.operation" -> bot.execute(behavior, action, operation)
+        Strips any CLI flags/arguments (e.g., "--format json") before routing.
         """
-        if '.' in command:
+        # Drop any flags/args after the first whitespace so action parsing isn't polluted
+        # Example: "prioritization.clarify --format json" -> "prioritization.clarify"
+        command_core = command.split(maxsplit=1)[0]
+        
+        if '.' in command_core:
             # behavior.action or behavior.action.operation
-            parts = command.split('.')
+            parts = command_core.split('.')
             behavior_name = parts[0]
             action_name = parts[1] if len(parts) > 1 else None
+            operation_name = '.'.join(parts[2:]) if len(parts) > 2 else None
             if hasattr(self.bot, 'execute'):
-                return self.bot.execute(behavior_name, action_name)
+                return self.bot.execute(behavior_name, action_name, operation_name)
         else:
             # Single word - try as behavior name and execute current action
             if hasattr(self.bot, 'execute'):
                 # bot.execute with None action will use current action
-                result = self.bot.execute(command, None)
+                result = self.bot.execute(command_core, None)
                 # Check if it's an error (behavior not found)
                 if isinstance(result, dict) and result.get('status') == 'error':
                     raise ValueError(result.get('message', 'Unknown error'))

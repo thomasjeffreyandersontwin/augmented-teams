@@ -57,11 +57,53 @@ class InstructionsSection extends PanelView {
      * @returns {string} HTML string
      */
     async render() {
-        const botData = await this.execute('status');
-        const instructionsData = botData.instructions || {};
+        // Prefer the most recent CLI response (navigation returns unified {bot,instructions})
+        const lastResponse = PanelView._lastResponse || {};
+        let instructionsData = lastResponse.instructions || {};
+        let currentActionFromResponse = lastResponse.bot?.current_action || lastResponse.current_action;
+
+        // Fallback to status if no cached instructions
+        if (!instructionsData || Object.keys(instructionsData).length === 0) {
+            const botData = await this.execute('status');
+            instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+            currentActionFromResponse = currentActionFromResponse ||
+                botData?.current_action ||
+                botData?.behaviors?.current_action ||
+                botData?.bot?.current_action;
+        }
+
+        // Persist prompt content for submit button state
+        if (instructionsData?.display_content) {
+            this.promptContent = Array.isArray(instructionsData.display_content)
+                ? instructionsData.display_content.join('\n')
+                : instructionsData.display_content;
+        }
         
         if (!instructionsData || Object.keys(instructionsData).length === 0) {
-            return '';
+            return `
+    <div class="section card-primary">
+        <div class="collapsible-section expanded">
+            <div class="collapsible-header" onclick="toggleSection('instructions-content')" style="
+                cursor: pointer;
+                padding: 4px 5px;
+                background-color: transparent;
+                border-left: none;
+                border-radius: 2px;
+                display: flex;
+                align-items: center;
+                user-select: none;
+            ">
+                <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
+                <span style="font-weight: 600; font-size: 20px;">Instructions</span>
+            </div>
+            <div id="instructions-content" class="collapsible-content" style="max-height: 600px; overflow-y: auto; overflow-x: hidden; transition: max-height 0.3s ease;">
+                <div class="card-secondary" style="padding: 8px 10px; color: var(--vscode-descriptionForeground);">
+                    <div style="margin-bottom: 4px;">No instructions available yet.</div>
+                    <div>Navigate to a behavior/action to load instructions.</div>
+                </div>
+            </div>
+        </div>
+    </div>`;
         }
 
         // Merge behavior instructions into base_instructions at the top
@@ -189,7 +231,7 @@ class InstructionsSection extends PanelView {
 
         // 2. CLARIFY - Q&A + Evidence
         // Only show when action is 'clarify'
-        const currentAction = instructions.action_instructions?.name || '';
+        const currentAction = instructions.action_instructions?.name || currentActionFromResponse || '';
         const hasClarificationData = instructions.clarify_instructions?.clarification_data || 
                                     instructions.clarification ||
                                     (instructions.guardrails?.required_context?.key_questions);

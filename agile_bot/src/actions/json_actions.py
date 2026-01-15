@@ -28,12 +28,19 @@ class JSONActions(BaseActionsAdapter, JSONAdapter):
         actions_list = []
         for action_adapter in self._action_adapters:
             if hasattr(action_adapter, 'to_dict'):
-                actions_list.append(action_adapter.to_dict())
+                action_dict = action_adapter.to_dict()
             elif hasattr(action_adapter, 'action'):
-                actions_list.append({
-                    'action_name': getattr(action_adapter.action, 'action_name', 'unknown'),
-                    'is_current': getattr(action_adapter, 'is_current', False)
-                })
+                action_dict = {
+                    'action_name': getattr(action_adapter.action, 'action_name', 'unknown')
+                }
+            else:
+                action_dict = {}
+            
+            # Ensure current/completed flags are always present for the panel
+            action_dict['is_current'] = getattr(action_adapter, 'is_current', False)
+            action_dict['is_completed'] = getattr(action_adapter, 'is_completed', False)
+            
+            actions_list.append(action_dict)
         return {
             'current': self.actions.current.action_name if self.actions.current else None,
             'names': self.actions.names,

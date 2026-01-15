@@ -286,21 +286,12 @@ class Actions:
         state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
 
     def is_action_completed(self, action_name: str) -> bool:
-        """Check if an action is completed using positional logic.
-        
-        An action is considered completed if the current action is past it in the workflow.
-        This matches the terminal formatter's logic.
         """
-        action_names = self.names
-        if action_name not in action_names:
-            return False
+        Check if an action is completed.
         
-        current_action_name = self.current_action_name
-        if not current_action_name or current_action_name not in action_names:
-            return False
-        
-        action_index = action_names.index(action_name)
-        current_index = action_names.index(current_action_name)
-        
-        # Action is completed if current action is past it
-        return action_index < current_index
+        Previous behavior marked all earlier actions as completed when the current
+        index moved forward. That caused the panel to show checkmarks on every prior
+        action, which we no longer want. Until we have explicit completion state,
+        treat actions as not completed unless a real completion flag exists.
+        """
+        return False

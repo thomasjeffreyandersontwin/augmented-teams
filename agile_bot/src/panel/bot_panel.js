@@ -19,7 +19,8 @@ class BotPanel {
   constructor(panel, workspaceRoot, extensionUri) {
     try {
       // Setup file logging first
-      const logFile = 'c:\\dev\\augmented-teams\\panel-debug.log';
+      const logFile = path.join(workspaceRoot || 'c:\\dev\\augmented-teams', 'panel-debug.log');
+      this.logFilePath = logFile;
       this._log = (msg) => {
         const timestamp = new Date().toISOString();
         try {
@@ -303,27 +304,47 @@ class BotPanel {
             return;
           case "executeNavigationCommand":
             if (message.commandText) {
+              this._log(`[BotPanel] executeNavigationCommand -> ${message.commandText}`);
               this._botView?.execute(message.commandText)
-                .then(() => this._update())
+                .then((result) => {
+                  this._log(`[BotPanel] executeNavigationCommand success: ${message.commandText} | result keys: ${Object.keys(result || {})}`);
+                  return this._update();
+                })
                 .catch((error) => {
+                  this._log(`[BotPanel] executeNavigationCommand ERROR: ${error.message}`);
+                  this._log(`[BotPanel] executeNavigationCommand STACK: ${error.stack}`);
                   vscode.window.showErrorMessage(`Failed to execute ${message.commandText}: ${error.message}`);
                 });
             }
             return;
           case "navigateToBehavior":
             if (message.behaviorName) {
-              this._botView?.execute(`${message.behaviorName}.clarify`)
-                .then(() => this._update())
+              const cmd = `${message.behaviorName}.clarify`;
+              this._log(`[BotPanel] navigateToBehavior -> ${cmd}`);
+              this._botView?.execute(cmd)
+                .then((result) => {
+                  this._log(`[BotPanel] navigateToBehavior success: ${cmd} | result keys: ${Object.keys(result || {})}`);
+                  return this._update();
+                })
                 .catch((error) => {
+                  this._log(`[BotPanel] navigateToBehavior ERROR: ${error.message}`);
+                  this._log(`[BotPanel] navigateToBehavior STACK: ${error.stack}`);
                   vscode.window.showErrorMessage(`Failed to navigate to behavior: ${error.message}`);
                 });
             }
             return;
           case "navigateToAction":
             if (message.behaviorName && message.actionName) {
-              this._botView?.execute(`${message.behaviorName}.${message.actionName}`)
-                .then(() => this._update())
+              const cmd = `${message.behaviorName}.${message.actionName}`;
+              this._log(`[BotPanel] navigateToAction -> ${cmd}`);
+              this._botView?.execute(cmd)
+                .then((result) => {
+                  this._log(`[BotPanel] navigateToAction success: ${cmd} | result keys: ${Object.keys(result || {})}`);
+                  return this._update();
+                })
                 .catch((error) => {
+                  this._log(`[BotPanel] navigateToAction ERROR: ${error.message}`);
+                  this._log(`[BotPanel] navigateToAction STACK: ${error.stack}`);
                   vscode.window.showErrorMessage(`Failed to navigate to action: ${error.message}`);
                 });
             }
@@ -331,9 +352,15 @@ class BotPanel {
           case "navigateAndExecute":
             if (message.behaviorName && message.actionName && message.operationName) {
               const command = `${message.behaviorName}.${message.actionName}.${message.operationName}`;
+              this._log(`[BotPanel] navigateAndExecute -> ${command}`);
               this._botView?.execute(command)
-                .then(() => this._update())
+                .then((result) => {
+                  this._log(`[BotPanel] navigateAndExecute success: ${command} | result keys: ${Object.keys(result || {})}`);
+                  return this._update();
+                })
                 .catch((error) => {
+                  this._log(`[BotPanel] navigateAndExecute ERROR: ${error.message}`);
+                  this._log(`[BotPanel] navigateAndExecute STACK: ${error.stack}`);
                   vscode.window.showErrorMessage(`Failed to execute operation: ${error.message}`);
                 });
             }
@@ -472,6 +499,7 @@ class BotPanel {
     console.log('[BotPanel] _update() called');
     this._log('[BotPanel] _update() called - hasBotView: ' + !!this._botView);
     try {
+      this._log('[BotPanel] _update() START');
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:384',message:'_update() ENTRY',data:{hasBotView:!!this._botView},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
       console.log('[BotPanel] Fetching bot status...');
@@ -506,6 +534,7 @@ class BotPanel {
       }
       
       console.log("[BotPanel] Rendering HTML");
+      this._log('[BotPanel] _botView.render() starting');
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:405',message:'Before _botView.render()',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
       // #endregion
@@ -517,6 +546,7 @@ class BotPanel {
       this._panel.webview.html = html;
       console.log("[BotPanel] _update() completed successfully");
       this._log('[BotPanel] _update() completed successfully');
+      this._log('[BotPanel] _update() END');
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/cc11718e-e210-436d-8aa6-f3e81dc3fdfc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'bot_panel.js:407',message:'_update() EXIT success',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
       // #endregion
@@ -1025,6 +1055,7 @@ class BotPanel {
         }
         
         function executeNavigationCommand(command) {
+            console.log('[WebView] executeNavigationCommand click ->', command);
             vscode.postMessage({
                 command: 'executeNavigationCommand',
                 commandText: command
@@ -1032,6 +1063,7 @@ class BotPanel {
         }
         
         function navigateToBehavior(behaviorName) {
+            console.log('[WebView] navigateToBehavior click ->', behaviorName);
             vscode.postMessage({
                 command: 'navigateToBehavior',
                 behaviorName: behaviorName
@@ -1039,6 +1071,7 @@ class BotPanel {
         }
         
         function navigateToAction(behaviorName, actionName) {
+            console.log('[WebView] navigateToAction click ->', behaviorName, actionName);
             vscode.postMessage({
                 command: 'navigateToAction',
                 behaviorName: behaviorName,
@@ -1047,6 +1080,7 @@ class BotPanel {
         }
         
         function navigateAndExecute(behaviorName, actionName, operationName) {
+            console.log('[WebView] navigateAndExecute click ->', behaviorName, actionName, operationName);
             vscode.postMessage({
                 command: 'navigateAndExecute',
                 behaviorName: behaviorName,
