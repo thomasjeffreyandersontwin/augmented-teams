@@ -43,43 +43,6 @@ class TTYAction(TTYAdapter):
         else:
             return f"  {icon}{self.action.action_name}"
     
-    @property
-    def operations(self):
-        """Returns formatted operations (instructions/confirm) for current action."""
-        if not self.is_current:
-            return ""
-        
-        lines = []
-        
-        # Get current phase/stage if available
-        stage = getattr(self.action, 'phase', None) or getattr(self.action, 'stage', None) or 'not_started'
-        is_completed = getattr(self.action, 'is_completed', False)
-        
-        # Instructions operation
-        if stage == 'instructions' or stage == 'not_started':
-            instr_icon = "➤ "
-            instr_text = self.add_bold("instructions")
-        elif stage in ('confirming', 'complete'):
-            instr_icon = "☑ "  # Checked box
-            instr_text = "instructions"
-        else:
-            instr_icon = "☐ "  # Empty box to align with chevron + space
-            instr_text = "instructions"
-        lines.append(f"    {instr_icon}{instr_text}")
-        
-        # Confirm operation
-        if stage == 'confirming':
-            confirm_icon = "➤ "
-            confirm_text = self.add_bold("confirm")
-        elif stage == 'complete' or self._is_completed:
-            confirm_icon = "☑ "  # Checked box
-            confirm_text = "confirm"
-        else:
-            confirm_icon = "☐ "  # Empty box to align with chevron + space
-            confirm_text = "confirm"
-        lines.append(f"    {confirm_icon}{confirm_text}")
-        
-        return '\n'.join(lines)
     
     @property
     def name(self):
@@ -93,16 +56,7 @@ class TTYAction(TTYAdapter):
     
     def serialize(self) -> str:
         """Convert Action to TTY string - returns formatted properties."""
-        lines = []
-        lines.append(self.action_name)
-        
-        # Show operations (instructions/confirm) for current action
-        if self.is_current:
-            ops = self.operations
-            if ops:
-                lines.append(ops)
-        
-        return '\n'.join(lines)
+        return self.action_name
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
         """Parse command text into verb and args."""

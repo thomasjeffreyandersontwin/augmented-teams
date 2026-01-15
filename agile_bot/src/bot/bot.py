@@ -166,46 +166,6 @@ class Bot:
             'message': 'Exiting bot session. Goodbye!'
         }
     
-    def confirm(self, args: Optional[str] = None) -> Dict[str, Any]:
-        """Confirm current action and advance workflow.
-        
-        Args:
-            args: Optional arguments for confirmation
-        
-        Returns:
-            Dict with confirmation result
-        """
-        if not self.behaviors.current:
-            return {
-                'status': 'error',
-                'message': 'No current behavior to confirm'
-            }
-        
-        behavior = self.behaviors.current
-        if not behavior.actions.current:
-            return {
-                'status': 'error',
-                'message': 'No current action to confirm'
-            }
-        
-        action = behavior.actions.current
-        
-        try:
-            # Call confirm on the action
-            from ..actions.action_context import ActionContext
-            context = action.context_class() if hasattr(action, 'context_class') else ActionContext()
-            result = action.confirm(context)
-            
-            return {
-                'status': 'success',
-                'message': f'Confirmed {action.action_name}',
-                'result': result
-            }
-        except Exception as e:
-            return {
-                'status': 'error',
-                'message': f'Error confirming: {str(e)}'
-            }
     
     def current(self) -> Dict[str, Any]:
         """Get current action instructions.
@@ -562,16 +522,18 @@ class Bot:
                 'message': f'Current action {current_action} not found in behavior'
             }
     
-    def execute(self, behavior_name: str, action_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Execute a specific behavior.action with optional parameters.
+    def execute(self, behavior_name: str, action_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> Any:
+        """Execute a specific behavior.action and return instructions.
+        
+        Navigates to behavior/action and calls get_instructions() with optional parameters.
         
         Args:
             behavior_name: Name of the behavior to execute
             action_name: Name of the action to execute (optional, uses current action if None)
-            params: Optional parameters to pass to the action
+            params: Optional parameters to pass to action context (guardrails, answers, decisions, etc.)
         
         Returns:
-            Dict with execution result
+            Instructions object from action.get_instructions()
         """
         # Find behavior
         behavior = self.behaviors.find_by_name(behavior_name)
@@ -607,16 +569,39 @@ class Bot:
                         'message': f'Behavior {behavior_name} has no actions'
                     }
         
-        current_action_name = behavior.actions.current_action_name
+        # Get current action
+        action = behavior.actions.current
+        if not action:
+            return {
+                'status': 'error',
+                'message': f'No current action in {behavior_name}'
+            }
         
-        # Execute the action (stub for now - actual execution would invoke action logic)
-        return {
-            'status': 'success',
-            'message': f'Executed {behavior_name}.{current_action_name}',
-            'behavior': behavior_name,
-            'action': current_action_name,
-            'result': 'Action execution complete'
-        }
+        # Save state after navigation
+        self.behaviors.save_state()
+        
+        try:
+            # Get instructions using get_instructions() method with context
+            from ..actions.action_context import ActionContext
+            context = action.context_class() if hasattr(action, 'context_class') else ActionContext()
+            
+            # If params provided, populate context attributes
+            if params:
+                for key, value in params.items():
+                    # Always set the attribute (even if it doesn't exist yet)
+                    # This allows passing both old names (decisions) and new names (decisions_made)
+                    setattr(context, key, value)
+            
+            # Get instructions (will save guardrails if provided in context)
+            instructions = action.get_instructions(context)
+            
+            # Return Instructions object directly for adapter serialization
+            return instructions
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Error executing {behavior_name}.{action.action_name}: {str(e)}'
+            }
 
     def tree(self) -> str:
         """Display behavior hierarchy tree.

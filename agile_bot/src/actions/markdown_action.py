@@ -33,48 +33,7 @@ class MarkdownAction(MarkdownAdapter):
         else:
             return f"  {marker} {self.action.action_name}"
     
-    @property
-    def operations(self):
-        """Returns formatted operations (instructions/confirm) for current action."""
-        if not self.is_current:
-            return ""
-        
-        lines = []
-        stage = getattr(self.action, 'phase', None) or getattr(self.action, 'stage', None) or 'not_started'
-        is_completed = getattr(self.action, 'is_completed', False)
-        
-        if stage == 'instructions' or stage == 'not_started':
-            instr_marker = "➤"
-            instr_text = "**instructions**"
-        elif stage in ('confirming', 'complete'):
-            instr_marker = "[X]"
-            instr_text = "instructions"
-        else:
-            instr_marker = "[ ]"
-            instr_text = "instructions"
-        lines.append(f"    {instr_marker} {instr_text}")
-        
-        if stage == 'confirming':
-            confirm_marker = "➤"
-            confirm_text = "**confirm**"
-        elif stage == 'complete' or is_completed:
-            confirm_marker = "[X]"
-            confirm_text = "confirm"
-        else:
-            confirm_marker = "[ ]"
-            confirm_text = "confirm"
-        lines.append(f"    {confirm_marker} {confirm_text}")
-        
-        return '\n'.join(lines)
     
     def serialize(self) -> str:
         """Convert Action to Markdown string - returns formatted properties."""
-        lines = []
-        lines.append(self.action_name)
-        
-        if self.is_current:
-            ops = self.operations
-            if ops:
-                lines.append(ops)
-        
-        return '\n'.join(lines)
+        return self.action_name

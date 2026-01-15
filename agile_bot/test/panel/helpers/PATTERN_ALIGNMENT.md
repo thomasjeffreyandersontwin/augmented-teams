@@ -105,7 +105,7 @@ class InstructionsViewTestHelper {
 | Purpose | Python Pattern | JavaScript Pattern | Example |
 |---------|----------------|-------------------|---------|
 | **Create test data** | `create_*` | `create_*` | `create_behavior_json()` / `create_behavior_with_actions()` |
-| **Execute operation** | Direct verb | Direct verb | `scan_with_rule()` / `render_html()` |
+| **Execute action** | Direct verb | Direct verb | `scan_with_rule()` / `render_html()` |
 | **Assert result** | `assert_*` | `assert_*` | `assert_validate_instructions()` / `assert_behavior_with_actions()` |
 | **Factory helper** | `create_*` | `create_*` | `create_validation_rules()` / `create_story_scope()` |
 

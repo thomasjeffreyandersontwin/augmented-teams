@@ -384,6 +384,82 @@ class BotPanel {
                 vscode.window.showErrorMessage(`Submit failed: ${error.message}`);
               });
             return;
+          case "saveClarifyAnswers":
+            if (message.answers) {
+              this._log(`[BotPanel] saveClarifyAnswers -> ${JSON.stringify(message.answers)}`);
+              const answersJson = JSON.stringify(message.answers).replace(/'/g, "\\'");
+              const cmd = `clarify --answers '${answersJson}'`;
+              this._botView?.execute(cmd)
+                .then(() => {
+                  this._log(`[BotPanel] saveClarifyAnswers success`);
+                  return this._update();
+                })
+                .catch((error) => {
+                  this._log(`[BotPanel] saveClarifyAnswers ERROR: ${error.message}`);
+                  vscode.window.showErrorMessage(`Failed to save clarify answers: ${error.message}`);
+                });
+            }
+            return;
+          case "saveClarifyEvidence":
+            if (message.evidence_provided) {
+              this._log(`[BotPanel] saveClarifyEvidence -> ${JSON.stringify(message.evidence_provided)}`);
+              const evidenceJson = JSON.stringify(message.evidence_provided).replace(/'/g, "\\'");
+              const cmd = `clarify --evidence_provided '${evidenceJson}'`;
+              this._botView?.execute(cmd)
+                .then(() => {
+                  this._log(`[BotPanel] saveClarifyEvidence success`);
+                  return this._update();
+                })
+                .catch((error) => {
+                  this._log(`[BotPanel] saveClarifyEvidence ERROR: ${error.message}`);
+                  vscode.window.showErrorMessage(`Failed to save clarify evidence: ${error.message}`);
+                });
+            }
+            return;
+          case "saveStrategyDecision":
+            if (message.criteriaKey && message.selectedOption) {
+              this._log(`[BotPanel] saveStrategyDecision -> ${message.criteriaKey}: ${message.selectedOption}`);
+              // Load existing decisions, update one, and save all
+              this._botView?.execute('status')
+                .then((statusResult) => {
+                  const currentBehavior = statusResult.behavior;
+                  // Build decisions object with just this one decision
+                  const decisions = {};
+                  decisions[message.criteriaKey] = message.selectedOption;
+                  const decisionsJson = JSON.stringify(decisions).replace(/'/g, "\\'");
+                  const cmd = `${currentBehavior}.strategy --decisions '${decisionsJson}'`;
+                  return this._botView?.execute(cmd);
+                })
+                .then(() => {
+                  this._log(`[BotPanel] saveStrategyDecision success`);
+                  return this._update();
+                })
+                .catch((error) => {
+                  this._log(`[BotPanel] saveStrategyDecision ERROR: ${error.message}`);
+                  vscode.window.showErrorMessage(`Failed to save strategy decision: ${error.message}`);
+                });
+            }
+            return;
+          case "saveStrategyAssumptions":
+            if (message.assumptions) {
+              this._log(`[BotPanel] saveStrategyAssumptions -> ${JSON.stringify(message.assumptions)}`);
+              const assumptionsJson = JSON.stringify(message.assumptions).replace(/'/g, "\\'");
+              this._botView?.execute('status')
+                .then((statusResult) => {
+                  const currentBehavior = statusResult.behavior;
+                  const cmd = `${currentBehavior}.strategy --assumptions '${assumptionsJson}'`;
+                  return this._botView?.execute(cmd);
+                })
+                .then(() => {
+                  this._log(`[BotPanel] saveStrategyAssumptions success`);
+                  return this._update();
+                })
+                .catch((error) => {
+                  this._log(`[BotPanel] saveStrategyAssumptions ERROR: ${error.message}`);
+                  vscode.window.showErrorMessage(`Failed to save strategy assumptions: ${error.message}`);
+                });
+            }
+            return;
         }
       },
       null,
@@ -1115,6 +1191,85 @@ class BotPanel {
                 command: 'switchBot',
                 botName: botName
             });
+        }
+        
+        // Save functions for guardrails
+        function saveClarifyAnswers() {
+            console.log('[WebView] saveClarifyAnswers triggered');
+            const answers = {};
+            const answerElements = document.querySelectorAll('[id^="clarify-answer-"]');
+            const questionElements = document.querySelectorAll('.input-header');
+            
+            answerElements.forEach((textarea, idx) => {
+                const question = questionElements[idx]?.textContent?.trim();
+                const answer = textarea.value?.trim();
+                if (question && answer) {
+                    answers[question] = answer;
+                }
+            });
+            
+            if (Object.keys(answers).length > 0) {
+                console.log('[WebView] Saving clarify answers:', answers);
+                vscode.postMessage({
+                    command: 'saveClarifyAnswers',
+                    answers: answers
+                });
+            }
+        }
+        
+        function saveClarifyEvidence() {
+            console.log('[WebView] saveClarifyEvidence triggered');
+            const evidenceTextarea = document.getElementById('clarify-evidence');
+            if (evidenceTextarea) {
+                const evidenceText = evidenceTextarea.value?.trim();
+                if (evidenceText) {
+                    // Parse evidence text as key:value pairs
+                    const evidenceProvided = {};
+                    evidenceText.split('\\n').forEach(line => {
+                        const colonIdx = line.indexOf(':');
+                        if (colonIdx > 0) {
+                            const key = line.substring(0, colonIdx).trim();
+                            const value = line.substring(colonIdx + 1).trim();
+                            if (key && value) {
+                                evidenceProvided[key] = value;
+                            }
+                        }
+                    });
+                    
+                    if (Object.keys(evidenceProvided).length > 0) {
+                        console.log('[WebView] Saving clarify evidence:', evidenceProvided);
+                        vscode.postMessage({
+                            command: 'saveClarifyEvidence',
+                            evidence_provided: evidenceProvided
+                        });
+                    }
+                }
+            }
+        }
+        
+        function saveStrategyDecision(criteriaKey, selectedOption) {
+            console.log('[WebView] saveStrategyDecision triggered:', criteriaKey, selectedOption);
+            vscode.postMessage({
+                command: 'saveStrategyDecision',
+                criteriaKey: criteriaKey,
+                selectedOption: selectedOption
+            });
+        }
+        
+        function saveStrategyAssumptions() {
+            console.log('[WebView] saveStrategyAssumptions triggered');
+            const assumptionsTextarea = document.getElementById('strategy-assumptions');
+            if (assumptionsTextarea) {
+                const assumptionsText = assumptionsTextarea.value?.trim();
+                if (assumptionsText) {
+                    const assumptions = assumptionsText.split('\\n').filter(a => a.trim());
+                    console.log('[WebView] Saving strategy assumptions:', assumptions);
+                    vscode.postMessage({
+                        command: 'saveStrategyAssumptions',
+                        assumptions: assumptions
+                    });
+                }
+            }
         }
         
         // Listen for messages from extension host (e.g. error displays)

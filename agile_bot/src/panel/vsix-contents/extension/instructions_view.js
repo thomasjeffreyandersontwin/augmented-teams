@@ -6,7 +6,7 @@
  * Story: Display Base Instructions, Display Clarify Instructions, Display Strategy Instructions, etc.
  */
 
-const PanelView = require('../panel/panel_view');
+const PanelView = require('./panel_view');
 const vscode = require('vscode');
 const path = require('path');
 
@@ -57,11 +57,53 @@ class InstructionsSection extends PanelView {
      * @returns {string} HTML string
      */
     async render() {
-        const botData = await this.execute('status');
-        const instructionsData = botData.instructions || {};
+        // Prefer the most recent CLI response (navigation returns unified {bot,instructions})
+        const lastResponse = PanelView._lastResponse || {};
+        let instructionsData = lastResponse.instructions || {};
+        let currentActionFromResponse = lastResponse.bot?.current_action || lastResponse.current_action;
+
+        // Fallback to status if no cached instructions
+        if (!instructionsData || Object.keys(instructionsData).length === 0) {
+            const botData = await this.execute('status');
+            instructionsData = botData?.instructions || botData?.bot?.instructions || {};
+            currentActionFromResponse = currentActionFromResponse ||
+                botData?.current_action ||
+                botData?.behaviors?.current_action ||
+                botData?.bot?.current_action;
+        }
+
+        // Persist prompt content for submit button state
+        if (instructionsData?.display_content) {
+            this.promptContent = Array.isArray(instructionsData.display_content)
+                ? instructionsData.display_content.join('\n')
+                : instructionsData.display_content;
+        }
         
         if (!instructionsData || Object.keys(instructionsData).length === 0) {
-            return '';
+            return `
+    <div class="section card-primary">
+        <div class="collapsible-section expanded">
+            <div class="collapsible-header" onclick="toggleSection('instructions-content')" style="
+                cursor: pointer;
+                padding: 4px 5px;
+                background-color: transparent;
+                border-left: none;
+                border-radius: 2px;
+                display: flex;
+                align-items: center;
+                user-select: none;
+            ">
+                <span class="expand-icon" style="margin-right: 8px; font-size: 28px; transition: transform 0.15s;">▸</span>
+                <span style="font-weight: 600; font-size: 20px;">Instructions</span>
+            </div>
+            <div id="instructions-content" class="collapsible-content" style="max-height: 600px; overflow-y: auto; overflow-x: hidden; transition: max-height 0.3s ease;">
+                <div class="card-secondary" style="padding: 8px 10px; color: var(--vscode-descriptionForeground);">
+                    <div style="margin-bottom: 4px;">No instructions available yet.</div>
+                    <div>Navigate to a behavior/action to load instructions.</div>
+                </div>
+            </div>
+        </div>
+    </div>`;
         }
 
         // Merge behavior instructions into base_instructions at the top
@@ -189,16 +231,52 @@ class InstructionsSection extends PanelView {
 
         // 2. CLARIFY - Q&A + Evidence
         // Only show when action is 'clarify'
-        const currentAction = instructions.action_instructions?.name || '';
+        const currentAction = instructions.action_instructions?.name || currentActionFromResponse || '';
         const hasClarificationData = instructions.clarify_instructions?.clarification_data || 
                                     instructions.clarification ||
                                     (instructions.guardrails?.required_context?.key_questions);
         
         // Only show clarify section when we're in clarify action
         if (hasClarificationData && currentAction === 'clarify') {
+            // Transform clarification.json structure to array format for rendering
+            let clarificationDataArray = [];
+            
+            // Check if we have saved clarification data (from clarification.json)
+            const savedClarification = instructions.clarification;
+            if (savedClarification && savedClarification.key_questions && savedClarification.key_questions.answers) {
+                // Convert answers object to array of {question, answer} objects
+                const answers = savedClarification.key_questions.answers;
+                clarificationDataArray = Object.keys(answers).map(question => ({
+                    question: question,
+                    answer: answers[question]
+                }));
+            }
+            
+            // If no saved data, create empty entries for guardrail questions
+            if (clarificationDataArray.length === 0 && instructions.guardrails?.required_context?.key_questions) {
+                const questions = instructions.guardrails.required_context.key_questions;
+                clarificationDataArray = questions.map(q => ({
+                    question: q,
+                    answer: ''
+                }));
+            }
+            
+            // Get evidence - pass full evidence object with both required and provided
+            let evidenceData = {};
+            if (savedClarification && savedClarification.evidence) {
+                // Use saved evidence structure (has both required and provided)
+                evidenceData = savedClarification.evidence;
+            } else {
+                // Create structure from guardrails only (no provided yet)
+                evidenceData = {
+                    required: instructions.guardrails?.required_context?.evidence || [],
+                    provided: {}
+                };
+            }
+            
             restructured.clarify_instructions = {
-                clarification_data: instructions.clarify_instructions?.clarification_data || instructions.clarification || {},
-                evidence: instructions.clarify_instructions?.evidence || instructions.guardrails?.required_context?.evidence || [],
+                clarification_data: clarificationDataArray,
+                evidence: evidenceData,
                 guardrails: instructions.guardrails || instructions.clarify_instructions?.guardrails
             };
         }
@@ -208,12 +286,33 @@ class InstructionsSection extends PanelView {
                             instructions.strategy_instructions?.strategy_data || 
                             instructions.strategy;
         if (hasStrategyData) {
+            // Extract saved strategy data from strategy.json
+            const savedStrategy = instructions.strategy;
+            let strategyCriteriaData = {};
+            let decisionsMade = {};
+            let assumptionsMade = [];
+            
+            if (savedStrategy && savedStrategy.strategy_criteria) {
+                // Get criteria (questions and options)
+                strategyCriteriaData = savedStrategy.strategy_criteria.criteria || {};
+                // Get decisions made
+                decisionsMade = savedStrategy.strategy_criteria.decisions_made || {};
+            }
+            
+            if (savedStrategy && savedStrategy.assumptions) {
+                // Get assumptions made
+                assumptionsMade = savedStrategy.assumptions.assumptions_made || [];
+            }
+            
+            // Fallback to guardrails if no saved data
+            if (Object.keys(strategyCriteriaData).length === 0) {
+                strategyCriteriaData = instructions.strategy_criteria || instructions.guardrails?.decision_criteria || {};
+            }
+            
             restructured.strategy_instructions = {
-                strategy_data: instructions.strategy_instructions?.strategy_data || instructions.strategy,
-                strategy_criteria: instructions.strategy_instructions?.strategy_criteria || 
-                              instructions.strategy_criteria ||
-                              instructions.guardrails?.decision_criteria,
-                assumptions: instructions.strategy_instructions?.assumptions || instructions.assumptions,
+                strategy_criteria: strategyCriteriaData,
+                decisions_made: decisionsMade,
+                assumptions_made: assumptionsMade,
                 action_instructions: instructions.action_instructions
             };
         }
@@ -476,13 +575,19 @@ class InstructionsSection extends PanelView {
             }));
         }
 
-        // Get evidence
-        if (value.clarification_data && Array.isArray(value.clarification_data) && value.clarification_data.length > 0) {
-            // Evidence from clarification.json
-            evidence = value.evidence || [];
-        } else if (value.guardrails && value.guardrails.required_context && Array.isArray(value.guardrails.required_context.evidence)) {
-            // Evidence from guardrails
-            evidence = value.guardrails.required_context.evidence;
+        // Get required evidence and provided evidence from evidence object
+        let requiredEvidence = [];
+        let providedEvidence = {};
+        
+        if (value.evidence && typeof value.evidence === 'object') {
+            // Evidence object should have 'required' and 'provided' keys
+            requiredEvidence = value.evidence.required || [];
+            providedEvidence = value.evidence.provided || {};
+        }
+        
+        // Fallback to guardrails if no evidence structure
+        if (requiredEvidence.length === 0 && value.guardrails && value.guardrails.required_context && Array.isArray(value.guardrails.required_context.evidence)) {
+            requiredEvidence = value.guardrails.required_context.evidence;
         }
 
         // Render Q&A Section - questions with editable answer textboxes
@@ -494,20 +599,39 @@ class InstructionsSection extends PanelView {
                 if (questionText) {
                     html += `<div class="input-container" style="margin-top: ${idx > 0 ? '12px' : '0'};">`;
                     html += `<div class="input-header">${this.escapeHtml(questionText)}</div>`;
-                    html += `<textarea id="clarify-answer-${idx}" rows="3" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(answerText)}</textarea>`;
+                    html += `<textarea id="clarify-answer-${idx}" rows="3" onblur="saveClarifyAnswers()" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(answerText)}</textarea>`;
                     html += `</div>`;
                 }
             });
         }
         
-        // Render Evidence Section
-        if (evidence.length > 0) {
-            html += '<div style="margin-top: 8px;">';
+        // Render Evidence Section - Required evidence as list + editable "Evidence Provided" box
+        if (requiredEvidence.length > 0 || Object.keys(providedEvidence).length > 0) {
+            html += '<div style="margin-top: 16px;">';
             html += '<div class="input-header">Evidence</div>';
-            html += '<div style="margin-top: 8px;">';
-            evidence.forEach(item => {
-                html += `<div style="margin-bottom: 4px;">• ${this.escapeHtml(String(item))}</div>`;
-            });
+            
+            // Show required evidence as bullet list
+            if (requiredEvidence.length > 0) {
+                html += '<div style="margin-top: 8px;">';
+                requiredEvidence.forEach(item => {
+                    html += `<div style="margin-bottom: 4px;">• ${this.escapeHtml(String(item))}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Show editable "Evidence Provided" textarea
+            html += '<div style="margin-top: 12px;">';
+            html += '<div class="input-header" style="font-size: 13px; margin-bottom: 4px;">Evidence Provided</div>';
+            
+            // Convert providedEvidence object to text for textarea
+            let providedText = '';
+            if (Object.keys(providedEvidence).length > 0) {
+                providedText = Object.entries(providedEvidence)
+                    .map(([key, val]) => `${key}: ${val}`)
+                    .join('\n');
+            }
+            
+            html += `<textarea id="clarify-evidence" rows="3" onblur="saveClarifyEvidence()" placeholder="Enter evidence sources provided (e.g., Requirements doc: project-spec.md)" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(providedText)}</textarea>`;
             html += '</div>';
             html += '</div>';
         }
@@ -524,38 +648,26 @@ class InstructionsSection extends PanelView {
         console.log('[DEBUG] Strategy Instructions value:', JSON.stringify(value, null, 2));
         
         let html = '';
-        let strategyCriteriaObj = {};
-        let selectedOption = null;
-        let assumptions = '';
+        const strategyCriteriaObj = value.strategy_criteria || {};
+        const decisionsMade = value.decisions_made || {};
+        const assumptionsMade = value.assumptions_made || [];
 
-        // Determine source of strategy data
-        if (value.strategy_data && value.strategy_data.decision_criteria) {
-            // Use strategy.json if present (saved decisions)
-            strategyCriteriaObj = value.strategy_data.decision_criteria;
-            selectedOption = value.strategy_data.selected_option || null;
-            assumptions = value.strategy_data.assumptions || '';
-        } else if (value.strategy_criteria && Object.keys(value.strategy_criteria).length > 0) {
-            // Use strategy_criteria from instructions if strategy.json not present
-            strategyCriteriaObj = value.strategy_criteria;
-            selectedOption = null;
-            assumptions = value.assumptions || '';
-        } else {
-            // No structured decision criteria - just extract assumptions
-            assumptions = value.assumptions || '';
-        }
-
-        // Render Decision Criteria - radio buttons
-        // strategyCriteriaObj format: { 'key1': {question: '...', options: [...], outcome: '...'}, ... }
+        // Render Decision Criteria - radio buttons with saved decisions highlighted
+        // strategyCriteriaObj format: { 'key1': {question: '...', options: [...]}, ... }
+        // decisionsMade format: { 'key1': 'selected option text', ... }
         const criteriaKeys = Object.keys(strategyCriteriaObj);
         if (criteriaKeys.length > 0) {
             criteriaKeys.forEach((criteriaKey, criteriaIdx) => {
                 const criteria = strategyCriteriaObj[criteriaKey];
                 if (typeof criteria === 'object' && criteria !== null) {
-                    html += '<div style="margin-bottom: 10px;">';
+                    html += '<div style="margin-bottom: 16px;">';
                     
                     // Render the question as header
                     const question = criteria.question || criteriaKey;
                     html += `<div class="input-header">${this.escapeHtml(question)}</div>`;
+                    
+                    // Get the saved decision for this criteria
+                    const savedDecision = decisionsMade[criteriaKey];
                     
                     // Render options as radio buttons
                     const options = criteria.options || [];
@@ -563,7 +675,6 @@ class InstructionsSection extends PanelView {
                         html += '<div style="margin-top: 8px;">';
                         options.forEach((option, optionIdx) => {
                             const radioName = `decision-criteria-${criteriaIdx}`;
-                            const isSelected = selectedOption !== null && selectedOption === optionIdx;
                             
                             // Extract option text (could be string or object with 'name' field)
                             let optionText = '';
@@ -573,10 +684,17 @@ class InstructionsSection extends PanelView {
                                 optionText = option.name || option.id || JSON.stringify(option);
                             }
                             
+                            // Check if this option matches the saved decision
+                            const isSelected = savedDecision && optionText === savedDecision;
+                            
+                            // Escape for use in onclick attribute
+                            const escapedCriteriaKey = this.escapeHtml(criteriaKey).replace(/'/g, "\\'");
+                            const escapedOptionText = this.escapeHtml(optionText).replace(/'/g, "\\'");
+                            
                             html += `<div style="margin-bottom: 8px;">`;
                             html += `<label style="display: flex; align-items: flex-start; cursor: pointer;">`;
-                            html += `<input type="radio" name="${radioName}" value="${optionIdx}" ${isSelected ? 'checked' : ''} style="margin-right: 8px; margin-top: 4px; cursor: pointer;" />`;
-                            html += `<span style="flex: 1;">${this.escapeHtml(optionText)}</span>`;
+                            html += `<input type="radio" name="${radioName}" value="${optionIdx}" ${isSelected ? 'checked' : ''} onchange="saveStrategyDecision('${escapedCriteriaKey}', '${escapedOptionText}')" style="margin-right: 8px; margin-top: 4px; cursor: pointer;" />`;
+                            html += `<span style="flex: 1; ${isSelected ? 'font-weight: 600; color: var(--vscode-textLink-foreground);' : ''}">${this.escapeHtml(optionText)}</span>`;
                             html += `</label>`;
                             html += `</div>`;
                         });
@@ -588,13 +706,24 @@ class InstructionsSection extends PanelView {
             });
         }
 
-        // Render Assumptions - editable textarea
+        // Render Assumptions - display saved assumptions as read-only list, or editable if none saved
         html += '<div class="input-container" style="margin-top: 6px;">';
         html += '<div class="input-header">Assumptions</div>';
-        const assumptionsText = Array.isArray(assumptions) 
-            ? assumptions.join('\n') 
-            : String(assumptions);
-        html += `<textarea id="strategy-assumptions" rows="5" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(assumptionsText)}</textarea>`;
+        
+        if (assumptionsMade.length > 0) {
+            // Display saved assumptions as bullet list
+            html += '<div style="margin-top: 8px; padding: 8px; background-color: var(--input-bg); border-radius: 4px;">';
+            assumptionsMade.forEach(assumption => {
+                html += `<div style="margin-bottom: 6px; padding-left: 8px; border-left: 3px solid var(--vscode-textLink-foreground);">${this.escapeHtml(assumption)}</div>`;
+            });
+            html += '</div>';
+        } else {
+            // No saved assumptions - show editable textarea
+            const assumptionsText = Array.isArray(value.assumptions) 
+                ? value.assumptions.join('\n') 
+                : String(value.assumptions || '');
+            html += `<textarea id="strategy-assumptions" rows="5" onblur="saveStrategyAssumptions()" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(assumptionsText)}</textarea>`;
+        }
         html += '</div>';
 
         return html;

@@ -133,7 +133,7 @@ class InstructionsViewTestHelper {
     }
     
     // ========================================================================
-    // ACTION HELPERS - Execute operations
+    // ACTION HELPERS - Execute actions
     // ========================================================================
     
     /**

@@ -16,6 +16,10 @@
     "If a choice is needed, list available options and ask user to choose.",
     "Don't guess or infer - be explicit when information is missing.",
     "",
-    "After presenting all answers, ask the user to review and confirm or provide corrections before proceeding."
+    "After presenting all answers, ask the user to review and confirm or provide corrections.",
+    "",
+    "**To save answers:** When user confirms, pass answers as parameters to the next action you run.",
+    "Example: `shape.strategy --answers '{\"question1\": \"answer1\", \"question2\": \"answer2\"}'`",
+    "The system will automatically save the answers to clarification.json and proceed with the next action."
   ]
 }

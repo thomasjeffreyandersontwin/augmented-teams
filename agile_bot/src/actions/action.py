@@ -395,17 +395,20 @@ class Action:
         return inject_reminder_to_instructions(result, reminder)
 
     def get_instructions(self, context: ActionContext = None) -> Instructions:
-        """Returns AI instructions without running scanners or saving files.
+        """Returns AI instructions and saves any guardrails provided in context.
         
-        This is the first phase of the three-phase action pattern:
-        1. get_instructions() - Build instructions (no side effects)
-        2. confirm() - Process work (may save files), mark complete and advance
+        This is the single operation for all actions:
+        - Saves guardrails if provided (answers, decisions, evidence, etc.)
+        - Builds and returns instructions for AI
         
         This is a template method. Subclasses override _prepare_instructions() to customize.
-        Loading/reading files is allowed. Writing files is NOT allowed.
         """
         if context is None:
             context = self.context_class()
+        
+        # Save guardrails if provided in context (answers, decisions, evidence, etc.)
+        # Do this FIRST before building instructions
+        self._save_guardrails_if_provided(context)
         
         # If context has a new scope, let the scope apply itself to the bot
         if hasattr(context, 'scope') and context.scope:
@@ -436,6 +439,73 @@ class Action:
         # Return the Instructions object directly
         # CLI will use adapters to serialize it appropriately
         return instructions
+    
+    def _save_guardrails_if_provided(self, context: ActionContext):
+        """Save guardrails if provided in context parameters.
+        
+        This is common logic for all actions. Any action can receive and save guardrails:
+        - Clarify action: answers, evidence
+        - Strategy action: decisions, assumptions
+        - Build action: build_config, decisions
+        - etc.
+        
+        Args:
+            context: Action context that may contain guardrail data
+        """
+        # Check for clarify data (answers, evidence)
+        if hasattr(context, 'answers') and context.answers:
+            try:
+                from .clarify.requirements_clarifications import RequirementsClarifications
+                from .clarify.required_context import RequiredContext
+                
+                # Get required context for this behavior
+                required_context = None
+                if hasattr(self, 'required_context'):
+                    required_context = self.required_context
+                elif self.behavior and hasattr(self.behavior, 'folder'):
+                    required_context = RequiredContext(self.behavior.folder)
+                
+                if required_context:
+                    clarifications = RequirementsClarifications(
+                        behavior_name=self.behavior.name,
+                        bot_paths=self.behavior.bot_paths,
+                        required_context=required_context,
+                        key_questions_answered=context.answers,
+                        evidence_provided=getattr(context, 'evidence_provided', {}),
+                        context=getattr(context, 'context', None)
+                    )
+                    clarifications.save()
+            except Exception as e:
+                # Log but don't fail if save fails
+                import logging
+                logging.getLogger(__name__).warning(f'Failed to save clarification data: {e}')
+        
+        # Check for strategy data (decisions_made or decisions, assumptions)
+        decisions = getattr(context, 'decisions_made', None) or getattr(context, 'decisions', None)
+        if decisions:
+            try:
+                from .strategy.strategy_decision import StrategyDecision
+                from .strategy.strategy import Strategy
+                from pathlib import Path
+                
+                # Get strategy from behavior folder
+                strategy_obj = None
+                if self.behavior and hasattr(self.behavior, 'folder'):
+                    strategy_obj = Strategy(Path(self.behavior.folder))
+                
+                if strategy_obj:
+                    strategy_decision = StrategyDecision(
+                        behavior_name=self.behavior.name,
+                        bot_paths=self.behavior.bot_paths,
+                        strategy=strategy_obj,
+                        decisions_made=decisions,
+                        assumptions_made=getattr(context, 'assumptions', [])
+                    )
+                    strategy_decision.save()
+            except Exception as e:
+                # Log but don't fail if save fails
+                import logging
+                logging.getLogger(__name__).warning(f'Failed to save strategy data: {e}')
     
     def _load_behavior_guardrails(self, instructions):
         """Load behavior-level guardrails (key questions and evidence) if available.
@@ -599,40 +669,6 @@ class Action:
             output_lines.extend(display_content)
         
         return "\n".join(output_lines)
-    
-    
-    def confirm(self, context: ActionContext = None) -> Dict[str, Any]:
-        """Process work and mark action complete.
-        
-        This is the second phase of the two-phase action pattern:
-        1. get_instructions() - Build instructions (no side effects)
-        2. confirm() - Process work (may save files), mark complete and advance
-        
-        This is a template method. Subclasses override _do_confirm() to customize.
-        """
-        if context is None:
-            context = self.context_class()
-        
-        # Call template method for subclass customization (save files, etc.)
-        result = self._do_confirm(context)
-        
-        self.track_activity_on_completion()
-        
-        next_action_name = self.next_action
-        return {
-            'status': 'confirmed',
-            'action_completed': self.action_name,
-            'next_action': next_action_name,
-            **result  # Include any additional data from _do_confirm
-        }
-    
-    def _do_confirm(self, context: ActionContext) -> Dict[str, Any]:
-        """Template method: Perform action-specific confirm logic.
-        
-        Override in subclasses to save files, update state, etc.
-        Should return a dict with any additional data to include in confirm result.
-        """
-        return {'message': 'Work confirmed successfully'}
 
     def do_execute(self, context: ActionContext = None) -> Dict[str, Any]:
         raise NotImplementedError('Subclasses must implement do_execute()')

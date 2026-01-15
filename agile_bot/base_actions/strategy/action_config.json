@@ -10,6 +10,10 @@
       "",
       "If context is insufficient to make a decision, state: \"[!] NOT ENOUGH INFORMATION\" and ask user for guidance.",
       "",
-      "After presenting all assumptions and decisions, ask the user to review and confirm or provide corrections before proceeding."
+      "After presenting all assumptions and decisions, ask the user to review and confirm or provide corrections.",
+      "",
+      "**To save decisions:** When user confirms, pass decisions as parameters to the next action you run.",
+      "Example: `shape.build --decisions '{\"decision1\": \"choice1\", \"decision2\": \"choice2\"}'`",
+      "The system will automatically save the decisions to strategy.json and proceed with the next action."
     ]
   }

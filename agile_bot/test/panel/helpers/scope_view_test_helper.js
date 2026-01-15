@@ -113,7 +113,7 @@ class ScopeViewTestHelper {
     }
     
     // ========================================================================
-    // ACTION HELPERS - Execute operations
+    // ACTION HELPERS - Execute actions
     // ========================================================================
     
     /**

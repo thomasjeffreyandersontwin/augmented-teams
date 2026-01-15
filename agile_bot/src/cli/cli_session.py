@@ -3,8 +3,9 @@ Minimal CLI session - command router that routes to Bot methods and uses adapter
 """
 
 import sys
+import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from agile_bot.src.cli.adapter_factory import AdapterFactory
 from agile_bot.src.cli.cli_results import CLICommandResponse
@@ -96,7 +97,8 @@ class CLISession:
                 # Not an action shortcut, try behavior.action pattern
                 try:
                     result = self._route_to_behavior_action(command)
-                    is_navigation_command = True  # behavior.action is navigation
+                    # behavior.action is NOT a navigation command anymore - execute returns instructions
+                    is_navigation_command = False
                 except ValueError:
                     # Not a valid command - return error in appropriate format
                     error_message = f"Unknown command '{verb}'"
@@ -143,6 +145,26 @@ class CLISession:
         # Get appropriate adapter for result type
         adapter = self._get_adapter_for_domain(result)
         output = adapter.serialize()
+        
+        # Check if result is Instructions (from behavior.action execution)
+        from agile_bot.src.instructions.instructions import Instructions
+        if isinstance(result, Instructions) and self.mode == 'json':
+            # Build unified JSON response with instructions and bot status
+            import json
+            instructions_data = json.loads(output) if isinstance(output, str) else output
+            status_adapter = self._get_adapter_for_domain(self.bot)
+            status_json = status_adapter.serialize()
+            status_data = json.loads(status_json) if isinstance(status_json, str) else status_json
+            
+            unified_response = {
+                'instructions': instructions_data,
+                'bot': status_data
+            }
+            output = json.dumps(unified_response, indent=2)
+            return CLICommandResponse(
+                output=output,
+                cli_terminated=False
+            )
         
         # For navigation commands, auto-execute instructions and append full bot status
         if is_navigation_command and not cli_terminated:
@@ -240,28 +262,83 @@ class CLISession:
         args = parts[1] if len(parts) > 1 else ""
         return verb, args
     
-    def _route_to_behavior_action(self, command: str) -> Any:
-        """Route behavior or behavior.action or behavior.action.operation commands to bot.
+    def _parse_action_params(self, args_string: str) -> Dict[str, Any]:
+        """Parse action parameters from command arguments.
         
-        Strips any CLI flags/arguments (e.g., "--format json") before routing.
+        Supports: --answers, --decisions, --assumptions, --evidence_provided
+        
+        Args:
+            args_string: Arguments portion of command (e.g., "--answers '{...}' --assumptions '[...]'")
+        
+        Returns:
+            Dict of parsed parameters ready for action context
         """
-        # Drop any flags/args after the first whitespace so action parsing isn't polluted
-        # Example: "prioritization.clarify --format json" -> "prioritization.clarify"
-        command_core = command.split(maxsplit=1)[0]
+        import re
+        import json
+        
+        params = {}
+        
+        # Parse --answers '{"key": "value"}'
+        answers_match = re.search(r"--answers\s+'([^']+)'", args_string)
+        if answers_match:
+            try:
+                params['answers'] = json.loads(answers_match.group(1))
+            except json.JSONDecodeError as e:
+                logging.warning(f"Failed to parse --answers: {e}")
+        
+        # Parse --decisions '{"key": "value"}'
+        decisions_match = re.search(r"--decisions\s+'([^']+)'", args_string)
+        if decisions_match:
+            try:
+                params['decisions'] = json.loads(decisions_match.group(1))
+            except json.JSONDecodeError as e:
+                logging.warning(f"Failed to parse --decisions: {e}")
+        
+        # Parse --assumptions '["item1", "item2"]'
+        assumptions_match = re.search(r"--assumptions\s+'([^']+)'", args_string)
+        if assumptions_match:
+            try:
+                params['assumptions'] = json.loads(assumptions_match.group(1))
+            except json.JSONDecodeError as e:
+                logging.warning(f"Failed to parse --assumptions: {e}")
+        
+        # Parse --evidence_provided '{"key": "value"}'
+        evidence_match = re.search(r"--evidence_provided\s+'([^']+)'", args_string)
+        if evidence_match:
+            try:
+                params['evidence_provided'] = json.loads(evidence_match.group(1))
+            except json.JSONDecodeError as e:
+                logging.warning(f"Failed to parse --evidence_provided: {e}")
+        
+        return params
+    
+    def _route_to_behavior_action(self, command: str) -> Any:
+        """Route behavior or behavior.action commands to bot with parameter support.
+        
+        Now parses CLI parameters like --answers, --decisions, --assumptions
+        and passes them to bot.execute() as params dict.
+        """
+        # Split command into core command and arguments
+        # Example: "shape.strategy --decisions '{...}'" -> "shape.strategy", "--decisions '{...}'"
+        parts = command.split(maxsplit=1)
+        command_core = parts[0]
+        args_string = parts[1] if len(parts) > 1 else ''
+        
+        # Parse action parameters from arguments
+        params = self._parse_action_params(args_string) if args_string else None
         
         if '.' in command_core:
-            # behavior.action or behavior.action.operation
-            parts = command_core.split('.')
-            behavior_name = parts[0]
-            action_name = parts[1] if len(parts) > 1 else None
-            operation_name = '.'.join(parts[2:]) if len(parts) > 2 else None
+            # behavior.action pattern
+            command_parts = command_core.split('.')
+            behavior_name = command_parts[0]
+            action_name = command_parts[1] if len(command_parts) > 1 else None
+            
             if hasattr(self.bot, 'execute'):
-                return self.bot.execute(behavior_name, action_name, operation_name)
+                return self.bot.execute(behavior_name, action_name, params)
         else:
             # Single word - try as behavior name and execute current action
             if hasattr(self.bot, 'execute'):
-                # bot.execute with None action will use current action
-                result = self.bot.execute(command_core, None)
+                result = self.bot.execute(command_core, None, params)
                 # Check if it's an error (behavior not found)
                 if isinstance(result, dict) and result.get('status') == 'error':
                     raise ValueError(result.get('message', 'Unknown error'))

@@ -1,5 +1,5 @@
 /**
- * BehaviorsView - Renders behavior hierarchy with actions and operations.
+ * BehaviorsView - Renders behavior hierarchy with actions.
  * 
  * Epic: Invoke Bot Through Panel
  * Sub-Epic: Navigate And Execute Behaviors Through Panel
@@ -367,67 +367,12 @@ class BehaviorsView extends PanelView {
             : (notTickedIconPath ? `<img src="${notTickedIconPath}" alt="Pending" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;" />` : '');
         
         const actionTooltip = action.description ? this.escapeHtml(action.description) : '';
-        const actionId = `action-${bIdx}-${aIdx}`;
         const actionName = this.escapeHtml(action.action_name || action.name || '');
         
-        // Check if action has operations (only current behavior actions have operations)
-        const operationsArray = action.operations?.all_operations || (Array.isArray(action.operations) ? action.operations : []);
-        const hasOperations = operationsArray.length > 0;
-        
-        // Only show expand/collapse icon if action has operations
-        let expandIconHtml = '';
-        let actionDisplay = 'none';
-        if (hasOperations) {
-        // Expansion logic:
-        // 1. If we have saved state for this item, use it (user's explicit choice)
-        // 2. Otherwise, expand if current or completed (don't auto-collapse completed items)
-        const hasActionExpansionState = this.expansionState && (actionId in this.expansionState);
-        const actionExpanded = hasActionExpansionState ? this.expansionState[actionId] : (isCurrent || isCompleted);
-        const actionIconSrc = actionExpanded ? subtractIconPath : plusIconPath;
-        const actionIconAlt = actionExpanded ? 'Collapse' : 'Expand';
-        const actionIconClass = actionExpanded ? 'expanded' : '';
-            actionDisplay = actionExpanded ? 'block' : 'none';
-            expandIconHtml = `<span id="${actionId}-icon" class="${actionIconClass}" style="display: inline-block; min-width: 9px; cursor: pointer;" onclick="toggleCollapse('${actionId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${actionIconSrc}" alt="${actionIconAlt}" style="width: 9px; height: 9px; vertical-align: middle;" />` : ''}</span> `;
-        }
-        
         const actionActiveClass = isCurrent ? ' active' : '';
-        let actionHtml = `<div class="collapsible-header action-item card-item${actionActiveClass}" title="${actionTooltip}">${expandIconHtml}<span style="cursor: pointer; text-decoration: underline;" onclick="navigateToAction('${behaviorName}', '${actionName}')">${actionMarker}${actionName}</span></div>`;
-        const operationsHtml = hasOperations ? operationsArray.map(op => {
-            return this.renderOperation(op, behaviorName, actionName, tickIconPath, notTickedIconPath);
-        }).join('') : '';
-        
-        actionHtml += `<div id="${actionId}" class="collapsible-content" style="display: ${actionDisplay};">${operationsHtml}</div>`;
+        const actionHtml = `<div class="collapsible-header action-item card-item${actionActiveClass}" title="${actionTooltip}"><span style="cursor: pointer; text-decoration: underline;" onclick="navigateToAction('${behaviorName}', '${actionName}')">${actionMarker}${actionName}</span></div>`;
         
         return actionHtml;
-    }
-    
-    /**
-     * Render a single operation.
-     * 
-     * @param {Object} op - Operation object
-     * @param {string} behaviorName - Behavior name (escaped)
-     * @param {string} actionName - Action name (escaped)
-     * @param {string} tickIconPath - Tick icon path
-     * @param {string} notTickedIconPath - Not ticked icon path
-     * @returns {string} HTML string
-     */
-    renderOperation(op, behaviorName, actionName, tickIconPath, notTickedIconPath) {
-        const isCurrent = op.isCurrent || op.is_current || false;
-        const isCompleted = op.isCompleted || op.is_completed || false;
-        const opMarker = isCurrent
-            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Current" style="width: 15px; height: 15px; vertical-align: middle; margin-right: 6px;" />` : '')
-            : isCompleted
-            ? (tickIconPath ? `<img src="${tickIconPath}" alt="Completed" style="width: 15px; height: 15px; vertical-align: middle; margin-right: 6px;" />` : '')
-            : (notTickedIconPath ? `<img src="${notTickedIconPath}" alt="Pending" style="width: 15px; height: 15px; vertical-align: middle; margin-right: 6px;" />` : '');
-        const opTooltip = op.description ? this.escapeHtml(op.description) : '';
-        const opName = this.escapeHtml(op.name || '');
-        const opClasses = ['operation-item', 'card-item'];
-        if (isCurrent) {
-            opClasses.push('active');
-        }
-        // Make all operations clickable
-        const clickHandler = ` onclick="navigateAndExecute('${behaviorName}', '${actionName}', '${opName}')" style="cursor: pointer; text-decoration: underline;"`;
-        return `<div class="${opClasses.join(' ')}" title="${opTooltip}"${clickHandler}>${opMarker}${opName}</div>`;
     }
     
     /**

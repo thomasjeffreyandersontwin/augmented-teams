@@ -79,7 +79,7 @@ class BehaviorsViewTestHelper {
     }
     
     // ========================================================================
-    // ACTION HELPERS - Execute operations
+    // ACTION HELPERS - Execute actions
     // ========================================================================
     
     /**

@@ -90,12 +90,6 @@ class BuildStoryGraphAction(Action):
         # Replace content with file references
         self._replace_content_with_file_references(instructions)
     
-    def _do_confirm(self, context: ScopeActionContext) -> Dict[str, Any]:
-        """Build actions - AI does the work directly."""
-        return {
-            'message': 'Build instructions provided to AI - story graph will be built by AI'
-        }
-    
     def do_execute(self, context: ScopeActionContext = None):
         result = self.get_instructions(context)
         return result

@@ -33,7 +33,7 @@ class StrategyAction(Action):
         return self.strategy.assumptions.assumptions
     
     def _prepare_instructions(self, instructions, context: StrategyActionContext):
-        """Add strategy data (criteria, assumptions) to instructions.
+        """Add strategy data (criteria, assumptions) and saved decisions to instructions.
         
         Note: Workflow instructions come from base_actions/strategy/action_config.json.
         This method adds only the behavior-specific data.
@@ -42,37 +42,12 @@ class StrategyAction(Action):
         # Store strategy data (criteria, assumptions) as separate keys
         if strategy_data:
             instructions.update(strategy_data)
-    
-    def _do_confirm(self, context: StrategyActionContext) -> Dict[str, Any]:
-        """Save strategy decisions and assumptions to strategy.json."""
-        decisions = context.get_decisions()
-        if decisions or context.assumptions:
-            self.save_strategy(context)
-            
-            # Count what was saved
-            decisions_count = len(decisions)
-            assumptions_count = len(context.assumptions or [])
-            
-            # Build detailed message
-            message_parts = []
-            if decisions_count > 0:
-                message_parts.append(f"{decisions_count} decision(s)")
-            if assumptions_count > 0:
-                message_parts.append(f"{assumptions_count} assumption(s)")
-            
-            saved_items = " and ".join(message_parts) if message_parts else "data"
-            
-            # Get file path
-            saved_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'strategy.json'
-            
-            return {
-                'message': f'Strategy saved: {saved_items} saved to {saved_path}',
-                'saved_path': str(saved_path),
-                'choices': decisions,
-                'assumptions': context.assumptions or []
-            }
         
-        return {'message': 'No strategy data to save'}
+        # Load saved strategy decisions if they exist
+        saved_data = StrategyDecision.load_all(self.behavior.bot_paths)
+        if saved_data and self.behavior.name in saved_data:
+            # Include saved strategy data in instructions for panel display
+            instructions.set('strategy', saved_data[self.behavior.name])
     
     def _format_instructions_for_display(self, instructions) -> str:
         """Format strategy data for REPL display."""

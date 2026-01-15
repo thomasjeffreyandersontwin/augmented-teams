@@ -106,12 +106,6 @@ class RenderOutputAction(Action):
         if render_output_paths:
             instructions._data['render_output_paths'] = render_output_paths
     
-    def _do_confirm(self, context: ScopeActionContext) -> Dict[str, Any]:
-        """Render actions execute synchronizers during preparation."""
-        return {
-            'message': 'Render instructions provided to AI - documents will be rendered by AI'
-        }
-    
     def do_execute(self, context: ScopeActionContext = None):
         render_instructions = self._config_loader.load_render_instructions()
         render_specs = self._render_specs

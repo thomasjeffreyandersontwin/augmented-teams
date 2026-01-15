@@ -208,19 +208,6 @@ class ValidateRulesAction(Action):
         
         return '\n'.join(lines)
     
-    def _do_confirm(self, context: ValidateActionContext) -> Dict[str, Any]:
-        """Run validation scanners and generate reports."""
-        logger.info('=== Starting validation ===')
-        logger.info(f'Behavior: {self.behavior.name}')
-        logger.info(f'Context: scope={context.scope}, skip_cross_file={context.skip_cross_file}')
-        
-        result = self._executor.execute_synchronous(context)
-        
-        return {
-            'message': 'Validation completed',
-            'validation_result': result
-        }
-    
     def do_execute(self, context: ValidateActionContext = None):
         return self.get_instructions(context)
 

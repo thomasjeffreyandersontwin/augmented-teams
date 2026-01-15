@@ -160,15 +160,6 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             // Action name with navigation handler
             assert(/<span[^>]*onclick="navigateToAction\([^)]*\)"[^>]*>[\s\S]*?clarify/.test(html));
             
-            // Operations nested under action
-            assert(/<div[^>]*id="action-[^"]*"[^>]*class="[^"]*collapsible-content[^"]*"[^>]*style="[^"]*display:[^"]*"[^>]*>/.test(html));
-            
-            // Operation items
-            assert(/<div[^>]*class="[^"]*operation-item[^"]*card-item[^"]*"[^>]*>/.test(html));
-            
-            // Current operation (instructions) - verify marker and click handler
-            assert(/<div[^>]*class="[^"]*operation-item[^"]*card-item[^"]*active[^"]*"[^>]*onclick="navigateAndExecute\([^)]*\)"[^>]*style="[^"]*cursor:[^"]*pointer[^"]*text-decoration:[^"]*underline[^"]*"[^>]*>[\s\S]*?instructions/.test(html));
-            
             // Navigation buttons (back, current, next)
             assert(/<button[^>]*onclick="executeNavigationCommand\('back'\)"[^>]*title="Back[^"]*"[^>]*>/.test(html));
             assert(/<button[^>]*onclick="executeNavigationCommand\('current'\)"[^>]*title="Current[^"]*"[^>]*>/.test(html));
@@ -240,17 +231,15 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
         }
     });
     
-    await t.test('test_user_expands_and_collapses_actions', async () => {
+    await t.test('test_user_sees_actions_as_clickable_items', async () => {
         /**
-         * SCENARIO: User expands and collapses actions
+         * SCENARIO: User sees actions as clickable items
          * Story: Display Hierarchy
-         * Steps from story-graph.json:
+         * Steps updated for simplified action display:
          *   Given Shape behavior is expanded showing actions
-         *   And Clarify action is collapsed
-         *   When User clicks collapsed clarify action
-         *   Then Clarify action expands showing operations (instructions, execute, confirm)
-         *   When User clicks expanded clarify action again
-         *   Then Clarify action collapses hiding operations
+         *   When User views the panel
+         *   Then Actions are displayed as simple clickable items
+          *   And Clicking an action navigates directly to that action
          */
         const tmpPath = setupTestWorkspace();
         const botDir = getBotDirectory();
@@ -260,13 +249,14 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
         
         try {
             // Given Shape behavior is expanded showing actions
-            // And Clarify action is collapsed
             await botView.execute('shape.clarify');
             
             const botJSON = await botView.execute('status');
             
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
+            
+            // When User views the panel
             const html = await view.render();
             
             // Find current behavior (should have actions)
@@ -274,25 +264,24 @@ test('TestDisplayHierarchy', { concurrency: false }, async (t) => {
             const hasActions = currentBehavior && currentBehavior.actions && currentBehavior.actions.length > 0;
             
             if (hasActions) {
-                // Verify action has collapse/expand icon with onclick handler
-                assert(/<span[^>]*id="action-[^"]*-icon"[^>]*onclick="toggleCollapse\('action-[^"]*'\)"[^>]*>/.test(html));
+                // Then Actions are displayed as simple clickable items
+                assert(/<span[^>]*onclick="navigateToAction\([^)]*\)"[^>]*>/.test(html), 
+                    'Action should be clickable');
+                assert(/clarify/.test(html), 
+                    'Action name should be displayed');
+                
+                // And Actions do not have expand/collapse icons
+                assert(!/<span[^>]*id="action-[^"]*-icon"[^>]*onclick="toggleCollapse/.test(html),
+                    'Actions should not have expand/collapse icons');
+                
+                // And Clicking an action navigates directly to that action
+                // (verified by presence of navigateToAction handler, not navigateAndExecute)
+                assert(!/>navigateAndExecute\([^)]*\)/.test(html),
+                    'Actions should not use navigateAndExecute (operations removed)');
             } else {
                 // If no actions, just verify behavior structure exists
                 assert(/<div[^>]*class="[^"]*collapsible-header[^"]*card-item[^"]*"[^>]*>/.test(html));
             }
-            
-            // When User clicks collapsed clarify action
-            // Then Clarify action expands showing operations (instructions, execute, confirm)
-            // Verify operations are nested under action
-            assert(/<div[^>]*id="action-[^"]*"[^>]*class="[^"]*collapsible-content[^"]*"[^>]*>/.test(html));
-            assert(/<div[^>]*class="[^"]*operation-item[^"]*"[^>]*>/.test(html));
-            
-            // When User clicks expanded clarify action again
-            // Then Clarify action collapses hiding operations
-            // (Expansion/collapse state is handled by JavaScript, verified by presence of toggle handler)
-            
-            // Verify expand/collapse icons are present (now uses images, not emojis)
-            assert(/onclick="toggleCollapse\([^)]*\)"/.test(html) || html.includes('toggleCollapse'));
         } finally {
             if (botView) {
                 // cleanup removed
@@ -351,7 +340,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // And Panel refreshes to show new current position
             const updatedBehaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const updatedView = new BehaviorsView(updatedBehaviorsJSON, null, tmpPath);
-            const updatedHtml = updatedView.render();
+            const updatedHtml = await updatedView.render();
             // Verify discovery or build is displayed
             assert(updatedHtml.includes('discovery') || updatedHtml.includes('build') || updatedHtml.includes('discovery.build'),
                 'Should display discovery.build as current');
@@ -422,7 +411,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // And Panel displays new action as current
             const updatedBehaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const updatedView = new BehaviorsView(updatedBehaviorsJSON, null, tmpPath);
-            const updatedHtml = updatedView.render();
+            const updatedHtml = await updatedView.render();
             assert(updatedHtml.includes(newCurrentAction) || updatedHtml.includes('strategy'), 
                 'Should display new current action');
         } finally {
@@ -485,7 +474,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // And Panel displays previous action as current
             const updatedBehaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const updatedView = new BehaviorsView(updatedBehaviorsJSON, null, tmpPath);
-            const updatedHtml = updatedView.render();
+            const updatedHtml = await updatedView.render();
             assert(updatedHtml.includes(newCurrentAction) || updatedHtml.includes('clarify'),
                 'Should display previous action as current');
         } finally {
@@ -539,7 +528,7 @@ test('TestNavigateBehaviorAction', { concurrency: false }, async (t) => {
             // And Panel refreshes to show current action details
             const updatedBehaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const updatedView = new BehaviorsView(updatedBehaviorsJSON, null, tmpPath);
-            const updatedHtml = updatedView.render();
+            const updatedHtml = await updatedView.render();
             assert(updatedHtml.includes(currentAction) || updatedHtml.includes('clarify'),
                 'Should display current action details');
         } finally {
@@ -652,7 +641,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             // And Panel displays discovery behavior as current
             const updatedBehaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const updatedView = new BehaviorsView(updatedBehaviorsJSON, null, tmpPath);
-            const updatedHtml = updatedView.render();
+            const updatedHtml = await updatedView.render();
             // Verify discovery is displayed (may be in behavior name or action behavior)
             assert(updatedHtml.includes('discovery') || botJSON.behaviors?.current === 'discovery',
                 'Should display discovery behavior as current');
@@ -718,7 +707,7 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
             // And Panel displays shape.strategy as current action
             const updatedBehaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const updatedView = new BehaviorsView(updatedBehaviorsJSON, null, tmpPath);
-            const updatedHtml = updatedView.render();
+            const updatedHtml = await updatedView.render();
             // Verify strategy is displayed or action is strategy
             assert(updatedHtml.includes('strategy') || newCurrentAction === 'strategy' || updatedHtml.includes('shape'),
                 `Should display shape.strategy as current (action: ${newCurrentAction}, html includes strategy: ${updatedHtml.includes('strategy')})`);
@@ -736,15 +725,16 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
         }
     });
     
-    await t.test('test_user_clicks_operation_to_execute', async () => {
+    await t.test('test_user_clicks_action_to_execute', async () => {
         /**
-         * SCENARIO: User clicks operation to execute
+         * SCENARIO: User clicks action to execute
          * Story: Execute Behavior Action
-         * Steps from story-graph.json:
-         *   Given Panel displays expanded shape.clarify action
-         *   And Operations are visible (instructions, confirm)
-         *   When User clicks clarify.instructions operation
-         *   Then Bot executes clarify.instructions operation
+         * Steps updated for simplified action execution:
+         *   Given Panel displays shape behavior with actions
+         *   When User clicks clarify action
+         *   Then Bot executes clarify action directly
+         *   And Action displays instructions
+         *   And No operations (instructions/confirm) are shown
          */
         const tmpPath = setupTestWorkspace();
         const botDir = getBotDirectory();
@@ -753,32 +743,38 @@ test('TestExecuteBehaviorAction', { concurrency: false }, async (t) => {
         // tracking removed
         
         try {
-            // Given Panel displays expanded shape.clarify action
+            // Given Panel displays shape behavior
             await botView.execute('shape.clarify');
             
             const botJSON = await botView.execute('status');
             const behaviorsJSON = botJSON.behaviors?.all_behaviors || botJSON.behaviors || [];
             const view = new BehaviorsView(behaviorsJSON, null, tmpPath);
+            
+            // When User clicks clarify action
             const html = await view.render();
             
-            // Verify operation items have execute handlers
-            assert(/<div[^>]*class="[^"]*operation-item[^"]*card-item[^"]*"[^>]*onclick="navigateAndExecute\([^)]*\)"[^>]*>/.test(html));
+            // Then Action items have click handlers
+            assert(/<span[^>]*onclick="navigateToAction\([^)]*\)"[^>]*>/.test(html), 
+                'Action should have click handler');
             
-            // Verify instructions operation is present
-            assert(/navigateAndExecute\([^)]*['"]instructions['"][^)]*\)/.test(html) || html.includes('instructions'),
-                'Should have instructions operation');
+            // And Clarify action is present
+            assert(/clarify/.test(html), 
+                'Should have clarify action');
             
-            // When User clicks clarify.instructions operation - ACTUALLY EXECUTE THE COMMAND
-            await botView.execute('shape.clarify.instructions');
+            // And No operations (instructions/confirm) are shown
+            assert(!/<div[^>]*class="[^"]*operation-item[^"]*"[^>]*>/.test(html),
+                'Should not have operation items');
             
-            // Then Bot executes clarify.instructions operation
+            // When User clicks clarify action - ACTUALLY EXECUTE THE COMMAND
+            const executeResult = await botView.execute('shape.clarify');
+            
+            // Then Bot executes clarify action directly and displays instructions
+            assert(executeResult, 'Should get result from executing action');
+            
             // Verify the command executed successfully by checking status still works
             const statusAfter = await botView.execute('status');
-            assert(statusAfter, 'Should be able to get status after executing instructions');
+            assert(statusAfter, 'Should be able to get status after executing action');
             assert(statusAfter.behaviors || statusAfter.current_action, 'Status should contain bot data');
-            
-            // Verify operations have proper structure
-            assert(/<div[^>]*class="[^"]*operation-item[^"]*"[^>]*>/.test(html));
         } finally {
             if (botView) {
                 // cleanup removed
