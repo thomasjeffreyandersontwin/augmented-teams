@@ -16,6 +16,38 @@ class MarkdownInstructions(MarkdownAdapter):
         instructions_dict = self.instructions.to_dict()
         output_lines = []
         
+        # SCOPE SECTION (if present and not 'all')
+        scope = self.instructions.scope
+        if scope and scope.type.value != 'all' and scope.value:
+            from agile_bot.src.cli.adapters import MarkdownAdapter
+            
+            output_lines.append("## Scope")
+            output_lines.append("")
+            if scope.type.value == 'story':
+                output_lines.append(f"**Story Scope:** {', '.join(scope.value)}")
+            elif scope.type.value == 'files':
+                output_lines.append(f"**File Scope:** {', '.join(scope.value)}")
+            else:
+                output_lines.append(f"**Scope:** {scope.type.value} - {', '.join(scope.value)}")
+            output_lines.append("")
+            
+            # Get the filtered results (story graph or files)
+            results = scope.results
+            if results:
+                # Use the appropriate adapter to serialize the scope results
+                from agile_bot.src.cli.adapter_factory import AdapterFactory
+                try:
+                    adapter = AdapterFactory.create(results, 'markdown')
+                    scope_content = adapter.serialize()
+                    output_lines.append(scope_content)
+                except Exception:
+                    # Fallback: just show the filter value
+                    pass
+            
+            output_lines.append("")
+            output_lines.append("---")
+            output_lines.append("")
+        
         # BEHAVIOR INSTRUCTIONS SECTION
         behavior_metadata = instructions_dict.get('behavior_metadata', {})
         if behavior_metadata:

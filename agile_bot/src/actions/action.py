@@ -234,7 +234,11 @@ class Action:
                 state_data = json.loads(state_file.read_text())
                 scope_dict = state_data.get('scope')
                 if scope_dict:
-                    return Scope.from_dict(scope_dict)
+                    return Scope.from_dict(
+                        scope_dict,
+                        workspace_directory=self.behavior.bot_paths.workspace_directory,
+                        bot_paths=self.behavior.bot_paths
+                    )
         except Exception:
             pass
         return None
@@ -576,26 +580,57 @@ class Action:
             logging.getLogger(__name__).debug(f'Could not load saved clarifications: {e}')
         
         try:
-            # Load saved strategy decisions
+            # Load strategy data (criteria templates + saved decisions)
             from .strategy.strategy_decision import StrategyDecision
+            from .strategy.strategy import Strategy
             
+            # Load strategy criteria templates
+            strategy = Strategy(self.behavior.folder)
+            strategy_data = strategy.instructions
+            
+            # Load saved strategy decisions
             saved_strategy = StrategyDecision.load_all(self.behavior.bot_paths)
-            if saved_strategy and self.behavior.name in saved_strategy:
-                # Transform to match panel's expected structure
-                behavior_data = saved_strategy[self.behavior.name]
-                decisions = behavior_data.get('decisions', {})
-                assumptions = behavior_data.get('assumptions', [])
+            saved_behavior_data = saved_strategy.get(self.behavior.name, {}) if saved_strategy else {}
+            
+            # Build combined structure with both templates and saved data
+            combined_strategy_criteria = {}
+            combined_assumptions = {}
+            
+            if strategy_data:
+                # Get criteria template
+                criteria_template = strategy_data.get('strategy_criteria', {})
+                if criteria_template:
+                    combined_strategy_criteria['criteria'] = criteria_template
                 
-                transformed_strategy = {
-                    'strategy_criteria': {
-                        'decisions_made': decisions
-                    },
-                    'assumptions': {
-                        'assumptions_made': assumptions
-                    }
-                }
-                
-                # Include saved strategy data in instructions for panel display
+                # Get assumptions template
+                assumptions_template = strategy_data.get('assumptions', {})
+                if isinstance(assumptions_template, dict):
+                    if 'typical_assumptions' in assumptions_template:
+                        combined_assumptions['typical_assumptions'] = assumptions_template.get('typical_assumptions', [])
+                    else:
+                        combined_assumptions['typical_assumptions'] = assumptions_template
+                elif isinstance(assumptions_template, list):
+                    combined_assumptions['typical_assumptions'] = assumptions_template
+            
+            # Add saved decisions
+            saved_decisions = saved_behavior_data.get('decisions', {})
+            if saved_decisions:
+                combined_strategy_criteria['decisions_made'] = saved_decisions
+            
+            # Add saved assumptions
+            saved_assumptions = saved_behavior_data.get('assumptions', [])
+            if saved_assumptions:
+                combined_assumptions['assumptions_made'] = saved_assumptions
+            
+            # Transform to match panel's expected structure
+            transformed_strategy = {}
+            if combined_strategy_criteria:
+                transformed_strategy['strategy_criteria'] = combined_strategy_criteria
+            if combined_assumptions:
+                transformed_strategy['assumptions'] = combined_assumptions
+            
+            if transformed_strategy:
+                # Include strategy data in instructions for panel display
                 instructions.set('strategy', transformed_strategy)
         except Exception as e:
             # Log but don't fail
@@ -645,180 +680,19 @@ class Action:
     def _build_display_content(self, instructions: Instructions):
         """Build display_content for chat submission from all instructions data.
         
-        This creates a flattened text version suitable for copying to chat.
-        Includes: behavior instructions, action instructions, base instructions, 
-        AND all guardrails (key questions, evidence, decisions, assumptions).
+        Uses the existing MarkdownInstructions adapter to format the complete instructions
+        object as markdown, including behavior/action instructions, base instructions,
+        guardrails, clarifications, strategy decisions, and all other data.
         """
-        display_lines = []
+        from agile_bot.src.instructions.markdown_instructions import MarkdownInstructions
         
-        # Add behavior-specific instructions if present
-        behavior_instructions = instructions._data.get('behavior_instructions')
-        if behavior_instructions:
-            if isinstance(behavior_instructions, dict):
-                if behavior_instructions.get('name'):
-                    display_lines.append(f"**Behavior Instructions - {behavior_instructions['name']}**")
-                    display_lines.append("")
-                if behavior_instructions.get('description'):
-                    display_lines.append(f"The purpose of this behavior is to {behavior_instructions['description'].lower()}")
-                    display_lines.append("")
-                if behavior_instructions.get('instructions'):
-                    inst_list = behavior_instructions['instructions']
-                    if isinstance(inst_list, list):
-                        display_lines.extend(inst_list)
-                    else:
-                        display_lines.append(str(inst_list))
-                    display_lines.append("")
-            elif isinstance(behavior_instructions, (list, str)):
-                if isinstance(behavior_instructions, list):
-                    display_lines.extend(behavior_instructions)
-                else:
-                    display_lines.append(behavior_instructions)
-                display_lines.append("")
+        # Use the existing markdown adapter to format the complete instructions
+        markdown_adapter = MarkdownInstructions(instructions)
+        markdown_output = markdown_adapter.serialize()
         
-        # Add action-specific instructions if present
-        action_instructions = instructions._data.get('action_instructions')
-        if action_instructions:
-            if isinstance(action_instructions, dict):
-                if action_instructions.get('name'):
-                    display_lines.append(f"**Action Instructions - {action_instructions['name']}**")
-                    display_lines.append("")
-                if action_instructions.get('description'):
-                    display_lines.append(f"The purpose of this action is to {action_instructions['description'].lower()}")
-                    display_lines.append("")
-                if action_instructions.get('instructions'):
-                    inst_list = action_instructions['instructions']
-                    if isinstance(inst_list, list):
-                        display_lines.extend(inst_list)
-                    else:
-                        display_lines.append(str(inst_list))
-                    display_lines.append("")
-            elif isinstance(action_instructions, (list, str)):
-                if isinstance(action_instructions, list):
-                    display_lines.extend(action_instructions)
-                else:
-                    display_lines.append(action_instructions)
-                display_lines.append("")
-        
-        display_lines.append("---")
-        display_lines.append("")
-        
-        # Add base instructions
-        base_instructions = instructions._data.get('base_instructions', [])
-        if base_instructions:
-            display_lines.extend(base_instructions)
-            display_lines.append("")
-        
-        # Add guardrails (key questions and evidence) if present
-        guardrails_dict = instructions._data.get('guardrails', {})
-        if guardrails_dict:
-            required_context = guardrails_dict.get('required_context', {})
-            if required_context:
-                key_questions = required_context.get('key_questions', [])
-                evidence = required_context.get('evidence', [])
-                
-                if key_questions:
-                    display_lines.append("**Key Questions:**")
-                    if isinstance(key_questions, list):
-                        for question in key_questions:
-                            display_lines.append(f"- {question}")
-                    elif isinstance(key_questions, dict):
-                        for question_key, question_text in key_questions.items():
-                            display_lines.append(f"- **{question_key}**: {question_text}")
-                    display_lines.append("")
-                
-                if evidence:
-                    display_lines.append("**Evidence:**")
-                    if isinstance(evidence, list):
-                        display_lines.append(', '.join(evidence))
-                    elif isinstance(evidence, dict):
-                        for evidence_key, evidence_desc in evidence.items():
-                            display_lines.append(f"- **{evidence_key}**: {evidence_desc}")
-                    display_lines.append("")
-        
-        # Add clarification data (saved answers) if present
-        clarification_dict = instructions._data.get('clarification', {})
-        if clarification_dict:
-            # Check for saved answers
-            for phase_name, phase_data in clarification_dict.items():
-                if isinstance(phase_data, dict):
-                    key_questions_data = phase_data.get('key_questions', {})
-                    answers = key_questions_data.get('answers', {})
-                    
-                    if answers:
-                        display_lines.append(f"**Clarification - {phase_name.title()} Phase:**")
-                        display_lines.append("")
-                        for question, answer in answers.items():
-                            display_lines.append(f"**Q:** {question}")
-                            display_lines.append(f"**A:** {answer}")
-                            display_lines.append("")
-                    
-                    # Add evidence sources if present
-                    evidence_data = phase_data.get('evidence', {})
-                    sources = evidence_data.get('sources', [])
-                    if sources:
-                        display_lines.append("**Evidence Sources:**")
-                        for source in sources:
-                            display_lines.append(f"- {source}")
-                        display_lines.append("")
-        
-        # Add strategy data (decisions and assumptions) if present
-        strategy_dict = instructions._data.get('strategy', {})
-        if strategy_dict:
-            # Add decisions
-            for phase_name, phase_data in strategy_dict.items():
-                if isinstance(phase_data, dict):
-                    decisions_data = phase_data.get('decisions', {})
-                    
-                    if decisions_data:
-                        display_lines.append(f"**Strategy Decisions - {phase_name.title()} Phase:**")
-                        display_lines.append("")
-                        for decision_key, decision_value in decisions_data.items():
-                            display_lines.append(f"**{decision_key}:** {decision_value}")
-                        display_lines.append("")
-                    
-                    # Add assumptions
-                    assumptions_list = phase_data.get('assumptions', [])
-                    if assumptions_list:
-                        display_lines.append(f"**Assumptions - {phase_name.title()} Phase:**")
-                        display_lines.append("")
-                        for assumption in assumptions_list:
-                            display_lines.append(f"- {assumption}")
-                        display_lines.append("")
-        
-        # Add strategy_criteria (for strategy action)
-        strategy_criteria = instructions._data.get('strategy_criteria', {})
-        if strategy_criteria:
-            saved_decisions = strategy_criteria.get('decisions', {})
-            if saved_decisions:
-                display_lines.append("**Strategy Decisions:**")
-                display_lines.append("")
-                for decision_key, decision_value in saved_decisions.items():
-                    display_lines.append(f"**{decision_key}:** {decision_value}")
-                display_lines.append("")
-        
-        # Add assumptions (for strategy action)
-        assumptions_dict = instructions._data.get('assumptions', {})
-        if assumptions_dict:
-            if isinstance(assumptions_dict, dict):
-                saved_assumptions = assumptions_dict.get('assumptions', [])
-                if saved_assumptions:
-                    display_lines.append("**Assumptions:**")
-                    display_lines.append("")
-                    for assumption in saved_assumptions:
-                        display_lines.append(f"- {assumption}")
-                    display_lines.append("")
-            elif isinstance(assumptions_dict, list):
-                if assumptions_dict:
-                    display_lines.append("**Assumptions:**")
-                    display_lines.append("")
-                    for assumption in assumptions_dict:
-                        display_lines.append(f"- {assumption}")
-                    display_lines.append("")
-        
-        # Populate display_content
-        for line in display_lines:
-            if line:  # Skip empty lines
-                instructions.add_display(line)
+        # Add the markdown output to display_content
+        for line in markdown_output.split('\n'):
+            instructions.add_display(line)
     
     def _prepare_instructions(self, instructions, context: ActionContext):
         """Template method: Prepare action-specific instructions data.

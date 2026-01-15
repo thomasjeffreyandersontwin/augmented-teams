@@ -140,6 +140,74 @@ class Bot:
         if self.behaviors.current and self.behaviors.current.actions.current_action_name:
             return self.behaviors.current.actions.current_action_name
         return None
+    
+    @property
+    def bots(self) -> List[str]:
+        """Return list of all registered bot names.
+        
+        Discovers bots by scanning the parent bots directory for subdirectories
+        containing bot_config.json files.
+        
+        Returns:
+            List of bot names (directory names) that have valid bot_config.json
+        """
+        registered_bots = []
+        
+        # Get the parent bots directory (bot_directory.parent)
+        bots_parent_dir = self.bot_paths.bot_directory.parent
+        
+        # Scan for bot directories
+        if bots_parent_dir.exists() and bots_parent_dir.is_dir():
+            for bot_dir in bots_parent_dir.iterdir():
+                if bot_dir.is_dir():
+                    bot_config = bot_dir / 'bot_config.json'
+                    if bot_config.exists():
+                        registered_bots.append(bot_dir.name)
+        
+        return sorted(registered_bots)
+    
+    @property
+    def active_bot(self) -> 'Bot':
+        """Return the currently active bot instance.
+        
+        Returns:
+            The current Bot instance (self)
+        """
+        return self
+    
+    @active_bot.setter
+    def active_bot(self, bot_name: str):
+        """Switch to a different registered bot.
+        
+        This is a domain-level property that validates bot switching logic.
+        The actual bot instance switching must be handled at the CLI/Panel layer
+        because Bot instances are stateful and created at initialization.
+        
+        Args:
+            bot_name: Name of the bot to switch to
+        
+        Raises:
+            ValueError: If bot_name is not registered or invalid
+        """
+        # Validate bot exists
+        registered_bots = self.bots
+        
+        if bot_name not in registered_bots:
+            raise ValueError(
+                f"Bot '{bot_name}' not found. Available bots: {', '.join(registered_bots)}"
+            )
+        
+        # If switching to current bot, no action needed
+        if bot_name == self.bot_name:
+            return
+        
+        # For actual switching, the CLI/Panel layer needs to create a new Bot instance
+        # This setter validates the request but cannot change self
+        # The calling code should catch this and instantiate a new Bot
+        raise NotImplementedError(
+            f"Bot switching to '{bot_name}' validated successfully. "
+            f"CLI/Panel layer must instantiate new Bot instance."
+        )
 
     def help(self, topic: Optional[str] = None):
         """Display help information about the bot, behaviors, or actions.

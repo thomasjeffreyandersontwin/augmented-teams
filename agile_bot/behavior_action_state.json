@@ -1,7 +1,9 @@
 {
   "scope": {
-    "type": "all",
-    "value": [],
+    "type": "story",
+    "value": [
+      "Invoke Bot"
+    ],
     "exclude": [],
     "skiprule": []
   },
@@ -29,5 +31,5 @@
   ],
   "current_behavior": "story_bot.shape",
   "current_action": "story_bot.shape.strategy",
-  "timestamp": "2026-01-15T17:45:19.297636"
+  "timestamp": "2026-01-15T18:32:17.353754"
 }

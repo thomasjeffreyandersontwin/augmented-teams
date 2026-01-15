@@ -3,7 +3,7 @@
     "decisions": {
       "flow_scope_and_granularity": "Intra-system level",
       "drill_down_approach": "Dig deep on behavioral complexity",
-      "depth_of_shaping": "Workflow -> Figure out logical process, alternate/or conditions",
+      "depth_of_shaping": "Decompose -> Discover all stories listed",
       "drill_down_limits": "Approximate story limit: 10-15 stories",
       "structure_exploration_depth": "Behavioral"
     },
