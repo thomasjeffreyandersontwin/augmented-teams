@@ -686,11 +686,12 @@ class Bot:
     def submit(self) -> Dict[str, Any]:
         """Submit current action instructions to AI agent.
         
-        This is a tracking method that marks instructions as submitted to the chat.
-        The actual submission to chat happens in the panel/UI layer.
+        Gets the current action's instructions (including display_content with all 
+        behavior instructions, action instructions, base instructions, and guardrails),
+        copies them to clipboard, and opens Cursor chat.
         
         Returns:
-            Status dict with success message and current context
+            Status dict with success message, current context, and instructions content
         """
         current_behavior = self.behaviors.current
         if not current_behavior:
@@ -699,20 +700,86 @@ class Bot:
                 'message': 'No current behavior set'
             }
         
-        current_action = current_behavior.actions.current_action_name
-        if not current_action:
+        current_action_name = current_behavior.actions.current_action_name
+        if not current_action_name:
             return {
                 'status': 'error',
                 'message': 'No current action set'
             }
         
-        return {
-            'status': 'success',
-            'message': f'Instructions submitted for {current_behavior.name}.{current_action}',
-            'behavior': current_behavior.name,
-            'action': current_action,
-            'timestamp': datetime.now().isoformat()
-        }
+        try:
+            # Get the current action object
+            action = current_behavior.actions.find_by_name(current_action_name)
+            if not action:
+                return {
+                    'status': 'error',
+                    'message': f'Action {current_action_name} not found'
+                }
+            
+            # Get instructions with display_content built
+            instructions = action.get_instructions()
+            display_content = instructions.display_content
+            
+            if not display_content:
+                return {
+                    'status': 'error',
+                    'message': 'No instructions available to submit'
+                }
+            
+            # Convert display_content to string
+            if isinstance(display_content, list):
+                content_str = '\n'.join(display_content)
+            else:
+                content_str = str(display_content)
+            
+            # Copy to clipboard and automate Cursor chat using keyboard shortcuts
+            clipboard_status = 'failed'
+            cursor_status = 'not_attempted'
+            
+            try:
+                import pyperclip
+                import pyautogui
+                import time
+                
+                # Copy to clipboard
+                pyperclip.copy(content_str)
+                clipboard_status = 'success'
+                time.sleep(0.2)
+                
+                # Ctrl+L to open chat
+                pyautogui.hotkey('ctrl', 'l')
+                time.sleep(0.3)
+                
+                # Ctrl+V to paste
+                pyautogui.hotkey('ctrl', 'v')
+                time.sleep(0.2)
+                
+                cursor_status = 'opened'
+                
+            except ImportError as e:
+                clipboard_status = 'failed'
+                cursor_status = f'failed: pyautogui/pyperclip not installed - {str(e)}'
+            except Exception as e:
+                cursor_status = f'failed: {str(e)}'
+            
+            return {
+                'status': 'success',
+                'message': f'Instructions submitted for {current_behavior.name}.{current_action_name}',
+                'behavior': current_behavior.name,
+                'action': current_action_name,
+                'timestamp': datetime.now().isoformat(),
+                'clipboard_status': clipboard_status,
+                'cursor_status': cursor_status,
+                'instructions_length': len(content_str),
+                'instructions': content_str  # Include for JSON mode
+            }
+            
+        except Exception as e:
+            logger.error(f'Error in submit: {str(e)}', exc_info=True)
+            return {
+                'status': 'error',
+                'message': f'Error submitting instructions: {str(e)}'
+            }
 
     def tree(self) -> str:
         """Display behavior hierarchy tree.

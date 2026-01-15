@@ -376,59 +376,32 @@ class BotPanel {
             }
             return;
           case "sendToChat":
-            // Get the instructions content from the message or fetch it
-            const instructionsContent = message.content || PanelView._lastResponse?.instructions?.display_content;
+            this._log('sendToChat - calling bot submit command');
             
-            if (instructionsContent) {
-              // Convert array to string if needed
-              const contentStr = Array.isArray(instructionsContent) 
-                ? instructionsContent.join('\n') 
-                : instructionsContent;
-              
-              // Copy to clipboard
-              vscode.env.clipboard.writeText(contentStr).then(() => {
-                // Open Cursor chat panel
-                vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus')
-                  .then(() => {
-                    // Wait a moment for chat to focus, then paste automatically
-                    setTimeout(() => {
-                      vscode.commands.executeCommand('editor.action.clipboardPasteAction')
-                        .then(() => {
-                          vscode.window.showInformationMessage('Instructions pasted to chat!');
-                        })
-                        .catch(() => {
-                          vscode.window.showInformationMessage('Instructions copied! Press Ctrl+V to paste.');
-                        });
-                    }, 300);
-                  })
-                  .catch(() => {
-                    // Fallback: try alternative chat command
-                    vscode.commands.executeCommand('workbench.action.chat.open')
-                      .then(() => {
-                        setTimeout(() => {
-                          vscode.commands.executeCommand('editor.action.clipboardPasteAction')
-                            .then(() => {
-                              vscode.window.showInformationMessage('Instructions pasted to chat!');
-                            })
-                            .catch(() => {
-                              vscode.window.showInformationMessage('Instructions copied! Press Ctrl+V to paste.');
-                            });
-                        }, 300);
-                      })
-                      .catch(() => {
-                        // Chat not available, just show clipboard message
-                        vscode.window.showInformationMessage('Instructions copied to clipboard! Paste into chat.');
-                      });
-                  });
-              });
-            } else {
-              vscode.window.showWarningMessage('No instructions available to submit.');
-            }
-            
-            // Also execute the submit CLI command for tracking
+            // Call the bot's submit command (Python handles everything)
             this._botView?.execute('submit')
+              .then((output) => {
+                this._log('Bot submit command output:', output);
+                
+                // Check for success
+                if (output && (output.includes('SUCCESS:') || output.includes('submitted to Cursor chat successfully'))) {
+                  vscode.window.showInformationMessage('Instructions submitted to chat!');
+                }
+                // Check for errors
+                else if (output && (output.includes('ERROR:') || output.includes('FAILED:'))) {
+                  const errorMatch = output.match(/ERROR:|FAILED:\s*(.+)/);
+                  const errorMsg = errorMatch ? errorMatch[1] : 'Unknown error';
+                  vscode.window.showErrorMessage(`Submit failed: ${errorMsg}`);
+                }
+                // Unknown result
+                else {
+                  vscode.window.showWarningMessage('Submit completed with unknown result');
+                  this._log('[PANEL] Submit output:', output);
+                }
+              })
               .catch((error) => {
-                console.error(`Submit tracking failed: ${error.message}`);
+                this._log('Submit command failed:', error);
+                vscode.window.showErrorMessage(`Submit command failed: ${error.message}`);
               });
             return;
           case "saveClarifyAnswers":

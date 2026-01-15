@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="4457" dy="598" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4744" dy="465" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -318,7 +318,7 @@
                     <mxGeometry x="-1592.9999999999995" y="898.5900000000003" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="261" value="Help" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2254.99" y="790.14" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2389.99" y="790.14" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="264" value="Plan Mode --&amp;gt; creates instructins eg to validate" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2636.25" y="1595.8299999999997" width="50" height="50" as="geometry"/>
@@ -393,7 +393,7 @@
                     <mxGeometry x="-2243.06" y="945.0199999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="319" value="Select Scope Type&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2252.5" y="780.0099999999996" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2387.5" y="780.0099999999996" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="320" value="&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;span style=&quot;border-color: rgb(218, 220, 224); background-color: initial;&quot;&gt;Increment 3: Multi-Phase with Submit/Confirm&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2265.56" y="962.5699999999998" width="50" height="50" as="geometry"/>
@@ -413,7 +413,7 @@
                 <mxCell id="326" value="&lt;div&gt;Scenarios synchronizer not working&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
                     <mxGeometry x="-1587.88" y="901.4800000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="356" style="edgeStyle=none;html=1;" edge="1" parent="1" source="329" target="329">
+                <mxCell id="356" style="edgeStyle=none;html=1;" parent="1" source="329" target="329" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="327" value="&lt;div&gt;Scanner is not using an LTK properly&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
@@ -431,7 +431,7 @@
                 <mxCell id="331" value="&lt;div&gt;Auto advance&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-1592" y="978.3099999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="355" style="edgeStyle=none;html=1;" edge="1" parent="1" source="329" target="329">
+                <mxCell id="355" style="edgeStyle=none;html=1;" parent="1" source="329" target="329" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="332" value="&lt;div&gt;Links In Story Scope&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
@@ -456,49 +456,64 @@
                     <mxGeometry x="-2261.93" y="979.9399999999999" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="343" value="&lt;div&gt;Not all story links work&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
-                    <mxGeometry x="-2247.5" y="777.6400000000002" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2382.5" y="777.6400000000002" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="344" value="&lt;div&gt;Scope Sub Epics dont link to folders&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
-                    <mxGeometry x="-2262.5" y="772.5000000000001" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2397.5" y="772.5000000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="345" value="Open md in preview mode by default&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="-2252.5" y="777.6399999999996" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2387.5" y="777.6399999999996" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="346" value="&lt;div&gt;Filterr not working on sub epic&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
-                    <mxGeometry x="-2260" y="780.0100000000001" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2395" y="780.0100000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="347" value="&lt;div&gt;Links go to top of panel&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
-                    <mxGeometry x="-2265" y="772.5000000000001" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2400" y="772.5000000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="349" value="CLI Bot Chaining&lt;br&gt;16 Stories" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
                     <mxGeometry x="-2249.9899999999993" y="961.8799999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="350" value="&lt;div&gt;Collapse and expand not preserved on refresh&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
-                    <mxGeometry x="-2257.5" y="804.6400000000001" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2392.5" y="804.6400000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="351" value="&lt;div&gt;Collapse and expand not preserved on refresh&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
-                    <mxGeometry x="-2250.57" y="783.5300000000001" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="-2385.57" y="783.5300000000001" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="352" value="Refresh Panel When Stories CHange&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" vertex="1" parent="1">
-                    <mxGeometry x="-2252.5" y="787.8899999999998" width="50" height="50" as="geometry"/>
+                <mxCell id="352" value="Refresh Panel When Stories CHange&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2387.5" y="787.8899999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="354" value="ViewPanel Refactor" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;fontColor=#080808;" vertex="1" parent="1">
-                    <mxGeometry x="-1999.9999999999995" y="772.4999999999993" width="50" height="50" as="geometry"/>
+                <mxCell id="354" value="ViewPanel Refactor" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
+                    <mxGeometry x="-1734.9999999999995" y="772.4999999999993" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="357" value="Scanner Improvments" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" vertex="1" parent="1">
+                <mxCell id="357" value="Scanner Improvments" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
                     <mxGeometry x="-1593" y="895.2799999999996" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="358" value="Better CLI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" vertex="1" parent="1">
+                <mxCell id="358" value="Better CLI" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
                     <mxGeometry x="-1589.87" y="829.28" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="362" value="Enter Custom Instructions&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" vertex="1" parent="1">
-                    <mxGeometry x="-2247.5" y="797.4999999999998" width="50" height="50" as="geometry"/>
+                <mxCell id="362" value="Enter Custom Instructions&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2382.5" y="797.4999999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="364" value="View Associated Code&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" vertex="1" parent="1">
-                    <mxGeometry x="-2224.99" y="790.1399999999998" width="50" height="50" as="geometry"/>
+                <mxCell id="364" value="View Associated Code&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2359.99" y="790.1399999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="365" value="ViewPanel Fixes" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" vertex="1" parent="1">
-                    <mxGeometry x="-2244.9899999999993" y="790.14" width="50" height="50" as="geometry"/>
+                <mxCell id="365" value="ViewPanel Fixes" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;fontColor=#080808;" parent="1" vertex="1">
+                    <mxGeometry x="-2379.9899999999993" y="790.14" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="367" value="plan mode&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2389.99" y="882.4999999999998" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="368" value="custom message&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2389.99" y="959.4999999999998" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="369" value="worspace message3 per behabior&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2389.99" y="1028.3099999999997" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="370" value="custom message&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2460" y="964.4999999999998" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="371" value="story --&amp;gt;&amp;nbsp; sunbit instructions&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2389.99" y="1096.8299999999997" width="50" height="50" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

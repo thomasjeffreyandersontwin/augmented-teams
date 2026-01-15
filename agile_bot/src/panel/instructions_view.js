@@ -803,24 +803,15 @@ class InstructionsSection extends PanelView {
             });
         }
 
-        // Render Assumptions - display saved assumptions as read-only list, or editable if none saved
+        // Render Assumptions - always show as editable textarea with saved values pre-filled
         html += '<div class="input-container" style="margin-top: 6px;">';
         html += '<div class="input-header">Assumptions</div>';
-        
-        if (assumptionsMade.length > 0) {
-            // Display saved assumptions as bullet list
-            html += '<div style="margin-top: 8px; padding: 8px; background-color: var(--input-bg); border-radius: 4px;">';
-            assumptionsMade.forEach(assumption => {
-                html += `<div style="margin-bottom: 6px; padding-left: 8px; border-left: 3px solid var(--vscode-textLink-foreground);">${this.escapeHtml(assumption)}</div>`;
-            });
-            html += '</div>';
-        } else {
-            // No saved assumptions - show editable textarea
-            const assumptionsText = Array.isArray(value.assumptions) 
-                ? value.assumptions.join('\n') 
-                : String(value.assumptions || '');
-            html += `<textarea id="strategy-assumptions" rows="5" onblur="saveStrategyAssumptions()" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(assumptionsText)}</textarea>`;
-        }
+
+        // Pre-fill textarea with saved assumptions (one per line) or empty
+        const assumptionsText = assumptionsMade.length > 0
+            ? assumptionsMade.join('\n')
+            : '';
+        html += `<textarea id="strategy-assumptions" rows="5" onblur="saveStrategyAssumptions()" placeholder="Enter assumptions (one per line)" style="width: 100%; padding: var(--input-padding); background-color: var(--input-bg); border: none; color: var(--vscode-foreground); resize: vertical; font-family: inherit; font-size: var(--font-size-base);">${this.escapeHtml(assumptionsText)}</textarea>`;
         html += '</div>';
 
         return html;

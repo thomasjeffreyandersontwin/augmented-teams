@@ -86,6 +86,45 @@ class CLISession:
                     status=result.get('status', 'success'),
                     cli_terminated=False
                 )
+        # Special case: "submit" calls bot.submit() and returns result with instructions
+        elif verb == 'submit':
+            result = self.bot.submit()
+            # Submit returns a dict - serialize based on mode
+            if self.mode == 'json':
+                import json
+                output = json.dumps(result, indent=2)
+                return CLICommandResponse(
+                    output=output,
+                    status=result.get('status', 'success'),
+                    cli_terminated=False
+                )
+            else:
+                # For TTY/markdown mode, show success message
+                if result.get('status') == 'success':
+                    output_lines = [
+                        f"✓ Instructions copied to clipboard!",
+                        f"  Behavior: {result.get('behavior')}",
+                        f"  Action: {result.get('action')}",
+                        f"  Length: {result.get('instructions_length', 0)} characters"
+                    ]
+                    
+                    if result.get('cursor_status') == 'opened':
+                        output_lines.append("  ✓ Cursor chat opened")
+                    elif result.get('cursor_status', '').startswith('failed'):
+                        output_lines.append(f"  ⚠ Could not open Cursor chat automatically")
+                        output_lines.append("  → Open Cursor chat manually and paste (Ctrl+V)")
+                    else:
+                        output_lines.append("  → Paste into Cursor chat (Ctrl+V)")
+                    
+                    output = '\n'.join(output_lines)
+                else:
+                    output = f"✗ {result.get('message', 'Submit failed')}"
+                
+                return CLICommandResponse(
+                    output=output,
+                    status=result.get('status', 'success'),
+                    cli_terminated=False
+                )
         # Route to Bot method using reflection
         elif hasattr(self.bot, verb):
             attr = getattr(self.bot, verb)
