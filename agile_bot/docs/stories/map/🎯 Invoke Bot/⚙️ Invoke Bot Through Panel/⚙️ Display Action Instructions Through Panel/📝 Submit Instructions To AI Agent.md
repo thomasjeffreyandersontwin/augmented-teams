@@ -19,6 +19,20 @@ Submit Instructions To AI Agent functionality for the mob minion system.
 
   **then** System sends instructions to AI chat
 
+- **When** User clicks submit button
+
+  **then** Submitted instructions include scope section
+
+  **and** Scope section includes scope type (story/files/all)
+
+  **and** Scope section includes scope filter values
+
+  **and** Scope section includes complete story graph tree when scope is story-based
+
+- **When** User has answered clarify questions or made strategy decisions
+
+  **then** Submitted instructions include all saved guardrails
+
 ## Scenarios
 
 <a id="scenario-unnamed-scenario"></a>
@@ -57,5 +71,34 @@ When User clicks copy button
 Then Instructions are copied to clipboard
 When User clicks submit button
 Then Instructions are also sent to AI chat
+```
+
+
+<a id="scenario-unnamed-scenario"></a>
+### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+
+**Steps:**
+```gherkin
+Given Bot has scope set to story Open Panel
+And Scope.results contains full story graph hierarchy
+When User clicks submit in panel
+Then Submitted instructions contain Scope section at top
+And Scope section shows Story Scope: Open Panel
+And Scope section shows complete epic/sub-epic/story hierarchy
+```
+
+
+<a id="scenario-unnamed-scenario"></a>
+### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+
+**Steps:**
+```gherkin
+Given Bot is at shape.build
+And User has answered clarify questions
+And User has made strategy decisions
+When User clicks submit in panel
+Then Submitted instructions include Clarify section with answers
+And Submitted instructions include Strategy section with decisions and assumptions
+And All saved guardrails are visible in submitted markdown
 ```
 

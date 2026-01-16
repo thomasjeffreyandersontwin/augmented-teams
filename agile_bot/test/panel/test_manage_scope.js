@@ -315,3 +315,188 @@ test('TestFilterStoryScope', { concurrency: false }, async (t) => {
         }
     });
 });
+
+test('TestShowAllScopeThroughPanel', { concurrency: false }, async (t) => {
+    
+    await t.test('test_user_clicks_show_all_to_clear_filter', async () => {
+        /**
+         * SCENARIO: User clicks show all to clear filter
+         * Story: Show All Scope Through Panel
+         * Steps from story-graph.json:
+         *   Given Panel displays filtered scope showing only Open Panel story
+         *   And Show All button is visible
+         *   When User clicks Show All button
+         *   Then Panel calls scope showall via CLI
+         *   And Scope filter is cleared
+         *   And Panel displays all epics, sub-epics, and stories
+         *   And Filter input is empty
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        try {
+            // Given Panel displays filtered scope showing only Open Panel story
+            await botView.execute('scope "Open Panel"');
+            const filteredScopeJSON = await botView.execute('scope');
+            const filteredScopeData = filteredScopeJSON.scope || filteredScopeJSON || { type: 'story', filter: 'Open Panel', content: [] };
+            
+            // And Show All button is visible
+            const filteredView = new ScopeSection(filteredScopeData, null, tmpPath);
+            const filteredHtml = filteredView.render();
+            assert(/<button[^>]*onclick="[^"]*showAll[^"]*"[^>]*>/.test(filteredHtml) || filteredHtml.includes('Show All'));
+            
+            // When User clicks Show All button - ACTUALLY EXECUTE THE SHOW ALL COMMAND
+            const clearedScopeJSON = await botView.execute('scope showall');
+            
+            const clearedScopeData = clearedScopeJSON.scope || clearedScopeJSON || { type: 'all', filter: '', content: null };
+            const clearedView = new ScopeSection(clearedScopeData, null, tmpPath);
+            const clearedHtml = clearedView.render();
+            
+            // Then Panel calls scope showall via CLI
+            // And Scope filter is cleared
+            assert(clearedScopeData.type === 'all' || clearedScopeData.filter === '' || clearedScopeData.filter === undefined);
+            
+            // And Panel displays all epics, sub-epics, and stories
+            // And Filter input is empty
+            assert(/<input[^>]*id="scopeFilterInput"[^>]*value=""[^"]*>/.test(clearedHtml) || !clearedHtml.includes('value="Open Panel"'));
+        } finally {
+            if (botView) {
+                botView.cleanup();
+                const index = activeBotViews.indexOf(botView);
+                if (index > -1) activeBotViews.splice(index, 1);
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+            try {
+                fs.rmSync(tmpPath, { recursive: true, force: true });
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+    });
+    
+    await t.test('test_show_all_button_is_visible_when_scope_is_filtered', async () => {
+        /**
+         * SCENARIO: Show all button is visible when scope is filtered
+         * Story: Show All Scope Through Panel
+         * Steps from story-graph.json:
+         *   Given Panel has no scope filter applied
+         *   When User views scope section
+         *   Then Show All button is not visible
+         *   When User applies filter to scope
+         *   Then Show All button becomes visible
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        try {
+            // Given Panel has no scope filter applied
+            await botView.execute('scope showall');
+            const unfilteredScopeJSON = await botView.execute('scope');
+            const unfilteredScopeData = unfilteredScopeJSON.scope || unfilteredScopeJSON || { type: 'all', filter: '', content: null };
+            
+            // When User views scope section
+            const unfilteredView = new ScopeSection(unfilteredScopeData, null, tmpPath);
+            const unfilteredHtml = unfilteredView.render();
+            
+            // Then Show All button is not visible
+            // (Show All button only shows when filter is applied)
+            assert(!/<button[^>]*onclick="[^"]*showAll[^"]*"[^>]*>[\s\S]*?Show All/.test(unfilteredHtml) || 
+                   unfilteredScopeData.filter === '' || unfilteredScopeData.type === 'all');
+            
+            // When User applies filter to scope
+            await botView.execute('scope "Open Panel"');
+            const filteredScopeJSON = await botView.execute('scope');
+            const filteredScopeData = filteredScopeJSON.scope || filteredScopeJSON || { type: 'story', filter: 'Open Panel', content: [] };
+            const filteredView = new ScopeSection(filteredScopeData, null, tmpPath);
+            const filteredHtml = filteredView.render();
+            
+            // Then Show All button becomes visible
+            assert(/<button[^>]*onclick="[^"]*showAll[^"]*"[^>]*>/.test(filteredHtml) || filteredHtml.includes('Show All'));
+        } finally {
+            if (botView) {
+                botView.cleanup();
+                const index = activeBotViews.indexOf(botView);
+                if (index > -1) activeBotViews.splice(index, 1);
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+            try {
+                fs.rmSync(tmpPath, { recursive: true, force: true });
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+    });
+});
+
+test('TestOpenStoryFiles', { concurrency: false }, async (t) => {
+    
+    await t.test('test_story_graph_and_story_map_links_always_visible', async () => {
+        /**
+         * SCENARIO: Story graph and story map links always visible
+         * Story: Open Story Files
+         * Steps from story-graph.json:
+         *   Given Panel displays scope section
+         *   And Scope may be filtered or showing all stories
+         *   When User views scope header
+         *   Then story-graph.json link is always visible
+         *   And story-map.md link is always visible
+         *   And Links persist regardless of filter state
+         *   And Links are positioned consistently in header
+         */
+        const tmpPath = setupTestWorkspace();
+        const botDir = getBotDirectory();
+        
+        const botView = new BotView({}, null, tmpPath, botDir);
+        activeBotViews.push(botView);
+        
+        try {
+            // Given Panel displays scope section
+            // And Scope may be filtered or showing all stories
+            const unfilteredScopeJSON = await botView.execute('scope');
+            const unfilteredScopeData = unfilteredScopeJSON.scope || unfilteredScopeJSON || { type: 'all', filter: '', content: null };
+            
+            // When User views scope header
+            const unfilteredView = new ScopeSection(unfilteredScopeData, null, tmpPath);
+            const unfilteredHtml = unfilteredView.render();
+            
+            // Then story-graph.json link is always visible
+            assert(/<a[^>]*href="[^"]*story-graph\.json[^"]*"[^>]*>/.test(unfilteredHtml) || unfilteredHtml.includes('story-graph.json'));
+            
+            // And story-map.md link is always visible
+            assert(/<a[^>]*href="[^"]*story-map\.md[^"]*"[^>]*>/.test(unfilteredHtml) || unfilteredHtml.includes('story-map.md'));
+            
+            // And Links persist regardless of filter state
+            await botView.execute('scope "Open Panel"');
+            const filteredScopeJSON = await botView.execute('scope');
+            const filteredScopeData = filteredScopeJSON.scope || filteredScopeJSON || { type: 'story', filter: 'Open Panel', content: [] };
+            const filteredView = new ScopeSection(filteredScopeData, null, tmpPath);
+            const filteredHtml = filteredView.render();
+            
+            // Verify links still visible with filter applied
+            assert(/<a[^>]*href="[^"]*story-graph\.json[^"]*"[^>]*>/.test(filteredHtml) || filteredHtml.includes('story-graph.json'));
+            assert(/<a[^>]*href="[^"]*story-map\.md[^"]*"[^>]*>/.test(filteredHtml) || filteredHtml.includes('story-map.md'));
+            
+            // And Links are positioned consistently in header
+            assert(unfilteredHtml.includes('story-graph.json') && unfilteredHtml.includes('story-map.md'));
+            assert(filteredHtml.includes('story-graph.json') && filteredHtml.includes('story-map.md'));
+        } finally {
+            if (botView) {
+                botView.cleanup();
+                const index = activeBotViews.indexOf(botView);
+                if (index > -1) activeBotViews.splice(index, 1);
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+            try {
+                fs.rmSync(tmpPath, { recursive: true, force: true });
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+    });
+});

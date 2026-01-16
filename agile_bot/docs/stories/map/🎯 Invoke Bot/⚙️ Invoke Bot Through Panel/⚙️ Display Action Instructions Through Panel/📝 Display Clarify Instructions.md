@@ -29,6 +29,10 @@ Display Clarify Instructions functionality for the mob minion system.
 
   **then** System displays saved key questions and answers
 
+- **When** User is on non-clarify actions and has previously made strategy decisions
+
+  **then** System displays saved strategy decisions and criteria as read-only
+
 ## Scenarios
 
 <a id="scenario-unnamed-scenario"></a>
@@ -66,5 +70,20 @@ Given User has previously answered clarify questions
 And Answers are saved in clarification.json
 When Panel displays clarify instructions
 Then Panel displays saved answers in textareas
+```
+
+
+<a id="scenario-unnamed-scenario"></a>
+### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+
+**Steps:**
+```gherkin
+Given Bot is at shape.clarify
+And User has previously made strategy decisions
+When Panel displays clarify instructions
+Then Panel displays Strategy section
+And Strategy section shows all decision criteria with selected options
+And Strategy section shows saved assumptions
+And Strategy data is read-only (not editable in clarify action)
 ```
 

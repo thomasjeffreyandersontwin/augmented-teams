@@ -25,8 +25,8 @@ Switch Bot functionality for the mob minion system.
 
 ## Scenarios
 
-<a id="scenario-unnamed-scenario"></a>
-### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+<a id="scenario-panel-shows-story_bot-and-multiple-bots-available"></a>
+### Scenario: [Panel shows story_bot and multiple bots available](#scenario-panel-shows-story_bot-and-multiple-bots-available) (happy_path)
 
 **Steps:**
 ```gherkin
@@ -40,8 +40,8 @@ And Panel refreshes all sections with crc_bot data
 ```
 
 
-<a id="scenario-unnamed-scenario"></a>
-### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+<a id="scenario-user-switches-to-crc_bot"></a>
+### Scenario: [User switches to crc_bot](#scenario-user-switches-to-crc_bot) (happy_path)
 
 **Steps:**
 ```gherkin

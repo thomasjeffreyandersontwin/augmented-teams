@@ -100,8 +100,8 @@ class ScopeSection extends PanelView {
                 const magnifyingGlassUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'magnifying_glass.png');
                 magnifyingGlassIconPath = this.webview.asWebviewUri(magnifyingGlassUri).toString();
                 
-                // clear.png doesn't exist - skip it
-                clearIconPath = '';
+                const clearUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'close.png');
+                clearIconPath = this.webview.asWebviewUri(clearUri).toString();
                 
                 const showAllUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'show_all.png');
                 showAllIconPath = this.webview.asWebviewUri(showAllUri).toString();
@@ -132,10 +132,20 @@ class ScopeSection extends PanelView {
         }
         
         const linksHtml = scopeData.graphLinks && scopeData.graphLinks.length > 0
-            ? scopeData.graphLinks.map(link => 
-                `<a href="javascript:void(0)" onclick="openFile('${this.escapeForJs(link.url)}')" style="color: var(--vscode-foreground); text-decoration: none; margin-left: 6px; font-size: 12px;">${this.escapeHtml(link.text).toLowerCase()}</a>`
+            ? scopeData.graphLinks.map(link =>
+                `<span onclick="openFile('${this.escapeForJs(link.url)}')" style="color: var(--vscode-foreground); text-decoration: underline; margin-left: 6px; font-size: 12px; cursor: pointer;">${this.escapeHtml(link.text).toLowerCase()}</span>`
             ).join('')
             : '';
+        
+        // Always show story-graph.json and story-map.md links
+        const workspaceDir = botData.workspace_directory || '';
+        const storyGraphPath = workspaceDir ? `${workspaceDir}/agile_bot/docs/stories/story-graph.json` : '';
+        const storyMapPath = workspaceDir ? `${workspaceDir}/agile_bot/docs/stories/story-map/story-map.md` : '';
+        
+        const permanentLinksHtml = `
+            <span onclick="openFile('${this.escapeForJs(storyGraphPath)}')" style="color: var(--vscode-foreground); text-decoration: underline; margin-left: 12px; font-size: 12px; cursor: pointer;" title="Open story-graph.json">story graph</span>
+            <span onclick="openFile('${this.escapeForJs(storyMapPath)}')" style="color: var(--vscode-foreground); text-decoration: underline; margin-left: 6px; font-size: 12px; cursor: pointer;" title="Open story-map.md">story map</span>
+        `;
         
         let contentHtml = '';
         let contentSummary = '';
@@ -218,7 +228,10 @@ class ScopeSection extends PanelView {
                         ✕
                     </button>` : ''}
                 </div>
-                ${linksHtml ? `<div onclick="event.stopPropagation();" style="display: flex; align-items: center;">${linksHtml}</div>` : ''}
+                <div onclick="event.stopPropagation();" style="display: flex; align-items: center;">
+                    ${linksHtml}
+                    ${permanentLinksHtml}
+                </div>
             </div>
             <div id="scope-content" class="collapsible-content" style="max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease;">
                 <div class="card-secondary" style="padding: 5px;">
@@ -253,13 +266,13 @@ class ScopeSection extends PanelView {
             const epicTestLink = epic.links && epic.links.find(l => l.icon === 'test_tube');
             
             // Make epic name a hyperlink if document exists
-            const epicNameHtml = epicDocLink 
-                ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(epicDocLink.url)}')">${this.escapeHtml(epic.name)}</a>`
+            const epicNameHtml = epicDocLink
+                ? `<span onclick="openFile('${this.escapeForJs(epicDocLink.url)}')" style="text-decoration: underline; cursor: pointer;">${this.escapeHtml(epic.name)}</span>`
                 : this.escapeHtml(epic.name);
             
             // Render test tube icon for epic test link
             const epicTestIcon = (epicTestLink && testTubeIconPath)
-                ? ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(epicTestLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`
+                ? ` <span onclick="openFile('${this.escapeForJs(epicTestLink.url)}')" style="cursor: pointer;"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></span>`
                 : '';
             
             let html = `<div style="margin-top: 8px; font-size: 12px;">
@@ -280,12 +293,12 @@ class ScopeSection extends PanelView {
                 
                 // Make sub-epic name a hyperlink if document exists
                 const subEpicNameHtml = subEpicDocLink
-                    ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(subEpicDocLink.url)}')">${this.escapeHtml(subEpic.name)}</a>`
+                    ? `<span onclick="openFile('${this.escapeForJs(subEpicDocLink.url)}')" style="text-decoration: underline; cursor: pointer;">${this.escapeHtml(subEpic.name)}</span>`
                     : this.escapeHtml(subEpic.name);
                 
                 // Only render test tube icon for test links
                 const subEpicTestIcon = (subEpicTestLink && testTubeIconPath)
-                    ? ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(subEpicTestLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`
+                    ? ` <span onclick="openFile('${this.escapeForJs(subEpicTestLink.url)}')" style="cursor: pointer;"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></span>`
                     : '';
                 
                 const marginLeft = 7 + (depth * 7); // Increase margin for nested sub-epics
@@ -325,7 +338,7 @@ class ScopeSection extends PanelView {
                                 const storyDocLink = story.links && story.links.find(l => l.text === 'story');
                                 
                                 if (storyDocLink) {
-                                    html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyDocLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
+                                    html += `<span onclick="openFile('${this.escapeForJs(storyDocLink.url)}')" style="text-decoration: underline; cursor: pointer;">${storyIcon}${this.escapeHtml(story.name)}</span>`;
                                 } else {
                                     html += `${storyIcon}${this.escapeHtml(story.name)}`;
                                 }
@@ -334,7 +347,7 @@ class ScopeSection extends PanelView {
                                 if (story.links && story.links.length > 0) {
                                     const testLink = story.links.find(l => l.icon === 'test_tube');
                                     if (testLink && testTubeIconPath) {
-                                        html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                                        html += ` <span onclick="openFile('${this.escapeForJs(testLink.url)}')" style="cursor: pointer;"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></span>`;
                                     }
                                 }
                                 
@@ -356,7 +369,7 @@ class ScopeSection extends PanelView {
                                         // Link scenario name to story file with scenario anchor
                                         if (storyDocLink) {
                                             const scenarioLink = `${storyDocLink.url}#${scenarioAnchor}`;
-                                            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenarioLink)}')">${this.escapeHtml(scenario.name)}</a>`;
+                                            html += `<span onclick="openFile('${this.escapeForJs(scenarioLink)}')" style="text-decoration: underline; cursor: pointer;">${this.escapeHtml(scenario.name)}</span>`;
                                         } else {
                                             // No story doc link - just display scenario name
                                             html += `${this.escapeHtml(scenario.name)}`;
@@ -365,7 +378,7 @@ class ScopeSection extends PanelView {
                                         // Render test tube icon for test link (separate from scenario name link)
                                         // Scenarios have test_method, backend sets test_file with full path + anchor when test_method exists
                                         if (scenario.test_file && testTubeIconPath) {
-                                            html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenario.test_file)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                                            html += ` <span onclick="openFile('${this.escapeForJs(scenario.test_file)}')" style="cursor: pointer;"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></span>`;
                                         }
                                         
                                         html += '</div>';
@@ -398,7 +411,7 @@ class ScopeSection extends PanelView {
                         const storyDocLink = story.links && story.links.find(l => l.text === 'story');
                         
                         if (storyDocLink) {
-                            html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(storyDocLink.url)}')">${storyIcon}${this.escapeHtml(story.name)}</a>`;
+                            html += `<span onclick="openFile('${this.escapeForJs(storyDocLink.url)}')" style="text-decoration: underline; cursor: pointer;">${storyIcon}${this.escapeHtml(story.name)}</span>`;
                         } else {
                             html += `${storyIcon}${this.escapeHtml(story.name)}`;
                         }
@@ -407,7 +420,7 @@ class ScopeSection extends PanelView {
                         if (story.links && story.links.length > 0) {
                             const testLink = story.links.find(l => l.icon === 'test_tube');
                             if (testLink && testTubeIconPath) {
-                                html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(testLink.url)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                                html += ` <span onclick="openFile('${this.escapeForJs(testLink.url)}')" style="cursor: pointer;"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></span>`;
                             }
                         }
                         
@@ -429,7 +442,7 @@ class ScopeSection extends PanelView {
                                 // Link scenario name to story file with scenario anchor
                                 if (storyDocLink) {
                                     const scenarioLink = `${storyDocLink.url}#${scenarioAnchor}`;
-                                    html += `<a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenarioLink)}')">${this.escapeHtml(scenario.name)}</a>`;
+                                    html += `<span onclick="openFile('${this.escapeForJs(scenarioLink)}')" style="text-decoration: underline; cursor: pointer;">${this.escapeHtml(scenario.name)}</span>`;
                                 } else {
                                     // No story doc link - just display scenario name
                                     html += `${this.escapeHtml(scenario.name)}`;
@@ -438,7 +451,7 @@ class ScopeSection extends PanelView {
                                 // Render test tube icon for test link (separate from scenario name link)
                                 // Scenarios have test_method, backend sets test_file with full path + anchor when test_method exists
                                 if (scenario.test_file && testTubeIconPath) {
-                                    html += ` <a href="javascript:void(0)" onclick="event.stopPropagation(); openFile('${this.escapeForJs(scenario.test_file)}')"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></a>`;
+                                    html += ` <span onclick="openFile('${this.escapeForJs(scenario.test_file)}')" style="cursor: pointer;"><img src="${testTubeIconPath}" style="width: 20px; height: 20px; vertical-align: middle;" alt="Test" /></span>`;
                                 }
                                 
                                 html += '</div>';
@@ -494,3 +507,4 @@ class ScopeSection extends PanelView {
 }
 
 module.exports = ScopeSection;
+

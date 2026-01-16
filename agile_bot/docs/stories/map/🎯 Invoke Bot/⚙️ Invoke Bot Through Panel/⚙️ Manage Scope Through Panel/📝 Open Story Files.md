@@ -64,3 +64,18 @@ Then Panel displays error message
 And Error message indicates file not found
 ```
 
+
+<a id="scenario-unnamed-scenario"></a>
+### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+
+**Steps:**
+```gherkin
+Given Panel displays scope section
+And Scope may be filtered or showing all stories
+When User views scope header
+Then story-graph.json link is always visible
+And story-map.md link is always visible
+And Links persist regardless of filter state
+And Links are positioned consistently in header
+```
+

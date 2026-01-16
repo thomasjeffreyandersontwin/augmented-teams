@@ -113,6 +113,44 @@ class CLISession:
                     status=result.get('status', 'success'),
                     cli_terminated=False
                 )
+        # Special case: "submitrules:behavior" calls bot.submit_behavior_rules()
+        elif verb.startswith('submitrules:') or verb.startswith('submitrules '):
+            behavior_name = verb.split(':', 1)[1] if ':' in verb else verb.split(' ', 1)[1]
+            behavior_name = behavior_name.strip()
+            result = self.bot.submit_behavior_rules(behavior_name)
+            # Submit returns a dict - serialize based on mode
+            if self.mode == 'json':
+                import json
+                output = json.dumps(result, indent=2)
+                return CLICommandResponse(
+                    output=output,
+                    status=result.get('status', 'success'),
+                    cli_terminated=False
+                )
+            else:
+                # For TTY/markdown mode, show success message
+                if result.get('status') == 'success':
+                    output_lines = [
+                        f"✓ {behavior_name} rules submitted to chat!",
+                        f"  Behavior: {result.get('behavior')}",
+                        f"  Action: {result.get('action')}",
+                        f"  Length: {result.get('instructions_length', 0)} characters"
+                    ]
+                    
+                    if result.get('cursor_status') == 'opened':
+                        output_lines.append("  ✓ Cursor chat opened")
+                    
+                    return CLICommandResponse(
+                        output='\n'.join(output_lines),
+                        status='success',
+                        cli_terminated=False
+                    )
+                else:
+                    return CLICommandResponse(
+                        output=f"Error: {result.get('message', 'Unknown error')}",
+                        status='error',
+                        cli_terminated=False
+                    )
         # Special case: "submit" calls bot.submit() and returns result with instructions
         elif verb == 'submit':
             result = self.bot.submit()
@@ -172,12 +210,66 @@ class CLISession:
         else:
             # Check if it's an action shortcut (route to current behavior's action)
             result = self._handle_action_shortcut(verb, args)
+            
+            # Special case: if action is 'rules', automatically submit to chat
+            if verb == 'rules' and result is not None:
+                from agile_bot.src.instructions.instructions import Instructions
+                if isinstance(result, Instructions):
+                    # Submit the rules to chat
+                    submit_result = self.bot.submit()
+                    
+                    # Show success message
+                    if submit_result.get('status') == 'success' and self.mode != 'json':
+                        output_lines = [
+                            f"✓ Rules submitted to chat!",
+                            f"  Behavior: {submit_result.get('behavior')}",
+                            f"  Action: {submit_result.get('action')}",
+                            f"  Length: {submit_result.get('instructions_length', 0)} characters"
+                        ]
+                        
+                        if submit_result.get('cursor_status') == 'opened':
+                            output_lines.append("  ✓ Cursor chat opened")
+                        
+                        # Return submit result instead of instructions
+                        return CLICommandResponse(
+                            output='\n'.join(output_lines),
+                            status='success',
+                            cli_terminated=False
+                        )
+            
             if result is None:
                 # Not an action shortcut, try behavior.action pattern
                 try:
                     result = self._route_to_behavior_action(command)
                     # behavior.action is NOT a navigation command anymore - execute returns instructions
                     is_navigation_command = False
+                    
+                    # Special case: if action is 'rules', automatically submit to chat
+                    if '.rules' in command.lower():
+                        # Get the instructions that were just generated
+                        from agile_bot.src.instructions.instructions import Instructions
+                        if isinstance(result, dict) and 'instructions' in result:
+                            # Submit the rules to chat
+                            submit_result = self.bot.submit()
+                            
+                            # Show success message
+                            if submit_result.get('status') == 'success' and self.mode != 'json':
+                                output_lines = [
+                                    f"✓ Rules submitted to chat!",
+                                    f"  Behavior: {submit_result.get('behavior')}",
+                                    f"  Action: {submit_result.get('action')}",
+                                    f"  Length: {submit_result.get('instructions_length', 0)} characters"
+                                ]
+                                
+                                if submit_result.get('cursor_status') == 'opened':
+                                    output_lines.append("  ✓ Cursor chat opened")
+                                
+                                # Return submit result instead of instructions
+                                return CLICommandResponse(
+                                    output='\n'.join(output_lines),
+                                    status='success',
+                                    cli_terminated=False
+                                )
                 except ValueError:
                     # Not a valid command - return error in appropriate format
                     error_message = f"Unknown command '{verb}'"

@@ -103,6 +103,7 @@ class BehaviorsView extends PanelView {
         let leftIconPath = '';
         let pointerIconPath = '';
         let rightIconPath = '';
+        let clipboardIconPath = '';
         if (this.webview && this.extensionUri) {
             try {
                 const feedbackUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'feedback.png');
@@ -131,6 +132,9 @@ class BehaviorsView extends PanelView {
                 
                 const rightUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'right.png');
                 rightIconPath = this.webview.asWebviewUri(rightUri).toString();
+                
+                const clipboardUri = vscode.Uri.joinPath(this.extensionUri, 'img', 'rules.png');
+                clipboardIconPath = this.webview.asWebviewUri(clipboardUri).toString();
             } catch (err) {
                 console.error('Failed to create icon URIs:', err);
             }
@@ -141,7 +145,7 @@ class BehaviorsView extends PanelView {
         }
         
         const behaviorsHtml = behaviorsData.map((behavior, bIdx) => {
-            return this.renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath);
+            return this.renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath, clipboardIconPath);
         }).join('');
         
         return `
@@ -304,9 +308,10 @@ class BehaviorsView extends PanelView {
      * @param {string} subtractIconPath - Subtract icon path
      * @param {string} tickIconPath - Tick icon path
      * @param {string} notTickedIconPath - Not ticked icon path
+     * @param {string} clipboardIconPath - Clipboard icon path
      * @returns {string} HTML string
      */
-    renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath) {
+    renderBehavior(behavior, bIdx, plusIconPath, subtractIconPath, tickIconPath, notTickedIconPath, clipboardIconPath) {
         const isCurrent = behavior.isCurrent || behavior.is_current || false;
         const isCompleted = behavior.isCompleted || behavior.is_completed || false;
         const behaviorMarker = isCurrent 
@@ -330,7 +335,7 @@ class BehaviorsView extends PanelView {
         const behaviorDisplay = behaviorExpanded ? 'block' : 'none';
         
         const behaviorActiveClass = isCurrent ? ' active' : '';
-        let html = `<div class="collapsible-header card-item${behaviorActiveClass}" data-behavior="${behaviorName}" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${behaviorIconSrc}" alt="${behaviorIconAlt}" style="width: 12px; height: 12px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${behaviorName}')">${behaviorMarker}${behaviorName}</span></div>`;
+        let html = `<div class="collapsible-header card-item${behaviorActiveClass}" data-behavior="${behaviorName}" title="${behaviorTooltip}"><span id="${behaviorId}-icon" class="${behaviorIconClass}" style="display: inline-block; min-width: 12px; cursor: pointer;" onclick="toggleCollapse('${behaviorId}')" data-plus="${plusIconPath}" data-subtract="${subtractIconPath}">${plusIconPath && subtractIconPath ? `<img src="${behaviorIconSrc}" alt="${behaviorIconAlt}" style="width: 12px; height: 12px; vertical-align: middle;" />` : ''}</span> <span style="cursor: pointer; text-decoration: underline;" onclick="navigateToBehavior('${behaviorName}')">${behaviorMarker}${behaviorName}</span>${clipboardIconPath ? `<button onclick="event.stopPropagation(); getBehaviorRules('${behaviorName}');" style="background: transparent; border: none; padding: 0 0 0 8px; margin: 0; cursor: pointer; vertical-align: middle; display: inline-flex; align-items: center; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'" title="Get rules for ${behaviorName} and send to chat"><img src="${clipboardIconPath}" style="width: 16px; height: 16px; object-fit: contain;" alt="Get Rules" /></button>` : ''}</div>`;
         
         // Always create collapsible content, even if empty
         const actionsArray = behavior.actions?.all_actions || behavior.actions || [];

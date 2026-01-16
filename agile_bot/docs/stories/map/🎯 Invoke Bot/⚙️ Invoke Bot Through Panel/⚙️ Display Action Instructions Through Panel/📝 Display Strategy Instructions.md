@@ -25,9 +25,17 @@ Display Strategy Instructions functionality for the mob minion system.
 
   **then** System displays selected option for each decision criterion
 
+  **and** Assumptions textarea remains editable
+
+  **and** Textarea is pre-filled with saved assumptions
+
 - **When** User edits assumptions textarea
 
   **then** System updates assumptions
+
+- **When** User is on non-strategy actions (clarify, build, validate, render)
+
+  **then** System displays saved strategy decisions and criteria as read-only
 
 ## Scenarios
 
@@ -53,5 +61,33 @@ Given Panel displays strategy instructions
 When User selects radio option for decision criterion
 Then System saves selected option
 And Selection persists across panel refreshes
+```
+
+
+<a id="scenario-unnamed-scenario"></a>
+### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+
+**Steps:**
+```gherkin
+Given Bot is at shape.strategy
+And User has previously saved assumptions
+When Panel displays strategy instructions
+Then Assumptions textarea is displayed as editable input
+And Textarea is pre-filled with saved assumptions
+And User can edit and update assumptions
+```
+
+
+<a id="scenario-unnamed-scenario"></a>
+### Scenario: [Unnamed Scenario](#scenario-unnamed-scenario) (happy_path)
+
+**Steps:**
+```gherkin
+Given Bot is at shape.strategy
+And User has previously answered clarify questions
+When Panel displays strategy instructions
+Then Panel displays Clarify section
+And Clarify section shows answered questions
+And Clarify data is read-only (not editable in strategy action)
 ```
 

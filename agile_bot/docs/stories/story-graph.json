@@ -5813,6 +5813,50 @@
                       ]
                     },
                     {
+                      "name": "Show All Scope Through Panel",
+                      "sequential_order": 1.5,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestShowAllScopeThroughPanel",
+                      "acceptance_criteria": [
+                        "WHEN User has filtered scope",
+                        "THEN System displays Show All button",
+                        "WHEN User clicks Show All button",
+                        "THEN System calls scope showall command via CLI",
+                        "AND System clears scope filter",
+                        "AND Panel displays complete unfiltered story hierarchy"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User clicks show all to clear filter",
+                          "test_method": "test_user_clicks_show_all_to_clear_filter",
+                          "steps": [
+                            "Given Panel displays filtered scope showing only Open Panel story",
+                            "And Show All button is visible",
+                            "When User clicks Show All button",
+                            "Then Panel calls scope showall via CLI",
+                            "And Scope filter is cleared",
+                            "And Panel displays all epics, sub-epics, and stories",
+                            "And Filter input is empty"
+                          ]
+                        },
+                        {
+                          "title": "Show all button is visible when scope is filtered",
+                          "test_method": "test_show_all_button_is_visible_when_scope_is_filtered",
+                          "steps": [
+                            "Given Panel has no scope filter applied",
+                            "When User views scope section",
+                            "Then Show All button is not visible",
+                            "When User applies filter to scope",
+                            "Then Show All button becomes visible"
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "name": "Display Story Scope Hierarchy",
                       "sequential_order": 2,
                       "connector": "and",
@@ -6060,6 +6104,19 @@
                             "Then Panel displays error message",
                             "And Error message indicates file not found"
                           ]
+                        },
+                        {
+                          "title": "Story graph and story map links always visible",
+                          "test_method": "test_story_graph_and_story_map_links_always_visible",
+                          "steps": [
+                            "Given Panel displays scope section",
+                            "And Scope may be filtered or showing all stories",
+                            "When User views scope header",
+                            "Then story-graph.json link is always visible",
+                            "And story-map.md link is always visible",
+                            "And Links persist regardless of filter state",
+                            "And Links are positioned consistently in header"
+                          ]
                         }
                       ]
                     }
@@ -6130,7 +6187,9 @@
                         "WHEN User edits answer textarea",
                         "THEN System updates answer",
                         "WHEN saved key questions and answers exists",
-                        "THEN System displays saved key questions and answers"
+                        "THEN System displays saved key questions and answers",
+                        "WHEN User is on non-clarify actions and has previously made strategy decisions",
+                        "THEN System displays saved strategy decisions and criteria as read-only"
                       ],
                       "scenarios": [
                         {
@@ -6161,6 +6220,19 @@
                             "When Panel displays clarify instructions",
                             "Then Panel displays saved answers in textareas"
                           ]
+                        },
+                        {
+                          "title": "User views strategy guardrails in clarify action",
+                          "test_method": "test_user_views_strategy_guardrails_in_clarify_action",
+                          "steps": [
+                            "Given Bot is at shape.clarify",
+                            "And User has previously made strategy decisions",
+                            "When Panel displays clarify instructions",
+                            "Then Panel displays Strategy section",
+                            "And Strategy section shows all decision criteria with selected options",
+                            "And Strategy section shows saved assumptions",
+                            "And Strategy data is read-only (not editable in clarify action)"
+                          ]
                         }
                       ]
                     },
@@ -6179,8 +6251,12 @@
                         "AND System displays assumptions textarea",
                         "WHEN Saved strategy exists",
                         "THEN System displays selected option for each decision criterion",
+                        "AND Assumptions textarea remains editable",
+                        "AND Textarea is pre-filled with saved assumptions",
                         "WHEN User edits assumptions textarea",
-                        "THEN System updates assumptions"
+                        "THEN System updates assumptions",
+                        "WHEN User is on non-strategy actions (clarify, build, validate, render)",
+                        "THEN System displays saved strategy decisions and criteria as read-only"
                       ],
                       "scenarios": [
                         {
@@ -6200,6 +6276,30 @@
                             "When User selects radio option for decision criterion",
                             "Then System saves selected option",
                             "And Selection persists across panel refreshes"
+                          ]
+                        },
+                        {
+                          "title": "Assumptions textarea remains editable after being saved",
+                          "test_method": "test_assumptions_textarea_remains_editable_after_being_saved",
+                          "steps": [
+                            "Given Bot is at shape.strategy",
+                            "And User has previously saved assumptions",
+                            "When Panel displays strategy instructions",
+                            "Then Assumptions textarea is displayed as editable input",
+                            "And Textarea is pre-filled with saved assumptions",
+                            "And User can edit and update assumptions"
+                          ]
+                        },
+                        {
+                          "title": "User views clarify answers in strategy action",
+                          "test_method": "test_user_views_clarify_answers_in_strategy_action",
+                          "steps": [
+                            "Given Bot is at shape.strategy",
+                            "And User has previously answered clarify questions",
+                            "When Panel displays strategy instructions",
+                            "Then Panel displays Clarify section",
+                            "And Clarify section shows answered questions",
+                            "And Clarify data is read-only (not editable in strategy action)"
                           ]
                         }
                       ]
@@ -6323,6 +6423,60 @@
                       ]
                     },
                     {
+                      "name": "Submit Behavior Rules Through Panel",
+                      "sequential_order": 6.5,
+                      "connector": "and",
+                      "users": [
+                        "User"
+                      ],
+                      "story_type": "user",
+                      "test_class": "TestSubmitBehaviorRulesThroughPanel",
+                      "acceptance_criteria": [
+                        "WHEN User clicks Get Rules button for a behavior",
+                        "THEN System executes behavior.rules command",
+                        "AND System submits rules digest to AI chat",
+                        "AND Rules include formatted descriptions with DO/DON'T sections",
+                        "AND Rules include file paths for each rule",
+                        "AND All behavior rules are included in digest"
+                      ],
+                      "scenarios": [
+                        {
+                          "title": "User clicks get rules button for behavior",
+                          "steps": [
+                            "Given Panel displays behavior hierarchy",
+                            "And Behavior has rules defined",
+                            "When User clicks Get Rules button for behavior",
+                            "Then System executes behavior.rules command via CLI",
+                            "And System submits formatted rules digest to AI chat",
+                            "And Rules digest includes descriptions, priorities, DO/DON'T sections",
+                            "And Rules digest includes file paths for each rule"
+                          ],
+                          "test_method": "test_user_clicks_get_rules_button_for_behavior"
+                        },
+                        {
+                          "title": "Get rules button visible for behaviors with rules",
+                          "steps": [
+                            "Given Panel displays behavior hierarchy",
+                            "And Behavior has rules defined",
+                            "When User views behavior in hierarchy",
+                            "Then Get Rules button is visible next to behavior name"
+                          ],
+                          "test_method": "test_get_rules_button_visible_for_behaviors_with_rules"
+                        },
+                        {
+                          "title": "System confirms rules submission to chat",
+                          "steps": [
+                            "Given Panel displays behavior hierarchy",
+                            "When User clicks Get Rules button",
+                            "And Rules are successfully submitted to chat",
+                            "Then System displays success confirmation message",
+                            "And Message indicates rules were submitted to chat"
+                          ],
+                          "test_method": "test_system_confirms_rules_submission_to_chat"
+                        }
+                      ]
+                    },
+                    {
                       "name": "Display Instructions In Raw Format",
                       "sequential_order": 7,
                       "connector": "and",
@@ -6369,7 +6523,14 @@
                       "acceptance_criteria": [
                         "When user has clicked on a Behavior Action's Instructions",
                         "AND User clicks submit button",
-                        "THEN System sends instructions to AI chat"
+                        "THEN System sends instructions to AI chat",
+                        "WHEN User clicks submit button",
+                        "THEN Submitted instructions include scope section",
+                        "AND Scope section includes scope type (story/files/all)",
+                        "AND Scope section includes scope filter values",
+                        "AND Scope section includes complete story graph tree when scope is story-based",
+                        "WHEN User has answered clarify questions or made strategy decisions",
+                        "THEN Submitted instructions include all saved guardrails"
                       ],
                       "scenarios": [
                         {
@@ -6400,6 +6561,31 @@
                             "Then Instructions are copied to clipboard",
                             "When User clicks submit button",
                             "Then Instructions are also sent to AI chat"
+                          ]
+                        },
+                        {
+                          "title": "Submitted instructions include complete scope with story tree",
+                          "test_method": "test_submitted_instructions_include_complete_scope_with_story_tree",
+                          "steps": [
+                            "Given Bot has scope set to story Open Panel",
+                            "And Scope.results contains full story graph hierarchy",
+                            "When User clicks submit in panel",
+                            "Then Submitted instructions contain Scope section at top",
+                            "And Scope section shows Story Scope: Open Panel",
+                            "And Scope section shows complete epic/sub-epic/story hierarchy"
+                          ]
+                        },
+                        {
+                          "title": "Submitted instructions include all guardrails",
+                          "test_method": "test_submitted_instructions_include_all_guardrails",
+                          "steps": [
+                            "Given Bot is at shape.build",
+                            "And User has answered clarify questions",
+                            "And User has made strategy decisions",
+                            "When User clicks submit in panel",
+                            "Then Submitted instructions include Clarify section with answers",
+                            "And Submitted instructions include Strategy section with decisions and assumptions",
+                            "And All saved guardrails are visible in submitted markdown"
                           ]
                         }
                       ]
@@ -8316,6 +8502,71 @@
                               "name": "Get render instructions with templates",
                               "steps": "GIVEN: CLI is at shape.render.instructions\nWHEN: user enters 'shape.render.instructions'\nTHEN: CLI displays render instructions with templates and synchronizers",
                               "test_method": "test_get_render_instructions_with_templates"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Display Rules Through REPL",
+                  "sequential_order": 7,
+                  "test_file": "test_display_rules_through_repl.py",
+                  "story_groups": [
+                    {
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
+                        {
+                          "name": "Get Rules Instructions Through CLI",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestGetRulesInstructionsThroughCLI",
+                          "acceptance_criteria": [
+                            "WHEN User navigates to behavior.rules",
+                            "THEN CLI displays formatted rules digest with descriptions and DO/DON'T sections",
+                            "AND CLI includes rule names with their file paths",
+                            "AND CLI includes all rules from the behavior"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "User gets rules instructions for behavior",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Production story_bot with tests behavior (has rules)",
+                                "When User enters 'tests.rules' in CLI",
+                                "Then CLI displays formatted rules digest with descriptions, priorities, DO/DON'T sections",
+                                "And Display includes rule names with their file paths",
+                                "And All rules from behavior are included in digest"
+                              ],
+                              "test_method": "test_user_gets_rules_instructions_for_behavior"
+                            },
+                            {
+                              "name": "User gets rules with message parameter",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Production story_bot with tests behavior",
+                                "When User enters 'tests.rules \"explain parameterized tests\"' in CLI",
+                                "Then CLI displays rules digest",
+                                "And Instructions include user message requesting specific rule information"
+                              ],
+                              "test_method": "test_user_gets_rules_with_message_parameter"
+                            },
+                            {
+                              "name": "User gets rules without message parameter",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Production story_bot with tests behavior",
+                                "When User enters 'tests.rules' without message",
+                                "Then CLI displays rules digest",
+                                "And Instructions do not include user message section"
+                              ],
+                              "test_method": "test_user_gets_rules_without_message_parameter"
                             }
                           ]
                         }

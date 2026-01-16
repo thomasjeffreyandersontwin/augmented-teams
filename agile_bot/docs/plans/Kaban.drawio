@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="story-map" name="Story Map">
-        <mxGraphModel dx="4744" dy="465" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="4722" dy="612" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4000" pageHeight="3000" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -512,8 +512,14 @@
                 <mxCell id="370" value="custom message&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2460" y="964.4999999999998" width="50" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="371" value="story --&amp;gt;&amp;nbsp; sunbit instructions&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" vertex="1" parent="1">
+                <mxCell id="371" value="story --&amp;gt;&amp;nbsp; sunbit instructions&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-2389.99" y="1096.8299999999997" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="372" value="A run made of srotires, scope stays&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="-2500" y="840.4299999999998" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="373" value="story --&amp;gt;&amp;nbsp; sunbit instructions&lt;div style=&quot;border-color: rgb(218, 220, 224);&quot;&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#080808;fontSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="-2400" y="1193.9399999999996" width="50" height="50" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

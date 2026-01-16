@@ -309,6 +309,31 @@ class BotPanel {
                 });
             }
             return;
+          case "getBehaviorRules":
+            if (message.behaviorName) {
+              this._log(`[BotPanel] getBehaviorRules -> ${message.behaviorName}`);
+              // Execute behavior.rules command which automatically submits via CLI
+              this._botView?.execute(`${message.behaviorName}.rules`)
+                .then((result) => {
+                  this._log('[BotPanel] Rules submitted:', result);
+                  // Check result status
+                  const status = result?.status || (result?.output?.includes('submitted') ? 'success' : 'error');
+                  
+                  if (status === 'success' || (result?.output && result.output.includes('submitted'))) {
+                    vscode.window.showInformationMessage(`${message.behaviorName} rules submitted to chat!`);
+                  } else {
+                    const errorMsg = result?.message || result?.output || 'Unknown error';
+                    vscode.window.showErrorMessage(`Failed to submit rules: ${errorMsg}`);
+                  }
+                  // Refresh panel to show current position
+                  return this._update();
+                })
+                .catch((error) => {
+                  this._log(`[BotPanel] ERROR getting behavior rules: ${error.message}`);
+                  vscode.window.showErrorMessage(`Failed to get rules: ${error.message}`);
+                });
+            }
+            return;
           case "executeNavigationCommand":
             if (message.commandText) {
               this._log(`[BotPanel] executeNavigationCommand -> ${message.commandText}`);
@@ -1231,6 +1256,14 @@ class BotPanel {
             vscode.postMessage({
                 command: 'switchBot',
                 botName: botName
+            });
+        }
+        
+        function getBehaviorRules(behaviorName) {
+            console.log('[WebView] getBehaviorRules called with:', behaviorName);
+            vscode.postMessage({
+                command: 'getBehaviorRules',
+                behaviorName: behaviorName
             });
         }
         

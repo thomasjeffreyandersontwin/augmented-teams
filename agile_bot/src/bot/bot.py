@@ -764,6 +764,52 @@ class Bot:
                 'message': f'Error saving: {str(e)}'
             }
     
+    def submit_behavior_rules(self, behavior_name: str) -> Dict[str, Any]:
+        """Get rules for a behavior and submit them to AI chat.
+        
+        This is a convenience method that:
+        1. Saves current position
+        2. Navigates to behavior.rules
+        3. Gets the rules instructions
+        4. Submits them to chat
+        5. Restores previous position
+        
+        Args:
+            behavior_name: Name of the behavior to get rules for
+            
+        Returns:
+            Status dict with success message and submission details
+        """
+        # Save current position
+        saved_behavior = self.behaviors.current.name if self.behaviors.current else None
+        saved_action = self.behaviors.current.actions.current_action_name if self.behaviors.current else None
+        
+        try:
+            # Navigate to behavior.rules
+            result = self.execute_command(f"{behavior_name}.rules")
+            
+            if result.get('status') == 'error':
+                return result
+            
+            # Submit the rules
+            submit_result = self.submit()
+            
+            # Restore previous position if needed
+            if saved_behavior and saved_action:
+                try:
+                    self.execute_command(f"{saved_behavior}.{saved_action}")
+                except:
+                    pass  # Don't fail if restore doesn't work
+            
+            return submit_result
+            
+        except Exception as e:
+            logger.error(f'Error in submit_behavior_rules: {str(e)}', exc_info=True)
+            return {
+                'status': 'error',
+                'message': f'Error getting rules for {behavior_name}: {str(e)}'
+            }
+    
     def submit(self) -> Dict[str, Any]:
         """Submit current action instructions to AI agent.
         
