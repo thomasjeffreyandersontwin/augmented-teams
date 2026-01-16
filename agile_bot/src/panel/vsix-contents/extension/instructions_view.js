@@ -281,32 +281,53 @@ class InstructionsSection extends PanelView {
             };
         }
 
-        // 3. STRATEGY - Decision Criteria + Assumptions (ONLY show during strategy action or when saved strategy exists)
-        const hasStrategyData = currentAction === 'strategy' || 
-                            instructions.strategy_instructions?.strategy_data || 
-                            instructions.strategy;
-        if (hasStrategyData) {
+        // 3. STRATEGY - Decision Criteria + Assumptions
+        // ALWAYS show when there's saved strategy data (visible on all pages as context)
+        // ALSO show when in strategy action even if no saved data yet (for editing)
+        const savedStrategy = instructions.strategy;
+        const isInStrategyAction = currentAction === 'strategy';
+        
+        // Check if we have saved decisions or assumptions
+        const hasSavedDecisions = savedStrategy && 
+                                 savedStrategy.strategy_criteria && 
+                                 savedStrategy.strategy_criteria.decisions_made &&
+                                 Object.keys(savedStrategy.strategy_criteria.decisions_made).length > 0;
+        
+        const hasSavedAssumptions = savedStrategy && 
+                                   savedStrategy.assumptions && 
+                                   savedStrategy.assumptions.assumptions_made &&
+                                   savedStrategy.assumptions.assumptions_made.length > 0;
+        
+        const showStrategySection = hasSavedDecisions || hasSavedAssumptions || isInStrategyAction;
+        
+        if (showStrategySection) {
             // Extract saved strategy data from strategy.json
-            const savedStrategy = instructions.strategy;
             let strategyCriteriaData = {};
             let decisionsMade = {};
             let assumptionsMade = [];
             
             if (savedStrategy && savedStrategy.strategy_criteria) {
-                // Get criteria (questions and options)
+                // Get criteria (questions and options) - always load if available to show decisions with context
                 strategyCriteriaData = savedStrategy.strategy_criteria.criteria || {};
-                // Get decisions made
+                // Get decisions made - always show if available
                 decisionsMade = savedStrategy.strategy_criteria.decisions_made || {};
             }
             
             if (savedStrategy && savedStrategy.assumptions) {
-                // Get assumptions made
+                // Get assumptions made - always show if available
                 assumptionsMade = savedStrategy.assumptions.assumptions_made || [];
             }
             
-            // Fallback to guardrails if no saved data
-            if (Object.keys(strategyCriteriaData).length === 0) {
-                strategyCriteriaData = instructions.strategy_criteria || instructions.guardrails?.decision_criteria || {};
+            // Fallback to guardrails if no saved data and we're in strategy action
+            if (Object.keys(strategyCriteriaData).length === 0 && isInStrategyAction) {
+                const fallbackData = instructions.strategy_criteria || instructions.guardrails?.decision_criteria || {};
+                
+                // If fallbackData has nested 'criteria' key, extract it; otherwise use as-is
+                if (fallbackData.criteria) {
+                    strategyCriteriaData = fallbackData.criteria;
+                } else {
+                    strategyCriteriaData = fallbackData;
+                }
             }
             
             restructured.strategy_instructions = {

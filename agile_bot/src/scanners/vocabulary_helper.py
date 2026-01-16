@@ -18,7 +18,7 @@ try:
     nltk.data.find('corpora/wordnet')
 except LookupError:
     try:
-    nltk.download('wordnet', quiet=True)
+        nltk.download('wordnet', quiet=True)
     except:
         pass  # Skip if download fails
 
@@ -26,7 +26,7 @@ try:
     nltk.data.find('tokenizers/punkt_tab')
 except LookupError:
     try:
-    nltk.download('punkt_tab', quiet=True)
+        nltk.download('punkt_tab', quiet=True)
     except:
         pass  # Skip if download fails
 
@@ -34,7 +34,7 @@ try:
     nltk.data.find('taggers/averaged_perceptron_tagger_eng')
 except LookupError:
     try:
-    nltk.download('averaged_perceptron_tagger_eng', quiet=True)
+        nltk.download('averaged_perceptron_tagger_eng', quiet=True)
     except:
         pass  # Skip if download fails
 

@@ -374,10 +374,9 @@ class InstructionsSection extends PanelView {
                 fetch('http://127.0.0.1:7242/ingest/8c521aea-7def-453b-baa0-70f06cfd0592',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'instructions_view.js:372',message:'savedStrategy.strategy_criteria details',data:{strategy_criteria_keys:Object.keys(savedStrategy.strategy_criteria),has_criteria:!!savedStrategy.strategy_criteria.criteria,has_decisions_made:!!savedStrategy.strategy_criteria.decisions_made},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H8'})}).catch(()=>{});
                 // #endregion
                 
-                // Get criteria (questions and options) - only needed if in strategy action
-                if (isInStrategyAction) {
-                    strategyCriteriaData = savedStrategy.strategy_criteria.criteria || {};
-                }
+                // Get criteria (questions and options) - always load if available to show decisions with context
+                // Previously only loaded in strategy action, but we need it everywhere to display decisions properly
+                strategyCriteriaData = savedStrategy.strategy_criteria.criteria || {};
                 // Get decisions made - always show if available
                 decisionsMade = savedStrategy.strategy_criteria.decisions_made || {};
             }
