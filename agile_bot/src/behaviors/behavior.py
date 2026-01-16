@@ -142,3 +142,43 @@ class Behavior:
             return ValidationType.FILES
         else:
             return ValidationType.BOTH
+    
+    def submitRules(self) -> Dict[str, Any]:
+        """Submit behavior rules instructions to AI chat.
+        
+        Executes the rules action to get instructions, then submits them to chat.
+        
+        Returns:
+            Status dict with success message and submission details
+        """
+        if not self.bot:
+            return {
+                'status': 'error',
+                'message': 'No bot instance available'
+            }
+        
+        try:
+            # Find the rules action
+            rules_action = self.actions.find_by_name('rules')
+            if not rules_action:
+                return {
+                    'status': 'error',
+                    'message': 'Rules action not found'
+                }
+            
+            # Execute the rules action to get instructions
+            from ..actions.action_context import ActionContext
+            context = rules_action.context_class() if hasattr(rules_action, 'context_class') else ActionContext()
+            instructions = rules_action.get_instructions(context)
+            
+            # Submit the instructions using bot's submit_instructions method
+            return self.bot.submit_instructions(instructions, self.name, 'rules')
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Error in submitRules: {str(e)}', exc_info=True)
+            return {
+                'status': 'error',
+                'message': f'Error submitting rules: {str(e)}'
+            }

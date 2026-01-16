@@ -151,9 +151,9 @@ class CLISession:
                         status='error',
                         cli_terminated=False
                     )
-        # Special case: "submit" calls bot.submit() and returns result with instructions
+        # Special case: "submit" calls bot.submit_current_action() and returns result with instructions
         elif verb == 'submit':
-            result = self.bot.submit()
+            result = self.bot.submit_current_action()
             # Submit returns a dict - serialize based on mode
             if self.mode == 'json':
                 import json
@@ -215,8 +215,14 @@ class CLISession:
             if verb == 'rules' and result is not None:
                 from agile_bot.src.instructions.instructions import Instructions
                 if isinstance(result, Instructions):
-                    # Submit the rules to chat
-                    submit_result = self.bot.submit()
+                    # Submit the RULES instructions using behavior.submitRules()
+                    if self.bot.behaviors.current:
+                        submit_result = self.bot.behaviors.current.submitRules()
+                    else:
+                        submit_result = {
+                            'status': 'error',
+                            'message': 'No current behavior set'
+                        }
                     
                     # Show success message
                     if submit_result.get('status') == 'success' and self.mode != 'json':
@@ -248,9 +254,15 @@ class CLISession:
                     if '.rules' in command.lower():
                         # Get the instructions that were just generated
                         from agile_bot.src.instructions.instructions import Instructions
-                        if isinstance(result, dict) and 'instructions' in result:
-                            # Submit the rules to chat
-                            submit_result = self.bot.submit()
+                        if isinstance(result, Instructions):
+                            # Submit the RULES instructions using behavior.submitRules()
+                            if self.bot.behaviors.current:
+                                submit_result = self.bot.behaviors.current.submitRules()
+                            else:
+                                submit_result = {
+                                    'status': 'error',
+                                    'message': 'No current behavior set'
+                                }
                             
                             # Show success message
                             if submit_result.get('status') == 'success' and self.mode != 'json':

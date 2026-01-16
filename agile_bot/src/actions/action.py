@@ -227,21 +227,16 @@ class Action:
         return result
     
     def _load_scope_from_state(self) -> Optional[Scope]:
-        """Load scope from bot state file."""
-        try:
-            state_file = self.behavior.bot_paths.workspace_directory / 'behavior_action_state.json'
-            if state_file.exists():
-                state_data = json.loads(state_file.read_text())
-                scope_dict = state_data.get('scope')
-                if scope_dict:
-                    return Scope.from_dict(
-                        scope_dict,
-                        workspace_directory=self.behavior.bot_paths.workspace_directory,
-                        bot_paths=self.behavior.bot_paths
-                    )
-        except Exception:
-            pass
-        return None
+        """Get current scope from bot instance, not from stale state file.
+        
+        Uses the bot's current scope which reflects the actual CLI state,
+        rather than loading from behavior_action_state.json which may be stale.
+        """
+        # Use bot's current scope if available (this reflects actual CLI state)
+        if hasattr(self.behavior, 'bot') and self.behavior.bot:
+            return self.behavior.bot._scope
+        # Fallback: create a new scope with 'all' type if bot not available
+        return Scope(self.behavior.bot_paths.workspace_directory, self.behavior.bot_paths)
     
     @property
     def instructions(self) -> Instructions:

@@ -799,38 +799,38 @@ test('TestSubmitBehaviorRulesThroughPanel', { concurrency: false }, async (t) =>
          *   Given Panel displays behavior hierarchy
          *   And Behavior has rules defined
          *   When User clicks Get Rules button for behavior
-         *   Then System executes submitrules command via CLI
-         *   And System submits formatted rules digest to AI chat
+         *   Then System executes behavior.rules command via CLI
+         *   And System automatically submits formatted rules digest to AI chat
          *   And Rules digest includes descriptions, priorities, DO/DON'T sections
          *   And Rules digest includes file paths for each rule
          */
         const tmpPath = setupTestWorkspace();
         const botDir = getBotDirectory();
-        
+
         const botView = new BotView({}, null, tmpPath, botDir);
         activeBotViews.push(botView);
-        
+
         try {
             // Given Panel displays behavior hierarchy
             // And Behavior has rules defined (tests behavior has rules)
             await botView.execute('tests');
             const statusResponse = await botView.execute('status');
             assert(statusResponse.bot || statusResponse.behaviors, 'Response must have bot or behaviors');
-            
+
             // When User clicks Get Rules button for behavior
-            // This triggers submitrules:tests command which gets rules and submits them
-            const submitRulesResponse = await botView.execute('submitrules:tests');
-            
-            // Then System executes submitrules command via CLI
-            assert(submitRulesResponse, 'Submit rules command should return response');
-            
-            // And System submits formatted rules digest to AI chat
+            // This triggers tests.rules command which gets rules and automatically submits them
+            const submitRulesResponse = await botView.execute('tests.rules');
+
+            // Then System executes behavior.rules command via CLI
+            assert(submitRulesResponse, 'Rules command should return response');
+
+            // And System automatically submits formatted rules digest to AI chat
             // Verify submission occurred
             const responseOutput = JSON.stringify(submitRulesResponse).toLowerCase();
-            assert(responseOutput.includes('submit') || responseOutput.includes('success') || 
-                   responseOutput.includes('rules'), 
-                'Submit rules response should indicate success');
-            
+            assert(responseOutput.includes('submit') || responseOutput.includes('success') ||
+                   responseOutput.includes('rules'),
+                'Rules response should indicate successful submission');
+
             // And Rules digest includes descriptions, priorities, DO/DON'T sections
             // And Rules digest includes file paths for each rule
             // These are verified by the rules action itself during submission

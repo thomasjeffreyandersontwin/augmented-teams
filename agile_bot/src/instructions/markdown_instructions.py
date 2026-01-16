@@ -16,9 +16,13 @@ class MarkdownInstructions(MarkdownAdapter):
         instructions_dict = self.instructions.to_dict()
         output_lines = []
         
-        # SCOPE SECTION (if present and not 'all')
+        # SCOPE SECTION (only show if scope has actual filter values set, or is 'showAll')
         scope = self.instructions.scope
-        if scope and scope.type.value != 'all' and scope.value:
+        # Check if scope has filter values (scope.value) - this determines if scope is "empty"
+        # When scope.type is 'all', scope.value is empty → don't show scope section
+        # When scope.type is 'showAll', scope.value is empty but we show full graph
+        # When scope.type is 'story'/'files', scope.value has filter terms → show filtered results
+        if scope and (scope.value or scope.type.value == 'showAll'):
             from agile_bot.src.cli.adapters import MarkdownAdapter
             
             output_lines.append("## Scope")
@@ -27,11 +31,14 @@ class MarkdownInstructions(MarkdownAdapter):
                 output_lines.append(f"**Story Scope:** {', '.join(scope.value)}")
             elif scope.type.value == 'files':
                 output_lines.append(f"**File Scope:** {', '.join(scope.value)}")
+            elif scope.type.value == 'showAll':
+                output_lines.append("**Scope:** Show All (entire story graph)")
             else:
-                output_lines.append(f"**Scope:** {scope.type.value} - {', '.join(scope.value)}")
+                output_lines.append(f"**Scope:** {scope.type.value} - {', '.join(scope.value) if scope.value else 'all'}")
             output_lines.append("")
             
             # Get the filtered results (story graph or files)
+            # Show results when scope has filter values OR when type is 'showAll'
             results = scope.results
             if results:
                 # Use the appropriate adapter to serialize the scope results

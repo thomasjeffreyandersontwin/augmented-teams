@@ -8,6 +8,16 @@ from .rules_digest_guidance import RulesDigestGuidance
 class RulesAction(Action):
     context_class: Type[ActionContext] = RulesActionContext
 
+    def _prepare_instructions(self, instructions, context: RulesActionContext):
+        """Prepare rules instructions by building rules digest and adding to display content."""
+        rules = Rules(behavior=self.behavior, bot_paths=self.behavior.bot_paths)
+        rules_digest = rules.formatted_rules_digest()
+        rule_names = self._get_rule_names(rules)
+        
+        self._add_rules_list_to_display(instructions, rule_names, rules)
+        self._add_user_message(instructions, context.message if hasattr(context, 'message') else None)
+        self._add_rules_context(instructions, rules_digest, rule_names)
+
     def do_execute(self, context: RulesActionContext) -> Dict[str, Any]:
         instructions = self.instructions.copy()
         rules = Rules(behavior=self.behavior, bot_paths=self.behavior.bot_paths)

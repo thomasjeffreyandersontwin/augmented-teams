@@ -769,10 +769,9 @@ class Bot:
         
         This is a convenience method that:
         1. Saves current position
-        2. Navigates to behavior.rules
-        3. Gets the rules instructions
-        4. Submits them to chat
-        5. Restores previous position
+        2. Navigates to behavior
+        3. Submits rules using behavior.submitRules()
+        4. Restores previous position
         
         Args:
             behavior_name: Name of the behavior to get rules for
@@ -785,19 +784,24 @@ class Bot:
         saved_action = self.behaviors.current.actions.current_action_name if self.behaviors.current else None
         
         try:
-            # Navigate to behavior.rules
-            result = self.execute_command(f"{behavior_name}.rules")
+            # Find the behavior
+            behavior = self.behaviors.find_by_name(behavior_name)
+            if not behavior:
+                return {
+                    'status': 'error',
+                    'message': f'Behavior not found: {behavior_name}'
+                }
             
-            if result.get('status') == 'error':
-                return result
+            # Navigate to behavior (sets it as current)
+            self.behaviors.navigate_to(behavior_name)
             
-            # Submit the rules
-            submit_result = self.submit()
+            # Submit the rules using behavior.submitRules()
+            submit_result = behavior.submitRules()
             
             # Restore previous position if needed
             if saved_behavior and saved_action:
                 try:
-                    self.execute_command(f"{saved_behavior}.{saved_action}")
+                    self.execute(saved_behavior, saved_action)
                 except:
                     pass  # Don't fail if restore doesn't work
             
@@ -810,7 +814,80 @@ class Bot:
                 'message': f'Error getting rules for {behavior_name}: {str(e)}'
             }
     
-    def submit(self) -> Dict[str, Any]:
+    def submit_instructions(self, instructions, behavior_name: str = None, action_name: str = None) -> Dict[str, Any]:
+        """Submit given Instructions object to AI chat.
+        
+        Args:
+            instructions: Instructions object with display_content to submit
+            behavior_name: Optional behavior name (for reporting, will be inferred if not provided)
+            action_name: Optional action name (for reporting, will be inferred if not provided)
+            
+        Returns:
+            Status dict with success message, behavior/action info, and submission details
+        """
+        display_content = instructions.display_content
+        if not display_content:
+            return {
+                'status': 'error',
+                'message': 'No instructions available to submit'
+            }
+        
+        # Convert display_content to string
+        if isinstance(display_content, list):
+            content_str = '\n'.join(display_content)
+        else:
+            content_str = str(display_content)
+        
+        # Copy to clipboard and automate Cursor chat using keyboard shortcuts
+        clipboard_status = 'failed'
+        cursor_status = 'not_attempted'
+        
+        try:
+            import pyperclip
+            import pyautogui
+            import time
+            
+            # Copy to clipboard
+            pyperclip.copy(content_str)
+            clipboard_status = 'success'
+            time.sleep(0.2)
+            
+            # Ctrl+L to open chat
+            pyautogui.hotkey('ctrl', 'l')
+            time.sleep(0.3)
+            
+            # Ctrl+V to paste
+            pyautogui.hotkey('ctrl', 'v')
+            time.sleep(0.2)
+            
+            cursor_status = 'opened'
+            
+        except ImportError as e:
+            clipboard_status = 'failed'
+            cursor_status = f'failed: pyautogui/pyperclip not installed - {str(e)}'
+        except Exception as e:
+            cursor_status = f'failed: {str(e)}'
+        
+        # Get behavior and action from instructions if available, or use provided, or infer from current
+        if not behavior_name:
+            behavior_name = getattr(instructions, 'behavior_name', 
+                                   self.behaviors.current.name if self.behaviors.current else 'unknown')
+        if not action_name:
+            action_name = getattr(instructions, 'action_name', 'unknown')
+        
+        return {
+            'status': 'success',
+            'message': f'Instructions submitted for {behavior_name}.{action_name}',
+            'behavior': behavior_name,
+            'action': action_name,
+            'timestamp': datetime.now().isoformat(),
+            'clipboard_status': clipboard_status,
+            'cursor_status': cursor_status,
+            'instructions_length': len(content_str),
+            'instructions': content_str  # Include for JSON mode
+        }
+    
+    def submit_current_action(self) -> Dict[str, Any]:
         """Submit current action instructions to AI agent.
         
         Gets the current action's instructions (including display_content with all 
@@ -845,64 +922,12 @@ class Bot:
             
             # Get instructions with display_content built
             instructions = action.get_instructions()
-            display_content = instructions.display_content
             
-            if not display_content:
-                return {
-                    'status': 'error',
-                    'message': 'No instructions available to submit'
-                }
-            
-            # Convert display_content to string
-            if isinstance(display_content, list):
-                content_str = '\n'.join(display_content)
-            else:
-                content_str = str(display_content)
-            
-            # Copy to clipboard and automate Cursor chat using keyboard shortcuts
-            clipboard_status = 'failed'
-            cursor_status = 'not_attempted'
-            
-            try:
-                import pyperclip
-                import pyautogui
-                import time
-                
-                # Copy to clipboard
-                pyperclip.copy(content_str)
-                clipboard_status = 'success'
-                time.sleep(0.2)
-                
-                # Ctrl+L to open chat
-                pyautogui.hotkey('ctrl', 'l')
-                time.sleep(0.3)
-                
-                # Ctrl+V to paste
-                pyautogui.hotkey('ctrl', 'v')
-                time.sleep(0.2)
-                
-                cursor_status = 'opened'
-                
-            except ImportError as e:
-                clipboard_status = 'failed'
-                cursor_status = f'failed: pyautogui/pyperclip not installed - {str(e)}'
-            except Exception as e:
-                cursor_status = f'failed: {str(e)}'
-            
-            return {
-                'status': 'success',
-                'message': f'Instructions submitted for {current_behavior.name}.{current_action_name}',
-                'behavior': current_behavior.name,
-                'action': current_action_name,
-                'timestamp': datetime.now().isoformat(),
-                'clipboard_status': clipboard_status,
-                'cursor_status': cursor_status,
-                'instructions_length': len(content_str),
-                'instructions': content_str  # Include for JSON mode
-            }
+            # Use the submit_instructions method to do the actual submission
+            return self.submit_instructions(instructions, current_behavior.name, current_action_name)
             
         except Exception as e:
-            logger.error(f'Error in submit: {str(e)}', exc_info=True)
+            logger.error(f'Error in submit_current_action: {str(e)}', exc_info=True)
             return {
                 'status': 'error',
                 'message': f'Error submitting instructions: {str(e)}'
