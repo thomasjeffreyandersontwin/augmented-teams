@@ -12,9 +12,7 @@ class Behavior:
     def __init__(self, name: str, bot_paths: BotPath, bot_instance=None):
         if not isinstance(bot_paths, BotPath):
             raise TypeError('bot_paths must be an instance of BotPath')
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_path.parent.mkdir(parents=True, exist_ok=True); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behavior.py:15','message':'Behavior.__init__ setting bot_name','data':{'name':name,'bot_directory':str(bot_paths.bot_directory),'bot_directory_name':bot_paths.bot_directory.name},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H2'})+'\n'); log_file.close()
-        # #endregion
         self.bot_name = bot_paths.bot_directory.name
         self.name = name
         self.bot_paths = bot_paths
@@ -64,11 +62,6 @@ class Behavior:
 
     @property
     def is_completed(self) -> bool:
-        """Check if this behavior is completed.
-        
-        Note: Completion should be explicitly tracked, not inferred from position.
-        Returning False until we implement explicit completion tracking.
-        """
         return False
 
     def matches_trigger(self, text: str) -> bool:
@@ -124,16 +117,7 @@ class Behavior:
 
     @property
     def validation_type(self) -> ValidationType:
-        """Determine what this behavior validates by default.
-        
-        Returns:
-            ValidationType.STORY_GRAPH: For behaviors that validate story graph only (shape, discovery, exploration, etc.)
-            ValidationType.FILES: For behaviors that validate files only (code, tests)
-            ValidationType.BOTH: For behaviors that validate both (default fallback)
-        """
-        # Behaviors that validate story graph only
         story_graph_only = {'shape', 'prioritization', 'discovery', 'exploration', 'scenarios'}
-        # Behaviors that validate files only
         files_only = {'code', 'tests', 'test'}
         
         if self.name in story_graph_only:
@@ -158,7 +142,6 @@ class Behavior:
             }
         
         try:
-            # Find the rules action
             rules_action = self.actions.find_by_name('rules')
             if not rules_action:
                 return {
@@ -166,7 +149,6 @@ class Behavior:
                     'message': 'Rules action not found'
                 }
             
-            # Execute the rules action to get instructions
             from ..actions.action_context import ActionContext
             context = rules_action.context_class() if hasattr(rules_action, 'context_class') else ActionContext()
             instructions = rules_action.get_instructions(context)

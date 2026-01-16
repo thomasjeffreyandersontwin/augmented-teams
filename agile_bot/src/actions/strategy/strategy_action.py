@@ -33,55 +33,40 @@ class StrategyAction(Action):
         return self.strategy.assumptions.assumptions
     
     def _prepare_instructions(self, instructions, context: StrategyActionContext):
-        """Add strategy data (criteria, assumptions) and saved decisions to instructions.
-        
-        Note: Workflow instructions come from base_actions/strategy/action_config.json.
-        This method adds only the behavior-specific data.
-        """
         strategy_data = self.strategy.instructions
         
-        # Load saved strategy decisions if they exist
         saved_data = StrategyDecision.load_all(self.behavior.bot_paths)
         saved_behavior_data = saved_data.get(self.behavior.name, {}) if saved_data else {}
         
-        # Build combined strategy structure that includes both template and saved data
         combined_strategy_criteria = {}
         combined_assumptions = {}
         
         if strategy_data:
-            # Get criteria template
             criteria_template = strategy_data.get('strategy_criteria', {})
             combined_strategy_criteria['criteria'] = criteria_template
             
-            # Get assumptions template
             assumptions_template = strategy_data.get('assumptions', {})
             if isinstance(assumptions_template, dict):
-                # If it has 'typical_assumptions' key already, use it
                 if 'typical_assumptions' in assumptions_template:
                     combined_assumptions['typical_assumptions'] = assumptions_template.get('typical_assumptions', [])
                 else:
-                    # Otherwise, treat the whole dict as the typical assumptions list
                     combined_assumptions['typical_assumptions'] = assumptions_template
             elif isinstance(assumptions_template, list):
                 combined_assumptions['typical_assumptions'] = assumptions_template
         
-        # Add saved decisions
         saved_decisions = saved_behavior_data.get('decisions', {})
         if saved_decisions:
             combined_strategy_criteria['decisions_made'] = saved_decisions
         
-        # Add saved assumptions
         saved_assumptions = saved_behavior_data.get('assumptions', [])
         if saved_assumptions:
             combined_assumptions['assumptions_made'] = saved_assumptions
         
-        # Set combined data in instructions
         if combined_strategy_criteria:
             instructions.set('strategy_criteria', combined_strategy_criteria)
         if combined_assumptions:
             instructions.set('assumptions', combined_assumptions)
     
-        # Also load saved clarifications so they're visible on strategy page
         try:
             from ..clarify.requirements_clarifications import RequirementsClarifications
             from ..clarify.required_context import RequiredContext
@@ -98,23 +83,18 @@ class StrategyAction(Action):
             if saved_clarifications and self.behavior.name in saved_clarifications:
                 instructions.set('clarification', saved_clarifications[self.behavior.name])
         except Exception:
-            pass  # Silently skip if can't load clarifications
+            pass
     
     def _format_instructions_for_display(self, instructions) -> str:
-        """Format strategy data for REPL display."""
-        # Get base formatting first (includes scope warning if set)
         output_lines = super()._format_instructions_for_display(instructions).split('\n')
         
-        # Get the instruction data
         instructions_dict = instructions.to_dict()
         
-        # Format strategy criteria
         strategy_criteria = instructions_dict.get('strategy_criteria', {})
         if strategy_criteria:
             output_lines.append("")
             output_lines.append("**Decisions:**")
             
-            # First show criteria template (if available)
             criteria_template = strategy_criteria.get('criteria', {})
             if criteria_template:
                 for criteria_key, criteria_data in criteria_template.items():
@@ -129,7 +109,6 @@ class StrategyAction(Action):
                         for option in options:
                             output_lines.extend(self._format_option(option))
             
-            # Then show saved decisions
             saved_decisions = strategy_criteria.get('decisions', {})
             if saved_decisions:
                 output_lines.append("")
@@ -143,19 +122,16 @@ class StrategyAction(Action):
                     else:
                         output_lines.append(f"  {decision_value}")
         
-        # Format assumptions
         assumptions = instructions_dict.get('assumptions', {})
         if assumptions:
             output_lines.append("")
             output_lines.append("**Assumptions:**")
             
-            # Show template assumptions
             typical_assumptions = assumptions.get('typical_assumptions', [])
             if typical_assumptions:
                 for assumption in typical_assumptions:
                     output_lines.append(f"- {assumption}")
             
-            # Show saved assumptions  
             saved_assumptions = assumptions.get('assumptions', [])
             if saved_assumptions:
                 output_lines.append("")
@@ -166,7 +142,6 @@ class StrategyAction(Action):
         return "\n".join(output_lines)
 
     def _format_option(self, option) -> list:
-        """Format a single decision criteria option for display."""
         lines = []
         if isinstance(option, dict):
             name = option.get('name', option.get('id', 'Unknown'))
@@ -188,7 +163,6 @@ class StrategyAction(Action):
         return lines
 
     def do_execute(self, context: StrategyActionContext = None):
-        """Execute strategy action - get instructions and save if decisions provided."""
         if context is None:
             context = StrategyActionContext()
         result = self.get_instructions(context)

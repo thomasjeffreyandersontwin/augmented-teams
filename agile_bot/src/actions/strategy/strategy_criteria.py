@@ -8,7 +8,6 @@ class StrategyCriteria:
         self.outcome = criteria_data.get('outcome', None)
 
     def _format_options(self, options: List[Any]) -> List[Any]:
-        """Format options, converting example arrays to formatted strings."""
         formatted_options = []
         for option in options:
             if isinstance(option, dict):
@@ -17,12 +16,10 @@ class StrategyCriteria:
                     formatted_option['example'] = self._format_example(formatted_option['example'])
                 formatted_options.append(formatted_option)
             else:
-                # Option is a string or other type, pass through as-is
                 formatted_options.append(option)
         return formatted_options
 
     def _format_example(self, example_lines: List[str]) -> str:
-        """Convert example array to properly formatted string."""
         return '\n'.join(example_lines)
 
     @property
@@ -50,7 +47,6 @@ class StrategyCriteria:
         self._outcome = value
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert StrategyCriteria to a dictionary for JSON serialization."""
         return {
             'question': self.question,
             'options': self.options,

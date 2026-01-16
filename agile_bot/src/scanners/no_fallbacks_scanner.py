@@ -1,4 +1,3 @@
-"""Scanner for detecting fallback/default values in tests."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .test_scanner import TestScanner
 from .violation import Violation
-
 
 class NoFallbacksScanner(TestScanner):
     
@@ -27,11 +25,11 @@ class NoFallbacksScanner(TestScanner):
         violations = []
         
         fallback_patterns = [
-            r'\bor\s+[A-Z]\w+\(\)',  # or DefaultValue()
-            r'\bdefault\s*=',  # default =
-            r'\bfallback\s*=',  # fallback =
-            r'\bor\s+None',  # or None (as fallback)
-            r'\bif\s+.*\s+else\s+["\']',  # if ... else "default"
+            r'\bor\s+[A-Z]\w+\(\)',
+            r'\bdefault\s*=',
+            r'\bfallback\s*=',
+            r'\bor\s+None',
+            r'\bif\s+.*\s+else\s+["\']',
         ]
         
         for line_num, line in enumerate(lines, 1):

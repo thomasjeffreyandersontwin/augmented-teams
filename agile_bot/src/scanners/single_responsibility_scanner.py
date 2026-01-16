@@ -1,4 +1,3 @@
-"""Scanner for validating single responsibility principle."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -11,7 +10,6 @@ from .complexity_metrics import ComplexityMetrics
 from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
-
 
 class SingleResponsibilityScanner(CodeScanner):
     
@@ -35,31 +33,15 @@ class SingleResponsibilityScanner(CodeScanner):
     def _check_function_sr(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         func_name = func_node.name.lower()
         
-        # Skip test helper functions (even if they somehow got through)
         if func_name.startswith(('given_', 'when_', 'then_', 'test_')):
             return None
         
         violations = []
         
-        # 1. Check name patterns (existing logic)
         name_violation = self._check_name_patterns(func_node, file_path, rule_obj)
         if name_violation:
             violations.append(name_violation)
         
-        # 2. AST-based responsibility detection - DISABLED
-        # The detect_responsibilities heuristic was too aggressive - it flagged 
-        # implementation details (I/O, path math, assignments) as separate "responsibilities"
-        # when they're really just steps in accomplishing ONE responsibility.
-        # Example: A template class that loads from file was flagged for:
-        #   - I/O (read_json_file)
-        #   - Computation (path / filename)  
-        #   - Transformation (storing result)
-        # But these are all ONE responsibility: "manage template".
-        # 
-        # For real SRP violations, use:
-        # - LCOM metric (low cohesion = methods don't share attributes)
-        # - Name pattern detection ("validate_and_save" = two responsibilities)
-        # - Manual review
         
         return violations[0] if violations else None
     

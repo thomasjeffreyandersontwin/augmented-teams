@@ -148,8 +148,6 @@ class ValidationReportFormatter:
         file_str = file_str.replace('\\', '/')
         if len(file_str) >= 2 and file_str[1] == ':':
             file_str = file_str[0].upper() + ':' + file_str[2:]
-        # URL-encode the path to handle special characters like emojis
-        # Preserve forward slashes (path separators) and colons (Windows drive letters)
         encoded_path = quote(file_str, safe='/:')
         uri = f'vscode://file/{encoded_path}'
         return f'{uri}:{line_number}' if line_number else uri

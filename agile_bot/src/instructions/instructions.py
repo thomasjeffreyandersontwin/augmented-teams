@@ -5,7 +5,6 @@ if TYPE_CHECKING:
     from agile_bot.src.bot_path import BotPath
     from agile_bot.src.actions.action_context import Scope
 
-
 class Instructions:
     
     def __init__(self, base_instructions: List[str] = None, bot_paths: 'BotPaths' = None, scope: Optional['Scope'] = None):
@@ -15,9 +14,8 @@ class Instructions:
         self._bot_paths = bot_paths
         self._scope = scope
         
-        # Domain objects for delegation (new pattern)
-        self._guardrails = None  # Guardrails object
-        self._strategy = None    # Strategy object
+        self._guardrails = None
+        self._strategy = None
     
     def add(self, *lines: str) -> 'Instructions':
         for line in lines:
@@ -35,14 +33,11 @@ class Instructions:
     
     @property
     def scope(self) -> Optional['Scope']:
-        """Get the scope filter if set."""
         return self._scope
     
     @property
     def context_sources_text(self) -> List[str]:
-        """Generate standard 'Look for context in the following locations' section with actual paths."""
         if not self._bot_paths:
-            # Return placeholder version if bot_paths not available
             return [
                 "**Look for context in the following locations:**",
                 "- in this message and chat history",
@@ -52,7 +47,6 @@ class Instructions:
             ]
         
         workspace = str(self._bot_paths.workspace_directory)
-        # Convert Windows paths to forward slashes for cross-platform compatibility
         workspace = workspace.replace('\\', '/')
         return [
             "**Look for context in the following locations:**",
@@ -69,7 +63,6 @@ class Instructions:
         if not self._bot_paths:
             raise ValueError("bot_paths not set. Pass bot_paths to Instructions constructor.")
         
-        # Write to .cursor/display/ directory under workspace
         display_dir = self._bot_paths.workspace_directory / '.cursor' / 'display'
         display_dir.mkdir(parents=True, exist_ok=True)
         
@@ -88,7 +81,6 @@ class Instructions:
     def update(self, data: Dict[str, Any]) -> 'Instructions':
         for key, value in data.items():
             if key == 'base_instructions':
-                # Extend, don't replace
                 if isinstance(value, list):
                     self._data['base_instructions'].extend(value)
             else:

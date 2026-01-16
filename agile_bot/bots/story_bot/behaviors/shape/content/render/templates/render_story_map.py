@@ -91,8 +91,12 @@ def collect_all_stories_in_epic(epic):
     """Collect all stories from an epic and its sub-epics recursively"""
     all_stories = []
     
-    # Add direct stories
+    # Add direct stories (legacy format)
     all_stories.extend(epic.get('stories', []))
+    
+    # Add stories from story_groups (new format)
+    for story_group in epic.get('story_groups', []):
+        all_stories.extend(story_group.get('stories', []))
     
     # Add stories from sub-epics
     for sub_epic in epic.get('sub_epics', []):
@@ -118,8 +122,15 @@ def render_sub_epic(sub_epic, indent_level, is_first_in_sequence=False, all_stor
             nested_lines = render_sub_epic(nested, indent_level + 1, i == 0, all_stories_in_epic)
             lines.extend(nested_lines)
     
-    # Render stories
-    stories = sub_epic.get('stories', [])
+    # Render stories from story_groups (new format) or direct stories (legacy format)
+    stories = []
+    # Collect stories from story_groups
+    for story_group in sub_epic.get('story_groups', []):
+        stories.extend(story_group.get('stories', []))
+    # Add direct stories (legacy format)
+    if not stories:
+        stories = sub_epic.get('stories', [])
+    
     if stories:
         # Use all stories in epic for workflow_children lookup
         story_lines = render_stories_with_workflow(stories, indent_level + 1, all_stories_in_epic or stories, set())
@@ -148,8 +159,15 @@ def render_epic(epic, indent_level, is_first_in_sequence=False):
             sub_epic_lines = render_sub_epic(sub_epic, indent_level + 1, i == 0, all_stories_in_epic)
             lines.extend(sub_epic_lines)
     
-    # Render direct stories (if any)
-    stories = epic.get('stories', [])
+    # Render direct stories (if any) - check both story_groups and direct stories
+    stories = []
+    # Collect stories from story_groups
+    for story_group in epic.get('story_groups', []):
+        stories.extend(story_group.get('stories', []))
+    # Add direct stories (legacy format)
+    if not stories:
+        stories = epic.get('stories', [])
+    
     if stories:
         story_lines = render_stories_with_workflow(stories, indent_level + 1, all_stories_in_epic or stories, set())
         lines.extend(story_lines)

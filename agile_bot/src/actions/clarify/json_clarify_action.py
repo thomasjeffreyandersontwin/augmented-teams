@@ -1,21 +1,15 @@
-"""
-JSON adapter for ClarifyContextAction.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.actions.clarify.clarify_action import ClarifyContextAction
 
-
 class JSONClarifyAction(JSONAdapter):
-    """Serializes ClarifyContextAction to JSON - exposes all ClarifyContextAction properties."""
     
     def __init__(self, action: ClarifyContextAction, is_current: bool = False, is_completed: bool = False):
         self.action = action
         self.is_current = is_current
         self.is_completed = is_completed
     
-    # Expose ALL domain properties
     @property
     def action_name(self):
         return self.action.action_name
@@ -50,21 +44,17 @@ class JSONClarifyAction(JSONAdapter):
     
     @property
     def required_context(self):
-        """Clarify-specific property."""
         return self.action.required_context
     
     @property
     def key_questions(self):
-        """Clarify-specific property."""
         return self.action.key_questions
     
     @property
     def evidence(self):
-        """Clarify-specific property."""
         return self.action.evidence
     
     def to_dict(self) -> dict:
-        """Convert ClarifyContextAction to dict."""
         result = {
             'action_name': self.action.action_name,
             'description': self.action.description,
@@ -76,7 +66,6 @@ class JSONClarifyAction(JSONAdapter):
             'behavior': self.action.behavior.name if self.action.behavior else None,
         }
         
-        # Add clarify-specific properties
         if self.action.required_context:
             key_questions_data = None
             if self.action.key_questions and hasattr(self.action.key_questions, 'questions'):
@@ -94,5 +83,4 @@ class JSONClarifyAction(JSONAdapter):
         return result
     
     def deserialize(self, data: str) -> dict:
-        """Parse JSON string to dict."""
         return json.loads(data)

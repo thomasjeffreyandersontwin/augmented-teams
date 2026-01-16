@@ -1,18 +1,13 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
-
 class _MarkdownHelper:
-    """Minimal markdown formatting helper for validation output."""
     
     def format_heading(self, text: str, level: int = 1) -> str:
-        """Format markdown heading."""
         return f"{'#' * level} {text}"
     
     def format_bold(self, text: str) -> str:
-        """Format bold text."""
         return f"**{text}**"
-
 
 class ValidationViolationsBuilder:
 

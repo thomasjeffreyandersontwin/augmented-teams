@@ -1,11 +1,9 @@
-"""Scanner for validating Given describes preconditions, not functionality."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 import re
-
 
 class GivenPreconditionScanner(StoryScanner):
     
@@ -41,7 +39,6 @@ class GivenPreconditionScanner(StoryScanner):
     def _check_given_is_functionality(self, step: str, node: StoryNode, scenario_idx: int, step_idx: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
         step_lower = step.lower()
         
-        # Functionality indicators (should be in When/Then, not Given)
         functionality_patterns = [
             r'\b(processes|validates|calculates|saves|loads|displays|sends|receives)\b',
             r'\b(handles|manages|controls|orchestrates|coordinates)\b',

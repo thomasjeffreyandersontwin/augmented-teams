@@ -17,15 +17,6 @@ class ActionScope:
     
     @classmethod
     def from_context(cls, context: 'ScopeActionContext', bot_paths: Optional[BotPath] = None) -> 'ActionScope':
-        """Create ActionScope from ScopeActionContext.
-        
-        Args:
-            context: ScopeActionContext with typed scope
-            bot_paths: Optional BotPath instance
-            
-        Returns:
-            ActionScope instance
-        """
         params = {}
         if context.scope:
             params['scope'] = context.scope.to_dict()
@@ -80,7 +71,6 @@ class ActionScope:
                 continue
             self._handle_custom_parameter(key, value)
         
-        # Default to 'all' if no scope configured
         if not self._scope_config:
             self._scope_config['all'] = True
 

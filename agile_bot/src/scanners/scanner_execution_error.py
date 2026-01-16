@@ -1,5 +1,4 @@
 class ScannerExecutionError(Exception):
-    """Exception raised when a scanner fails to execute."""
 
     def __init__(self, rule_file: str, scanner_path: str, original_error: Exception):
         self.rule_file = rule_file

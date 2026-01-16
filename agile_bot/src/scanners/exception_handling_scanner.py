@@ -1,4 +1,3 @@
-"""Scanner for validating exception handling is proper."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import TryBlocks
-
 
 class ExceptionHandlingScanner(CodeScanner):
     
@@ -33,7 +31,6 @@ class ExceptionHandlingScanner(CodeScanner):
                 handler_body = handler.body
                 if len(handler_body) == 0:
                     line_number = handler.lineno if hasattr(handler, 'lineno') else None
-                    # No code snippet for empty except blocks
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Empty except block at line {line_number} - exceptions should be logged or rethrown, never swallowed',

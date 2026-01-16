@@ -128,27 +128,21 @@ class ValidationScannerStatusBuilder:
         return lines
 
     def _get_overall_status(self, stats: ValidationStats) -> tuple:
-        # Critical only for execution failures (scanner crashes) or multiple load failures
         if stats.execution_failed_count > 0:
             return ('🟥', 'CRITICAL ISSUES')
         if stats.load_failed_count > 2:
             return ('🟥', 'CRITICAL ISSUES')
         
-        # Perfect - no violations
         if not stats.has_violations:
             return ('🟩', 'ALL CLEAN')
         
-        # Calculate violation density (approximate - assume ~1 file per violation as baseline)
-        # If violations are low relative to typical codebase size, consider it healthy
         violation_density = stats.total_violations
         
-        # Healthy: low violation count or mostly warnings
         if violation_density < 150 and stats.rules_with_errors == 0:
             return ('🟩', 'HEALTHY')
         if violation_density < MAX_VIOLATION_DENSITY_FOR_GOOD_STATUS and stats.rules_with_errors <= MAX_RULES_WITH_ERRORS_FOR_GOOD_STATUS:
             return ('🟨', 'GOOD - Minor Issues')
         
-        # Moderate issues
         if stats.rules_with_errors > 0:
             return ('🟨', 'NEEDS ATTENTION')
         

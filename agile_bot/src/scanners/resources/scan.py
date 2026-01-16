@@ -1,4 +1,3 @@
-"""Scan resource representing a scan operation."""
 
 from typing import List, TYPE_CHECKING
 
@@ -6,7 +5,6 @@ if TYPE_CHECKING:
     from .scope import Scope
     from .violation import Violation
     from agile_bot.src.actions.rules.rule import Rule
-
 
 class Scan:
     
@@ -34,14 +32,6 @@ class Scan:
         self._violations.extend(violations)
     
     def undergoes_scan(self, scanner) -> List['Violation']:
-        # The scanner will call back to add violations
         scanner.performs_scan_for_one_rule(self, self._scope, self._rule)
         return self._violations
-
-
-
-
-
-
-
 

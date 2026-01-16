@@ -1,11 +1,9 @@
-"""Scanner for validating Scenario Outline usage."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 import re
-
 
 class ScenarioOutlineScanner(StoryScanner):
     

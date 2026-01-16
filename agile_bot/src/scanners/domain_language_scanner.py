@@ -1,11 +1,9 @@
-"""Scanner for validating domain-specific language in domain models."""
 
 from typing import List, Dict, Any, Optional
 import re
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class DomainLanguageScanner(DomainScanner):
     
@@ -14,7 +12,7 @@ class DomainLanguageScanner(DomainScanner):
         r'\bconfig\b',
         r'\bparameter\b',
         r'\bresult\b',
-        r'\bvalue\b',  # Only if used generically
+        r'\bvalue\b',
     ]
     
     GENERATE_PATTERNS = [
@@ -74,10 +72,5 @@ class DomainLanguageScanner(DomainScanner):
         return violations
     
     def _is_domain_specific(self, name: str) -> bool:
-        # Simple heuristic: if it's just "Data" or "Config" it's generic
-        # If it's "PortfolioData" it might be okay in some contexts, but ideally should be "Portfolio"
         return len(name.split()) > 1 or name.lower() not in ['data', 'config', 'parameter', 'result']
-
-
-
 

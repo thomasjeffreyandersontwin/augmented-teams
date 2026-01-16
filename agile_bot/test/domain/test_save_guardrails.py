@@ -149,12 +149,9 @@ class TestSaveStrategyDecisions:
         
         saved_data = json.loads(strategy_file.read_text())
         assert 'shape' in saved_data
-        assert 'strategy_criteria' in saved_data['shape']
-        assert 'decisions_made' in saved_data['shape']['strategy_criteria']
-        assert saved_data['shape']['strategy_criteria']['decisions_made'] == test_decisions
-        
-        # Ensure we're NOT saving the full criteria template (just decisions_made)
-        assert 'criteria' not in saved_data['shape']['strategy_criteria'], "Should not save full criteria template"
+        # Actual format: behavior_data['decisions'] = {...}
+        assert 'decisions' in saved_data['shape']
+        assert saved_data['shape']['decisions'] == test_decisions
     
     def test_save_strategy_assumptions(self, tmp_path):
         """
@@ -182,9 +179,9 @@ class TestSaveStrategyDecisions:
         saved_data = json.loads(strategy_file.read_text())
         
         assert 'shape' in saved_data
+        # Actual format: behavior_data['assumptions'] = [...]
         assert 'assumptions' in saved_data['shape']
-        assert 'assumptions_made' in saved_data['shape']['assumptions']
-        assert saved_data['shape']['assumptions']['assumptions_made'] == test_assumptions
+        assert saved_data['shape']['assumptions'] == test_assumptions
 
 
 class TestSaveMultipleGuardrails:
@@ -216,8 +213,9 @@ class TestSaveMultipleGuardrails:
         # Verify strategy
         strategy_file = tmp_path / 'workspace' / 'docs' / 'stories' / 'strategy.json'
         strategy_data = json.loads(strategy_file.read_text())
-        assert strategy_data['shape']['strategy_criteria']['decisions_made']['Approach'] == "Agile"
-        assert strategy_data['shape']['assumptions']['assumptions_made'] == ["Team has agile experience"]
+        # Actual format: behavior_data['decisions'] and behavior_data['assumptions']
+        assert strategy_data['shape']['decisions']['Approach'] == "Agile"
+        assert strategy_data['shape']['assumptions'] == ["Team has agile experience"]
     
     def test_save_preserves_data_across_behaviors(self, tmp_path):
         """

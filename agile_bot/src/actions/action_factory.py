@@ -52,7 +52,6 @@ class ActionFactory:
         return self._get_default_action_class_path(action_name)
 
     def _get_default_action_class_path(self, action_name: str) -> str:
-        # Special case for 'rules' - it's in agile_bot.src.rules, not agile_bot.src.actions.rules
         if action_name == 'rules':
             return 'agile_bot.src.rules.rules_action.RulesAction'
         

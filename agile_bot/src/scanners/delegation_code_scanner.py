@@ -1,4 +1,3 @@
-"""Scanner for validating delegation to lowest-level objects in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -9,7 +8,6 @@ from .violation import Violation
 from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
-
 
 class DelegationCodeScanner(CodeScanner):
     
@@ -36,7 +34,6 @@ class DelegationCodeScanner(CodeScanner):
         
         for node in ast.walk(class_node):
             if isinstance(node, ast.FunctionDef):
-                # Skip __init__ methods - setup code is fine
                 if node.name == '__init__':
                     continue
                 
@@ -46,25 +43,20 @@ class DelegationCodeScanner(CodeScanner):
                             if isinstance(stmt.iter.value, ast.Name) and stmt.iter.value.id == 'self':
                                 collection_name = stmt.iter.attr
                                 
-                                # Skip if this class IS the collection class iterating its own collection
                                 if is_collection_class:
-                                    # e.g., Actions class with _actions attribute, Behaviors with _behaviors
                                     class_name_lower = class_node.name.lower()
                                     attr_name_lower = collection_name.lower()
-                                    # Match patterns like: Actions -> _actions, Behaviors -> _behaviors
-                                    # Also handle: Actions -> actions (without underscore)
                                     attr_without_underscore = attr_name_lower.lstrip('_')
                                     if attr_name_lower == f"_{class_name_lower}" or attr_name_lower == class_name_lower or attr_without_underscore == class_name_lower:
-                                        continue  # This is fine - collection class iterating its own collection
+                                        continue
                                 
                                 if self._is_plain_collection(class_node, collection_name, content):
-                                    continue  # Plain lists are fine to iterate
+                                    continue
                                 
                                 if self._is_class_constant(class_node, collection_name):
-                                    continue  # Class constants are fine to iterate
+                                    continue
                                 
                                 if self._is_collection_name(collection_name):
-                                    # No code snippet for delegation violations (for loop line)
                                     violations.append(
                                         Violation(
                                             rule=rule_obj,
@@ -79,15 +71,12 @@ class DelegationCodeScanner(CodeScanner):
     
     def _is_collection_class(self, class_name: str) -> bool:
         name_lower = class_name.lower()
-        # Patterns like "Actions", "Behaviors", "Users", etc.
         return (name_lower.endswith('s') and len(name_lower) > 3) or 'collection' in name_lower
     
     def _is_plain_collection(self, class_node: ast.ClassDef, attr_name: str, content: str) -> bool:
         attr_name_lower = attr_name.lower()
         
-        # Skip private attributes that are clearly plain lists
         if attr_name_lower.startswith('_'):
-            # Common patterns for plain lists
             plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element']
             if any(indicator in attr_name_lower for indicator in plain_list_indicators):
                 return True
@@ -133,7 +122,6 @@ class DelegationCodeScanner(CodeScanner):
                         if isinstance(node.value, (ast.List, ast.Dict, ast.Tuple)):
                             return True
         
-        # Also check for common constant name patterns
         constant_patterns = ['PATTERNS', 'RULES', 'PATTERN', 'RULE', 'CONSTANTS', 'CONFIG', 'SETTINGS']
         if attr_name in constant_patterns or any(attr_name.endswith(f'_{p}') for p in constant_patterns):
             return True
@@ -143,21 +131,13 @@ class DelegationCodeScanner(CodeScanner):
     def _is_collection_name(self, name: str) -> bool:
         name_lower = name.lower()
         
-        # Skip if it's clearly a plain list based on name patterns
         if name_lower.startswith('_'):
             plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element']
             if any(indicator in name_lower for indicator in plain_list_indicators):
                 return False
         
-        # Skip if it's uppercase (likely a constant)
         if name.isupper() or name == name.upper():
             return False
         
-        # Only flag if it looks like a collection class name
-        # e.g., "behaviors", "actions" (plural nouns representing collections of objects)
-        # but not "_exclude_patterns" or "_render_specs"
         return (name_lower.endswith('s') and len(name_lower) > 3) or 'collection' in name_lower
-
-
-
 

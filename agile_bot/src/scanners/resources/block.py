@@ -1,4 +1,3 @@
-"""Block resource representing a code block."""
 
 from typing import List, Optional, TYPE_CHECKING
 
@@ -72,7 +71,6 @@ class Block:
     def calculate_complexity(self, complexity_metrics) -> dict:
         if self._complexity_metrics is None:
             self._complexity_metrics = complexity_metrics
-        # This would use ComplexityMetrics to calculate various metrics
         return {}
     
     def check_class_naming(self, class_naming_checker) -> List['Violation']:
@@ -86,15 +84,4 @@ class Block:
             self._method_naming_checker = method_naming_checker
         return self._method_naming_checker.checks_method_name_matches_scenario(self) + \
                self._method_naming_checker.validates_method_naming_conventions(self)
-
-
-
-
-
-
-
-
-
-
-
 

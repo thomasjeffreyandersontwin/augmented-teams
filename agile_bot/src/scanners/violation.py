@@ -1,10 +1,8 @@
-"""Violation DTO class for rule violations."""
 
 from typing import Optional, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from agile_bot.src.actions.rules.rule import Rule
-
 
 class Violation:
     
@@ -51,8 +49,8 @@ class Violation:
             'rule_file': self._rule.rule_file,
             'violation_message': self._violation_message,
             'severity': self._severity,
-            'line_number': self._line_number,  # Always include, even if None
-            'location': self._location  # Always include, even if None
+            'line_number': self._line_number,
+            'location': self._location
         }
         
         return result

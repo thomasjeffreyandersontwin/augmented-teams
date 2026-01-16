@@ -67,7 +67,6 @@ class RenderConfigLoader:
             except ImportError:
                 continue
         
-        # If module not found, skip verification (may be in test environment)
         if module is None:
             return
         

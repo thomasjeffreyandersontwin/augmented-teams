@@ -1,4 +1,3 @@
-"""Scanner for validating mocks are only for external boundaries."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .test_scanner import TestScanner
 from .violation import Violation
-
 
 class MockBoundariesScanner(TestScanner):
     
@@ -28,17 +26,16 @@ class MockBoundariesScanner(TestScanner):
         lines = content.split('\n')
         
         mock_patterns = [
-            r'@patch\s*\(',  # Python unittest.mock.patch
-            r'@mock\.',  # Python mock decorator
-            r'Mock\s*\(',  # Mock() constructor
-            r'mock\.',  # mock. calls
-            r'@pytest\.fixture.*mock',  # pytest mock fixtures
+            r'@patch\s*\(',
+            r'@mock\.',
+            r'Mock\s*\(',
+            r'mock\.',
+            r'@pytest\.fixture.*mock',
         ]
         
-        # Internal code patterns (shouldn't be mocked)
         internal_patterns = [
-            r'mock.*\b(validate|calculate|process|format|parse)\b',  # Internal business logic
-            r'mock.*\b(helper|util|common|shared)\b',  # Internal helpers
+            r'mock.*\b(validate|calculate|process|format|parse)\b',
+            r'mock.*\b(helper|util|common|shared)\b',
         ]
         
         for line_num, line in enumerate(lines, 1):

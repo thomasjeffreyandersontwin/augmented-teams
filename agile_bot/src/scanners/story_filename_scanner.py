@@ -1,4 +1,3 @@
-"""Scanner for validating story filenames match story names."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 import re
-
 
 class StoryFilenameScanner(StoryScanner):
     
@@ -18,9 +16,6 @@ class StoryFilenameScanner(StoryScanner):
             if not story_name:
                 return violations
             
-            # This scanner would need access to actual file system to check filenames
-            # For now, we can validate story names don't contain actor prefixes
-            # that shouldn't be in filenames
             
             violation = self._check_actor_in_story_name(story_name, node, rule_obj)
             if violation:
@@ -29,7 +24,6 @@ class StoryFilenameScanner(StoryScanner):
         return violations
     
     def _check_actor_in_story_name(self, story_name: str, node: StoryNode, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        # Common actor prefixes that shouldn't be in story names/filenames
         actor_prefixes = [
             'AI Chat', 'Router', 'Bot Behavior', 'GatherContextAction',
             'Agent', 'System', 'User', 'Admin', 'Customer'

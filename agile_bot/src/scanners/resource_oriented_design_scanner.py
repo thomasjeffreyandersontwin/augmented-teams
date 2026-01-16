@@ -1,4 +1,3 @@
-"""Scanner for validating resource-oriented design in domain models."""
 
 from typing import List, Dict, Any, Optional
 from .domain_scanner import DomainScanner
@@ -6,20 +5,11 @@ from .domain_concept_node import DomainConceptNode
 from .violation import Violation
 from .vocabulary_helper import VocabularyHelper
 
-
 class ResourceOrientedDesignScanner(DomainScanner):
-    """
-    Validates that domain concepts are named after resources (what they ARE)
-    rather than actions (what they DO).
-    
-    Uses NLTK to detect agent nouns (Manager, Loader, Handler, etc.)
-    which are nouns derived from verbs that describe doers of actions.
-    """
     
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check if concept name is an agent noun (e.g., Manager, Loader, Handler)
         is_agent, base_verb, suffix = VocabularyHelper.is_agent_noun(node.name)
         
         if is_agent:
@@ -39,18 +29,7 @@ class ResourceOrientedDesignScanner(DomainScanner):
         
         return violations
 
-
-
-
-
         return violations
 
-
-
-
-
         return violations
-
-
-
 

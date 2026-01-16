@@ -11,26 +11,13 @@ from ..bot.workspace import get_python_workspace_root, get_base_actions_director
 
 logger = logging.getLogger(__name__)
 
-
 class TypeHintConverter:
-    """Converts Python type hints to CLI-friendly type strings for help display"""
     
     @staticmethod
     def to_cli_type(python_type) -> str:
-        """Convert Python type hint to CLI-friendly string.
-        
-        Examples:
-            str -> "string"
-            Path -> "path"
-            dict -> "dict"
-            Dict[str, Any] -> "dict"
-            List[str] -> "list"
-        """
-        # Handle None type
         if python_type is type(None):
             return "none"
         
-        # Handle basic types
         if python_type == str:
             return "string"
         elif python_type == Path:
@@ -50,7 +37,6 @@ class TypeHintConverter:
         elif python_type == set:
             return "set"
         
-        # Handle generic types (Dict[...], List[...], etc.)
         origin = get_origin(python_type)
         if origin is dict:
             return "dict"
@@ -61,11 +47,10 @@ class TypeHintConverter:
         elif origin is set:
             return "set"
         
-        # Fallback for unknown types
         return "value"
 
 class HelpAction(Action):
-    context_class: Type[ActionContext] = ActionContext  # Help action needs no parameters
+    context_class: Type[ActionContext] = ActionContext
     
     def do_execute(self, context: ActionContext) -> Dict[str, Any]:
         instructions = self.instructions.copy()
@@ -157,7 +142,6 @@ class HelpAction(Action):
         if cmd_name == f'{bot_name}-set_working_dir':
             return "Set Working Dir"
         behavior_name = cmd_name.replace(f'{bot_name}-', '')
-        # Try to extract description from cursor command markdown file first
         description = self._extract_description_from_command_file(cmd_name)
         if description:
             return description
@@ -173,7 +157,6 @@ class HelpAction(Action):
         except Exception:
             logger.debug(f'Failed to get description for behavior {behavior_name}')
         
-        # Try to extract description from cursor command markdown file
         description = self._extract_description_from_command_file(behavior_name)
         if description:
             return description
@@ -230,8 +213,6 @@ class HelpAction(Action):
         return params
     
     def _get_parameter_description(self, action_name: str, param_name: str) -> str:
-        """Get meaningful description for a parameter (like ActionDataCollector does)"""
-        # Check common parameter patterns
         if 'answers' in param_name or 'key_questions_answered' in param_name:
             return "Dict mapping question keys to answer strings"
         elif 'evidence_provided' in param_name or 'evidence' in param_name:
@@ -248,7 +229,6 @@ class HelpAction(Action):
             return "Optional parameter"
     
     def _get_scope_description(self, action_name: str) -> str:
-        """Get scope description for an action"""
         if action_name == 'validate':
             return "Scope structure: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>}"
         return "Scope structure: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}"
@@ -274,7 +254,6 @@ class HelpAction(Action):
             instructions.add_display('```')
             instructions.add_display(f'/{self.behavior.bot_name}-<behavior> {action_name} [parameters]')
             
-            # Dynamically get parameters from context class
             params = self._get_parameters_from_context_class(action_name)
             if params:
                 instructions.add_display('')

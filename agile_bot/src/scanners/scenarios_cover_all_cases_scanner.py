@@ -1,11 +1,9 @@
-"""Scanner for validating scenarios cover all cases (happy path, edge cases, error cases)."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 import re
-
 
 class ScenariosCoverAllCasesScanner(StoryScanner):
     
@@ -67,7 +65,6 @@ class ScenariosCoverAllCasesScanner(StoryScanner):
     
     def _is_happy_path(self, scenario_text: str) -> bool:
         text_lower = scenario_text.lower()
-        # Happy path indicators: valid, success, saves, completes, etc.
         happy_indicators = ['valid', 'success', 'saves', 'completes', 'accepts', 'processes']
         return any(indicator in text_lower for indicator in happy_indicators)
     
@@ -79,7 +76,6 @@ class ScenariosCoverAllCasesScanner(StoryScanner):
     
     def _is_error_case(self, scenario_text: str) -> bool:
         text_lower = scenario_text.lower()
-        # Error case indicators: error, invalid, fails, rejects, exception, wrong
         error_indicators = ['error', 'invalid', 'fails', 'rejects', 'exception', 'wrong', 'missing', 'not found']
         return any(indicator in text_lower for indicator in error_indicators)
 

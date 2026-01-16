@@ -1,10 +1,8 @@
-"""Scanner for validating delegation to lowest-level objects in domain models."""
 
 from typing import List, Dict, Any, Optional
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class DelegationScanner(DomainScanner):
     
@@ -16,9 +14,7 @@ class DelegationScanner(DomainScanner):
             collaborators = responsibility_data.get('collaborators', [])
             resp_lower = responsibility_name.lower()
             
-            # Check for patterns like "Find X by Y" where X should be found by collection class
             if 'find' in resp_lower and 'by' in resp_lower:
-                # If this is not a collection class, it might be doing child's work
                 if not self._is_collection_class(node.name):
                     violations.append(
                         Violation(
@@ -33,10 +29,6 @@ class DelegationScanner(DomainScanner):
         return violations
     
     def _is_collection_class(self, name: str) -> bool:
-        # Simple heuristic: plural forms or explicit "Collection" marker
         name_lower = name.lower()
         return (name_lower.endswith('s') and len(name_lower) > 3) or 'collection' in name_lower
-
-
-
 

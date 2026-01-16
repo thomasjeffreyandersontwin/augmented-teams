@@ -1,9 +1,3 @@
-"""Scanner for detecting Dict[str, Any] and other type-unsafe patterns.
-
-This scanner enforces the use of typed objects (dataclasses, classes) instead of 
-generic dictionaries for structured data. Dict[str, Any] hides structure, prevents
-IDE autocomplete, and allows runtime errors that could be caught at compile time.
-"""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -16,26 +10,18 @@ from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
-
 class TypeSafetyScanner(CodeScanner):
     
-    # Methods that are allowed to use Dict[str, Any] (infrastructure, not business logic)
     ALLOWED_DICT_ANY_METHODS = {
-        # JSON serialization/deserialization
         'to_dict', 'from_dict', 'to_json', 'from_json', 'serialize', 'deserialize',
         'read_json_file', 'write_json_file', 'load_json', 'save_json',
-        # Test helpers
         'create_test_data', 'mock_response',
-        # Scanner infrastructure (they receive generic rule data)
         'scan', 'scan_file', 'scan_cross_file',
-        # Configuration loading (transitional - these should eventually be typed too)
         '_load_config', 'load_config',
     }
     
-    # Parameter names that are allowed to be Dict[str, Any] (infrastructure)
     ALLOWED_DICT_ANY_PARAMS = {
         'kwargs', 'options', 'metadata', 'extra', 'attrs', 'attributes',
-        # Scanner infrastructure
         'story_graph', 'rule_content', 'config',
     }
     
@@ -48,11 +34,9 @@ class TypeSafetyScanner(CodeScanner):
         
         content, lines, tree = parsed
         
-        # Skip test files - they may need Dict[str, Any] for test data
         if file_path.name.startswith('test_'):
             return violations
         
-        # Walk the AST looking for type-unsafe patterns
         functions = Functions(tree)
         for function in functions.get_many_functions:
             func_violations = self._check_function_type_safety(function.node, file_path, rule_obj, content)
@@ -68,9 +52,7 @@ class TypeSafetyScanner(CodeScanner):
         if func_name in self.ALLOWED_DICT_ANY_METHODS:
             return violations
         
-        # Skip private utility methods (underscore prefix, not dunder)
         if func_name.startswith('_') and not func_name.startswith('__'):
-            # But DO check do_execute and other important methods
             if func_name not in ('do_execute', '_execute', '_process', '_handle'):
                 return violations
         
@@ -91,11 +73,9 @@ class TypeSafetyScanner(CodeScanner):
         for arg in func_node.args.args:
             param_name = arg.arg
             
-            # Skip self/cls
             if param_name in ('self', 'cls'):
                 continue
             
-            # Skip allowed parameter names
             if param_name in self.ALLOWED_DICT_ANY_PARAMS:
                 continue
             
@@ -117,7 +97,7 @@ class TypeSafetyScanner(CodeScanner):
                         max_lines=10
                     )
                 )
-                break  # One violation per function is enough
+                break
         
         return violations
     
@@ -126,7 +106,6 @@ class TypeSafetyScanner(CodeScanner):
         
         returns = func_node.returns
         if returns and self._is_dict_any_annotation(returns):
-            # Skip if function name suggests it should return dict (to_dict, etc)
             if any(pattern in func_node.name.lower() for pattern in ['to_dict', 'as_dict', 'to_json', 'serialize']):
                 return violations
             
@@ -151,7 +130,7 @@ class TypeSafetyScanner(CodeScanner):
     
     def _check_parameters_get_pattern(self, func_node: ast.FunctionDef, file_path: Path, rule_obj: Any, content: str) -> List[Dict[str, Any]]:
         violations = []
-        found_lines = set()  # Track lines to avoid duplicate violations
+        found_lines = set()
         
         for node in ast.walk(func_node):
             if isinstance(node, ast.Call):
@@ -166,7 +145,6 @@ class TypeSafetyScanner(CodeScanner):
                                     message = self._get_violation_message(
                                         rule_obj, 'parameters_get_pattern', line_no
                                     )
-                                    # No code snippet for parameters.get() pattern violations
                                     violations.append(
                                         Violation(
                                             rule=rule_obj,
@@ -189,7 +167,6 @@ class TypeSafetyScanner(CodeScanner):
                             second_arg = annotation.slice.elts[1]
                             if isinstance(second_arg, ast.Name) and second_arg.id == 'Any':
                                 return True
-            # Also check for dict[str, Any] (lowercase, Python 3.9+)
             if isinstance(annotation.value, ast.Name):
                 if annotation.value.id == 'dict':
                     if isinstance(annotation.slice, ast.Tuple):
@@ -216,7 +193,6 @@ class TypeSafetyScanner(CodeScanner):
                 template = violation_messages[message_key]
                 return template.format(line=line_number, **format_args)
         
-        # Default messages if not in rule file
         defaults = {
             'dict_any_parameter': f"Line {line_number}: Method '{format_args.get('method', 'unknown')}' uses Dict[str, Any] parameter '{format_args.get('param', 'unknown')}'. Define a typed dataclass/class instead.",
             'dict_any_return': f"Line {line_number}: Method '{format_args.get('method', 'unknown')}' returns Dict[str, Any]. Define a typed result class instead.",
@@ -225,9 +201,4 @@ class TypeSafetyScanner(CodeScanner):
             'list_any_type': f"Line {line_number}: Found List[Any] type hint. Specify the element type."
         }
         return defaults.get(message_key, f'Line {line_number}: Type safety violation detected.')
-
-
-
-
-
 

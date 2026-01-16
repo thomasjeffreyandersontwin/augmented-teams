@@ -1,10 +1,8 @@
-"""Scanner for validating code representation in domain models."""
 
 from typing import List, Dict, Any, Optional
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class CodeRepresentationScanner(DomainScanner):
     
@@ -53,7 +51,4 @@ class CodeRepresentationScanner(DomainScanner):
                         break
         
         return violations
-
-
-
 

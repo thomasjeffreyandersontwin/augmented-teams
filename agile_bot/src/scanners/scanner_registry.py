@@ -1,10 +1,8 @@
-"""ScannerRegistry for finding and loading scanner helpers by rule."""
 
 from typing import Optional, Dict, Type
 import importlib
 import re
 from .scanner import Scanner
-
 
 class ScannerRegistry:
     
@@ -39,7 +37,7 @@ class ScannerRegistry:
             scanner_name = re.sub(r'(?<!^)(?=[A-Z])', '_', class_name).lower().replace('_scanner', '').replace('scanner', '')
             
             paths_to_try = [
-                module_path,  # Exact path from config
+                module_path,
                 f'agile_bot.src.scanners.{scanner_name}_scanner'
             ]
             

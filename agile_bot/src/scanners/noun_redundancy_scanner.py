@@ -1,11 +1,9 @@
-"""Scanner for detecting noun redundancy in story elements."""
 
 from typing import List, Dict, Any
 from .story_scanner import StoryScanner
 from .story_map import StoryNode
 from .violation import Violation
 import re
-
 
 class NounRedundancyScanner(StoryScanner):
     
@@ -19,10 +17,7 @@ class NounRedundancyScanner(StoryScanner):
         
         words = re.findall(r'\b[A-Z][a-z]+\b|\b[a-z]+\b', name)
         
-        # This is a simplified check - full implementation would need parent context
-        # For now, check if name has redundant patterns like "X Animation", "Y Animation"
         if len(words) >= 2:
-            # This is a heuristic - full check needs sibling context
             pass
         
         if re.search(r'\d+|System|Component|Module|Manager|Handler', name, re.IGNORECASE):

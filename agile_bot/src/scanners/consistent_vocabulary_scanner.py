@@ -1,11 +1,9 @@
-"""Scanner for validating vocabulary consistency across tests."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from .test_scanner import TestScanner
 from .violation import Violation
 from collections import defaultdict
-
 
 class ConsistentVocabularyScanner(TestScanner):
     
@@ -38,14 +36,13 @@ class ConsistentVocabularyScanner(TestScanner):
                 if sub_epic_name:
                     terms.extend(sub_epic_name.lower().split())
         
-        return list(set(terms))  # Unique terms
+        return list(set(terms))
     
     def _check_vocabulary_consistency(self, content: str, domain_terms: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
         content_lower = content.lower()
         
-        # Look for common synonyms that should use domain terms instead
         synonym_map = {
             'data': ['info', 'information', 'content'],
             'user': ['person', 'customer', 'client'],
@@ -54,7 +51,6 @@ class ConsistentVocabularyScanner(TestScanner):
         
         for domain_term, synonyms in synonym_map.items():
             if domain_term in domain_terms:
-                # Domain term exists, check for synonyms
                 for synonym in synonyms:
                     if synonym in content_lower and domain_term not in content_lower:
                         violation = Violation(

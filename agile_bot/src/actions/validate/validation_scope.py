@@ -27,7 +27,6 @@ class ValidationScope(ActionScope):
     
     @classmethod
     def from_context(cls, context: 'ValidateActionContext', bot_paths: Optional[BotPath] = None, behavior_name: Optional[str] = None) -> 'ValidationScope':
-        # Convert typed context to parameters dict for compatibility with parent class
         params = {}
         if context.scope:
             params['scope'] = context.scope.to_dict()
@@ -104,7 +103,6 @@ class ValidationScope(ActionScope):
         scope_dict = self._parameters.get('scope', {}) if isinstance(self._parameters.get('scope'), dict) else {}
         has_files_scope = scope_dict.get('type') == 'files'
         has_story_scope = scope_dict.get('type') == 'story'
-        # Don't auto-discover files if story scope is set - validation should use story graph instead
         if not files_list and (not has_any_explicit_files) and (not has_files_scope) and (not has_story_scope) and self._bot_paths:
             discovered = self._auto_discover_files(key)
             if discovered:
@@ -119,11 +117,10 @@ class ValidationScope(ActionScope):
         return self._path_resolver.expand_path_if_needed(file_path, self._expand_directory_to_files)
 
     def all_files(self) -> Dict[str, List[Path]]:
-        # If story scope is set, don't scan files - validation should use story graph instead
         scope_dict = self._parameters.get('scope', {}) if isinstance(self._parameters.get('scope'), dict) else {}
         has_story_scope = scope_dict.get('type') == 'story'
         if has_story_scope:
-            return {}  # Return empty dict - validation should use story graph, not scan files
+            return {}
         
         if self._behavior_name:
             return self._handle_behavior_specific_files({})
@@ -139,7 +136,6 @@ class ValidationScope(ActionScope):
         scope_dict = self._parameters.get('scope', {}) if isinstance(self._parameters.get('scope'), dict) else {}
         has_files_scope = scope_dict.get('type') == 'files'
         has_story_scope = scope_dict.get('type') == 'story'
-        # Don't discover files if story scope is set - validation should use story graph instead
         if not has_explicit_files and (not has_any_explicit_params) and (not has_files_scope) and (not has_story_scope):
             files = self._discover_files_from_directory(behavior_dir)
             if files:
@@ -159,7 +155,6 @@ class ValidationScope(ActionScope):
             return 'src'
 
     def _get_explicit_files_for_behavior(self, file_key, behavior_dir):
-        # Check if we have a files scope - if so, try both file_key and 'test'/'src' explicitly
         has_files_scope = (self._parameters.get('scope', {}).get('type') == 'files' if isinstance(self._parameters.get('scope'), dict) else False)
         
         if file_key in self._scope_config:
@@ -172,7 +167,6 @@ class ValidationScope(ActionScope):
             if files:
                 return files
         
-        # For files scope, also try the opposite key (test vs src) in case files were categorized differently
         if has_files_scope:
             alternate_keys = ['test', 'src']
             for alt_key in alternate_keys:
@@ -189,7 +183,6 @@ class ValidationScope(ActionScope):
         has_files_scope = scope_dict.get('type') == 'files'
         has_story_scope = scope_dict.get('type') == 'story'
         file_keys = {'test', 'src'}
-        # Don't discover files if story scope is set - validation should use story graph instead
         if not has_any_explicit_params and not has_files_scope and not has_story_scope:
             self._discover_all_file_keys(file_keys, all_files_dict)
         else:

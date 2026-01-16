@@ -1,4 +1,3 @@
-"""BlockExtractor helper for extracting code blocks from files."""
 
 from typing import List
 import ast
@@ -7,7 +6,6 @@ from .file import File
 from .block import Block
 
 logger = logging.getLogger(__name__)
-
 
 class BlockExtractor:
     
@@ -58,5 +56,4 @@ class BlockExtractor:
         
         logger.debug(f'ast.unparse not available')
         return ''
-
 

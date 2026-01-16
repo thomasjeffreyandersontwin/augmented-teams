@@ -1,7 +1,5 @@
-"""Line resource representing a line in a file."""
 
 from typing import Optional
-
 
 class Line:
     
@@ -26,18 +24,6 @@ class Line:
         return getattr(node, 'lineno', None)
     
     def extract_from_position(self, position: int) -> int:
-        # Count newlines before position
         content_before = self._file.content[:position] if hasattr(self._file, 'content') else ''
         return content_before.count('\n') + 1
-
-
-
-
-
-
-
-
-
-
-
 

@@ -2,7 +2,6 @@ import ast
 from typing import List, Optional
 from abc import ABC
 
-
 class ASTElement(ABC):
     
     def __init__(self, node: ast.AST):
@@ -15,7 +14,6 @@ class ASTElement(ABC):
     @property
     def node(self) -> ast.AST:
         return self._node
-
 
 class Function(ASTElement):
     
@@ -34,7 +32,6 @@ class Function(ASTElement):
     @property
     def is_test_function(self) -> bool:
         return self.name.startswith('test_')
-
 
 class Functions:
     
@@ -55,7 +52,6 @@ class Functions:
                 functions.append(Function(node))
         return functions
 
-
 class Class(ASTElement):
     
     @property
@@ -73,7 +69,6 @@ class Class(ASTElement):
     @property
     def is_test_class(self) -> bool:
         return self.name.startswith('Test')
-
 
 class Classes:
     
@@ -94,7 +89,6 @@ class Classes:
                 classes.append(Class(node))
         return classes
 
-
 class IfStatement(ASTElement):
     
     @property
@@ -109,7 +103,6 @@ class IfStatement(ASTElement):
             if isinstance(stmt, ast.Return):
                 return True
         return False
-
 
 class IfStatements:
     
@@ -130,7 +123,6 @@ class IfStatements:
                 if_statements.append(IfStatement(node))
         return if_statements
 
-
 class TryBlock(ASTElement):
     
     @property
@@ -147,7 +139,6 @@ class TryBlock(ASTElement):
     @property
     def has_finally(self) -> bool:
         return len(self._node.finalbody) > 0
-
 
 class TryBlocks:
     
@@ -168,7 +159,6 @@ class TryBlocks:
                 try_blocks.append(TryBlock(node))
         return try_blocks
 
-
 class Import(ASTElement):
     
     @property
@@ -183,7 +173,6 @@ class Import(ASTElement):
             if self._node.names:
                 return self._node.names[0].name
         return ''
-
 
 class Imports:
     
@@ -203,7 +192,4 @@ class Imports:
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 imports.append(Import(node))
         return imports
-
-
-
 

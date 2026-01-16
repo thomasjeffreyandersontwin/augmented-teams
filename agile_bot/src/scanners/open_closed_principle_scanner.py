@@ -1,4 +1,3 @@
-"""Scanner for validating open-closed principle."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
-
 
 class OpenClosedPrincipleScanner(CodeScanner):
     
@@ -28,21 +26,19 @@ class OpenClosedPrincipleScanner(CodeScanner):
         lines = content.split('\n')
         
         type_switch_patterns = [
-            r'\.type\s*==',  # obj.type == 'credit'
-            r'\.kind\s*==',  # obj.kind == 'user'
-            r'\.type\s*!=',  # obj.type != 'credit'
-            r'\.kind\s*!=',  # obj.kind != 'user'
+            r'\.type\s*==',
+            r'\.kind\s*==',
+            r'\.type\s*!=',
+            r'\.kind\s*!=',
         ]
         
         for line_num, line in enumerate(lines, 1):
-            # Skip comments
             stripped = line.strip()
             if stripped.startswith('#') or stripped.startswith('//'):
                 continue
             
             for pattern in type_switch_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
-                    # No code snippet for type-switch pattern violations
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Line {line_num} uses type-based conditional - use polymorphism instead to follow open-closed principle',

@@ -1,35 +1,22 @@
-"""
-Base adapter classes for channel-specific serialization.
-
-All domain adapters inherit from these base classes.
-"""
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
-
 class ChannelAdapter(ABC):
-    """Base for all channel adapters."""
     
     @abstractmethod
     def serialize(self) -> str:
-        """Serialize domain object to string format."""
         pass
 
 class TextAdapter(ChannelAdapter):
-    """Base for text-based adapters (TTY, Markdown)."""
     
     @abstractmethod
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text into verb and params."""
         pass
 
-
 class TTYAdapter(TextAdapter):
-    """Base for terminal output adapters."""
     
     def add_color(self, text: str, color: str) -> str:
-        """Add ANSI color codes."""
         colors = {
             'green': '\033[92m',
             'yellow': '\033[93m',
@@ -40,95 +27,72 @@ class TTYAdapter(TextAdapter):
         return f"{colors.get(color, '')}{text}{colors['reset']}"
     
     def add_bold(self, text: str) -> str:
-        """Add ANSI bold formatting."""
         return f"\033[1m{text}\033[0m"
     
     def format_indentation(self, level: int) -> str:
-        """Format indentation for hierarchy."""
         return "  " * level
     
     def section_separator(self) -> str:
-        """Return heavy separator for major sections."""
         return "━" * 100
     
     def subsection_separator(self) -> str:
-        """Return light separator for subsections."""
         return "─" * 60
     
     @abstractmethod
     def serialize(self) -> str:
-        """Convert domain object to TTY string."""
         pass
     
     @abstractmethod
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""
         return verb, args
 
-
 class JSONAdapter(ChannelAdapter):
-    """Base for JSON adapters."""
     
     @abstractmethod
     def to_dict(self) -> Dict:
-        """Convert domain object to dict."""
         pass
     
     def serialize(self) -> str:
-        """Convert to JSON string."""
         import json
         return json.dumps(self.to_dict(), indent=2)
 
-
 class MarkdownAdapter(TextAdapter):
-    """Base for Markdown adapters."""
     
     def format_header(self, level: int, text: str) -> str:
-        """Format markdown header."""
         return f"{'#' * level} {text}\n"
     
     def format_list_item(self, text: str, indent: int = 0) -> str:
-        """Format markdown list item."""
         return f"{'  ' * indent}- {text}\n"
     
     def format_code_block(self, content: str, language: str = "") -> str:
-        """Format markdown code block."""
         return f"```{language}\n{content}\n```\n"
     
     @abstractmethod
     def serialize(self) -> str:
-        """Convert domain object to Markdown string."""
         pass
     
     @abstractmethod
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""
         return verb, args
 
-
 class JSONProgressAdapter(JSONAdapter):
-    """Base for JSON adapters that track progress."""
     
     def include_progress_fields(self, is_completed: bool, is_current: bool) -> Dict:
-        """Standard progress fields."""
         return {
             'is_completed': is_completed,
             'is_current': is_current,
             'completion_marker': '[X]' if is_completed else '[ ]'
         }
 
-
 class TTYProgressAdapter(TTYAdapter):
-    """Base for TTY adapters that track progress."""
     
     def render_marker(self, is_completed: bool, is_current: bool) -> str:
-        """Render progress marker."""
         if is_completed:
             return self.add_color('[X]', 'green')
         elif is_current:
@@ -136,12 +100,9 @@ class TTYProgressAdapter(TTYAdapter):
         else:
             return '[ ]'
 
-
 class MarkdownProgressAdapter(MarkdownAdapter):
-    """Base for Markdown adapters that track progress."""
     
     def render_progress_marker(self, is_completed: bool, is_current: bool) -> str:
-        """Render markdown progress marker."""
         if is_completed:
             return '[X]'
         elif is_current:
@@ -149,30 +110,23 @@ class MarkdownProgressAdapter(MarkdownAdapter):
         else:
             return '[ ]'
 
-
 class GenericJSONAdapter(JSONAdapter):
-    """Generic JSON adapter for dict/list objects without custom domain objects."""
     
     def __init__(self, data: Any):
         self.data = data
     
     def to_dict(self) -> Dict:
-        """Return data as-is if dict, otherwise wrap it."""
         if isinstance(self.data, dict):
             return self.data
         return {'data': self.data}
 
-
 class GenericTTYAdapter(TTYAdapter):
-    """Generic TTY adapter for dict/list objects without custom domain objects."""
     
     def __init__(self, data: Any):
         self.data = data
     
     def serialize(self) -> str:
-        """Format data for TTY output with ANSI formatting."""
         if isinstance(self.data, dict):
-            # Check if it's a scope response (status/message/scope)
             if 'scope' in self.data and isinstance(self.data['scope'], dict):
                 scope_data = self.data['scope']
                 scope_type = scope_data.get('type', 'all')
@@ -183,7 +137,6 @@ class GenericTTYAdapter(TTYAdapter):
                     return f"\x1b[1mScope:\x1b[0m {scope_type}: {target_str}"
                 else:
                     return f"\x1b[1mScope:\x1b[0m {scope_type}"
-            # Check if it's an execution result
             elif 'status' in self.data and 'behavior' in self.data and 'action' in self.data:
                 lines = []
                 lines.append(f"\x1b[1mStatus:\x1b[0m {self.data['status']}")
@@ -195,32 +148,25 @@ class GenericTTYAdapter(TTYAdapter):
                     lines.append(f"\x1b[1mResult:\x1b[0m {self.data['result']}")
                 return '\n'.join(lines)
             else:
-                # Generic dict formatting
                 lines = []
                 for key, value in self.data.items():
                     lines.append(f"\x1b[1m{key}:\x1b[0m {value}")
                 return '\n'.join(lines)
-        # For lists/other types, use JSON as fallback
         import json
         return json.dumps(self.data, indent=2)
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""
         return verb, args
 
-
 class GenericMarkdownAdapter(MarkdownAdapter):
-    """Generic Markdown adapter for dict/list objects without custom domain objects."""
     
     def __init__(self, data: Any):
         self.data = data
     
     def serialize(self) -> str:
-        """Format data for Markdown output."""
-        # Check if it's a scope response
         if isinstance(self.data, dict) and 'scope' in self.data and isinstance(self.data['scope'], dict):
             scope_data = self.data['scope']
             scope_type = scope_data.get('type', 'all')
@@ -231,12 +177,10 @@ class GenericMarkdownAdapter(MarkdownAdapter):
                 return f"**Scope:** {scope_type}: {target_str}"
             else:
                 return f"**Scope:** {scope_type}"
-        # For other dicts, wrap in JSON code fences
         import json
         return f"```json\n{json.dumps(self.data, indent=2)}\n```"
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

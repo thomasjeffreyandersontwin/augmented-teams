@@ -1,4 +1,3 @@
-"""Scanner for validating concerns are separated."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -9,7 +8,6 @@ from .code_scanner import CodeScanner
 from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
-
 
 class SeparateConcernsScanner(CodeScanner):
     
@@ -33,11 +31,9 @@ class SeparateConcernsScanner(CodeScanner):
     def _check_mixed_concerns(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         from .complexity_metrics import ComplexityMetrics
         
-        # Use ComplexityMetrics to detect responsibilities
         responsibilities = ComplexityMetrics.detect_responsibilities(func_node)
         
         if len(responsibilities) <= 1:
-            # Single responsibility - no violation
             return None
         
         line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
@@ -66,7 +62,6 @@ class SeparateConcernsScanner(CodeScanner):
                     ast_node=func_node
                 )
         
-        # If multiple responsibilities but no incompatible pairs, still warn
         if len(responsibilities) > 2:
             violation_message = (
                 f'Function "{func_node.name}" has multiple responsibilities: {", ".join(responsibilities)}. '

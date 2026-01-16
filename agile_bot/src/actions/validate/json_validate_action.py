@@ -1,21 +1,15 @@
-"""
-JSON adapter for ValidateRulesAction.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.actions.validate.validate_action import ValidateRulesAction
 
-
 class JSONValidateAction(JSONAdapter):
-    """Serializes ValidateRulesAction to JSON - exposes all ValidateRulesAction properties."""
     
     def __init__(self, action: ValidateRulesAction, is_current: bool = False, is_completed: bool = False):
         self.action = action
         self.is_current = is_current
         self.is_completed = is_completed
     
-    # Expose ALL domain properties
     @property
     def action_name(self):
         return self.action.action_name
@@ -50,11 +44,9 @@ class JSONValidateAction(JSONAdapter):
     
     @property
     def rules(self):
-        """Validate-specific property."""
         return self.action.rules
     
     def to_dict(self) -> dict:
-        """Convert ValidateRulesAction to dict."""
         result = {
             'action_name': self.action.action_name,
             'description': self.action.description,
@@ -66,7 +58,6 @@ class JSONValidateAction(JSONAdapter):
             'behavior': self.action.behavior.name if self.action.behavior else None,
         }
         
-        # Add validate-specific properties
         if self.action.rules:
             rules_list = getattr(self.action.rules, 'rules', None) or getattr(self.action.rules, '_rules', None) or []
             if not rules_list and hasattr(self.action.rules, '__iter__'):
@@ -86,5 +77,4 @@ class JSONValidateAction(JSONAdapter):
         return result
     
     def deserialize(self, data: str) -> dict:
-        """Parse JSON string to dict."""
         return json.loads(data)

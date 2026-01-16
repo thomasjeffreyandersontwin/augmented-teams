@@ -1,4 +1,3 @@
-"""Scanner for validating function parameters are clear."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -10,7 +9,6 @@ from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
-
 class ClearParametersScanner(CodeScanner):
     
     def __init__(self):
@@ -21,16 +19,15 @@ class ClearParametersScanner(CodeScanner):
         self.story_graph = story_graph
         return super().scan(story_graph, rule_obj, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
     
-    # Acceptable parameter names in specific contexts
     ACCEPTABLE_PARAMETER_NAMES = {
-        'data',  # Acceptable in data processing/transformation functions
-        'value',  # Acceptable in transformation/validation functions
-        'item',  # Acceptable in iteration/callback functions
-        'obj',  # Acceptable in generic object manipulation functions
-        'param',  # Acceptable in parameter forwarding functions
-        'arg',  # Acceptable in argument forwarding functions
-        'kwargs', 'args',  # Standard Python parameter names
-        'self', 'cls',  # Standard Python method parameters
+        'data',
+        'value',
+        'item',
+        'obj',
+        'param',
+        'arg',
+        'kwargs', 'args',
+        'self', 'cls',
     }
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -39,7 +36,6 @@ class ClearParametersScanner(CodeScanner):
         if not file_path.exists():
             return violations
         
-        # Skip test files - they may use different parameter naming conventions
         if self._is_test_file(file_path):
             return violations
         
@@ -68,7 +64,6 @@ class ClearParametersScanner(CodeScanner):
         if '/test' in path_str or '/tests' in path_str or '\\test' in path_str or '\\tests' in path_str:
             return True
         
-        # Skip test files (files starting with test_)
         if file_name.startswith('test_'):
             return True
         
@@ -81,7 +76,6 @@ class ClearParametersScanner(CodeScanner):
         if domain_terms is None:
             domain_terms = set()
         
-        # Allow more parameters for initialization functions (__init__)
         max_params = 7 if func_node.name == '__init__' else 5
         if len(func_node.args.args) > max_params:
             line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
@@ -96,26 +90,22 @@ class ClearParametersScanner(CodeScanner):
                 max_lines=5
             )
         
-        vague_names = ['thing', 'stuff', 'info']  # Removed acceptable names from list
+        vague_names = ['thing', 'stuff', 'info']
         for arg in func_node.args.args:
-            # Skip standard Python parameters
             if arg.arg in ['self', 'cls', 'args', 'kwargs']:
                 continue
             
             arg_name_lower = arg.arg.lower()
             
             if arg_name_lower in domain_terms:
-                continue  # Domain term - acceptable
+                continue
             
-            # Check if parameter name contains domain terms (e.g., "planning_data", "agent_config")
             if domain_terms:
                 arg_words = arg_name_lower.split('_')
                 if any(word in domain_terms for word in arg_words):
-                    continue  # Contains domain term - likely acceptable
+                    continue
             
             if arg_name_lower in self.ACCEPTABLE_PARAMETER_NAMES:
-                # Only flag if function name doesn't provide context
-                # (e.g., "process_data(data)" is OK, but "process(data)" might need better name)
                 if not self._function_name_provides_context(func_node.name, arg.arg):
                     continue
             
@@ -138,8 +128,6 @@ class ClearParametersScanner(CodeScanner):
         func_name_lower = func_name.lower()
         param_name_lower = param_name.lower()
         
-        # If function name contains the parameter name or related terms, it provides context
-        # e.g., "process_data" provides context for "data" parameter
         if param_name_lower in func_name_lower:
             return True
         

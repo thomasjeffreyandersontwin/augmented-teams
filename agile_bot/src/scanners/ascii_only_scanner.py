@@ -1,11 +1,9 @@
-"""Scanner for validating ASCII-only characters in test code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from .test_scanner import TestScanner
 from .violation import Violation
 import re
-
 
 class AsciiOnlyScanner(TestScanner):
     
@@ -29,8 +27,6 @@ class AsciiOnlyScanner(TestScanner):
         try:
             line.encode('ascii')
         except UnicodeEncodeError:
-            # Found non-ASCII characters
-            # Find the problematic characters
             unicode_chars = []
             for char in line:
                 try:
@@ -39,10 +35,8 @@ class AsciiOnlyScanner(TestScanner):
                     unicode_chars.append(char)
             
             if unicode_chars:
-                # Common Unicode characters to flag
                 problematic = [c for c in unicode_chars if ord(c) > 127]
                 if problematic:
-                    # Read file content for snippet extraction
                     try:
                         content = file_path.read_text(encoding='utf-8')
                         return self._create_violation_with_snippet(

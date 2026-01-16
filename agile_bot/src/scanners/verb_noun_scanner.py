@@ -11,7 +11,6 @@ from nltk.corpus import wordnet as wn
 
 logger = logging.getLogger(__name__)
 
-# Download required NLTK data if not already present
 try:
     nltk.data.find('tokenizers/punkt_tab')
 except LookupError:
@@ -26,7 +25,6 @@ try:
     nltk.data.find('corpora/wordnet')
 except LookupError:
     nltk.download('wordnet', quiet=True)
-
 
 class VerbNounScanner(StoryScanner):
     
@@ -109,14 +107,12 @@ class VerbNounScanner(StoryScanner):
             if synsets:
                 return True
             
-            # Also check all synsets - sometimes verbs are stored without explicit pos filter
             for synset in wn.synsets(word_lower):
                 if 'v' in synset.pos():
                     return True
             
             return False
         except Exception:
-            # If WordNet lookup fails, return False
             return False
     
     def _check_verb_noun_order(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
@@ -167,7 +163,6 @@ class VerbNounScanner(StoryScanner):
             
             if tags[0][1] == "VBZ":
                 first_word = tags[0][0]
-                # Convert to base form (remove -s/-es ending)
                 base_form = self._convert_to_base_form(first_word)
                 
                 location = node.map_location()
@@ -200,17 +195,13 @@ class VerbNounScanner(StoryScanner):
                 return base.capitalize()
             return base
         
-        # Regular verbs: remove -s or -es ending
         if verb_lower.endswith("ies") and len(verb_lower) > 3:
             base = verb_lower[:-3] + "y"
-        # Handle verbs ending in -es (e.g., "fixes" -> "fix", "watches" -> "watch", "goes" -> "go")
         elif verb_lower.endswith("es") and len(verb_lower) > 2:
-            # Most verbs ending in -es just drop the -es
             base = verb_lower[:-2]
         elif verb_lower.endswith("s") and len(verb_lower) > 1:
             base = verb_lower[:-1]
         else:
-            # Doesn't end in -s/-es, return as-is (shouldn't happen for VBZ verbs)
             return verb
         
         if verb[0].isupper():
@@ -232,7 +223,6 @@ class VerbNounScanner(StoryScanner):
             if (self._is_noun(first_tag) or self._is_proper_noun(first_tag)) and \
                self._is_verb(second_tag) and \
                (self._is_noun(third_tag) or self._is_proper_noun(third_tag)):
-                # Check if first word is an actor/role using NLTK
                 if VocabularyHelper.is_actor_or_role(words[0]):
                     location = node.map_location()
                     return Violation(
@@ -255,47 +245,40 @@ class VerbNounScanner(StoryScanner):
                 return None
             
             first_word = tags[0][0]
-            # Strip punctuation from first word (e.g., "Load+" -> "Load")
             first_word_clean = ''.join(c for c in first_word if c.isalnum())
             first_word_lower = first_word_clean.lower()
             first_tag = tags[0][1]
             second_tag = tags[1][1]
             
-            # If NLTK tags first word as verb, trust it - don't flag
             if self._is_verb(first_tag):
                 return None
             
-            # If WordNet says first word can be a verb, trust it - don't flag
-            # This handles cases where NLTK mis-tags capitalized verbs as proper nouns
             if self._can_be_verb(first_word_lower):
                 return None
             
-            # Check common verb abbreviations and short forms that WordNet might not recognize
             common_verb_abbreviations = {
-                'init': True,  # Initialize
-                'load': True,  # Load
-                'save': True,  # Save
-                'run': True,   # Run
-                'get': True,   # Get
-                'set': True,   # Set
-                'add': True,   # Add
-                'del': True,   # Delete
-                'rm': True,    # Remove
-                'mv': True,    # Move
-                'cp': True,    # Copy
-                'mk': True,    # Make
-                'rmv': True,   # Remove
-                'upd': True,   # Update
-                'gen': True,   # Generate
-                'inv': True,   # Invoke
-                'exec': True,  # Execute
-                'proc': True,  # Process
+                'init': True,
+                'load': True,
+                'save': True,
+                'run': True,
+                'get': True,
+                'set': True,
+                'add': True,
+                'del': True,
+                'rm': True,
+                'mv': True,
+                'cp': True,
+                'mk': True,
+                'rmv': True,
+                'upd': True,
+                'gen': True,
+                'inv': True,
+                'exec': True,
+                'proc': True,
             }
             if first_word_lower in common_verb_abbreviations:
                 return None
             
-            # Check if first word is an adverb - adverb-verb combinations are ENCOURAGED and valid
-            # Common adverbs that might precede verbs
             adverbs = {
                 'proactively', 'automatically', 'manually', 'immediately', 'quickly', 
                 'slowly', 'carefully', 'properly', 'correctly', 'incorrectly',
@@ -310,11 +293,8 @@ class VerbNounScanner(StoryScanner):
                 'gracefully', 'elegantly', 'robustly', 'resiliently', 'adaptively'
             }
             if first_word_lower in adverbs and self._is_verb(second_tag):
-                # Adverb-verb pattern is valid - don't flag
                 return None
             
-            # Flag if first word is NOUN/PROPN and second is VERB (noun-verb pattern)
-            # Only flag if first is definitely NOT a verb and NOT an adverb
             if (self._is_noun(first_tag) or self._is_proper_noun(first_tag)) and self._is_verb(second_tag):
                 location = node.map_location()
                 return Violation(
@@ -325,7 +305,6 @@ class VerbNounScanner(StoryScanner):
                 ).to_dict()
         
         except Exception:
-            # If NLTK fails, return None to avoid false positives
             return None
         
         return None
@@ -339,20 +318,15 @@ class VerbNounScanner(StoryScanner):
         
         first_word = words[0]
         
-        # CRITICAL FIX: Check if first word is a verb BEFORE checking if it's an actor
-        # If it's a verb, it's part of verb-noun format, not an actor prefix
         tokens, tags = self._get_tokens_and_tags(name)
         if tags:
             first_tag = tags[0][1]
-            # If NLTK tags it as a verb, it's not an actor
             if self._is_verb(first_tag):
                 return None
         
-        # Also check WordNet - if word can be a verb, don't flag as actor
         if self._can_be_verb(first_word):
             return None
         
-        # Check common verb abbreviations
         common_verb_abbreviations = {
             'init', 'load', 'save', 'run', 'get', 'set', 'add', 'del', 'rm', 'mv',
             'cp', 'mk', 'rmv', 'upd', 'gen', 'inv', 'exec', 'proc', 'build', 'render',
@@ -395,7 +369,6 @@ class VerbNounScanner(StoryScanner):
         if first_word in common_verb_abbreviations:
             return None
         
-        # Only check if it's an actor if it's NOT a verb
         if VocabularyHelper.is_actor_or_role(first_word):
             location = node.map_location()
             return Violation(
@@ -416,33 +389,22 @@ class VerbNounScanner(StoryScanner):
             
             has_verb = any(self._is_verb(tag[1]) for tag in tags)
             
-            # Handle hyphenated verbs (e.g., "Auto-Run", "Re-execute", "Auto-Confirm")
-            # When a noun is in front of a verb with a dash, we should accept it as valid
             if not has_verb and tokens:
                 first_token = tokens[0]
-                # Check if first token contains a hyphen
                 if '-' in first_token:
-                    # Split on hyphen and check each part
                     parts = first_token.split('-')
-                    # Check if any part (especially after the first) is a verb
-                    # This handles noun-verb patterns like "Auto-Run" where "Run" is the verb
                     for part in parts:
                         part_clean = ''.join(c for c in part if c.isalnum())
                         part_lower = part_clean.lower()
-                        # If this part is a verb (or can be a verb), accept it
                         if self._can_be_verb(part_lower) or part_lower in ['run', 'confirm', 'execute', 'auto', 're']:
                             has_verb = True
                             break
-                    # Also check if the full hyphenated word (without hyphen) could be a verb
                     if not has_verb:
                         full_word = ''.join(parts).lower()
                         if self._can_be_verb(full_word):
                             has_verb = True
             
-            # Handle adverb-verb combinations (e.g., "proactively Validate")
-            # Adverb-verb combinations are ENCOURAGED and valid verb-noun format
             if not has_verb and len(tokens) > 1:
-                # Comprehensive list of common adverbs that might precede verbs
                 adverbs = {
                     'proactively', 'automatically', 'manually', 'immediately', 'quickly', 
                     'slowly', 'carefully', 'properly', 'correctly', 'incorrectly',
@@ -458,62 +420,51 @@ class VerbNounScanner(StoryScanner):
                 }
                 first_word_lower = tokens[0].lower()
                 if first_word_lower in adverbs:
-                    # Check the second word as a verb - if it's a verb, this is valid adverb-verb pattern
                     second_word_clean = ''.join(c for c in tokens[1] if c.isalnum())
                     second_word_lower = second_word_clean.lower()
-                    # Check WordNet and common verbs - if second word is a verb, accept it
                     if self._can_be_verb(second_word_lower):
                         has_verb = True
-                    # Also check against comprehensive verb list
                     elif second_word_lower in ['validate', 'check', 'verify', 'run', 'execute', 
                                                 'process', 'generate', 'create', 'build', 'render',
                                                 'load', 'save', 'store', 'update', 'delete',
                                                 'track', 'monitor', 'report', 'display', 'show']:
                         has_verb = True
             
-            # If NLTK didn't find a verb, check if first word can be a verb using WordNet
-            # (NLTK often tags capitalized verbs as proper nouns NNP)
             if not has_verb and tokens:
-                # Strip punctuation from first word (e.g., "Load+" -> "Load")
                 first_word_clean = ''.join(c for c in tokens[0] if c.isalnum())
                 first_word_lower = first_word_clean.lower()
                 if self._can_be_verb(first_word_lower):
                     has_verb = True
                 
-                # Check common verb abbreviations and short forms that WordNet might not recognize
                 if not has_verb:
                     common_verb_abbreviations = {
-                        'init': True,  # Initialize
-                        'load': True,  # Load
-                        'save': True,  # Save
-                        'run': True,   # Run
-                        'get': True,   # Get
-                        'set': True,   # Set
-                        'add': True,   # Add
-                        'del': True,   # Delete
-                        'rm': True,    # Remove
-                        'mv': True,    # Move
-                        'cp': True,    # Copy
-                        'mk': True,    # Make
-                        'rmv': True,   # Remove
-                        'upd': True,   # Update
-                        'del': True,   # Delete
-                        'gen': True,   # Generate
-                        'inv': True,   # Invoke
-                        'exec': True,  # Execute
-                        'proc': True,  # Process
+                        'init': True,
+                        'load': True,
+                        'save': True,
+                        'run': True,
+                        'get': True,
+                        'set': True,
+                        'add': True,
+                        'del': True,
+                        'rm': True,
+                        'mv': True,
+                        'cp': True,
+                        'mk': True,
+                        'rmv': True,
+                        'upd': True,
+                        'del': True,
+                        'gen': True,
+                        'inv': True,
+                        'exec': True,
+                        'proc': True,
                     }
                     if first_word_lower in common_verb_abbreviations:
                         has_verb = True
             
-            # If still no verb found, check if first word looks like a verb
-            # (handles cases where NLTK tags verbs as nouns due to capitalization)
             if not has_verb and tokens:
-                # Strip punctuation from first word (e.g., "Load+" -> "Load")
                 first_word_clean = ''.join(c for c in tokens[0] if c.isalnum())
                 first_word_lower = first_word_clean.lower()
                 
-                # These are verbs that are commonly used in imperative/infinitive form
                 common_action_verbs = {
                     'load', 'save', 'run', 'get', 'set', 'add', 'remove', 'delete',
                     'move', 'copy', 'make', 'create', 'update', 'generate', 'invoke',
@@ -570,7 +521,6 @@ class VerbNounScanner(StoryScanner):
                 ).to_dict()
         
         except Exception:
-            # NLTK POS tagging failed - return None to avoid false positives
             pass
         
         return None

@@ -3,7 +3,6 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
 
-
 class GenericCapabilityScanner(StoryScanner):
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
@@ -48,7 +47,6 @@ class GenericCapabilityScanner(StoryScanner):
         verb_category: str,
         message_template: str
     ) -> Optional[Dict[str, Any]]:
-        """Helper function to check if name starts with any verb in the list."""
         name_lower = name.lower()
         words = name_lower.split()
         
@@ -90,12 +88,9 @@ class GenericCapabilityScanner(StoryScanner):
         
         first_word = words[0]
         if first_word in generic_technical_verbs:
-            # Check if it's followed by technical nouns (API, endpoint, etc.) without describing outcome
             remaining_text = ' '.join(words[1:])
             has_technical_noun = any(tech_noun in remaining_text for tech_noun in technical_nouns)
             
-            # Also check if the noun describes a mechanism rather than an outcome
-            # If it says "API", "endpoint", "service" without business context, it's too technical
             if has_technical_noun:
                 location = node.map_location()
                 return Violation(

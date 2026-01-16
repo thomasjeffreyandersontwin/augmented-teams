@@ -74,8 +74,6 @@ class FileLinkBuilder:
         return file_str
 
     def _build_vscode_uri(self, file_str: str, line_number: Optional[int]) -> str:
-        # URL-encode the path to handle special characters like emojis
-        # Preserve forward slashes (path separators) and colons (Windows drive letters)
         encoded_path = quote(file_str, safe='/:')
         vscode_uri = f'vscode://file/{encoded_path}'
         if line_number:

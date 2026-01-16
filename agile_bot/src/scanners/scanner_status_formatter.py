@@ -67,7 +67,6 @@ class ScannerStatusFormatter:
         scanner_status = rule_dict.get('scanner_status', {})
         return self._build_failed_rule_info(rule_file, scanner_status)
 
-
     def _build_failed_rule_info(self, rule_file: str, scanner_status: Dict) -> Dict:
         return {'rule': rule_file, 'scanner_path': scanner_status.get('scanner_path', 'unknown'), 'error': scanner_status.get('error', 'Unknown error')}
 

@@ -1,11 +1,3 @@
-"""
-Scope domain object for filtering bot operations.
-
-Scope is a stateful domain object that:
-- Holds workspace context
-- Manages filter criteria (story/file filters)
-- Provides results as domain objects (StoryGraph or file list)
-"""
 
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
@@ -13,37 +5,24 @@ from dataclasses import dataclass, field
 from enum import Enum
 import json
 
-
 class ScopeType(Enum):
     ALL = 'all'
     SHOW_ALL = 'showAll'
-    STORY = 'story'  # Searches across all graph levels (epic/sub-epic/story)
+    STORY = 'story'
     INCREMENT = 'increment'
     FILES = 'files'
 
-
 @dataclass
 class StoryGraphFilter:
-    """Filters content by story graph nodes (stories, epics, sub-epics).
-    
-    Used for filtering operations to specific parts of the story graph.
-    Searches across ALL levels of the hierarchy (epic/sub-epic/story).
-    """
     search_terms: List[str] = field(default_factory=list)
     increments: List[int] = field(default_factory=list)
     
     def matches_node(self, node_name: str) -> bool:
-        """Check if node (epic/sub-epic/story) matches filter."""
         if not self.search_terms:
             return True
         return node_name in self.search_terms
     
     def filter_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter story graph to only nodes matching this filter.
-        
-        Searches ALL levels (epics, sub-epics, nested sub-epics, stories) regardless of where the term appears.
-        Recursively handles nested sub-epics at any depth.
-        """
         if not self.search_terms and not self.increments:
             return story_graph
         
@@ -53,18 +32,11 @@ class StoryGraphFilter:
             return any(filter_name.lower() in name.lower() for filter_name in all_filter_names)
         
         def filter_sub_epic(sub_epic: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-            """Recursively filter a sub-epic and its nested sub-epics.
-            
-            Returns:
-                Filtered sub-epic dict if it or any of its children match, None otherwise.
-            """
             sub_epic_name = sub_epic.get('name', '')
             
-            # Check if this sub-epic itself matches - if so, include entire sub-epic with all stories
             if name_matches(sub_epic_name):
-                return sub_epic  # Include entire sub-epic if name matches
+                return sub_epic
             
-            # Check stories in story groups
             matching_story_groups = []
             for story_group in sub_epic.get('story_groups', []):
                 matching_stories = []
@@ -78,20 +50,17 @@ class StoryGraphFilter:
                         'stories': matching_stories
                     })
             
-            # Check direct stories
             matching_direct_stories = []
             for story in sub_epic.get('stories', []):
                 if name_matches(story.get('name', '')):
                     matching_direct_stories.append(story)
             
-            # Recursively filter nested sub-epics
             filtered_nested_sub_epics = []
             for nested_sub_epic in sub_epic.get('sub_epics', []):
                 filtered_nested = filter_sub_epic(nested_sub_epic)
                 if filtered_nested:
                     filtered_nested_sub_epics.append(filtered_nested)
             
-            # If we have matches at any level, include this sub-epic
             if matching_story_groups or matching_direct_stories or filtered_nested_sub_epics:
                 filtered_sub_epic = {**sub_epic}
                 if matching_story_groups:
@@ -114,7 +83,6 @@ class StoryGraphFilter:
                 filtered_graph['epics'].append(epic)
                 continue
             
-            # Filter sub-epics recursively
             filtered_sub_epics = []
             for sub_epic in epic.get('sub_epics', []):
                 filtered_sub = filter_sub_epic(sub_epic)
@@ -127,22 +95,12 @@ class StoryGraphFilter:
         
         return filtered_graph
 
-
 @dataclass
 class FileFilter:
-    """Filters files by path patterns.
-    
-    Supports glob patterns for include/exclude.
-    """
     include_patterns: List[str] = field(default_factory=list)
     exclude_patterns: List[str] = field(default_factory=list)
     
     def matches_file(self, file_path: Path) -> bool:
-        """Check if file matches the filter.
-        
-        Note: This method performs simple substring matching. For full glob pattern
-        matching, use filter_files() which implements complete glob pattern support.
-        """
         if not self.include_patterns:
             return True
         file_str = str(file_path)
@@ -152,7 +110,6 @@ class FileFilter:
         return False
     
     def filter_files(self, file_list: List[Path]) -> List[Path]:
-        """Filter file list to only files matching this filter."""
         if not self.include_patterns and not self.exclude_patterns:
             return file_list
         
@@ -203,67 +160,38 @@ class FileFilter:
         
         return filtered
 
-
 class Scope:
-    """Scope for filtering bot operations to specific content.
-    
-    Scope is created once with workspace context and provides:
-    - filter() method to set filter criteria
-    - results property that returns filtered StoryGraph or file list
-    - Persistence to bot state file
-    """
     
     def __init__(self, workspace_directory: Path, bot_paths=None):
-        """Initialize Scope with workspace context.
-        
-        Args:
-            workspace_directory: Workspace directory path
-            bot_paths: Optional BotPath for story graph loading
-        """
         self.workspace_directory = Path(workspace_directory)
         self.bot_paths = bot_paths
         
-        # Filter state
         self.type = ScopeType.ALL
         self.value: List[str] = []
         self.exclude: List[str] = []
         self.skiprule: List[str] = []
         
-        # Internal filters
         self._story_graph_filter: Optional[StoryGraphFilter] = None
         self._file_filter: Optional[FileFilter] = None
         
-        # Cached results
         self._cached_results = None
         self._results_dirty = True
     
     def filter(self, type: ScopeType, value: List[str] = None, exclude: List[str] = None, skiprule: List[str] = None):
-        """Set filter criteria.
-        
-        Args:
-            type: Scope type (STORY, FILES, etc.)
-            value: Filter values (story names, file patterns, etc.)
-            exclude: Exclusion patterns
-            skiprule: Rules to skip
-        """
         self.type = type
         self.value = value or []
         self.exclude = exclude or []
         self.skiprule = skiprule or []
         
-        # Rebuild filters
         self._rebuild_filters()
         
-        # Mark results as dirty
         self._results_dirty = True
         self._cached_results = None
     
     def clear(self):
-        """Clear all filters."""
         self.filter(ScopeType.ALL, [], [], [])
     
     def _rebuild_filters(self):
-        """Rebuild internal filter objects from current criteria."""
         self._story_graph_filter = None
         self._file_filter = None
         
@@ -282,17 +210,9 @@ class Scope:
     
     @property
     def results(self) -> Union['StoryGraph', List[Path], None]:
-        """Get filtered results as domain objects.
-        
-        Returns:
-            - StoryGraph object for story/epic/increment scopes
-            - List of Path objects for file scopes
-            - None for ALL scope
-        """
         if not self._results_dirty and self._cached_results is not None:
             return self._cached_results
         
-        # Compute results based on scope type
         if self.type in (ScopeType.STORY, ScopeType.INCREMENT, ScopeType.SHOW_ALL):
             self._cached_results = self._get_story_graph_results()
         elif self.type == ScopeType.FILES:
@@ -304,14 +224,12 @@ class Scope:
         return self._cached_results
     
     def _get_story_graph_results(self):
-        """Get filtered story graph as StoryGraph object."""
         story_graph_path = self.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
         
         if not story_graph_path.exists():
             return None
         
         try:
-            # Load and filter graph data
             graph_data = json.loads(story_graph_path.read_text(encoding='utf-8'))
             
             if self._story_graph_filter:
@@ -319,19 +237,15 @@ class Scope:
             else:
                 filtered_data = graph_data
             
-            # Create StoryGraph domain object with filtered data
             from ..story_graph.story_graph import StoryGraph
             from ..bot_path import BotPath
             
-            # Use bot_paths if available, otherwise create minimal one
             if self.bot_paths:
                 story_graph = StoryGraph(self.bot_paths, self.workspace_directory, require_file=False)
             else:
-                # Create minimal BotPath just for story graph
                 bot_path = BotPath(bot_directory=self.workspace_directory)
                 story_graph = StoryGraph(bot_path, self.workspace_directory, require_file=False)
             
-            # Replace content with filtered data
             story_graph._content = filtered_data
             
             return story_graph
@@ -341,7 +255,6 @@ class Scope:
             return None
     
     def _get_file_results(self) -> List[Path]:
-        """Get filtered file list."""
         import glob as glob_module
         
         all_files = []
@@ -383,19 +296,16 @@ class Scope:
         return self._file_filter
     
     def filters_story_graph(self, story_graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Legacy method - filters story graph dict."""
         if self._story_graph_filter:
             return self._story_graph_filter.filter_story_graph(story_graph)
         return story_graph
     
     def filters_files(self, file_list: List[Path]) -> List[Path]:
-        """Legacy method - filters file list."""
         if self._file_filter:
             return self._file_filter.filter_files(file_list)
         return file_list
     
     def to_dict(self) -> Dict[str, Any]:
-        """Serialize scope criteria to dict for persistence."""
         return {
             'type': self.type.value,
             'value': self.value,
@@ -405,13 +315,6 @@ class Scope:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any], workspace_directory: Path, bot_paths=None) -> 'Scope':
-        """Load scope from dict.
-        
-        Args:
-            data: Scope data dict
-            workspace_directory: Workspace directory
-            bot_paths: Optional BotPath
-        """
         scope = cls(workspace_directory, bot_paths)
         
         if not data:
@@ -440,14 +343,12 @@ class Scope:
         return scope
     
     def save(self):
-        """Save scope to scope.json file."""
         scope_file = self.workspace_directory / 'scope.json'
         
         scope_file.parent.mkdir(parents=True, exist_ok=True)
         scope_file.write_text(json.dumps(self.to_dict(), indent=2))
     
     def load(self):
-        """Load scope from scope.json file."""
         scope_file = self.workspace_directory / 'scope.json'
         
         if not scope_file.exists():
@@ -457,7 +358,6 @@ class Scope:
             scope_data = json.loads(scope_file.read_text())
             
             if scope_data:
-                # Update this instance from loaded data
                 scope_type_str = scope_data.get('type', 'all')
                 scope_type = ScopeType(scope_type_str)
                 
@@ -477,14 +377,11 @@ class Scope:
         except (json.JSONDecodeError, IOError, ValueError):
             pass
     
-    # Legacy methods for backward compatibility
     def apply_to_bot(self, workspace_directory: Path = None):
-        """Legacy method - save scope to state file."""
         self.save()
     
     @staticmethod
     def clear_from_bot(workspace_directory: Path) -> None:
-        """Clear scope from bot state file."""
         state_file = workspace_directory / 'behavior_action_state.json'
         
         if not state_file.exists():

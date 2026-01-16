@@ -1,26 +1,14 @@
-"""
-JSON adapter for Help domain object.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.help.help import Help
 
-
 class JSONHelp(JSONAdapter):
-    """Serializes Help domain object to JSON."""
     
     def __init__(self, help_obj: Help):
-        """
-        Initialize JSON adapter for Help.
-        
-        Args:
-            help_obj: Help domain object to serialize
-        """
         self.help_obj = help_obj
     
     def to_dict(self) -> dict:
-        """Convert Help to dict - mirrors TTYHelp structure."""
         return {
             'core_commands': {
                 'navigation_pattern': self.help_obj.commands.core.navigation_pattern,
@@ -45,12 +33,8 @@ class JSONHelp(JSONAdapter):
         }
     
     def serialize(self) -> str:
-        """Convert Help to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
     
     def deserialize(self, data: str) -> Help:
-        """Reconstruct Help from JSON string."""
         help_data = json.loads(data)
-        # Note: Help constructor doesn't support deserialization from dict
-        # This method is kept for interface compatibility
         return Help()

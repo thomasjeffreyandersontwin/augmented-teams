@@ -1,4 +1,3 @@
-"""Scanner for detecting code duplication (DRY principle)."""
 
 from typing import List, Dict, Any, Optional, Tuple, Set
 from pathlib import Path
@@ -13,25 +12,20 @@ import json
 
 logger = logging.getLogger(__name__)
 
-# Timeout for individual file scans (seconds)
-FILE_SCAN_TIMEOUT = 60  # 60 seconds per file max
-
+FILE_SCAN_TIMEOUT = 60
 
 def _safe_print(*args, **kwargs):
     try:
         print(*args, **kwargs)
     except UnicodeEncodeError:
-        # Convert arguments to ASCII-safe strings
         safe_args = []
         for arg in args:
             if isinstance(arg, str):
-                # Replace problematic Unicode characters with ASCII equivalents
                 safe_str = arg.encode('ascii', errors='replace').decode('ascii')
                 safe_args.append(safe_str)
             else:
                 safe_args.append(str(arg))
         print(*safe_args, **kwargs)
-
 
 class DuplicationScanner(CodeScanner):
     
@@ -114,12 +108,11 @@ class DuplicationScanner(CodeScanner):
             _safe_print(f"[DuplicationScanner.scan_code_file] File does not exist: {file_path}")
             return violations
         
-        # Track time for timeout detection
         file_start_time = datetime.now()
         
         try:
             file_size = file_path.stat().st_size
-            if file_size > 500_000:  # Skip files larger than 500KB
+            if file_size > 500_000:
                 _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                 return violations
         except Exception as e:
@@ -134,11 +127,9 @@ class DuplicationScanner(CodeScanner):
             
             def extract_functions_from_node(node: ast.AST, parent_class: str = None):
                 if isinstance(node, ast.ClassDef):
-                    # Found a class - extract its methods
                     for child in node.body:
                         extract_functions_from_node(child, node.name)
                 elif isinstance(node, ast.FunctionDef):
-                    # Found a function - extract it with class context
                     func_body = ast.unparse(node.body) if hasattr(ast, 'unparse') else str(node.body)
                     functions.append((node.name, func_body, node.lineno, node, parent_class))
             
@@ -162,7 +153,6 @@ class DuplicationScanner(CodeScanner):
             elif file_elapsed > 10:
                 _safe_print(f"Slow scan: {file_path} took {file_elapsed:.1f}s")
             
-            # Log detailed information if violations found
             if violations:
                 _safe_print(f"[DUPLICATION SCANNER] Found {len(violations)} violations in {file_path}")
                 _safe_print(f"[DUPLICATION SCANNER] Violations: {[v.get('violation_message', '')[:100] for v in violations]}")
@@ -173,21 +163,18 @@ class DuplicationScanner(CodeScanner):
             return violations
         
         except (SyntaxError, UnicodeDecodeError) as e:
-            # Skip files with syntax errors - these are expected and not scanner errors
             _safe_print(f"Skipping file with syntax/encoding error: {file_path}: {e}")
             return violations
         except Exception as e:
-            # Unexpected errors should bubble up - log and re-raise
             file_elapsed = (datetime.now() - file_start_time).total_seconds()
             import traceback
             _safe_print(f"Unexpected error scanning {file_path} after {file_elapsed:.1f}s: {e}")
             traceback.print_exc()
-            raise  # Re-raise to let validation framework handle it
+            raise
     
     def _check_duplicate_functions(self, functions: List[tuple], file_path: Path, rule_obj: Any, lines: List[str] = None) -> List[Dict[str, Any]]:
         violations = []
         
-        # Group functions by body hash
         body_hashes = {}
         for func_tuple in functions:
             func_name, func_body, line_num, node, class_name = func_tuple
@@ -196,31 +183,22 @@ class DuplicationScanner(CodeScanner):
                 body_hashes[body_hash] = []
             body_hashes[body_hash].append((func_name, line_num, node, class_name))
         
-        # Find duplicates
         for body_hash, func_list in body_hashes.items():
             if len(func_list) > 1:
-                # Multiple functions with same body - check if this is legitimate duplication
                 func_names = [f[0] for f in func_list]
                 func_nodes = [f[2] for f in func_list]
                 class_names = [f[3] for f in func_list]
                 line_numbers = [f[1] for f in func_list]
                 
-                # Skip if these are interface methods in different classes (legitimate duplication)
                 if self._are_interface_methods(func_names, class_names, func_nodes):
                     continue
                 
-                # Skip if these are simple property getters (legitimate boilerplate)
                 if all(self._is_simple_property(node) for node in func_nodes):
                     continue
                 
-                # Skip if these are all simple delegation/wrapper methods (legitimate design pattern)
-                # This catches cases like format_directive, format_header, format_workflow_status_header
-                # which are intentional wrappers that delegate to other methods
                 if all(self._is_simple_delegation(node) for node in func_nodes):
                     continue
                 
-                # Multiple functions with same body
-                # No code snippet for duplicate function violations
                 violation = Violation(
                     rule=rule_obj,
                     violation_message=f'Duplicate code detected: functions {", ".join(func_names)} have identical bodies - extract to shared function',
@@ -234,27 +212,20 @@ class DuplicationScanner(CodeScanner):
     
     def _are_interface_methods(self, func_names: List[str], class_names: List[Any], func_nodes: List[ast.FunctionDef]) -> bool:
         if all(name.startswith('__') and name.endswith('__') for name in func_names):
-            # If they're in different classes, they're interface implementations
             unique_classes = set(c for c in class_names if c is not None)
             if len(unique_classes) > 1:
                 return True
-            # If same class, check if it's a simple property getter pattern
             if len(func_names) == 1 and func_names[0] == '__str__':
-                # __str__ that just returns self.name is a common pattern
                 return True
         
-        # This is common for interface implementations (e.g., children property in node classes)
         if all(self._is_simple_property_getter(node) for node in func_nodes):
-            # If they're in different classes, they're interface implementations
             unique_classes = set(c for c in class_names if c is not None)
             if len(unique_classes) > 1:
                 return True
         
-        # This suggests interface implementation
-        if len(set(func_names)) == 1:  # All have same name
+        if len(set(func_names)) == 1:
             unique_classes = set(c for c in class_names if c is not None)
             if len(unique_classes) > 1:
-                # Same method name in different classes - likely interface
                 if all(self._is_simple_delegation(node) for node in func_nodes):
                     return True
         
@@ -264,32 +235,27 @@ class DuplicationScanner(CodeScanner):
         if self._is_simple_property_getter(func_node):
             return True
         
-        # Check if it's a simple method that just returns self.attr.method() or self.attr[item]
         executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
         if len(executable_body) == 1:
             stmt = executable_body[0]
             if isinstance(stmt, ast.Return) and stmt.value:
                 if isinstance(stmt.value, (ast.Call, ast.Subscript)):
-                    # Method call or subscript - check if it's on self.attribute
                     if isinstance(stmt.value, ast.Call):
                         if isinstance(stmt.value.func, ast.Attribute):
                             if isinstance(stmt.value.func.value, ast.Name) and stmt.value.func.value.id == 'self':
-                                return True  # self.method() - simple wrapper
+                                return True
                             elif isinstance(stmt.value.func.value, ast.Attribute):
                                 if isinstance(stmt.value.func.value.value, ast.Name) and stmt.value.func.value.value.id == 'self':
-                                    return True  # self.attr.method()
-                            # Also check for static/class method calls: ClassName.method() or ClassName.attr.method()
+                                    return True
                             elif isinstance(stmt.value.func.value, ast.Name):
-                                # Static method call: ClassName.method() - legitimate delegation
                                 return True
                     elif isinstance(stmt.value, ast.Subscript):
                         if isinstance(stmt.value.value, ast.Attribute):
                             if isinstance(stmt.value.value.value, ast.Name) and stmt.value.value.value.id == 'self':
-                                return True  # self.attr[key]
-                # Also check self.attr directly
+                                return True
                 elif isinstance(stmt.value, ast.Attribute):
                     if isinstance(stmt.value.value, ast.Name) and stmt.value.value.id == 'self':
-                        return True  # self.attr
+                        return True
         
         return False
     
@@ -301,7 +267,6 @@ class DuplicationScanner(CodeScanner):
                 break
             elif isinstance(decorator, ast.Attribute):
                 if decorator.attr in ('setter', 'deleter'):
-                    # Setter/deleter, check if it's simple
                     pass
                 elif hasattr(decorator, 'value') and isinstance(decorator.value, ast.Name):
                     if decorator.value.id == 'property':
@@ -309,15 +274,13 @@ class DuplicationScanner(CodeScanner):
                         break
         
         if not is_property:
-            # (not decorated but simple return)
-            if len(func_node.body) <= 2:  # docstring + return
+            if len(func_node.body) <= 2:
                 for stmt in func_node.body:
                     if isinstance(stmt, ast.Return):
                         if isinstance(stmt.value, ast.Attribute):
                             if isinstance(stmt.value.value, ast.Name) and stmt.value.value.id == 'self':
                                 return True
         
-        # For properties, check if body is just return self._attribute
         executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
         if len(executable_body) == 1:
             stmt = executable_body[0]
@@ -325,9 +288,7 @@ class DuplicationScanner(CodeScanner):
                 if isinstance(stmt.value, ast.Attribute):
                     if isinstance(stmt.value.value, ast.Name) and stmt.value.value.id == 'self':
                         return True
-                # Also check for simple expressions like self._children
                 if isinstance(stmt.value, ast.Name):
-                    # Returning a name (could be self.name or similar)
                     return True
         
         return False
@@ -341,47 +302,37 @@ class DuplicationScanner(CodeScanner):
             blocks = self._extract_code_blocks(func_node, func_line, func_name)
             all_blocks.extend(blocks)
         
-        # Use similarity checking to find duplicate blocks
-        SIMILARITY_THRESHOLD = 0.90  # Increased to 90% to reduce false positives
+        SIMILARITY_THRESHOLD = 0.90
         
-        # Debug: track comparison attempts
         comparison_count = 0
         similarity_scores = []
         
-        # Track duplicate pairs and build groups using union-find approach
-        duplicate_pairs = []  # List of (block1_idx, block2_idx, similarity) tuples
-        reported_block_indices = set()  # Track which blocks have been reported
+        duplicate_pairs = []
+        reported_block_indices = set()
         
         _safe_print(f"[DuplicationScanner] Extracted {len(all_blocks)} blocks from {len(functions)} functions")
         
-        # Compare all blocks pairwise
         compared_pairs = set()
         for i, block1 in enumerate(all_blocks):
             for j, block2 in enumerate(all_blocks[i+1:], start=i+1):
-                # Skip if same block
                 if i == j:
                     continue
                 
-                # Skip if already compared
                 pair_key = tuple(sorted([i, j]))
                 if pair_key in compared_pairs:
                     continue
                 compared_pairs.add(pair_key)
                 
-                # Skip if blocks overlap significantly (same function, overlapping line ranges)
-                # This prevents comparing overlapping blocks from the same function
                 if (block1['func_name'] == block2['func_name'] and 
                     not (block1['end_line'] < block2['start_line'] or block2['end_line'] < block1['start_line'])):
                     continue
                 
-                # Calculate AST-level similarity (more accurate than string comparison)
                 try:
                     ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
                 except Exception as e:
                     _safe_print(f"Error comparing AST blocks: {e}")
                     ast_similarity = 0.0
                 
-                # Also check normalized structure similarity
                 try:
                     normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
                 except Exception as e:
@@ -396,10 +347,6 @@ class DuplicationScanner(CodeScanner):
                     _safe_print(f"Error comparing content blocks: {e}")
                     content_similarity = 0.0
                 
-                # Use AST similarity as primary indicator (it ignores variable names)
-                # Content similarity is secondary - lower threshold since variable names differ
-                # If AST similarity is high (>= 85%), accept even with lower content similarity (>= 50%)
-                # Otherwise require both to be reasonably high
                 max_similarity = 0.0
                 if ast_similarity >= 0.85 and content_similarity >= 0.50:
                     max_similarity = max(ast_similarity, content_similarity)
@@ -408,49 +355,34 @@ class DuplicationScanner(CodeScanner):
                 elif max(ast_similarity, content_similarity) >= 0.90 and min(ast_similarity, content_similarity) >= 0.60:
                     max_similarity = max(ast_similarity, content_similarity)
                 elif ast_similarity >= SIMILARITY_THRESHOLD:
-                    # If AST similarity alone meets threshold, use it (AST is more reliable for structural duplication)
                     max_similarity = ast_similarity
                 else:
-                    # If both aren't reasonably high, skip this comparison
                     similarity_scores.append((ast_similarity, content_similarity, max(ast_similarity, content_similarity)))
                     continue
                 
                 similarity_scores.append((ast_similarity, content_similarity, max_similarity))
                 
                 if max_similarity >= SIMILARITY_THRESHOLD:
-                    # Similar blocks found - check if they should be reported
-                    # Skip if EITHER block is an interface method - interface implementations are legitimate, not duplication
                     if self._is_interface_method(block1['func_name']) or self._is_interface_method(block2['func_name']):
                         continue
                     
-                    # Skip if EITHER block is mostly helper calls - that's intended reuse, not duplication
                     if self._is_mostly_helper_calls(block1['ast_nodes']) or self._is_mostly_helper_calls(block2['ast_nodes']):
                         continue
                     
-                    # Skip if BOTH functions are helper functions - helper functions are meant to encapsulate patterns
-                    # Finding similar patterns in helpers is expected, not duplication
                     if self._is_helper_function(block1['func_name']) and self._is_helper_function(block2['func_name']):
                         continue
                     
-                    # Skip if blocks operate on different domain entities - legitimate separate implementations
-                    # This prevents flagging similar CRUD operations on different entities as duplication
                     if self._operates_on_different_domains(block1, block2):
                         continue
                     
-                    # Skip if blocks are structurally similar but call different methods
-                    # This catches cases like lines.extend(builder.method1()) vs lines.extend(builder.method2())
-                    # which are legitimate structural patterns, not duplication
                     if self._calls_different_methods(block1['ast_nodes'], block2['ast_nodes']):
                         continue
                     
-                    # Only report if blocks are in different functions or far apart in same function
                     should_report = False
                     
                     if block1['func_name'] != block2['func_name']:
-                        # Different functions - report as potential duplication
                         should_report = True
                     elif abs(block1['start_line'] - block2['start_line']) > 10:
-                        # Same function but far apart - report as potential duplication
                         should_report = True
                     
                     if should_report:
@@ -463,25 +395,22 @@ class DuplicationScanner(CodeScanner):
             top_scores = sorted(similarity_scores, key=lambda x: x[2], reverse=True)[:10]
             _safe_print(f"[DuplicationScanner] Top similarity scores: {[(f'{a:.2f}', f'{c:.2f}', f'{m:.2f}') for a, c, m in top_scores]}")
         
-        # Map each block to its group representative
-        group_repr = list(range(len(all_blocks)))  # Initially each block is its own representative
+        group_repr = list(range(len(all_blocks)))
         
         def find(x):
             if group_repr[x] != x:
-                group_repr[x] = find(group_repr[x])  # Path compression
+                group_repr[x] = find(group_repr[x])
             return group_repr[x]
         
         def union(x, y):
             root_x = find(x)
             root_y = find(y)
             if root_x != root_y:
-                group_repr[root_y] = root_x  # Union by making root_x the parent
+                group_repr[root_y] = root_x
         
-        # Union all duplicate pairs
         for i, j, _ in duplicate_pairs:
             union(i, j)
         
-        # Group blocks by their representative
         groups = {}
         for idx in range(len(all_blocks)):
             root = find(idx)
@@ -489,14 +418,12 @@ class DuplicationScanner(CodeScanner):
                 groups[root] = []
             groups[root].append(idx)
         
-        # Merge groups that represent the same duplication (same function pairs with overlapping ranges)
-        # This prevents reporting the same duplication multiple times with different block boundaries
         merged_groups = {}
         group_keys = list(groups.keys())
         
         for i, root_idx in enumerate(group_keys):
             if root_idx in merged_groups:
-                continue  # Already merged into another group
+                continue
             
             group_blocks = [all_blocks[idx] for idx in groups[root_idx]]
             func_pairs = set()
@@ -513,7 +440,6 @@ class DuplicationScanner(CodeScanner):
                 for block in other_blocks:
                     other_func_pairs.add(block['func_name'])
                 
-                # If they share function pairs, check for overlapping ranges
                 if func_pairs == other_func_pairs:
                     overlaps = False
                     for block1 in group_blocks:
@@ -527,13 +453,11 @@ class DuplicationScanner(CodeScanner):
                             break
                     
                     if overlaps:
-                        # Merge into the first group
                         groups[merged_with].extend(groups[other_root_idx])
                         merged_groups[other_root_idx] = merged_with
             
             merged_groups[root_idx] = merged_with
         
-        # Consolidate groups after merging
         final_groups = {}
         for root_idx, block_indices in groups.items():
             merged_root = merged_groups.get(root_idx, root_idx)
@@ -546,34 +470,26 @@ class DuplicationScanner(CodeScanner):
         
         _safe_print(f"[DuplicationScanner] Built {len(final_groups)} duplicate groups")
         
-        # Report each duplicate group once
         for root_idx, block_indices in final_groups.items():
-            # Skip groups with only one block (no duplicates)
             if len(block_indices) < 2:
                 _safe_print(f"[DuplicationScanner] Skipping group {root_idx}: only {len(block_indices)} block(s)")
                 continue
             
-            # Skip if all blocks in this group have already been reported
             if all(idx in reported_block_indices for idx in block_indices):
                 continue
             
             group_blocks = [all_blocks[idx] for idx in sorted(block_indices)]
             
-            # Filter out overlapping blocks from the same function
-            # Keep only the largest non-overlapping blocks per function
             filtered_blocks = []
             blocks_by_func = {}
             
-            # Group blocks by function
             for block in group_blocks:
                 func_name = block['func_name']
                 if func_name not in blocks_by_func:
                     blocks_by_func[func_name] = []
                 blocks_by_func[func_name].append(block)
             
-            # For each function, keep only non-overlapping blocks (prefer larger blocks)
             for func_name, func_blocks in blocks_by_func.items():
-                # Sort by size (largest first), then by start line
                 func_blocks.sort(key=lambda b: (b['end_line'] - b['start_line'], -b['start_line']), reverse=True)
                 
                 non_overlapping = []
@@ -588,14 +504,12 @@ class DuplicationScanner(CodeScanner):
                 
                 filtered_blocks.extend(non_overlapping)
             
-            # Skip if filtering removed all blocks
             if len(filtered_blocks) < 2:
                 _safe_print(f"[DuplicationScanner] Skipping group {root_idx}: filtering reduced to {len(filtered_blocks)} block(s)")
                 continue
             
             _safe_print(f"[DuplicationScanner] Reporting duplicate group: {len(filtered_blocks)} blocks")
             
-            # Use the first block as the primary one for reporting
             primary_block = filtered_blocks[0]
             
             previews = []
@@ -609,7 +523,6 @@ class DuplicationScanner(CodeScanner):
                 '\n\n'.join(previews)
             )
             
-            # No code snippet for duplicate block violations (previews already included in message)
             violation = Violation(
                 rule=rule_obj,
                 violation_message=violation_message,
@@ -619,7 +532,6 @@ class DuplicationScanner(CodeScanner):
             ).to_dict()
             violations.append(violation)
             
-            # Mark all blocks in this group as reported
             reported_block_indices.update(block_indices)
         
         _safe_print(f"[DuplicationScanner._check_duplicate_code_blocks] Returning {len(violations)} violations")
@@ -627,30 +539,23 @@ class DuplicationScanner(CodeScanner):
     
     def _extract_code_blocks(self, func_node: ast.FunctionDef, func_start_line: int, func_name: str) -> List[Dict[str, Any]]:
         blocks = []
-        MIN_NODES = 5  # Minimum AST nodes for a meaningful subtree
-        MAX_NODES = 80  # Maximum nodes to avoid overly large blocks
-        MIN_LINES = 5  # Minimum lines of code
-        MAX_LINES = 20  # Maximum lines (goldilocks zone)
+        MIN_NODES = 5
+        MAX_NODES = 80
+        MIN_LINES = 5
+        MAX_LINES = 20
         
-        # Skip blocks in test methods - test structure similarity is expected, not duplication
         if func_name.startswith('test_'):
             return blocks
         
-        # Skip interface methods - these are legitimate interface implementations, not duplication
-        # Interface methods like __getitem__, __contains__, items, keys are required by protocols
-        # and should be implemented consistently across classes, not flagged as duplication
         if self._is_interface_method(func_name):
             return blocks
         
-        # Skip simple property methods (getters/setters) - these are legitimate boilerplate
         if self._is_simple_property(func_node):
             return blocks
         
-        # Skip simple constructors that only set instance variables - legitimate boilerplate
         if self._is_simple_constructor(func_node):
             return blocks
         
-        # These are nodes with bodies: functions, loops, conditionals, try blocks, etc.
         subtrees = self._extract_subtrees_from_function(func_node, MIN_NODES, MAX_NODES)
         
         for subtree in subtrees:
@@ -669,37 +574,28 @@ class DuplicationScanner(CodeScanner):
             if not block_statements:
                 continue
             
-            # Skip if block contains only docstrings or comments
             if all(self._is_docstring_or_comment(s, func_node) for s in block_statements):
                 continue
             
-            # Skip if block is just sequences of helper function calls
             if self._is_only_helper_calls(block_statements):
                 continue
             
-            # Skip if block is mostly helper calls with minimal actual implementation
             if self._is_mostly_helper_calls(block_statements):
                 continue
             
-            # Skip if block is mostly assertions - test assertions are expected to be similar
             if self._is_mostly_assertions(block_statements):
                 continue
             
-            # Skip if block follows test pattern (helper calls + assertions) - that's legitimate test structure
             if self._is_test_pattern(block_statements):
                 continue
             
-            # Skip if block is a list-building pattern (sequences of lines.extend()/append() calls)
-            # This is a legitimate pattern for building output lists, not duplication
             if self._is_list_building_pattern(block_statements):
                 continue
             
-            # Skip blocks with fewer than 3 actual code statements (one-liners and trivial blocks)
             actual_code_count = self._count_actual_code_statements(block_statements)
             if actual_code_count < 3:
                 continue
             
-            # Normalize block (remove variable names, keep structure)
             normalized = self._normalize_block(block_statements)
             if not normalized:
                 continue
@@ -713,24 +609,18 @@ class DuplicationScanner(CodeScanner):
                 'func_name': func_name,
                 'preview': preview,
                 'normalized': normalized,
-                'ast_nodes': block_statements  # Store AST nodes for comparison
+                'ast_nodes': block_statements
             })
         
-        # Also extract sequences of statements from the function body itself
-        # This catches patterns that aren't wrapped in control structures
         executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
         
-        # Extract sequences of 5-10 consecutive statements (sliding window for non-control patterns)
         for block_size in range(5, min(11, len(executable_body) + 1)):
             for i in range(len(executable_body) - block_size + 1):
                 block_statements = executable_body[i:i+block_size]
                 
-                # Skip if this is already covered by a subtree
-                # (e.g., if all statements are part of a single if/for block)
                 if self._is_contained_in_subtree(block_statements, subtrees):
                     continue
                 
-                # Apply same filters as subtrees
                 if all(self._is_docstring_or_comment(s, func_node) for s in block_statements):
                     continue
                 if self._is_only_helper_calls(block_statements):
@@ -742,7 +632,6 @@ class DuplicationScanner(CodeScanner):
                 if self._is_test_pattern(block_statements):
                     continue
                 
-                # Skip blocks with fewer than 3 actual code statements (one-liners and trivial blocks)
                 actual_code_count = self._count_actual_code_statements(block_statements)
                 if actual_code_count < 3:
                     continue
@@ -777,13 +666,11 @@ class DuplicationScanner(CodeScanner):
     def _extract_subtrees_from_function(self, func_node: ast.FunctionDef, min_nodes: int, max_nodes: int) -> List[ast.AST]:
         subtrees = []
         
-        # Control structures that represent semantic units
         control_structures = (ast.If, ast.For, ast.While, ast.Try, ast.With, 
                              ast.AsyncFor, ast.AsyncWith)
         
         def extract_from_node(node):
             if isinstance(node, control_structures):
-                # Count nodes in this subtree
                 num_nodes = len(list(ast.walk(node)))
                 if min_nodes <= num_nodes <= max_nodes:
                     subtrees.append(node)
@@ -806,7 +693,6 @@ class DuplicationScanner(CodeScanner):
                 for child in node.finalbody:
                     extract_from_node(child)
         
-        # Start extracting from function body
         for stmt in func_node.body:
             extract_from_node(stmt)
         
@@ -832,7 +718,6 @@ class DuplicationScanner(CodeScanner):
         if hasattr(stmt, 'end_lineno') and stmt.end_lineno:
             return stmt.end_lineno
         
-        # For control structures, find the end of their body
         if isinstance(stmt, ast.If):
             end_line = stmt.lineno
             if stmt.body:
@@ -865,7 +750,6 @@ class DuplicationScanner(CodeScanner):
                 end_line = max(end_line, self._get_body_end_line(stmt.body))
             return end_line
         
-        # Default: use lineno if end_lineno not available
         return stmt.lineno if hasattr(stmt, 'lineno') else 0
     
     def _get_body_end_line(self, body: List[ast.stmt]) -> int:
@@ -880,10 +764,8 @@ class DuplicationScanner(CodeScanner):
     def _is_docstring_or_comment(self, stmt: ast.stmt, func_node: ast.FunctionDef = None) -> bool:
         if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
             if isinstance(stmt.value.value, str):
-                # If we have the function node, check if this is the first statement (docstrings are always first)
                 if func_node and func_node.body and func_node.body[0] is stmt:
                     return True
-                # Also check for common docstring patterns (Args:, Returns:, etc.)
                 value_str = stmt.value.value.strip()
                 if any(pattern in value_str for pattern in ['Args:', 'Returns:', 'Raises:', 'Yields:', 'Note:', 'Example:']):
                     return True
@@ -930,16 +812,14 @@ class DuplicationScanner(CodeScanner):
                         'get_', 'load_', 'fetch_'
                     ])
             elif isinstance(stmt, ast.Assert):
-                # Assertions are verification, not duplication
                 is_helper = True
             
             if is_helper:
                 helper_count += 1
         
         if total_count == 0:
-            return True  # All docstrings/comments
+            return True
         
-        # If >= 60% are helper calls, consider it mostly helpers
         return (helper_count / total_count) >= 0.6
     
     def _is_only_helper_calls(self, statements: List[ast.stmt]) -> bool:
@@ -957,25 +837,19 @@ class DuplicationScanner(CodeScanner):
                     func_name = self._get_function_name(stmt.value.func)
                     if func_name:
                         if not self._check_helper_pattern_match(func_name, helper_patterns):
-                            # Not a helper call - this is actual implementation
                             return False
                 else:
-                    # Assignment but not from function call - could be duplication
                     return False
             elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
-                # Expression statement with function call (no assignment)
                 func_name = self._get_function_name(stmt.value.func)
                 if func_name:
                     if not self._check_helper_pattern_match(func_name, helper_patterns):
                         return False
             elif isinstance(stmt, ast.Assert):
-                # Assertions are fine - they're verification, not duplication
                 continue
             else:
-                # Other statement types - could be duplication
                 return False
         
-        # All statements are helper calls - not duplication
         return True
     
     def _check_helper_pattern_match(self, func_name: str, helper_patterns: List[str]) -> bool:
@@ -985,7 +859,6 @@ class DuplicationScanner(CodeScanner):
         if isinstance(func_node, ast.Name):
             return func_node.id
         elif isinstance(func_node, ast.Attribute):
-            # Method call or module.function
             return func_node.attr
         return None
     
@@ -1000,21 +873,18 @@ class DuplicationScanner(CodeScanner):
         return any(func_name.startswith(pattern) for pattern in helper_patterns)
     
     def _is_interface_method(self, func_name: str) -> bool:
-        # Magic methods (dunder methods) - these are interface requirements
         if func_name.startswith('__') and func_name.endswith('__'):
             return True
         
-        # Common protocol/interface method names
         interface_methods = {
-            'items', 'keys', 'values',  # dict-like interface
-            'children', 'steps',  # node/tree interface
-            'default_test_method',  # test interface
-            'get', 'set', 'has',  # common accessor patterns
+            'items', 'keys', 'values',
+            'children', 'steps',
+            'default_test_method',
+            'get', 'set', 'has',
         }
         if func_name in interface_methods:
             return True
         
-        # Property-like methods that are part of interfaces
         if func_name in ['items', 'keys', 'values', 'children', 'steps']:
             return True
         
@@ -1029,20 +899,18 @@ class DuplicationScanner(CodeScanner):
             if isinstance(stmt, ast.Pass):
                 continue
             
-            # Count simple executable statements
             if isinstance(stmt, (ast.Assign, ast.AnnAssign, ast.AugAssign, 
                                  ast.Expr, ast.Return, ast.Raise, ast.Assert,
                                  ast.Delete, ast.Import, ast.ImportFrom,
                                  ast.Global, ast.Nonlocal)):
                 count += 1
             
-            # For control structures, count their body statements recursively
             elif isinstance(stmt, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
                 if hasattr(stmt, 'body'):
                     count += self._count_actual_code_statements(stmt.body)
                 if hasattr(stmt, 'orelse') and stmt.orelse:
                     count += self._count_actual_code_statements(stmt.orelse)
-                if hasattr(stmt, 'handlers'):  # Try blocks
+                if hasattr(stmt, 'handlers'):
                     for handler in stmt.handlers:
                         count += self._count_actual_code_statements(handler.body)
                 if hasattr(stmt, 'finalbody') and stmt.finalbody:
@@ -1078,7 +946,6 @@ class DuplicationScanner(CodeScanner):
         if not statements:
             return False
         
-        # Count helper calls and assertions
         helper_count = 0
         assertion_count = 0
         other_count = 0
@@ -1108,7 +975,6 @@ class DuplicationScanner(CodeScanner):
         if total == 0:
             return False
         
-        # If it's mostly helper calls + assertions with minimal other code, it's a test pattern
         test_pattern_ratio = (helper_count + assertion_count) / total
         return test_pattern_ratio >= 0.75 and other_count <= 1
     
@@ -1139,7 +1005,6 @@ class DuplicationScanner(CodeScanner):
         if total_count == 0:
             return False
         
-        # If >= 75% are list-building calls, it's a list-building pattern
         return (list_building_count / total_count) >= 0.75
     
     def _is_simple_property(self, func_node: ast.FunctionDef) -> bool:
@@ -1159,11 +1024,8 @@ class DuplicationScanner(CodeScanner):
         if not has_property_decorator:
             return False
         
-        # Simple properties are usually just return self._field or self._field = value
-        # Count actual statements (excluding docstrings)
         executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
         
-        # If <= 2 executable statements, it's likely a simple property
         if len(executable_body) <= 2:
             return True
         
@@ -1173,7 +1035,6 @@ class DuplicationScanner(CodeScanner):
         if func_node.name != '__init__':
             return False
         
-        # Count statements that are just assignments to self
         executable_body = [stmt for stmt in func_node.body if not self._is_docstring_or_comment(stmt, func_node)]
         
         self_assignments = 0
@@ -1201,7 +1062,6 @@ class DuplicationScanner(CodeScanner):
             else:
                 other_statements += 1
         
-        # If >= 80% are just self assignments, it's a simple constructor
         total = self_assignments + other_statements
         if total > 0 and (self_assignments / total) >= 0.8:
             return True
@@ -1212,8 +1072,6 @@ class DuplicationScanner(CodeScanner):
         func_name = block['func_name'].lower()
         entities = set()
         
-        # Common domain entity patterns
-        # This could be improved with AST analysis of variable names
         common_entities = ['user', 'product', 'order', 'item', 'account', 'payment', 
                           'customer', 'invoice', 'report', 'task', 'project', 'story',
                           'feature', 'epic', 'sprint', 'team', 'workflow', 'action',
@@ -1230,15 +1088,11 @@ class DuplicationScanner(CodeScanner):
         domain_patterns1 = self._extract_domain_entities(block1)
         domain_patterns2 = self._extract_domain_entities(block2)
         
-        # If they have different domain entities and function names are similar,
-        # they're likely legitimate separate implementations
         if domain_patterns1 and domain_patterns2:
             if domain_patterns1 != domain_patterns2:
-                # If so, this is likely legitimate - each domain needs its own handlers
                 func1 = block1['func_name']
                 func2 = block2['func_name']
-                if abs(len(func1) - len(func2)) <= 3:  # Similar length names
-                    # Extract common prefixes (CRUD operations: create, read, update, delete, get, set)
+                if abs(len(func1) - len(func2)) <= 3:
                     crud_ops = ['create', 'read', 'get', 'update', 'delete', 'remove', 
                                'save', 'load', 'fetch', 'set', 'find', 'search']
                     func1_lower = func1.lower()
@@ -1246,7 +1100,7 @@ class DuplicationScanner(CodeScanner):
                     
                     for op in crud_ops:
                         if func1_lower.startswith(op) and func2_lower.startswith(op):
-                            return True  # Same CRUD operation on different domains = legitimate
+                            return True
         
         return False
     
@@ -1257,20 +1111,15 @@ class DuplicationScanner(CodeScanner):
         if not calls1 or not calls2:
             return False
         
-        # If blocks have same number of calls but different method names, they're likely
-        # structural patterns calling different methods (not duplication)
         if len(calls1) == len(calls2) and len(calls1) >= 2:
             method_names1 = {call for call in calls1}
             method_names2 = {call for call in calls2}
             
-            # If more than 50% of method names are different, it's likely a structural pattern
             if method_names1 != method_names2:
-                # Count how many calls are the same vs different
                 same_calls = len(method_names1 & method_names2)
                 total_unique = len(method_names1 | method_names2)
                 if total_unique > 0:
                     similarity_ratio = same_calls / total_unique
-                    # If less than 50% of method names match, they're calling different methods
                     if similarity_ratio < 0.5:
                         return True
         
@@ -1283,13 +1132,10 @@ class DuplicationScanner(CodeScanner):
             if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
                 call = node.value
                 if isinstance(call.func, ast.Attribute):
-                    # Method call: obj.method()
                     method_calls.append(call.func.attr)
                 elif isinstance(call.func, ast.Name):
-                    # Function call: func()
                     method_calls.append(call.func.id)
             elif isinstance(node, ast.Assign):
-                # Assignment with call: result = obj.method()
                 if isinstance(node.value, ast.Call):
                     call = node.value
                     if isinstance(call.func, ast.Attribute):
@@ -1307,38 +1153,30 @@ class DuplicationScanner(CodeScanner):
             for stmt in statements:
                 stmt_type = type(stmt).__name__
                 
-                # Skip docstrings and comments
                 if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
                     if isinstance(stmt.value.value, str) and stmt.value.value.strip().startswith('"""'):
                         continue
                 
-                # Normalize assignment: var = value -> ASSIGN
                 if isinstance(stmt, ast.Assign):
                     normalized_parts.append(f"ASSIGN({len(stmt.targets)}_targets)")
                 
-                # Normalize function call: func() -> CALL
                 elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
                     normalized_parts.append("CALL")
                 
-                # Normalize assert: assert x -> ASSERT
                 elif isinstance(stmt, ast.Assert):
                     normalized_parts.append("ASSERT")
                 
-                # Normalize for loop: for x in y -> FOR_LOOP
                 elif isinstance(stmt, ast.For):
                     normalized_parts.append("FOR_LOOP")
                 
-                # Normalize with statement: with x -> WITH
                 elif isinstance(stmt, ast.With):
                     normalized_parts.append("WITH")
                 
-                # Keep other statement types
                 else:
                     normalized_parts.append(stmt_type)
             
             return "|".join(normalized_parts) if normalized_parts else None
         except Exception as e:
-            # Log error but return None - this is a helper method, exception will bubble up if critical
             _safe_print(f"Error normalizing block: {e}")
             return None
     
@@ -1347,7 +1185,6 @@ class DuplicationScanner(CodeScanner):
             if hasattr(ast, 'unparse'):
                 preview_lines = []
                 for stmt in statements:
-                    # Skip docstrings when generating preview
                     if self._is_docstring_or_comment(stmt):
                         continue
                     preview_lines.append(ast.unparse(stmt))
@@ -1355,7 +1192,6 @@ class DuplicationScanner(CodeScanner):
             else:
                 return str(statements)
         except Exception as e:
-            # Log error but return fallback - this is a helper method, exception will bubble up if critical
             _safe_print(f"Error generating block preview: {e}")
             return str(statements)
     
@@ -1366,10 +1202,8 @@ class DuplicationScanner(CodeScanner):
             return 0.0
         
         if len(block1) != len(block2):
-            # Different lengths - use longest common subsequence approach
             return self._compare_ast_structures(block1, block2)
         
-        # Same length - compare node by node with weighted similarity
         similarities = []
         for node1, node2 in zip(block1, block2):
             similarity = self._compare_ast_nodes_deep(node1, node2)
@@ -1389,7 +1223,6 @@ class DuplicationScanner(CodeScanner):
                 best_match = max(best_match, similarity)
             similarities.append(best_match)
         
-        # Average similarity, weighted by block lengths
         if similarities:
             avg_similarity = sum(similarities) / len(similarities)
             length_ratio = min(len(block1), len(block2)) / max(len(block1), len(block2))
@@ -1401,13 +1234,11 @@ class DuplicationScanner(CodeScanner):
         if type(node1) != type(node2):
             return 0.0
         
-        # Compare based on node type
         if isinstance(node1, ast.Assign):
             return self._compare_assign_nodes(node1, node2)
         elif isinstance(node1, ast.AugAssign):
             return self._compare_augassign_nodes(node1, node2)
         elif isinstance(node1, ast.Expr) and isinstance(node1.value, ast.Call):
-            # Both are Expr nodes with Call values
             if isinstance(node2, ast.Expr) and isinstance(node2.value, ast.Call):
                 return self._compare_call_nodes(node1.value, node2.value)
             return 0.0
@@ -1428,31 +1259,27 @@ class DuplicationScanner(CodeScanner):
         elif isinstance(node1, ast.Raise):
             return self._compare_raise_nodes(node1, node2)
         else:
-            # Generic comparison - same type means high similarity
-            return 0.8  # Not perfect match but structurally similar
+            return 0.8
     
     def _compare_assign_nodes(self, node1: ast.Assign, node2: ast.Assign) -> float:
-        # Compare number of targets
         if len(node1.targets) != len(node2.targets):
-            return 0.5  # Partial match
+            return 0.5
         
-        # Compare value structure (ignore actual values)
         value_sim = self._compare_expr_structure(node1.value, node2.value)
-        return 0.7 + 0.3 * value_sim  # Base similarity + value structure bonus
+        return 0.7 + 0.3 * value_sim
     
     def _compare_augassign_nodes(self, node1: ast.AugAssign, node2: ast.AugAssign) -> float:
         if type(node1.op) != type(node2.op):
             return 0.5
-        return 0.9  # Same operation type = very similar
+        return 0.9
     
     def _compare_call_nodes(self, node1: ast.Call, node2: ast.Call) -> float:
         arg_count1 = len(node1.args) + len(node1.keywords)
         arg_count2 = len(node2.args) + len(node2.keywords)
         
         if arg_count1 != arg_count2:
-            return 0.6  # Partial match - different arg counts
+            return 0.6
         
-        # Compare function structure (ignore function name)
         func_sim = self._compare_expr_structure(node1.func, node2.func)
         
         arg_sims = []
@@ -1517,13 +1344,10 @@ class DuplicationScanner(CodeScanner):
         if isinstance(expr1, ast.Call):
             return self._compare_call_nodes(expr1, expr2)
         elif isinstance(expr1, ast.Attribute):
-            # Compare attribute access structure (ignore attribute name)
             return 0.8 + 0.2 * self._compare_expr_structure(expr1.value, expr2.value)
         elif isinstance(expr1, ast.Name):
-            # Names are different but structure is same
             return 0.9
         elif isinstance(expr1, ast.Constant):
-            # Constants - compare types only
             if type(expr1.value) == type(expr2.value):
                 return 0.8
             return 0.5
@@ -1543,15 +1367,12 @@ class DuplicationScanner(CodeScanner):
                 return 0.6 + 0.4 * left_sim
             return 0.4
         else:
-            # Generic expression - same type means some similarity
             return 0.7
     
     def _log_violation_details(self, file_path: Path, violations: List[Dict[str, Any]], lines: List[str]) -> None:
         if not violations:
             return
         
-        # Log detailed violation information
-        # Note: This can be verbose, but provides valuable debugging info
         
         _safe_print(f"\n[{file_path}] Found {len(violations)} duplication violation(s):")
         
@@ -1561,13 +1382,11 @@ class DuplicationScanner(CodeScanner):
             
             _safe_print(f"\n  Violation {idx} (line {line_num}):")
             
-            # Format: "Duplicate code blocks detected (N locations)...\n\nLocation (func:start-end):\ncode..."
             if 'Location (' in msg:
-                # Split by "Location (" to get each location block
                 parts = msg.split('Location (')
                 locations_found = []
                 
-                for part in parts[1:]:  # Skip first part (header)
+                for part in parts[1:]:
                     if '):' in part:
                         location_part = part.split('):')[0]
                         
@@ -1578,12 +1397,10 @@ class DuplicationScanner(CodeScanner):
                         except ValueError:
                             logger.debug(f'Could not parse location: {location_part}')
                 
-                # Log all duplicate locations with actual code
                 for loc_idx, (func_name, start_line, end_line) in enumerate(locations_found, 1):
                     _safe_print(f"\n    Location {loc_idx}: {func_name}() at lines {start_line}-{end_line}")
                     
                     if start_line is not None and end_line is not None and lines:
-                        # Convert to 0-based indexing and ensure valid range
                         start_idx = max(0, start_line - 1)
                         end_idx = min(len(lines), end_line)
                         
@@ -1591,7 +1408,6 @@ class DuplicationScanner(CodeScanner):
                             code_block = lines[start_idx:end_idx]
                             _safe_print(f"    {'-' * 70}")
                             for line_num, code_line in enumerate(code_block, start=start_line):
-                                # Show line numbers and code
                                 _safe_print(f"    {line_num:4d} | {code_line}")
                             _safe_print(f"    {'-' * 70}")
                         else:
@@ -1599,10 +1415,9 @@ class DuplicationScanner(CodeScanner):
                     else:
                         _safe_print(f"    (Could not extract code: invalid location)")
             else:
-                # For duplicate functions or other violations, log the message
                 _safe_print(f"    {msg[:300]}...")
         
-        _safe_print("")  # Blank line after violations
+        _safe_print("")
     
     def _filter_files_by_package_proximity(
         self,
@@ -1641,7 +1456,6 @@ class DuplicationScanner(CodeScanner):
             
             changed_dir = changed_file.parent
             
-            # Level 0: Same package (immediate siblings) - highest priority
             for file in all_files:
                 if len(nearby_files) >= max_files:
                     break
@@ -1649,7 +1463,6 @@ class DuplicationScanner(CodeScanner):
                     nearby_files.append(file)
                     seen_files.add(file)
             
-            # Level 1-N: Parent packages - lower priority
             current_dir = changed_dir
             for level in range(1, max_parent_levels + 1):
                 if len(nearby_files) >= max_files:
@@ -1666,11 +1479,9 @@ class DuplicationScanner(CodeScanner):
                     if file in seen_files:
                         continue
                     
-                    # Include files in this parent package
                     if file.parent == current_dir:
                         nearby_files.append(file)
                         seen_files.add(file)
-                    # Include files in sibling packages at this level
                     elif file.parent.parent == current_dir:
                         nearby_files.append(file)
                         seen_files.add(file)
@@ -1692,20 +1503,17 @@ class DuplicationScanner(CodeScanner):
     ) -> List[Dict[str, Any]]:
         violations = []
         
-        # If all_* not provided, fall back to regular behavior
         if all_test_files is None:
             all_test_files = test_files
         if all_code_files is None:
             all_code_files = code_files
         
-        # Combine changed files (to scan)
         changed_files = []
         if code_files:
             changed_files.extend(code_files)
         if test_files:
             changed_files.extend(test_files)
         
-        # Combine all files (for reference)
         all_files = []
         if all_code_files:
             all_files.extend(all_code_files)
@@ -1715,7 +1523,6 @@ class DuplicationScanner(CodeScanner):
         if not changed_files or not all_files:
             return violations
         
-        # Filter all_files to only include files in nearby packages
         all_files = self._filter_files_by_package_proximity(changed_files, all_files, max_files=max_cross_file_comparisons)
         
         if len(changed_files) < len(all_files):
@@ -1734,12 +1541,9 @@ class DuplicationScanner(CodeScanner):
         write_status(f"\n## Cross-File Duplication Analysis")
         write_status(f"Scanning {len(changed_files)} changed file(s) against {len(all_files)} total files...")
         
-        # Extract blocks from changed files (files to check for duplication)
         changed_blocks = []
-        # Extract blocks from all files (reference set for comparison)
         all_blocks = []
         
-        # First, extract blocks from changed files
         _safe_print(f"[CROSS-FILE] Extracting blocks from {len(changed_files)} changed file(s)...")
         for file_idx, file_path in enumerate(changed_files):
             if file_idx % 10 == 0:
@@ -1750,7 +1554,7 @@ class DuplicationScanner(CodeScanner):
             
             try:
                 file_size = file_path.stat().st_size
-                if file_size > 500_000:  # Skip files larger than 500KB
+                if file_size > 500_000:
                     _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                     continue
             except Exception as e:
@@ -1786,7 +1590,6 @@ class DuplicationScanner(CodeScanner):
                 _safe_print(f"Error processing {file_path} for cross-file scan: {e}")
                 continue
         
-        # Second, extract blocks from all files (reference set)
         _safe_print(f"\n[CROSS-FILE] Extracting blocks from {len(all_files)} reference file(s)...")
         cache_hits = 0
         cache_misses = 0
@@ -1799,7 +1602,6 @@ class DuplicationScanner(CodeScanner):
             if not file_path.exists():
                 continue
             
-            # Try to load from cache first
             cached_blocks = self._load_blocks_from_cache(file_path)
             if cached_blocks is not None:
                 cache_hits += 1
@@ -1816,10 +1618,9 @@ class DuplicationScanner(CodeScanner):
             
             cache_misses += 1
             
-            # Not in cache - extract blocks normally
             try:
                 file_size = file_path.stat().st_size
-                if file_size > 500_000:  # Skip files larger than 500KB
+                if file_size > 500_000:
                     _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                     continue
             except Exception as e:
@@ -1850,7 +1651,6 @@ class DuplicationScanner(CodeScanner):
                         all_blocks.append(block)
                         file_blocks.append(block)
                 
-                # Save to cache for next time
                 self._save_blocks_to_cache(file_path, file_blocks)
                         
             except (SyntaxError, UnicodeDecodeError) as e:
@@ -1865,7 +1665,6 @@ class DuplicationScanner(CodeScanner):
         _safe_print(f"\n[CROSS-FILE] Extracted {len(changed_blocks)} blocks from changed files, {len(all_blocks)} blocks from all files")
         write_status(f"Extracted {len(changed_blocks)} changed blocks, {len(all_blocks)} reference blocks")
         
-        # Compare changed blocks against all blocks (including changed blocks)
         SIMILARITY_THRESHOLD = 0.90
         compared_pairs = set()
         total_comparisons = len(changed_blocks) * len(all_blocks)
@@ -1877,18 +1676,15 @@ class DuplicationScanner(CodeScanner):
         
         start_time = datetime.now()
         last_report_time = start_time
-        REPORT_INTERVAL_SECONDS = 10  # Report at least every 10 seconds
-        REPORT_INTERVAL_COMPARISONS = 50000  # Or every 50K comparisons
+        REPORT_INTERVAL_SECONDS = 10
+        REPORT_INTERVAL_COMPARISONS = 50000
         last_comparison_report = 0
         
-        # Compare each changed block against all blocks
         for i, block1 in enumerate(changed_blocks):
             for j, block2 in enumerate(all_blocks):
-                # Skip if same file (within-file duplication already checked in scan_file)
                 if block1['file_path'] == block2['file_path']:
                     continue
                 
-                # Skip comparing a block against itself
                 if (block1['file_path'] == block2['file_path'] and 
                     block1['start_line'] == block2['start_line'] and
                     block1['func_name'] == block2['func_name']):
@@ -1896,15 +1692,14 @@ class DuplicationScanner(CodeScanner):
                 
                 comparison_count += 1
                 
-                # Report progress: every 5%, every 50K comparisons, or every 10 seconds
                 now = datetime.now()
                 elapsed_since_report = (now - last_report_time).total_seconds()
                 progress_pct = (comparison_count * 100) // total_comparisons if total_comparisons > 0 else 0
                 
                 should_report = (
-                    progress_pct >= last_progress + 5 or  # Every 5%
-                    comparison_count >= last_comparison_report + REPORT_INTERVAL_COMPARISONS or  # Every 50K comparisons
-                    elapsed_since_report >= REPORT_INTERVAL_SECONDS  # Every 10 seconds
+                    progress_pct >= last_progress + 5 or
+                    comparison_count >= last_comparison_report + REPORT_INTERVAL_COMPARISONS or
+                    elapsed_since_report >= REPORT_INTERVAL_SECONDS
                 )
                 
                 if should_report:
@@ -1914,17 +1709,15 @@ class DuplicationScanner(CodeScanner):
                     eta_seconds = int(remaining / max(1, rate))
                     progress_msg = f"Comparing: {progress_pct}% ({comparison_count:,}/{total_comparisons:,}) - {len(violations)} violations - ETA: {eta_seconds}s"
                     _safe_print(f"[CROSS-FILE] {progress_msg}")
-                    write_status(progress_msg + "  ")  # Add 2 trailing spaces for markdown line break
+                    write_status(progress_msg + "  ")
                     last_progress = progress_pct
                     last_report_time = now
                     last_comparison_report = comparison_count
                 
-                # Calculate similarity
-                # Check if both blocks have ast_nodes (cached blocks don't have them)
                 if 'ast_nodes' in block1 and 'ast_nodes' in block2:
                     ast_similarity = self._compare_ast_blocks(block1['ast_nodes'], block2['ast_nodes'])
                 else:
-                    ast_similarity = 0.0  # No AST comparison if nodes not available
+                    ast_similarity = 0.0
                 
                 normalized_similarity = SequenceMatcher(None, block1['normalized'], block2['normalized']).ratio()
                 
@@ -1932,9 +1725,7 @@ class DuplicationScanner(CodeScanner):
                 preview2_normalized = ' '.join(block2['preview'].split())
                 content_similarity = SequenceMatcher(None, preview1_normalized, preview2_normalized).ratio()
                 
-                # Use AST similarity as primary indicator (if available)
                 if ast_similarity >= SIMILARITY_THRESHOLD or (normalized_similarity >= SIMILARITY_THRESHOLD and content_similarity >= 0.85):
-                    # Found duplicate across files
                     file1 = block1['file_path']
                     file2 = block2['file_path']
                     func1 = block1['func_name']
@@ -1947,7 +1738,6 @@ class DuplicationScanner(CodeScanner):
                     preview1 = block1['preview']
                     preview2 = block2['preview']
                     
-                    # Truncate previews if too long
                     if len(preview1) > 300:
                         preview1 = preview1[:300] + '...'
                     if len(preview2) > 300:
@@ -1962,7 +1752,6 @@ class DuplicationScanner(CodeScanner):
                         f'Location 2 ({location2}):\n```python\n{preview2}\n```'
                     )
                     
-                    # No code snippet for cross-file duplication violations (previews already included in message)
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=violation_message,

@@ -15,14 +15,11 @@ from .file_link_builder import FileLinkBuilder
 from .violation_formatter import ViolationFormatter
 logger = logging.getLogger(__name__)
 
-
 def ensure_reports_directory(bot_paths: BotPath, workspace_directory: Path) -> Path:
-    """Module-level helper to create and return the reports directory."""
     docs_path = bot_paths.documentation_path
     docs_dir = workspace_directory / docs_path / 'reports'
     docs_dir.mkdir(parents=True, exist_ok=True)
     return docs_dir
-
 
 class StreamingValidationReportWriter:
 
@@ -259,8 +256,6 @@ class ValidationReportWriter:
             file_str = str(resolved_path).replace('\\', '/')
             if len(file_str) >= 2 and file_str[1] == ':':
                 file_str = file_str[0].upper() + ':' + file_str[2:]
-            # URL-encode the path to handle special characters like emojis
-            # Preserve forward slashes (path separators) and colons (Windows drive letters)
             encoded_path = quote(file_str, safe='/:')
             vscode_uri = f'vscode://file/{encoded_path}'
             try:
@@ -283,9 +278,6 @@ class ValidationReportWriter:
                 lines.append(f'  - `{rel_path}`')
             lines.append(f'  - **Total:** {len(files_scanned)} {file_type} file(s)')
         return lines
-
-
-
 
     def _format_violation_line(self, violation: Dict[str, Any]) -> List[str]:
         if hasattr(violation, 'location') and not isinstance(violation, dict):

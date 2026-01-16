@@ -1,4 +1,3 @@
-"""Scanner for validating third-party code is isolated."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
-
 
 class ThirdPartyIsolationScanner(CodeScanner):
     
@@ -26,13 +24,12 @@ class ThirdPartyIsolationScanner(CodeScanner):
     def _check_third_party_usage(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Common third-party libraries that should be wrapped
         third_party_patterns = [
-            r'from\s+requests\s+import',  # HTTP library
-            r'from\s+boto3\s+import',  # AWS SDK
-            r'from\s+sqlalchemy\s+import',  # ORM
-            r'import\s+requests',  # HTTP library
-            r'import\s+boto3',  # AWS SDK
+            r'from\s+requests\s+import',
+            r'from\s+boto3\s+import',
+            r'from\s+sqlalchemy\s+import',
+            r'import\s+requests',
+            r'import\s+boto3',
         ]
         
         has_third_party_import = False
@@ -40,7 +37,6 @@ class ThirdPartyIsolationScanner(CodeScanner):
             for pattern in third_party_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
                     has_third_party_import = True
-                    # This is a simplified check - could be enhanced
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Line {line_num} imports third-party library directly - wrap third-party APIs behind your own interfaces',

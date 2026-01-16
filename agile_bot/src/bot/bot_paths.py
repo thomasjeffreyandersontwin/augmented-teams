@@ -92,7 +92,6 @@ class BotPaths:
                 config = read_json_file(config_path)
                 self._write_workspace_to_config(config_path, config, resolved_path)
                 return
-        # If no config exists, create a minimal one at the root
         default_config_path = candidate_paths[0]
         default_config_path.parent.mkdir(parents=True, exist_ok=True)
         config = {'name': self._bot_directory.name, 'mcp': {'env': {}}}

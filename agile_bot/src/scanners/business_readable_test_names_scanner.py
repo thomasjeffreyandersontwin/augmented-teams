@@ -1,4 +1,3 @@
-"""Scanner for validating business-readable test names."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -10,7 +9,6 @@ from .violation import Violation
 from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
-
 
 class BusinessReadableTestNamesScanner(TestScanner):
     
@@ -116,25 +114,16 @@ class BusinessReadableTestNamesScanner(TestScanner):
         
         test_words = self._extract_words_from_text(name_without_prefix)
         
-        # If ANY domain term matches, consider it business-readable and skip all technical jargon checks
         if domain_language and test_words:
             matching_domain_terms = test_words.intersection(domain_language)
-            # If ANY domain term matches, skip all technical jargon checks
-            # This prevents false positives for legitimate domain terms like 'param', 'method', 'data'
             if len(matching_domain_terms) >= 1:
-                # Test name uses domain language - consider it business-readable
                 return None
         
-        # Read file content for snippet extraction
         try:
             content = file_path.read_text(encoding='utf-8')
         except Exception:
             content = None
         
-        # Technical jargon indicators - only flag truly technical terms that are NOT domain language
-        # These are implementation details, not domain concepts
-        # Note: Terms like 'json', 'data', 'param', 'method', 'class', 'call' are now considered
-        # legitimate domain terms when used in context (e.g., "agent_json", "planning_data")
         technical_terms = [
             'constructor', 'init', 'parse', 'serialize', 'deserialize',
             'xml', 'http', 'api', 'endpoint', 'request', 'response',
@@ -146,10 +135,8 @@ class BusinessReadableTestNamesScanner(TestScanner):
         for term in technical_terms:
             if term in name_lower:
                 if term in domain_language:
-                    continue  # Skip - it's domain language
+                    continue
                 
-                # Only flag if it's clearly technical jargon (not part of a compound domain term)
-                # For example, "parse_json" is technical, but "agent_json" is domain
                 if self._is_clearly_technical_jargon(term, name_lower, domain_language):
                     line_number = node.lineno if hasattr(node, 'lineno') else None
                     if content:
@@ -172,7 +159,6 @@ class BusinessReadableTestNamesScanner(TestScanner):
                             severity='error'
                         ).to_dict()
         
-        # Only flag truly technical abbreviations, not domain terms
         technical_abbrevs = r'\b(init|cfg|obj|req|resp|api|http|xml)\b'
         if re.search(technical_abbrevs, name_lower):
             abbrev_matches = re.findall(technical_abbrevs, name_lower)
@@ -226,12 +212,9 @@ class BusinessReadableTestNamesScanner(TestScanner):
         return None
     
     def _is_clearly_technical_jargon(self, term: str, test_name_lower: str, domain_language: set) -> bool:
-        # If term is in domain language, it's not technical jargon
         if term in domain_language:
             return False
         
-        # Look for patterns like: <domain_term>_<term> or <term>_<domain_term>
-        # Examples: "agent_json", "workflow_json", "planning_data", "story_graph_json"
         domain_prefixes = ['agent', 'bot', 'workflow', 'story', 'epic', 'scenario', 
                           'action', 'behavior', 'rule', 'validation', 'planning',
                           'config', 'state', 'tool', 'server', 'catalog']
@@ -239,7 +222,6 @@ class BusinessReadableTestNamesScanner(TestScanner):
         for prefix in domain_prefixes:
             if f'{prefix}_{term}' in test_name_lower:
                 return False
-            # Check if term precedes a domain term (e.g., "json_file" - but this is less common)
             if f'{term}_{prefix}' in test_name_lower and prefix in domain_language:
                 return False
         
@@ -252,10 +234,8 @@ class BusinessReadableTestNamesScanner(TestScanner):
         
         for pattern in domain_compound_patterns:
             if re.search(pattern, test_name_lower):
-                # If the term appears near domain language, it's likely domain, not technical
                 return False
         
-        # If we get here, it's likely technical jargon
         return True
     
     def _extract_code_snippet(self, content: str, ast_node: Optional[ast.AST] = None, 
@@ -263,35 +243,29 @@ class BusinessReadableTestNamesScanner(TestScanner):
                              context_before: int = 2, max_lines: int = 50) -> str:
         lines = content.split('\n')
         
-        # Determine start and end lines
         if ast_node is not None:
-            # Use AST node to determine lines
             start_line_0 = ast_node.lineno - 1 if hasattr(ast_node, 'lineno') and ast_node.lineno else 0
             
             if hasattr(ast_node, 'end_lineno') and ast_node.end_lineno:
-                end_line_0 = ast_node.end_lineno  # end_lineno is 1-indexed, exclusive
+                end_line_0 = ast_node.end_lineno
             else:
-                # Estimate end by finding the maximum line number in the subtree
                 end_line_0 = start_line_0 + 1
                 for node in ast.walk(ast_node):
                     if hasattr(node, 'lineno') and node.lineno:
                         end_line_0 = max(end_line_0, node.lineno)
         elif start_line is not None:
-            # Use provided line numbers (1-indexed, convert to 0-indexed)
             start_line_0 = start_line - 1
             if end_line is not None:
-                end_line_0 = end_line  # end_line is 1-indexed, exclusive (like end_lineno)
+                end_line_0 = end_line
             else:
                 end_line_0 = start_line_0 + 1
         else:
-            # No information provided, return empty
             return ""
         
         snippet_start = max(0, start_line_0 - context_before)
         snippet_end = min(len(lines), end_line_0 + 1)
         code_snippet = '\n'.join(lines[snippet_start:snippet_end])
         
-        # Truncate if too long
         code_lines = code_snippet.split('\n')
         if len(code_lines) > max_lines:
             code_snippet = '\n'.join(code_lines[:max_lines]) + '\n    # ... (truncated)'

@@ -1,4 +1,3 @@
-"""Scope resource representing what is being scanned."""
 
 from typing import List, Set, TYPE_CHECKING
 from pathlib import Path
@@ -7,13 +6,12 @@ from .file import File
 if TYPE_CHECKING:
     from .block import Block
 
-
 class Scope:
     
     def __init__(self, files: List[Path]):
         self._file_paths = files
         self._files: List[File] = []
-        self._blocks: List['Block'] = []  # type: ignore
+        self._blocks: List['Block'] = []
     
     @property
     def files(self) -> List[File]:

@@ -61,11 +61,6 @@ class Behavior:
 
     @property
     def is_completed(self) -> bool:
-        """Check if this behavior is completed.
-        
-        Note: Completion should be explicitly tracked, not inferred from position.
-        Returning False until we implement explicit completion tracking.
-        """
         return False
 
     def matches_trigger(self, text: str) -> bool:
@@ -121,16 +116,7 @@ class Behavior:
 
     @property
     def validation_type(self) -> ValidationType:
-        """Determine what this behavior validates by default.
-        
-        Returns:
-            ValidationType.STORY_GRAPH: For behaviors that validate story graph only (shape, discovery, exploration, etc.)
-            ValidationType.FILES: For behaviors that validate files only (code, tests)
-            ValidationType.BOTH: For behaviors that validate both (default fallback)
-        """
-        # Behaviors that validate story graph only
         story_graph_only = {'shape', 'prioritization', 'discovery', 'exploration', 'scenarios'}
-        # Behaviors that validate files only
         files_only = {'code', 'tests', 'test'}
         
         if self.name in story_graph_only:

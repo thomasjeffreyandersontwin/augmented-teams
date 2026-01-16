@@ -1,18 +1,14 @@
-"""Scanner for validating vertical slices in increments."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic
 from .violation import Violation
 
-
 class VerticalSliceScanner(StoryScanner):
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # This scanner works on increments, not individual story nodes
-        # It needs to check increment structure
         return violations
     
     def scan(

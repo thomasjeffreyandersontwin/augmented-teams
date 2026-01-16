@@ -21,7 +21,6 @@ class Visitor(ABC):
     
     @property
     def data_collector(self):
-        """Override in subclasses that need data collection."""
         return None
     
     @abstractmethod

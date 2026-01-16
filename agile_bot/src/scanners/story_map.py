@@ -1,17 +1,5 @@
-"""
-Story Map (Legacy Compatibility Layer)
-
-This module provides backward-compatible wrappers around the new story_graph package.
-The old interface uses data dictionaries and indices, while the new model uses proper domain objects.
-
-This is a compatibility layer - new code should use story_graph package directly.
-"""
 
 from typing import List, Dict, Any, Optional, Iterator, Union
-
-# Note: New story_graph package available at agile_bot.src.story_graph
-# This module maintains backward compatibility with old interface
-
 
 class StoryNode:
     
@@ -53,7 +41,6 @@ class StoryNode:
             return ".".join(path_parts)
         return ""
 
-
 class Epic(StoryNode):
     
     @property
@@ -74,7 +61,6 @@ class Epic(StoryNode):
 
     @property
     def all_stories(self) -> List['Story']:
-        """Return all Story nodes within this epic (including nested sub-epics)."""
         stories: List['Story'] = []
 
         def _collect(node: StoryNode):
@@ -85,7 +71,6 @@ class Epic(StoryNode):
 
         _collect(self)
         return stories
-
 
 class SubEpic(StoryNode):
     
@@ -106,7 +91,6 @@ class SubEpic(StoryNode):
         
         return children
 
-
 class StoryGroup(StoryNode):
     
     @property
@@ -119,7 +103,6 @@ class StoryGroup(StoryNode):
             children.append(story)
         
         return children
-
 
 class ScenarioBase:
     
@@ -138,7 +121,6 @@ class ScenarioBase:
         words = scenario_name.split()
         method_name = "_".join(word.lower() for word in words)
         return f"test_{method_name}"
-
 
 class Scenario(ScenarioBase):
     
@@ -166,7 +148,6 @@ class Scenario(ScenarioBase):
     def map_location(self, field: str = 'name') -> str:
         story_location = self.story.map_location('scenarios')
         return f"{story_location}[{self.scenario_idx}].{field}"
-
 
 class ScenarioOutline(ScenarioBase):
     
@@ -206,7 +187,6 @@ class ScenarioOutline(ScenarioBase):
     def map_location(self, field: str = 'name') -> str:
         story_location = self.story.map_location('scenario_outlines')
         return f"{story_location}[{self.scenario_outline_idx}].{field}"
-
 
 class Story(StoryNode):
     
@@ -255,7 +235,6 @@ class Story(StoryNode):
         class_name = "".join(word.capitalize() for word in words)
         return f"Test{class_name}"
 
-
 class StoryMap:
     
     def __init__(self, story_graph: Dict[str, Any]):
@@ -290,7 +269,6 @@ class StoryMap:
         return [Epic(epic_data, epic_idx) for epic_idx, epic_data in enumerate(epics_data)]
     
     def find_epic_by_name(self, epic_name: str) -> 'Epic':
-        """Find an epic by name."""
         for epic in self.epics():
             if epic.name == epic_name:
                 return epic

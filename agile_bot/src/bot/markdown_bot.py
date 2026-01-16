@@ -1,31 +1,19 @@
-"""
-Markdown adapter for Bot domain object.
-"""
 
 from agile_bot.src.cli.adapters import MarkdownAdapter
 from agile_bot.src.cli.base_hierarchical_adapter import BaseBotAdapter
 from agile_bot.src.bot.bot import Bot
 
 class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
-    """Serializes Bot domain object to Markdown - matches TTYBot structure."""
     
     def __init__(self, bot: Bot):
-        """
-        Initialize Markdown adapter for Bot.
-        
-        Args:
-            bot: Bot domain object to serialize
-        """
         BaseBotAdapter.__init__(self, bot, 'markdown')
         self.bot = bot
     
     
     @property
     def name(self):
-        """Returns formatted bot name header with registered bots."""
         lines = []
         lines.append(MarkdownAdapter.format_header(self, 2, f"🤖 Bot: {self.bot.name}").strip())
-        # Show registered bots
         registered_bots = self.bot.bots
         if registered_bots and len(registered_bots) > 1:
             bot_list = ' | '.join(registered_bots)
@@ -36,14 +24,12 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
     
     @property
     def bot_paths(self):
-        """Returns formatted bot paths display."""
         from agile_bot.src.cli.adapter_factory import AdapterFactory
         markdown_bot_paths = AdapterFactory.create(self.bot.bot_paths, 'markdown')
         return markdown_bot_paths.serialize()
     
     @property
     def progress(self):
-        """Returns formatted progress section with behaviors hierarchy."""
         lines = []
         lines.append(MarkdownAdapter.format_header(self, 2, "🗺️ Progress"))
         lines.append("")
@@ -58,7 +44,6 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
     
     @property
     def commands(self):
-        """Returns available commands quick reference."""
         lines = []
         lines.append(MarkdownAdapter.format_header(self, 2, "💻 Commands"))
         lines.append("")
@@ -73,10 +58,8 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
     
     @property
     def behavior_action_summary(self):
-        """Returns summary of all behaviors and actions."""
         lines = []
         
-        # Get behavior names
         behavior_names = []
         for behavior in self.bot.behaviors:
             name = behavior.name
@@ -87,7 +70,6 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
         
         lines.append(f"**Behaviors:** {' | '.join(behavior_names)}")
         
-        # Get actions from current behavior
         behavior = self.bot.behaviors.current or next(iter(self.bot.behaviors), None)
         if behavior:
             action_names = []
@@ -104,7 +86,6 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
         return '\n'.join(lines)
     
     def format_header(self) -> str:
-        """Returns CLI STATUS section header with AI instructions in markdown."""
         lines = []
         lines.append("")
         lines.append("---")
@@ -121,7 +102,6 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
         return '\n'.join(lines)
     
     def format_bot_info(self) -> str:
-        """Returns bot name and paths."""
         lines = []
         lines.append(self.name)
         lines.append("")
@@ -146,17 +126,14 @@ class MarkdownBot(BaseBotAdapter, MarkdownAdapter):
         return '\n'.join(lines)
     
     def format_footer(self) -> str:
-        """Returns behavior/action summary."""
         return self.behavior_action_summary
     
     def serialize(self) -> str:
-        """Convert Bot to Markdown string - uses base class serialization."""
         result = super().serialize()
         return result + "\n" if result else result
     
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

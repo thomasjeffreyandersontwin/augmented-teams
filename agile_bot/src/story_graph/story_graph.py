@@ -26,7 +26,6 @@ class StoryGraph:
             output_filename = config_data.get('output', 'story-graph.json')
             docs_dir = self._workspace_directory / docs_path
         else:
-            # documentation_path is already relative to workspace, so use it directly
             docs_path = self._bot_paths.documentation_path
             output_filename = 'story-graph.json'
             docs_dir = self._workspace_directory / docs_path

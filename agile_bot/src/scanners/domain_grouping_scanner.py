@@ -1,11 +1,9 @@
-"""Scanner for validating domain grouping in domain models."""
 
 from typing import List, Dict, Any, Optional
 import re
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class DomainGroupingScanner(DomainScanner):
     
@@ -38,7 +36,4 @@ class DomainGroupingScanner(DomainScanner):
                 break
         
         return violations
-
-
-
 

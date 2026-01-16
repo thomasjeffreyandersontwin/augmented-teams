@@ -1,18 +1,13 @@
-"""
-Markdown adapter for BotPath domain object.
-"""
 
 from agile_bot.src.cli.adapters import MarkdownAdapter
 from agile_bot.src.bot_path.bot_path import BotPath
 
 class MarkdownBotPath(MarkdownAdapter):
-    """Serializes BotPath to Markdown."""
     
     def __init__(self, bot_path: BotPath):
         self.bot_path = bot_path
     
     def serialize(self) -> str:
-        """Convert BotPath to Markdown string."""
         lines = []
         
         lines.append(self.format_header(2, "Bot Paths"))
@@ -32,7 +27,6 @@ class MarkdownBotPath(MarkdownAdapter):
     
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

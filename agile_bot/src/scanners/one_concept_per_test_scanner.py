@@ -1,4 +1,3 @@
-"""Scanner for validating one concept per test."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -10,7 +9,6 @@ from .violation import Violation
 from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
-
 
 class OneConceptPerTestScanner(TestScanner):
     
@@ -35,7 +33,6 @@ class OneConceptPerTestScanner(TestScanner):
     def _check_one_concept(self, test_node: ast.FunctionDef, file_path: Path, content: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
         violations = []
         
-        # 1. Name pattern check (existing logic)
         test_name = test_node.name.lower()
         multi_concept_patterns = [
             r'\b(and|or|then|also|plus)\b',
@@ -47,7 +44,6 @@ class OneConceptPerTestScanner(TestScanner):
                 words = test_name.split('_')
                 if len(words) > 8:
                     line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-                    # No code snippet for test naming violations (method definition line)
                     violations.append(Violation(
                         rule=rule_obj,
                         violation_message=f'Test "{test_node.name}" appears to test multiple concepts - split into separate tests, one concept per test',
@@ -57,11 +53,9 @@ class OneConceptPerTestScanner(TestScanner):
                     ).to_dict())
                     break
         
-        # 2. AST-based concept detection
         concepts = self._detect_multiple_concepts(test_node, content)
         if len(concepts) > 1:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            # No code snippet for multiple concept violations (method definition line)
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(
@@ -73,11 +67,9 @@ class OneConceptPerTestScanner(TestScanner):
                 severity='warning'
             ).to_dict())
         
-        # 3. Scenario analysis from docstring
         scenario = self._extract_scenario(test_node)
         if scenario and self._has_multiple_scenarios(scenario):
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            # No code snippet for docstring scenario violations (method definition line)
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(
@@ -89,11 +81,9 @@ class OneConceptPerTestScanner(TestScanner):
                 severity='info'
             ).to_dict())
         
-        # 4. Assertion grouping
         assertion_groups = self._group_assertions(test_node)
         if len(assertion_groups) > 3:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
-            # No code snippet for assertion grouping violations (method definition line)
             violations.append(Violation(
                 rule=rule_obj,
                 violation_message=(
@@ -110,7 +100,6 @@ class OneConceptPerTestScanner(TestScanner):
     def _detect_multiple_concepts(self, test_node: ast.FunctionDef, content: str) -> List[str]:
         concepts = []
         
-        # Detect different types of operations
         has_setup = False
         has_action = False
         has_validation = False
@@ -138,8 +127,6 @@ class OneConceptPerTestScanner(TestScanner):
         if has_cleanup:
             concepts.append('Cleanup')
         
-        # If we have multiple distinct operation types, might be multiple concepts
-        # But this is just a heuristic - need more sophisticated analysis
         
         return concepts
     
@@ -164,7 +151,6 @@ class OneConceptPerTestScanner(TestScanner):
         return None
     
     def _has_multiple_scenarios(self, scenario: str) -> bool:
-        # Look for multiple "SCENARIO:" markers or multiple "GIVEN:" sections
         scenario_count = scenario.lower().count('scenario:')
         given_count = scenario.lower().count('given:')
         
@@ -179,12 +165,10 @@ class OneConceptPerTestScanner(TestScanner):
         if len(assertions) <= 1:
             return [assertions] if assertions else []
         
-        # Simple grouping: consecutive assertions are in same group
         groups = []
         current_group = [assertions[0]]
         
         for i in range(1, len(assertions)):
-            # If assertions are close together (within 5 lines), same group
             if hasattr(assertions[i], 'lineno') and hasattr(assertions[i-1], 'lineno'):
                 if assertions[i].lineno - assertions[i-1].lineno <= 5:
                     current_group.append(assertions[i])

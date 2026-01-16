@@ -1,4 +1,3 @@
-"""Scanner for validating avoidance of technical abstractions in domain models."""
 
 from typing import List, Dict, Any, Optional
 import re
@@ -7,14 +6,8 @@ from .domain_concept_node import DomainConceptNode
 from .violation import Violation
 from .vocabulary_helper import VocabularyHelper
 
-
 class TechnicalAbstractionScanner(DomainScanner):
-    """
-    Validates that domain concepts avoid exposing technical abstractions.
-    Uses NLTK to detect agent nouns like Saver, Loader, Storage.
-    """
     
-    # Technical file operation patterns (regex-based, not derivable from NLTK)
     TECHNICAL_FILE_PATTERNS = [
         r'\bsave\s+.*file\b',
         r'\bload\s+.*file\b',
@@ -24,7 +17,6 @@ class TechnicalAbstractionScanner(DomainScanner):
     def scan_domain_concept(self, node: DomainConceptNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Check if concept name is an agent noun related to technical operations
         is_agent, base_verb, suffix = VocabularyHelper.is_agent_noun(node.name)
         if is_agent and base_verb in ['save', 'load', 'store']:
             violations.append(
@@ -37,7 +29,6 @@ class TechnicalAbstractionScanner(DomainScanner):
                 ).to_dict()
             )
         
-        # Check responsibilities for technical file operation patterns
         for i, responsibility_data in enumerate(node.responsibilities):
             responsibility_name = responsibility_data.get('name', '')
             resp_lower = responsibility_name.lower()
@@ -55,7 +46,4 @@ class TechnicalAbstractionScanner(DomainScanner):
                     break
         
         return violations
-
-
-
 

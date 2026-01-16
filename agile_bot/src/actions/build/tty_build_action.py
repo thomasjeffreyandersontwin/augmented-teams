@@ -1,17 +1,12 @@
-"""
-TTY adapter for BuildStoryGraphAction.
-"""
 
 from agile_bot.src.actions.tty_action import TTYAction
 from agile_bot.src.actions.build.build_action import BuildStoryGraphAction
 
 class TTYBuildAction(TTYAction):
-    """Serializes BuildStoryGraphAction to TTY - exposes all BuildStoryGraphAction properties."""
     
     def __init__(self, action: BuildStoryGraphAction, is_current: bool = False, is_completed: bool = False):
         super().__init__(action, is_current, is_completed)
     
-    # Expose ALL domain properties
     @property
     def description(self):
         return self.action.description
@@ -42,26 +37,21 @@ class TTYBuildAction(TTYAction):
     
     @property
     def story_graph_data(self):
-        """Build-specific property."""
         return self.action.story_graph_data
     
     @property
     def story_graph_spec(self):
-        """Build-specific property."""
         return self.action.story_graph_spec
     
     @property
     def story_graph_template(self):
-        """Build-specific property."""
         return self.action.story_graph_template
     
     def serialize(self) -> str:
-        """Convert BuildStoryGraphAction to TTY string - uses base class for status display."""
         return super().serialize()
     
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

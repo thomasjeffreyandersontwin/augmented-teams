@@ -1,4 +1,3 @@
-"""Scanner for validating error handling is isolated."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Functions, TryBlocks
-
 
 class ErrorHandlingIsolationScanner(CodeScanner):
     

@@ -13,19 +13,13 @@ class BotPath:
     def __init__(self, workspace_path: Path=None, bot_directory: Path=None):
         self._python_workspace_root = get_python_workspace_root()
         self._workspace_directory = Path(workspace_path) if workspace_path else get_workspace_directory()
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_path.parent.mkdir(parents=True, exist_ok=True); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'bot_path.py:16','message':'BotPath.__init__ setting bot_directory','data':{'bot_directory_param':str(bot_directory) if bot_directory else None,'bot_directory_param_name':bot_directory.name if bot_directory else None,'BOT_DIRECTORY_env':__import__('os').environ.get('BOT_DIRECTORY')},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H2'})+'\n'); log_file.close()
-        # #endregion
         self._bot_directory = Path(bot_directory) if bot_directory else get_bot_directory()
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'bot_path.py:17','message':'BotPath.__init__ bot_directory set','data':{'final_bot_directory':str(self._bot_directory),'final_bot_directory_name':self._bot_directory.name},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H2'})+'\n'); log_file.close()
-        # #endregion
         self._base_actions_directory = self._load_base_actions_directory()
         self._documentation_path = self._load_documentation_path()
 
     def _load_base_actions_directory(self) -> Path:
-        """Load base_actions path from bot_config.json or use default."""
-        # Try both config locations
         config_paths = [
             self._bot_directory / 'bot_config.json',
             self._bot_directory / 'config' / 'bot_config.json'
@@ -37,7 +31,6 @@ class BotPath:
                     config = read_json_file(config_path)
                     base_actions_path = config.get('baseActionsPath')
                     if base_actions_path:
-                        # If relative path, resolve from workspace root
                         path = Path(base_actions_path)
                         if not path.is_absolute():
                             path = self._python_workspace_root / base_actions_path
@@ -45,7 +38,6 @@ class BotPath:
                 except Exception as e:
                     logger.debug(f'Failed to load baseActionsPath from {config_path}: {e}')
         
-        # Default: base_actions at workspace root level
         return self._python_workspace_root / 'agile_bot' / 'base_actions'
     
     def _load_documentation_path(self) -> Path:
@@ -85,7 +77,6 @@ class BotPath:
 
     @property
     def test_path(self) -> Path:
-        """Return the relative path to the test directory."""
         return Path('test')
 
     def find_repo_root(self) -> Path:
@@ -131,7 +122,6 @@ class BotPath:
                 config = read_json_file(config_path)
                 self._write_workspace_to_config(config_path, config, resolved_path)
                 return
-        # If no config exists, create a minimal one at the root
         default_config_path = candidate_paths[0]
         default_config_path.parent.mkdir(parents=True, exist_ok=True)
         config = {'name': self._bot_directory.name, 'mcp': {'env': {}}}

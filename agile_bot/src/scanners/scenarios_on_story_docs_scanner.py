@@ -1,10 +1,8 @@
-"""Scanner for validating scenarios are in story-graph.json."""
 
 from typing import List, Dict, Any, Optional, Set
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story, StoryMap
 from .violation import Violation
-
 
 def _get_story_names_from_scope(story_graph: Dict[str, Any]) -> Set[str]:
     scope_config = story_graph.get('_validation_scope', {})
@@ -44,7 +42,6 @@ def _get_story_names_from_scope(story_graph: Dict[str, Any]) -> Set[str]:
     
     return None
 
-
 def _get_increment_story_names(story_graph: Dict[str, Any], priority: int) -> Set[str]:
     increments = story_graph.get('increments', [])
     for increment in increments:
@@ -56,7 +53,6 @@ def _get_increment_story_names(story_graph: Dict[str, Any], priority: int) -> Se
             return _extract_story_names_from_increment(increment)
     return set()
 
-
 def _extract_story_names_from_increment(increment_data: Dict[str, Any]) -> Set[str]:
     story_names = set()
     for story in increment_data.get('stories', []):
@@ -67,7 +63,6 @@ def _extract_story_names_from_increment(increment_data: Dict[str, Any]) -> Set[s
     for epic in increment_data.get('epics', []):
         story_names.update(_extract_story_names_from_epic(epic))
     return story_names
-
 
 def _extract_story_names_from_epic(epic_data: Dict[str, Any]) -> Set[str]:
     story_names = set()
@@ -86,7 +81,6 @@ def _extract_story_names_from_epic(epic_data: Dict[str, Any]) -> Set[str]:
         story_names.update(_extract_story_names_from_epic(sub_epic))
     return story_names
 
-
 class ScenariosOnStoryDocsScanner(StoryScanner):
     
     def __init__(self):
@@ -101,27 +95,22 @@ class ScenariosOnStoryDocsScanner(StoryScanner):
         code_files: Optional[List['Path']] = None,
         on_file_scanned: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        # Determine in-scope story names
         self._in_scope_story_names = _get_story_names_from_scope(story_graph)
         
-        # Call parent scan method (pass through test_files and code_files)
         return super().scan(story_graph, rule_obj, test_files=test_files, code_files=code_files)
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
         if isinstance(node, Story):
-            # Skip stories not in scope (if scope is defined)
             if self._in_scope_story_names is not None:
                 if node.name not in self._in_scope_story_names:
-                    # Story is out of scope, skip validation
                     return violations
             
             story_data = node.data
             scenarios = story_data.get('scenarios', [])
             scenario_outlines = story_data.get('scenario_outlines', [])
             
-            # Story is valid if it has EITHER scenarios OR scenario_outlines (not requiring both)
             has_scenarios = scenarios and len(scenarios) > 0
             has_scenario_outlines = scenario_outlines and len(scenario_outlines) > 0
             

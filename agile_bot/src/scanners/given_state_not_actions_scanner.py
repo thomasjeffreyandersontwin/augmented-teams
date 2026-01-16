@@ -1,11 +1,9 @@
-"""Scanner for validating Given statements describe state, not actions."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 import re
-
 
 class GivenStateNotActionsScanner(StoryScanner):
     
@@ -31,16 +29,13 @@ class GivenStateNotActionsScanner(StoryScanner):
         steps = []
         
         if isinstance(scenario, dict):
-            # Try different possible keys
             if 'steps' in scenario:
                 steps = scenario['steps']
             elif 'scenario' in scenario:
-                # Scenario might be a string with newlines
                 scenario_text = scenario['scenario']
                 if isinstance(scenario_text, str):
                     steps = [s.strip() for s in scenario_text.split('\n') if s.strip()]
             elif 'given' in scenario or 'when' in scenario or 'then' in scenario:
-                # Steps might be in separate keys
                 if 'given' in scenario:
                     given = scenario['given']
                     if isinstance(given, list):
@@ -61,7 +56,6 @@ class GivenStateNotActionsScanner(StoryScanner):
         return steps
     
     def _check_given_is_action(self, step: str, node: StoryNode, scenario_idx: int, step_idx: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        # Common action verbs that should be in When, not Given
         action_verbs = [
             'invokes', 'invoked', 'calls', 'called', 'executes', 'executed',
             'clicks', 'clicked', 'sends', 'sent', 'triggers', 'triggered',
@@ -76,7 +70,6 @@ class GivenStateNotActionsScanner(StoryScanner):
         
         for verb in action_verbs:
             if verb in step_lower:
-                # e.g., "Given Tool invokes" is wrong, "Given tool has invoked" might be wrong too
                 if re.search(rf'\b{verb}\b', step_lower):
                     location = f"{node.map_location()}.scenarios[{scenario_idx}].steps[{step_idx}]"
                     return Violation(

@@ -1,4 +1,3 @@
-"""Scanner for detecting excessive guard clauses in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -10,7 +9,6 @@ from .violation import Violation
 from .resources.ast_elements import Functions, IfStatements
 
 logger = logging.getLogger(__name__)
-
 
 class ExcessiveGuardsScanner(CodeScanner):
     
@@ -49,10 +47,6 @@ class ExcessiveGuardsScanner(CodeScanner):
         return violations
     
     def _is_guard_clause(self, if_node: ast.If, source_lines: List[str]) -> bool:
-        # Guard clauses typically:
-        # 1. Return early or set default values
-        # 2. Check for None/existence/type
-        # 3. Have simple bodies (return, continue, break, or single assignment)
         
         body_is_simple = len(if_node.body) == 1
         if body_is_simple:
@@ -66,32 +60,27 @@ class ExcessiveGuardsScanner(CodeScanner):
         return False
     
     def _is_guard_pattern(self, test_node: ast.AST) -> bool:
-        # hasattr() checks
         if isinstance(test_node, ast.Call):
             if isinstance(test_node.func, ast.Name):
                 if test_node.func.id == 'hasattr':
                     return True
         
-        # isinstance() checks (defensive, not polymorphic)
         if isinstance(test_node, ast.Call):
             if isinstance(test_node.func, ast.Name):
                 if test_node.func.id == 'isinstance':
                     return True
         
-        # File existence checks (identified but may not be flagged if optional)
         if isinstance(test_node, ast.Call):
             if isinstance(test_node.func, ast.Attribute):
                 if test_node.func.attr == 'exists':
                     return True
         
-        # Variable truthiness checks (if variable:, if not variable:)
         if isinstance(test_node, ast.Name):
             return True
         if isinstance(test_node, ast.UnaryOp) and isinstance(test_node.op, ast.Not):
             if isinstance(test_node.operand, ast.Name):
                 return True
         
-        # Comparison with None
         if isinstance(test_node, ast.Compare):
             for op in test_node.ops:
                 if isinstance(op, (ast.Is, ast.IsNot, ast.Eq, ast.NotEq)):
@@ -110,7 +99,6 @@ class ExcessiveGuardsScanner(CodeScanner):
                 template = violation_messages[message_key]
                 return template.format(line=line_number, **format_args)
         
-        # Default messages if not in rule file
         defaults = {
             'hasattr_guard': f'Line {line_number}: hasattr() guard clause detected. Assume attributes exist - let AttributeError propagate if missing.',
             'file_existence_guard': f'Line {line_number}: File existence check detected. Let file operations fail if file missing - handle errors centrally.',
@@ -121,15 +109,12 @@ class ExcessiveGuardsScanner(CodeScanner):
         return defaults.get(message_key, f'Line {line_number}: Guard clause detected.')
 
     def _is_optional_config_check(self, guard_node: ast.If, source_lines: List[str]) -> bool:
-        # File existence checks - only flag if NOT followed by creation logic
         test = guard_node.test
         if isinstance(test, ast.Call) and isinstance(test.func, ast.Attribute) and test.func.attr == 'exists':
             if self._is_followed_by_creation_logic(guard_node, source_lines):
-                return True  # Has creation logic, so it's legitimate - don't flag
-            # No creation logic - flag it
+                return True
             return False
         
-        # hasattr() checks - these are for optional attributes, don't flag
         if isinstance(test, ast.Call) and isinstance(test.func, ast.Name) and test.func.id == 'hasattr':
             return True
         
@@ -144,14 +129,12 @@ class ExcessiveGuardsScanner(CodeScanner):
                 if isinstance(first_stmt.value, (ast.List, ast.Dict)):
                     return True
         
-        # Look for patterns like: if not config_value:, if not template_filename:, etc.
         if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
             if isinstance(test.operand, ast.Name):
                 var_name = test.operand.id.lower()
                 if self._check_optional_pattern(var_name):
-                    return True  # Likely optional - don't flag
+                    return True
         
-        # These are often checking optional values
         if isinstance(test, ast.Name):
             var_name = test.id.lower()
             if self._check_optional_pattern(var_name):
@@ -179,7 +162,7 @@ class ExcessiveGuardsScanner(CodeScanner):
                             'pattern', 'spec', 'rule', 'violation', 'action', 'behavior',
                             'trigger', 'command', 'desc', 'instruction', 'error', 'info',
                             'name', 'obj', 'instance', 'module', 'class', 'background',
-                            'parsed', 'result', 'content', 'tree', 'lines']  # Parsing/processing results that can fail
+                            'parsed', 'result', 'content', 'tree', 'lines']
         return any(pattern in var_name for pattern in optional_patterns)
     
     def _is_followed_by_creation_logic(self, guard_node: ast.If, source_lines: List[str]) -> bool:
@@ -188,8 +171,7 @@ class ExcessiveGuardsScanner(CodeScanner):
                 if self._contains_creation_call(stmt):
                     return True
         
-        # Look at lines after the if statement (including else branch)
-        start_line = guard_node.lineno - 1  # Convert to 0-based index
+        start_line = guard_node.lineno - 1
         end_line = guard_node.end_lineno if hasattr(guard_node, 'end_lineno') else start_line + len(guard_node.body) + 1
         
         if guard_node.orelse:
@@ -205,7 +187,6 @@ class ExcessiveGuardsScanner(CodeScanner):
         
         for i in range(end_line, min(end_line + 5, len(source_lines))):
             line = source_lines[i].strip()
-            # Skip empty lines and comments
             if not line or line.startswith('#'):
                 continue
             creation_patterns = ['.write_text', '.write_bytes', '.mkdir', '.touch', 'open(']
@@ -226,12 +207,9 @@ class ExcessiveGuardsScanner(CodeScanner):
     def _check_guard_pattern(self, guard_node: ast.If, file_path: Path, rule_obj: Any, source_lines: List[str], content: str) -> Optional[Dict[str, Any]]:
         test = guard_node.test
         
-        # Skip file existence checks, optional config, hasattr(), early returns, etc.
         if self._is_optional_config_check(guard_node, source_lines):
             return None
         
-        # None checks (if X is None:, if X is not None:)
-        # Only flag if it's checking a required variable, not optional config
         if isinstance(test, ast.Compare):
             for op in test.ops:
                 if isinstance(op, (ast.Is, ast.IsNot)):
@@ -257,8 +235,6 @@ class ExcessiveGuardsScanner(CodeScanner):
                                 ast_node=guard_node
                             )
         
-        # Variable truthiness checks (if not X:, if X:)
-        # Only flag if it's checking a required variable, not optional config
         if isinstance(test, ast.Name):
             var_name = self._get_variable_name(test)
             return self._create_violation_with_snippet(

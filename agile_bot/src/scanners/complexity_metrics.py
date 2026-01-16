@@ -1,20 +1,16 @@
-"""Shared complexity metrics calculations for scanners."""
 
 from typing import Any, Dict, List, Set, Optional
 import ast
-
 
 class ComplexityMetrics:
     
     @staticmethod
     def cyclomatic_complexity(func_node: ast.FunctionDef) -> int:
-        complexity = 1  # Base complexity
+        complexity = 1
         
         for node in ast.walk(func_node):
-            # Decision points
             if isinstance(node, (ast.If, ast.For, ast.While, ast.ExceptHandler, ast.With)):
                 complexity += 1
-            # Boolean operators add complexity
             elif isinstance(node, ast.BoolOp):
                 complexity += len(node.values) - 1
             elif isinstance(node, ast.Assert):
@@ -30,10 +26,8 @@ class ComplexityMetrics:
         def visit_node(node: ast.AST, level: int):
             nonlocal complexity
             
-            # Increment complexity for decision points
             if isinstance(node, (ast.If, ast.For, ast.While, ast.ExceptHandler)):
-                complexity += 1 + level  # Nesting adds to complexity
-                # Visit children with increased nesting
+                complexity += 1 + level
                 for child in ast.iter_child_nodes(node):
                     visit_node(child, level + 1)
             elif isinstance(node, ast.With):
@@ -47,7 +41,6 @@ class ComplexityMetrics:
             elif isinstance(node, ast.Assert):
                 complexity += 1 + level
             else:
-                # Visit children at same nesting level
                 for child in ast.iter_child_nodes(node):
                     visit_node(child, level)
         
@@ -64,7 +57,6 @@ class ComplexityMetrics:
             nonlocal max_depth
             max_depth = max(max_depth, depth)
             
-            # Increase depth for nested structures
             if isinstance(node, (ast.If, ast.For, ast.While, ast.With, ast.Try, ast.FunctionDef)):
                 for child in ast.iter_child_nodes(node):
                     visit_node(child, depth + 1)
@@ -89,7 +81,6 @@ class ComplexityMetrics:
         def add_example(resp_type: str, node: ast.AST):
             if resp_type not in responsibilities:
                 responsibilities[resp_type] = []
-            # Only keep first 2 examples per type to avoid verbose output
             if len(responsibilities[resp_type]) < 2:
                 line = getattr(node, 'lineno', None)
                 try:
@@ -101,24 +92,19 @@ class ComplexityMetrics:
                 responsibilities[resp_type].append({'line': line, 'code': code})
         
         for node in ast.walk(func_node):
-            # I/O operations - must be actual file/network operations, not dict methods
             if isinstance(node, ast.Call):
                 func_name = ComplexityMetrics._get_call_name(node)
                 if func_name and ComplexityMetrics._is_io_operation(func_name, node):
                     add_example('I/O', node)
             
-            # Validation (assertions, checks, validations)
             if isinstance(node, ast.Assert):
                 add_example('Validation', node)
             
-            # Transformation (assignments with meaningful operations, not simple accessors)
             if isinstance(node, ast.Assign):
                 if ComplexityMetrics._has_transformation(node):
                     add_example('Transformation', node)
             
-            # Computation (math operations - but not simple comparisons or string ops)
             if isinstance(node, ast.BinOp):
-                # Only count actual math, not string concatenation or list operations
                 if isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.FloorDiv)):
                     add_example('Computation', node)
         
@@ -128,7 +114,6 @@ class ComplexityMetrics:
     def _is_io_operation(func_name: str, call_node: ast.Call) -> bool:
         func_name_lower = func_name.lower()
         
-        # Exclude common collection accessor methods (these are NOT I/O)
         non_io_methods = {
             'get', 'items', 'keys', 'values', 'pop', 'update', 'setdefault',
             'append', 'extend', 'insert', 'remove', 'clear', 'copy',
@@ -141,7 +126,6 @@ class ComplexityMetrics:
         if func_name_lower in non_io_methods:
             return False
         
-        # These are actual I/O keywords
         io_keywords = ['open', 'read_file', 'write_file', 'load_json', 'save_json',
                        'read_text', 'write_text', 'read_bytes', 'write_bytes',
                        'fetch', 'request', 'post', 'download', 'upload',
@@ -152,7 +136,6 @@ class ComplexityMetrics:
         if any(keyword in func_name_lower for keyword in ['read_', 'write_', 'load_', 'save_', 'fetch_']):
             return True
         
-        # 'open' is I/O only if it's the builtin
         if func_name_lower == 'open':
             return True
         
@@ -174,7 +157,6 @@ class ComplexityMetrics:
         if isinstance(assign_node.value, ast.Call):
             func_name = ComplexityMetrics._get_call_name(assign_node.value)
             if func_name:
-                # Simple utilities are NOT transformations
                 simple_utilities = {
                     'list', 'dict', 'set', 'tuple', 'str', 'int', 'float', 'bool',
                     'len', 'sorted', 'reversed', 'enumerate', 'zip', 'range',
@@ -188,15 +170,11 @@ class ComplexityMetrics:
                 }
                 if func_name.lower() in simple_utilities:
                     return False
-            # Other function calls are transformations
             return True
         
-        # List/dict comprehensions are transformations
         if isinstance(assign_node.value, (ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp)):
             return True
         
-        # BinOp/UnaryOp - only count if it's actual transformation, not simple concatenation
-        # (We handle this separately in detect_responsibilities for Computation)
         
         return False
     
@@ -204,21 +182,19 @@ class ComplexityMetrics:
     def calculate_lcom(class_node: ast.ClassDef) -> float:
         methods = [node for node in class_node.body if isinstance(node, ast.FunctionDef)]
         
-        # Filter out simple property getters - they're data accessors, not real methods
         meaningful_methods = []
         for method in methods:
             if not ComplexityMetrics._is_simple_property_getter(method):
                 meaningful_methods.append(method)
         
         if len(meaningful_methods) < 2:
-            return 0.0  # Single method or no methods = perfect cohesion
+            return 0.0
         
         method_attributes = []
         for method in meaningful_methods:
             attrs = ComplexityMetrics._get_accessed_attributes(method, class_node)
             method_attributes.append(attrs)
         
-        # Count pairs of methods that don't share attributes
         non_shared_pairs = 0
         total_pairs = 0
         
@@ -231,19 +207,15 @@ class ComplexityMetrics:
         if total_pairs == 0:
             return 0.0
         
-        # LCOM = ratio of non-shared pairs to total pairs
         return non_shared_pairs / total_pairs
     
     @staticmethod
     def _is_simple_property_getter(method_node: ast.FunctionDef) -> bool:
-        # Must have exactly one statement (or docstring + return)
         body = method_node.body
         
-        # Skip docstring if present
         if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, (ast.Str, ast.Constant)):
             body = body[1:]
         
-        # Must be exactly one return statement
         if len(body) != 1:
             return False
         
@@ -271,14 +243,11 @@ class ComplexityMetrics:
                     if isinstance(target, ast.Name):
                         class_attrs.add(target.id)
         
-        # Find attribute accesses in method
         for node in ast.walk(method_node):
             if isinstance(node, ast.Attribute):
-                # Direct self.attr access
                 if isinstance(node.value, ast.Name) and node.value.id == 'self':
                     attr_name = ComplexityMetrics._normalize_attr_name(node.attr)
                     attributes.add(attr_name)
-                # Delegation: self.x.y - count as accessing 'x'
                 elif isinstance(node.value, ast.Attribute):
                     if isinstance(node.value.value, ast.Name) and node.value.value.id == 'self':
                         attr_name = ComplexityMetrics._normalize_attr_name(node.value.attr)
@@ -302,7 +271,6 @@ class ComplexityMetrics:
             if not hasattr(ast, 'unparse'):
                 return f'def {method.name}(...)'
             
-            # Skip docstring if present
             body = method.body
             if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, (ast.Str, ast.Constant)):
                 body = body[1:]
@@ -310,7 +278,6 @@ class ComplexityMetrics:
             if body:
                 first_stmt = body[0]
                 code = ast.unparse(first_stmt)
-                # Truncate if too long
                 if len(code) > 80:
                     code = code[:77] + '...'
                 return code
@@ -333,13 +300,11 @@ class ComplexityMetrics:
         if len(methods) == 0:
             return {}
         
-        # Group methods by responsibility type with examples
         responsibility_groups: Dict[str, List[Dict[str, Any]]] = {}
         
         for method in methods:
             responsibilities_detailed = ComplexityMetrics.detect_responsibilities_with_examples(method)
             if not responsibilities_detailed:
-                # Method has no detected responsibility - classify as General
                 if 'General' not in responsibility_groups:
                     responsibility_groups['General'] = []
                 if len(responsibility_groups['General']) < 2:
@@ -362,11 +327,4 @@ class ComplexityMetrics:
                         })
         
         return responsibility_groups
-
-
-
-
-
-
-
 

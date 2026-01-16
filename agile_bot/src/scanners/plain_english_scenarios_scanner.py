@@ -1,11 +1,9 @@
-"""Scanner for validating scenarios are written in plain English."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 import re
-
 
 class PlainEnglishScenariosScanner(StoryScanner):
     
@@ -35,7 +33,6 @@ class PlainEnglishScenariosScanner(StoryScanner):
     
     def _get_scenario_text(self, scenario: Dict[str, Any]) -> str:
         if isinstance(scenario, dict):
-            # Try different possible keys
             return scenario.get('scenario', '') or scenario.get('name', '') or str(scenario)
         return str(scenario)
     

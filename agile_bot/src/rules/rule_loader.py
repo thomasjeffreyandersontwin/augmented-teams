@@ -14,7 +14,6 @@ class RuleLoader:
         self.behavior = behavior
 
     def load_bot_rules(self) -> List[Rule]:
-        """Load bot-level rules from <bot_directory>/rules/"""
         bot_rules_dir = self.bot_paths.bot_directory / 'rules'
         bot_rules = []
         if not bot_rules_dir.exists():

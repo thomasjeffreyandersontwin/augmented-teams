@@ -1,10 +1,8 @@
-"""Scanner for validating scenario steps start with scenario-specific Given."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
-
 
 class ScenarioSpecificGivenScanner(StoryScanner):
     

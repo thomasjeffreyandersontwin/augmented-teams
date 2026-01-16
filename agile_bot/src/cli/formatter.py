@@ -1,8 +1,3 @@
-"""
-CLI Terminal Formatter
-
-Simple formatter for CLI output formatting.
-"""
 
 class CliTerminalFormatter:
 

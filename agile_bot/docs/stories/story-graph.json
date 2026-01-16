@@ -2267,12 +2267,12 @@
                           "type": "happy_path",
                           "steps": [],
                           "test_method": "test_workflow_transitions_built_correctly_from_actions_workflow_json"
-                }
-              ]
-            },
-            {
+                        }
+                      ]
+                    },
+                    {
                       "name": "Navigate Sequentially",
-              "sequential_order": 4,
+                      "sequential_order": 4,
                       "connector": "or",
                       "users": [
                         "Bot Behavior"
@@ -2512,460 +2512,464 @@
               ]
             },
             {
-              "name": "Manage Scope",
+              "name": "Manage Story Graph",
               "sequential_order": 4,
-              "test_file": "domain/test_manage_scope.py",
-              "story_groups": [
+              "sub_epics": [
                 {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
+                  "name": "Manage Story Scope",
+                  "sequential_order": 4,
+                  "test_file": "domain/test_manage_scope.py",
+                  "story_groups": [
                     {
-                      "name": "Create Scope",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestCreateScope",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "Scope created with different parameter combinations",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Parameters dict with scope configuration",
-                            "When ActionScope instantiated with parameters",
-                            "Then ActionScope scope property returns expected configuration"
+                          "name": "Create Scope",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_scope_created_with_different_parameter_combinations"
+                          "story_type": "user",
+                          "test_class": "TestCreateScope",
+                          "scenarios": [
+                            {
+                              "name": "Scope created with different parameter combinations",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Parameters dict with scope configuration",
+                                "When ActionScope instantiated with parameters",
+                                "Then ActionScope scope property returns expected configuration"
+                              ],
+                              "test_method": "test_scope_created_with_different_parameter_combinations"
+                            },
+                            {
+                              "name": "Scope defaults to 'all' when no parameters provided",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Empty parameters dict",
+                                "When ActionScope instantiated",
+                                "Then Scope defaults to 'all'"
+                              ],
+                              "test_method": "test_scope_defaults_to_all_when_no_parameters"
+                            }
+                          ]
                         },
                         {
-                          "name": "Scope defaults to 'all' when no parameters provided",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Empty parameters dict",
-                            "When ActionScope instantiated",
-                            "Then Scope defaults to 'all'"
+                          "name": "Filter Scope By Stories",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_scope_defaults_to_all_when_no_parameters"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Filter Scope By Stories",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestFilterScopeByStories",
-                      "scenarios": [
+                          "story_type": "user",
+                          "test_class": "TestFilterScopeByStories",
+                          "scenarios": [
+                            {
+                              "name": "Filter returns all when scope is all",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Story graph with multiple epics and increments",
+                                "When Filter with scope type 'all'",
+                                "Then Story graph contains all epics and increments"
+                              ],
+                              "test_method": "test_filter_returns_all_when_scope_is_all"
+                            },
+                            {
+                              "name": "Filter by single story name returns matching story",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Story graph with multiple stories",
+                                "When Filter with single story name",
+                                "Then Story graph contains only matching story and its parent epic"
+                              ],
+                              "test_method": "test_filter_by_single_story_name_returns_matching_story"
+                            },
+                            {
+                              "name": "Filter by single epic name returns matching epic",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Story graph with multiple epics",
+                                "When Filter with single epic name",
+                                "Then Story graph contains only matching epic and its increments"
+                              ],
+                              "test_method": "test_filter_by_single_epic_name_returns_matching_epic"
+                            },
+                            {
+                              "name": "Filter by increment priorities returns matching increments",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Story graph with increments having different priorities",
+                                "When Filter with increment priorities",
+                                "Then Story graph contains only matching increments and their stories"
+                              ],
+                              "test_method": "test_filter_by_increment_priorities_returns_matching_increments"
+                            },
+                            {
+                              "name": "Filter by increment names returns matching increments",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Story graph with increments having different names",
+                                "When Filter with increment names",
+                                "Then Story graph contains only matching increments and their stories"
+                              ],
+                              "test_method": "test_filter_by_increment_names_returns_matching_increments"
+                            },
+                            {
+                              "name": "Filter returns parent epic when child story matches",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Story graph with epic containing story",
+                                "When Scope set to story name",
+                                "Then Story and parent epic are both returned"
+                              ],
+                              "test_method": "test_filter_returns_parent_epic_when_child_story_matches"
+                            }
+                          ]
+                        },
                         {
-                          "name": "Filter returns all when scope is all",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Story graph with multiple epics and increments",
-                            "When Filter with scope type 'all'",
-                            "Then Story graph contains all epics and increments"
+                          "name": "Filter Scope By Files",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_filter_returns_all_when_scope_is_all"
+                          "story_type": "user",
+                          "test_class": "TestFilterScopeByFiles",
+                          "scenarios": [
+                            {
+                              "name": "File Filter Includes Matching Files",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_file_filter_includes_matching_files"
+                            },
+                            {
+                              "name": "FileFilter excludes files matching exclude patterns",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given A list of files and a FileFilter with exclude patterns",
+                                "When filter_files() is called",
+                                "Then Files matching exclude patterns are removed"
+                              ],
+                              "test_method": "test_file_filter_excludes_matching_files"
+                            },
+                            {
+                              "name": "FileFilter combines include and exclude patterns",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given A list of files and a FileFilter with both include and exclude patterns",
+                                "When filter_files() is called",
+                                "Then Files must match include AND not match exclude"
+                              ],
+                              "test_method": "test_file_filter_combines_include_and_exclude"
+                            },
+                            {
+                              "name": "FileFilter returns all files when no patterns specified",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given A list of files and a FileFilter with no patterns",
+                                "When filter_files() is called",
+                                "Then All files are returned"
+                              ],
+                              "test_method": "test_file_filter_returns_all_when_no_patterns"
+                            },
+                            {
+                              "name": "FileFilter handles specific file paths (not just globs)",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given A list of files and a FileFilter with specific file path",
+                                "When filter_files() is called",
+                                "Then Only the specific file is included"
+                              ],
+                              "test_method": "test_file_filter_handles_specific_file_paths"
+                            },
+                            {
+                              "name": "File discovery and filtering work together",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given A FileDiscovery component and a FileFilter",
+                                "When Files are discovered and then filtered",
+                                "Then Only matching files are returned",
+                                "Then This test verifies the integration between FileDiscovery and FileFilter,",
+                                "Then which was the core fix for the validation scope bug."
+                              ],
+                              "test_method": "test_file_discovery_and_filtering_integration"
+                            }
+                          ]
                         },
                         {
-                          "name": "Filter by single story name returns matching story",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Story graph with multiple stories",
-                            "When Filter with single story name",
-                            "Then Story graph contains only matching story and its parent epic"
+                          "name": "Persist Scope",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_filter_by_single_story_name_returns_matching_story"
+                          "story_type": "user",
+                          "test_class": "TestPersistScope",
+                          "scenarios": [
+                            {
+                              "name": "Scope persists across bot invocations",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Bot with scope set",
+                                "When Bot is reloaded",
+                                "Then Scope is restored from workflow state"
+                              ],
+                              "test_method": "test_scope_persists_across_bot_invocations"
+                            },
+                            {
+                              "name": "Scope persists after action execution",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Bot with scope set",
+                                "When Action executes and completes",
+                                "Then Scope remains active for next action"
+                              ],
+                              "test_method": "test_scope_persists_after_action_execution"
+                            }
+                          ]
                         },
                         {
-                          "name": "Filter by single epic name returns matching epic",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Story graph with multiple epics",
-                            "When Filter with single epic name",
-                            "Then Story graph contains only matching epic and its increments"
+                          "name": "Clear Scope",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_filter_by_single_epic_name_returns_matching_epic"
+                          "story_type": "user",
+                          "test_class": "TestClearScope",
+                          "scenarios": [
+                            {
+                              "name": "Clear scope with show_all parameter",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Bot with scope set",
+                                "When Scope cleared with show_all=True",
+                                "Then Scope is cleared and all content is shown"
+                              ],
+                              "test_method": "test_clear_scope_with_show_all_parameter"
+                            },
+                            {
+                              "name": "Clear scope without show_all parameter",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Bot with scope set",
+                                "When Scope cleared without show_all parameter",
+                                "Then Scope is cleared"
+                              ],
+                              "test_method": "test_clear_scope_without_show_all_parameter"
+                            },
+                            {
+                              "name": "Actions after clear process all content",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Bot had scope set, then cleared",
+                                "When Action executes",
+                                "Then Action processes all content without filtering"
+                              ],
+                              "test_method": "test_actions_after_clear_process_all_content"
+                            }
+                          ]
                         },
                         {
-                          "name": "Filter by increment priorities returns matching increments",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Story graph with increments having different priorities",
-                            "When Filter with increment priorities",
-                            "Then Story graph contains only matching increments and their stories"
+                          "name": "Execute Actions With Scope",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_filter_by_increment_priorities_returns_matching_increments"
+                          "story_type": "user",
+                          "test_class": "TestExecuteActionsWithScope",
+                          "scenarios": [
+                            {
+                              "name": "Build action includes scope in instructions",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Build action with story scope",
+                                "When Instructions are retrieved",
+                                "Then Instructions contain scope configuration"
+                              ],
+                              "test_method": "test_build_action_includes_scope_in_instructions"
+                            },
+                            {
+                              "name": "Validate action accepts scope context",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Validate action with story scope and story graph file",
+                                "When Instructions are retrieved",
+                                "Then No errors occur and scope is processed"
+                              ],
+                              "test_method": "test_validate_action_accepts_scope_context"
+                            },
+                            {
+                              "name": "Render action accepts scope context",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Render action with story scope",
+                                "When Instructions are retrieved",
+                                "Then No errors occur (render supports ScopeActionContext)"
+                              ],
+                              "test_method": "test_render_action_accepts_scope_context"
+                            },
+                            {
+                              "name": "Clarify action does not support scope",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Clarify action",
+                                "When Context is checked",
+                                "Then Uses ClarifyActionContext (not ScopeActionContext)"
+                              ],
+                              "test_method": "test_clarify_action_does_not_support_scope"
+                            },
+                            {
+                              "name": "Strategy action does not support scope",
+                              "type": "happy_path",
+                              "steps": [
+                                "Given Strategy action",
+                                "When Context is checked",
+                                "Then Uses StrategyActionContext (not ScopeActionContext)"
+                              ],
+                              "test_method": "test_strategy_action_does_not_support_scope"
+                            }
+                          ]
                         },
                         {
-                          "name": "Filter by increment names returns matching increments",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Story graph with increments having different names",
-                            "When Filter with increment names",
-                            "Then Story graph contains only matching increments and their stories"
+                          "name": "Navigate Story Graph",
+                          "sequential_order": 999,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
                           ],
-                          "test_method": "test_filter_by_increment_names_returns_matching_increments"
-                        },
-                        {
-                          "name": "Filter returns parent epic when child story matches",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Story graph with epic containing story",
-                            "When Scope set to story name",
-                            "Then Story and parent epic are both returned"
-                          ],
-                          "test_method": "test_filter_returns_parent_epic_when_child_story_matches"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Filter Scope By Files",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestFilterScopeByFiles",
-                      "scenarios": [
-                        {
-                          "name": "File Filter Includes Matching Files",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_file_filter_includes_matching_files"
-                        },
-                        {
-                          "name": "FileFilter excludes files matching exclude patterns",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given A list of files and a FileFilter with exclude patterns",
-                            "When filter_files() is called",
-                            "Then Files matching exclude patterns are removed"
-                          ],
-                          "test_method": "test_file_filter_excludes_matching_files"
-                        },
-                        {
-                          "name": "FileFilter combines include and exclude patterns",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given A list of files and a FileFilter with both include and exclude patterns",
-                            "When filter_files() is called",
-                            "Then Files must match include AND not match exclude"
-                          ],
-                          "test_method": "test_file_filter_combines_include_and_exclude"
-                        },
-                        {
-                          "name": "FileFilter returns all files when no patterns specified",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given A list of files and a FileFilter with no patterns",
-                            "When filter_files() is called",
-                            "Then All files are returned"
-                          ],
-                          "test_method": "test_file_filter_returns_all_when_no_patterns"
-                        },
-                        {
-                          "name": "FileFilter handles specific file paths (not just globs)",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given A list of files and a FileFilter with specific file path",
-                            "When filter_files() is called",
-                            "Then Only the specific file is included"
-                          ],
-                          "test_method": "test_file_filter_handles_specific_file_paths"
-                        },
-                        {
-                          "name": "File discovery and filtering work together",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given A FileDiscovery component and a FileFilter",
-                            "When Files are discovered and then filtered",
-                            "Then Only matching files are returned",
-                            "Then This test verifies the integration between FileDiscovery and FileFilter,",
-                            "Then which was the core fix for the validation scope bug."
-                          ],
-                          "test_method": "test_file_discovery_and_filtering_integration"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Persist Scope",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestPersistScope",
-                      "scenarios": [
-                        {
-                          "name": "Scope persists across bot invocations",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Bot with scope set",
-                            "When Bot is reloaded",
-                            "Then Scope is restored from workflow state"
-                          ],
-                          "test_method": "test_scope_persists_across_bot_invocations"
-                        },
-                        {
-                          "name": "Scope persists after action execution",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Bot with scope set",
-                            "When Action executes and completes",
-                            "Then Scope remains active for next action"
-                          ],
-                          "test_method": "test_scope_persists_after_action_execution"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Clear Scope",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestClearScope",
-                      "scenarios": [
-                        {
-                          "name": "Clear scope with show_all parameter",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Bot with scope set",
-                            "When Scope cleared with show_all=True",
-                            "Then Scope is cleared and all content is shown"
-                          ],
-                          "test_method": "test_clear_scope_with_show_all_parameter"
-                        },
-                        {
-                          "name": "Clear scope without show_all parameter",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Bot with scope set",
-                            "When Scope cleared without show_all parameter",
-                            "Then Scope is cleared"
-                          ],
-                          "test_method": "test_clear_scope_without_show_all_parameter"
-                        },
-                        {
-                          "name": "Actions after clear process all content",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Bot had scope set, then cleared",
-                            "When Action executes",
-                            "Then Action processes all content without filtering"
-                          ],
-                          "test_method": "test_actions_after_clear_process_all_content"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Execute Actions With Scope",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestExecuteActionsWithScope",
-                      "scenarios": [
-                        {
-                          "name": "Build action includes scope in instructions",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Build action with story scope",
-                            "When Instructions are retrieved",
-                            "Then Instructions contain scope configuration"
-                          ],
-                          "test_method": "test_build_action_includes_scope_in_instructions"
-                        },
-                        {
-                          "name": "Validate action accepts scope context",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Validate action with story scope and story graph file",
-                            "When Instructions are retrieved",
-                            "Then No errors occur and scope is processed"
-                          ],
-                          "test_method": "test_validate_action_accepts_scope_context"
-                        },
-                        {
-                          "name": "Render action accepts scope context",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Render action with story scope",
-                            "When Instructions are retrieved",
-                            "Then No errors occur (render supports ScopeActionContext)"
-                          ],
-                          "test_method": "test_render_action_accepts_scope_context"
-                        },
-                        {
-                          "name": "Clarify action does not support scope",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Clarify action",
-                            "When Context is checked",
-                            "Then Uses ClarifyActionContext (not ScopeActionContext)"
-                          ],
-                          "test_method": "test_clarify_action_does_not_support_scope"
-                        },
-                        {
-                          "name": "Strategy action does not support scope",
-                          "type": "happy_path",
-                          "steps": [
-                            "Given Strategy action",
-                            "When Context is checked",
-                            "Then Uses StrategyActionContext (not ScopeActionContext)"
-                          ],
-                          "test_method": "test_strategy_action_does_not_support_scope"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Navigate Story Graph",
-                      "sequential_order": 999,
-                      "connector": "or",
-                      "users": [
-                        "Bot Behavior"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestNavigateStoryGraph",
-                      "scenarios": [
-                        {
-                          "name": "Story Map Loads Epics",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_map_loads_epics"
-                        },
-                        {
-                          "name": "Epic Has Sub Epics",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_epic_has_sub_epics"
-                        },
-                        {
-                          "name": "Sub Epic Has Story Groups",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_sub_epic_has_story_groups"
-                        },
-                        {
-                          "name": "Story Group Has Stories",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_group_has_stories"
-                        },
-                        {
-                          "name": "Story Has Properties",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_has_properties"
-                        },
-                        {
-                          "name": "Story Has Scenarios",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_has_scenarios"
-                        },
-                        {
-                          "name": "Scenario Has Properties",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_has_properties"
-                        },
-                        {
-                          "name": "Scenario Default Test Method",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_default_test_method"
-                        },
-                        {
-                          "name": "Story Has Scenario Outlines",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_has_scenario_outlines"
-                        },
-                        {
-                          "name": "Scenario Outline Has Examples",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_outline_has_examples"
-                        },
-                        {
-                          "name": "Story Default Test Class",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_default_test_class"
-                        },
-                        {
-                          "name": "Story Map Walk Traverses All Nodes",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_story_map_walk_traverses_all_nodes"
-                        },
-                        {
-                          "name": "Map Location For Epic",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_map_location_for_epic"
-                        },
-                        {
-                          "name": "Map Location For Sub Epic",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_map_location_for_sub_epic"
-                        },
-                        {
-                          "name": "Map Location For Story",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_map_location_for_story"
-                        },
-                        {
-                          "name": "Scenario Map Location",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_map_location"
-                        },
-                        {
-                          "name": "Scenario Outline Map Location",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_outline_map_location"
-                        },
-                        {
-                          "name": "From Bot Loads Story Graph",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_from_bot_loads_story_graph"
-                        },
-                        {
-                          "name": "From Bot With Path",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_from_bot_with_path"
-                        },
-                        {
-                          "name": "Scenario Map Location",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_map_location_duplicate"
-                        },
-                        {
-                          "name": "Scenario Outline Map Location",
-                          "type": "happy_path",
-                          "steps": [],
-                          "test_method": "test_scenario_outline_map_location_duplicate"
-                        }
+                          "story_type": "user",
+                          "test_class": "TestNavigateStoryGraph",
+                          "scenarios": [
+                            {
+                              "name": "Story Map Loads Epics",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_map_loads_epics"
+                            },
+                            {
+                              "name": "Epic Has Sub Epics",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_epic_has_sub_epics"
+                            },
+                            {
+                              "name": "Sub Epic Has Story Groups",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_sub_epic_has_story_groups"
+                            },
+                            {
+                              "name": "Story Group Has Stories",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_group_has_stories"
+                            },
+                            {
+                              "name": "Story Has Properties",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_has_properties"
+                            },
+                            {
+                              "name": "Story Has Scenarios",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_has_scenarios"
+                            },
+                            {
+                              "name": "Scenario Has Properties",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_has_properties"
+                            },
+                            {
+                              "name": "Scenario Default Test Method",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_default_test_method"
+                            },
+                            {
+                              "name": "Story Has Scenario Outlines",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_has_scenario_outlines"
+                            },
+                            {
+                              "name": "Scenario Outline Has Examples",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_outline_has_examples"
+                            },
+                            {
+                              "name": "Story Default Test Class",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_default_test_class"
+                            },
+                            {
+                              "name": "Story Map Walk Traverses All Nodes",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_story_map_walk_traverses_all_nodes"
+                            },
+                            {
+                              "name": "Map Location For Epic",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_map_location_for_epic"
+                            },
+                            {
+                              "name": "Map Location For Sub Epic",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_map_location_for_sub_epic"
+                            },
+                            {
+                              "name": "Map Location For Story",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_map_location_for_story"
+                            },
+                            {
+                              "name": "Scenario Map Location",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_map_location"
+                            },
+                            {
+                              "name": "Scenario Outline Map Location",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_outline_map_location"
+                            },
+                            {
+                              "name": "From Bot Loads Story Graph",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_from_bot_loads_story_graph"
+                            },
+                            {
+                              "name": "From Bot With Path",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_from_bot_with_path"
+                            },
+                            {
+                              "name": "Scenario Map Location",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_map_location_duplicate"
+                            },
+                            {
+                              "name": "Scenario Outline Map Location",
+                              "type": "happy_path",
+                              "steps": [],
+                              "test_method": "test_scenario_outline_map_location_duplicate"
+                            }
                           ]
                         }
                       ]
@@ -2973,443 +2977,646 @@
                   ]
                 },
                 {
-              "name": "Perform Action",
-              "sequential_order": 5,
-              "test_file": "domain/test_perform_action.py",
-                  "domain_concepts": [
-                    {
-                      "name": "GatherContextAction",
-                      "module": "actions.clarify",
-                      "responsibilities": [
-                        {
-                          "name": "Inject gather context instructions",
-                          "collaborators": [
-                            "Behavior",
-                            "Guardrails",
-                            "Required Clarifications"
-                          ]
-                        },
-                        {
-                          "name": "Inject questions and evidence",
-                          "collaborators": [
-                            "Behavior",
-                            "Guardrails",
-                            "Key Questions",
-                            "Evidence"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Guardrails",
-                      "module": "actions",
-                      "responsibilities": [
-                        {
-                          "name": "Provide required context",
-                          "collaborators": [
-                            "Key Questions",
-                            "Evidence"
-                          ]
-                        },
-                        {
-                          "name": "Guide planning decisions",
-                          "collaborators": [
-                            "Decision Criteria",
-                            "Assumptions"
-                          ]
-                        },
-                        {
-                          "name": "Define recommended human activity",
-                          "collaborators": [
-                            "Human",
-                            "Instructions"
-                          ]
-                        }
-                      ]
-                },
-                    {
-                      "name": "PlanningAction",
-                      "module": "actions.strategy",
-                      "responsibilities": [
-                        {
-                          "name": "Inject planning instructions",
-                          "collaborators": [
-                            "Behavior",
-                            "Guardrails",
-                            "Planning"
-                          ]
-                        },
-                        {
-                          "name": "Inject decision criteria and assumptions",
-                          "collaborators": [
-                            "Behavior",
-                            "Guardrails",
-                            "Decision Criteria",
-                            "Assumptions",
-                            "Recommended Human Activity"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Guardrails",
-                      "module": "actions",
-                      "responsibilities": [
-                        {
-                          "name": "Provide required context",
-                          "collaborators": [
-                            "Key Questions",
-                            "Evidence"
-                          ]
-                        },
-                        {
-                          "name": "Guide planning decisions",
-                          "collaborators": [
-                            "Decision Criteria",
-                            "Assumptions"
-                          ]
-                        },
-                        {
-                          "name": "Define recommended human activity",
-                          "collaborators": [
-                            "Human",
-                            "Instructions"
-                          ]
-                        }
-                      ]
-                },
-                    {
-                      "name": "BuildKnowledgeAction",
-                      "module": "actions.build",
-                      "responsibilities": [
-                        {
-                          "name": "Inject knowledge graph template",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Knowledge Graph Spec",
-                            "Knowledge Graph"
-                          ]
-                        },
-                        {
-                          "name": "Inject builder instructions",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Build Instructions"
-                          ]
-                        },
-                        {
-                          "name": "Save Knowledge graph",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Knowledge Graph"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Content",
-                      "module": "actions",
-                      "responsibilities": [
-                        {
-                          "name": "Render outputs",
-                          "collaborators": [
-                            "Template",
-                            "Renderer",
-                            "Render Spec"
-                          ]
-                        },
-                        {
-                          "name": "Synchronize formats",
-                          "collaborators": [
-                            "Synchronizer",
-                            "Extractor",
-                            "Synchronizer Spec"
-                          ]
-                        },
-                        {
-                          "name": "Save knowledge graph",
-                          "collaborators": [
-                            "Knowledge Graph"
-                          ]
-                        },
-                        {
-                          "name": "Load rendered content",
-                          "collaborators": [
-                            "na"
-                          ]
-                        },
-                        {
-                          "name": "Present rendered content",
-                          "collaborators": [
-                            "na"
-                          ]
-                        }
-                      ]
-                },
-                    {
-                      "name": "RenderOutputAction",
-                      "module": "actions.render",
-                      "responsibilities": [
-                        {
-                          "name": "Inject render output instructions",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Render Spec",
-                            "Renderer"
-                          ]
-                        },
-                        {
-                          "name": "Inject templates",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Render Spec",
-                            "Template"
-                          ]
-                        },
-                        {
-                          "name": "Inject transformers",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Transformer"
-                          ]
-                        },
-                        {
-                          "name": "Load + inject structured content",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Knowledge Graph"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Renderer",
-                      "module": "actions.render",
-                      "responsibilities": [
-                        {
-                          "name": "Render complex output",
-                          "collaborators": [
-                            "Template",
-                            "Knowledge Graph",
-                            "Transformer"
-                          ]
-                        },
-                        {
-                          "name": "Render outputs using components in context",
-                          "collaborators": [
-                            "AI Chat",
-                            "Template",
-                            "Content"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Template",
-                      "module": "actions.render",
-                      "responsibilities": [
-                        {
-                          "name": "Define output structure",
-                          "collaborators": [
-                            "Placeholder"
-                          ]
-                        },
-                        {
-                          "name": "Transform content",
-                          "collaborators": [
-                            "Transformer",
-                            "Content"
-                          ]
-                        },
-                        {
-                          "name": "Load template",
-                          "collaborators": [
-                            "Behavior",
-                            "Content"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Content",
-                      "module": "actions",
-                      "responsibilities": [
-                        {
-                          "name": "Render outputs",
-                          "collaborators": [
-                            "Template",
-                            "Renderer",
-                            "Render Spec"
-                          ]
-                        },
-                        {
-                          "name": "Synchronize formats",
-                          "collaborators": [
-                            "Synchronizer",
-                            "Extractor",
-                            "Synchronizer Spec"
-                          ]
-                        },
-                        {
-                          "name": "Save knowledge graph",
-                          "collaborators": [
-                            "Knowledge Graph"
-                          ]
-                        },
-                        {
-                          "name": "Load rendered content",
-                          "collaborators": [
-                            "na"
-                          ]
-                        },
-                        {
-                          "name": "Present rendered content",
-                          "collaborators": [
-                            "na"
-                          ]
-                        }
-                      ]
-                },
-                    {
-                      "name": "ValidateRulesAction",
-                      "module": "actions.rules",
-                      "responsibilities": [
-                        {
-                          "name": "Inject common bot rules",
-                          "collaborators": [
-                            "Base Bot",
-                            "Rules",
-                            "Common Rules"
-                          ]
-                        },
-                        {
-                          "name": "Inject behavior specific rules",
-                          "collaborators": [
-                            "Behavior",
-                            "Rules",
-                            "Behavior Rules"
-                          ]
-                        },
-                        {
-                          "name": "Load + inject content for validation",
-                          "collaborators": [
-                            "Behavior",
-                            "Content",
-                            "Knowledge Graph",
-                            "Rendered Outputs"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Rule",
-                      "module": "actions.rules",
-                      "responsibilities": [
-                        {
-                          "name": "Validate content",
-                          "collaborators": [
-                            "Knowledge Graph",
-                            "Violations"
-                          ]
-                        },
-                        {
-                          "name": "Find behavior specific rules from context",
-                          "collaborators": [
-                            "Behavior"
-                          ]
-                        },
-                        {
-                          "name": "Find common bot rules from context",
-                          "collaborators": [
-                            "Base Bot"
-                          ]
-                        },
-                        {
-                          "name": "Load + inject diagnostics results",
-                          "collaborators": [
-                            "AI Chat",
-                            "Violations",
-                            "Corrections"
-                          ]
-                        },
-                        {
-                          "name": "Suggest corrections",
-                          "collaborators": [
-                            "Violations",
-                            "Suggestions",
-                            "Fixes"
-                          ]
-                        },
-                        {
-                          "name": "Provide examples - Do",
-                          "collaborators": [
-                            "Example",
-                            "Description"
-                          ]
-                        },
-                        {
-                          "name": "Provide examples - Dont",
-                          "collaborators": [
-                            "Example",
-                            "Description"
-                          ]
-                        },
-                        {
-                          "name": "Specialized examples",
-                          "collaborators": [
-                            "Language",
-                            "Framework",
-                            "Pattern"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "CorrectBotAction",
-                      "module": "actions.validate",
-                      "responsibilities": [
-                        {
-                          "name": "Inject correct bot instructions",
-                          "collaborators": [
-                            "Behavior",
-                            "Correct Bot Instructions"
-                          ]
-                        },
-                        {
-                          "name": "Load + inject diagnostics results",
-                          "collaborators": [
-                            "Content",
-                            "Diagnostic Report",
-                            "Violations",
-                            "Suggestions"
-                          ]
-                        }
-                      ]
-                    }
-                  ],
+                  "name": "Manage File Scope",
+                  "sequential_order": 2,
                   "story_groups": [
                     {
                       "type": "and",
                       "connector": null,
                       "stories": [
                         {
-                      "name": "Build Story Graph",
-                      "sequential_order": 999,
+                          "name": "Filter File Scope",
+                          "sequential_order": 1,
                           "connector": "or",
                           "users": [
                             "Bot Behavior"
                           ],
                           "story_type": "user",
+                          "test_class": "TestFilterFileScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Get All Files For Behavior",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestGetAllFilesForBehavior",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Add Filter Part To File Scope",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddFilterPartToFileScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Remove Filter Part From File Scope",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestRemoveFilterPartFromFileScope",
+                          "scenarios": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Edit Story Graph",
+                  "sequential_order": 3,
+                  "story_groups": [
+                    {
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
+                        {
+                          "name": "Add Child Story Node To Parent",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddChildStoryNodeToParent",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Delete Story Node From Parent",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDeleteStoryNodeFromParent",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Update Story Node name",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestUpdateStoryNodename",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Move Story Node",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestMoveStoryNode",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Submit Action Scoped To Story Scope",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSubmitActionScopedToStoryScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Update Story Graph Changes",
+                          "sequential_order": 6,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestUpdateStoryGraphChanges",
+                          "scenarios": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Edit Increments",
+                  "sequential_order": 4,
+                  "story_groups": [
+                    {
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
+                        {
+                          "name": "Add Increment",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddIncrement",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Delete Increment",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDeleteIncrement",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Move Story to Increment",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestMoveStorytoIncrement",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Show All Increment Scope",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestShowAllIncrementScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Submit Action Scoped To Increment",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSubmitActionScopedToIncrement",
+                          "scenarios": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Perform Action",
+              "sequential_order": 5,
+              "test_file": "domain/test_perform_action.py",
+              "domain_concepts": [
+                {
+                  "name": "GatherContextAction",
+                  "module": "actions.clarify",
+                  "responsibilities": [
+                    {
+                      "name": "Inject gather context instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Guardrails",
+                        "Required Clarifications"
+                      ]
+                    },
+                    {
+                      "name": "Inject questions and evidence",
+                      "collaborators": [
+                        "Behavior",
+                        "Guardrails",
+                        "Key Questions",
+                        "Evidence"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Guardrails",
+                  "module": "actions",
+                  "responsibilities": [
+                    {
+                      "name": "Provide required context",
+                      "collaborators": [
+                        "Key Questions",
+                        "Evidence"
+                      ]
+                    },
+                    {
+                      "name": "Guide planning decisions",
+                      "collaborators": [
+                        "Decision Criteria",
+                        "Assumptions"
+                      ]
+                    },
+                    {
+                      "name": "Define recommended human activity",
+                      "collaborators": [
+                        "Human",
+                        "Instructions"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "PlanningAction",
+                  "module": "actions.strategy",
+                  "responsibilities": [
+                    {
+                      "name": "Inject planning instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Guardrails",
+                        "Planning"
+                      ]
+                    },
+                    {
+                      "name": "Inject decision criteria and assumptions",
+                      "collaborators": [
+                        "Behavior",
+                        "Guardrails",
+                        "Decision Criteria",
+                        "Assumptions",
+                        "Recommended Human Activity"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Guardrails",
+                  "module": "actions",
+                  "responsibilities": [
+                    {
+                      "name": "Provide required context",
+                      "collaborators": [
+                        "Key Questions",
+                        "Evidence"
+                      ]
+                    },
+                    {
+                      "name": "Guide planning decisions",
+                      "collaborators": [
+                        "Decision Criteria",
+                        "Assumptions"
+                      ]
+                    },
+                    {
+                      "name": "Define recommended human activity",
+                      "collaborators": [
+                        "Human",
+                        "Instructions"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "BuildKnowledgeAction",
+                  "module": "actions.build",
+                  "responsibilities": [
+                    {
+                      "name": "Inject knowledge graph template",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Knowledge Graph Spec",
+                        "Knowledge Graph"
+                      ]
+                    },
+                    {
+                      "name": "Inject builder instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Build Instructions"
+                      ]
+                    },
+                    {
+                      "name": "Save Knowledge graph",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Knowledge Graph"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Content",
+                  "module": "actions",
+                  "responsibilities": [
+                    {
+                      "name": "Render outputs",
+                      "collaborators": [
+                        "Template",
+                        "Renderer",
+                        "Render Spec"
+                      ]
+                    },
+                    {
+                      "name": "Synchronize formats",
+                      "collaborators": [
+                        "Synchronizer",
+                        "Extractor",
+                        "Synchronizer Spec"
+                      ]
+                    },
+                    {
+                      "name": "Save knowledge graph",
+                      "collaborators": [
+                        "Knowledge Graph"
+                      ]
+                    },
+                    {
+                      "name": "Load rendered content",
+                      "collaborators": [
+                        "na"
+                      ]
+                    },
+                    {
+                      "name": "Present rendered content",
+                      "collaborators": [
+                        "na"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "RenderOutputAction",
+                  "module": "actions.render",
+                  "responsibilities": [
+                    {
+                      "name": "Inject render output instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Render Spec",
+                        "Renderer"
+                      ]
+                    },
+                    {
+                      "name": "Inject templates",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Render Spec",
+                        "Template"
+                      ]
+                    },
+                    {
+                      "name": "Inject transformers",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Transformer"
+                      ]
+                    },
+                    {
+                      "name": "Load + inject structured content",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Knowledge Graph"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Renderer",
+                  "module": "actions.render",
+                  "responsibilities": [
+                    {
+                      "name": "Render complex output",
+                      "collaborators": [
+                        "Template",
+                        "Knowledge Graph",
+                        "Transformer"
+                      ]
+                    },
+                    {
+                      "name": "Render outputs using components in context",
+                      "collaborators": [
+                        "AI Chat",
+                        "Template",
+                        "Content"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Template",
+                  "module": "actions.render",
+                  "responsibilities": [
+                    {
+                      "name": "Define output structure",
+                      "collaborators": [
+                        "Placeholder"
+                      ]
+                    },
+                    {
+                      "name": "Transform content",
+                      "collaborators": [
+                        "Transformer",
+                        "Content"
+                      ]
+                    },
+                    {
+                      "name": "Load template",
+                      "collaborators": [
+                        "Behavior",
+                        "Content"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Content",
+                  "module": "actions",
+                  "responsibilities": [
+                    {
+                      "name": "Render outputs",
+                      "collaborators": [
+                        "Template",
+                        "Renderer",
+                        "Render Spec"
+                      ]
+                    },
+                    {
+                      "name": "Synchronize formats",
+                      "collaborators": [
+                        "Synchronizer",
+                        "Extractor",
+                        "Synchronizer Spec"
+                      ]
+                    },
+                    {
+                      "name": "Save knowledge graph",
+                      "collaborators": [
+                        "Knowledge Graph"
+                      ]
+                    },
+                    {
+                      "name": "Load rendered content",
+                      "collaborators": [
+                        "na"
+                      ]
+                    },
+                    {
+                      "name": "Present rendered content",
+                      "collaborators": [
+                        "na"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "ValidateRulesAction",
+                  "module": "actions.rules",
+                  "responsibilities": [
+                    {
+                      "name": "Inject common bot rules",
+                      "collaborators": [
+                        "Base Bot",
+                        "Rules",
+                        "Common Rules"
+                      ]
+                    },
+                    {
+                      "name": "Inject behavior specific rules",
+                      "collaborators": [
+                        "Behavior",
+                        "Rules",
+                        "Behavior Rules"
+                      ]
+                    },
+                    {
+                      "name": "Load + inject content for validation",
+                      "collaborators": [
+                        "Behavior",
+                        "Content",
+                        "Knowledge Graph",
+                        "Rendered Outputs"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Rule",
+                  "module": "actions.rules",
+                  "responsibilities": [
+                    {
+                      "name": "Validate content",
+                      "collaborators": [
+                        "Knowledge Graph",
+                        "Violations"
+                      ]
+                    },
+                    {
+                      "name": "Find behavior specific rules from context",
+                      "collaborators": [
+                        "Behavior"
+                      ]
+                    },
+                    {
+                      "name": "Find common bot rules from context",
+                      "collaborators": [
+                        "Base Bot"
+                      ]
+                    },
+                    {
+                      "name": "Load + inject diagnostics results",
+                      "collaborators": [
+                        "AI Chat",
+                        "Violations",
+                        "Corrections"
+                      ]
+                    },
+                    {
+                      "name": "Suggest corrections",
+                      "collaborators": [
+                        "Violations",
+                        "Suggestions",
+                        "Fixes"
+                      ]
+                    },
+                    {
+                      "name": "Provide examples - Do",
+                      "collaborators": [
+                        "Example",
+                        "Description"
+                      ]
+                    },
+                    {
+                      "name": "Provide examples - Dont",
+                      "collaborators": [
+                        "Example",
+                        "Description"
+                      ]
+                    },
+                    {
+                      "name": "Specialized examples",
+                      "collaborators": [
+                        "Language",
+                        "Framework",
+                        "Pattern"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "CorrectBotAction",
+                  "module": "actions.validate",
+                  "responsibilities": [
+                    {
+                      "name": "Inject correct bot instructions",
+                      "collaborators": [
+                        "Behavior",
+                        "Correct Bot Instructions"
+                      ]
+                    },
+                    {
+                      "name": "Load + inject diagnostics results",
+                      "collaborators": [
+                        "Content",
+                        "Diagnostic Report",
+                        "Violations",
+                        "Suggestions"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "story_groups": [
+                {
+                  "type": "and",
+                  "connector": null,
+                  "stories": [
+                    {
+                      "name": "Build Story Graph",
+                      "sequential_order": 999,
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
                       "test_class": "TestBuildStoryGraph",
-                          "scenarios": [
-                            {
+                      "scenarios": [
+                        {
                           "name": "Action Injects Story Graph Template",
                           "type": "happy_path",
                           "steps": [
@@ -3449,20 +3656,20 @@
                             "Then And Existing story-graph.json in workspace"
                           ],
                           "test_method": "test_behavior_updates_existing_story_graph_json"
-                            }
-                          ]
-                        },
-                        {
+                        }
+                      ]
+                    },
+                    {
                       "name": "Clarify Requirements",
                       "sequential_order": 999,
                       "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
                       "test_class": "TestClarifyRequirements",
-                          "scenarios": [
-                            {
+                      "scenarios": [
+                        {
                           "name": "Action injects questions and evidence from production guardrails",
                           "type": "happy_path",
                           "steps": [
@@ -3524,20 +3731,20 @@
                             "Then Strategy assumptions are loaded correctly"
                           ],
                           "test_method": "test_guardrails_loads_strategy_assumptions_from_workspace"
-                            }
-                          ]
-                        },
-                        {
+                        }
+                      ]
+                    },
+                    {
                       "name": "Validate Rules",
                       "sequential_order": 999,
-                          "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
+                      "connector": "or",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
                       "test_class": "TestValidateRules",
-                          "scenarios": [
-                            {
+                      "scenarios": [
+                        {
                           "name": "Story graph validation includes rule content in instructions",
                           "type": "happy_path",
                           "steps": [
@@ -3586,20 +3793,20 @@
                             "Then And Instructions reference test file scope"
                           ],
                           "test_method": "test_file_scanner_receives_file_data"
-                            }
-                          ]
-                        },
-                        {
+                        }
+                      ]
+                    },
+                    {
                       "name": "Display Rules",
                       "sequential_order": 999,
                       "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
                       "test_class": "TestDisplayRules",
-                          "scenarios": [
-                            {
+                      "scenarios": [
+                        {
                           "name": "Action loads and formats rules digest",
                           "type": "happy_path",
                           "steps": [
@@ -3649,17 +3856,17 @@
                             "Then Instructions do not include user message section"
                           ],
                           "test_method": "test_no_user_message_section_when_empty"
-                            }
-                          ]
-                        },
-                        {
+                        }
+                      ]
+                    },
+                    {
                       "name": "Decide Strategy",
                       "sequential_order": 999,
                       "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
                       "test_class": "TestDecideStrategy",
                       "scenarios": [
                         {
@@ -3711,13 +3918,13 @@
                       "name": "Render Output",
                       "sequential_order": 999,
                       "connector": "or",
-                          "users": [
-                            "Bot Behavior"
-                          ],
-                          "story_type": "user",
+                      "users": [
+                        "Bot Behavior"
+                      ],
+                      "story_type": "user",
                       "test_class": "TestRenderOutput",
-                          "scenarios": [
-                            {
+                      "scenarios": [
+                        {
                           "name": "Action injects render configs and instructions",
                           "type": "happy_path",
                           "steps": [
@@ -3763,7 +3970,9 @@
                       "name": "Save Guardrails",
                       "sequential_order": 7,
                       "connector": "and",
-                      "users": ["System"],
+                      "users": [
+                        "System"
+                      ],
                       "story_type": "user",
                       "test_class": "TestSaveGuardrailsViaCLI",
                       "scenarios": [
@@ -5731,392 +5940,599 @@
               ]
             },
             {
-              "name": "Manage Scope Through Panel",
+              "name": "Manage Story Graph Through Panel",
               "sequential_order": 3,
-              "test_file": "test_manage_scope.js",
-              "story_groups": [
+              "sub_epics": [
                 {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
+                  "name": "Manage Story Scope Through Panel",
+                  "sequential_order": 3,
+                  "test_file": "test_manage_scope.js",
+                  "story_groups": [
                     {
-                      "name": "Filter Story Scope",
-                      "sequential_order": 1,
+                      "type": "and",
                       "connector": null,
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestFilterStoryScope",
-                      "acceptance_criteria": [
-                        "WHEN User types story name in filter",
-                        "THEN System refreshes story hierarchy based on new story scope",
-                        "WHEN Filter matches epic",
-                        "THEN System displays epic with all sub-epics and stories collapsed beneath it",
-                        "WHEN Filter matches sub-epic",
-                        "THEN System displays sub-epic with all stories collapsed beneath it",
-                        "WHEN Filter matches story",
-                        "THEN System displays that story with its acceptance criteria",
-                        "WHEN User clicks story with acceptance criteria",
-                        "THEN System expands story showing acceptance criteria list",
-                        "WHEN Filter matches multiple items",
-                        "THEN System displays all matches in hierarchical format preserving parent-child relationships",
-                        "WHEN User clicks clear filter button",
-                        "THEN System displays all stories",
-                        "WHEN User sets scope filter",
-                        "THEN System persists scope filter value",
-                        "WHEN Panel refreshes",
-                        "THEN System restores previously set scope filter"
-                      ],
-                      "scenarios": [
+                      "stories": [
                         {
-                          "title": "User filters scope by story name",
-                          "steps": [
-                            "Given Panel displays scope section with full story hierarchy",
-                            "When User types Open Panel in scope filter",
-                            "Then Panel displays filtered hierarchy showing Open Panel story",
-                            "And Panel displays Open Panel parent sub-epic (Manage Panel Session)",
-                            "And Panel displays parent epic (Invoke Bot Through Panel)"
+                          "name": "Filter Story Scope",
+                          "sequential_order": 1,
+                          "connector": null,
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestFilterStoryScope",
+                          "acceptance_criteria": [
+                            "WHEN User types story name in filter",
+                            "THEN System refreshes story hierarchy based on new story scope",
+                            "WHEN Filter matches epic",
+                            "THEN System displays epic with all sub-epics and stories collapsed beneath it",
+                            "WHEN Filter matches sub-epic",
+                            "THEN System displays sub-epic with all stories collapsed beneath it",
+                            "WHEN Filter matches story",
+                            "THEN System displays that story with its acceptance criteria",
+                            "WHEN User clicks story with acceptance criteria",
+                            "THEN System expands story showing acceptance criteria list",
+                            "WHEN Filter matches multiple items",
+                            "THEN System displays all matches in hierarchical format preserving parent-child relationships",
+                            "WHEN User clicks clear filter button",
+                            "THEN System displays all stories",
+                            "WHEN User sets scope filter",
+                            "THEN System persists scope filter value",
+                            "WHEN Panel refreshes",
+                            "THEN System restores previously set scope filter"
+                          ],
+                          "scenarios": [
+                            {
+                              "title": "User filters scope by story name",
+                              "steps": [
+                                "Given Panel displays scope section with full story hierarchy",
+                                "When User types Open Panel in scope filter",
+                                "Then Panel displays filtered hierarchy showing Open Panel story",
+                                "And Panel displays Open Panel parent sub-epic (Manage Panel Session)",
+                                "And Panel displays parent epic (Invoke Bot Through Panel)"
+                              ]
+                            },
+                            {
+                              "title": "User filters scope by epic name",
+                              "steps": [
+                                "Given Panel displays full story hierarchy",
+                                "When User types Invoke Bot in scope filter",
+                                "Then Panel displays Invoke Bot epic",
+                                "And Panel displays all sub-epics under Invoke Bot",
+                                "And Sub-epics are initially collapsed"
+                              ]
+                            },
+                            {
+                              "title": "User clears story scope filter",
+                              "steps": [
+                                "Given Panel displays filtered scope showing only Open Panel story",
+                                "When User clicks clear filter button",
+                                "Then Panel displays all stories in full hierarchy",
+                                "And All epics are visible"
+                              ]
+                            },
+                            {
+                              "title": "Scope filter persists across panel refreshes",
+                              "steps": [
+                                "Given Panel is open",
+                                "When User types Open Panel in scope filter",
+                                "And Panel displays filtered hierarchy",
+                                "And User refreshes panel",
+                                "Then Panel displays same filtered hierarchy",
+                                "And Scope filter input shows Open Panel",
+                                "And Filter value was persisted and restored"
+                              ]
+                            }
                           ]
                         },
                         {
-                          "title": "User filters scope by epic name",
-                          "steps": [
-                            "Given Panel displays full story hierarchy",
-                            "When User types Invoke Bot in scope filter",
-                            "Then Panel displays Invoke Bot epic",
-                            "And Panel displays all sub-epics under Invoke Bot",
-                            "And Sub-epics are initially collapsed"
+                          "name": "Show All Scope Through Panel",
+                          "sequential_order": 1.5,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestShowAllScopeThroughPanel",
+                          "acceptance_criteria": [
+                            "WHEN User has filtered scope",
+                            "THEN System displays Show All button",
+                            "WHEN User clicks Show All button",
+                            "THEN System calls scope showall command via CLI",
+                            "AND System clears scope filter",
+                            "AND Panel displays complete unfiltered story hierarchy"
+                          ],
+                          "scenarios": [
+                            {
+                              "title": "User clicks show all to clear filter",
+                              "test_method": "test_user_clicks_show_all_to_clear_filter",
+                              "steps": [
+                                "Given Panel displays filtered scope showing only Open Panel story",
+                                "And Show All button is visible",
+                                "When User clicks Show All button",
+                                "Then Panel calls scope showall via CLI",
+                                "And Scope filter is cleared",
+                                "And Panel displays all epics, sub-epics, and stories",
+                                "And Filter input is empty"
+                              ]
+                            },
+                            {
+                              "title": "Show all button is visible when scope is filtered",
+                              "test_method": "test_show_all_button_is_visible_when_scope_is_filtered",
+                              "steps": [
+                                "Given Panel has no scope filter applied",
+                                "When User views scope section",
+                                "Then Show All button is not visible",
+                                "When User applies filter to scope",
+                                "Then Show All button becomes visible"
+                              ]
+                            }
                           ]
                         },
                         {
-                          "title": "User clears story scope filter",
-                          "steps": [
-                            "Given Panel displays filtered scope showing only Open Panel story",
-                            "When User clicks clear filter button",
-                            "Then Panel displays all stories in full hierarchy",
-                            "And All epics are visible"
+                          "name": "Display Story Scope Hierarchy",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDisplayStoryScopeHierarchy",
+                          "acceptance_criteria": [
+                            "WHEN User views story scope",
+                            "THEN System displays epic list collapsed",
+                            "WHEN User clicks collapsed epic expand icon",
+                            "AND epic has sub-epics",
+                            "THEN System expands epic showing sub-epics collapsed beneath it",
+                            "WHEN User clicks epic name",
+                            "AND matching epic folder exists",
+                            "THEN System opens epic folder in IDE explorer",
+                            "WHEN Epic has test file",
+                            "THEN System displays test tube icon next to epic name",
+                            "WHEN User clicks epic test link",
+                            "THEN System opens test file in editor",
+                            "WHEN User clicks collapsed sub-epic expand icon",
+                            "AND matching sub-epic has stories",
+                            "THEN System expands sub-epic showing stories collapsed beneath it",
+                            "WHEN Sub-epic has test file",
+                            "THEN System displays test tube icon next to sub-epic name",
+                            "WHEN User clicks sub-epic test link",
+                            "THEN System opens test file in editor",
+                            "WHEN User clicks sub-epic name",
+                            "THEN System opens sub-epic folder in IDE explorer",
+                            "WHEN User clicks collapsed story expand icon",
+                            "AND matching sub-epic has stories",
+                            "THEN System expands story showing scenarios collapsed beneath it",
+                            "WHEN User clicks story name",
+                            "THEN System opens story markdown file in editor",
+                            "WHEN Story has test file",
+                            "THEN System displays test tube icon next to story name",
+                            "WHEN User clicks story test link",
+                            "THEN System opens test file at test class",
+                            "WHEN User clicks collapsed story expand icon",
+                            "THEN System expands story showing scenarios",
+                            "WHEN User clicks scenario name",
+                            "THEN System opens story markdown file at scenario anchor",
+                            "WHEN Scenario has test method",
+                            "THEN System displays test tube icon next to scenario name",
+                            "WHEN User clicks scenario test link",
+                            "THEN System opens test file at scenario test method line",
+                            "WHEN Test tube icon is displayed",
+                            "THEN System shows correct test tube image",
+                            "WHEN User clicks epic or sub-epic or story name",
+                            "THEN System opens corresponding file or folder"
+                          ],
+                          "scenarios": [
+                            {
+                              "title": "User views nested story tree with epics features and stories",
+                              "steps": [
+                                "Given Story graph has epics with nested sub-epics",
+                                "When User views scope section",
+                                "Then Panel displays epic names (Invoke Bot)",
+                                "When User expands Invoke Bot epic",
+                                "Then Panel displays sub-epics (Invoke Bot Through Panel, Invoke Bot Through REPL)",
+                                "When User expands Invoke Bot Through Panel sub-epic",
+                                "Then Panel displays nested sub-epics (Manage Panel Session, Navigate Behaviors)",
+                                "When User expands Manage Panel Session sub-epic",
+                                "Then Panel displays stories (Open Panel, Display Session Status)"
+                              ]
+                            },
+                            {
+                              "title": "User clicks test link and file opens at correct location",
+                              "steps": [
+                                "Given Story has test link displayed",
+                                "And Test file is test_manage_panel_session.spec.js",
+                                "And Test class is TestOpenPanel",
+                                "When User clicks test link for Open Panel story",
+                                "Then VS Code opens test_manage_panel_session.spec.js file",
+                                "And Editor scrolls to TestOpenPanel class"
+                              ]
+                            },
+                            {
+                              "title": "User clicks story file link and story markdown opens",
+                              "steps": [
+                                "Given Story has story file link displayed",
+                                "And Story file is Open Panel.md",
+                                "When User clicks story link for Open Panel",
+                                "Then VS Code opens Open Panel.md file in editor"
+                              ]
+                            },
+                            {
+                              "title": "User clicks test link for missing file",
+                              "steps": [
+                                "Given Story has test link displayed",
+                                "And Test file does not exist",
+                                "When User clicks test link",
+                                "Then Panel displays error message",
+                                "And Error message indicates file not found"
+                              ]
+                            },
+                            {
+                              "title": "Test tube icons display with correct image for all items",
+                              "steps": [
+                                "Given Epic has test file",
+                                "And Sub-epic has test file",
+                                "And Story has test class",
+                                "And Scenario has test method",
+                                "When Panel renders scope hierarchy",
+                                "Then Test tube icon appears next to epic name",
+                                "And Test tube icon appears next to sub-epic name",
+                                "And Test tube icon appears next to story name",
+                                "And Test tube icon appears next to scenario name",
+                                "And All test tube icons show correct test_tube.png image",
+                                "And Test tube icons are large enough to see clearly"
+                              ]
+                            },
+                            {
+                              "title": "Epic and sub-epic names are clickable hyperlinks",
+                              "steps": [
+                                "Given Panel displays scope hierarchy with epics and sub-epics",
+                                "When User clicks epic name",
+                                "Then VS Code reveals epic folder in explorer",
+                                "When User clicks sub-epic name",
+                                "Then VS Code reveals sub-epic folder in explorer"
+                              ]
+                            },
+                            {
+                              "title": "Story names are clickable hyperlinks",
+                              "steps": [
+                                "Given Panel displays scope hierarchy with stories",
+                                "And Story has matching markdown file",
+                                "When User clicks story name",
+                                "Then VS Code opens story markdown file in editor"
+                              ]
+                            },
+                            {
+                              "title": "Scenario test links navigate to exact test method line",
+                              "steps": [
+                                "Given Story has scenarios with test methods",
+                                "And Scenario test method is at line 145 in test file",
+                                "When User clicks scenario test tube icon",
+                                "Then VS Code opens test file",
+                                "And Editor scrolls to line 145",
+                                "And Test method definition is visible at cursor"
+                              ]
+                            },
+                            {
+                              "title": "Scenario name links navigate to scenario anchor in story file",
+                              "steps": [
+                                "Given Story markdown file has scenario sections with anchors",
+                                "And Scenario is named User expands collapsed section",
+                                "When User clicks scenario name in panel",
+                                "Then VS Code opens story markdown file",
+                                "And Editor scrolls to scenario anchor",
+                                "And Scenario section is visible with heading"
+                              ]
+                            },
+                            {
+                              "title": "Folder links open in explorer",
+                              "steps": [
+                                "Given Epic has matching folder in docs/stories/map",
+                                "And Sub-epic has matching folder",
+                                "When User clicks epic name link",
+                                "Then VS Code reveals folder in explorer view",
+                                "When User clicks sub-epic name link",
+                                "Then VS Code reveals sub-epic folder in explorer view"
+                              ]
+                            }
                           ]
                         },
                         {
-                          "title": "Scope filter persists across panel refreshes",
-                          "steps": [
-                            "Given Panel is open",
-                            "When User types Open Panel in scope filter",
-                            "And Panel displays filtered hierarchy",
-                            "And User refreshes panel",
-                            "Then Panel displays same filtered hierarchy",
-                            "And Scope filter input shows Open Panel",
-                            "And Filter value was persisted and restored"
+                          "name": "Filter File Scope",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestFilterFileScope",
+                          "acceptance_criteria": [
+                            "WHEN User types file pattern in filter",
+                            "THEN System displays filtered file list",
+                            "AND System displays file list with monospace paths"
+                          ],
+                          "scenarios": [
+                            {
+                              "title": "User filters scope by file pattern",
+                              "steps": [
+                                "Given Panel displays scope section",
+                                "When User types file:src/**/*.py in scope filter",
+                                "Then Panel displays file scope mode",
+                                "And Panel displays list of Python files in src directory",
+                                "And File paths are displayed in monospace font"
+                              ]
+                            },
+                            {
+                              "title": "User filters scope by specific file extension",
+                              "steps": [
+                                "Given Panel displays scope section",
+                                "When User types file:**/*.spec.js in scope filter",
+                                "Then Panel displays all JavaScript test files",
+                                "And Files are displayed with full relative paths"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Open Story Files",
+                          "sequential_order": 9,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestOpenStoryFiles",
+                          "acceptance_criteria": [
+                            "WHEN User clicks graph link",
+                            "THEN System opens story-graph.json in editor",
+                            "WHEN User clicks map link",
+                            "THEN System opens story-map.drawio in diagram viewer",
+                            "WHEN System cannot open file",
+                            "THEN System displays error message"
+                          ],
+                          "scenarios": [
+                            {
+                              "title": "User opens story graph JSON file",
+                              "steps": [
+                                "Given Panel displays scope section with graph link",
+                                "When User clicks Graph link",
+                                "Then VS Code opens story-graph.json in editor",
+                                "And File is displayed with JSON syntax highlighting"
+                              ]
+                            },
+                            {
+                              "title": "User opens story map diagram",
+                              "steps": [
+                                "Given Panel displays scope section with map link",
+                                "When User clicks map link",
+                                "Then VS Code opens story-map.drawio in diagram viewer",
+                                "And Diagram is displayed with Draw.io extension"
+                              ]
+                            },
+                            {
+                              "title": "System cannot open missing file",
+                              "steps": [
+                                "Given Panel displays link to non-existent file",
+                                "When User clicks link",
+                                "Then Panel displays error message",
+                                "And Error message indicates file not found"
+                              ]
+                            },
+                            {
+                              "title": "Story graph and story map links always visible",
+                              "test_method": "test_story_graph_and_story_map_links_always_visible",
+                              "steps": [
+                                "Given Panel displays scope section",
+                                "And Scope may be filtered or showing all stories",
+                                "When User views scope header",
+                                "Then story-graph.json link is always visible",
+                                "And story-map.md link is always visible",
+                                "And Links persist regardless of filter state",
+                                "And Links are positioned consistently in header"
+                              ]
+                            }
                           ]
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Manage File Scope Through Panel",
+                  "sequential_order": 2,
+                  "story_groups": [
                     {
-                      "name": "Show All Scope Through Panel",
-                      "sequential_order": 1.5,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestShowAllScopeThroughPanel",
-                      "acceptance_criteria": [
-                        "WHEN User has filtered scope",
-                        "THEN System displays Show All button",
-                        "WHEN User clicks Show All button",
-                        "THEN System calls scope showall command via CLI",
-                        "AND System clears scope filter",
-                        "AND Panel displays complete unfiltered story hierarchy"
-                      ],
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "title": "User clicks show all to clear filter",
-                          "test_method": "test_user_clicks_show_all_to_clear_filter",
-                          "steps": [
-                            "Given Panel displays filtered scope showing only Open Panel story",
-                            "And Show All button is visible",
-                            "When User clicks Show All button",
-                            "Then Panel calls scope showall via CLI",
-                            "And Scope filter is cleared",
-                            "And Panel displays all epics, sub-epics, and stories",
-                            "And Filter input is empty"
-                          ]
+                          "name": "Filter File Scope",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestFilterFileScope",
+                          "scenarios": []
                         },
                         {
-                          "title": "Show all button is visible when scope is filtered",
-                          "test_method": "test_show_all_button_is_visible_when_scope_is_filtered",
-                          "steps": [
-                            "Given Panel has no scope filter applied",
-                            "When User views scope section",
-                            "Then Show All button is not visible",
-                            "When User applies filter to scope",
-                            "Then Show All button becomes visible"
-                          ]
+                          "name": "Display All Files For Behavior",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDisplayAllFilesForBehavior",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Add Filter Part To File Scope",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddFilterPartToFileScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Remove Filter Part From File Scope",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestRemoveFilterPartFromFileScope",
+                          "scenarios": []
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Edit Story Graph In Panel",
+                  "sequential_order": 3,
+                  "story_groups": [
                     {
-                      "name": "Display Story Scope Hierarchy",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestDisplayStoryScopeHierarchy",
-                      "acceptance_criteria": [
-                        "WHEN User views story scope",
-                        "THEN System displays epic list collapsed",
-                        "WHEN User clicks collapsed epic expand icon",
-                        "AND epic has sub-epics",
-                        "THEN System expands epic showing sub-epics collapsed beneath it",
-                        "WHEN User clicks epic name",
-                        "AND matching epic folder exists",
-                        "THEN System opens epic folder in IDE explorer",
-                        "WHEN Epic has test file",
-                        "THEN System displays test tube icon next to epic name",
-                        "WHEN User clicks epic test link",
-                        "THEN System opens test file in editor",
-                        "WHEN User clicks collapsed sub-epic expand icon",
-                        "AND matching sub-epic has stories",
-                        "THEN System expands sub-epic showing stories collapsed beneath it",
-                        "WHEN Sub-epic has test file",
-                        "THEN System displays test tube icon next to sub-epic name",
-                        "WHEN User clicks sub-epic test link",
-                        "THEN System opens test file in editor",
-                        "WHEN User clicks sub-epic name",
-                        "THEN System opens sub-epic folder in IDE explorer",
-                        "WHEN User clicks collapsed story expand icon",
-                        "AND matching sub-epic has stories",
-                        "THEN System expands story showing scenarios collapsed beneath it",
-                        "WHEN User clicks story name",
-                        "THEN System opens story markdown file in editor",
-                        "WHEN Story has test file",
-                        "THEN System displays test tube icon next to story name",
-                        "WHEN User clicks story test link",
-                        "THEN System opens test file at test class",
-                        "WHEN User clicks collapsed story expand icon",
-                        "THEN System expands story showing scenarios",
-                        "WHEN User clicks scenario name",
-                        "THEN System opens story markdown file at scenario anchor",
-                        "WHEN Scenario has test method",
-                        "THEN System displays test tube icon next to scenario name",
-                        "WHEN User clicks scenario test link",
-                        "THEN System opens test file at scenario test method line",
-                        "WHEN Test tube icon is displayed",
-                        "THEN System shows correct test tube image",
-                        "WHEN User clicks epic or sub-epic or story name",
-                        "THEN System opens corresponding file or folder"
-                      ],
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "title": "User views nested story tree with epics features and stories",
-                          "steps": [
-                            "Given Story graph has epics with nested sub-epics",
-                            "When User views scope section",
-                            "Then Panel displays epic names (Invoke Bot)",
-                            "When User expands Invoke Bot epic",
-                            "Then Panel displays sub-epics (Invoke Bot Through Panel, Invoke Bot Through REPL)",
-                            "When User expands Invoke Bot Through Panel sub-epic",
-                            "Then Panel displays nested sub-epics (Manage Panel Session, Navigate Behaviors)",
-                            "When User expands Manage Panel Session sub-epic",
-                            "Then Panel displays stories (Open Panel, Display Session Status)"
-                          ]
+                          "name": "Add Child Story Node To Parent",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddChildStoryNodeToParent",
+                          "scenarios": []
                         },
                         {
-                          "title": "User clicks test link and file opens at correct location",
-                          "steps": [
-                            "Given Story has test link displayed",
-                            "And Test file is test_manage_panel_session.spec.js",
-                            "And Test class is TestOpenPanel",
-                            "When User clicks test link for Open Panel story",
-                            "Then VS Code opens test_manage_panel_session.spec.js file",
-                            "And Editor scrolls to TestOpenPanel class"
-                          ]
+                          "name": "Delete Story Node From Parent",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDeleteStoryNodeFromParent",
+                          "scenarios": []
                         },
                         {
-                          "title": "User clicks story file link and story markdown opens",
-                          "steps": [
-                            "Given Story has story file link displayed",
-                            "And Story file is Open Panel.md",
-                            "When User clicks story link for Open Panel",
-                            "Then VS Code opens Open Panel.md file in editor"
-                          ]
+                          "name": "Update Story Node name",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestUpdateStoryNodename",
+                          "scenarios": []
                         },
                         {
-                          "title": "User clicks test link for missing file",
-                          "steps": [
-                            "Given Story has test link displayed",
-                            "And Test file does not exist",
-                            "When User clicks test link",
-                            "Then Panel displays error message",
-                            "And Error message indicates file not found"
-                          ]
+                          "name": "Move Story Node",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestMoveStoryNode",
+                          "scenarios": []
                         },
                         {
-                          "title": "Test tube icons display with correct image for all items",
-                          "steps": [
-                            "Given Epic has test file",
-                            "And Sub-epic has test file",
-                            "And Story has test class",
-                            "And Scenario has test method",
-                            "When Panel renders scope hierarchy",
-                            "Then Test tube icon appears next to epic name",
-                            "And Test tube icon appears next to sub-epic name",
-                            "And Test tube icon appears next to story name",
-                            "And Test tube icon appears next to scenario name",
-                            "And All test tube icons show correct test_tube.png image",
-                            "And Test tube icons are large enough to see clearly"
-                          ]
+                          "name": "Submit Action Scoped To Story Scope",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSubmitActionScopedToStoryScope",
+                          "scenarios": []
                         },
                         {
-                          "title": "Epic and sub-epic names are clickable hyperlinks",
-                          "steps": [
-                            "Given Panel displays scope hierarchy with epics and sub-epics",
-                            "When User clicks epic name",
-                            "Then VS Code reveals epic folder in explorer",
-                            "When User clicks sub-epic name",
-                            "Then VS Code reveals sub-epic folder in explorer"
-                          ]
-                        },
-                        {
-                          "title": "Story names are clickable hyperlinks",
-                          "steps": [
-                            "Given Panel displays scope hierarchy with stories",
-                            "And Story has matching markdown file",
-                            "When User clicks story name",
-                            "Then VS Code opens story markdown file in editor"
-                          ]
-                        },
-                        {
-                          "title": "Scenario test links navigate to exact test method line",
-                          "steps": [
-                            "Given Story has scenarios with test methods",
-                            "And Scenario test method is at line 145 in test file",
-                            "When User clicks scenario test tube icon",
-                            "Then VS Code opens test file",
-                            "And Editor scrolls to line 145",
-                            "And Test method definition is visible at cursor"
-                          ]
-                        },
-                        {
-                          "title": "Scenario name links navigate to scenario anchor in story file",
-                          "steps": [
-                            "Given Story markdown file has scenario sections with anchors",
-                            "And Scenario is named User expands collapsed section",
-                            "When User clicks scenario name in panel",
-                            "Then VS Code opens story markdown file",
-                            "And Editor scrolls to scenario anchor",
-                            "And Scenario section is visible with heading"
-                          ]
-                        },
-                        {
-                          "title": "Folder links open in explorer",
-                          "steps": [
-                            "Given Epic has matching folder in docs/stories/map",
-                            "And Sub-epic has matching folder",
-                            "When User clicks epic name link",
-                            "Then VS Code reveals folder in explorer view",
-                            "When User clicks sub-epic name link",
-                            "Then VS Code reveals sub-epic folder in explorer view"
-                          ]
+                          "name": "Automatically Refresh Story Graph Changes",
+                          "sequential_order": 6,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAutomaticallyRefreshStoryGraphChanges",
+                          "scenarios": []
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Edit Increments In Panel",
+                  "sequential_order": 4,
+                  "story_groups": [
                     {
-                      "name": "Filter File Scope",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestFilterFileScope",
-                      "acceptance_criteria": [
-                        "WHEN User types file pattern in filter",
-                        "THEN System displays filtered file list",
-                        "AND System displays file list with monospace paths"
-                      ],
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "title": "User filters scope by file pattern",
-                          "steps": [
-                            "Given Panel displays scope section",
-                            "When User types file:src/**/*.py in scope filter",
-                            "Then Panel displays file scope mode",
-                            "And Panel displays list of Python files in src directory",
-                            "And File paths are displayed in monospace font"
-                          ]
+                          "name": "Add Increment",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddIncrement",
+                          "scenarios": []
                         },
                         {
-                          "title": "User filters scope by specific file extension",
-                          "steps": [
-                            "Given Panel displays scope section",
-                            "When User types file:**/*.spec.js in scope filter",
-                            "Then Panel displays all JavaScript test files",
-                            "And Files are displayed with full relative paths"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Open Story Files",
-                      "sequential_order": 9,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestOpenStoryFiles",
-                      "acceptance_criteria": [
-                        "WHEN User clicks graph link",
-                        "THEN System opens story-graph.json in editor",
-                        "WHEN User clicks map link",
-                        "THEN System opens story-map.drawio in diagram viewer",
-                        "WHEN System cannot open file",
-                        "THEN System displays error message"
-                      ],
-                      "scenarios": [
-                        {
-                          "title": "User opens story graph JSON file",
-                          "steps": [
-                            "Given Panel displays scope section with graph link",
-                            "When User clicks Graph link",
-                            "Then VS Code opens story-graph.json in editor",
-                            "And File is displayed with JSON syntax highlighting"
-                          ]
+                          "name": "Delete Increment",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDeleteIncrement",
+                          "scenarios": []
                         },
                         {
-                          "title": "User opens story map diagram",
-                          "steps": [
-                            "Given Panel displays scope section with map link",
-                            "When User clicks map link",
-                            "Then VS Code opens story-map.drawio in diagram viewer",
-                            "And Diagram is displayed with Draw.io extension"
-                          ]
+                          "name": "Move Story to Increment",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestMoveStorytoIncrement",
+                          "scenarios": []
                         },
                         {
-                          "title": "System cannot open missing file",
-                          "steps": [
-                            "Given Panel displays link to non-existent file",
-                            "When User clicks link",
-                            "Then Panel displays error message",
-                            "And Error message indicates file not found"
-                          ]
+                          "name": "Show All Increment Scope Through Panel",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestShowAllIncrementScopeThroughPanel",
+                          "scenarios": []
                         },
                         {
-                          "title": "Story graph and story map links always visible",
-                          "test_method": "test_story_graph_and_story_map_links_always_visible",
-                          "steps": [
-                            "Given Panel displays scope section",
-                            "And Scope may be filtered or showing all stories",
-                            "When User views scope header",
-                            "Then story-graph.json link is always visible",
-                            "And story-map.md link is always visible",
-                            "And Links persist regardless of filter state",
-                            "And Links are positioned consistently in header"
-                          ]
+                          "name": "Submit Action Scoped To Increment",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSubmitActionScopedToIncrement",
+                          "scenarios": []
                         }
                       ]
                     }
@@ -8577,161 +8993,368 @@
               ]
             },
             {
-              "name": "Manage Scope Using REPL",
+              "name": "Manage Story Graph Using REPL",
               "sequential_order": 4,
-              "test_file": "test_manage_scope_using_repl.py",
-              "story_groups": [
+              "sub_epics": [
                 {
-                  "type": "and",
-                  "connector": null,
-                  "stories": [
+                  "name": "Manage Story Scope Using REPL",
+                  "sequential_order": 4,
+                  "test_file": "test_manage_scope_using_repl.py",
+                  "story_groups": [
                     {
-                      "name": "Filter Work Using Knowledge Graph Scope in CLI",
-                      "sequential_order": 1,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestSetStoryScope",
-                      "acceptance_criteria": [
-                        "WHEN user sets epic scope filter\nTHEN CLI displays active scope filters",
-                        "WHEN user sets story scope filter\nTHEN CLI displays active scope filters",
-                        "WHEN user executes build with active knowledge graph scope\nTHEN CLI displays instructions filtered to specified stories",
-                        "WHEN user clears scope\nTHEN CLI removes all scope filters AND displays unfiltered content"
-                      ],
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "User sets knowledge graph scope filter",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'scope <filter>'\nTHEN: CLI displays active scope filters",
-                          "test_method": "test_user_sets_knowledge_graph_scope_filter"
+                          "name": "Filter Work Using Knowledge Graph Scope in CLI",
+                          "sequential_order": 1,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSetStoryScope",
+                          "acceptance_criteria": [
+                            "WHEN user sets epic scope filter\nTHEN CLI displays active scope filters",
+                            "WHEN user sets story scope filter\nTHEN CLI displays active scope filters",
+                            "WHEN user executes build with active knowledge graph scope\nTHEN CLI displays instructions filtered to specified stories",
+                            "WHEN user clears scope\nTHEN CLI removes all scope filters AND displays unfiltered content"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "User sets knowledge graph scope filter",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nWHEN: user enters 'scope <filter>'\nTHEN: CLI displays active scope filters",
+                              "test_method": "test_user_sets_knowledge_graph_scope_filter"
+                            },
+                            {
+                              "name": "User executes build with active knowledge graph scope",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nAND: active scope filter is story=\"Story1\"\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLIAction passes scope filter to action.get_instructions()\nAND: CLI displays instructions filtered to Story1",
+                              "test_method": "test_user_executes_build_with_active_knowledge_graph_scope"
+                            }
+                          ],
+                          "optional": false,
+                          "priority": 1
                         },
                         {
-                          "name": "User executes build with active knowledge graph scope",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nAND: active scope filter is story=\"Story1\"\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLIAction passes scope filter to action.get_instructions()\nAND: CLI displays instructions filtered to Story1",
-                          "test_method": "test_user_executes_build_with_active_knowledge_graph_scope"
-                        }
-                      ],
-                      "optional": false,
-                      "priority": 1
-                    },
-                    {
-                      "name": "Filter Work Using Files Scope in CLI",
-                      "sequential_order": 2,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "acceptance_criteria": [
-                        "WHEN user sets files scope filter\nTHEN CLI displays active scope filters",
-                        "WHEN user executes validate with active files scope\nTHEN CLI displays validation filtered to matched files",
-                        "WHEN user provides glob pattern for files\nTHEN CLI matches files using glob pattern",
-                        "WHEN user clears files scope\nTHEN CLI removes files filter AND displays unfiltered content"
-                      ],
-                      "optional": false,
-                      "priority": 1,
-                      "test_class": "TestSetFileScope",
-                      "scenarios": [
-                        {
-                          "name": "User sets files scope filter",
-                          "steps": "GIVEN: CLI is at code.validate.instructions\nWHEN: user enters 'scope files=\"src/**/*.py\"'\nTHEN: CLIScope parses files scope string\nAND: REPLSession stores files filter in context\nAND: CLI displays active scope filters",
-                          "test_method": "test_user_sets_files_scope_filter"
+                          "name": "Filter Work Using Files Scope in CLI",
+                          "sequential_order": 2,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "acceptance_criteria": [
+                            "WHEN user sets files scope filter\nTHEN CLI displays active scope filters",
+                            "WHEN user executes validate with active files scope\nTHEN CLI displays validation filtered to matched files",
+                            "WHEN user provides glob pattern for files\nTHEN CLI matches files using glob pattern",
+                            "WHEN user clears files scope\nTHEN CLI removes files filter AND displays unfiltered content"
+                          ],
+                          "optional": false,
+                          "priority": 1,
+                          "test_class": "TestSetFileScope",
+                          "scenarios": [
+                            {
+                              "name": "User sets files scope filter",
+                              "steps": "GIVEN: CLI is at code.validate.instructions\nWHEN: user enters 'scope files=\"src/**/*.py\"'\nTHEN: CLIScope parses files scope string\nAND: REPLSession stores files filter in context\nAND: CLI displays active scope filters",
+                              "test_method": "test_user_sets_files_scope_filter"
+                            },
+                            {
+                              "name": "User executes validate with active files scope",
+                              "steps": "GIVEN: CLI is at code.validate.instructions\nAND: active scope filter is files=\"src/**/*.py\"\nWHEN: user enters 'code.validate.instructions'\nTHEN: CLIAction passes files filter to action.get_instructions()\nAND: CLI displays validation filtered to matched files",
+                              "test_method": "test_user_executes_validate_with_active_files_scope"
+                            }
+                          ]
                         },
                         {
-                          "name": "User executes validate with active files scope",
-                          "steps": "GIVEN: CLI is at code.validate.instructions\nAND: active scope filter is files=\"src/**/*.py\"\nWHEN: user enters 'code.validate.instructions'\nTHEN: CLIAction passes files filter to action.get_instructions()\nAND: CLI displays validation filtered to matched files",
-                          "test_method": "test_user_executes_validate_with_active_files_scope"
+                          "name": "Enforce Mutually Exclusive Scope Types",
+                          "sequential_order": 3,
+                          "connector": "and",
+                          "users": [
+                            "CLI"
+                          ],
+                          "story_type": "system",
+                          "acceptance_criteria": [
+                            "WHEN user sets file scope while story scope is active\nTHEN CLI replaces story scope with file scope",
+                            "WHEN user sets story scope while file scope is active\nTHEN CLI replaces file scope with story scope",
+                            "WHEN checking stored scope\nTHEN only one filter type is active",
+                            "WHEN user clears scope\nTHEN CLI removes all scope filters"
+                          ],
+                          "optional": false,
+                          "priority": 2,
+                          "test_class": "TestScopeTypesMutuallyExclusive",
+                          "scenarios": [
+                            {
+                              "name": "Setting file scope replaces existing story scope",
+                              "steps": "GIVEN: CLI has story scope set\nWHEN: user enters file scope\nTHEN: file scope replaces story scope (not combined)",
+                              "test_method": "test_setting_file_scope_replaces_story_scope"
+                            },
+                            {
+                              "name": "Setting story scope replaces existing file scope",
+                              "steps": "GIVEN: CLI has file scope set\nWHEN: user enters story scope\nTHEN: story scope replaces file scope (not combined)",
+                              "test_method": "test_setting_story_scope_replaces_file_scope"
+                            },
+                            {
+                              "name": "Scope object can only have one type at a time",
+                              "steps": "GIVEN: Any scope is set\nWHEN: checking the stored scope\nTHEN: only one filter type is active (knowledge_graph_filter OR file_filter, never both)",
+                              "test_method": "test_scope_only_has_one_type"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "View Current Scope in CLI",
+                          "sequential_order": 4,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_file": "test_manage_scope_using_repl.py",
+                          "test_class": "TestViewCurrentScopeInCLI",
+                          "acceptance_criteria": [
+                            "WHEN user enters 'scope' command with no filters set\nTHEN CLI displays \"No scope filters active\"",
+                            "WHEN user enters 'scope' command with story scope set\nTHEN CLI displays active story scope filter",
+                            "WHEN user enters 'scope' command with file scope set\nTHEN CLI displays active file scope filter"
+                          ],
+                          "scenarios": [
+                            {
+                              "name": "View scope with no filters set",
+                              "steps": "GIVEN: CLI is initialized with no scope filters\nWHEN: user enters 'scope' command\nTHEN: CLI displays \"No scope filters active\"",
+                              "test_method": "test_view_scope_with_no_filters_set"
+                            },
+                            {
+                              "name": "View story scope filter",
+                              "steps": "GIVEN: Story scope filter is set to \"Story1\"\nWHEN: user enters 'scope' command\nTHEN: CLI displays active story scope filter",
+                              "test_method": "test_view_story_scope_filter"
+                            },
+                            {
+                              "name": "View file scope filter",
+                              "steps": "GIVEN: File scope filter is set to \"*.py\"\nWHEN: user enters 'scope' command\nTHEN: CLI displays active file scope filter",
+                              "test_method": "test_view_file_scope_filter"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Clear Scope Through CLI",
+                          "sequential_order": 5,
+                          "connector": "and",
+                          "users": [
+                            "User"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestClearScope",
+                          "scenarios": [
+                            {
+                              "name": "User clears all scope filters",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nAND: active scope filters are story=\"Story1\" AND files=\"docs/**/*.md\"\nWHEN: user enters 'scope clear'\nTHEN: REPLSession clears all scope filters from context\nAND: CLI displays 'All scope filters cleared'\nAND: StatusDisplay shows no active scope",
+                              "test_method": "test_user_clears_all_scope_filters"
+                            },
+                            {
+                              "name": "User executes build after clearing scope",
+                              "steps": "GIVEN: CLI is at shape.build.instructions\nAND: user has cleared all scope filters\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLIAction passes no scope filters to action\nAND: CLI displays unfiltered instructions",
+                              "test_method": "test_user_executes_build_after_clearing_scope"
+                            }
+                          ]
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Manage File Scope Using REPL",
+                  "sequential_order": 2,
+                  "story_groups": [
                     {
-                      "name": "Enforce Mutually Exclusive Scope Types",
-                      "sequential_order": 3,
-                      "connector": "and",
-                      "users": [
-                        "CLI"
-                      ],
-                      "story_type": "system",
-                      "acceptance_criteria": [
-                        "WHEN user sets file scope while story scope is active\nTHEN CLI replaces story scope with file scope",
-                        "WHEN user sets story scope while file scope is active\nTHEN CLI replaces file scope with story scope",
-                        "WHEN checking stored scope\nTHEN only one filter type is active",
-                        "WHEN user clears scope\nTHEN CLI removes all scope filters"
-                      ],
-                      "optional": false,
-                      "priority": 2,
-                      "test_class": "TestScopeTypesMutuallyExclusive",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "Setting file scope replaces existing story scope",
-                          "steps": "GIVEN: CLI has story scope set\nWHEN: user enters file scope\nTHEN: file scope replaces story scope (not combined)",
-                          "test_method": "test_setting_file_scope_replaces_story_scope"
+                          "name": "Filter File Scope",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestFilterFileScope",
+                          "scenarios": []
                         },
                         {
-                          "name": "Setting story scope replaces existing file scope",
-                          "steps": "GIVEN: CLI has file scope set\nWHEN: user enters story scope\nTHEN: story scope replaces file scope (not combined)",
-                          "test_method": "test_setting_story_scope_replaces_file_scope"
+                          "name": "Display All Files For Behavior",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDisplayAllFilesForBehavior",
+                          "scenarios": []
                         },
                         {
-                          "name": "Scope object can only have one type at a time",
-                          "steps": "GIVEN: Any scope is set\nWHEN: checking the stored scope\nTHEN: only one filter type is active (knowledge_graph_filter OR file_filter, never both)",
-                          "test_method": "test_scope_only_has_one_type"
+                          "name": "Add Filter Part To File Scope",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddFilterPartToFileScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Remove Filter Part From File Scope",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestRemoveFilterPartFromFileScope",
+                          "scenarios": []
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Edit Story Graph In CLI",
+                  "sequential_order": 3,
+                  "story_groups": [
                     {
-                      "name": "View Current Scope in CLI",
-                      "sequential_order": 4,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_file": "test_manage_scope_using_repl.py",
-                      "test_class": "TestViewCurrentScopeInCLI",
-                      "acceptance_criteria": [
-                        "WHEN user enters 'scope' command with no filters set\nTHEN CLI displays \"No scope filters active\"",
-                        "WHEN user enters 'scope' command with story scope set\nTHEN CLI displays active story scope filter",
-                        "WHEN user enters 'scope' command with file scope set\nTHEN CLI displays active file scope filter"
-                      ],
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "View scope with no filters set",
-                          "steps": "GIVEN: CLI is initialized with no scope filters\nWHEN: user enters 'scope' command\nTHEN: CLI displays \"No scope filters active\"",
-                          "test_method": "test_view_scope_with_no_filters_set"
+                          "name": "Add Child Story Node To Parent",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddChildStoryNodeToParent",
+                          "scenarios": []
                         },
                         {
-                          "name": "View story scope filter",
-                          "steps": "GIVEN: Story scope filter is set to \"Story1\"\nWHEN: user enters 'scope' command\nTHEN: CLI displays active story scope filter",
-                          "test_method": "test_view_story_scope_filter"
+                          "name": "Delete Story Node From Parent",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDeleteStoryNodeFromParent",
+                          "scenarios": []
                         },
                         {
-                          "name": "View file scope filter",
-                          "steps": "GIVEN: File scope filter is set to \"*.py\"\nWHEN: user enters 'scope' command\nTHEN: CLI displays active file scope filter",
-                          "test_method": "test_view_file_scope_filter"
+                          "name": "Update Story Node name",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestUpdateStoryNodename",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Move Story Node",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestMoveStoryNode",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Submit Action Scoped To Story Scope",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSubmitActionScopedToStoryScope",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Automatically Refresh Story Graph Changes",
+                          "sequential_order": 6,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAutomaticallyRefreshStoryGraphChanges",
+                          "scenarios": []
                         }
                       ]
-                    },
+                    }
+                  ]
+                },
+                {
+                  "name": "Edit Increments In CLI",
+                  "sequential_order": 4,
+                  "story_groups": [
                     {
-                      "name": "Clear Scope Through CLI",
-                      "sequential_order": 5,
-                      "connector": "and",
-                      "users": [
-                        "User"
-                      ],
-                      "story_type": "user",
-                      "test_class": "TestClearScope",
-                      "scenarios": [
+                      "type": "and",
+                      "connector": null,
+                      "stories": [
                         {
-                          "name": "User clears all scope filters",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nAND: active scope filters are story=\"Story1\" AND files=\"docs/**/*.md\"\nWHEN: user enters 'scope clear'\nTHEN: REPLSession clears all scope filters from context\nAND: CLI displays 'All scope filters cleared'\nAND: StatusDisplay shows no active scope",
-                          "test_method": "test_user_clears_all_scope_filters"
+                          "name": "Add Increment",
+                          "sequential_order": 1,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestAddIncrement",
+                          "scenarios": []
                         },
                         {
-                          "name": "User executes build after clearing scope",
-                          "steps": "GIVEN: CLI is at shape.build.instructions\nAND: user has cleared all scope filters\nWHEN: user enters 'shape.build.instructions'\nTHEN: CLIAction passes no scope filters to action\nAND: CLI displays unfiltered instructions",
-                          "test_method": "test_user_executes_build_after_clearing_scope"
+                          "name": "Delete Increment",
+                          "sequential_order": 2,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestDeleteIncrement",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Move Story to Increment",
+                          "sequential_order": 3,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestMoveStorytoIncrement",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Show All Increment Scope Through CLI",
+                          "sequential_order": 4,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestShowAllIncrementScopeThroughCLI",
+                          "scenarios": []
+                        },
+                        {
+                          "name": "Submit Action Scoped To Increment",
+                          "sequential_order": 5,
+                          "connector": "or",
+                          "users": [
+                            "Bot Behavior"
+                          ],
+                          "story_type": "user",
+                          "test_class": "TestSubmitActionScopedToIncrement",
+                          "scenarios": []
                         }
                       ]
                     }
@@ -8784,7 +9407,7 @@
                         },
                         {
                           "name": "CLI displays workspace name and path",
-                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains '\u00c3\u00b0\u00c5\u00b8\u00e2\u20ac\u0153\u00e2\u20ac\u0161 **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
+                          "steps": "Given CLI is initialized with workspace base_bot\nAnd workspace path is C:/dev/augmented-teams/agile_bot/bots/base_bot\nWhen CLI renders the dashboard header\nThen output contains 'Ã°Å¸â€œâ€š **Workspace:** base_bot' with folder emoji\nAnd output shows code block with three backticks\nAnd output shows full workspace path: 'C:\\dev\\augmented-teams\\agile_bot\\bots\\base_bot'\nAnd output closes code block with three backticks",
                           "test_method": "test_cli_displays_workspace_name_and_path",
                           "notes": "Test method referenced but not found in test files - may need to be implemented. Based on screen example lines 38-39 and implementation in repl_session.py display_current_state() lines 177-179"
                         },

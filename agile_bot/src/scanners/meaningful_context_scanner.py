@@ -1,4 +1,3 @@
-"""Scanner for validating meaningful context is provided in names."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -9,7 +8,6 @@ from .code_scanner import CodeScanner
 from .violation import Violation
 
 logger = logging.getLogger(__name__)
-
 
 class MeaningfulContextScanner(CodeScanner):
     
@@ -32,18 +30,17 @@ class MeaningfulContextScanner(CodeScanner):
         violations = []
         content = '\n'.join(lines)
         
-        # Common magic numbers that should be constants
         magic_number_patterns = [
-            r'\b(200|404|500)\b',  # HTTP status codes
-            r'\b(86400|3600|60)\b',  # Time constants (seconds in day/hour/minute)
-            r'\b(1024|2048|4096)\b',  # Size constants
+            r'\b(200|404|500)\b',
+            r'\b(86400|3600|60)\b',
+            r'\b(1024|2048|4096)\b',
         ]
         
         for line_num, line in enumerate(lines, 1):
             for pattern in magic_number_patterns:
                 if re.search(pattern, line):
                     if '=' in line and ('const' in line or 'final' in line):
-                        continue  # It's a constant definition, not magic number
+                        continue
                     
                     violation = self._create_violation_with_snippet(
                         rule_obj=rule_obj,
@@ -66,14 +63,12 @@ class MeaningfulContextScanner(CodeScanner):
         violations = []
         
         try:
-            # Parse the file as AST to get actual variable names (AST automatically excludes comments and string literals)
             tree = ast.parse(content, filename=str(file_path))
             
-            numbered_var_pattern = re.compile(r'^\w+\d+$')  # word followed by number (entire match)
+            numbered_var_pattern = re.compile(r'^\w+\d+$')
             
             def check_name(var_name: str, lineno: int):
                 if numbered_var_pattern.match(var_name):
-                    # Exclude common test patterns
                     if var_name.startswith('test') or var_name in ['test1', 'test2']:
                         return
                     violations.append(self._create_violation_with_snippet(

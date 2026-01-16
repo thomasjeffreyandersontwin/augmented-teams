@@ -1,4 +1,3 @@
-"""Scanner for validating dependency chaining in code."""
 
 from typing import List, Dict, Any, Optional, Set
 from pathlib import Path
@@ -9,7 +8,6 @@ from .violation import Violation
 from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
-
 
 class DependencyChainingCodeScanner(CodeScanner):
     
@@ -32,7 +30,6 @@ class DependencyChainingCodeScanner(CodeScanner):
     def _check_dependency_chaining(self, class_node: ast.ClassDef, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Find __init__ method and collect constructor-injected parameters
         init_method = None
         init_params = []
         for node in ast.walk(class_node):
@@ -41,12 +38,10 @@ class DependencyChainingCodeScanner(CodeScanner):
                 init_params = [arg.arg for arg in node.args.args if arg.arg != 'self']
                 break
         
-        # Collect all instance attributes (from assignments, properties, etc.)
         instance_attrs = self._collect_instance_attributes(class_node)
         
         for node in ast.walk(class_node):
             if isinstance(node, ast.FunctionDef) and node.name != '__init__':
-                # Skip classmethods and staticmethods - they legitimately need parameters
                 is_classmethod = any(
                     (isinstance(decorator, ast.Name) and decorator.id == 'classmethod') or
                     (isinstance(decorator, ast.Attribute) and decorator.attr == 'classmethod')
@@ -63,7 +58,6 @@ class DependencyChainingCodeScanner(CodeScanner):
                 
                 method_params = [arg.arg for arg in node.args.args if arg.arg != 'self']
                 
-                # Check if method takes parameters that are in __init__ (should use self.param instead)
                 for param in method_params:
                     if param in init_params:
                         try:
@@ -102,14 +96,12 @@ class DependencyChainingCodeScanner(CodeScanner):
         attrs = set()
         
         for node in ast.walk(class_node):
-            # Collect self.X assignments
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Attribute):
                         if isinstance(target.value, ast.Name) and target.value.id == 'self':
                             attrs.add(target.attr)
             
-            # Collect self.X in expressions (properties, method calls)
             if isinstance(node, ast.Attribute):
                 if isinstance(node.value, ast.Name) and node.value.id == 'self':
                     attrs.add(node.attr)
@@ -172,7 +164,4 @@ class DependencyChainingCodeScanner(CodeScanner):
                         ).to_dict()
         
         return None
-
-
-
 

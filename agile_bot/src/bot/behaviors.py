@@ -16,28 +16,18 @@ logger = logging.getLogger(__name__)
 class Behaviors:
 
     def __init__(self, bot_name: str, bot_paths: BotPath, allowed_behaviors: Optional[List[str]] = None):
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_path.parent.mkdir(parents=True, exist_ok=True); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:18','message':'Behaviors.__init__ entry','data':{'bot_name':bot_name},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
-        # #endregion
         self.bot_name = bot_name
         self.bot_paths = bot_paths
-        self._allowed_behaviors = allowed_behaviors  # Filter behaviors by bot_config.json if provided
+        self._allowed_behaviors = allowed_behaviors
         self._behaviors: List['Behavior'] = []
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:22','message':'Before _discover_behaviors','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
-        # #endregion
         self._discover_behaviors()
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:22','message':'After _discover_behaviors','data':{'behavior_count':len(self._behaviors)},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
-        # #endregion
         self._current_index: Optional[int] = None
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:24','message':'Before load_state','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
-        # #endregion
         self.load_state()
-        # #region agent log
         import json; from pathlib import Path as P; log_path = P(r'c:\dev\augmented-teams\.cursor\debug.log'); log_file = open(log_path, 'a', encoding='utf-8'); log_file.write(json.dumps({'location':'behaviors.py:24','message':'After load_state - Behaviors.__init__ exit','data':{},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n'); log_file.close()
-        # #endregion
 
     def _load_behavior_from_dir(self, item: Path) -> tuple:
         behavior_json_path = item / 'behavior.json'
@@ -61,7 +51,6 @@ class Behaviors:
         for item in behaviors_dir.iterdir():
             if not item.is_dir() or item.name.startswith('_') or item.name.startswith('.'):
                 continue
-            # Filter by allowed_behaviors from bot_config.json if provided
             if self._allowed_behaviors is not None and item.name not in self._allowed_behaviors:
                 continue
             result = self._load_behavior_from_dir(item)
@@ -82,7 +71,6 @@ class Behaviors:
 
     @property
     def completed_behaviors(self) -> List[str]:
-        """Get list of completed behavior names."""
         completed = []
         for behavior in self._behaviors:
             if behavior.is_completed:
@@ -120,14 +108,12 @@ class Behaviors:
         return None
 
     def next(self) -> Optional['Behavior']:
-        """Get the next behavior without changing current state."""
         next_index = self._current_index + 1
         if next_index < len(self._behaviors):
             return self._behaviors[next_index]
         return None
     
     def previous(self) -> Optional['Behavior']:
-        """Get the previous behavior without changing current state."""
         if self._current_index is None or self._current_index <= 0:
             return None
         prev_index = self._current_index - 1
@@ -136,11 +122,6 @@ class Behaviors:
         return None
     
     def advance(self) -> Dict[str, Any]:
-        """Advance to the next action in the current behavior, or next behavior if at end.
-        
-        Returns:
-            Dict with status and information about the advancement
-        """
         if not self.current:
             return {
                 'status': 'error',
@@ -149,11 +130,9 @@ class Behaviors:
         
         current_behavior = self.current
         actions = current_behavior.actions
-        # If no current action, navigate to first
         if actions.current is None and actions.names:
             actions.navigate_to(actions.names[0])
         
-        # If we are at the final action, close it and move to next behavior
         if actions.is_final_action():
             actions.close_current()
             next_behavior = self.next()
@@ -173,7 +152,6 @@ class Behaviors:
                 'message': 'Workflow complete - no more behaviors'
             }
         
-        # Otherwise, advance within the current behavior
         actions.close_current()
         return {
             'status': 'success',
@@ -183,31 +161,22 @@ class Behaviors:
         }
     
     def go_back(self) -> Dict[str, Any]:
-        """Go back to the previous action in the current behavior, or previous behavior if at start.
-        
-        Returns:
-            Dict with status and information about going back
-        """
         if not self.current:
             return {
                 'status': 'error',
                 'message': 'No current behavior set'
             }
         
-        # Try to go back within current behavior
         current_behavior = self.current
         back_result = current_behavior.actions.go_back()
         
         if back_result['status'] == 'success':
             return back_result
         
-        # If at start of behavior actions, check if we can go to previous behavior
-        # If no previous behavior, return the actions error message  
         prev_behavior = self.previous()
         if prev_behavior:
             self._current_index -= 1
             self.save_state()
-            # Navigate to last action of previous behavior
             if prev_behavior.actions._actions:
                 last_action_name = prev_behavior.actions.names[-1]
                 prev_behavior.actions.navigate_to(last_action_name)
@@ -218,7 +187,6 @@ class Behaviors:
                 'action': prev_behavior.actions.current.action_name if prev_behavior.actions.current else None
             }
         
-        # No previous behavior - return the action's error message
         return back_result
 
     def __iter__(self) -> Iterator['Behavior']:
@@ -238,7 +206,6 @@ class Behaviors:
                 self._current_index = i
                 break
         
-        # Persist current_behavior to state file
         self.save_state()
 
     def close_current(self):

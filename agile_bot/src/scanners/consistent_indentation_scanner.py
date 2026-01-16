@@ -1,10 +1,8 @@
-"""Scanner for validating consistent indentation."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from .code_scanner import CodeScanner
 from .violation import Violation
-
 
 class ConsistentIndentationScanner(CodeScanner):
     
@@ -34,7 +32,6 @@ class ConsistentIndentationScanner(CodeScanner):
                 has_spaces = True
         
         if has_tabs and has_spaces:
-            # No code snippet for file-level indentation violations
             violation = Violation(
                 rule=rule_obj,
                 violation_message='File mixes tabs and spaces for indentation - use consistent indentation (prefer spaces)',

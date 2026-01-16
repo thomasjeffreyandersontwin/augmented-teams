@@ -1,21 +1,15 @@
-"""
-JSON adapter for StrategyAction.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.actions.strategy.strategy_action import StrategyAction
 
-
 class JSONStrategyAction(JSONAdapter):
-    """Serializes StrategyAction to JSON - exposes all StrategyAction properties."""
     
     def __init__(self, action: StrategyAction, is_current: bool = False, is_completed: bool = False):
         self.action = action
         self.is_current = is_current
         self.is_completed = is_completed
     
-    # Expose ALL domain properties
     @property
     def action_name(self):
         return self.action.action_name
@@ -50,26 +44,20 @@ class JSONStrategyAction(JSONAdapter):
     
     @property
     def strategy(self):
-        """Strategy-specific property."""
         return self.action.strategy
     
     @property
     def strategy_criteria(self):
-        """Strategy-specific property."""
         return self.action.strategy_criteria
     
     @property
     def typical_assumptions(self):
-        """Strategy-specific property."""
         return self.action.typical_assumptions
     
     def to_dict(self) -> dict:
-        """Convert StrategyAction to dict."""
-        # #region agent log
         import time
         with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
             f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H1','location':'json_strategy_action.py:67','message':'to_dict called','data':{'behavior_name':self.action.behavior.name if self.action.behavior else None,'has_strategy':bool(self.action.strategy)},'timestamp':int(time.time()*1000)})+'\n')
-        # #endregion
         
         result = {
             'action_name': self.action.action_name,
@@ -82,37 +70,27 @@ class JSONStrategyAction(JSONAdapter):
             'behavior': self.action.behavior.name if self.action.behavior else None,
         }
         
-        # Add strategy-specific properties
         if self.action.strategy:
-            # Get saved decisions from strategy.json
             from agile_bot.src.actions.strategy.strategy_decision import StrategyDecision
             saved_data = StrategyDecision.load_all(self.action.behavior.bot_paths)
             
-            # #region agent log
             with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
                 f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H3,H4','location':'json_strategy_action.py:83','message':'loaded saved_data','data':{'saved_data_keys':list(saved_data.keys()) if saved_data else None,'saved_data':saved_data,'behavior_name':self.action.behavior.name},'timestamp':int(time.time()*1000)})+'\n')
-            # #endregion
             
             behavior_data = saved_data.get(self.action.behavior.name, {}) if saved_data else {}
             saved_decisions = behavior_data.get('decisions', {})
             saved_assumptions = behavior_data.get('assumptions', [])
             
-            # #region agent log
             with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
                 f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H3,H4','location':'json_strategy_action.py:93','message':'extracted behavior data','data':{'behavior_data':behavior_data,'saved_decisions':saved_decisions,'saved_assumptions':saved_assumptions},'timestamp':int(time.time()*1000)})+'\n')
-            # #endregion
             
-            # Convert strategy_criteria objects to dicts for JSON serialization
             serialized_criteria = {}
             
-            # #region agent log
             with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
                 f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H2,H6','location':'json_strategy_action.py:102','message':'before serializing criteria','data':{'has_strategy_criteria':bool(self.action.strategy_criteria),'criteria_type':str(type(self.action.strategy_criteria)),'criteria_len':len(self.action.strategy_criteria) if self.action.strategy_criteria else 0},'timestamp':int(time.time()*1000)})+'\n')
-            # #endregion
             
             if self.action.strategy_criteria:
                 for key, criteria in self.action.strategy_criteria.items():
-                    # Use to_dict() method if available, otherwise build dict manually
                     if hasattr(criteria, 'to_dict'):
                         serialized_criteria[key] = criteria.to_dict()
                     else:
@@ -122,15 +100,12 @@ class JSONStrategyAction(JSONAdapter):
                             'outcome': criteria.outcome if hasattr(criteria, 'outcome') else None
                         }
             
-            # #region agent log
             with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
                 f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H2,H6','location':'json_strategy_action.py:120','message':'after serializing criteria','data':{'serialized_count':len(serialized_criteria),'serialized_keys':list(serialized_criteria.keys())},'timestamp':int(time.time()*1000)})+'\n')
-            # #endregion
             
             result['strategy'] = {
                 'criteria_count': len(self.action.strategy_criteria) if self.action.strategy_criteria else 0,
                 'assumptions_count': len(self.action.typical_assumptions) if self.action.typical_assumptions else 0,
-                # The panel expects strategy_criteria and assumptions in this nested format
                 'strategy_criteria': {
                     'criteria': serialized_criteria,
                     'decisions_made': saved_decisions
@@ -140,12 +115,9 @@ class JSONStrategyAction(JSONAdapter):
                 }
             }
             
-            # #region agent log
             with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
                 f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H5','location':'json_strategy_action.py:135','message':'final strategy structure','data':{'has_strategy_key':('strategy' in result),'strategy_criteria_criteria_keys':list(result['strategy']['strategy_criteria']['criteria'].keys()),'decisions_made_keys':list(result['strategy']['strategy_criteria']['decisions_made'].keys()),'assumptions_made_count':len(result['strategy']['assumptions']['assumptions_made'])},'timestamp':int(time.time()*1000)})+'\n')
-            # #endregion
             
-            # ALSO provide strategy_criteria at top level for compatibility
             if self.action.strategy_criteria:
                 criteria_dict = self.action.strategy_criteria
                 if isinstance(criteria_dict, dict):
@@ -163,13 +135,10 @@ class JSONStrategyAction(JSONAdapter):
             if self.action.typical_assumptions:
                 result['typical_assumptions'] = self.action.typical_assumptions
         
-        # #region agent log
         with open(r'c:\dev\augmented-teams\.cursor\debug.log', 'a', encoding='utf-8') as f:
             f.write(json.dumps({'sessionId':'debug-session','runId':'initial','hypothesisId':'H1','location':'json_strategy_action.py:152','message':'to_dict returning','data':{'result_keys':list(result.keys()),'has_strategy':('strategy' in result),'result_json_length':len(json.dumps(result))},'timestamp':int(time.time()*1000)})+'\n')
-        # #endregion
         
         return result
     
     def deserialize(self, data: str) -> dict:
-        """Parse JSON string to dict."""
         return json.loads(data)

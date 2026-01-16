@@ -1,4 +1,3 @@
-"""Scanner for detecting incomplete refactoring (fallback/legacy support code)."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -8,7 +7,6 @@ from .code_scanner import CodeScanner
 from .violation import Violation
 
 logger = logging.getLogger(__name__)
-
 
 class CompleteRefactoringScanner(CodeScanner):
     
@@ -28,7 +26,6 @@ class CompleteRefactoringScanner(CodeScanner):
     def _check_fallback_legacy_support(self, lines: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Pattern to match comments that explicitly mention fallback or legacy
         fallback_comment_pattern = re.compile(
             r'#\s*(fallback|legacy).*',
             re.IGNORECASE
@@ -38,13 +35,11 @@ class CompleteRefactoringScanner(CodeScanner):
             stripped = line.strip()
             
             if fallback_comment_pattern.match(stripped):
-                # Look ahead to find the actual code (not just more comments)
                 code_line_num = None
                 for next_line_num in range(line_num, min(line_num + 5, len(lines) + 1)):
                     if next_line_num > len(lines):
                         break
                     next_line = lines[next_line_num - 1].strip()
-                    # Skip empty lines and comments
                     if next_line and not next_line.startswith('#'):
                         code_line_num = next_line_num
                         break

@@ -1,19 +1,13 @@
-"""
-JSON adapter for StoryGraph domain object.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.story_graph.story_graph import StoryGraph
 
-
 class JSONStoryGraph(JSONAdapter):
-    """Serializes StoryGraph to JSON - exposes all StoryGraph properties."""
     
     def __init__(self, story_graph: StoryGraph):
         self.story_graph = story_graph
     
-    # Expose ALL domain properties
     @property
     def path(self):
         return self.story_graph.path
@@ -39,7 +33,6 @@ class JSONStoryGraph(JSONAdapter):
         return self.story_graph.content
     
     def to_dict(self) -> dict:
-        """Convert StoryGraph to dict."""
         return {
             'path': str(self.story_graph.path),
             'has_epics': self.story_graph.has_epics,
@@ -50,5 +43,4 @@ class JSONStoryGraph(JSONAdapter):
         }
     
     def deserialize(self, data: str) -> dict:
-        """Parse JSON string to dict."""
         return json.loads(data)

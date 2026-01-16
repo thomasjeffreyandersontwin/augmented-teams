@@ -1,17 +1,12 @@
-"""
-TTY adapter for BotPath domain object.
-"""
 
 from agile_bot.src.cli.adapters import TTYAdapter
 from agile_bot.src.bot_path.bot_path import BotPath
 
 class TTYBotPath(TTYAdapter):
-    """Serializes BotPath to TTY - exposes all BotPath properties."""
     
     def __init__(self, bot_path: BotPath):
         self.bot_path = bot_path
     
-    # Expose ALL domain properties
     @property
     def workspace_directory(self):
         return self.bot_path.workspace_directory
@@ -33,15 +28,12 @@ class TTYBotPath(TTYAdapter):
         return self.bot_path.documentation_path
     
     def serialize(self) -> str:
-        """Convert BotPath to TTY string."""
         lines = []
         
-        # Bot directory section
         lines.append(self.add_bold("Bot Path:"))
         lines.append(str(self.bot_path.bot_directory))
         lines.append("")
         
-        # Workspace section with friendly name
         workspace_name = self.bot_path.workspace_directory.name
         lines.append(f"📂 {self.add_bold('Workspace:')} {workspace_name}")
         lines.append(str(self.bot_path.workspace_directory))
@@ -55,7 +47,6 @@ class TTYBotPath(TTYAdapter):
     
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

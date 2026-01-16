@@ -45,7 +45,6 @@ class ValidationContext:
         if context.scope:
             story_graph_content = validation_scope.filter_story_graph(story_graph_content)
         
-        # Get files - either from scope filter or discover all
         files = cls._get_files_for_validation(behavior, context)
         
         skiprule = context.scope.skiprule if context.scope else []
@@ -67,22 +66,18 @@ class ValidationContext:
     
     @classmethod
     def _get_files_for_validation(cls, behavior, context: 'ValidateActionContext') -> Dict[str, List[Path]]:
-        """Get files to validate based on behavior validation type and scope."""
         from agile_bot.src.actions.validate.file_discovery import FileDiscovery
         from agile_bot.src.scope import ScopeType
         from agile_bot.src.actions.validate.validation_type import ValidationType
         
-        # Enforce story-graph-only behaviors to ignore file scopes entirely.
         validation_type = behavior.validation_type
         if validation_type == ValidationType.STORY_GRAPH:
             return {}
 
-        # If scope type is FILES, use the file paths directly from scope.value
         if context.scope and context.scope.type == ScopeType.FILES:
             files_dict = {}
             for file_path_str in context.scope.value:
                 file_path = Path(file_path_str)
-                # Determine file type based on path or behavior
                 if 'test' in str(file_path).lower() or behavior.name in ('tests', 'test'):
                     if 'test' not in files_dict:
                         files_dict['test'] = []
@@ -92,7 +87,6 @@ class ValidationContext:
                         files_dict['src'] = []
                     files_dict['src'].append(file_path)
             
-            # Apply file filter if present
             if context.scope.file_filter:
                 filtered_files = {}
                 for key, file_list in files_dict.items():
@@ -103,22 +97,18 @@ class ValidationContext:
             
             return files_dict
         
-        # For behaviors that validate files (or both), discover files
         file_discovery = FileDiscovery(behavior.bot_paths, behavior.name, [])
         
-        # Determine which file types to discover based on behavior
         if behavior.name in ('tests', 'test'):
             all_files = {'test': file_discovery.discover_files_from_directory('test')}
         elif behavior.name == 'code':
             all_files = {'src': file_discovery.discover_files_from_directory('src')}
         else:
-            # For other behaviors, discover both
             all_files = {
                 'test': file_discovery.discover_files_from_directory('test'),
                 'src': file_discovery.discover_files_from_directory('src')
             }
         
-        # Filter files using scope if present
         if context.scope and context.scope.file_filter:
             filtered_files = {}
             for key, file_list in all_files.items():
@@ -150,7 +140,6 @@ class ValidationContext:
                     skiprule=scope_dict.get('skiprule', [])
                 )
         elif 'test' in parameters or 'src' in parameters:
-            # Convert test/src parameters to files scope
             file_paths = []
             if 'test' in parameters:
                 test_files = parameters['test']
@@ -231,7 +220,6 @@ class ValidationContext:
         changed_files = {}
         for file_type, file_list in files.items():
             changed = [f for f in file_list if f.stat().st_mtime > last_report_time]
-            # Always add the file_type key, even if empty list
             changed_files[file_type] = changed
         
         return changed_files, files
@@ -263,11 +251,9 @@ class Rules:
             return self._rules
         all_rules = []
         
-        # Load bot-level rules
         bot_rules = self._rule_loader.load_bot_rules()
         all_rules.extend(bot_rules)
         
-        # Load behavior-specific rules if behavior is provided
         if self.behavior:
             behavior_rules = self._rule_loader.load_behavior_rules()
             all_rules.extend(behavior_rules)
@@ -312,7 +298,6 @@ class Rules:
         rules = self._load_rules()
         if not rules:
             return 'No validation rules found.'
-        # Sort by priority (lower number = higher priority)
         sorted_rules = sorted(rules, key=lambda r: r.priority)
         sections = []
         for rule in sorted_rules:
@@ -324,7 +309,6 @@ class Rules:
         if not rules:
             return 'No validation rules found.'
         
-        # Sort by priority (lower number = higher priority)
         rules = sorted(rules, key=lambda r: r.priority)
         
         lines = ['Rules to follow:', '']
@@ -332,19 +316,16 @@ class Rules:
             description = rule.description or 'No description'
             lines.append(f"- **{rule.name}**: {description}")
             
-            # Add DO description if present
             do_section = rule.rule_content.get('do', {})
             do_desc = do_section.get('description', '')
             if do_desc:
                 lines.append(f"  DO: {do_desc}")
             
-            # Add DON'T description if present
             dont_section = rule.rule_content.get('dont', {})
             dont_desc = dont_section.get('description', '')
             if dont_desc:
                 lines.append(f"  DON'T: {dont_desc}")
             
-            # Add blank line between rules, but not after the last rule
             if i < len(rules) - 1:
                 lines.append("")
         

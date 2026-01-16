@@ -1,4 +1,3 @@
-"""Scanner for validating variable names match scenario/AC/domain model concepts exactly."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -7,7 +6,6 @@ import re
 from .test_scanner import TestScanner
 from .violation import Violation
 from .resources.ast_elements import Functions
-
 
 class ExactVariableNamesScanner(TestScanner):
     
@@ -44,7 +42,6 @@ class ExactVariableNamesScanner(TestScanner):
     def _check_variable_names(self, test_node: ast.FunctionDef, domain_concepts: List[str], file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Find variable assignments in test
         for node in ast.walk(test_node):
             if isinstance(node, ast.Assign):
                 for target in node.targets:

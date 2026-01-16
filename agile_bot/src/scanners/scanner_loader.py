@@ -2,7 +2,6 @@ from typing import Optional, Tuple
 import importlib
 from .scanner import Scanner
 
-
 class ScannerLoader:
     def __init__(self, bot_name: str = None):
         self.bot_name = bot_name
@@ -24,12 +23,11 @@ class ScannerLoader:
         try:
             module_path, class_name = scanner_module_path.rsplit('.', 1)
             
-            # Convert VerbNounScanner -> verb_noun
             import re
             scanner_name = re.sub(r'(?<!^)(?=[A-Z])', '_', class_name).lower().replace('_scanner', '').replace('scanner', '')
             
             paths_to_try = [
-                module_path,  # Exact path from config
+                module_path,
                 f'agile_bot.src.scanners.{scanner_name}_scanner'
             ]
             
@@ -51,5 +49,4 @@ class ScannerLoader:
             return None, f"Scanner class not found: {scanner_module_path}"
         except Exception as e:
             return None, f"Error loading scanner {scanner_module_path}: {e}"
-
 

@@ -11,12 +11,10 @@ class RenderInstructionBuilder:
         executed_specs = [spec for spec in render_specs if spec.is_executed]
         template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]
         
-        # If no template specs require AI handling, clear the template-related instructions
         if not template_specs:
             base_instructions_list = []
         
         self._add_spec_instructions(base_instructions_list, executed_specs, template_specs)
-        # Process action_config.json placeholders with ALL render_specs (for {{#for_each_render_config}} loops)
         self.inject_render_template_variables(base_instructions_list, render_instructions, template_specs, all_render_specs=render_specs)
         self._update_instructions_dict(instructions, base_instructions_list, render_instructions, template_specs, executed_specs, render_specs, working_dir)
 
@@ -25,32 +23,18 @@ class RenderInstructionBuilder:
             return None
         bot_paths = render_specs[0]._bot_paths
         working_dir = bot_paths.workspace_directory
-        # Workspace path info removed - not needed in instructions
         return working_dir
 
     def _add_spec_instructions(self, base_instructions_list: List[str], executed_specs: List['RenderSpec'], template_specs: List['RenderSpec']) -> None:
         if executed_specs:
-            # Find the end of context sources section (after the blank line following context sources)
-            # Context sources typically look like:
-            # [0]: "**Look for context in the following locations:**"
-            # [1]: "- in this message and chat history"
-            # [2]: "- in `{workspace}/docs/context/`"
-            # [3]: "- generated files in `{workspace}/docs/stories/`"
-            # [4]: "  clarification.json, planning.json"
-            # [5]: ""  <- blank line
-            # We want to insert AFTER this blank line
-            insert_position = 1  # Default to position 1 if we can't find the pattern
+            insert_position = 1
             for i, line in enumerate(base_instructions_list):
-                # Look for the blank line after context sources (after lines starting with "-" or spaces)
                 if i > 0 and line == "" and i > 1:
-                    # Found a blank line, check if previous lines were context sources
                     prev_line = base_instructions_list[i-1]
                     if prev_line.strip().startswith('-') or (prev_line.startswith('  ') and prev_line.strip()):
-                        # This is the blank line after context sources
                         insert_position = i + 1
                         break
             
-            # Split the multiline string into separate lines and insert them
             synchronizer_lines = self.format_executed_synchronizers(executed_specs).split('\n')
             for line in reversed(synchronizer_lines):
                 base_instructions_list.insert(insert_position, line)
@@ -64,24 +48,14 @@ class RenderInstructionBuilder:
             instructions['workspace_path'] = str(working_dir)
 
     def inject_render_template_variables(self, instructions_list: List[str], render_instructions: Dict[str, Any], render_specs: List['RenderSpec'], all_render_specs: List['RenderSpec'] = None) -> None:
-        """Inject render template variables and process for-each loops.
-        
-        Args:
-            instructions_list: List of instruction strings to process
-            render_instructions: Render instructions dict from instructions.json
-            render_specs: Template specs that require AI handling
-            all_render_specs: All render specs (for {{#for_each_render_config}} loops). Defaults to render_specs if not provided.
-        """
         if all_render_specs is None:
             all_render_specs = render_specs
             
         render_instructions_text = '\n'.join(render_instructions.get('instructions', []))
         render_configs_text = self.format_render_configs(render_specs)
         
-        # First, process for-each loops with ALL render specs
         processed_list = self._process_for_each_loops(instructions_list, all_render_specs)
         
-        # Then process simple placeholders
         new_instructions = []
         for line in processed_list:
             if '{{render_instructions}}' in line:
@@ -103,11 +77,9 @@ class RenderInstructionBuilder:
     def _format_single_spec(self, spec: 'RenderSpec', index: int, formatted_parts: list):
         config_name = spec.name
         
-        # Build the simplified instruction line
         workspace = spec._bot_paths.workspace_directory if hasattr(spec, '_bot_paths') else None
         path_prefix = spec.config_data.get('path', 'docs/stories')
         
-        # Get full paths
         if workspace:
             output_path = workspace / path_prefix / spec.output if spec.output else 'N/A'
             input_path = workspace / path_prefix / spec.input if spec.input else 'N/A'
@@ -115,13 +87,11 @@ class RenderInstructionBuilder:
             output_path = spec.output if spec.output else 'N/A'
             input_path = spec.input if spec.input else 'N/A'
         
-        # Get template path
         if spec.template and hasattr(spec.template, 'template_path'):
             template_path = spec.template.template_path
         else:
             template_path = spec.config_data.get('template', 'N/A')
         
-        # Create single instruction line
         formatted_parts.append(f'{index}. {config_name} > manually generate {output_path} by taking {input_path} and transform using {template_path}')
         formatted_parts.append('')
 
@@ -147,14 +117,12 @@ class RenderInstructionBuilder:
         parts.append('')
     
     def _process_for_each_loops(self, instructions_list: List[str], render_specs: List['RenderSpec']) -> List[str]:
-        """Process {{#for_each_render_config}}...{{/for_each_render_config}} loops."""
         new_instructions = []
         i = 0
         while i < len(instructions_list):
             line = instructions_list[i]
             
             if '{{#for_each_render_config}}' in line:
-                # Find the end of the loop
                 loop_start = i + 1
                 loop_end = None
                 for j in range(loop_start, len(instructions_list)):
@@ -163,20 +131,16 @@ class RenderInstructionBuilder:
                         break
                 
                 if loop_end is None:
-                    # Malformed loop, skip the marker
                     new_instructions.append(line)
                     i += 1
                     continue
                 
-                # Extract the template lines
                 template_lines = instructions_list[loop_start:loop_end]
                 
-                # Generate instructions for each render spec
                 for spec in render_specs:
                     expanded_lines = self._expand_template_for_spec(template_lines, spec)
                     new_instructions.extend(expanded_lines)
                 
-                # Skip past the loop
                 i = loop_end + 1
             else:
                 new_instructions.append(line)
@@ -185,8 +149,6 @@ class RenderInstructionBuilder:
         return new_instructions
     
     def _expand_template_for_spec(self, template_lines: List[str], spec: 'RenderSpec') -> List[str]:
-        """Expand template lines with render_config placeholders replaced."""
-        # Handle instructions - can be string or list
         instructions = spec.config_data.get('instructions', 'No instructions provided')
         if isinstance(instructions, list):
             instructions = '\n'.join(instructions)
@@ -205,13 +167,10 @@ class RenderInstructionBuilder:
         for line in template_lines:
             expanded_line = line
             for placeholder, value in replacements.items():
-                # For instructions, if it's multiline, we need to handle it specially
                 if placeholder == '{render_config.instructions}' and '\n' in value:
-                    # Replace the placeholder with first line, then insert remaining lines
                     lines = value.split('\n')
                     expanded_line = expanded_line.replace(placeholder, lines[0])
                     expanded_lines.append(expanded_line)
-                    # Add remaining lines (if the original line only had the placeholder)
                     if line.strip() == placeholder:
                         for additional_line in lines[1:]:
                             expanded_lines.append(additional_line)
@@ -219,7 +178,6 @@ class RenderInstructionBuilder:
                 else:
                     expanded_line = expanded_line.replace(placeholder, str(value))
             else:
-                # No multiline instructions handling needed
                 expanded_lines.append(expanded_line)
         
         return expanded_lines

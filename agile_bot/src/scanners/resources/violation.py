@@ -1,4 +1,3 @@
-"""Violation resource representing a rule violation."""
 
 from typing import TYPE_CHECKING
 
@@ -6,7 +5,6 @@ if TYPE_CHECKING:
     from .block import Block
     from .scan import Scan
     from agile_bot.src.actions.rules.rule import Rule
-
 
 class Violation:
     
@@ -78,11 +76,4 @@ class Violation:
             'location': str(self._block.file.path)
         }
         return result
-
-
-
-
-
-
-
 

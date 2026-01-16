@@ -1,4 +1,3 @@
-"""Scanner to ensure tests reuse standard data sets instead of ad-hoc inline dicts."""
 
 from typing import List, Dict, Any, Optional, Set
 from pathlib import Path
@@ -7,9 +6,7 @@ import ast
 from .test_scanner import TestScanner
 from .violation import Violation
 
-
 class StandardDataReuseScanner(TestScanner):
-    """Detect repeated ad-hoc inline data instead of shared canonical fixtures/constants."""
 
     CANONICAL_KEYS: Set[str] = {
         "current",
@@ -35,7 +32,6 @@ class StandardDataReuseScanner(TestScanner):
         for func in [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name.startswith("test")]:
             dict_keysets = []
             for node in ast.walk(func):
-                # Capture dict literals passed into calls or assigned
                 dict_node = None
                 if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict):
                     dict_node = node.value
@@ -59,7 +55,6 @@ class StandardDataReuseScanner(TestScanner):
                             ).to_dict()
                         )
 
-            # If multiple distinct keysets appear in same test, flag duplication/variation
             unique_keysets = {}
             for keyset, lineno in dict_keysets:
                 unique_keysets.setdefault(keyset, []).append(lineno)

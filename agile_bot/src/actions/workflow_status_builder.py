@@ -8,14 +8,12 @@ if TYPE_CHECKING:
     from ..bot.behaviors import Behaviors
 logger = logging.getLogger(__name__)
 
-
 class CurrentBehaviorContext(NamedTuple):
     name: str
     icon: str
     actions: List[str]
     current_action: str
     completed: List[str]
-
 
 class BehaviorActionStatusBuilder:
 

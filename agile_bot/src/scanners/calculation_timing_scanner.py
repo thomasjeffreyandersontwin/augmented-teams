@@ -1,11 +1,9 @@
-"""Scanner for validating that calculation timing is hidden in domain models."""
 
 from typing import List, Dict, Any, Optional
 import re
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class CalculationTimingScanner(DomainScanner):
     
@@ -41,7 +39,4 @@ class CalculationTimingScanner(DomainScanner):
                     break
         
         return violations
-
-
-
 

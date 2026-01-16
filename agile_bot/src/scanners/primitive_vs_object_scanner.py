@@ -11,7 +11,6 @@ from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
 
-
 class PrimitiveVsObjectScanner(CodeScanner):
     
     # Primitive type names that suggest objects should be used instead
@@ -24,12 +23,11 @@ class PrimitiveVsObjectScanner(CodeScanner):
         r'str\(', r'__str__', r'__repr__', r'serialize', r'marshal'
     ]
     
-    # Parameter name patterns that suggest an object should be passed instead
     OBJECT_SUGGESTING_PATTERNS = [
-        r'_id$',  # customer_id, order_id, etc.
-        r'_ids$',  # customer_ids, order_ids, etc.
-        r'_name$',  # customer_name, order_name (when customer/order object exists)
-        r'_email$',  # customer_email (when customer object exists)
+        r'_id$',
+        r'_ids$',
+        r'_name$',
+        r'_email$',
     ]
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -69,7 +67,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
     def _check_function_parameters(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Skip presentation boundary methods
         if self._is_presentation_boundary(func_node.name, content, func_node):
             return violations
         
@@ -78,7 +75,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
             return violations
         
         for arg in func_node.args.args:
-            # Skip self and cls
             if arg.arg in ('self', 'cls'):
                 continue
             
@@ -92,7 +88,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
                             f'Function "{func_node.name}" takes primitive "{arg.arg}: {type_name}" - consider passing domain object instead'
                         ))
             
-            # Even without type annotation, check parameter name patterns
             elif self._suggests_object_should_be_passed(arg.arg):
                 violations.append(self._create_primitive_violation(
                     rule_obj, file_path, func_node, arg, None,
@@ -102,7 +97,6 @@ class PrimitiveVsObjectScanner(CodeScanner):
         return violations
     
     def _check_return_type(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        # Skip presentation boundary methods
         if self._is_presentation_boundary(func_node.name, content, func_node):
             return None
         

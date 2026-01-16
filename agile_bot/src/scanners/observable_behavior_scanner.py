@@ -1,4 +1,3 @@
-"""Scanner for validating tests focus on observable behavior."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .test_scanner import TestScanner
 from .violation import Violation
-
 
 class ObservableBehaviorScanner(TestScanner):
     
@@ -27,14 +25,13 @@ class ObservableBehaviorScanner(TestScanner):
         violations = []
         lines = content.split('\n')
         
-        # Patterns that indicate testing internal implementation
         internal_patterns = [
-            r'\.toHaveBeenCalled',  # Jest mock assertions
-            r'\.assert_called',  # Python mock assertions
-            r'\.mock\.',  # Mock internals
-            r'\.spyOn\(',  # Spy creation
-            r'assert.*\.call_count',  # Checking call counts
-            r'assert.*\.call_args',  # Checking call arguments
+            r'\.toHaveBeenCalled',
+            r'\.assert_called',
+            r'\.mock\.',
+            r'\.spyOn\(',
+            r'assert.*\.call_count',
+            r'assert.*\.call_args',
         ]
         
         for line_num, line in enumerate(lines, 1):

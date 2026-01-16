@@ -6,10 +6,9 @@ class Assumptions:
 
     def __init__(self, strategy_dir: Path):
         self._strategy_dir = strategy_dir
-        self._assumptions: List[str] | None = None  # Lazy-loaded
+        self._assumptions: List[str] | None = None
 
     def _load_assumptions(self):
-        """Lazy load assumptions from file."""
         if self._assumptions is None:
             assumptions_file = self._strategy_dir / 'typical_assumptions.json'
             assumptions_data = read_json_file(assumptions_file)
@@ -17,6 +16,5 @@ class Assumptions:
 
     @property
     def assumptions(self) -> List[str]:
-        """Get assumptions, loading from file if needed."""
         self._load_assumptions()
         return self._assumptions

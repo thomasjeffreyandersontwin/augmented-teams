@@ -1,4 +1,3 @@
-"""Scanner for validating domain-specific language in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -11,14 +10,10 @@ from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
 
-
 class DomainLanguageCodeScanner(CodeScanner):
     
     GENERATE_PATTERNS = [r'^generate_', r'^calculate_']
     
-    # Common verb suffixes for builder/processor classes
-    # e.g., MCPServerGenerator, ComplexityCalculator, BotToolBuilder, RequestHandler
-    # These are allowed to use generate_/calculate_ methods IF they have a domain-meaningful prefix
     BUILDER_VERB_SUFFIXES = (
         'Generator', 'Calculator', 'Builder', 'Processor', 
         'Handler', 'Factory', 'Creator', 'Producer', 'Compiler'
@@ -35,7 +30,7 @@ class DomainLanguageCodeScanner(CodeScanner):
         for suffix in self.BUILDER_VERB_SUFFIXES:
             if class_name.endswith(suffix):
                 prefix = class_name[:-len(suffix)]
-                if prefix:  # Has a domain-meaningful prefix
+                if prefix:
                     return True
         return False
     
@@ -53,7 +48,6 @@ class DomainLanguageCodeScanner(CodeScanner):
         if self.story_graph:
             domain_terms = self._extract_domain_terms(self.story_graph)
         
-        # Generic names that are acceptable in specific contexts
         generic_names = {'self', 'result', 'value', 'data', 'item', 'obj', 'workspace', 'root', 'path', 'config'}
         
         parsed = self._read_and_parse_file(file_path)
@@ -90,13 +84,11 @@ class DomainLanguageCodeScanner(CodeScanner):
         violations = []
         class_name = class_node.name
         
-        # Skip if class name is in generic names (acceptable)
         if class_name.lower() in generic_names:
             return violations
         
         if domain_terms and not self._matches_domain_term(class_name, domain_terms):
             sample_terms = sorted(list(domain_terms))[:10]
-            # No code snippet for class-level naming violations (class definition line)
             violations.append(
                 Violation(
                     rule=rule_obj,
@@ -118,14 +110,11 @@ class DomainLanguageCodeScanner(CodeScanner):
         violations = []
         func_name_lower = func_node.name.lower()
         
-        # Skip generate/calculate check for builder/generator classes with domain prefix
-        # e.g., MCPServerGenerator.generate_server() is legitimate
         skip_generate_check = self._is_builder_class_with_domain_prefix(enclosing_class)
         
         if not skip_generate_check:
             for pattern in self.GENERATE_PATTERNS:
                 if re.search(pattern, func_name_lower):
-                    # No code snippet for method-level naming violations (method definition line)
                     violations.append(
                         Violation(
                             rule=rule_obj,
@@ -137,10 +126,8 @@ class DomainLanguageCodeScanner(CodeScanner):
                     )
         
         if domain_terms and not self._matches_domain_term(func_node.name, domain_terms):
-            # Skip if function name is in generic names (acceptable)
             if func_node.name.lower() not in generic_names:
                 sample_terms = sorted(list(domain_terms))[:10]
-                # No code snippet for method-level naming violations (method definition line)
                 violations.append(
                     Violation(
                         rule=rule_obj,
@@ -156,13 +143,11 @@ class DomainLanguageCodeScanner(CodeScanner):
         
         for arg in func_node.args.args:
             arg_name_lower = arg.arg.lower()
-            # Skip if parameter is in generic names (acceptable)
             if arg_name_lower in generic_names:
                 continue
             
             if domain_terms and not self._matches_domain_term(arg.arg, domain_terms):
                 sample_terms = sorted(list(domain_terms))[:10]
-                # No code snippet for parameter naming violations (method definition line)
                 violations.append(
                     Violation(
                         rule=rule_obj,
@@ -177,7 +162,4 @@ class DomainLanguageCodeScanner(CodeScanner):
                 )
         
         return violations
-
-
-
 

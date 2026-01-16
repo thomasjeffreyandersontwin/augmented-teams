@@ -1,4 +1,3 @@
-"""Scanner for validating Arrange-Act-Assert structure in tests."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -9,7 +8,6 @@ from .violation import Violation
 from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
-
 
 class ArrangeActAssertScanner(TestScanner):
     
@@ -34,23 +32,18 @@ class ArrangeActAssertScanner(TestScanner):
     def _check_aaa_structure(self, test_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         violations = []
         
-        # 1. AST-based section detection
         sections = self._detect_aaa_sections_ast(test_node, content)
         
-        # 2. Check for actual code
         has_actual_code = self._has_actual_code(test_node)
         
-        # 3. Validate structure
         structure_violation = self._validate_aaa_structure(sections, test_node, file_path, rule_obj)
         if structure_violation:
             violations.append(structure_violation)
         
-        # 4. Check order (arrange before act, act before assert)
         order_violation = self._validate_aaa_order(sections, test_node, file_path, rule_obj)
         if order_violation:
             violations.append(order_violation)
         
-        # 5. Check for actual code
         if not has_actual_code:
             line_number = test_node.lineno if hasattr(test_node, 'lineno') else None
             try:
@@ -65,7 +58,6 @@ class ArrangeActAssertScanner(TestScanner):
                     max_lines=10
                 ))
             except Exception:
-                # No code snippet for exception case (fallback when snippet creation fails)
                 violations.append(Violation(
                     rule=rule_obj,
                     violation_message=f'Test "{test_node.name}" has AAA structure but no actual code - tests must call production code, not just contain comments and pass statements',
@@ -80,11 +72,9 @@ class ArrangeActAssertScanner(TestScanner):
         sections = {'arrange': [], 'act': [], 'assert': []}
         test_lines = content.split('\n')
         
-        # Track current section based on comments
         current_section = None
         
         for i, stmt in enumerate(test_node.body):
-            # Skip docstrings and pass
             if isinstance(stmt, (ast.Pass, ast.Expr)):
                 if isinstance(stmt, ast.Expr) and isinstance(stmt.value, (ast.Constant, ast.Str)):
                     continue
@@ -100,11 +90,9 @@ class ArrangeActAssertScanner(TestScanner):
                     elif '# Then' in line or '# Assert' in line:
                         current_section = 'assert'
             
-            # Classify statement by AST structure
             if current_section:
                 sections[current_section].append(stmt)
             else:
-                # Auto-classify based on AST
                 section = self._classify_statement(stmt)
                 if section:
                     sections[section].append(stmt)
@@ -112,7 +100,6 @@ class ArrangeActAssertScanner(TestScanner):
         return sections
     
     def _classify_statement(self, stmt: ast.stmt) -> Optional[str]:
-        # Assertions are always "assert"
         if isinstance(stmt, ast.Assert):
             return 'assert'
         
@@ -133,11 +120,9 @@ class ArrangeActAssertScanner(TestScanner):
                     elif func_name.startswith('then_'):
                         return 'assert'
         
-        # Assignments are usually arrange
         if isinstance(stmt, ast.Assign):
             return 'arrange'
         
-        # Function calls without assertions might be act
         if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
             return 'act'
         
@@ -156,7 +141,6 @@ class ArrangeActAssertScanner(TestScanner):
         has_act = len(sections['act']) > 0
         has_assert = len(sections['assert']) > 0
         
-        # Also check comments/method names (fallback)
         test_lines = file_path.read_text(encoding='utf-8').split('\n')
         start_line = test_node.lineno - 1
         end_line = test_node.end_lineno if hasattr(test_node, 'end_lineno') else start_line + 50
@@ -217,7 +201,7 @@ class ArrangeActAssertScanner(TestScanner):
         assert_lines = [stmt.lineno for stmt in sections['assert'] if hasattr(stmt, 'lineno')]
         
         if not arrange_lines or not act_lines or not assert_lines:
-            return None  # Missing sections handled elsewhere
+            return None
         
         max_arrange = max(arrange_lines) if arrange_lines else 0
         min_act = min(act_lines) if act_lines else float('inf')

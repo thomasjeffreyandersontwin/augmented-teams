@@ -1,4 +1,3 @@
-"""Scanner for detecting unnecessary guard clauses in tests."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -9,7 +8,6 @@ from .test_scanner import TestScanner
 from .violation import Violation
 
 logger = logging.getLogger(__name__)
-
 
 class NoGuardClausesScanner(TestScanner):
     
@@ -32,11 +30,8 @@ class NoGuardClausesScanner(TestScanner):
         
         guard_patterns = [
             (r'if\s+(not\s+)?\w+\.exists\(\):', 'File existence check - test should fail if file missing'),
-            # Type checks (isinstance)
             (r'if\s+(not\s+)?isinstance\([^)]+\):', 'Type check guard clause - test should fail if wrong type'),
-            # Attribute checks (hasattr)
             (r'if\s+(not\s+)?hasattr\([^)]+\):', 'Attribute existence check - test should fail if attribute missing'),
-            # Variable truthiness checks in test functions
             (r'if\s+(not\s+)?\w+:', 'Variable truthiness check - test should fail if variable is None/empty'),
         ]
         
@@ -47,25 +42,20 @@ class NoGuardClausesScanner(TestScanner):
             stripped = line.lstrip()
             current_indent = len(line) - len(stripped)
             
-            # Track if we're in a test function
             if re.match(r'^\s*def\s+test_', line):
                 in_test_function = True
                 test_function_indent = current_indent
             elif in_test_function and stripped and current_indent <= test_function_indent and not stripped.startswith('@'):
-                # We've left the test function
                 in_test_function = False
             
-            # Only check guard clauses inside test functions
             if not in_test_function:
                 continue
             
-            # Skip docstrings and comments
             if stripped.startswith('"""') or stripped.startswith("'''") or stripped.startswith('#'):
                 continue
             
             for pattern, message in guard_patterns:
                 if re.search(pattern, line):
-                    # Exclude legitimate assertions (assert isinstance, assert hasattr)
                     if 'assert' in line.lower():
                         continue
                     
@@ -148,7 +138,6 @@ class NoGuardClausesScanner(TestScanner):
         return False
     
     def _is_variable_truthiness_check(self, if_node: ast.If) -> bool:
-        # Simple variable checks like "if variable:" or "if not variable:"
         if isinstance(if_node.test, ast.Name):
             return True
         if isinstance(if_node.test, ast.UnaryOp) and isinstance(if_node.test.op, ast.Not):

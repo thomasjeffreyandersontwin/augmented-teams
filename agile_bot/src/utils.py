@@ -82,22 +82,7 @@ def get_formatter(enabled: Optional[bool]=None) -> TerminalFormatter:
         _default_formatter = TerminalFormatter(enabled=enabled)
     return _default_formatter
 
-
-# Test Link Builder Functions
-# Used by CLI scope display and story document synchronizers
-
 def build_test_file_link(test_file: str, workspace_directory: Path, story_file_path: Optional[Path] = None) -> str:
-    """
-    Build link to test file.
-    
-    Args:
-        test_file: Name of test file (e.g., 'test_example.py')
-        workspace_directory: Path to workspace directory
-        story_file_path: Optional path to story markdown file (generates absolute path from workspace root)
-    
-    Returns:
-        Markdown link string like ' | [Test](path/to/test.py)' or empty string if not found
-    """
     if not test_file:
         return ""
     try:
@@ -107,8 +92,6 @@ def build_test_file_link(test_file: str, workspace_directory: Path, story_file_p
         if not test_file_path.exists():
             return ""
         
-        # If story_file_path provided, use absolute path from workspace root (starts with /)
-        # VS Code/Cursor resolves /path as relative to workspace root
         if story_file_path:
             rel_path = test_file_path.relative_to(workspace_root)
             rel_path_str = '/' + str(rel_path).replace('\\', '/')
@@ -118,7 +101,6 @@ def build_test_file_link(test_file: str, workspace_directory: Path, story_file_p
         rel_path_str = str(rel_path).replace('\\', '/')
         return f" | [Test]({rel_path_str})"
     except (ValueError, AttributeError):
-        # Fallback: try relative to workspace_directory
         test_file_path = workspace_directory / 'test' / test_file
         if not test_file_path.exists():
             return ""
@@ -127,20 +109,7 @@ def build_test_file_link(test_file: str, workspace_directory: Path, story_file_p
         file_uri = link_builder.get_file_uri(str(test_file_path))
         return f" | [Test]({file_uri})"
 
-
 def build_test_class_link(test_file: str, test_class: str, workspace_directory: Path, story_file_path: Optional[Path] = None) -> str:
-    """
-    Build link to test class with line number.
-    
-    Args:
-        test_file: Name of test file (e.g., 'test_example.py')
-        test_class: Name of test class (e.g., 'TestMyFeature')
-        workspace_directory: Path to workspace directory
-        story_file_path: Optional path to story markdown file (generates absolute path from workspace root)
-    
-    Returns:
-        Markdown link string like ' | [Test](path/to/test.py#L123)' or empty string if not found
-    """
     if not test_file or not test_class or test_class == '?':
         return ""
     
@@ -151,42 +120,29 @@ def build_test_class_link(test_file: str, test_class: str, workspace_directory: 
         if not test_file_path.exists():
             return ""
         
-        # Find line number of test class using AST
         line_number = find_test_class_line(test_file_path, test_class)
         
-        # Only create link if we found the line number
-        # Don't create link without line number as it may default to line 1
         if not line_number:
             return ""
         
-        # If story_file_path provided, use absolute path from workspace root (starts with /)
-        # VS Code/Cursor resolves /path as relative to workspace root
         if story_file_path:
             rel_path = test_file_path.relative_to(workspace_root)
             rel_path_str = '/' + str(rel_path).replace('\\', '/')
             return f" | [Test]({rel_path_str}#L{line_number})"
         
-        # Use relative path with line number using #L format
-        # VS Code/Cursor markdown links use #L123 format for line numbers
         rel_path = test_file_path.relative_to(workspace_root)
         rel_path_str = str(rel_path).replace('\\', '/')
         return f" | [Test]({rel_path_str}#L{line_number})"
     except (ValueError, AttributeError):
-        # Fallback: try relative to workspace_directory
         test_file_path = workspace_directory / 'test' / test_file
         if not test_file_path.exists():
             return ""
         
-        # Find line number of test class using AST
         line_number = find_test_class_line(test_file_path, test_class)
         
-        # Only create link if we found the line number
-        # Don't create link without line number as it may default to line 1
         if not line_number:
             return ""
         
-        # Use relative path with line number using #L format
-        # VS Code/Cursor markdown links use #L123 format for line numbers
         try:
             from agile_bot.src.bot.workspace import get_python_workspace_root
             workspace_root = get_python_workspace_root()
@@ -194,26 +150,12 @@ def build_test_class_link(test_file: str, test_class: str, workspace_directory: 
             rel_path_str = str(rel_path).replace('\\', '/')
             return f" | [Test]({rel_path_str}#L{line_number})"
         except (ValueError, AttributeError):
-            # Fallback: use vscode://file URI if relative path fails
             from agile_bot.src.actions.validate.file_link_builder import FileLinkBuilder
             link_builder = FileLinkBuilder(workspace_directory)
             file_uri = link_builder.get_file_uri(str(test_file_path), line_number)
             return f" | [Test]({file_uri})"
 
-
 def build_test_method_link(test_file: str, test_method: str, workspace_directory: Path, story_file_path: Optional[Path] = None) -> str:
-    """
-    Build link to test method with line number.
-    
-    Args:
-        test_file: Name of test file (e.g., 'test_example.py')
-        test_method: Name of test method (e.g., 'test_my_scenario')
-        workspace_directory: Path to workspace directory
-        story_file_path: Optional path to story markdown file (generates absolute path from workspace root)
-    
-    Returns:
-        Markdown link string like ' | [Test](path/to/test.py#L456)' or empty string if not found
-    """
     if not test_file or not test_method or test_method == '?':
         return ""
     
@@ -224,42 +166,29 @@ def build_test_method_link(test_file: str, test_method: str, workspace_directory
         if not test_file_path.exists():
             return ""
         
-        # Find line number of test method using AST
         line_number = find_test_method_line(test_file_path, test_method)
         
-        # Only create link if we found the line number
-        # Don't create link without line number as it may default to line 1
         if not line_number:
             return ""
         
-        # If story_file_path provided, use absolute path from workspace root (starts with /)
-        # VS Code/Cursor resolves /path as relative to workspace root
         if story_file_path:
             rel_path = test_file_path.relative_to(workspace_root)
             rel_path_str = '/' + str(rel_path).replace('\\', '/')
             return f" | [Test]({rel_path_str}#L{line_number})"
         
-        # Use relative path with line number using #L format
-        # VS Code/Cursor markdown links use #L123 format for line numbers
         rel_path = test_file_path.relative_to(workspace_root)
         rel_path_str = str(rel_path).replace('\\', '/')
         return f" | [Test]({rel_path_str}#L{line_number})"
     except (ValueError, AttributeError):
-        # Fallback: try relative to workspace_directory
         test_file_path = workspace_directory / 'test' / test_file
         if not test_file_path.exists():
             return ""
         
-        # Find line number of test method using AST
         line_number = find_test_method_line(test_file_path, test_method)
         
-        # Only create link if we found the line number
-        # Don't create link without line number as it may default to line 1
         if not line_number:
             return ""
         
-        # Use relative path with line number using #L format
-        # VS Code/Cursor markdown links use #L123 format for line numbers
         try:
             from agile_bot.src.bot.workspace import get_python_workspace_root
             workspace_root = get_python_workspace_root()
@@ -267,24 +196,12 @@ def build_test_method_link(test_file: str, test_method: str, workspace_directory
             rel_path_str = str(rel_path).replace('\\', '/')
             return f" | [Test]({rel_path_str}#L{line_number})"
         except (ValueError, AttributeError):
-            # Fallback: use vscode://file URI if relative path fails
             from agile_bot.src.actions.validate.file_link_builder import FileLinkBuilder
             link_builder = FileLinkBuilder(workspace_directory)
             file_uri = link_builder.get_file_uri(str(test_file_path), line_number)
             return f" | [Test]({file_uri})"
 
-
 def find_test_class_line(test_file_path: Path, test_class_name: str) -> Optional[int]:
-    """
-    Find the line number of a test class definition.
-    
-    Args:
-        test_file_path: Path to test file
-        test_class_name: Name of test class
-    
-    Returns:
-        Line number (1-based) or None if not found
-    """
     if not test_file_path.exists() or not test_class_name or test_class_name == '?':
         return None
     try:
@@ -292,30 +209,14 @@ def find_test_class_line(test_file_path: Path, test_class_name: str) -> Optional
         tree = ast.parse(content, filename=str(test_file_path))
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef) and node.name == test_class_name:
-                # ast.lineno is 1-based, which is correct for markdown links
                 return node.lineno
     except SyntaxError:
-        # If there's a syntax error, we can't parse the file
-        # Return None so we don't create a broken link
         return None
     except Exception:
-        # For any other exception, return None
-        # Don't create a link if we can't find the class
         return None
     return None
 
-
 def find_test_method_line(test_file_path: Path, test_method_name: str) -> Optional[int]:
-    """
-    Find the line number of a test method definition.
-    
-    Args:
-        test_file_path: Path to test file
-        test_method_name: Name of test method
-    
-    Returns:
-        Line number (1-based) or None if not found
-    """
     if not test_file_path.exists() or not test_method_name or test_method_name == '?':
         return None
     try:
@@ -323,14 +224,9 @@ def find_test_method_line(test_file_path: Path, test_method_name: str) -> Option
         tree = ast.parse(content, filename=str(test_file_path))
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == test_method_name:
-                # ast.lineno is 1-based, which is correct for markdown links
                 return node.lineno
     except SyntaxError:
-        # If there's a syntax error, we can't parse the file
-        # Return None so we don't create a broken link
         return None
     except Exception:
-        # For any other exception, return None
-        # Don't create a link if we can't find the method
         return None
     return None

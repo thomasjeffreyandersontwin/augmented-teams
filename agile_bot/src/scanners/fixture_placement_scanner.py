@@ -1,4 +1,3 @@
-"""Scanner for validating fixtures are defined in test file."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 from .test_scanner import TestScanner
 from .violation import Violation
 from .resources.ast_elements import Imports
-
 
 class FixturePlacementScanner(TestScanner):
     

@@ -1,4 +1,3 @@
-"""Scanner for validating consistent naming across codebase."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -10,7 +9,6 @@ from collections import defaultdict
 from .resources.ast_elements import Functions, Classes
 
 logger = logging.getLogger(__name__)
-
 
 class ConsistentNamingScanner(CodeScanner):
     
@@ -28,7 +26,6 @@ class ConsistentNamingScanner(CodeScanner):
         
         functions = Functions(tree)
         for function in functions.get_many_functions:
-            # Skip private methods and special methods
             if not (function.node.name.startswith('_') and function.node.name != '__init__'):
                 function_names.append(function.node.name)
         
@@ -36,7 +33,6 @@ class ConsistentNamingScanner(CodeScanner):
         for cls in classes.get_many_classes:
             class_names.append(cls.node.name)
         
-        # Classes often use PascalCase while functions use snake_case - that's OK
         violations.extend(self._check_naming_consistency(function_names, class_names, file_path, rule_obj))
         
         return violations
@@ -47,11 +43,9 @@ class ConsistentNamingScanner(CodeScanner):
         if not function_names:
             return violations
         
-        # Python convention: functions use snake_case, classes use PascalCase
         has_snake_case = any('_' in name for name in function_names)
         has_camel_case = any(name[0].isupper() and '_' not in name for name in function_names if name)
         
-        # Only flag if there's a significant mix (more than 1 camelCase function)
         camel_case_count = sum(1 for name in function_names if name and name[0].isupper() and '_' not in name)
         
         if has_snake_case and camel_case_count > 1:

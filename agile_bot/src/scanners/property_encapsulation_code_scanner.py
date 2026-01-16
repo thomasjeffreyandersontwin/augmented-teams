@@ -1,4 +1,3 @@
-"""Scanner for validating property encapsulation in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -7,7 +6,6 @@ import re
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Classes
-
 
 class PropertyEncapsulationCodeScanner(CodeScanner):
     
@@ -39,7 +37,6 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
                         if not field_name.startswith('_') and not field_name.startswith('__'):
                             parent = self._get_parent_function(node)
                             if parent and isinstance(parent, ast.FunctionDef) and parent.name == '__init__':
-                                # No code snippet for field assignment violations
                                 violations.append(
                                     Violation(
                                         rule=rule_obj,
@@ -55,7 +52,6 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
                 for stmt in ast.walk(node):
                     if isinstance(stmt, ast.Return) and stmt.value:
                         if isinstance(stmt.value, ast.Attribute):
-                            # No code snippet for return statement violations
                             violations.append(
                                 Violation(
                                     rule=rule_obj,
@@ -70,8 +66,7 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
             if isinstance(node, ast.FunctionDef):
                 method_name_lower = node.name.lower()
                 if method_name_lower.startswith(('calculate_', 'compute_', 'derive_')):
-                    if len(node.args.args) <= 1:  # Only self
-                        # No code snippet for method-level naming violations (method definition line)
+                    if len(node.args.args) <= 1:
                         violations.append(
                             Violation(
                                 rule=rule_obj,
@@ -91,7 +86,4 @@ class PropertyEncapsulationCodeScanner(CodeScanner):
                     if child == node:
                         return parent
         return None
-
-
-
 

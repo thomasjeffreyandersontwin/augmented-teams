@@ -1,4 +1,3 @@
-"""Scanner for validating encapsulation."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -9,7 +8,6 @@ from .violation import Violation
 from .resources.ast_elements import Classes
 
 logger = logging.getLogger(__name__)
-
 
 class EncapsulationScanner(CodeScanner):
     
@@ -43,13 +41,11 @@ class EncapsulationScanner(CodeScanner):
     def _check_method_encapsulation(self, method_node: ast.FunctionDef, class_name: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Find all method call chains in the method body
         for node in ast.walk(method_node):
             if isinstance(node, ast.Call):
                 chain_depth = self._get_method_chain_depth(node)
-                if chain_depth >= 3:  # 3+ levels is a violation
+                if chain_depth >= 3:
                     line_number = node.lineno if hasattr(node, 'lineno') else method_node.lineno
-                    # No code snippet for method chain violations
                     violations.append(Violation(
                         rule=rule_obj,
                         violation_message=(
@@ -64,18 +60,14 @@ class EncapsulationScanner(CodeScanner):
         return violations
     
     def _get_method_chain_depth(self, call_node: ast.Call) -> int:
-        depth = 1  # The current call counts as 1
+        depth = 1
         
-        # Traverse up the chain by following the func attribute
         current = call_node.func
         while isinstance(current, ast.Attribute):
-            # If the value is another Call, that's a chained method call
             if isinstance(current.value, ast.Call):
                 depth += 1
-                # Continue traversing the inner call's func
                 current = current.value.func
             else:
-                # Not a method chain, just attribute access
                 break
         
         return depth

@@ -1,11 +1,9 @@
-"""Scanner for validating natural English usage in domain models."""
 
 from typing import List, Dict, Any, Optional
 import re
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class NaturalEnglishScanner(DomainScanner):
     
@@ -41,7 +39,4 @@ class NaturalEnglishScanner(DomainScanner):
                     break
         
         return violations
-
-
-
 

@@ -1,4 +1,3 @@
-"""File resource representing a file to be scanned."""
 
 from typing import List, Optional, TYPE_CHECKING
 from pathlib import Path
@@ -13,17 +12,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-
 class File:
     
-    def __init__(self, path: Path, scope: 'Scope'):  # type: ignore
+    def __init__(self, path: Path, scope: 'Scope'):
         self._path = path
         self._scope = scope
         self._lines: List['Line'] = []
         self._blocks: List['Block'] = []
         self._content: Optional[str] = None
         self._ast: Optional[ast.AST] = None
-        self._block_extractor = None  # Will be set when needed
+        self._block_extractor = None
     
     @property
     def path(self) -> Path:
@@ -34,7 +32,7 @@ class File:
         return self._scope
     
     @property
-    def lines(self) -> List['Line']:  # type: ignore
+    def lines(self) -> List['Line']:
         if not self._lines and self._content:
             from .line import Line
             self._lines = [
@@ -89,7 +87,7 @@ class File:
         
         return False
     
-    def check_file_naming(self, file_naming_checker) -> List['Violation']:  # type: ignore
+    def check_file_naming(self, file_naming_checker) -> List['Violation']:
         return file_naming_checker.check_file_name_matches_sub_epic(self) + \
                file_naming_checker.validate_file_naming_conventions(self)
     
@@ -108,6 +106,5 @@ class File:
             self._block_extractor = BlockExtractor()
         
         self._blocks = self._block_extractor.extract_blocks_from_file(self)
-        # Also set blocks on scope
-        self._scope._blocks.extend(self._blocks)  # type: ignore
+        self._scope._blocks.extend(self._blocks)
 

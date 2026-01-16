@@ -3,7 +3,6 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
 
-
 class ExhaustiveDecompositionScanner(StoryScanner):
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:

@@ -1,11 +1,9 @@
-"""Scanner for detecting acceptance criteria consolidation opportunities."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 from collections import defaultdict
-
 
 class ACConsolidationScanner(StoryScanner):
     
@@ -23,13 +21,11 @@ class ACConsolidationScanner(StoryScanner):
     def _check_duplicate_ac(self, acceptance_criteria: List[Any], node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Normalize AC text for comparison
         ac_texts = []
         for ac in acceptance_criteria:
             ac_text = self._get_ac_text(ac).lower().strip()
             ac_texts.append(ac_text)
         
-        # Find duplicates
         ac_counts = defaultdict(list)
         for idx, ac_text in enumerate(ac_texts):
             ac_counts[ac_text].append(idx)

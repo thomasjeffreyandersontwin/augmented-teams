@@ -1,4 +1,3 @@
-"""Scanner for detecting technical implementation language in story elements."""
 
 from typing import List, Dict, Any
 from .story_scanner import StoryScanner
@@ -6,10 +5,8 @@ from .story_map import StoryNode
 from .violation import Violation
 import re
 
-
 class TechnicalLanguageScanner(StoryScanner):
     
-    # Technical implementation verbs and phrases
     TECHNICAL_VERBS = [
         'implement', 'create', 'refactor', 'optimize', 'fix', 'build', 'set up',
         'query', 'call', 'update', 'configure', 'serialize', 'deserialize',

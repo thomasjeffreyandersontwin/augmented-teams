@@ -1,11 +1,9 @@
-"""Scanner for validating explicit dependencies in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
-
 
 class ExplicitDependenciesScanner(CodeScanner):
     

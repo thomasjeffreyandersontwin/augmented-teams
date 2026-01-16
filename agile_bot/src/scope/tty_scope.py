@@ -1,30 +1,18 @@
-"""
-TTY adapter for Scope domain object.
-"""
 
 from pathlib import Path
 from agile_bot.src.cli.adapters import TTYAdapter
 from agile_bot.src.scope.scope import Scope
 
-
 class TTYScope(TTYAdapter):
-    """Serializes Scope to TTY - delegates to result adapters (StoryGraph or file list)."""
     
     def __init__(self, scope: Scope):
-        """Initialize TTYScope.
-        
-        Args:
-            scope: Scope domain object (already has workspace_directory)
-        """
         self.scope = scope
     
     def serialize(self) -> str:
-        """Convert Scope to TTY string - delegates to result domain adapters."""
         lines = []
         
         lines.append(self.add_bold("🎯 Scope"))
         
-        # Display scope filter
         if self.scope.type.value == 'all':
             filter_display = "all (entire project)"
         else:
@@ -33,20 +21,16 @@ class TTYScope(TTYAdapter):
         lines.append(f"🎯 {self.add_bold('Current Scope:')} {filter_display}")
         lines.append("")
         
-        # Get results from Scope and delegate to appropriate adapter
         results = self.scope.results
         
         if results is not None:
-            # Check type and delegate
             from agile_bot.src.story_graph.story_graph import StoryGraph
             
             if isinstance(results, StoryGraph):
-                # Delegate to TTYStoryGraph adapter
                 from agile_bot.src.cli.adapter_factory import AdapterFactory
                 storyGrapgAdapter = AdapterFactory.create(results, 'tty')
                 lines.append(storyGrapgAdapter.serialize())
             elif isinstance(results, list):
-                # File list - format as tree
                 if results:
                     for file_path in sorted(results):
                         try:
@@ -68,7 +52,6 @@ class TTYScope(TTYAdapter):
         return '\n'.join(lines)
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

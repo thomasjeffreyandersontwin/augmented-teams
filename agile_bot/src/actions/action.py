@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 class Action:
-    # Class attribute: the context class this action expects
-    # Subclasses override this to declare their typed context
     context_class: Type[ActionContext] = ActionContext
 
     def __init__(self, behavior: 'Behavior', action_config: Dict[str, Any]=None, action_name: str=None):
@@ -50,10 +48,6 @@ class Action:
         action_config = self.action_config
         if 'order' in action_config:
             self._base_config['order'] = action_config['order']
-        # DON'T merge behavior instructions into base - keep them separate for display ordering
-        # behavior_instructions = action_config.get('instructions', [])
-        # base_instructions = self._base_config.get('instructions', [])
-        # self._base_config['instructions'] = self._merge_instructions(base_instructions, behavior_instructions)
         self._base_config['custom_class'] = action_config.get('action_class') or action_config.get('custom_class')
         if 'next_action' in action_config:
             self._base_config['next_action'] = action_config['next_action']
@@ -69,14 +63,8 @@ class Action:
         self.next_action = self._base_config.get('next_action')
         self.action_class = self._base_config.get('action_class') or self._base_config.get('custom_class')
         self.workflow = self._base_config.get('workflow', True)
-        # auto_confirm: if True, confirm step should be automatic (no human input needed)
-        # Default to False for safety - require explicit opt-in for auto-confirm
         self.auto_confirm = self._base_config.get('auto_confirm', False)
-        # skip_confirm: if True, skip the confirm step entirely when advancing
-        # Used for actions like 'build' where the work IS the confirmation
         self.skip_confirm = self._base_config.get('skip_confirm', False)
-        # skip_confirm: if True, when advancing just skip the confirm step entirely
-        # Useful for actions like 'build' where the work itself is the confirmation
         self.skip_confirm = self._base_config.get('skip_confirm', False)
 
     def _derive_action_name_from_class(self) -> str:
@@ -99,17 +87,10 @@ class Action:
 
     @property
     def description(self) -> str:
-        """Get the action description from base config."""
         return self._base_config.get('description', '')
     
     @property
     def help(self) -> Dict[str, Any]:
-        """Get parameter help for this action.
-        
-        Returns a dict with:
-        - description: Action description
-        - parameters: List of dicts with 'name', 'type', 'description' for each parameter
-        """
         import dataclasses
         from typing import get_origin
         
@@ -118,7 +99,6 @@ class Action:
             'parameters': []
         }
         
-        # Get parameters from context_class if it's a dataclass
         if hasattr(self.__class__, 'context_class'):
             context_class = self.__class__.context_class
             if dataclasses.is_dataclass(context_class):
@@ -134,7 +114,6 @@ class Action:
         return help_dict
     
     def _get_type_string(self, python_type) -> str:
-        """Convert Python type hint to string for help display."""
         if python_type is type(None):
             return "none"
         if python_type == str:
@@ -152,7 +131,6 @@ class Action:
         elif python_type == list:
             return "list"
         
-        # Handle generic types (Dict[...], List[...], etc.)
         from typing import get_origin
         origin = get_origin(python_type)
         if origin is dict:
@@ -167,7 +145,6 @@ class Action:
         return "value"
     
     def _get_parameter_description(self, param_name: str) -> str:
-        """Get meaningful description for a parameter."""
         if 'answers' in param_name or 'key_questions_answered' in param_name:
             return "Dict mapping question keys to answer strings"
         elif 'evidence_provided' in param_name or 'evidence' in param_name:
@@ -196,10 +173,6 @@ class Action:
         return self._workflow_status_builder.get_behavior_action_status_breadcrumbs()
 
     def _replace_context_placeholders(self, instructions_list: List[str]) -> List[str]:
-        """Replace standard context placeholders with actual values.
-        
-        For action-specific placeholders, override this method in the subclass.
-        """
         replacements = {
             '{project_area}': str(self.behavior.bot_paths.workspace_directory),
             '{bot}': str(self.behavior.bot_paths.bot_directory),
@@ -215,26 +188,17 @@ class Action:
         return result
     
     def _load_scope_from_state(self) -> Optional[Scope]:
-        """Get current scope from bot instance, not from stale state file.
-        
-        Uses the bot's current scope which reflects the actual CLI state,
-        rather than loading from behavior_action_state.json which may be stale.
-        """
-        # Use bot's current scope if available (this reflects actual CLI state)
         if hasattr(self.behavior, 'bot') and self.behavior.bot:
             return self.behavior.bot._scope
-        # Fallback: create a new scope with 'all' type if bot not available
         return Scope(self.behavior.bot_paths.workspace_directory, self.behavior.bot_paths)
     
     @property
     def instructions(self) -> Instructions:
         base_instructions = self._base_config.get('instructions', [])
         
-        # Replace context placeholders in base instructions
         if isinstance(base_instructions, list):
             base_instructions = self._replace_context_placeholders(base_instructions)
         
-        # Load scope from state file
         scope = self._load_scope_from_state()
         
         inst = Instructions(
@@ -243,9 +207,7 @@ class Action:
             scope=scope
         )
         
-        # Add context instructions (clarification, strategy, context files) at the beginning
         context_instructions = []
-        # Use shared dict to capture injected data
         injected_data = {}
         try:
             context_instructions.extend(self._inject_clarification_data(injected_data))
@@ -258,20 +220,13 @@ class Action:
         for key, value in injected_data.items():
             inst._data[key] = value
         
-        # Add standard context sources at the very top
         for line in reversed(inst.context_sources_text):
             inst._data['base_instructions'].insert(0, line)
-        inst._data['base_instructions'].insert(len(inst.context_sources_text), "")  # Add blank line after context sources
+        inst._data['base_instructions'].insert(len(inst.context_sources_text), "")
         
-        # Add other context instructions after the context sources
         for line in reversed(context_instructions):
             inst._data['base_instructions'].insert(len(inst.context_sources_text) + 1, line)
         
-        # Status breadcrumbs for CLI output
-        # COMMENTED OUT: This is now handled by the REPL CLI layer
-        # breadcrumbs = self._inject_status_update_breadcrumbs({})
-        # for line in breadcrumbs:
-        #     inst.add_display(line)
         
         return inst
 
@@ -306,7 +261,6 @@ class Action:
         try:
             result = self.do_execute(context)
             
-            # Write display content to file after action completes
             result = self._finalize_display_content(result)
             
             if not result.get('_background_execution', False):
@@ -322,12 +276,10 @@ class Action:
         
         instructions_dict = result['instructions']
         
-        # Check if there's display content (stored in the dict from Instructions.to_dict())
         display_content_list = instructions_dict.get('display_content', [])
         if not display_content_list:
             return result
         
-        # Write display content to file
         inst = Instructions(bot_paths=self.behavior.bot_paths)
         for line in display_content_list:
             inst.add_display(line)
@@ -382,73 +334,40 @@ class Action:
         return inject_reminder_to_instructions(result, reminder)
 
     def get_instructions(self, context: ActionContext = None) -> Instructions:
-        """Returns AI instructions and saves any guardrails provided in context.
-        
-        This is the single operation for all actions:
-        - Saves guardrails if provided (answers, decisions, evidence, etc.)
-        - Builds and returns instructions for AI
-        
-        This is a template method. Subclasses override _prepare_instructions() to customize.
-        """
         if context is None:
             context = self.context_class()
         
-        # Save guardrails if provided in context (answers, decisions, evidence, etc.)
-        # Do this FIRST before building instructions
         self._save_guardrails_if_provided(context)
         
-        # If context has a new scope, let the scope apply itself to the bot
         if hasattr(context, 'scope') and context.scope:
             context.scope.apply_to_bot(self.behavior.bot_paths.workspace_directory)
         
-        # Get base instructions from property
         instructions = self.instructions.copy()
         
-        # Get behavior-specific instructions from action_config if available
         if self.action_config and 'instructions' in self.action_config:
             behavior_instructions = self.action_config.get('instructions', [])
             if behavior_instructions:
-                # Add behavior-specific instructions to base_instructions
                 if isinstance(behavior_instructions, list):
                     instructions._data['base_instructions'].extend(behavior_instructions)
                 elif isinstance(behavior_instructions, str):
                     instructions._data['base_instructions'].append(behavior_instructions)
         
-        # Load behavior-level guardrails (key questions and evidence) if available
         self._load_behavior_guardrails(instructions)
         
-        # Call template method for subclass customization
         self._prepare_instructions(instructions, context)
         
-        # Add behavior and action metadata for JSON output
         self._add_behavior_action_metadata(instructions)
         
-        # Build display content for chat submission
         self._build_display_content(instructions)
         
-        # Return the Instructions object directly
-        # CLI will use adapters to serialize it appropriately
         return instructions
     
     def _save_guardrails_if_provided(self, context: ActionContext):
-        """Save guardrails if provided in context parameters.
-        
-        This is common logic for all actions. Any action can receive and save guardrails:
-        - Clarify action: answers, evidence
-        - Strategy action: decisions, assumptions
-        - Build action: build_config, decisions
-        - etc.
-        
-        Args:
-            context: Action context that may contain guardrail data
-        """
-        # Check for clarify data (answers, evidence)
         if hasattr(context, 'answers') and context.answers:
             try:
                 from .clarify.requirements_clarifications import RequirementsClarifications
                 from .clarify.required_context import RequiredContext
                 
-                # Get required context for this behavior
                 required_context = None
                 if hasattr(self, 'required_context'):
                     required_context = self.required_context
@@ -466,11 +385,9 @@ class Action:
                     )
                     clarifications.save()
             except Exception as e:
-                # Log but don't fail if save fails
                 import logging
                 logging.getLogger(__name__).warning(f'Failed to save clarification data: {e}')
         
-        # Check for strategy data (decisions_made or decisions, assumptions)
         decisions = getattr(context, 'decisions_made', None) or getattr(context, 'decisions', None)
         if decisions:
             try:
@@ -478,7 +395,6 @@ class Action:
                 from .strategy.strategy import Strategy
                 from pathlib import Path
                 
-                # Get strategy from behavior folder
                 strategy_obj = None
                 if self.behavior and hasattr(self.behavior, 'folder'):
                     strategy_obj = Strategy(Path(self.behavior.folder))
@@ -493,57 +409,37 @@ class Action:
                     )
                     strategy_decision.save()
             except Exception as e:
-                # Log but don't fail if save fails
                 import logging
                 logging.getLogger(__name__).warning(f'Failed to save strategy data: {e}')
     
     def _load_behavior_guardrails(self, instructions):
-        """Load behavior-level guardrails (key questions and evidence) if available.
-        
-        Note: For clarify action, guardrails are set in _prepare_instructions() instead.
-        This method is a fallback for other actions that don't override _prepare_instructions().
-        """
         try:
-            # Check if behavior has guardrails
             if not self.behavior or not hasattr(self.behavior, 'guardrails'):
                 return
             
-            # Get required_context from behavior's guardrails
             guardrails_obj = self.behavior.guardrails
             if hasattr(guardrails_obj, 'required_context'):
                 required_context = guardrails_obj.required_context
                 if hasattr(required_context, 'instructions'):
-                    # Set guardrails in instructions (even if empty - let _prepare_instructions override if needed)
-                    # Only set if guardrails not already set (to avoid overwriting clarify action's guardrails)
                     if 'guardrails' not in instructions._data:
                         instructions.set('guardrails', {'required_context': required_context.instructions})
         except Exception:
-            # Silently skip if guardrails can't be loaded
             pass
     
-        # Load ALL saved guardrail data (clarifications and strategy) so they're visible on all pages
         self._load_all_saved_guardrails(instructions)
     
     def _load_all_saved_guardrails(self, instructions):
-        """Load all saved guardrail data (clarifications and strategy) for visibility on all pages.
-        
-        This ensures that once clarifications are answered or strategy decisions are made,
-        they are visible on ALL pages (clarify, build, validate, render), not just their own page.
-        """
         if not self.behavior:
             return
         
         try:
-            # Load saved clarification data
             from .clarify.requirements_clarifications import RequirementsClarifications
             from .clarify.required_context import RequiredContext
             
-            # Try to get required_context
             required_context = None
             if hasattr(self.behavior, 'guardrails') and hasattr(self.behavior.guardrails, 'required_context'):
                 required_context = self.behavior.guardrails.required_context
             else:
-                # Fallback to loading from behavior folder
                 required_context = RequiredContext(self.behavior.folder)
             
             clarifications = RequirementsClarifications(
@@ -555,37 +451,29 @@ class Action:
             )
             saved_clarifications = clarifications.load()
             if saved_clarifications and self.behavior.name in saved_clarifications:
-                # Include saved clarification data in instructions for panel display
                 instructions.set('clarification', saved_clarifications[self.behavior.name])
         except Exception as e:
-            # Log but don't fail
             import logging
             logging.getLogger(__name__).debug(f'Could not load saved clarifications: {e}')
         
         try:
-            # Load strategy data (criteria templates + saved decisions)
             from .strategy.strategy_decision import StrategyDecision
             from .strategy.strategy import Strategy
             
-            # Load strategy criteria templates
             strategy = Strategy(self.behavior.folder)
             strategy_data = strategy.instructions
             
-            # Load saved strategy decisions
             saved_strategy = StrategyDecision.load_all(self.behavior.bot_paths)
             saved_behavior_data = saved_strategy.get(self.behavior.name, {}) if saved_strategy else {}
             
-            # Build combined structure with both templates and saved data
             combined_strategy_criteria = {}
             combined_assumptions = {}
             
             if strategy_data:
-                # Get criteria template
                 criteria_template = strategy_data.get('strategy_criteria', {})
                 if criteria_template:
                     combined_strategy_criteria['criteria'] = criteria_template
                 
-                # Get assumptions template
                 assumptions_template = strategy_data.get('assumptions', {})
                 if isinstance(assumptions_template, dict):
                     if 'typical_assumptions' in assumptions_template:
@@ -595,17 +483,14 @@ class Action:
                 elif isinstance(assumptions_template, list):
                     combined_assumptions['typical_assumptions'] = assumptions_template
             
-            # Add saved decisions
             saved_decisions = saved_behavior_data.get('decisions', {})
             if saved_decisions:
                 combined_strategy_criteria['decisions_made'] = saved_decisions
             
-            # Add saved assumptions
             saved_assumptions = saved_behavior_data.get('assumptions', [])
             if saved_assumptions:
                 combined_assumptions['assumptions_made'] = saved_assumptions
             
-            # Transform to match panel's expected structure
             transformed_strategy = {}
             if combined_strategy_criteria:
                 transformed_strategy['strategy_criteria'] = combined_strategy_criteria
@@ -613,16 +498,12 @@ class Action:
                 transformed_strategy['assumptions'] = combined_assumptions
             
             if transformed_strategy:
-                # Include strategy data in instructions for panel display
                 instructions.set('strategy', transformed_strategy)
         except Exception as e:
-            # Log but don't fail
             import logging
             logging.getLogger(__name__).debug(f'Could not load saved strategy decisions: {e}')
     
     def _add_behavior_action_metadata(self, instructions):
-        """Add behavior and action metadata as separate properties for JSON output."""
-        # Add behavior metadata (using keys that TTY adapter expects)
         if self.behavior:
             behavior_data = {
                 'name': self.behavior.name if hasattr(self.behavior, 'name') else 'unknown',
@@ -630,7 +511,6 @@ class Action:
                 'instructions': []
             }
             
-            # Add behavior-level instructions if present
             if hasattr(self.behavior, 'instructions') and self.behavior.instructions:
                 behavior_instructions = self.behavior.instructions
                 if isinstance(behavior_instructions, list):
@@ -639,16 +519,14 @@ class Action:
                     behavior_data['instructions'] = [behavior_instructions]
             
             instructions.set('behavior_metadata', behavior_data)
-            instructions.set('behavior_instructions', behavior_data)  # Keep both for compatibility
+            instructions.set('behavior_instructions', behavior_data)
         
-        # Add action metadata (using keys that TTY adapter expects)
         action_data = {
             'name': self.action_name if hasattr(self, 'action_name') else 'unknown',
             'description': self.description if hasattr(self, 'description') else '',
             'instructions': []
         }
         
-        # Add behavior-specific action instructions if present
         if self.action_config and 'instructions' in self.action_config:
             behavior_action_instructions = self.action_config.get('instructions', [])
             if behavior_action_instructions:
@@ -658,63 +536,36 @@ class Action:
                     action_data['instructions'] = [behavior_action_instructions]
         
         instructions.set('action_metadata', action_data)
-        instructions.set('action_instructions', action_data)  # Keep both for compatibility
+        instructions.set('action_instructions', action_data)
     
     def _build_display_content(self, instructions: Instructions):
-        """Build display_content for chat submission from all instructions data.
-        
-        Uses the existing MarkdownInstructions adapter to format the complete instructions
-        object as markdown, including behavior/action instructions, base instructions,
-        guardrails, clarifications, strategy decisions, and all other data.
-        
-        IMPORTANT: Creates a temporary copy without display_content to avoid circular
-        serialization (display_content shouldn't include itself).
-        """
         from agile_bot.src.instructions.markdown_instructions import MarkdownInstructions
 
-        # Create a temporary copy without display_content to avoid circular serialization
-        # (display_content shouldn't include itself when serialized)
         temp_instructions = instructions.copy()
-        temp_instructions._display_content = []  # Clear display_content before serializing
+        temp_instructions._display_content = []
         
-        # Use the existing markdown adapter to format the instructions (without display_content)
         markdown_adapter = MarkdownInstructions(temp_instructions)
         markdown_output = markdown_adapter.serialize()
 
-        # Add the markdown output to display_content
         for line in markdown_output.split('\n'):
             instructions.add_display(line)
     
     def _prepare_instructions(self, instructions, context: ActionContext):
-        """Template method: Prepare action-specific instructions data.
-        
-        Override in subclasses to add guardrails, questions, evidence, etc.
-        Subclasses should modify the instructions object in place.
-        """
         pass
     
     def _format_instructions_for_display(self, instructions) -> str:
-        """Template method: Format instructions for REPL display.
-        
-        Override in subclasses to customize display formatting.
-        """
-        # Use the proper interface to get instruction data
         instructions_dict = instructions.to_dict()
         output_lines = []
         
-        # Note: Scope display with CLI formatting is handled by CLI layer
         
-        # BEHAVIOR INSTRUCTIONS SECTION
         if self.behavior:
             behavior_name = self.behavior.name if hasattr(self.behavior, 'name') else 'unknown'
             output_lines.append(f"**Behavior Instructions - {behavior_name}**")
             
-            # Add behavior description
             if hasattr(self.behavior, 'description') and self.behavior.description:
                 output_lines.append(f"The purpose of this behavior is to {self.behavior.description.lower()}")
                 output_lines.append("")
             
-            # Add behavior-level instructions if present
             if hasattr(self.behavior, 'instructions') and self.behavior.instructions:
                 behavior_instructions = self.behavior.instructions
                 if isinstance(behavior_instructions, list):
@@ -723,16 +574,13 @@ class Action:
                     output_lines.append(behavior_instructions)
                 output_lines.append("")
         
-        # ACTION INSTRUCTIONS SECTION
         action_name = self.action_name if hasattr(self, 'action_name') else 'unknown'
         output_lines.append(f"**Action Instructions - {action_name}**")
         
-        # Add action description if available
         if hasattr(self, 'description') and self.description:
             output_lines.append(f"The purpose of this action is to {self.description.lower()}")
             output_lines.append("")
         
-        # Add behavior-specific action instructions if present
         if self.action_config and 'instructions' in self.action_config:
             behavior_action_instructions = self.action_config.get('instructions', [])
             if behavior_action_instructions:
@@ -742,11 +590,9 @@ class Action:
         output_lines.append("---")
         output_lines.append("")
         
-        # Add base instructions (context sources + base action instructions)
         base_instructions = instructions_dict.get('base_instructions', [])
         output_lines.extend(base_instructions)
         
-        # Add guardrails (questions and evidence) if present
         guardrails_dict = instructions_dict.get('guardrails', {})
         if guardrails_dict:
             required_context = guardrails_dict.get('required_context', {})
@@ -754,7 +600,6 @@ class Action:
                 key_questions = required_context.get('key_questions', [])
                 evidence = required_context.get('evidence', [])
                 
-                # Display key questions (can be list or dict)
                 if key_questions:
                     output_lines.append("")
                     output_lines.append("**Key Questions:**")
@@ -765,7 +610,6 @@ class Action:
                         for question_key, question_text in key_questions.items():
                             output_lines.append(f"- **{question_key}**: {question_text}")
                 
-                # Display evidence requirements (can be list or dict)
                 if evidence:
                     output_lines.append("")
                     output_lines.append("**Evidence:**")
@@ -776,7 +620,6 @@ class Action:
                         for evidence_key, evidence_desc in evidence.items():
                             output_lines.append(f"- **{evidence_key}**: {evidence_desc}")
         
-        # Add display content
         display_content = instructions_dict.get('display_content', [])
         if display_content:
             output_lines.append("")

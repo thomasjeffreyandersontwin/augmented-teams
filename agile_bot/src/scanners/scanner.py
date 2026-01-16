@@ -1,4 +1,3 @@
-"""Base Scanner class for validation rule scanners."""
 
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, TYPE_CHECKING
@@ -12,7 +11,6 @@ if TYPE_CHECKING:
     from .resources.block import Block
     from .resources.file import File
 
-
 class Scanner(ABC):
     
     def scan(
@@ -25,14 +23,12 @@ class Scanner(ABC):
     ) -> List[Dict[str, Any]]:
         violations = []
         
-        # Combine all files - unified architecture
         all_files = []
         if test_files:
             all_files.extend(test_files)
         if code_files:
             all_files.extend(code_files)
         
-        # Scan each file using unified scan_file() method
         for file_path in all_files:
             if file_path and file_path.exists() and file_path.is_file():
                 file_violations = self.scan_file(file_path, rule_obj, story_graph)
@@ -41,14 +37,12 @@ class Scanner(ABC):
                 if file_violations_list:
                     violations.extend(file_violations_list)
                 
-                # Call callback immediately after each file is scanned
                 if on_file_scanned:
                     on_file_scanned(file_path, file_violations_list, rule_obj)
         
         return violations
     
     def _empty_violation_list(self) -> List[Dict[str, Any]]:
-        """Helper method for default empty implementations."""
         return []
     
     def scan_file(
@@ -57,7 +51,6 @@ class Scanner(ABC):
         rule_obj: Any = None,
         story_graph: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-        # Default implementation - subclasses should override
         return self._empty_violation_list()
     
     def scan_cross_file(
@@ -87,7 +80,6 @@ class Scanner(ABC):
         
         return False
     
-    # New resource-oriented methods
     
     def performs_scan_for_one_rule(
         self,
@@ -97,13 +89,11 @@ class Scanner(ABC):
     ) -> List['Violation']:
         violations = []
         
-        # Iterate through files in scope
         for file in scope.files:
             if not file.parse_safely():
                 continue
             
             for block in file.blocks:
-                # Scan block for violations
                 block_violations = self._scan_block(block, rule, scan)
                 violations.extend(block_violations)
         
@@ -115,14 +105,11 @@ class Scanner(ABC):
         rule: 'Rule',
         scan: 'Scan'
     ) -> List['Violation']:
-        # Default implementation - subclasses should override
         return self._empty_violation_list()
     
     def associated_with_rule(self, rule: 'Rule') -> bool:
-        # Default implementation - subclasses can override
         return True
     
-    # Helper methods for domain model responsibilities
     
     def checks_file_naming(self, file: 'File', file_naming_checker) -> List['Violation']:
         return file.check_file_naming(file_naming_checker)
@@ -154,7 +141,6 @@ class Scanner(ABC):
         pattern_collection,
         code_structure_analyzer
     ) -> List['Violation']:
-        # This would use pattern_collection to match patterns in block content
         violations = []
         if pattern_collection and pattern_collection.matches_text(block.content):
             pass

@@ -1,4 +1,3 @@
-"""Scanner for validating natural English usage in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -7,7 +6,6 @@ import re
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Functions
-
 
 class NaturalEnglishCodeScanner(CodeScanner):
     
@@ -75,7 +73,4 @@ class NaturalEnglishCodeScanner(CodeScanner):
                 )
         
         return None
-
-
-
 

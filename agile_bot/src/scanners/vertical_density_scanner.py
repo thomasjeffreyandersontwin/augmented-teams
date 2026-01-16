@@ -1,4 +1,3 @@
-"""Scanner for validating vertical density (related code close together)."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Functions
-
 
 class VerticalDensityScanner(CodeScanner):
     
@@ -28,8 +26,6 @@ class VerticalDensityScanner(CodeScanner):
         return violations
     
     def _check_variable_declaration_distance(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        # This is a simplified check - could be enhanced
-        # For now, check if function is very long (suggests poor vertical density)
         if hasattr(func_node, 'end_lineno') and func_node.end_lineno:
             func_size = func_node.end_lineno - func_node.lineno + 1
             if func_size > 50:

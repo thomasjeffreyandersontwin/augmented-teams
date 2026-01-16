@@ -8,12 +8,7 @@ from .vocabulary_helper import VocabularyHelper
 
 logger = logging.getLogger(__name__)
 
-
 class ActiveLanguageScanner(StoryScanner):
-    """
-    Validates that story names use active language without actor prefixes.
-    Uses NLTK to detect actor/role words at the beginning of story names.
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -39,7 +34,6 @@ class ActiveLanguageScanner(StoryScanner):
         return violations
     
     def _check_actor_in_name(self, name: str, node: StoryNode, node_type: str, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        # Tokenize the name and check if first word is an actor/role
         words = name.split()
         if not words:
             return None
@@ -47,25 +41,19 @@ class ActiveLanguageScanner(StoryScanner):
         first_word = words[0].lower()
         actor_index = 0
         
-        # Skip "the" if present
         if first_word == 'the' and len(words) > 1:
             first_word = words[1].lower()
             actor_index = 1
         
-        # CRITICAL FIX: Check if first word is a verb BEFORE checking if it's an actor
-        # If it's a verb, it's part of verb-noun format, not an actor prefix
         tags = VocabularyHelper.get_pos_tags(name)
         if tags:
             first_tag = tags[actor_index][1] if len(tags) > actor_index else None
-            # If NLTK tags it as a verb, it's not an actor
             if first_tag and VocabularyHelper.is_verb_tag(first_tag):
                 return None
         
-        # Also check WordNet - if word can be a verb, don't flag as actor
         if VocabularyHelper.is_verb(first_word):
             return None
         
-        # Check common verb abbreviations and action verbs
         common_verbs = {
             'init', 'load', 'save', 'run', 'get', 'set', 'add', 'del', 'rm', 'mv',
             'cp', 'mk', 'rmv', 'upd', 'gen', 'inv', 'exec', 'proc', 'build', 'render',
@@ -109,11 +97,9 @@ class ActiveLanguageScanner(StoryScanner):
         if first_word in common_verbs:
             return None
         
-        # Only check if it's an actor if it's NOT a verb
         if VocabularyHelper.is_actor_or_role(first_word):
             actor = words[actor_index]
             location = node.map_location()
-            # Suggest the corrected name (without the actor prefix)
             suggested_name = ' '.join(words[actor_index + 1:])
             if suggested_name:
                 suggested_name = suggested_name[0].upper() + suggested_name[1:] if len(suggested_name) > 1 else suggested_name.upper()
@@ -169,11 +155,9 @@ class ActiveLanguageScanner(StoryScanner):
             if not re.search(pattern, name):
                 continue
             
-            # Allow when the name has 3 or more words
             if len(name.split()) >= 3:
                 break
             
-            # Skip if name contains excluded terms
             if any(re.search(r'\b' + exclude + r'\b', name, re.IGNORECASE) for exclude in ["User Story", "Epic", "Feature"]):
                 continue
             

@@ -43,23 +43,17 @@ class BuildStoryGraphAction(Action):
         return ValidateRulesAction(behavior=self.behavior, action_config=None)
 
     def _prepare_instructions(self, instructions, context: ScopeActionContext):
-        """Prepare build instructions with story graph data, rules, and scope."""
-        # Add story graph data instructions
         instructions.update(self.story_graph_data.instructions)
         
-        # Handle scope
         action_scope = ActionScope.from_context(context, self.behavior.bot_paths)
         instructions.set('scope', action_scope.scope)
         story_names = action_scope.get_story_names(self.story_graph_spec.story_graph.content)
         instructions.set('scope_story_names', list(story_names) if story_names else [])
         
-        # Add story_graph_template and story_graph_config for test compatibility
         if self.story_graph_template:
-            # Ensure template_path is always absolute - construct from bot directory + behavior path
             if self.story_graph_template.template_path:
                 template_path_value = str(self.story_graph_template.template_path.resolve())
             elif self.story_graph_spec.template_filename:
-                # Fallback: construct absolute path from bot_directory/behaviors/{behavior}/content/story_graph/{template}
                 kg_dir = self.behavior.bot_paths.bot_directory / 'behaviors' / self.behavior.name / 'content' / 'story_graph'
                 template_path_value = str((kg_dir / self.story_graph_spec.template_filename).resolve())
             else:
@@ -70,24 +64,19 @@ class BuildStoryGraphAction(Action):
                 'exists': self.story_graph_template.exists
             })
         if self.story_graph_spec.config_data:
-            # Use absolute path for the output file
             output_file_path = self.story_graph_spec.story_graph.path
             instructions.set('story_graph_config', {
                 'output': self.story_graph_spec.output_filename,
-                'path': str(output_file_path.parent),  # Absolute path to directory
+                'path': str(output_file_path.parent),
                 'template': self.story_graph_spec.template_filename
             })
         
-        # Add update/create instructions
         self._add_update_instructions(instructions)
         
-        # Replace placeholders
         self._replace_schema_placeholders(instructions)
         
-        # Inject rules
         self.inject_rules(instructions)
         
-        # Replace content with file references
         self._replace_content_with_file_references(instructions)
     
     def do_execute(self, context: ScopeActionContext = None):
@@ -113,7 +102,6 @@ class BuildStoryGraphAction(Action):
         return behavior_to_content.get(self.behavior.name, [])
     
     def _replace_schema_placeholders(self, instructions) -> None:
-        """Replace {{schema}} and {{description}} placeholders in base_instructions with template references."""
         base_instructions = instructions.get('base_instructions', [])
         new_instructions = []
         
@@ -124,44 +112,34 @@ class BuildStoryGraphAction(Action):
         if template and template.exists:
             template_path = template.template_path
             if template_path:
-                # Create relative path reference: bot_name/behaviors/behavior_name/content/story_graph/template_filename
                 bot_dir = self.behavior.bot_paths.bot_directory
                 try:
                     if template_path.is_absolute():
-                        # Make it relative to bot directory, then prepend bot_name
                         try:
                             rel_path = template_path.relative_to(bot_dir)
                             template_reference = f"{self.behavior.bot_name}/{str(rel_path).replace('\\', '/')}"
                         except ValueError:
-                            # If can't make relative, construct the expected path
                             template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/story_graph/{template_path.name}"
                     else:
-                        # Already relative, prepend bot_name
                         template_reference = f"{self.behavior.bot_name}/{str(template_path).replace('\\', '/')}"
                 except Exception:
-                    # Fallback to constructing the expected path
                     template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/story_graph/{template_path.name if template_path else 'template.json'}"
             else:
-                # No template path available
                 template_reference = f"{self.behavior.bot_name}/behaviors/{self.behavior.name}/content/story_graph/template.json"
             
-            # Extract schema explanation from template's _explanation field
             template_content = template.template_content
             if isinstance(template_content, dict) and '_explanation' in template_content:
                 explanation = template_content['_explanation']
                 if isinstance(explanation, dict):
-                    # Format explanation as schema description
                     for key, value in explanation.items():
                         if isinstance(value, str):
                             schema_explanation_lines.append(f"{key}: {value}")
                         else:
                             schema_explanation_lines.append(f"{key}: {str(value)}")
             
-            # Get output filename and path
             output_filename = self.story_graph_spec.output_filename if self.story_graph_spec else 'story-graph.json'
             output_path = str(self.story_graph_spec.story_graph.path.parent) if self.story_graph_spec else ''
             
-            # Create description text for template file and output instructions
             description_lines_list = [
                 f"Review the template file at `{template_reference}`. It shows the exact structure (fields, nesting, types) that your story graph output must follow during this behavior. Read this file to understand the required schema.",
                 "",
@@ -173,19 +151,14 @@ class BuildStoryGraphAction(Action):
         for line in base_instructions:
             if isinstance(line, str):
                 if '{{schema}}' in line:
-                    # Replace schema placeholder with schema explanation
                     if schema_explanation_lines:
-                        # Replace the line with schema explanation
                         new_instructions.extend(schema_explanation_lines)
                     else:
-                        # If no schema explanation, remove the placeholder line
                         pass
                 elif '{{description}}' in line:
                     if description_lines_list:
-                        # Add each description line as a separate instruction
                         new_instructions.extend(description_lines_list)
                     else:
-                        # Remove the line if no description available
                         pass
                 else:
                     new_instructions.append(line)
@@ -201,68 +174,44 @@ class BuildStoryGraphAction(Action):
         rules_data = validate_action.inject_behavior_specific_rules()
         all_rules = rules_data.get('validation_rules', [])
         
-        # Get existing base_instructions (these are the CUSTOM INSTRUCTIONS - keep them FIRST)
         existing_instructions = instructions.get('base_instructions', [])
         new_instructions = []
         rules_section = []
         
-        # Get schema path for placeholder replacement
         schema_path = self.behavior.bot_paths.workspace_directory / 'docs' / 'stories' / 'story-graph.json'
         
-        # Keep ALL other instructions, replacing placeholders as we go
         for line in existing_instructions:
             if isinstance(line, str):
-                # Replace {{rules}} - skip it here, will add rules section at the end
                 if '{{rules}}' in line:
                     continue
-                # Replace {{schema}} placeholder
                 if '{{schema}}' in line:
                     line = line.replace('{{schema}}', f'**Schema:** Story graph template at `{schema_path}`')
-                # Replace {{description}} placeholder
                 if '{{description}}' in line:
                     line = line.replace('{{description}}', f'**Task:** Build {self.behavior.name} story graph from clarification and strategy data')
-            # Keep all custom instructions
             new_instructions.append(line)
         
-        # Prepare rules section to append at the END
         if rules_text != 'No validation rules found.':
             rules_lines = rules_text.split('\n')
             rules_section.extend(rules_lines)
         
-        # Append rules section at the VERY END (after ALL custom instructions)
         if rules_section:
-            # Strip trailing blank lines before adding rules
             while new_instructions and new_instructions[-1] == '':
                 new_instructions.pop()
             new_instructions.append('')
             new_instructions.append('When building or adding to the story graph follow these rules,')
             new_instructions.extend(rules_section)
         
-        # Replace base_instructions with: [custom instructions] + [rules at end]
         instructions._data['base_instructions'] = new_instructions
         instructions.set('rules', all_rules)
     
     def _replace_content_with_file_references(self, instructions) -> None:
-        """Replace full content (templates, configs, rules) with file path references."""
         bot_dir = self.behavior.bot_paths.bot_directory
         
-        # NOTE: Keep template_path and config_path as absolute paths for clickable links in frontend
-        # Do NOT convert to relative references anymore
-        # template_path = instructions.get('template_path')
-        # if template_path:
-        #     template_reference = self._convert_path_to_reference(template_path, bot_dir)
-        #     instructions._data['template_path'] = template_reference
         
-        # config_path = instructions.get('config_path')
-        # if config_path:
-        #     config_reference = self._convert_path_to_reference(config_path, bot_dir)
-        #     instructions._data['config_path'] = config_reference
         
-        # Replace full rules data with file path references
         if 'rules' in instructions._data and instructions._data['rules']:
             all_rules = instructions._data['rules']
             rule_files = []
-            # Get the bots directory using python_workspace_root
             bots_dir = self.behavior.bot_paths.python_workspace_root / 'agile_bot' / 'bots'
             
             for rule in all_rules:
@@ -270,17 +219,11 @@ class BuildStoryGraphAction(Action):
                 if isinstance(rule, dict):
                     rule_file = rule.get('rule_file', '')
                     if rule_file:
-                        # Convert bot-relative path to absolute path
-                        # rule_file format: "story_bot/behaviors/discovery/rules/file.json"
                         rule_path = str(bots_dir / rule_file)
                 elif isinstance(rule, str):
-                    # If it's already a string path, convert it to absolute
                     rule_path = str(bots_dir / rule)
                 
                 if rule_path:
                     rule_files.append(rule_path)
             
-            # Replace full rules with absolute file paths
             instructions._data['rules'] = rule_files
-            # Keep rules content as-is, no need to add file references
-            # Rules are already formatted nicely from inject_rules method

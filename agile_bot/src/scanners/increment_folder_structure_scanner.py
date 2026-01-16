@@ -1,4 +1,3 @@
-"""Scanner for validating folder structure matches story map hierarchy."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -7,13 +6,11 @@ from .story_map import StoryNode, Epic, SubEpic, Story
 from .violation import Violation
 import re
 
-
 class IncrementFolderStructureScanner(StoryScanner):
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Only check epics and their direct stories (scenarios behavior)
         if isinstance(node, Epic):
             epic_name = node.name
             if not epic_name:
@@ -41,13 +38,8 @@ class IncrementFolderStructureScanner(StoryScanner):
         epic_name = node.name
         expected_folder = f"🎯 {epic_name}"
         
-        # This scanner validates structure, but actual folder checking
-        # would require workspace context (not available in story graph)
-        # For now, validate that epic name follows expected format
         
         if not epic_name.startswith('🎯'):
-            # Epic name should have emoji prefix in folder structure
-            # But story graph may not include emoji, so this is informational
             pass
         
         return None

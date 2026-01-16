@@ -1,11 +1,9 @@
-"""Scanner for validating property encapsulation in domain models."""
 
 from typing import List, Dict, Any, Optional
 import re
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class PropertyEncapsulationScanner(DomainScanner):
     
@@ -60,7 +58,4 @@ class PropertyEncapsulationScanner(DomainScanner):
                     break
         
         return violations
-
-
-
 

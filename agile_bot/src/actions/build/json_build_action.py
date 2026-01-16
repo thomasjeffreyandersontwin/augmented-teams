@@ -1,21 +1,15 @@
-"""
-JSON adapter for BuildStoryGraphAction.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.actions.build.build_action import BuildStoryGraphAction
 
-
 class JSONBuildAction(JSONAdapter):
-    """Serializes BuildStoryGraphAction to JSON - exposes all BuildStoryGraphAction properties."""
     
     def __init__(self, action: BuildStoryGraphAction, is_current: bool = False, is_completed: bool = False):
         self.action = action
         self.is_current = is_current
         self.is_completed = is_completed
     
-    # Expose ALL domain properties
     @property
     def action_name(self):
         return self.action.action_name
@@ -50,21 +44,17 @@ class JSONBuildAction(JSONAdapter):
     
     @property
     def story_graph_data(self):
-        """Build-specific property."""
         return self.action.story_graph_data
     
     @property
     def story_graph_spec(self):
-        """Build-specific property."""
         return self.action.story_graph_spec
     
     @property
     def story_graph_template(self):
-        """Build-specific property."""
         return self.action.story_graph_template
     
     def to_dict(self) -> dict:
-        """Convert BuildStoryGraphAction to dict."""
         result = {
             'action_name': self.action.action_name,
             'description': self.action.description,
@@ -76,7 +66,6 @@ class JSONBuildAction(JSONAdapter):
             'behavior': self.action.behavior.name if self.action.behavior else None,
         }
         
-        # Add build-specific properties
         if self.action.story_graph_spec:
             result['story_graph_data'] = {
                 'has_spec': self.action.story_graph_spec is not None,
@@ -97,5 +86,4 @@ class JSONBuildAction(JSONAdapter):
         return result
     
     def deserialize(self, data: str) -> dict:
-        """Parse JSON string to dict."""
         return json.loads(data)

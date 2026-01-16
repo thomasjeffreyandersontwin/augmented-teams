@@ -1,21 +1,15 @@
-"""
-JSON adapter for RenderOutputAction.
-"""
 
 import json
 from agile_bot.src.cli.adapters import JSONAdapter
 from agile_bot.src.actions.render.render_action import RenderOutputAction
 
-
 class JSONRenderAction(JSONAdapter):
-    """Serializes RenderOutputAction to JSON - exposes all RenderOutputAction properties."""
     
     def __init__(self, action: RenderOutputAction, is_current: bool = False, is_completed: bool = False):
         self.action = action
         self.is_current = is_current
         self.is_completed = is_completed
     
-    # Expose ALL domain properties
     @property
     def action_name(self):
         return self.action.action_name
@@ -50,21 +44,17 @@ class JSONRenderAction(JSONAdapter):
     
     @property
     def render_specs(self):
-        """Render-specific property."""
         return self.action.render_specs
     
     @property
     def templates(self):
-        """Render-specific property."""
         return self.action.templates
     
     @property
     def synchronizers(self):
-        """Render-specific property."""
         return self.action.synchronizers
     
     def to_dict(self) -> dict:
-        """Convert RenderOutputAction to dict."""
         result = {
             'action_name': self.action.action_name,
             'description': self.action.description,
@@ -76,7 +66,6 @@ class JSONRenderAction(JSONAdapter):
             'behavior': self.action.behavior.name if self.action.behavior else None,
         }
         
-        # Add render-specific properties
         if self.action.render_specs:
             result['render_specs'] = {
                 'count': len(self.action.render_specs),
@@ -97,5 +86,4 @@ class JSONRenderAction(JSONAdapter):
         return result
     
     def deserialize(self, data: str) -> dict:
-        """Parse JSON string to dict."""
         return json.loads(data)

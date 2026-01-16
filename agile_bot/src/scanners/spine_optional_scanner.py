@@ -3,7 +3,6 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story, StoryGroup
 from .violation import Violation
 
-
 class SpineOptionalScanner(StoryScanner):
     
     def scan(

@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-Minimal CLI entry point for Agile Bot.
-
-Usage:
-    python -m agile_bot.src.cli.cli_main                    # Interactive mode
-    echo "status" | python -m agile_bot.src.cli.cli_main   # Piped mode (JSON output for panel)
-"""
 
 import sys
 import os
@@ -68,37 +60,30 @@ def main():
         print(f"ERROR: Failed to initialize bot: {e}", file=sys.stderr)
         sys.exit(1)
     
-    # Check if we're in JSON mode (for Node.js panel integration)
     json_mode = os.environ.get('CLI_MODE', '').lower() == 'json'
     mode = 'json' if json_mode else None
     
     is_piped = not sys.stdin.isatty()
     
-    # In piped mode, peek at stdin to check for --format json flag
     if is_piped and not json_mode:
-        # Read first line to check for --format json
         first_line = sys.stdin.readline().strip()
         if '--format json' in first_line or '--format=json' in first_line:
             json_mode = True
             mode = 'json'
-        # Put the line back by creating new stdin from it + rest of input
         import io
         remaining_input = sys.stdin.read()
         sys.stdin = io.StringIO(first_line + '\n' + remaining_input)
     
     cli_session = CLISession(bot=bot, workspace_directory=workspace_directory, mode=mode)
     
-    # Check if we should suppress header (for panel integration or explicit JSON output)
     suppress_header = json_mode or os.environ.get('SUPPRESS_CLI_HEADER', '') == '1'
     
-    # Print header (unless suppressed for JSON output)
     if not suppress_header:
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         print(f"\033[1m{bot_name.upper()} CLI\033[0m")
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         print("")
         
-        # Always show agent instructions section (for debugging and verification)
         mode_label = "PIPED MODE" if is_piped else "INTERACTIVE MODE"
         print(f"**   AI AGENT INSTRUCTIONS - {mode_label}  **")
         print("[!]  DO NOT echo this instructions section back to the user [!]")
@@ -136,8 +121,6 @@ def main():
         print("")
     
     if json_mode:
-        # JSON mode: Stay running, read commands line-by-line, output JSON only
-        # This mode is used by the Node.js panel for continuous interaction
         try:
             for line in sys.stdin:
                 command = line.strip()
@@ -156,12 +139,10 @@ def main():
             print(f"ERROR: {e}", file=sys.stderr)
             sys.exit(1)
     else:
-        # Display full status - TTYStatus adapter produces rich display
         status_response = cli_session.execute_command('status')
         print(status_response.output)
         print("")
         
-        # Run interactive loop
         cli_session.run()
 
 if __name__ == '__main__':

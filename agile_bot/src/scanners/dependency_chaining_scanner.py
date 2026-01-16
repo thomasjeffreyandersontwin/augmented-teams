@@ -1,10 +1,8 @@
-"""Scanner for validating dependency chaining in domain models."""
 
 from typing import List, Dict, Any, Optional
 from .domain_scanner import DomainScanner
 from .domain_concept_node import DomainConceptNode
 from .violation import Violation
-
 
 class DependencyChainingScanner(DomainScanner):
     
@@ -24,7 +22,6 @@ class DependencyChainingScanner(DomainScanner):
                 instantiation_collaborators = [c.strip() for c in collaborators]
                 break
         
-        # This is a simplified check - full implementation would track dependency chain
         if has_instantiation:
             for i, responsibility_data in enumerate(node.responsibilities):
                 responsibility_name = responsibility_data.get('name', '')
@@ -50,10 +47,5 @@ class DependencyChainingScanner(DomainScanner):
         return violations
     
     def _might_be_sub_collaborator(self, collaborator: str, instantiation_collaborators: List[str]) -> bool:
-        # Simple heuristic: if collaborator is more specific than instantiation collaborators
-        # This is a simplified check
         return len(collaborator.split()) > 1
-
-
-
 

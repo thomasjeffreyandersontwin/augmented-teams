@@ -1,4 +1,3 @@
-"""Scanner for validating domain grouping in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -7,7 +6,6 @@ import re
 from .code_scanner import CodeScanner
 from .violation import Violation
 from .resources.ast_elements import Classes
-
 
 class DomainGroupingCodeScanner(CodeScanner):
     
@@ -58,7 +56,6 @@ class DomainGroupingCodeScanner(CodeScanner):
         
         for pattern in self.TECHNICAL_LAYER_PATTERNS:
             if re.search(pattern, class_name_lower):
-                # Read file content for snippet extraction
                 try:
                     content = file_path.read_text(encoding='utf-8')
                     return self._create_violation_with_snippet(
@@ -81,7 +78,4 @@ class DomainGroupingCodeScanner(CodeScanner):
                     ).to_dict()
         
         return None
-
-
-
 

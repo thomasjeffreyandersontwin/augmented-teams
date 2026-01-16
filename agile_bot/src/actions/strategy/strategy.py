@@ -13,11 +13,6 @@ class Strategy:
 
     @property
     def instructions(self) -> Dict[str, Any]:
-        """Get strategy data (criteria and assumptions).
-        
-        Note: Workflow instructions are now in base_actions/strategy/action_config.json.
-        This method returns only the behavior-specific data (criteria and assumptions).
-        """
         strategy_criteria_dict = {}
         for key, criteria in self.strategy_criterias.strategy_criterias.items():
             strategy_criteria_dict[key] = criteria.to_dict()

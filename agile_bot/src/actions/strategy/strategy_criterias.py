@@ -7,10 +7,9 @@ class StrategyCriterias:
 
     def __init__(self, strategy_dir: Path):
         self._strategy_dir = strategy_dir
-        self._strategy_criterias: Dict[str, StrategyCriteria] | None = None  # Lazy-loaded
+        self._strategy_criterias: Dict[str, StrategyCriteria] | None = None
 
     def _load_strategy_criterias(self):
-        """Lazy load strategy criterias from files."""
         if self._strategy_criterias is None:
             self._strategy_criterias = {}
             criteria_dir = self._strategy_dir / 'decision_criteria'
@@ -26,6 +25,5 @@ class StrategyCriterias:
 
     @property
     def strategy_criterias(self) -> Dict[str, StrategyCriteria]:
-        """Get strategy criterias, loading from files if needed."""
         self._load_strategy_criterias()
         return self._strategy_criterias

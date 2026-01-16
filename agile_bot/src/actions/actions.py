@@ -17,17 +17,14 @@ class Actions:
         actions_workflow = behavior._config.get('actions_workflow', {})
         actions_list = actions_workflow.get('actions', [])
         
-        # Separate workflow actions (have order) from non-workflow actions (no order)
         workflow_actions = [a for a in actions_list if a.get('order') is not None]
         non_workflow_actions = [a for a in actions_list if a.get('order') is None]
         
-        # Sort workflow actions by order
         workflow_actions = sorted(workflow_actions, key=lambda x: x.get('order', 0))
         
         self._factory = ActionFactory(behavior)
         self._state_manager = ActionStateManager(behavior)
         
-        # _actions contains only workflow actions (for sequencing)
         self._actions: List[Action] = []
         for action_dict in workflow_actions:
             action_name = action_dict.get('name', '')
@@ -35,7 +32,6 @@ class Actions:
                 action_instance = self._factory.create_action_instance(action_name=action_name, action_config=action_dict)
                 self._actions.append(action_instance)
         
-        # _non_workflow_actions contains actions that can be invoked but don't participate in workflow
         self._non_workflow_actions: List[Action] = []
         for action_dict in non_workflow_actions:
             action_name = action_dict.get('name', '')
@@ -43,15 +39,12 @@ class Actions:
                 action_instance = self._factory.create_action_instance(action_name=action_name, action_config=action_dict)
                 self._non_workflow_actions.append(action_instance)
         
-        # Automatically add 'rules' as a non-workflow action if not already present
-        # This makes 'rules' available for all behaviors without needing to explicitly add it to behavior.json
         has_rules = any(action.action_name == 'rules' for action in self._non_workflow_actions)
         if not has_rules:
             try:
                 rules_action_instance = self._factory.create_action_instance(action_name='rules', action_config=None)
                 self._non_workflow_actions.append(rules_action_instance)
             except Exception as e:
-                # If rules action can't be created (e.g., action_config.json doesn't exist), skip it
                 logging.getLogger(__name__).debug(f'Could not auto-add rules action: {e}')
         
         self._current_index: Optional[int] = None
@@ -84,11 +77,9 @@ class Actions:
         return [name for name in remaining if not self.is_action_completed(name)]
 
     def find_by_name(self, action_name: str) -> Optional[Action]:
-        # First check workflow actions
         for action in self._actions:
             if action.action_name == action_name:
                 return action
-        # Then check non-workflow actions
         for action in self._non_workflow_actions:
             if action.action_name == action_name:
                 return action
@@ -121,10 +112,8 @@ class Actions:
         if action is None:
             raise ValueError(f"Action '{action_name}' not found")
         
-        # Check if this is a non-workflow action (no order)
         is_non_workflow = action in self._non_workflow_actions
         if is_non_workflow:
-            # Non-workflow actions don't affect workflow state
             return
         
         for i, a in enumerate(self._actions):
@@ -135,19 +124,14 @@ class Actions:
         self.save_state()
 
     def close_current(self):
-        # Ensure we have a current action before trying to close it
         if self.current is None:
-            # No current action to close - ensure we're at the first action
             if self._actions:
                 self._current_index = 0
             else:
-                # No actions available
                 return
         
-        # Now that we've ensured _current_index is set, get the current action
         current_action = self.current
         if current_action is None:
-            # Still no current action after setting index - something is wrong
             return
         
         state_file = self._state_manager.get_state_file_path()
@@ -166,10 +150,7 @@ class Actions:
         if 'completed_actions' not in state_data:
             state_data['completed_actions'] = []
         completed_actions_list = state_data.get('completed_actions', [])
-        # Note: This method should only be called when self.current is not None
-        # (caller should ensure this via close_current() logic)
         if self.current is None:
-            # No current action to mark as completed - skip
             return
         action_state = f'{self.behavior.bot_name}.{self.behavior.name}.{self.current.action_name}'
         is_already_completed = any((a.get('action_state') == action_state for a in completed_actions_list))
@@ -203,10 +184,8 @@ class Actions:
             action_names = self.names
             if not action_names:
                 return False
-            # If we have a current action, check position
             if self.current is not None:
                 return self.current.action_name == action_names[-1]
-            # If no current action, fall back to state file: consider final if last action is marked completed
             state_file = self._state_manager.get_state_file_path()
             if state_file.exists():
                 state_data = json.loads(state_file.read_text(encoding='utf-8'))
@@ -259,12 +238,4 @@ class Actions:
         self._current_index = current_index_ref[0]
 
     def is_action_completed(self, action_name: str) -> bool:
-        """
-        Check if an action is completed.
-        
-        Previous behavior marked all earlier actions as completed when the current
-        index moved forward. That caused the panel to show checkmarks on every prior
-        action, which we no longer want. Until we have explicit completion state,
-        treat actions as not completed unless a real completion flag exists.
-        """
         return False

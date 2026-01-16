@@ -1,20 +1,14 @@
-"""
-TTY adapter for RequiredContext domain object.
-"""
 
 from agile_bot.src.cli.adapters import TTYAdapter
 
 class TTYRequiredContext(TTYAdapter):
-    """Serializes RequiredContext to TTY - formats key questions and evidence."""
     
     def __init__(self, required_context):
         self.required_context = required_context
     
     def serialize(self) -> str:
-        """Convert RequiredContext to TTY string."""
         lines = []
         
-        # Display key questions
         key_questions = self.required_context.key_questions.questions
         if key_questions:
             lines.append("")
@@ -26,7 +20,6 @@ class TTYRequiredContext(TTYAdapter):
                 for question_key, question_text in key_questions.items():
                     lines.append(f"- {self.add_bold(f'{question_key}:')} {question_text}")
         
-        # Display evidence requirements
         evidence_list = self.required_context.evidence.evidence_list
         if evidence_list:
             lines.append("")
@@ -41,7 +34,6 @@ class TTYRequiredContext(TTYAdapter):
         return '\n'.join(lines)
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text (not used for RequiredContext)."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower() if parts else ""
         args = parts[1] if len(parts) > 1 else ""

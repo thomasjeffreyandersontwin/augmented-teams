@@ -1,11 +1,9 @@
-"""Scanner for validating all stories are explicitly enumerated."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Epic, SubEpic
 from .violation import Violation
 import re
-
 
 class EnumerateStoriesScanner(StoryScanner):
     

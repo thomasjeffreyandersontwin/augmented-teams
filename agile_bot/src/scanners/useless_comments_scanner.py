@@ -1,4 +1,3 @@
-"""Scanner for detecting useless comments in code."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -8,7 +7,6 @@ from .code_scanner import CodeScanner
 from .violation import Violation
 
 logger = logging.getLogger(__name__)
-
 
 class UselessCommentsScanner(CodeScanner):
     
@@ -30,7 +28,6 @@ class UselessCommentsScanner(CodeScanner):
     def _check_useless_docstrings(self, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Pattern for docstrings (triple quotes)
         docstring_pattern = r'"""(.*?)"""'
         matches = re.finditer(docstring_pattern, content, re.DOTALL)
         
@@ -60,17 +57,16 @@ class UselessCommentsScanner(CodeScanner):
         content = '\n'.join(lines)
         
         useless_patterns = [
-            r'#\s*(Load|Get|Set|Return|Execute|Perform|Handle|Process|Create|Delete|Update)\s+\w+',  # Obvious action comments
-            r'#\s*(This|The)\s+(function|method|class|variable)\s+(does|gets|sets|returns)',  # "This function does X"
-            r'#\s*(end|End)\s+(if|for|while|class|function)',  # Closing brace comments
-            r'#\s*={10,}',  # Section dividers (10 or more = characters)
-            r'#\s*(Changed|Modified|Added|Removed)\s+by:',  # Change history
+            r'#\s*(Load|Get|Set|Return|Execute|Perform|Handle|Process|Create|Delete|Update)\s+\w+',
+            r'#\s*(This|The)\s+(function|method|class|variable)\s+(does|gets|sets|returns)',
+            r'#\s*(end|End)\s+(if|for|while|class|function)',
+            r'#\s*={10,}',
+            r'#\s*(Changed|Modified|Added|Removed)\s+by:',
         ]
         
         for line_num, line in enumerate(lines, 1):
             line_stripped = line.strip()
             
-            # Skip empty lines and non-comment lines
             if not line_stripped.startswith('#'):
                 continue
             
@@ -99,25 +95,22 @@ class UselessCommentsScanner(CodeScanner):
         comment_lower = comment_line.lower()
         
         useful_patterns = [
-            r'\?',  # Questions indicate reasoning or explanation
-            r'(because|since|due to|as|when|if|unless)',  # Explains reason
-            r'(warning|caution|note|important|critical)',  # Warnings/notes
-            r'(todo|fixme|hack|workaround)',  # TODO/FIXME with context
-            r'(license|copyright|legal)',  # Legal notices
-            r'(algorithm|complex|non-obvious)',  # Complex logic explanation
-            r'(business rule|domain|requirement)',  # Business logic
+            r'\?',
+            r'(because|since|due to|as|when|if|unless)',
+            r'(warning|caution|note|important|critical)',
+            r'(todo|fixme|hack|workaround)',
+            r'(license|copyright|legal)',
+            r'(algorithm|complex|non-obvious)',
+            r'(business rule|domain|requirement)',
         ]
         
         for pattern in useful_patterns:
             if re.search(pattern, comment_lower):
                 return True
         
-        # (e.g., "Skip test files" before a conditional)
         if line_num < len(lines):
             next_line = lines[line_num].strip() if line_num < len(lines) else ""
-            # If comment is followed by non-obvious code (if/for/while with complex condition), it might be useful
             if re.search(r'\b(if|for|while|with)\s+[^:]+:', next_line):
-                # Comment might be explaining the condition
                 return True
         
         return False

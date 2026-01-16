@@ -29,7 +29,6 @@ class RenderOutputAction(Action):
         raise AttributeError('action_name is read-only for RenderOutputAction')
 
     def _execute_synchronizers(self, render_specs: List['RenderSpec']) -> None:
-        """Execute synchronizers for all render specs."""
         for spec in render_specs:
             if spec.synchronizer:
                 try:
@@ -41,25 +40,20 @@ class RenderOutputAction(Action):
                     spec.mark_failed(str(e))
     
     def _prepare_instructions(self, instructions, context: ScopeActionContext):
-        """Prepare render instructions with render specs and templates."""
         render_instructions = self._config_loader.load_render_instructions()
         render_specs = self._render_specs
         
-        # Execute synchronizers during preparation
         self._execute_synchronizers(render_specs)
         
-        # Inject render data directly into instructions (no MergedInstructions needed)
         merged_data = {
             'base_instructions': instructions.get('base_instructions', []),
             'render_instructions': render_instructions
         }
         self._instruction_formatter.inject_render_data(merged_data, render_instructions, render_specs)
         
-        # Store render specs for later use
         executed_specs = [spec for spec in render_specs if spec.is_executed]
         template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]
         
-        # Update instructions with formatted data
         instructions._data['base_instructions'] = merged_data.get('base_instructions', [])
         instructions.set('render_instructions', merged_data.get('render_instructions', {}))
         instructions.set('render_configs', merged_data.get('render_configs', []))
@@ -69,7 +63,6 @@ class RenderOutputAction(Action):
         instructions.set('executed_specs', [spec.config_data for spec in executed_specs])
         instructions.set('template_specs', [spec.config_data for spec in template_specs])
         
-        # Add render config file paths for display panel (similar to build action's config/template paths)
         render_config_paths = []
         render_template_paths = []
         render_output_paths = []
@@ -78,27 +71,22 @@ class RenderOutputAction(Action):
         workspace_dir = self.behavior.bot_paths.workspace_directory
         
         for spec in render_specs:
-            # Add the render config file path (stored as relative path in config_data['file'])
             if 'file' in spec.config_data:
                 config_file_rel = spec.config_data['file']
                 config_file_abs = bot_dir / config_file_rel
                 if config_file_abs.exists():
                     render_config_paths.append(str(config_file_abs.resolve()))
             
-            # Add template file path if using template
             if spec.template and hasattr(spec.template, 'template_path'):
                 template_path = spec.template.template_path
                 if template_path:
                     render_template_paths.append(str(template_path.resolve()))
             
-            # Add output file path (drawio, md, txt, etc.)
             if spec.output:
-                # Get the path prefix
                 path_prefix = spec.config_data.get('path', 'docs/stories')
                 output_file_abs = workspace_dir / path_prefix / spec.output
                 render_output_paths.append(str(output_file_abs.resolve()))
         
-        # Store as separate arrays like build action does
         if render_config_paths:
             instructions._data['render_config_paths'] = render_config_paths
         if render_template_paths:
@@ -111,22 +99,18 @@ class RenderOutputAction(Action):
         render_specs = self._render_specs
         self._execute_synchronizers(render_specs)
         
-        # Start with instructions from get_instructions
         instructions = self.get_instructions(context)
         
-        # Get render instruction data and inject it
         merged_data = {
             'base_instructions': instructions.get('base_instructions', []),
             'render_instructions': render_instructions
         }
         self._instruction_formatter.inject_render_data(merged_data, render_instructions, render_specs)
         
-        # Update instructions object with merged data
         instructions._data['base_instructions'] = merged_data.get('base_instructions', [])
         if 'render_instructions' in merged_data:
             instructions.set('render_instructions', merged_data['render_instructions'])
         
-        # Store executed and template specs in instructions for reference
         executed_specs = [spec for spec in render_specs if spec.is_executed]
         template_specs = [spec for spec in render_specs if spec.requires_ai_handling and (not spec.is_executed)]
         if executed_specs:

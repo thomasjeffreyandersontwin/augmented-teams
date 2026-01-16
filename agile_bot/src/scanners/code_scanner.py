@@ -1,12 +1,10 @@
-"""Base CodeScanner class for validating source code files."""
 
 from abc import abstractmethod
 from typing import List, Dict, Any, Optional, Tuple
-from pathlib import Path  # Needed at runtime for Path operations
+from pathlib import Path
 import ast
 from .scanner import Scanner
 from .violation import Violation
-
 
 class CodeScanner(Scanner):
     
@@ -21,7 +19,6 @@ class CodeScanner(Scanner):
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
-        # Use base Scanner.scan() which combines files and calls scan_file() for each
         violations = super().scan(story_graph, rule_obj, test_files, code_files, on_file_scanned=on_file_scanned)
         return violations
     
@@ -34,17 +31,13 @@ class CodeScanner(Scanner):
         if not rule_obj:
             raise ValueError("rule_obj parameter is required for CodeScanner")
         
-        # Store story_graph in instance for scanners that need it
-        # Assign directly - let AttributeError propagate if self doesn't support it
         self.story_graph = story_graph
         
-        # Default implementation - subclasses must override
         return []
     
     def _extract_domain_terms(self, story_graph: Dict[str, Any]) -> set:
         domain_terms = set()
         
-        # These are domain concepts, not technical jargon
         common_domain_terms = {
             'json', 'data', 'param', 'params', 'parameter', 'parameters',
             'var', 'vars', 'variable', 'variables',
@@ -96,7 +89,6 @@ class CodeScanner(Scanner):
                         if sub_epic_name:
                             domain_terms.update(self._extract_words_from_text(sub_epic_name))
                         
-                        # Extract from domain_concepts in sub_epic - CRITICAL: Must extract all domain terms
                         sub_epic_concepts = sub_epic.get('domain_concepts', [])
                         for concept in sub_epic_concepts:
                             if isinstance(concept, dict):
@@ -153,7 +145,6 @@ class CodeScanner(Scanner):
             return set()
         
         import re
-        # Split on spaces, underscores, hyphens, and other separators
         words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
         return set(words)
     
@@ -168,7 +159,6 @@ class CodeScanner(Scanner):
         for domain_term in domain_terms:
             if domain_term in name_words:
                 return True
-            # e.g., "assigned_strategy" contains "strategy", "template_manager" contains "template"
             if domain_term in name_lower or name_lower in domain_term:
                 return True
         
@@ -184,7 +174,6 @@ class CodeScanner(Scanner):
         status_writer: Optional[Any] = None,
         max_cross_file_comparisons: Optional[int] = None
     ) -> List[Dict[str, Any]]:
-        # Default implementation - subclasses override
         return []
     
     def _read_and_parse_file(self, file_path: Path) -> Optional[Tuple[str, List[str], ast.AST]]:
@@ -208,35 +197,29 @@ class CodeScanner(Scanner):
                              context_before: int = 2, max_lines: int = 50) -> str:
         lines = content.split('\n')
         
-        # Determine start and end lines
         if ast_node is not None:
-            # Use AST node to determine lines
             start_line_0 = ast_node.lineno - 1 if hasattr(ast_node, 'lineno') and ast_node.lineno else 0
             
             if hasattr(ast_node, 'end_lineno') and ast_node.end_lineno:
-                end_line_0 = ast_node.end_lineno  # end_lineno is 1-indexed, exclusive
+                end_line_0 = ast_node.end_lineno
             else:
-                # Estimate end by finding the maximum line number in the subtree
                 end_line_0 = start_line_0 + 1
                 for node in ast.walk(ast_node):
                     if hasattr(node, 'lineno') and node.lineno:
                         end_line_0 = max(end_line_0, node.lineno)
         elif start_line is not None:
-            # Use provided line numbers (1-indexed, convert to 0-indexed)
             start_line_0 = start_line - 1
             if end_line is not None:
-                end_line_0 = end_line  # end_line is 1-indexed, exclusive (like end_lineno)
+                end_line_0 = end_line
             else:
                 end_line_0 = start_line_0 + 1
         else:
-            # No information provided, return empty
             return ""
         
         snippet_start = max(0, start_line_0 - context_before)
         snippet_end = min(len(lines), end_line_0 + 1)
         code_snippet = '\n'.join(lines[snippet_start:snippet_end])
         
-        # Truncate if too long
         code_lines = code_snippet.split('\n')
         if len(code_lines) > max_lines:
             code_snippet = '\n'.join(code_lines[:max_lines]) + '\n    # ... (truncated)'

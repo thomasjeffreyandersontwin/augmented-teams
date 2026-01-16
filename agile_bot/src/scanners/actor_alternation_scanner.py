@@ -3,12 +3,7 @@ from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
 
-
 class ActorAlternationScanner(StoryScanner):
-    """
-    Scans acceptance criteria to ensure actors alternate every 1-2 steps.
-    Scenarios should show back-and-forth interaction between user and system.
-    """
     
     def scan_story_node(self, node: StoryNode, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
@@ -27,26 +22,21 @@ class ActorAlternationScanner(StoryScanner):
         return violations
     
     def _check_actor_alternation(self, ac: str, story: Story, ac_index: int, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        """Check if actors alternate properly in acceptance criteria."""
         lines = ac.split('\n')
         
-        # Extract actor from each line (WHEN/THEN/AND)
         actors = []
         for line in lines:
             line = line.strip()
             if not line:
                 continue
             
-            # Determine actor from the line
             actor = self._extract_actor(line)
             if actor:
                 actors.append(actor)
         
         if len(actors) < 3:
-            # Not enough steps to check alternation
             return None
         
-        # Check for runs of same actor longer than 2
         consecutive_count = 1
         prev_actor = actors[0]
         
@@ -57,7 +47,6 @@ class ActorAlternationScanner(StoryScanner):
                 consecutive_count += 1
                 
                 if consecutive_count > 2:
-                    # Found violation: more than 2 consecutive steps from same actor
                     location = story.map_location(f'acceptance_criteria[{ac_index}]')
                     return Violation(
                         rule=rule_obj,
@@ -72,20 +61,16 @@ class ActorAlternationScanner(StoryScanner):
         return None
     
     def _extract_actor(self, line: str) -> Optional[str]:
-        """Extract the actor (user/system) from a WHEN/THEN/AND line."""
         line_lower = line.lower()
         
-        # Skip WHEN/THEN/AND/GIVEN keywords
         for keyword in ['when ', 'then ', 'and ', 'given ']:
             if line_lower.startswith(keyword):
                 line_lower = line_lower[len(keyword):].strip()
                 break
         
-        # Determine actor based on common patterns
         if any(word in line_lower for word in ['user ', 'actor ', 'customer ', 'developer ', 'human ', 'cli ', 'repl ']):
             return 'user'
         elif any(word in line_lower for word in ['system ', 'bot ', 'application ', 'server ', 'workflow ']):
             return 'system'
         
-        # Default to system if no clear actor
         return 'system'

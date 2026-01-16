@@ -1,8 +1,3 @@
-"""
-Cursor Command Generator for generating Cursor command files.
-
-Uses the new CLI entry point: python -m agile_bot.src.cli.cli_main
-"""
 from pathlib import Path
 from typing import Dict, Set, Optional
 import json
@@ -12,9 +7,7 @@ from ..description_extractor import DescriptionExtractor
 from ..formatter import CliTerminalFormatter
 from ...utils import read_json_file
 
-
 class CursorCommandGenerator(BaseBehaviorsAdapter):
-    """Generator that creates Cursor command files using the new CLI entry point."""
     
     def __init__(self, workspace_root: Path, bot_location: Path, bot=None, bot_name: str = None):
         if not bot:
@@ -56,7 +49,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
         return self._data_collector
     
     def _build_wrapped_hierarchy(self):
-        """Override to create CursorBehaviorWrapper instead of generic adapters."""
         current_behavior_name = (
             self.behaviors.current.name
             if self.behaviors.current
@@ -89,7 +81,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
             base_command_content
         )
         
-        # Generate separate status command
         status_command_content = self._build_status_command()
         self.commands[f'{self.bot_name}_status'] = self._write_command_file(
             self.commands_dir / f'{self.bot_name}_status.md',
@@ -97,7 +88,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
         )
     
     def _build_status_command(self) -> str:
-        """Build a dedicated status command for quick access."""
         bot_dir_str = str(self.bot_directory).replace('\\', '\\')
         workspace_str = str(self.workspace_root).replace('\\', '\\')
         
@@ -200,7 +190,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
         return self.commands
     
     def serialize(self) -> str:
-        """Generate Cursor commands by walking wrapped hierarchy."""
         self.commands_dir = self._ensure_commands_directory()
         self._generate_base_commands()
         
@@ -211,7 +200,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
         return ""
     
     def generate(self) -> Dict[str, Path]:
-        """Generate command files and return commands dict."""
         self.serialize()
         return self.commands
     
@@ -251,9 +239,7 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
         except (json.JSONDecodeError, FileNotFoundError):
             return []
 
-
 class CursorBehaviorWrapper(BaseBehaviorAdapter):
-    """Wrapper for generating behavior command files."""
     
     def __init__(self, behavior, workspace_root: Path, bot_location: Path, bot_name: str, is_current: bool, bot, generator_ref):
         self.workspace_root = workspace_root
@@ -264,15 +250,12 @@ class CursorBehaviorWrapper(BaseBehaviorAdapter):
         BaseBehaviorAdapter.__init__(self, behavior, 'cursor', is_current)
     
     def format_behavior_name(self) -> str:
-        """Not used for file generation."""
         return ""
     
     def serialize(self) -> str:
-        """Not used - generate_command_file writes files directly."""
         return ""
     
     def generate_command_file(self, commands_dir: Path, commands: Dict[str, Path]):
-        """Generate command file for this behavior."""
         behavior_command = self.generator_ref._build_behavior_command(self.behavior.name)
         behavior_name_underscore = self.behavior.name.replace('-', '_')
         commands[f'{self.bot_name}_{behavior_name_underscore}'] = self.generator_ref._write_command_file(

@@ -1,4 +1,3 @@
-"""Scanner for validating mutable state is minimized."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
-
 
 class MinimizeMutableStateScanner(CodeScanner):
     
@@ -27,20 +25,20 @@ class MinimizeMutableStateScanner(CodeScanner):
         violations = []
         
         mutable_patterns = [
-            r'\.push\s*\(',  # Array mutation (JS)
-            r'\.pop\s*\(',  # Array mutation (JS/Python)
-            r'\.splice\s*\(',  # Array mutation (JS)
-            r'\+\+\s*;',  # Increment mutation (JS)
-            r'--\s*;',  # Decrement mutation (JS)
-            r'=\s*\{.*\}\s*\.\w+\s*=',  # Object mutation
-            r'\.append\s*\(',  # List mutation (Python)
-            r'\.extend\s*\(',  # List mutation (Python)
-            r'\.insert\s*\(',  # List mutation (Python)
-            r'\.remove\s*\(',  # List mutation (Python)
-            r'\.clear\s*\(',  # List/dict mutation (Python)
-            r'\+=\s*1\s*$',  # counter += 1 (Python increment)
-            r'-=\s*1\s*$',  # counter -= 1 (Python decrement)
-            r'\w+\s*\+\+',  # variable++ (without semicolon, test files)
+            r'\.push\s*\(',
+            r'\.pop\s*\(',
+            r'\.splice\s*\(',
+            r'\+\+\s*;',
+            r'--\s*;',
+            r'=\s*\{.*\}\s*\.\w+\s*=',
+            r'\.append\s*\(',
+            r'\.extend\s*\(',
+            r'\.insert\s*\(',
+            r'\.remove\s*\(',
+            r'\.clear\s*\(',
+            r'\+=\s*1\s*$',
+            r'-=\s*1\s*$',
+            r'\w+\s*\+\+',
         ]
         
         for line_num, line in enumerate(lines, 1):
@@ -49,7 +47,6 @@ class MinimizeMutableStateScanner(CodeScanner):
                     if 'test_' in line.lower() or 'def test' in line.lower():
                         continue
                     
-                    # No code snippet for mutation pattern violations
                     violation = Violation(
                         rule=rule_obj,
                         violation_message=f'Line {line_num} mutates state - prefer immutable data structures (create new objects instead of mutating)',

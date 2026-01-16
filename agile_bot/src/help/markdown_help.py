@@ -1,28 +1,21 @@
-"""
-Markdown adapter for Help domain object.
-"""
 
 from agile_bot.src.cli.adapters import MarkdownAdapter
 from agile_bot.src.help.help import Help
 
 class MarkdownHelp(MarkdownAdapter):
-    """Serializes Help to Markdown."""
     
     def __init__(self, help_obj: Help):
         self.help_obj = help_obj
     
     def serialize(self) -> str:
-        """Convert Help to Markdown string - mirrors TTYHelp structure."""
         lines = []
         
-        # Core Commands section
         lines.append(self.format_header(2, "Core Commands"))
         core = self.help_obj.commands.core
         lines.append(f"  {core.navigation_pattern}  - {core.description_full}")
         lines.append(f"  {core.short_navigation_pattern}           - {core.description_short}")
         lines.append("")
         
-        # Available Components section
         lines.append("  Available Components:")
         lines.append(f"    behaviors   -> {self.help_obj.components.behaviors}")
         lines.append("")
@@ -38,19 +31,16 @@ class MarkdownHelp(MarkdownAdapter):
                 lines.append(f"      {operation}")
         lines.append("")
         
-        # Examples section
         lines.append("  Examples:")
         for cmd, desc in self.help_obj.commands.examples.examples:
             lines.append(f"    echo '{cmd}' | python repl_main.py{' ' * (30 - len(cmd))} -> {desc}")
         lines.append("")
         
-        # Other Commands section
         lines.append("  Other Commands:")
         for cmd, desc in self.help_obj.commands.other.commands:
             lines.append(f"    echo '{cmd}' | python repl_main.py{' ' * (30 - len(cmd))} - {desc}")
         lines.append("")
         
-        # Scope Command Details section
         lines.append("  Scope Command Details:")
         for rule in self.help_obj.scope.important_rules:
             lines.append(f"    {rule}")
@@ -73,7 +63,6 @@ class MarkdownHelp(MarkdownAdapter):
     
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

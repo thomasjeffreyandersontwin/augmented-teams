@@ -29,10 +29,6 @@ class ContextDataInjector:
         )
 
     def inject_strategy_data(self, instructions: Dict[str, Any]) -> list:
-        # Strategy data injection is handled by StrategyAction._prepare_instructions()
-        # which sets 'strategy_criteria' and 'assumptions' keys directly.
-        # We should NOT set a 'strategy' key here as it conflicts with that.
-        # Other actions that need strategy context will use 'strategy_criteria' and 'assumptions' keys.
         return []
 
     def inject_context_files(self, instructions: Dict[str, Any]) -> list:
@@ -41,7 +37,6 @@ class ContextDataInjector:
         docs_path = bot_paths.documentation_path
         context_dir = workspace_directory / docs_path / 'context'
         
-        # If context directory doesn't exist, don't add context_files key
         if not context_dir.exists():
             return []
         
@@ -50,7 +45,6 @@ class ContextDataInjector:
             if file_path.is_file():
                 context_files.append(file_path.name)
         
-        # Only add context_files key if there are files
         if context_files:
             instructions['context_files'] = context_files
         return []

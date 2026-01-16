@@ -3,7 +3,6 @@ from .scanner import Scanner
 from .violation import Violation
 from .story_map import StoryMap, StoryNode, Story
 
-
 class ParameterizedTestsScanner(Scanner):
     
     def scan(

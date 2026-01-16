@@ -16,7 +16,6 @@ class StoryGraphData:
 
     @property
     def instructions(self) -> Dict[str, Any]:
-        # Return only file path references, not full content
         config_path = str(self.story_graph_spec.config_path) if self.story_graph_spec.config_path else None
         result = {'config_path': config_path}
         if self.story_graph_template:

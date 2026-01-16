@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from agile_bot.src.cli.adapter_factory import AdapterFactory
 
-
 class BaseHierarchicalAdapter(ABC):
     def __init__(self, domain_object, channel: str, factory: Optional[AdapterFactory] = None):
         self.domain_object = domain_object
@@ -17,7 +16,6 @@ class BaseHierarchicalAdapter(ABC):
     @abstractmethod
     def serialize(self) -> str:
         pass
-
 
 class BaseBotAdapter(BaseHierarchicalAdapter):
     def __init__(self, bot, channel: str):
@@ -53,7 +51,6 @@ class BaseBotAdapter(BaseHierarchicalAdapter):
     def format_footer(self) -> str:
         pass
 
-
 class BaseBehaviorsAdapter(BaseHierarchicalAdapter):
     def __init__(self, behaviors, channel: str):
         self.behaviors = behaviors
@@ -81,7 +78,6 @@ class BaseBehaviorsAdapter(BaseHierarchicalAdapter):
         for behavior_adapter in self._behavior_adapters:
             lines.append(behavior_adapter.serialize())
         return '\n'.join(lines)
-
 
 class BaseBehaviorAdapter(BaseHierarchicalAdapter):
     def __init__(self, behavior, channel: str, is_current: bool = False):
@@ -113,7 +109,6 @@ class BaseBehaviorAdapter(BaseHierarchicalAdapter):
 
     def _indent_actions(self, actions_output: str) -> str:
         return '\n'.join(f"    {line}" if line else "" for line in actions_output.split('\n'))
-
 
 class BaseActionsAdapter(BaseHierarchicalAdapter):
     def __init__(self, actions, channel: str):

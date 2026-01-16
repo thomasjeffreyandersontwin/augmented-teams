@@ -1,4 +1,3 @@
-"""Resource-oriented domain model for scanner validation."""
 
 from .scope import Scope
 from .file import File

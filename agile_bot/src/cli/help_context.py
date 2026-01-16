@@ -7,7 +7,7 @@ class BehaviorHelpContext:
     behavior_name: str
     behavior_description: str
     actions: List[str]
-    behavior: Any = None  # The actual Behavior object
+    behavior: Any = None
     additional_options: Optional[Dict[str, str]] = None
 
 @dataclass
@@ -17,5 +17,5 @@ class ActionHelpContext:
     action_description: str
     parameters: List[str]
     parameter_descriptions: Dict[str, str]
-    behavior_name: str = ""  # Parent behavior name
-    action: Any = None  # The actual Action object
+    behavior_name: str = ""
+    action: Any = None

@@ -1,4 +1,3 @@
-"""Scanner for validating tests match specification scenarios."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -10,7 +9,6 @@ from .violation import Violation
 from .resources.ast_elements import Functions
 
 logger = logging.getLogger(__name__)
-
 
 class SpecificationMatchScanner(TestScanner):
     
@@ -29,7 +27,6 @@ class SpecificationMatchScanner(TestScanner):
         
         violations.extend(self._check_assertions(tree, content, file_path, rule_obj))
         
-        # NEW: Story graph integration - match tests to specification
         if story_graph:
             violations.extend(self._check_specification_matches(tree, content, file_path, rule_obj, story_graph))
         
@@ -52,8 +49,6 @@ class SpecificationMatchScanner(TestScanner):
                         is_vague = True
                         break
                 
-                # Also check if it's a thin wrapper delegating to helper
-                # (these are acceptable even if name is vague)
                 is_thin_wrapper = self._is_thin_wrapper(function.node)
                 
                 if is_vague and not is_thin_wrapper:
@@ -65,7 +60,6 @@ class SpecificationMatchScanner(TestScanner):
         return violations
     
     def _is_thin_wrapper(self, test_node: ast.FunctionDef) -> bool:
-        # If body is just a single statement (likely a function call), it's a thin wrapper
         if len(test_node.body) == 1:
             stmt = test_node.body[0]
             if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
@@ -82,7 +76,6 @@ class SpecificationMatchScanner(TestScanner):
         message: str,
         severity: str = 'warning'
     ) -> Dict[str, Any]:
-        # Read file content for snippet extraction
         try:
             content = file_path.read_text(encoding='utf-8')
         except Exception:
@@ -98,7 +91,6 @@ class SpecificationMatchScanner(TestScanner):
             severity=severity
         ).to_dict()
         
-        # Add snippet if content is available
         if content and line_number:
             lines = content.split('\n')
             start_line = max(0, line_number - 2)
@@ -111,7 +103,6 @@ class SpecificationMatchScanner(TestScanner):
     def _check_variable_names(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Generic names that suggest mismatch with specification
         generic_names = ['data', 'result', 'value', 'item', 'obj', 'thing', 'name', 'root', 'path', 'config']
         
         test_methods = []
@@ -139,7 +130,6 @@ class SpecificationMatchScanner(TestScanner):
             func = assign_node.value.func
             if isinstance(func, ast.Name):
                 func_name = func.id
-                # Helper functions typically start with verify_, given_, when_, then_
                 if func_name.startswith(('verify_', 'given_', 'when_', 'then_', 'create_', 'setup_')):
                     return True
             elif isinstance(func, ast.Attribute):
@@ -151,12 +141,11 @@ class SpecificationMatchScanner(TestScanner):
     def _check_assertions(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Patterns that suggest implementation detail assertions
         implementation_patterns = [
             r'\._(private|internal|_flag|_state|_cache)',
-            r'\.called\b',  # Mock call checks
-            r'\.assert_called',  # Mock assertion
-            r'\._validate',  # Internal validation
+            r'\.called\b',
+            r'\.assert_called',
+            r'\._validate',
         ]
         
         test_methods = []
@@ -199,7 +188,6 @@ class SpecificationMatchScanner(TestScanner):
         for test_method in test_methods:
             scenario = self._extract_scenario_from_docstring(test_method)
             
-            # Find matching story/scenario in story graph
             matching_story = self._find_matching_story(scenario, test_method.name, story_graph)
             
             if matching_story:
@@ -209,7 +197,6 @@ class SpecificationMatchScanner(TestScanner):
                 assertion_matches = self._check_assertion_matches(test_method, matching_story, rule_obj, file_path)
                 violations.extend(assertion_matches)
             elif scenario:
-                # Test has scenario but no matching story found
                 violations.append(self._create_violation_with_line_number(
                     rule_obj, file_path, test_method,
                     f'Test "{test_method.name}" has scenario but no matching story found in specification. '
@@ -260,7 +247,6 @@ class SpecificationMatchScanner(TestScanner):
                         if sub_epic_name:
                             domain_terms.update(self._extract_words_from_text(sub_epic_name))
                         
-                        # Extract from domain_concepts in sub_epic - CRITICAL: Must extract all domain terms
                         sub_epic_concepts = sub_epic.get('domain_concepts', [])
                         for concept in sub_epic_concepts:
                             if isinstance(concept, dict):
@@ -338,7 +324,6 @@ class SpecificationMatchScanner(TestScanner):
         
         scenario_name = None
         if scenario:
-            # Look for "SCENARIO: <name>" pattern in docstring
             scenario_match = re.search(r'SCENARIO:\s*(.+?)(?:\n|$)', scenario, re.IGNORECASE)
             if scenario_match:
                 scenario_name = scenario_match.group(1).strip()
@@ -357,13 +342,11 @@ class SpecificationMatchScanner(TestScanner):
                                 stories = story_group.get('stories', [])
                                 for story in stories:
                                     if isinstance(story, dict):
-                                        # Match by scenario name if we have one
                                         if scenario_name:
                                             story_scenarios = story.get('scenarios', [])
                                             for story_scenario in story_scenarios:
                                                 if isinstance(story_scenario, dict):
                                                     story_scenario_name = story_scenario.get('name', '')
-                                                    # Normalize both names for comparison (lowercase, remove extra spaces)
                                                     normalized_test_scenario = re.sub(r'\s+', ' ', scenario_name.lower().strip())
                                                     normalized_story_scenario = re.sub(r'\s+', ' ', story_scenario_name.lower().strip())
                                                     if normalized_test_scenario == normalized_story_scenario:
@@ -385,15 +368,12 @@ class SpecificationMatchScanner(TestScanner):
         for var_name, line_number in variable_names:
             var_name_lower = var_name.lower()
             
-            # Skip generic names that are OK
             generic_names = {'self', 'result', 'value', 'data', 'item', 'obj', 'workspace', 'root', 'path', 'config'}
             if var_name_lower in generic_names:
                 continue
             
             var_words = set(self._extract_words_from_text(var_name))
             
-            # Also check if any domain term appears as substring in variable name
-            # (e.g., "assigned_strategy" contains "strategy", "template_manager" contains "template" and "manager")
             matches_domain_term = False
             for domain_term in domain_terms:
                 if domain_term in var_words:
@@ -403,7 +383,6 @@ class SpecificationMatchScanner(TestScanner):
                     matches_domain_term = True
                     break
             
-            # Only flag if variable doesn't match any domain terms
             if not matches_domain_term:
                 sample_terms = sorted(list(domain_terms))[:10]
                 violations.append(self._create_violation_with_line_number(
@@ -431,7 +410,6 @@ class SpecificationMatchScanner(TestScanner):
             if isinstance(node, ast.Assert):
                 assertions.append(node)
             
-            # pytest.raises() context managers (these are assertions)
             if isinstance(node, ast.With):
                 for item in node.items:
                     if isinstance(item.context_expr, ast.Call):
@@ -444,7 +422,6 @@ class SpecificationMatchScanner(TestScanner):
                             if func.id == 'raises':
                                 has_pytest_raises = True
             
-            # Helper function calls that contain assertions (then_*, verify_*, check_*)
             if isinstance(node, ast.Call):
                 func = node.func
                 func_name = None
@@ -454,18 +431,15 @@ class SpecificationMatchScanner(TestScanner):
                     func_name = func.attr
                 
                 if func_name:
-                    # Helper functions that typically contain assertions
                     if func_name.startswith(('then_', 'verify_', 'check_', 'assert_')):
                         has_helper_assertions = True
         
-        # Count total assertion-like constructs
         total_assertions = len(assertions)
         if has_pytest_raises:
             total_assertions += 1
         if has_helper_assertions:
             total_assertions += 1
         
-        # If test has no assertions but story has acceptance criteria, that's a violation
         if total_assertions == 0 and len(acceptance_criteria) > 0:
             violations.append(self._create_violation_with_line_number(
                 rule_obj, file_path, test_method,

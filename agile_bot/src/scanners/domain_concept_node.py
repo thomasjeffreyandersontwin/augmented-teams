@@ -1,7 +1,5 @@
-"""DomainConceptNode class for representing domain concepts in story graphs."""
 
 from typing import List, Dict, Any, Optional
-
 
 class DomainConceptNode:
     
@@ -37,7 +35,4 @@ class DomainConceptNode:
             path_parts.append(field)
         
         return ".".join(path_parts)
-
-
-
 

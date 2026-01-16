@@ -263,30 +263,22 @@ class TestManageBotRegistry:
         """
         Scenario: Set Active Bot to Registered Bot
         GIVEN: story_bot is currently active
-        AND: task_bot is registered
-        WHEN: bot.active_bot is set to "task_bot"
-        THEN: System switches to task_bot
-        AND: System loads task_bot configuration from bot_config.json
-        AND: System loads task_bot behaviors and actions
-        AND: bot.active_bot returns task_bot instance
+        AND: crc_bot is registered (from production)
+        WHEN: bot.active_bot is set to "crc_bot"
+        THEN: System switches to crc_bot
+        AND: System loads crc_bot configuration from bot_config.json
+        AND: System loads crc_bot behaviors and actions
+        AND: bot.active_bot returns crc_bot instance
         """
-        # Given: story_bot is active and task_bot is registered
+        # Given: story_bot is active and crc_bot is registered
         helper = BotTestHelper(tmp_path)
         
-        # Create task_bot directory with config
-        task_bot_dir = tmp_path / 'bots' / 'task_bot'
-        task_bot_dir.mkdir(parents=True, exist_ok=True)
-        (task_bot_dir / 'bot_config.json').write_text(json.dumps({
-            "bot_name": "task_bot",
-            "behaviors": []
-        }))
+        # When: active_bot is set to crc_bot (which already exists in production)
+        helper.bot.active_bot = "crc_bot"
         
-        # When: active_bot is set to task_bot
-        helper.bot.active_bot = "task_bot"
-        
-        # Then: System switches to task_bot
+        # Then: System switches to crc_bot
         active_bot = helper.bot.active_bot
-        assert active_bot.bot_name == 'task_bot'
+        assert active_bot.bot_name == 'crc_bot'
     
     def test_attempt_to_set_unregistered_bot(self, tmp_path):
         """

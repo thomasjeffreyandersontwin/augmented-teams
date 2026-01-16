@@ -1,4 +1,3 @@
-"""Scanner for detecting bad comments (commented-out code, outdated, misleading)."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -8,7 +7,6 @@ from .code_scanner import CodeScanner
 from .violation import Violation
 
 logger = logging.getLogger(__name__)
-
 
 class BadCommentsScanner(CodeScanner):
     
@@ -39,27 +37,21 @@ class BadCommentsScanner(CodeScanner):
             if stripped.startswith('//') or stripped.startswith('#'):
                 comment_content = stripped[2:].strip()
                 
-                # Only flag if this looks like actual executable code, not just a comment mentioning code
                 if self._is_actual_commented_code(comment_content, lines, line_num):
                     if commented_block_start is None:
                         commented_block_start = line_num
                 elif commented_block_start:
-                    # Continue commented block if previous line was commented code
                     prev_comment = lines[line_num - 2].strip() if line_num > 1 else ""
                     if (prev_comment.startswith('//') or prev_comment.startswith('#')) and \
                        self._is_actual_commented_code(prev_comment[2:].strip(), lines, line_num - 1):
-                        # Continue block
                         pass
                     else:
-                        # End of commented block
                         if commented_block_start:
                             violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
                             commented_block_start = None
                 else:
-                    # Not commented code, reset
                     commented_block_start = None
             else:
-                # Not a comment line - end any commented block
                 if commented_block_start:
                     violations.append(self._create_commented_code_violation(rule_obj, file_path, commented_block_start))
                     commented_block_start = None
@@ -97,65 +89,49 @@ class BadCommentsScanner(CodeScanner):
         if not comment_content:
             return False
         
-        # Check if there's production code immediately after this comment (within 2 lines)
-        # If so, this is likely an explanatory comment, not commented-out code
         for i in range(1, min(3, len(lines) - line_num + 1)):
             if line_num + i - 1 < len(lines):
                 next_line = lines[line_num + i - 1].strip()
-                # Skip empty lines and comment lines
                 if next_line and not next_line.startswith('//') and not next_line.startswith('#'):
                     if re.search(r'\b(def|class|if|for|while|return|import|from|=\s*[^=]|\(|\[|\{)\b', next_line):
-                        # There's production code right after - this comment is explanatory
                         return False
         
-        # Patterns that indicate actual executable code (not just mentions of code concepts)
-        # These must be strict - looking for actual code syntax, not just keywords
         code_patterns = [
-            # Variable assignments with actual assignment operator (not ==)
-            r'^\s*\w+\s*=\s*[^=]',  # var = value (but not ==)
-            r'\w+\s*\+=\s*',         # += operator
-            r'\w+\s*-=\s*',          # -= operator
-            r'\w+\s*\*=\s*',         # *= operator
-            r'\w+\s*/=\s*',          # /= operator
+            r'^\s*\w+\s*=\s*[^=]',
+            r'\w+\s*\+=\s*',
+            r'\w+\s*-=\s*',
+            r'\w+\s*\*=\s*',
+            r'\w+\s*/=\s*',
             
-            # Function/class definitions with proper syntax (must have opening paren or colon)
-            r'\b(def|function|class|const|let|var)\s+\w+\s*[\(:]',  # def func( or class X:
+            r'\b(def|function|class|const|let|var)\s+\w+\s*[\(:]',
             
-            # Function calls with parentheses and arguments
-            r'\w+\s*\([^)]+\)',      # function_call(args) - must have args
-            r'\w+\.\w+\s*\(',        # obj.method(
+            r'\w+\s*\([^)]+\)',
+            r'\w+\.\w+\s*\(',
             
-            # Control flow with proper syntax and conditions
-            r'\bif\s+[^:]+:',        # if condition: (Python)
-            r'\bif\s*\([^)]+\)',     # if (condition) (JS/C)
-            r'\bfor\s+[^:]+:',       # for item in items: (Python)
-            r'\bfor\s*\([^)]+\)',    # for (init; condition; inc) (JS/C)
-            r'\bwhile\s+[^:]+:',     # while condition: (Python)
-            r'\bwhile\s*\([^)]+\)',  # while (condition) (JS/C)
+            r'\bif\s+[^:]+:',
+            r'\bif\s*\([^)]+\)',
+            r'\bfor\s+[^:]+:',
+            r'\bfor\s*\([^)]+\)',
+            r'\bwhile\s+[^:]+:',
+            r'\bwhile\s*\([^)]+\)',
             
-            r'\breturn\s+[^;]+;',    # return value; (with semicolon)
-            r'\breturn\s+[^#\n]+$',  # return value (end of line, Python)
+            r'\breturn\s+[^;]+;',
+            r'\breturn\s+[^#\n]+$',
             
-            # Array/object literals with content
-            r'\[[^\]]+\]',           # [array with items]
-            r'\{[^}]+\}',            # {object with props}
+            r'\[[^\]]+\]',
+            r'\{[^}]+\}',
             
-            # Operators and expressions (must have actual operators)
-            r'[+\-*/%]=\s*\w',       # +=, -=, etc.
-            r'\w+\s*[+\-*/%]\s*\w',  # arithmetic operations
-            r'\w+\s*(==|!=|<=|>=|<|>)\s*\w',  # comparisons
+            r'[+\-*/%]=\s*\w',
+            r'\w+\s*[+\-*/%]\s*\w',
+            r'\w+\s*(==|!=|<=|>=|<|>)\s*\w',
             
-            # Method chaining (multiple dots)
-            r'\w+\.\w+\.\w+',        # obj.method.chain
+            r'\w+\.\w+\.\w+',
             
-            # Import/require statements
             r'^\s*(import|from|require)\s+',
         ]
         
         for pattern in code_patterns:
             if re.search(pattern, comment_content):
-                # Additional check: exclude comments that are clearly explanatory text
-                # These patterns suggest explanatory comments, not actual code
                 explanatory_patterns = [
                     r'^\s*(case|return|tuple|is|are|will|should|does|do|use|create|set|get)\s+\w+',
                     r'^\s*\w+\s+(case|is|are|will|should|does|do)',
@@ -165,7 +141,6 @@ class BadCommentsScanner(CodeScanner):
                 is_explanatory = False
                 for exp_pattern in explanatory_patterns:
                     if re.search(exp_pattern, comment_content, re.IGNORECASE):
-                        # Might be explanatory - only flag if it has clear code syntax
                         if not re.search(r'[=\(\)\[\]\{\}\+\-\*/%;]', comment_content):
                             is_explanatory = True
                             break
@@ -254,21 +229,15 @@ class BadCommentsScanner(CodeScanner):
                 elif char == "'" and not in_double_quote:
                     in_single_quote = not in_single_quote
             
-            # If we're not in a string, check for comment markers
             if not in_single_quote and not in_double_quote and not in_triple_single and not in_triple_double:
-                # Python comment
                 if char == '#' and (i == 0 or line[i-1] != '#' or (i > 0 and line[i-1:i+1] != '##')):
                     return line[i+1:].strip()
-                # C-style comment start
                 if i + 1 < len(line) and line[i:i+2] == '//':
                     return line[i+2:].strip()
-                # C-style block comment start
                 if i + 1 < len(line) and line[i:i+2] == '/*':
-                    # Find the end of the comment
                     end = line.find('*/', i + 2)
                     if end != -1:
                         return line[i+2:end].strip()
-                    # Multi-line comment - return what we have so far
                     return line[i+2:].strip()
             
             i += 1

@@ -95,34 +95,34 @@ class BehaviorTestHelper(BaseHelper):
             assert f'story_bot.{behavior}.{action}' in state['current_action'], \
                 f"State file current_action mismatch: expected to contain 'story_bot.{behavior}.{action}', got '{state['current_action']}'"
     
-    def assert_bot_result_success(self, result: dict, behavior: str, action: str):
+    def assert_bot_result_success(self, result, behavior: str, action: str):
         """
         Assert bot execute result has complete success structure.
         
-        Validates EVERY field in the result, not just checking one word.
+        bot.execute() returns Instructions object with instruction data.
+        Validates that instructions were returned successfully.
         """
-        # Assert all required keys exist
-        assert 'status' in result, "Missing 'status' key in result"
-        assert 'message' in result, "Missing 'message' key in result"
-        assert 'behavior' in result, "Missing 'behavior' key in result"
-        assert 'action' in result, "Missing 'action' key in result"
-        assert 'result' in result, "Missing 'result' key in result"
+        # Assert result exists and has instruction data
+        assert result is not None, "Result should not be None"
         
-        # Assert exact values
-        assert result['status'] == 'success', \
-            f"Expected status='success', got '{result['status']}'"
+        # Instructions are returned as Instructions object or dict
+        from agile_bot.src.instructions.instructions import Instructions
+        if isinstance(result, Instructions):
+            # Instructions object has _data attribute
+            assert hasattr(result, '_data'), \
+                f"Expected Instructions object to have '_data' attribute"
+        elif isinstance(result, dict):
+            # Dict should have instruction data
+            assert len(result) > 0, "Expected non-empty dict"
+        else:
+            raise AssertionError(f"Expected Instructions or dict, got {type(result)}")
         
-        assert result['behavior'] == behavior, \
-            f"Expected behavior='{behavior}', got '{result['behavior']}'"
+        # Verify bot is at correct behavior/action
+        assert self.parent.bot.behaviors.current.name == behavior, \
+            f"Expected behavior '{behavior}', got '{self.parent.bot.behaviors.current.name}'"
         
-        assert result['action'] == action, \
-            f"Expected action='{action}', got '{result['action']}'"
-        
-        assert result['message'] == f'Executed {behavior}.{action}', \
-            f"Expected message='Executed {behavior}.{action}', got '{result['message']}'"
-        
-        assert result['result'] == 'Action execution complete', \
-            f"Expected result='Action execution complete', got '{result['result']}'"
+        assert self.parent.bot.behaviors.current.actions.current_action_name == action, \
+            f"Expected action '{action}', got '{self.parent.bot.behaviors.current.actions.current_action_name}'"
     
     def assert_bot_result_error_behavior_not_found(self, result: dict, behavior: str):
         """Assert bot execute result shows behavior not found error."""

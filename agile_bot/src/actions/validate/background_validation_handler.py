@@ -38,7 +38,6 @@ class BackgroundValidationHandler:
         reports_dir.mkdir(parents=True, exist_ok=True)
         return reports_dir / f'{self.behavior.name}-validation-status-{timestamp}.md'
 
-
     def _start_validation_thread(self, context: 'ValidateActionContext', track_completion_fn, status_path: Path) -> None:
 
         def run_validation():

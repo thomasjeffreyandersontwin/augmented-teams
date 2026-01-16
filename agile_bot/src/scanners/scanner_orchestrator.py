@@ -1,4 +1,3 @@
-"""Scanner Orchestrator for coordinating scans across multiple rules."""
 
 from typing import List, TYPE_CHECKING
 from pathlib import Path
@@ -13,7 +12,6 @@ if TYPE_CHECKING:
 from .resources.scope import Scope
 from .resources.scan import Scan
 from .scanner_registry import ScannerRegistry
-
 
 class ScannerOrchestrator:
     
@@ -42,7 +40,6 @@ class ScannerOrchestrator:
         rule: 'Rule',
         scanner: 'Scanner' = None
     ) -> 'Scan':
-        # Default scanner from rule if not provided
         selected_scanner = scanner or self.selects_scanner_helpers_by_rule(rule)
         
         scan.undergoes_scan(selected_scanner)

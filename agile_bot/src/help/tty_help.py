@@ -1,34 +1,21 @@
-"""
-TTY adapter for Help domain object.
-"""
 
 from agile_bot.src.cli.adapters import TTYAdapter
 from agile_bot.src.help.help import Help
 
-
 class TTYHelp(TTYAdapter):
-    """Serializes Help domain object to TTY - delegates to help sub-objects."""
     
     def __init__(self, help_obj: Help):
-        """Initialize TTY adapter for Help.
-        
-        Args:
-            help_obj: Help domain object to serialize
-        """
         self.help_obj = help_obj
     
     def serialize(self) -> str:
-        """Convert Help to TTY string - assembles all help sections."""
         lines = []
         
-        # Core Commands section
         lines.append(self.add_color("Core Commands:", 'green'))
         core = self.help_obj.commands.core
         lines.append(f"  {core.navigation_pattern}  - {core.description_full}")
         lines.append(f"  {core.short_navigation_pattern}           - {core.description_short}")
         lines.append("")
         
-        # Available Components section
         lines.append("  Available Components:")
         lines.append(f"    behaviors   -> {self.help_obj.components.behaviors}")
         lines.append("")
@@ -44,19 +31,16 @@ class TTYHelp(TTYAdapter):
                 lines.append(f"      {operation}")
         lines.append("")
         
-        # Examples section
         lines.append("  Examples:")
         for cmd, desc in self.help_obj.commands.examples.examples:
             lines.append(f"    echo '{cmd}' | python repl_main.py{' ' * (30 - len(cmd))} -> {desc}")
         lines.append("")
         
-        # Other Commands section
         lines.append("  Other Commands:")
         for cmd, desc in self.help_obj.commands.other.commands:
             lines.append(f"    echo '{cmd}' | python repl_main.py{' ' * (30 - len(cmd))} - {desc}")
         lines.append("")
         
-        # Scope Command Details section
         lines.append("  Scope Command Details:")
         for rule in self.help_obj.scope.important_rules:
             lines.append(f"    {rule}")
@@ -67,7 +51,6 @@ class TTYHelp(TTYAdapter):
         lines.append("")
         lines.append("    Examples (CORRECT - each sets a SINGLE scope type):")
         for example, desc in self.help_obj.scope.correct_examples:
-            # Truncate long examples for display
             display_example = example if len(example) < 75 else example[:72] + "..."
             padding = max(1, 80 - len(display_example))
             lines.append(f"      {display_example}{' ' * padding} - {desc}")
@@ -79,7 +62,6 @@ class TTYHelp(TTYAdapter):
         return '\n'.join(lines)
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        """Parse command text into verb and args."""
         parts = text.split(maxsplit=1)
         verb = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""

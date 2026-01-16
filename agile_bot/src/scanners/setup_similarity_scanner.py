@@ -1,4 +1,3 @@
-"""Prototype scanner to detect repeated, similar setup payloads (dicts) that should be centralized."""
 
 from typing import List, Dict, Any, Optional, Tuple, Set
 from pathlib import Path
@@ -8,19 +7,11 @@ from collections import defaultdict
 from .test_scanner import TestScanner
 from .violation import Violation
 
-
 class SetupSimilarityScanner(TestScanner):
-    """
-    Detect repeated setup payloads (dicts) across tests that should be centralized
-    into shared helpers/fixtures/standard data sets.
-    
-    NOTE: This prototype derives signals purely from the code it scans—no hardcoded
-    domain keys. It looks for repeated keysets/shapes across tests and flags reuse.
-    """
 
     MIN_KEYS = 2
-    MIN_REUSE = 3  # across tests
-    MIN_INTRA_DUP = 2  # within a single test
+    MIN_REUSE = 3
+    MIN_INTRA_DUP = 2
 
     def scan(
         self,
@@ -43,7 +34,6 @@ class SetupSimilarityScanner(TestScanner):
 
             for func in [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name.startswith("test")]:
                 payloads = self._collect_payloads(func)
-                # Track intra-test duplicates
                 per_func_counts: Dict[Tuple[str, Tuple[str, ...]], List[int]] = defaultdict(list)
                 for fp, lineno in payloads:
                     per_func_counts[fp].append(lineno)
@@ -64,7 +54,6 @@ class SetupSimilarityScanner(TestScanner):
                             ).to_dict()
                         )
 
-        # Cross-test reuse
         for fp, occs in fingerprint_occurrences.items():
             if len(occs) >= self.MIN_REUSE:
                 keyset = fp[0]
@@ -96,13 +85,11 @@ class SetupSimilarityScanner(TestScanner):
             if isinstance(node, ast.Dict):
                 dict_node = node
             elif isinstance(node, ast.Call):
-                # look at args/kwargs for dicts
                 for arg in list(node.args) + [kw.value for kw in node.keywords]:
                     if isinstance(arg, ast.Dict):
                         dict_node = arg
                         lineno = getattr(arg, "lineno", lineno)
                         break
-                # handle json.dumps({...})
                 if not dict_node and isinstance(node.func, ast.Attribute) and node.func.attr in ("write_text", "write_bytes"):
                     if node.args:
                         first_arg = node.args[0]

@@ -1,4 +1,3 @@
-"""Scanner to ensure tests assert full domain results, not single cherry-picked fields."""
 
 from typing import List, Dict, Any, Optional, Set
 from pathlib import Path
@@ -7,12 +6,9 @@ import ast
 from .test_scanner import TestScanner
 from .violation import Violation
 
-
 class FullResultAssertionsScanner(TestScanner):
-    """Detect assertions that only check a single field of complex objects instead of the whole result."""
 
     TARGET_NAMES: Set[str] = {
-        # common state/result holders
         "state",
         "log",
         "activity_log",
@@ -47,7 +43,7 @@ class FullResultAssertionsScanner(TestScanner):
         for func in [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name.startswith("test")]:
             alias_targets = self._collect_result_aliases(func)
             if self._has_full_object_assert(func, alias_targets):
-                continue  # already asserting full object on result-like object
+                continue
             for node in ast.walk(func):
                 if isinstance(node, ast.Assert):
                     if self._is_single_field_assert(node.test, alias_targets):
@@ -65,30 +61,25 @@ class FullResultAssertionsScanner(TestScanner):
 
     def _is_single_field_assert(self, test_expr: ast.AST, aliases: Set[str]) -> bool:
         targets = aliases or set()
-        # assert obj['field'] == ... OR ... == obj['field']
         if isinstance(test_expr, ast.Compare):
             left = test_expr.left
             if self._is_subscript_or_attr_on_target(left, targets):
                 return True
-            # assert something == obj['field']
             for comp in test_expr.comparators:
                 if self._is_subscript_or_attr_on_target(comp, targets):
                     return True
-        # assert len(obj) == ... or ... == len(obj)
         if isinstance(test_expr, ast.Compare):
             sides = [test_expr.left] + list(test_expr.comparators)
             for side in sides:
                 if isinstance(side, ast.Call) and isinstance(side.func, ast.Name) and side.func.id == "len":
                     if side.args and self._is_target_name(side.args[0], targets):
                         return True
-        # membership checks: 'field' in obj  OR obj in something
         if isinstance(test_expr, ast.Compare):
             sides = [test_expr.left] + list(test_expr.comparators)
             for side in sides:
                 if self._is_target_name(side, targets) or self._is_subscript_or_attr_on_target(side, targets):
                     return True
         if isinstance(test_expr, ast.BoolOp):
-            # Any part that is single-field counts as violation
             return any(self._is_single_field_assert(value, targets) for value in test_expr.values)
         return False
 
@@ -108,23 +99,16 @@ class FullResultAssertionsScanner(TestScanner):
         return isinstance(node, ast.Name) and node.id in (self.TARGET_NAMES | aliases)
 
     def _has_full_object_assert(self, func_node: ast.FunctionDef, aliases: Set[str]) -> bool:
-        """Detect if function asserts equality of whole object (dict or dataclass-like) on a result-like target."""
         for node in ast.walk(func_node):
             if isinstance(node, ast.Assert) and isinstance(node.test, ast.Compare):
                 left = node.test.left
                 comps = node.test.comparators
                 if any(self._is_target_name(expr, aliases) for expr in [left, *comps]):
-                    # if comparing target directly to something (likely full object)
                     if not any(isinstance(expr, (ast.Subscript, ast.Attribute)) for expr in [left, *comps]):
                         return True
         return False
 
     def _collect_result_aliases(self, func_node: ast.FunctionDef) -> Set[str]:
-        """
-        Collect names that likely hold result/state objects:
-        - Assignment from a call with result-ish name.
-        - Assignment from an existing target name.
-        """
         aliases: Set[str] = set()
         for node in ast.walk(func_node):
             if isinstance(node, ast.Assign):

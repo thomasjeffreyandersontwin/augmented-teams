@@ -1,10 +1,8 @@
-"""Scanner for validating Background section usage in scenarios."""
 
 from typing import List, Dict, Any, Optional
 from .story_scanner import StoryScanner
 from .story_map import StoryNode, Story
 from .violation import Violation
-
 
 class BackgroundCommonSetupScanner(StoryScanner):
     
@@ -46,11 +44,7 @@ class BackgroundCommonSetupScanner(StoryScanner):
         return None
     
     def _check_background_scenario_specific(self, background: List[str], scenarios: List[Dict[str, Any]], node: StoryNode, rule_obj: Any) -> Optional[Dict[str, Any]]:
-        # This is harder to validate automatically - would need to check if background steps
-        # appear in all scenarios. For now, just check if background has very specific content
-        # that suggests it's scenario-specific
         
-        # If only 1-2 scenarios, background shouldn't exist (not common enough)
         if len(scenarios) < 3 and background:
             location = f"{node.map_location()}.background"
             return Violation(
@@ -89,7 +83,7 @@ class BackgroundCommonSetupScanner(StoryScanner):
             if step_lower.startswith('given ') or step_lower.startswith('and '):
                 steps.append(step)
             else:
-                break  # Stop at first When/Then
+                break
         return steps
     
     def _get_scenario_steps(self, scenario: Dict[str, Any]) -> List[str]:

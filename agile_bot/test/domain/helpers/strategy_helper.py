@@ -83,9 +83,11 @@ class StrategyTestHelper(BaseHelper):
         assert strategy_criteria is not None, "strategy_criteria should be set"
         assert isinstance(strategy_criteria, dict), "strategy_criteria should be a dict"
         
+        # assumptions is a dict with 'typical_assumptions' and 'assumptions_made'
         assumptions = instructions.get('assumptions')
         assert assumptions is not None, "assumptions should be set"
-        assert isinstance(assumptions, list), "assumptions should be a list"
+        assert isinstance(assumptions, dict), "assumptions should be a dict"
+        assert 'typical_assumptions' in assumptions, "assumptions should have 'typical_assumptions'"
     
     def get_strategy_file_path(self) -> Path:
         """Get path to strategy.json file in workspace.
@@ -127,8 +129,16 @@ class StrategyTestHelper(BaseHelper):
         
         Args:
             behavior_name: Behavior name (e.g., 'shape', 'discovery')
-            expected_decisions: Expected decisions_made dict (optional)
-            expected_assumptions: Expected assumptions_made list (optional)
+            expected_decisions: Expected decisions dict (optional)
+            expected_assumptions: Expected assumptions list (optional)
+        
+        Note: Actual save format is:
+        {
+          "behavior": {
+            "decisions": {...},
+            "assumptions": [...]
+          }
+        }
         """
         strategy_file = self.get_strategy_file_path()
         assert strategy_file.exists(), f"strategy.json should exist at {strategy_file}"
@@ -139,14 +149,14 @@ class StrategyTestHelper(BaseHelper):
         behavior_data = strategy_data[behavior_name]
         
         if expected_decisions:
-            assert 'strategy_criteria' in behavior_data, "Behavior should have strategy_criteria"
-            assert 'decisions_made' in behavior_data['strategy_criteria'], "strategy_criteria should have decisions_made"
+            # Actual format: behavior_data['decisions'] = {...}
+            assert 'decisions' in behavior_data, "Behavior should have 'decisions'"
             for key, value in expected_decisions.items():
-                assert behavior_data['strategy_criteria']['decisions_made'][key] == value, \
-                    f"Expected decision '{key}' = '{value}', got '{behavior_data['strategy_criteria']['decisions_made'].get(key)}'"
+                assert behavior_data['decisions'][key] == value, \
+                    f"Expected decision '{key}' = '{value}', got '{behavior_data['decisions'].get(key)}'"
         
         if expected_assumptions:
-            assert 'assumptions' in behavior_data, "Behavior should have assumptions"
-            assert 'assumptions_made' in behavior_data['assumptions'], "assumptions should have assumptions_made"
-            assert behavior_data['assumptions']['assumptions_made'] == expected_assumptions, \
-                f"Expected assumptions_made = {expected_assumptions}, got {behavior_data['assumptions']['assumptions_made']}"
+            # Actual format: behavior_data['assumptions'] = [...]
+            assert 'assumptions' in behavior_data, "Behavior should have 'assumptions'"
+            assert behavior_data['assumptions'] == expected_assumptions, \
+                f"Expected assumptions = {expected_assumptions}, got {behavior_data['assumptions']}"

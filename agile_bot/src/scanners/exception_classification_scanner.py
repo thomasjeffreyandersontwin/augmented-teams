@@ -1,4 +1,3 @@
-"""Scanner for validating exception classification by caller needs."""
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -6,7 +5,6 @@ import ast
 import re
 from .code_scanner import CodeScanner
 from .violation import Violation
-
 
 class ExceptionClassificationScanner(CodeScanner):
     
@@ -26,7 +24,6 @@ class ExceptionClassificationScanner(CodeScanner):
     def _check_exception_naming(self, tree: ast.AST, content: str, file_path: Path, rule_obj: Any) -> List[Dict[str, Any]]:
         violations = []
         
-        # Component-based exception patterns (bad)
         component_patterns = [
             r'Database\w+Exception',
             r'File\w+Exception',

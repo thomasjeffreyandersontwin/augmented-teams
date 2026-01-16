@@ -33,14 +33,8 @@ class ClarifyContextAction(Action):
         return self.required_context.evidence
 
     def _prepare_instructions(self, instructions, context: ClarifyActionContext):
-        """Load required questions, evidence, and saved clarification data into instructions.
-        
-        Note: Strategy data (criteria templates + saved decisions) is loaded by the base class
-        via _load_behavior_guardrails() -> _load_all_saved_guardrails(), so no need to load here.
-        """
         instructions.set('guardrails', {'required_context': self.required_context.instructions})
         
-        # Load saved clarification data if it exists
         clarifications = RequirementsClarifications(
             behavior_name=self.behavior.name,
             bot_paths=self.behavior.bot_paths,
@@ -50,12 +44,10 @@ class ClarifyContextAction(Action):
         )
         saved_data = clarifications.load()
         if saved_data and self.behavior.name in saved_data:
-            # Include saved clarification data in instructions for panel display
             instructions.set('clarification', saved_data[self.behavior.name])
     
 
     def do_execute(self, context: ClarifyActionContext = None):
-        """Execute clarify action - get instructions and save if answers provided."""
         if context is None:
             context = ClarifyActionContext()
         result = self.get_instructions(context)
