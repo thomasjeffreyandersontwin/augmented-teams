@@ -105,14 +105,33 @@ class MarkdownInstructions(MarkdownAdapter):
         base_instructions = instructions_dict.get('base_instructions', [])
         output_lines.extend(base_instructions)
         
-        # Add guardrails
+        # Add clarifications (saved answers and evidence, or template questions if none saved)
+        clarification_data = instructions_dict.get('clarification', {})
         guardrails_dict = instructions_dict.get('guardrails', {})
-        if guardrails_dict:
+        
+        # Check for saved clarification data first
+        saved_answers = {}
+        saved_evidence_provided = {}
+        if clarification_data:
+            key_questions_data = clarification_data.get('key_questions', {})
+            if isinstance(key_questions_data, dict):
+                saved_answers = key_questions_data.get('answers', {})
+            
+            evidence_data = clarification_data.get('evidence', {})
+            if isinstance(evidence_data, dict):
+                saved_evidence_provided = evidence_data.get('provided', {})
+        
+        # Show saved answers if they exist, otherwise show template questions
+        if saved_answers:
+            output_lines.append("")
+            output_lines.append("### Key Questions")
+            output_lines.append("")
+            for question, answer in saved_answers.items():
+                output_lines.append(f"- **{question}**: {answer}")
+        elif guardrails_dict:
             required_context = guardrails_dict.get('required_context', {})
             if required_context:
                 key_questions = required_context.get('key_questions', [])
-                evidence = required_context.get('evidence', [])
-                
                 if key_questions:
                     output_lines.append("")
                     output_lines.append("### Key Questions")
@@ -123,7 +142,18 @@ class MarkdownInstructions(MarkdownAdapter):
                     elif isinstance(key_questions, dict):
                         for question_key, question_text in key_questions.items():
                             output_lines.append(f"- **{question_key}**: {question_text}")
-                
+        
+        # Show provided evidence if it exists, otherwise show required evidence template
+        if saved_evidence_provided:
+            output_lines.append("")
+            output_lines.append("### Evidence")
+            output_lines.append("")
+            for evidence_key, evidence_content in saved_evidence_provided.items():
+                output_lines.append(f"- **{evidence_key}**: {evidence_content}")
+        elif guardrails_dict:
+            required_context = guardrails_dict.get('required_context', {})
+            if required_context:
+                evidence = required_context.get('evidence', [])
                 if evidence:
                     output_lines.append("")
                     output_lines.append("### Evidence")
@@ -134,16 +164,41 @@ class MarkdownInstructions(MarkdownAdapter):
                         for evidence_key, evidence_desc in evidence.items():
                             output_lines.append(f"- **{evidence_key}**: {evidence_desc}")
         
-        # Strategy action sections
+        # Strategy action sections - check both 'strategy_criteria' and 'strategy' keys
         strategy_criteria = instructions_dict.get('strategy_criteria', {})
+        strategy_data = instructions_dict.get('strategy', {})
+        
+        # Get strategy_criteria from either location
+        if strategy_data and 'strategy_criteria' in strategy_data:
+            strategy_criteria = strategy_criteria or strategy_data['strategy_criteria']
+        
+        # Get saved decisions (check both 'decisions' and 'decisions_made' keys)
+        saved_decisions = {}
         if strategy_criteria:
+            saved_decisions = strategy_criteria.get('decisions', {}) or strategy_criteria.get('decisions_made', {})
+        
+        # Show saved decisions if they exist, otherwise show criteria template
+        if saved_decisions:
             output_lines.append("")
             output_lines.append("### Decisions")
             output_lines.append("")
-            
-            # First show criteria template (if available)
+            output_lines.append("**Your Decisions:**")
+            output_lines.append("")
+            for decision_key, decision_value in saved_decisions.items():
+                output_lines.append(f"**{decision_key}:**")
+                if isinstance(decision_value, list):
+                    for item in decision_value:
+                        output_lines.append(f"  - {item}")
+                else:
+                    output_lines.append(f"  {decision_value}")
+                output_lines.append("")
+        elif strategy_criteria:
+            # Show criteria template only if no saved decisions
             criteria_template = strategy_criteria.get('criteria', {})
             if criteria_template:
+                output_lines.append("")
+                output_lines.append("### Decisions")
+                output_lines.append("")
                 for criteria_key, criteria_data in criteria_template.items():
                     question = criteria_data.get('question', '')
                     if question:
@@ -156,45 +211,37 @@ class MarkdownInstructions(MarkdownAdapter):
                         for option in options:
                             output_lines.extend(self._format_strategy_option(option))
                     output_lines.append("")
-            
-            # Then show saved decisions
-            saved_decisions = strategy_criteria.get('decisions', {})
-            if saved_decisions:
-                output_lines.append("**Your Decisions:**")
-                output_lines.append("")
-                for decision_key, decision_value in saved_decisions.items():
-                    output_lines.append(f"**{decision_key}:**")
-                    if isinstance(decision_value, list):
-                        for item in decision_value:
-                            output_lines.append(f"  - {item}")
-                    else:
-                        output_lines.append(f"  {decision_value}")
-                    output_lines.append("")
         
+        # Get assumptions from either 'assumptions' key or from 'strategy' key
         assumptions = instructions_dict.get('assumptions', {})
-        if assumptions:
+        if strategy_data and 'assumptions' in strategy_data:
+            assumptions = assumptions or strategy_data['assumptions']
+        
+        # Get saved assumptions (check both 'assumptions' and 'assumptions_made' keys)
+        saved_assumptions = []
+        if isinstance(assumptions, dict):
+            saved_assumptions = assumptions.get('assumptions', []) or assumptions.get('assumptions_made', [])
+        elif isinstance(assumptions, list):
+            # Legacy format - treat entire list as saved assumptions
+            saved_assumptions = assumptions
+        
+        # Show saved assumptions if they exist, otherwise show template
+        if saved_assumptions:
             output_lines.append("")
             output_lines.append("### Assumptions")
             output_lines.append("")
-            
-            # Show template assumptions
-            if isinstance(assumptions, dict):
-                typical_assumptions = assumptions.get('typical_assumptions', [])
-                if typical_assumptions:
-                    for assumption in typical_assumptions:
-                        output_lines.append(f"- {assumption}")
-                
-                # Show saved assumptions
-                saved_assumptions = assumptions.get('assumptions', [])
-                if saved_assumptions:
-                    output_lines.append("")
-                    output_lines.append("**Your Assumptions:**")
-                    output_lines.append("")
-                    for assumption in saved_assumptions:
-                        output_lines.append(f"- {assumption}")
-            elif isinstance(assumptions, list):
-                # Legacy format - just a list of assumptions
-                for assumption in assumptions:
+            output_lines.append("**Your Assumptions:**")
+            output_lines.append("")
+            for assumption in saved_assumptions:
+                output_lines.append(f"- {assumption}")
+        elif isinstance(assumptions, dict):
+            # Show template assumptions only if no saved assumptions
+            typical_assumptions = assumptions.get('typical_assumptions', [])
+            if typical_assumptions:
+                output_lines.append("")
+                output_lines.append("### Assumptions")
+                output_lines.append("")
+                for assumption in typical_assumptions:
                     output_lines.append(f"- {assumption}")
         
         # Add display content

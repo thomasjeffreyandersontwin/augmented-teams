@@ -62,9 +62,29 @@ class TTYInstructions(TTYAdapter):
         base_instructions = instructions_dict.get('base_instructions', [])
         output_lines.extend(base_instructions)
         
-        # Add guardrails (delegate to Guardrails adapter)
+        # Add clarifications (saved answers and evidence, or template questions if none saved)
+        clarification_data = instructions_dict.get('clarification', {})
         guardrails_dict = instructions_dict.get('guardrails', {})
-        if guardrails_dict:
+        
+        # Check for saved clarification data first
+        saved_answers = {}
+        saved_evidence_provided = {}
+        if clarification_data:
+            key_questions_data = clarification_data.get('key_questions', {})
+            if isinstance(key_questions_data, dict):
+                saved_answers = key_questions_data.get('answers', {})
+            
+            evidence_data = clarification_data.get('evidence', {})
+            if isinstance(evidence_data, dict):
+                saved_evidence_provided = evidence_data.get('provided', {})
+        
+        # Show saved answers if they exist, otherwise show template questions
+        if saved_answers:
+            output_lines.append("")
+            output_lines.append(self.add_bold("Key Questions:"))
+            for question, answer in saved_answers.items():
+                output_lines.append(f"- {self.add_bold(f'{question}:')} {answer}")
+        elif guardrails_dict:
             # Check if we have a domain object or dict (backward compatibility)
             if hasattr(self.instructions, '_guardrails') and self.instructions._guardrails:
                 # New pattern: delegate to Guardrails adapter
@@ -76,8 +96,6 @@ class TTYInstructions(TTYAdapter):
                 required_context = guardrails_dict.get('required_context', {})
                 if required_context:
                     key_questions = required_context.get('key_questions', [])
-                    evidence = required_context.get('evidence', [])
-                    
                     if key_questions:
                         output_lines.append("")
                         output_lines.append(self.add_bold("Key Questions:"))
@@ -87,35 +105,79 @@ class TTYInstructions(TTYAdapter):
                         elif isinstance(key_questions, dict):
                             for question_key, question_text in key_questions.items():
                                 output_lines.append(f"- {self.add_bold(f'{question_key}:')} {question_text}")
-                    
-                    if evidence:
-                        output_lines.append("")
-                        output_lines.append(self.add_bold("Evidence:"))
-                        if isinstance(evidence, list):
-                            output_lines.append(', '.join(evidence))
-                        elif isinstance(evidence, dict):
-                            for evidence_key, evidence_desc in evidence.items():
-                                output_lines.append(f"- {self.add_bold(f'{evidence_key}:')} {evidence_desc}")
+        
+        # Show provided evidence if it exists, otherwise show required evidence template
+        if saved_evidence_provided:
+            output_lines.append("")
+            output_lines.append(self.add_bold("Evidence:"))
+            for evidence_key, evidence_content in saved_evidence_provided.items():
+                output_lines.append(f"- {self.add_bold(f'{evidence_key}:')} {evidence_content}")
+        elif guardrails_dict and not hasattr(self.instructions, '_guardrails'):
+            # Only show template evidence if we're using the old pattern and no saved evidence
+            required_context = guardrails_dict.get('required_context', {})
+            if required_context:
+                evidence = required_context.get('evidence', [])
+                if evidence:
+                    output_lines.append("")
+                    output_lines.append(self.add_bold("Evidence:"))
+                    if isinstance(evidence, list):
+                        output_lines.append(', '.join(evidence))
+                    elif isinstance(evidence, dict):
+                        for evidence_key, evidence_desc in evidence.items():
+                            output_lines.append(f"- {self.add_bold(f'{evidence_key}:')} {evidence_desc}")
         
         # ACTION-SPECIFIC SECTIONS
         
         # Strategy action: delegate to Strategy adapter if available
         strategy_criteria = instructions_dict.get('strategy_criteria', {})
-        assumptions = instructions_dict.get('assumptions', [])
+        strategy_data = instructions_dict.get('strategy', {})
+        assumptions = instructions_dict.get('assumptions', {})
+        
+        # Get strategy_criteria from either location
+        if strategy_data and 'strategy_criteria' in strategy_data:
+            strategy_criteria = strategy_criteria or strategy_data['strategy_criteria']
+        
+        # Get saved decisions (check both 'decisions' and 'decisions_made' keys)
+        saved_decisions = {}
+        if strategy_criteria:
+            saved_decisions = strategy_criteria.get('decisions', {}) or strategy_criteria.get('decisions_made', {})
+        
+        # Get assumptions from either 'assumptions' key or from 'strategy' key
+        if strategy_data and 'assumptions' in strategy_data:
+            assumptions = assumptions or strategy_data['assumptions']
+        
+        # Get saved assumptions (check both 'assumptions' and 'assumptions_made' keys)
+        saved_assumptions = []
+        if isinstance(assumptions, dict):
+            saved_assumptions = assumptions.get('assumptions', []) or assumptions.get('assumptions_made', [])
+        elif isinstance(assumptions, list):
+            # Legacy format - treat entire list as saved assumptions
+            saved_assumptions = assumptions
         
         if hasattr(self.instructions, '_strategy') and self.instructions._strategy:
             # New pattern: delegate to Strategy adapter
             from agile_bot.src.cli.adapter_factory import AdapterFactory
             strategy_adapter = AdapterFactory.create(self.instructions._strategy, 'tty')
             output_lines.append(strategy_adapter.serialize())
-        elif strategy_criteria or assumptions:
+        elif saved_decisions or saved_assumptions or strategy_criteria or assumptions:
             # Old pattern: format dict manually (fallback for backward compatibility)
-            if strategy_criteria:
+            
+            # Show saved decisions if they exist, otherwise show criteria template
+            if saved_decisions:
                 output_lines.append("")
                 output_lines.append(self.add_bold("Decisions:"))
-                
-                # Get saved decisions
-                saved_decisions = strategy_criteria.get('decisions', {})
+                output_lines.append(self.add_bold("Your Decisions:"))
+                for decision_key, decision_value in saved_decisions.items():
+                    output_lines.append("")
+                    output_lines.append(f"{self.add_bold(f'{decision_key}:')}")
+                    if isinstance(decision_value, list):
+                        for item in decision_value:
+                            output_lines.append(f"  - {item}")
+                    else:
+                        output_lines.append(f"  {decision_value}")
+            elif strategy_criteria:
+                output_lines.append("")
+                output_lines.append(self.add_bold("Decisions:"))
                 
                 # Show criteria with options, mark selected ones
                 criteria_template = strategy_criteria.get('criteria', {})
@@ -136,27 +198,20 @@ class TTYInstructions(TTYAdapter):
                             for option in options:
                                 output_lines.extend(self._format_strategy_option(option, selected_value))
             
-            if assumptions:
+            # Show saved assumptions if they exist, otherwise show template
+            if saved_assumptions:
                 output_lines.append("")
                 output_lines.append(self.add_bold("Assumptions:"))
-                
-                # Show template assumptions
-                if isinstance(assumptions, dict):
-                    typical_assumptions = assumptions.get('typical_assumptions', [])
-                    if typical_assumptions:
-                        for assumption in typical_assumptions:
-                            output_lines.append(f"- {assumption}")
-                    
-                    # Show saved assumptions
-                    saved_assumptions = assumptions.get('assumptions', [])
-                    if saved_assumptions:
-                        output_lines.append("")
-                        output_lines.append(self.add_bold("Your Assumptions:"))
-                        for assumption in saved_assumptions:
-                            output_lines.append(f"- {assumption}")
-                elif isinstance(assumptions, list):
-                    # Legacy format - just a list of assumptions
-                    for assumption in assumptions:
+                output_lines.append(self.add_bold("Your Assumptions:"))
+                for assumption in saved_assumptions:
+                    output_lines.append(f"- {assumption}")
+            elif isinstance(assumptions, dict):
+                # Show template assumptions only if no saved assumptions
+                typical_assumptions = assumptions.get('typical_assumptions', [])
+                if typical_assumptions:
+                    output_lines.append("")
+                    output_lines.append(self.add_bold("Assumptions:"))
+                    for assumption in typical_assumptions:
                         output_lines.append(f"- {assumption}")
         
         # Add display content (action-specific formatted content)
