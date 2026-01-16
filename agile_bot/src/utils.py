@@ -9,6 +9,20 @@ def read_json_file(file_path: Path) -> Dict[str, Any]:
         raise FileNotFoundError(f'File not found: {file_path}')
     return json.loads(file_path.read_text(encoding='utf-8-sig'))
 
+def parse_command_text(text: str) -> tuple[str, str]:
+    """Parse command text into verb and arguments.
+    
+    Args:
+        text: Command text to parse (e.g., "scope --filter=story")
+        
+    Returns:
+        Tuple of (verb, args) where verb is lowercase and args is the rest
+    """
+    parts = text.split(maxsplit=1)
+    verb = parts[0].lower()
+    args = parts[1] if len(parts) > 1 else ""
+    return verb, args
+
 class TerminalFormatter:
     RESET = '\x1b[0m'
     BLACK = '\x1b[30m'
@@ -201,14 +215,24 @@ def build_test_method_link(test_file: str, test_method: str, workspace_directory
             file_uri = link_builder.get_file_uri(str(test_file_path), line_number)
             return f" | [Test]({file_uri})"
 
-def find_test_class_line(test_file_path: Path, test_class_name: str) -> Optional[int]:
-    if not test_file_path.exists() or not test_class_name or test_class_name == '?':
+def _find_ast_node_line(file_path: Path, node_name: str, node_type: type) -> Optional[int]:
+    """Generic helper to find AST node line number by name and type.
+    
+    Args:
+        file_path: Path to Python file to parse
+        node_name: Name of the node to find
+        node_type: Type of AST node to look for (ast.ClassDef, ast.FunctionDef, etc.)
+        
+    Returns:
+        Line number where node is defined, or None if not found
+    """
+    if not file_path.exists() or not node_name or node_name == '?':
         return None
     try:
-        content = test_file_path.read_text(encoding='utf-8')
-        tree = ast.parse(content, filename=str(test_file_path))
+        content = file_path.read_text(encoding='utf-8')
+        tree = ast.parse(content, filename=str(file_path))
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == test_class_name:
+            if isinstance(node, node_type) and node.name == node_name:
                 return node.lineno
     except SyntaxError:
         return None
@@ -216,17 +240,10 @@ def find_test_class_line(test_file_path: Path, test_class_name: str) -> Optional
         return None
     return None
 
+def find_test_class_line(test_file_path: Path, test_class_name: str) -> Optional[int]:
+    """Find line number where a test class is defined."""
+    return _find_ast_node_line(test_file_path, test_class_name, ast.ClassDef)
+
 def find_test_method_line(test_file_path: Path, test_method_name: str) -> Optional[int]:
-    if not test_file_path.exists() or not test_method_name or test_method_name == '?':
-        return None
-    try:
-        content = test_file_path.read_text(encoding='utf-8')
-        tree = ast.parse(content, filename=str(test_file_path))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == test_method_name:
-                return node.lineno
-    except SyntaxError:
-        return None
-    except Exception:
-        return None
-    return None
+    """Find line number where a test method/function is defined."""
+    return _find_ast_node_line(test_file_path, test_method_name, ast.FunctionDef)

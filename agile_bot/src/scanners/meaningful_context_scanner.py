@@ -31,16 +31,34 @@ class MeaningfulContextScanner(CodeScanner):
         content = '\n'.join(lines)
         
         magic_number_patterns = [
-            r'\b(200|404|500)\b',
-            r'\b(86400|3600|60)\b',
-            r'\b(1024|2048|4096)\b',
+            r'\b(200|404|500)\b',  # HTTP status codes
+            r'\b(86400|3600)\b',  # Time constants (seconds in day/hour)
         ]
         
         for line_num, line in enumerate(lines, 1):
+            stripped = line.strip()
+            
+            # Skip lines that are defining the patterns themselves (scanner definitions)
+            if 'magic_number_patterns' in stripped or r'\b(' in stripped:
+                continue
+            
+            # Skip lines that are defining named constants (already have meaningful names)
+            if '=' in stripped and re.match(r'^\s*[A-Z_][A-Z0-9_]*\s*=', stripped):
+                continue
+            
+            # Skip string multiplication for display purposes (e.g., "─" * 60)
+            if re.search(r'["\'].*["\']\s*\*\s*\d+', stripped):
+                continue
+            
             for pattern in magic_number_patterns:
-                if re.search(pattern, line):
-                    if '=' in line and ('const' in line or 'final' in line):
-                        continue
+                match = re.search(pattern, stripped)
+                if match:
+                    # Skip if number is in a comment
+                    if '#' in stripped:
+                        comment_pos = stripped.index('#')
+                        number_pos = match.start()
+                        if comment_pos < number_pos:
+                            continue
                     
                     violation = self._create_violation_with_snippet(
                         rule_obj=rule_obj,
@@ -67,22 +85,50 @@ class MeaningfulContextScanner(CodeScanner):
             
             numbered_var_pattern = re.compile(r'^\w+\d+$')
             
+            # Meaningful patterns that should NOT be flagged as violations
+            meaningful_patterns = [
+                # Indexing schemes (0-indexed, 1-indexed)
+                re.compile(r'^.+_(0|1)$'),  # e.g., start_line_0, end_line_1
+                # ANY variable ending in 1 or 2 (comparison/pairing pattern)
+                # This is a common idiom for comparing two similar things
+                re.compile(r'^[a-z_]+[12]$'),  # e.g., func1, func2, preview1, preview2
+                # Compound comparison variables (with underscores)
+                re.compile(r'^[a-z_]+[12]_[a-z_]+$'),  # e.g., func1_lower, block1_nodes
+                # Coordinate/dimension names
+                re.compile(r'^[xy]\d+$'),  # e.g., x1, y2
+                # Version numbers
+                re.compile(r'^(version|v)\d+$'),
+            ]
+            
             def check_name(var_name: str, lineno: int):
-                if numbered_var_pattern.match(var_name):
-                    if var_name.startswith('test') or var_name in ['test1', 'test2']:
+                if not numbered_var_pattern.match(var_name):
+                    return
+                
+                # Skip test-related variables
+                if var_name.startswith('test') or var_name in ['test1', 'test2']:
+                    return
+                
+                # Skip meaningful patterns
+                for pattern in meaningful_patterns:
+                    if pattern.match(var_name):
                         return
-                    violations.append(self._create_violation_with_snippet(
-                        rule_obj=rule_obj,
-                        violation_message=f'Line {lineno} uses numbered variable "{var_name}" - use meaningful descriptive name',
-                        file_path=file_path,
-                        line_number=lineno,
-                        severity='warning',
-                        content=content,
-                        start_line=lineno,
-                        end_line=lineno,
-                        context_before=1,
-                        max_lines=3
-                    ))
+                
+                # Skip very short numbered variables (likely loop counters)
+                if len(var_name) <= 2:  # e.g., i1, j2, n1, n2
+                    return
+                
+                violations.append(self._create_violation_with_snippet(
+                    rule_obj=rule_obj,
+                    violation_message=f'Line {lineno} uses numbered variable "{var_name}" - use meaningful descriptive name',
+                    file_path=file_path,
+                    line_number=lineno,
+                    severity='warning',
+                    content=content,
+                    start_line=lineno,
+                    end_line=lineno,
+                    context_before=1,
+                    max_lines=3
+                ))
             
             for node in ast.walk(tree):
                 if isinstance(node, ast.Assign):

@@ -30,7 +30,9 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
     def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Dict[str, Any] = None) -> List[Violation]:
         violations = []
         
-        if not self.rule_obj:
+        # Use injected rule_obj if provided, otherwise fall back to self.rule_obj
+        effective_rule = rule_obj if rule_obj is not None else self.rule_obj
+        if not effective_rule:
             return violations
         
         self.current_file_path = file_path
@@ -59,14 +61,16 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
                 if re.search(pattern, line):
                     violations.append(self._create_violation(
                         line_num,
-                        f"{description}. Use object properties instead of accessing _config directly."
+                        f"{description}. Use object properties instead of accessing _config directly.",
+                        effective_rule
                     ))
             
             if re.search(self.config_file_pattern, line):
                 if self._looks_like_object_exists_context(lines, line_num):
                     violations.append(self._create_violation(
                         line_num,
-                        "Reading config file directly when object model may exist. Use object properties instead."
+                        "Reading config file directly when object model may exist. Use object properties instead.",
+                        effective_rule
                     ))
         
         return violations
@@ -116,9 +120,10 @@ class PreferObjectModelOverConfigScanner(CodeScanner):
         
         return any(re.search(pattern, context) for pattern in object_patterns)
     
-    def _create_violation(self, line_num: int, message: str) -> Violation:
+    def _create_violation(self, line_num: int, message: str, effective_rule: Any = None) -> Violation:
+        rule_to_use = effective_rule if effective_rule is not None else self.rule_obj
         return Violation(
-            rule=self.rule_obj,
+            rule=rule_to_use,
             violation_message=message,
             location=str(self.current_file_path),
             line_number=line_num,

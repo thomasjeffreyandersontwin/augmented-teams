@@ -62,7 +62,5 @@ class TTYHelp(TTYAdapter):
         return '\n'.join(lines)
     
     def parse_command_text(self, text: str) -> tuple[str, str]:
-        parts = text.split(maxsplit=1)
-        verb = parts[0].lower()
-        args = parts[1] if len(parts) > 1 else ""
-        return verb, args
+        from agile_bot.src.utils import parse_command_text
+        return parse_command_text(text)

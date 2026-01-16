@@ -145,20 +145,30 @@ class Action:
         return "value"
     
     def _get_parameter_description(self, param_name: str) -> str:
-        if 'answers' in param_name or 'key_questions_answered' in param_name:
-            return "Dict mapping question keys to answer strings"
-        elif 'evidence_provided' in param_name or 'evidence' in param_name:
-            return "Dict mapping evidence types to evidence content"
-        elif 'choices' in param_name or 'decisions_made' in param_name or 'decisions' in param_name:
-            return "Dict mapping decision criteria keys to selected options/values"
-        elif 'assumptions' in param_name or 'assumptions_made' in param_name:
-            return "List of assumption strings"
-        elif 'scope' in param_name:
-            return "Scope structure: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}"
-        elif 'path' in param_name or 'directory' in param_name:
+        """Get meaningful description for a parameter by delegating to domain objects."""
+        from .clarify.requirements_clarifications import RequirementsClarifications
+        from .strategy.strategy_decision import StrategyDecision
+        from ..scope import Scope
+        
+        # Registry mapping parameter name patterns to domain object description methods
+        description_registry = [
+            (['answers', 'key_questions_answered'], RequirementsClarifications.get_answers_parameter_description),
+            (['evidence_provided', 'evidence'], RequirementsClarifications.get_evidence_parameter_description),
+            (['choices', 'decisions_made', 'decisions'], StrategyDecision.get_decisions_parameter_description),
+            (['assumptions', 'assumptions_made'], StrategyDecision.get_assumptions_parameter_description),
+            (['scope'], Scope.get_parameter_description),
+        ]
+        
+        # Check each pattern in registry
+        for patterns, description_method in description_registry:
+            if any(pattern in param_name for pattern in patterns):
+                return description_method()
+        
+        # Handle path/directory separately (not a domain object)
+        if 'path' in param_name or 'directory' in param_name:
             return "Path to working directory or file"
-        else:
-            return "Optional parameter"
+        
+        return "Optional parameter"
 
     def _inject_clarification_data(self, instructions: Dict[str, Any]) -> list:
         return self._context_data_injector.inject_clarification_data(instructions)
@@ -553,27 +563,28 @@ class Action:
     def _prepare_instructions(self, instructions, context: ActionContext):
         pass
     
-    def _format_instructions_for_display(self, instructions) -> str:
-        instructions_dict = instructions.to_dict()
-        output_lines = []
+    def _format_behavior_section(self, output_lines: list):
+        """Format behavior instructions section."""
+        if not self.behavior:
+            return
         
+        behavior_name = self.behavior.name if hasattr(self.behavior, 'name') else 'unknown'
+        output_lines.append(f"**Behavior Instructions - {behavior_name}**")
         
-        if self.behavior:
-            behavior_name = self.behavior.name if hasattr(self.behavior, 'name') else 'unknown'
-            output_lines.append(f"**Behavior Instructions - {behavior_name}**")
-            
-            if hasattr(self.behavior, 'description') and self.behavior.description:
-                output_lines.append(f"The purpose of this behavior is to {self.behavior.description.lower()}")
-                output_lines.append("")
-            
-            if hasattr(self.behavior, 'instructions') and self.behavior.instructions:
-                behavior_instructions = self.behavior.instructions
-                if isinstance(behavior_instructions, list):
-                    output_lines.extend(behavior_instructions)
-                elif isinstance(behavior_instructions, str):
-                    output_lines.append(behavior_instructions)
-                output_lines.append("")
+        if hasattr(self.behavior, 'description') and self.behavior.description:
+            output_lines.append(f"The purpose of this behavior is to {self.behavior.description.lower()}")
+            output_lines.append("")
         
+        if hasattr(self.behavior, 'instructions') and self.behavior.instructions:
+            behavior_instructions = self.behavior.instructions
+            if isinstance(behavior_instructions, list):
+                output_lines.extend(behavior_instructions)
+            elif isinstance(behavior_instructions, str):
+                output_lines.append(behavior_instructions)
+            output_lines.append("")
+    
+    def _format_action_section(self, output_lines: list):
+        """Format action instructions section."""
         action_name = self.action_name if hasattr(self, 'action_name') else 'unknown'
         output_lines.append(f"**Action Instructions - {action_name}**")
         
@@ -586,6 +597,58 @@ class Action:
             if behavior_action_instructions:
                 output_lines.extend(behavior_action_instructions)
                 output_lines.append("")
+    
+    def _format_key_questions(self, key_questions, output_lines: list):
+        """Format key questions section."""
+        if not key_questions:
+            return
+        
+        output_lines.append("")
+        output_lines.append("**Key Questions:**")
+        
+        if isinstance(key_questions, list):
+            for question in key_questions:
+                output_lines.append(f"- {question}")
+        elif isinstance(key_questions, dict):
+            for question_key, question_text in key_questions.items():
+                output_lines.append(f"- **{question_key}**: {question_text}")
+    
+    def _format_evidence(self, evidence, output_lines: list):
+        """Format evidence section."""
+        if not evidence:
+            return
+        
+        output_lines.append("")
+        output_lines.append("**Evidence:**")
+        
+        if isinstance(evidence, list):
+            output_lines.append(', '.join(evidence))
+        elif isinstance(evidence, dict):
+            for evidence_key, evidence_desc in evidence.items():
+                output_lines.append(f"- **{evidence_key}**: {evidence_desc}")
+    
+    def _format_guardrails_section(self, guardrails_dict: dict, output_lines: list):
+        """Format guardrails section with required context."""
+        if not guardrails_dict:
+            return
+        
+        required_context = guardrails_dict.get('required_context', {})
+        if not required_context:
+            return
+        
+        key_questions = required_context.get('key_questions', [])
+        evidence = required_context.get('evidence', [])
+        
+        self._format_key_questions(key_questions, output_lines)
+        self._format_evidence(evidence, output_lines)
+    
+    def _format_instructions_for_display(self, instructions) -> str:
+        """Format instructions for display by building sections."""
+        instructions_dict = instructions.to_dict()
+        output_lines = []
+        
+        self._format_behavior_section(output_lines)
+        self._format_action_section(output_lines)
         
         output_lines.append("---")
         output_lines.append("")
@@ -594,31 +657,7 @@ class Action:
         output_lines.extend(base_instructions)
         
         guardrails_dict = instructions_dict.get('guardrails', {})
-        if guardrails_dict:
-            required_context = guardrails_dict.get('required_context', {})
-            if required_context:
-                key_questions = required_context.get('key_questions', [])
-                evidence = required_context.get('evidence', [])
-                
-                if key_questions:
-                    output_lines.append("")
-                    output_lines.append("**Key Questions:**")
-                    if isinstance(key_questions, list):
-                        for question in key_questions:
-                            output_lines.append(f"- {question}")
-                    elif isinstance(key_questions, dict):
-                        for question_key, question_text in key_questions.items():
-                            output_lines.append(f"- **{question_key}**: {question_text}")
-                
-                if evidence:
-                    output_lines.append("")
-                    output_lines.append("**Evidence:**")
-                    if isinstance(evidence, list):
-                        # Show as comma-delimited list instead of one per line
-                        output_lines.append(', '.join(evidence))
-                    elif isinstance(evidence, dict):
-                        for evidence_key, evidence_desc in evidence.items():
-                            output_lines.append(f"- **{evidence_key}**: {evidence_desc}")
+        self._format_guardrails_section(guardrails_dict, output_lines)
         
         display_content = instructions_dict.get('display_content', [])
         if display_content:

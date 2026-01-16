@@ -13,6 +13,46 @@ logger = logging.getLogger(__name__)
 
 class ResourceOrientedCodeScanner(CodeScanner):
     
+    # Domain entities, design patterns, and services that are legitimately named with agent nouns
+    LEGITIMATE_AGENT_NOUNS = {
+        # Domain entities
+        'Collaborator',  # CRC domain entity representing collaborators in Class-Responsibility-Collaborator
+        'Contributor',
+        'Actor',
+        'User',
+        'Owner',
+        'Author',
+        'Developer',
+        'Participant',
+        
+        # Design patterns (Gang of Four patterns)
+        'Visitor',       # Visitor pattern for traversing object structures
+        'Observer',      # Observer pattern for event handling
+        'Decorator',     # Decorator pattern
+        'Iterator',      # Iterator pattern
+        'Interpreter',   # Interpreter pattern
+        'Mediator',      # Mediator pattern
+        'Adapter',       # Adapter pattern
+        'Builder',       # Builder pattern
+        'Subscriber',    # Publisher-Subscriber pattern
+        'Publisher',
+        'Listener',
+        'Handler',
+        
+        # Domain services (from domain model)
+        'Orchestrator',  # Orchestrates visitor pattern for domain traversal
+        'Synchronizer',  # Synchronizes format between representations
+        'Coordinator',   # Coordinates domain operations
+        'Dispatcher',
+        'Router',
+        'Controller',
+        'Resolver',
+        'Injector',
+        'Tracker',
+        'Monitor',
+        'Manager',
+    }
+    
     def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         return []
     
@@ -60,6 +100,14 @@ class ResourceOrientedCodeScanner(CodeScanner):
                 continue
         
         for loader_class_name, (loader_file, loader_node, suffix) in loader_classes.items():
+            # Skip if it's a legitimate agent noun (domain entity, pattern, or service)
+            if loader_class_name in self.LEGITIMATE_AGENT_NOUNS:
+                continue
+            
+            # Skip if it's a domain entity (dataclass in domain.py or similar)
+            if self._is_domain_entity(loader_file, loader_node):
+                continue
+            
             if not self._is_owned_by_domain_object(loader_class_name, loader_node, all_files, all_classes):
                 suggested_name = loader_class_name[:-len(suffix)] if loader_class_name.endswith(suffix) else loader_class_name
                 violation = Violation(
@@ -72,6 +120,19 @@ class ResourceOrientedCodeScanner(CodeScanner):
                 violations.append(violation)
         
         return violations
+    
+    def _is_domain_entity(self, file_path: Path, class_node: ast.ClassDef) -> bool:
+        """Check if a class is a domain entity (dataclass in domain.py or similar domain model file)."""
+        # Check if it's in a domain model file
+        if 'domain' in file_path.name.lower():
+            # Check if it has @dataclass decorator
+            for decorator in class_node.decorator_list:
+                if isinstance(decorator, ast.Name) and decorator.id == 'dataclass':
+                    return True
+                if isinstance(decorator, ast.Attribute) and decorator.attr == 'dataclass':
+                    return True
+        
+        return False
     
     def _is_owned_by_domain_object(
         self, 

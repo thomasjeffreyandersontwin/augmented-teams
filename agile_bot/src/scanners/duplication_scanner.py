@@ -12,7 +12,10 @@ import json
 
 logger = logging.getLogger(__name__)
 
-FILE_SCAN_TIMEOUT = 60
+# Configuration constants
+FILE_SCAN_TIMEOUT = 60  # seconds
+MAX_FILE_SIZE = 500_000  # bytes (500KB)
+PREVIEW_LENGTH = 200  # characters
 
 def _safe_print(*args, **kwargs):
     try:
@@ -112,7 +115,7 @@ class DuplicationScanner(CodeScanner):
         
         try:
             file_size = file_path.stat().st_size
-            if file_size > 500_000:
+            if file_size > MAX_FILE_SIZE:
                 _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                 return violations
         except Exception as e:
@@ -378,6 +381,9 @@ class DuplicationScanner(CodeScanner):
                     if self._calls_different_methods(block1['ast_nodes'], block2['ast_nodes']):
                         continue
                     
+                    if self._is_sequential_appends_with_different_content(block1['ast_nodes'], block2['ast_nodes']):
+                        continue
+                    
                     should_report = False
                     
                     if block1['func_name'] != block2['func_name']:
@@ -515,7 +521,7 @@ class DuplicationScanner(CodeScanner):
             previews = []
             for block in filtered_blocks:
                 location = f"{block['func_name']}:{block['start_line']}-{block['end_line']}"
-                preview = block['preview'][:200] + '...' if len(block['preview']) > 200 else block['preview']
+                preview = block['preview'][:PREVIEW_LENGTH] + '...' if len(block['preview']) > PREVIEW_LENGTH else block['preview']
                 previews.append(f"Location ({location}):\n```python\n{preview}\n```")
             
             violation_message = (
@@ -592,6 +598,15 @@ class DuplicationScanner(CodeScanner):
             if self._is_list_building_pattern(block_statements):
                 continue
             
+            if self._is_sequential_output_building(block_statements):
+                continue
+            
+            if self._is_logging_or_output_pattern(block_statements):
+                continue
+            
+            if self._is_string_formatting_pattern(block_statements):
+                continue
+            
             actual_code_count = self._count_actual_code_statements(block_statements)
             if actual_code_count < 3:
                 continue
@@ -630,6 +645,15 @@ class DuplicationScanner(CodeScanner):
                 if self._is_mostly_assertions(block_statements):
                     continue
                 if self._is_test_pattern(block_statements):
+                    continue
+                
+                if self._is_sequential_output_building(block_statements):
+                    continue
+                
+                if self._is_logging_or_output_pattern(block_statements):
+                    continue
+                
+                if self._is_string_formatting_pattern(block_statements):
                     continue
                 
                 actual_code_count = self._count_actual_code_statements(block_statements)
@@ -922,6 +946,43 @@ class DuplicationScanner(CodeScanner):
         
         return count
     
+    def _is_string_formatting_pattern(self, statements: List[ast.stmt]) -> bool:
+        """Check if this is primarily string formatting/building operations"""
+        if not statements:
+            return False
+        
+        string_ops = 0
+        total_count = 0
+        
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            total_count += 1
+            
+            # Check for f-strings, format calls, % formatting
+            if isinstance(stmt, ast.Assign):
+                if isinstance(stmt.value, ast.JoinedStr):  # f-string
+                    string_ops += 1
+                elif isinstance(stmt.value, ast.Call):
+                    if isinstance(stmt.value.func, ast.Attribute):
+                        if stmt.value.func.attr in ('format', 'join'):
+                            string_ops += 1
+                elif isinstance(stmt.value, ast.BinOp):
+                    if isinstance(stmt.value.op, (ast.Add, ast.Mod)):  # + or %
+                        string_ops += 1
+            
+            # String method calls
+            if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                if isinstance(stmt.value.func, ast.Attribute):
+                    if stmt.value.func.attr in ('format', 'join', 'replace', 'strip', 'split'):
+                        string_ops += 1
+        
+        if total_count == 0:
+            return False
+        
+        return (string_ops / total_count) >= 0.6
+    
     def _is_mostly_assertions(self, statements: List[ast.stmt]) -> bool:
         if not statements:
             return False
@@ -978,12 +1039,122 @@ class DuplicationScanner(CodeScanner):
         test_pattern_ratio = (helper_count + assertion_count) / total
         return test_pattern_ratio >= 0.75 and other_count <= 1
     
+    def _is_sequential_output_building(self, statements: List[ast.stmt]) -> bool:
+        """Check if this is just sequential appends/extends to any list (common output building)"""
+        if not statements or len(statements) < 3:
+            return False
+        
+        append_count = 0
+        total_count = 0
+        has_loop_with_appends = False
+        
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            total_count += 1
+            
+            # Check for direct append/extend calls
+            if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                if isinstance(stmt.value.func, ast.Attribute):
+                    method_name = stmt.value.func.attr
+                    if method_name in ('append', 'extend'):
+                        append_count += 1
+            
+            # Check for loops that contain appends (help text formatting pattern)
+            if isinstance(stmt, ast.For):
+                # Count as output building if the loop body contains appends
+                loop_has_appends = False
+                for node in ast.walk(stmt):
+                    if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+                        if isinstance(node.value.func, ast.Attribute):
+                            if node.value.func.attr in ('append', 'extend'):
+                                loop_has_appends = True
+                                break
+                
+                if loop_has_appends:
+                    has_loop_with_appends = True
+                    append_count += 1  # Count the loop itself as output building
+        
+        if total_count == 0:
+            return False
+        
+        # Pattern 1: 70%+ direct appends
+        if (append_count / total_count) >= 0.7:
+            return True
+        
+        # Pattern 2: Has a loop with appends + some surrounding appends (help text pattern)
+        if has_loop_with_appends and append_count >= 2:
+            return True
+        
+        return False
+    
+    def _is_logging_or_output_pattern(self, statements: List[ast.stmt]) -> bool:
+        """Check if this is primarily logging, printing, or string output"""
+        if not statements:
+            return False
+        
+        output_count = 0
+        total_count = 0
+        
+        for stmt in statements:
+            if self._is_docstring_or_comment(stmt):
+                continue
+            
+            total_count += 1
+            
+            # Check for logging calls
+            if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+                if isinstance(stmt.value.func, ast.Attribute):
+                    method_name = stmt.value.func.attr
+                    obj_name = None
+                    if isinstance(stmt.value.func.value, ast.Name):
+                        obj_name = stmt.value.func.value.id
+                    
+                    # Logging patterns
+                    if obj_name in ('logger', 'log', 'logging'):
+                        output_count += 1
+                        continue
+                    
+                    # Common logging methods
+                    if method_name in ('debug', 'info', 'warning', 'error', 'critical', 'log', 'exception'):
+                        output_count += 1
+                        continue
+                    
+                    # Print-like functions
+                    if method_name in ('write', 'writeline', 'writelines', 'flush'):
+                        output_count += 1
+                        continue
+                
+                # Direct print calls
+                if isinstance(stmt.value.func, ast.Name):
+                    func_name = stmt.value.func.id
+                    if func_name in ('print', '_safe_print', 'safe_print'):
+                        output_count += 1
+                        continue
+            
+            # Check for assignments to string/list that are clearly output building
+            if isinstance(stmt, ast.Assign):
+                # String concatenation patterns
+                if isinstance(stmt.value, ast.BinOp):
+                    if isinstance(stmt.value.op, ast.Add):
+                        # Check if it's string addition
+                        output_count += 0.5  # Half credit for string building
+        
+        if total_count == 0:
+            return False
+        
+        # If 60%+ is logging/output, exclude it
+        return (output_count / total_count) >= 0.6
+    
     def _is_list_building_pattern(self, statements: List[ast.stmt]) -> bool:
         if not statements:
             return False
         
         list_building_count = 0
         total_count = 0
+        has_append = False
+        sequential_appends = 0
         
         for stmt in statements:
             if self._is_docstring_or_comment(stmt):
@@ -998,6 +1169,23 @@ class DuplicationScanner(CodeScanner):
                     method_name = stmt.value.func.attr
                     if method_name in ('extend', 'append'):
                         is_list_building = True
+                        has_append = True
+                        sequential_appends += 1
+            
+            # Check for list comprehensions or list assignments
+            if isinstance(stmt, ast.Assign):
+                if isinstance(stmt.value, (ast.List, ast.ListComp)):
+                    is_list_building = True
+            
+            # Check for appends inside if/else blocks
+            if isinstance(stmt, ast.If):
+                for substmt in ast.walk(stmt):
+                    if isinstance(substmt, ast.Expr) and isinstance(substmt.value, ast.Call):
+                        if isinstance(substmt.value.func, ast.Attribute):
+                            if substmt.value.func.attr in ('extend', 'append'):
+                                list_building_count += 1
+                                has_append = True
+                                break
             
             if is_list_building:
                 list_building_count += 1
@@ -1005,7 +1193,15 @@ class DuplicationScanner(CodeScanner):
         if total_count == 0:
             return False
         
-        return (list_building_count / total_count) >= 0.75
+        # If this is ALL or mostly sequential appends (common output building pattern), it's not duplication
+        if sequential_appends >= 3 and (sequential_appends / total_count) >= 0.7:
+            return True
+        
+        # If this is mostly list building with append calls inside conditionals, it's likely a formatting pattern
+        if has_append and (list_building_count / total_count) >= 0.5:
+            return True
+        
+        return (list_building_count / total_count) >= 0.7
     
     def _is_simple_property(self, func_node: ast.FunctionDef) -> bool:
         if not func_node.decorator_list:
@@ -1102,6 +1298,24 @@ class DuplicationScanner(CodeScanner):
                         if func1_lower.startswith(op) and func2_lower.startswith(op):
                             return True
         
+        # Check if they're iterating over different collections
+        collections1 = self._extract_iteration_targets(block1.get('ast_nodes', []))
+        collections2 = self._extract_iteration_targets(block2.get('ast_nodes', []))
+        
+        if collections1 and collections2:
+            # If they iterate over completely different collections, they're in different domains
+            if not collections1.intersection(collections2):
+                return True
+        
+        # Check if they're building different list types
+        list_targets1 = self._extract_list_building_targets(block1.get('ast_nodes', []))
+        list_targets2 = self._extract_list_building_targets(block2.get('ast_nodes', []))
+        
+        if list_targets1 and list_targets2:
+            # If they're building different lists, they're likely parallel implementations
+            if not list_targets1.intersection(list_targets2):
+                return True
+        
         return False
     
     def _calls_different_methods(self, block1_nodes: List[ast.stmt], block2_nodes: List[ast.stmt]) -> bool:
@@ -1144,6 +1358,86 @@ class DuplicationScanner(CodeScanner):
                         method_calls.append(call.func.id)
         
         return method_calls
+    
+    def _extract_iteration_targets(self, nodes: List[ast.stmt]) -> Set[str]:
+        """Extract the names of collections being iterated over (e.g., 'behaviors', 'actions')"""
+        targets = set()
+        
+        for node in nodes:
+            for child in ast.walk(node):
+                if isinstance(child, ast.For):
+                    # Extract what we're iterating over
+                    if isinstance(child.iter, ast.Attribute):
+                        # e.g., self.bot.behaviors -> 'behaviors'
+                        targets.add(child.iter.attr)
+                    elif isinstance(child.iter, ast.Name):
+                        # e.g., items -> 'items'
+                        targets.add(child.iter.id)
+        
+        return targets
+    
+    def _extract_list_building_targets(self, nodes: List[ast.stmt]) -> Set[str]:
+        """Extract the names of lists being built (e.g., 'behavior_names', 'action_names')"""
+        targets = set()
+        
+        for node in nodes:
+            # Look for assignments creating empty lists
+            if isinstance(node, ast.Assign):
+                if isinstance(node.value, ast.List) and len(node.value.elts) == 0:
+                    for target in node.targets:
+                        if isinstance(target, ast.Name):
+                            targets.add(target.id)
+            
+            # Look for append calls
+            for child in ast.walk(node):
+                if isinstance(child, ast.Expr) and isinstance(child.value, ast.Call):
+                    if isinstance(child.value.func, ast.Attribute):
+                        if child.value.func.attr == 'append':
+                            # Get the list being appended to
+                            if isinstance(child.value.func.value, ast.Name):
+                                targets.add(child.value.func.value.id)
+        
+        return targets
+    
+    def _is_sequential_appends_with_different_content(self, block1_nodes: List[ast.stmt], block2_nodes: List[ast.stmt]) -> bool:
+        """Check if both blocks are just sequential appends but with different string content"""
+        
+        # Extract append content from block 1
+        appends1 = []
+        for node in block1_nodes:
+            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+                if isinstance(node.value.func, ast.Attribute) and node.value.func.attr == 'append':
+                    if node.value.args:
+                        arg = node.value.args[0]
+                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                            appends1.append(arg.value)
+        
+        # Extract append content from block 2
+        appends2 = []
+        for node in block2_nodes:
+            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+                if isinstance(node.value.func, ast.Attribute) and node.value.func.attr == 'append':
+                    if node.value.args:
+                        arg = node.value.args[0]
+                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                            appends2.append(arg.value)
+        
+        # If both blocks are mostly appends (80%+) with string literals
+        block1_append_ratio = len(appends1) / len(block1_nodes) if block1_nodes else 0
+        block2_append_ratio = len(appends2) / len(block2_nodes) if block2_nodes else 0
+        
+        if block1_append_ratio >= 0.8 and block2_append_ratio >= 0.8:
+            # Check if the content is actually different
+            if appends1 and appends2:
+                # Calculate how many string literals are different
+                common_strings = set(appends1) & set(appends2)
+                total_unique_strings = len(set(appends1) | set(appends2))
+                
+                if total_unique_strings > 0:
+                    similarity = len(common_strings) / total_unique_strings
+                    # If less than 30% of the strings are common, they're different content
+                    if similarity < 0.3:
+                        return True
         
         return False
     
@@ -1554,7 +1848,7 @@ class DuplicationScanner(CodeScanner):
             
             try:
                 file_size = file_path.stat().st_size
-                if file_size > 500_000:
+                if file_size > MAX_FILE_SIZE:
                     _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                     continue
             except Exception as e:
@@ -1620,7 +1914,7 @@ class DuplicationScanner(CodeScanner):
             
             try:
                 file_size = file_path.stat().st_size
-                if file_size > 500_000:
+                if file_size > MAX_FILE_SIZE:
                     _safe_print(f"Skipping large file ({file_size/1024:.1f}KB): {file_path}")
                     continue
             except Exception as e:

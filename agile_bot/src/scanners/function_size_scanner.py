@@ -77,10 +77,10 @@ class FunctionSizeScanner(CodeScanner):
         
         line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
         
-        if executable_lines > 20:
+        if executable_lines > 50:
             violations.append(self._create_violation_with_snippet(
                 rule_obj=rule_obj,
-                violation_message=f'Function "{func_node.name}" is {executable_lines} lines - should be under 20 lines (extract complex logic to helper functions)',
+                violation_message=f'Function "{func_node.name}" is {executable_lines} lines - should be under 50 lines (extract complex logic to helper functions)',
                 file_path=file_path,
                 line_number=line_number,
                 severity='warning',

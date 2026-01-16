@@ -208,48 +208,118 @@ class Bot:
                 'message': f'Error getting instructions: {str(e)}'
             }
     
-    def scope(self, scope_filter: Optional[str] = None):
-        from ..scope.scope import ScopeType
-        import os
+    def _clear_scope_and_return_result(self, message: str):
+        """Helper to clear scope, save, and return success result.
         
-        if scope_filter is None:
-            return self._scope
-        
-        is_clear = False
-        
+        Args:
+            message: Success message to include in result
+            
+        Returns:
+            ScopeCommandResult with success status
+        """
+        self._scope.clear()
+        self._scope.save()
+        from ..scope.scope_command_result import ScopeCommandResult
+        return ScopeCommandResult(
+            status='success',
+            message=message,
+            scope=self._scope
+        )
+    
+    def _normalize_scope_filter(self, scope_filter: str) -> str:
+        """Normalize scope filter by removing quotes and 'set ' prefix."""
         scope_filter_lower = scope_filter.lower().strip()
         if scope_filter_lower.startswith('set '):
             scope_filter = scope_filter[4:].strip()
-            scope_filter_lower = scope_filter.lower().strip()
         
         scope_filter = scope_filter.strip()
         if (scope_filter.startswith('"') and scope_filter.endswith('"')) or \
            (scope_filter.startswith("'") and scope_filter.endswith("'")):
             scope_filter = scope_filter[1:-1]
-            scope_filter_lower = scope_filter.lower().strip()
         
+        return scope_filter.strip()
+    
+    def _determine_scope_type(self, prefix: str):
+        """Determine ScopeType from prefix string."""
+        from ..scope.scope import ScopeType
+        
+        if prefix in ('file', 'files'):
+            return ScopeType.FILES
+        elif prefix in ('story', 'epic'):
+            return ScopeType.STORY
+        elif prefix == 'increment':
+            return ScopeType.INCREMENT
+        else:
+            return ScopeType.STORY
+    
+    def _looks_like_file_path(self, values: list) -> bool:
+        """Check if values look like file paths."""
+        import os
+        return any(os.path.isabs(v) or '\\' in v or '/' in v for v in values)
+    
+    def _parse_delimited_scope(self, scope_filter: str):
+        """Parse scope filter with = or : delimiter."""
+        delimiter = '=' if '=' in scope_filter else ':'
+        prefix, value_part = scope_filter.split(delimiter, 1)
+        
+        prefix = prefix.strip().lower()
+        value_part = value_part.strip()
+        scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
+        
+        scope_type = self._determine_scope_type(prefix)
+        if prefix in ('story', 'epic'):
+            prefix = prefix  # Keep original
+        elif prefix not in ('file', 'files', 'increment'):
+            prefix = 'story'  # Default
+        
+        return scope_type, prefix, scope_values
+    
+    def _parse_spaced_scope(self, scope_filter: str):
+        """Parse scope filter with space separator."""
+        parts = scope_filter.split(None, 1)
+        potential_prefix = parts[0].lower()
+        
+        if potential_prefix in ('story', 'epic', 'increment', 'file', 'files'):
+            prefix = potential_prefix
+            value_part = parts[1] if len(parts) > 1 else ''
+            scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
+            scope_type = self._determine_scope_type(prefix)
+            return scope_type, prefix, scope_values
+        
+        # No recognized prefix - auto-detect
+        scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
+        if self._looks_like_file_path(scope_values):
+            return self._determine_scope_type('files'), 'files', scope_values
+        else:
+            return self._determine_scope_type('story'), 'story', scope_values
+    
+    def _parse_undelimited_scope(self, scope_filter: str):
+        """Parse scope filter without delimiters - auto-detect."""
+        scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
+        
+        if self._looks_like_file_path(scope_values):
+            return self._determine_scope_type('files'), 'files', scope_values
+        else:
+            return self._determine_scope_type('story'), 'story', scope_values
+    
+    def scope(self, scope_filter: Optional[str] = None):
+        """Set or get scope filter for the bot."""
+        from ..scope.scope import ScopeType
+        
+        if scope_filter is None:
+            return self._scope
+        
+        scope_filter = self._normalize_scope_filter(scope_filter)
+        scope_filter_lower = scope_filter.lower()
+        
+        # Handle special commands
         if scope_filter_lower == 'clear':
-            is_clear = True
-            self._scope.clear()
-            self._scope.save()
-            from ..scope.scope_command_result import ScopeCommandResult
-            return ScopeCommandResult(
-                status='success',
-                message='Scope cleared',
-                scope=self._scope
-            )
+            return self._clear_scope_and_return_result('Scope cleared')
         
-        if scope_filter.lower() == 'all':
-            self._scope.clear()
-            self._scope.save()
-            from ..scope.scope_command_result import ScopeCommandResult
-            return ScopeCommandResult(
-                status='success',
-                message='Scope cleared (set to all)',
-                scope=self._scope
-            )
+        if scope_filter_lower == 'all':
+            return self._clear_scope_and_return_result('Scope cleared (set to all)')
         
-        if scope_filter.lower() == 'showall':
+        if scope_filter_lower == 'showall':
             self._scope.filter(ScopeType.SHOW_ALL, [])
             self._scope.save()
             from ..scope.scope_command_result import ScopeCommandResult
@@ -259,72 +329,13 @@ class Bot:
                 scope=self._scope
             )
         
-        # 1. "story=TestStory" or "story:TestStory" (delimited)
-        
+        # Parse scope filter based on format
         if '=' in scope_filter or ':' in scope_filter:
-            if '=' in scope_filter:
-                delimiter = '='
-                prefix, value_part = scope_filter.split('=', 1)
-            else:
-                delimiter = ':'
-                prefix, value_part = scope_filter.split(':', 1)
-            
-            prefix = prefix.strip().lower()
-            value_part = value_part.strip()
-            scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
-            
-            if prefix in ('file', 'files'):
-                scope_type = ScopeType.FILES
-            elif prefix in ('story', 'epic'):
-                scope_type = ScopeType.STORY
-                prefix = 'story' if prefix == 'story' else 'epic'
-            elif prefix == 'increment':
-                scope_type = ScopeType.INCREMENT
-            else:
-                scope_type = ScopeType.STORY
-                prefix = 'story'
+            scope_type, prefix, scope_values = self._parse_delimited_scope(scope_filter)
         elif ' ' in scope_filter:
-            parts = scope_filter.split(None, 1)
-            potential_prefix = parts[0].lower()
-            
-            if potential_prefix in ('story', 'epic', 'increment', 'file', 'files'):
-                prefix = potential_prefix
-                value_part = parts[1] if len(parts) > 1 else ''
-                scope_values = [v.strip() for v in value_part.split(',') if v.strip()]
-                
-                if prefix in ('file', 'files'):
-                    scope_type = ScopeType.FILES
-                elif prefix in ('story', 'epic'):
-                    scope_type = ScopeType.STORY
-                elif prefix == 'increment':
-                    scope_type = ScopeType.INCREMENT
-                else:
-                    scope_type = ScopeType.STORY
-            else:
-                scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
-                looks_like_path = any(
-                    os.path.isabs(v) or '\\' in v or '/' in v 
-                    for v in scope_values
-                )
-                if looks_like_path:
-                    scope_type = ScopeType.FILES
-                    prefix = 'files'
-                else:
-                    scope_type = ScopeType.STORY
-                    prefix = 'story'
+            scope_type, prefix, scope_values = self._parse_spaced_scope(scope_filter)
         else:
-            # No delimiter or space - auto-detect based on value
-            scope_values = [v.strip() for v in scope_filter.split(',') if v.strip()]
-            looks_like_path = any(
-                os.path.isabs(v) or '\\' in v or '/' in v 
-                for v in scope_values
-            )
-            if looks_like_path:
-                scope_type = ScopeType.FILES
-                prefix = 'files'
-            else:
-                scope_type = ScopeType.STORY
-                prefix = 'story'
+            scope_type, prefix, scope_values = self._parse_undelimited_scope(scope_filter)
         
         self._scope.filter(scope_type, scope_values)
         self._scope.save()
@@ -369,6 +380,26 @@ class Bot:
             'message': f'Working directory set to: {new_path}'
         }
 
+    def _navigate_and_save(self, behavior, action_name: str, message_prefix: str = "Moved to") -> Dict[str, Any]:
+        """Helper to navigate to an action and save state.
+        
+        Args:
+            behavior: The behavior containing the action
+            action_name: Name of action to navigate to
+            message_prefix: Prefix for success message (default: "Moved to")
+            
+        Returns:
+            Success status dict with navigation details
+        """
+        behavior.actions.navigate_to(action_name)
+        self.behaviors.save_state()
+        return {
+            'status': 'success',
+            'message': f'{message_prefix} {behavior.name}.{action_name}',
+            'behavior': behavior.name,
+            'action': action_name
+        }
+    
     def next(self) -> Dict[str, Any]:
         if not self.behaviors.current:
             return {
@@ -382,14 +413,7 @@ class Bot:
         if not current_action:
             if behavior.action_names:
                 first_action = behavior.action_names[0]
-                behavior.actions.navigate_to(first_action)
-                self.behaviors.save_state()
-                return {
-                    'status': 'success',
-                    'message': f'Moved to {behavior.name}.{first_action}',
-                    'behavior': behavior.name,
-                    'action': first_action
-                }
+                return self._navigate_and_save(behavior, first_action)
             else:
                 return {
                     'status': 'error',
@@ -401,14 +425,7 @@ class Bot:
             current_index = action_names.index(current_action)
             if current_index < len(action_names) - 1:
                 next_action = action_names[current_index + 1]
-                behavior.actions.navigate_to(next_action)
-                self.behaviors.save_state()
-                return {
-                    'status': 'success',
-                    'message': f'Moved to {behavior.name}.{next_action}',
-                    'behavior': behavior.name,
-                    'action': next_action
-                }
+                return self._navigate_and_save(behavior, next_action)
             else:
                 advance_result = self.behaviors.advance()
                 return advance_result
@@ -439,14 +456,7 @@ class Bot:
             current_index = action_names.index(current_action)
             if current_index > 0:
                 prev_action = action_names[current_index - 1]
-                behavior.actions.navigate_to(prev_action)
-                self.behaviors.save_state()
-                return {
-                    'status': 'success',
-                    'message': f'Moved back to {behavior.name}.{prev_action}',
-                    'behavior': behavior.name,
-                    'action': prev_action
-                }
+                return self._navigate_and_save(behavior, prev_action, "Moved back to")
             else:
                 return {
                     'status': 'info',

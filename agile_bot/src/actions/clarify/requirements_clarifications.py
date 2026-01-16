@@ -4,6 +4,16 @@ from ..strategy.json_persistent import JsonPersistent
 from .required_context import RequiredContext
 
 class RequirementsClarifications(JsonPersistent):
+    
+    @staticmethod
+    def get_answers_parameter_description() -> str:
+        """Get description for key_questions_answered/answers parameter."""
+        return "Dict mapping question keys to answer strings"
+    
+    @staticmethod
+    def get_evidence_parameter_description() -> str:
+        """Get description for evidence_provided/evidence parameter."""
+        return "Dict mapping evidence types to evidence content"
 
     def __init__(self, behavior_name: str, bot_paths: BotPath, required_context: RequiredContext, key_questions_answered: Dict[str, Any]=None, evidence_provided: Dict[str, Any]=None, context: Optional[Union[List[str], str]]=None):
         super().__init__(bot_paths, 'clarification.json')

@@ -2,12 +2,14 @@
 import sys
 import os
 import json
+import io
 from pathlib import Path
 
+# Configure Windows console encoding
 if sys.platform == 'win32':
-    import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
+# Setup paths before importing agile_bot modules
 script_path = Path(__file__).resolve()
 workspace_root = script_path.parent.parent.parent.parent
 
@@ -37,6 +39,7 @@ if 'WORKING_AREA' not in os.environ:
     if 'WORKING_AREA' not in os.environ:
         os.environ['WORKING_AREA'] = str(workspace_root)
 
+# Import agile_bot modules after environment setup
 from agile_bot.src.bot.bot import Bot
 from agile_bot.src.bot.workspace import get_workspace_directory
 from agile_bot.src.cli.cli_session import CLISession
@@ -70,7 +73,6 @@ def main():
         if '--format json' in first_line or '--format=json' in first_line:
             json_mode = True
             mode = 'json'
-        import io
         remaining_input = sys.stdin.read()
         sys.stdin = io.StringIO(first_line + '\n' + remaining_input)
     

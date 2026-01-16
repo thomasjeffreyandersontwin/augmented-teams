@@ -413,7 +413,60 @@ class CLISession:
                 return result
         raise ValueError(f"Unknown command: {command}")
     
+    def _prepare_action_context(self, action, args: str):
+        """Prepare action context with optional arguments."""
+        from ..actions.action_context import ActionContext
+        context = action.context_class() if hasattr(action, 'context_class') else ActionContext()
+        
+        if args and hasattr(context, 'message'):
+            context.message = args
+        
+        return context
+    
+    def _build_instructions_from_dict(self, instructions_dict, action):
+        """Build Instructions object from result dictionary."""
+        from ..instructions.instructions import Instructions
+        
+        if not isinstance(instructions_dict, dict):
+            return instructions_dict
+        
+        instructions = Instructions(
+            base_instructions=instructions_dict.get('base_instructions', []),
+            bot_paths=action.behavior.bot_paths,
+            scope=action.instructions.scope if hasattr(action, 'instructions') else None
+        )
+        
+        for key, value in instructions_dict.items():
+            if key not in ('base_instructions', 'display_content'):
+                instructions.set(key, value)
+        
+        display_content = instructions_dict.get('display_content', [])
+        for line in display_content:
+            instructions.add_display(line)
+        
+        return instructions
+    
+    def _execute_non_workflow_action(self, action, action_name: str, args: str):
+        """Execute non-workflow action and return instructions."""
+        try:
+            context = self._prepare_action_context(action, args)
+            result = action.execute(context)
+            
+            # Check if result contains instructions dict
+            if isinstance(result, dict) and 'instructions' in result:
+                return self._build_instructions_from_dict(result['instructions'], action)
+            
+            # Otherwise get instructions normally
+            return action.get_instructions(context)
+            
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Error executing {action_name}: {str(e)}'
+            }
+    
     def _handle_action_shortcut(self, action_name: str, args: str) -> Any:
+        """Handle shortcut command for executing an action."""
         if not self.bot.behaviors.current:
             return {
                 'status': 'error',
@@ -421,53 +474,20 @@ class CLISession:
             }
         
         behavior = self.bot.behaviors.current
-        
         action = behavior.actions.find_by_name(action_name)
+        
         if not action:
             return None
         
+        # Check if non-workflow action
         is_non_workflow = action in behavior.actions._non_workflow_actions
         
         if is_non_workflow:
-            try:
-                from ..actions.action_context import ActionContext
-                context = action.context_class() if hasattr(action, 'context_class') else ActionContext()
-                
-                if args:
-                    if hasattr(context, 'message'):
-                        context.message = args
-                
-                result = action.execute(context)
-                
-                if isinstance(result, dict) and 'instructions' in result:
-                    instructions_dict = result['instructions']
-                    from ..instructions.instructions import Instructions
-                    if isinstance(instructions_dict, dict):
-                        instructions = Instructions(
-                            base_instructions=instructions_dict.get('base_instructions', []),
-                            bot_paths=action.behavior.bot_paths,
-                            scope=action.instructions.scope if hasattr(action, 'instructions') else None
-                        )
-                        for key, value in instructions_dict.items():
-                            if key not in ('base_instructions', 'display_content'):
-                                instructions.set(key, value)
-                        display_content = instructions_dict.get('display_content', [])
-                        for line in display_content:
-                            instructions.add_display(line)
-                    else:
-                        instructions = instructions_dict
-                else:
-                    instructions = action.get_instructions(context)
-                
-                return instructions
-            except Exception as e:
-                return {
-                    'status': 'error',
-                    'message': f'Error executing {action_name}: {str(e)}'
-                }
-        else:
-            behavior.actions.navigate_to(action_name)
-            return self._route_to_behavior_action(f"{behavior.name}.{action_name}")
+            return self._execute_non_workflow_action(action, action_name, args)
+        
+        # Workflow action - navigate and route
+        behavior.actions.navigate_to(action_name)
+        return self._route_to_behavior_action(f"{behavior.name}.{action_name}")
     
     def _get_adapter_for_domain(self, domain_object: Any):
         if self.mode:

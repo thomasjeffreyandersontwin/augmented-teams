@@ -4,6 +4,7 @@ from ..scanners.code_scanner import CodeScanner
 from ..scanners.scanner_registry import ScannerRegistry
 from ..scanners.test_scanner import TestScanner
 from ..utils import read_json_file
+from .scan_config import ScanConfig
 
 class Rule:
 
@@ -114,25 +115,42 @@ class Rule:
             return False
         return issubclass(self._scanner, TestScanner) or issubclass(self._scanner, CodeScanner)
 
-    def scan(self, story_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]]=None, on_file_scanned: Optional[Any]=None, skip_cross_file: bool=False, changed_files: Optional[Dict[str, List[Path]]]=None, status_writer: Optional[Any]=None, max_cross_file_comparisons: int=20) -> Dict[str, Any]:
+    def scan(self, config: ScanConfig) -> Dict[str, Any]:
+        """Execute scanner with the provided configuration.
+        
+        Args:
+            config: ScanConfig object containing all scan parameters
+            
+        Returns:
+            Dict with scan results including violations and status
+        """
         if not self.has_scanner:
             return {}
-        files = files or {}
-        files_to_scan = changed_files if changed_files else files
-        test_files = files_to_scan.get('test', [])
-        code_files = files_to_scan.get('src', [])
-        all_test_files = files.get('test', [])
-        all_code_files = files.get('src', [])
+        
         self._initialize_scan_state()
         try:
             scanner_instance = self._get_scanner_instance()
-            self._execute_file_by_file_scan(scanner_instance, story_graph, test_files, code_files, on_file_scanned)
-            self._execute_cross_file_scan(scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer, max_cross_file_comparisons)
+            self._execute_file_by_file_scan(scanner_instance, config)
+            self._execute_cross_file_scan(scanner_instance, config)
             return self._build_scan_result()
         except Exception as e:
             self._scan_error = str(e)
             self._scanner_execution_status = f'EXECUTION_FAILED: {str(e)}'
             raise
+    
+    # Legacy method signature for backward compatibility
+    def scan_legacy(self, story_graph: Dict[str, Any], files: Optional[Dict[str, List[Path]]]=None, on_file_scanned: Optional[Any]=None, skip_cross_file: bool=False, changed_files: Optional[Dict[str, List[Path]]]=None, status_writer: Optional[Any]=None, max_cross_file_comparisons: int=20) -> Dict[str, Any]:
+        """Legacy scan method - converts parameters to ScanConfig and delegates."""
+        config = ScanConfig(
+            story_graph=story_graph,
+            files=files,
+            changed_files=changed_files,
+            skip_cross_file=skip_cross_file,
+            max_cross_file_comparisons=max_cross_file_comparisons,
+            on_file_scanned=on_file_scanned,
+            status_writer=status_writer
+        )
+        return self.scan(config)
 
     def _initialize_scan_state(self):
         self._file_by_file_violations = []
@@ -147,8 +165,14 @@ class Rule:
         self._scanner_execution_status = 'EXECUTION_SUCCESS'
         return scanner_instance
 
-    def _execute_file_by_file_scan(self, scanner_instance, story_graph, test_files, code_files, on_file_scanned):
-        violations_file_by_file = scanner_instance.scan(story_graph, rule_obj=self, test_files=test_files, code_files=code_files, on_file_scanned=on_file_scanned)
+    def _execute_file_by_file_scan(self, scanner_instance, config: ScanConfig):
+        violations_file_by_file = scanner_instance.scan(
+            config.story_graph, 
+            rule_obj=self, 
+            test_files=config.test_files, 
+            code_files=config.code_files, 
+            on_file_scanned=config.on_file_scanned
+        )
         if violations_file_by_file is not None:
             if isinstance(violations_file_by_file, list):
                 self._file_by_file_violations = violations_file_by_file
@@ -159,9 +183,17 @@ class Rule:
         if not hasattr(self, '_file_by_file_violations') or self._file_by_file_violations is None:
             self._file_by_file_violations = []
 
-    def _execute_cross_file_scan(self, scanner_instance, skip_cross_file, test_files, code_files, all_test_files, all_code_files, status_writer=None, max_cross_file_comparisons=20):
-        if not skip_cross_file and self.requires_two_pass_scan and hasattr(scanner_instance, 'scan_cross_file'):
-            violations_cross_file = scanner_instance.scan_cross_file(rule_obj=self, test_files=test_files, code_files=code_files, all_test_files=all_test_files, all_code_files=all_code_files, status_writer=status_writer, max_cross_file_comparisons=max_cross_file_comparisons)
+    def _execute_cross_file_scan(self, scanner_instance, config: ScanConfig):
+        if not config.skip_cross_file and self.requires_two_pass_scan and hasattr(scanner_instance, 'scan_cross_file'):
+            violations_cross_file = scanner_instance.scan_cross_file(
+                rule_obj=self, 
+                test_files=config.test_files, 
+                code_files=config.code_files, 
+                all_test_files=config.all_test_files, 
+                all_code_files=config.all_code_files, 
+                status_writer=config.status_writer, 
+                max_cross_file_comparisons=config.max_cross_file_comparisons
+            )
             if violations_cross_file:
                 self._cross_file_violations = violations_cross_file
 

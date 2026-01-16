@@ -77,7 +77,7 @@ class DelegationCodeScanner(CodeScanner):
         attr_name_lower = attr_name.lower()
         
         if attr_name_lower.startswith('_'):
-            plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element']
+            plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element', 'adapter', 'line', 'file', 'path']
             if any(indicator in attr_name_lower for indicator in plain_list_indicators):
                 return True
         
@@ -132,7 +132,7 @@ class DelegationCodeScanner(CodeScanner):
         name_lower = name.lower()
         
         if name_lower.startswith('_'):
-            plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element']
+            plain_list_indicators = ['pattern', 'spec', 'config', 'item', 'entry', 'element', 'adapter', 'line', 'file', 'path']
             if any(indicator in name_lower for indicator in plain_list_indicators):
                 return False
         

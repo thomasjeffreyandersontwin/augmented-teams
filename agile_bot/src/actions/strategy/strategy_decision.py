@@ -4,6 +4,16 @@ from .json_persistent import JsonPersistent
 from .strategy import Strategy
 
 class StrategyDecision(JsonPersistent):
+    
+    @staticmethod
+    def get_decisions_parameter_description() -> str:
+        """Get description for decisions_made/decisions/choices parameter."""
+        return "Dict mapping decision criteria keys to selected options/values"
+    
+    @staticmethod
+    def get_assumptions_parameter_description() -> str:
+        """Get description for assumptions_made/assumptions parameter."""
+        return "List of assumption strings"
 
     def __init__(self, behavior_name: str, bot_paths: BotPath, strategy: Strategy, decisions_made: Dict[str, Any]=None, assumptions_made: list=None):
         super().__init__(bot_paths, 'strategy.json')

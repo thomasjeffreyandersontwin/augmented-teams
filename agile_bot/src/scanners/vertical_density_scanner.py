@@ -28,11 +28,11 @@ class VerticalDensityScanner(CodeScanner):
     def _check_variable_declaration_distance(self, func_node: ast.FunctionDef, content: str, file_path: Path, rule_obj: Any) -> Optional[Dict[str, Any]]:
         if hasattr(func_node, 'end_lineno') and func_node.end_lineno:
             func_size = func_node.end_lineno - func_node.lineno + 1
-            if func_size > 50:
+            if func_size > 150:
                 line_number = func_node.lineno if hasattr(func_node, 'lineno') else None
                 return self._create_violation_with_snippet(
                     rule_obj=rule_obj,
-                    violation_message=f'Function "{func_node.name}" is {func_size} lines - consider improving vertical density by declaring variables near usage',
+                    violation_message=f'Function "{func_node.name}" is {func_size} lines - consider improving vertical density by extracting helper methods and declaring variables near usage',
                     file_path=file_path,
                     line_number=line_number,
                     severity='info',

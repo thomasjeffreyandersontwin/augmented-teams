@@ -8,6 +8,9 @@ from .violation import Violation
 
 logger = logging.getLogger(__name__)
 
+# Configuration constants
+CONTEXT_LENGTH = 200  # characters of context to examine
+
 class UselessCommentsScanner(CodeScanner):
     
     def scan_file(self, file_path: Path, rule_obj: Any = None, story_graph: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -117,7 +120,7 @@ class UselessCommentsScanner(CodeScanner):
     
     def _is_useless_docstring(self, docstring: str, content: str, docstring_start: int) -> bool:
         before_docstring = content[:docstring_start]
-        recent_context = before_docstring[-200:] if len(before_docstring) > 200 else before_docstring
+        recent_context = before_docstring[-CONTEXT_LENGTH:] if len(before_docstring) > CONTEXT_LENGTH else before_docstring
         
         lines_before = before_docstring.strip()
         if not lines_before or lines_before.count('\n') == 0:

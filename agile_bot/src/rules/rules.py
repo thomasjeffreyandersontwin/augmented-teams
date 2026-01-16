@@ -392,7 +392,17 @@ class Rules:
             context.callbacks.on_scanner_start(rule.rule_file, scanner_path)
         try:
             max_cross_file = getattr(context, 'max_cross_file_comparisons', 20)
-            scanner_results = rule.scan(context.story_graph, all_files or files, on_file_scanned=context.callbacks.on_file_scanned, skip_cross_file=context.skip_cross_file, changed_files=changed_files, status_writer=context.status_writer, max_cross_file_comparisons=max_cross_file)
+            from agile_bot.src.rules.scan_config import ScanConfig
+            scan_config = ScanConfig(
+                story_graph=context.story_graph,
+                files=all_files or files,
+                changed_files=changed_files,
+                skip_cross_file=context.skip_cross_file,
+                max_cross_file_comparisons=max_cross_file,
+                on_file_scanned=context.callbacks.on_file_scanned,
+                status_writer=context.status_writer
+            )
+            scanner_results = rule.scan(scan_config)
             rule_result['scanner_results'] = self._convert_violations_to_dicts(scanner_results)
             return self._process_scanner_result(rule, rule_result, scanner_results, scanner_path, scanner_name, logger)
         except Exception as e:

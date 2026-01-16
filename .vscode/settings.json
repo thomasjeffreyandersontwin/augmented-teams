@@ -1,22 +1,39 @@
 {
-    "python.defaultInterpreterPath":  "${python_interpreter_default}",
-    "python.testing.unittestArgs":  [
-                                        "-v",
-                                        "-s",
-                                        "./agile_bot",
-                                        "-p",
-                                        "*test.py"
-                                    ],
-    "python.testing.pytestEnabled":  true,
-    "python.testing.unittestEnabled":  false,
-    "python.testing.pytestArgs":  [
-        "agile_bot"
-    ],
-    "python.testing.cwd":  "${workspaceFolder}",
-    "python.testing.autoTestDiscoverOnSaveEnabled":  true,
-    "javascript.preferences.importModuleSpecifier": "relative",
-    "javascript.validate.enable": true,
-    "cursor.ai.autoAcceptFileWrites":  true,
-    "cursor.general.autoAcceptFileWrites":  true
-   
+  "python.defaultInterpreterPath": "C:\\Users\\thoma\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+  "python.languageServer": "Pylance",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "off",
+  
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "agile_bot/test"
+  ],
+  "python.testing.cwd": "${workspaceFolder}",
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  
+  "testExplorer.useNativeTesting": true,
+  "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
+  
+  "files.associations": {
+    "*.mdc": "markdown"
+  },
+  
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true
+  },
+  
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/agile_bot/legacy": true,
+    "**/agile_bot/backups": true
+  }
 }

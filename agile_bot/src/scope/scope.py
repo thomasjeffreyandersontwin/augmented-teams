@@ -162,6 +162,11 @@ class FileFilter:
 
 class Scope:
     
+    @staticmethod
+    def get_parameter_description() -> str:
+        """Get description for scope parameter."""
+        return "Scope structure: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}"
+    
     def __init__(self, workspace_directory: Path, bot_paths=None):
         self.workspace_directory = Path(workspace_directory)
         self.bot_paths = bot_paths
@@ -377,7 +382,11 @@ class Scope:
         except (json.JSONDecodeError, IOError, ValueError):
             pass
     
-    def apply_to_bot(self, workspace_directory: Path = None):
+    def apply_to_bot(self):
+        """Legacy method - save scope to state file.
+        
+        Note: workspace_directory parameter removed as it's already available via self.workspace_directory
+        """
         self.save()
     
     @staticmethod

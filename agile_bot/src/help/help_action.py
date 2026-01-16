@@ -212,26 +212,38 @@ class HelpAction(Action):
         
         return params
     
-    def _get_parameter_description(self, action_name: str, param_name: str) -> str:
-        if 'answers' in param_name or 'key_questions_answered' in param_name:
-            return "Dict mapping question keys to answer strings"
-        elif 'evidence_provided' in param_name or 'evidence' in param_name:
-            return "Dict mapping evidence types to evidence content"
-        elif 'choices' in param_name or 'decisions_made' in param_name or 'decisions' in param_name:
-            return "Dict mapping decision criteria keys to selected options/values"
-        elif 'assumptions' in param_name or 'assumptions_made' in param_name:
-            return "List of assumption strings"
-        elif 'scope' in param_name:
-            return self._get_scope_description(action_name)
-        elif 'path' in param_name or 'directory' in param_name:
-            return "Path to working directory or file"
-        else:
-            return "Optional parameter"
-    
     def _get_scope_description(self, action_name: str) -> str:
+        """Get scope description based on action."""
         if action_name == 'validate':
             return "Scope structure: {'type': 'story'|'epic'|'increment'|'all'|'files', 'value': <names|priorities|files>, 'exclude': <patterns>}"
         return "Scope structure: {'type': 'story'|'epic'|'increment'|'all', 'value': <names|priorities>}"
+    
+    def _get_parameter_description(self, action_name: str, param_name: str) -> str:
+        """Get parameter description by delegating to domain objects."""
+        from ..actions.clarify.requirements_clarifications import RequirementsClarifications
+        from ..actions.strategy.strategy_decision import StrategyDecision
+        
+        # Registry mapping parameter name patterns to domain object description methods
+        description_registry = [
+            (['answers', 'key_questions_answered'], RequirementsClarifications.get_answers_parameter_description),
+            (['evidence_provided', 'evidence'], RequirementsClarifications.get_evidence_parameter_description),
+            (['choices', 'decisions_made', 'decisions'], StrategyDecision.get_decisions_parameter_description),
+            (['assumptions', 'assumptions_made'], StrategyDecision.get_assumptions_parameter_description),
+        ]
+        
+        # Check each pattern in registry
+        for patterns, description_method in description_registry:
+            if any(pattern in param_name for pattern in patterns):
+                return description_method()
+        
+        # Handle special cases
+        if 'scope' in param_name:
+            return self._get_scope_description(action_name)
+        
+        if 'path' in param_name or 'directory' in param_name:
+            return "Path to working directory or file"
+        
+        return "Optional parameter"
     
     def _add_single_action_help(self, instructions, base_actions_dir: Path, action_name: str):
         action_dir = base_actions_dir / action_name

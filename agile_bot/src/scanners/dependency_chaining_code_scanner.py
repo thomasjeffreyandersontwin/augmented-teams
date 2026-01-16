@@ -52,8 +52,14 @@ class DependencyChainingCodeScanner(CodeScanner):
                     (isinstance(decorator, ast.Attribute) and decorator.attr == 'staticmethod')
                     for decorator in node.decorator_list
                 )
+                is_property_setter = any(
+                    (isinstance(decorator, ast.Attribute) and decorator.attr == 'setter')
+                    for decorator in node.decorator_list
+                )
                 
-                if is_classmethod or is_staticmethod:
+                # Skip classmethods, staticmethods, and property setters
+                # Property setters need their parameters to set new values
+                if is_classmethod or is_staticmethod or is_property_setter:
                     continue
                 
                 method_params = [arg.arg for arg in node.args.args if arg.arg != 'self']
