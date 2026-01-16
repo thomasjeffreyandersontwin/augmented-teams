@@ -65,7 +65,7 @@
           "# Keep old module with deprecation:",
           "# src/actions/gather_context.py",
           "import warnings",
-          "from agile_bot.bots.base_bot.src.bot.gather_context_action import (",
+          "from agile_bot.src.bot.gather_context_action import (",
           "    GatherContextAction as _GatherContextAction",
           ")",
           "",

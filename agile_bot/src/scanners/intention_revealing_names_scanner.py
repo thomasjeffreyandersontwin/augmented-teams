@@ -277,18 +277,6 @@ class IntentionRevealingNamesScanner(CodeScanner):
         
         return violations
     
-    def _is_in_small_loop(self, node: ast.Name) -> bool:
-        parent = getattr(node, 'parent', None)
-        if parent and isinstance(parent, ast.For):
-            if isinstance(parent.iter, ast.Call):
-                if isinstance(parent.iter.func, ast.Name) and parent.iter.func.id == 'range':
-                    return True
-            # Also allow iteration over small lists/tuples (common pattern)
-            elif isinstance(parent.iter, (ast.List, ast.Tuple)):
-                if len(parent.iter.elts) <= 5:  # Small collection
-                    return True
-        return False
-    
     def _get_docstring_ranges(self, tree: ast.AST) -> List[tuple]:
         docstring_ranges = []
         

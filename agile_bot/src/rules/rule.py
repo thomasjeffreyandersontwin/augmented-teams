@@ -215,17 +215,6 @@ class Rule:
             if examples:
                 for ex in examples:
                     formatted.append(f'  - {ex}')
-    
-    def _format_examples(self, examples: list, formatted: list) -> None:
-        for example in examples:
-            desc = example.get('description', '')
-            content = example.get('content', '')
-            if isinstance(content, list):
-                content = '\n'.join(content)
-            if desc:
-                formatted.append(f'- {desc}: {content}')
-            else:
-                formatted.append(f'- {content}')
 
     def _format_example_block(self, example_content: dict, label: str, formatted: list) -> None:
         desc = example_content.get('description', '')

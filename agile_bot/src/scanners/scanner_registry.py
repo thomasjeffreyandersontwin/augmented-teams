@@ -61,13 +61,4 @@ class ScannerRegistry:
             return None, f"Scanner class not found: {scanner_module_path}"
         except Exception as e:
             return None, f"Error loading scanner {scanner_module_path}: {e}"
-    
-    def registers_helper(self, scanner_class: Type[Scanner], rule_name: str = None):
-        if rule_name:
-            # Register by rule name
-            self._scanner_cache[rule_name] = scanner_class
-        else:
-            # Register by class name
-            class_name = scanner_class.__name__
-            self._scanner_cache[class_name] = scanner_class
 

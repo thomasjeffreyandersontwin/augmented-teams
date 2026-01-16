@@ -241,18 +241,6 @@ class BuildStoryGraphAction(Action):
         # Replace base_instructions with: [custom instructions] + [rules at end]
         instructions._data['base_instructions'] = new_instructions
         instructions.set('rules', all_rules)
-
-    def _convert_path_to_reference(self, path_str: str, bot_dir: Path) -> str:
-        """Helper to convert absolute/relative path to bot-relative reference."""
-        try:
-            path_obj = Path(path_str)
-            if path_obj.is_absolute():
-                rel_path = path_obj.relative_to(bot_dir)
-                return f"{self.behavior.bot_name}/{str(rel_path).replace('\\', '/')}"
-            else:
-                return f"{self.behavior.bot_name}/{str(path_str).replace('\\', '/')}"
-        except Exception:
-            return path_str
     
     def _replace_content_with_file_references(self, instructions) -> None:
         """Replace full content (templates, configs, rules) with file path references."""

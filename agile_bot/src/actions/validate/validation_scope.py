@@ -47,9 +47,6 @@ class ValidationScope(ActionScope):
         if skiprule:
             self._parameters['skiprule'] = skiprule
 
-    def _should_include_file(self, file_path: Path) -> bool:
-        return self._file_discovery.should_include_file(file_path)
-
     def _expand_directory_to_files(self, dir_path: Path) -> List[Path]:
         return self._file_discovery.expand_directory_to_files(dir_path)
 

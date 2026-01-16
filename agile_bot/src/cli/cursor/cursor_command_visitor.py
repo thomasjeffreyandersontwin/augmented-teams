@@ -82,22 +82,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
         commands_dir.mkdir(parents=True, exist_ok=True)
         return commands_dir
     
-    def _get_cli_command(self) -> str:
-        """Get the CLI command template using the new entry point."""
-        bot_dir_str = str(self.bot_directory).replace('\\', '\\')
-        workspace_str = str(self.workspace_root).replace('\\', '\\')
-        return f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo '${{1:command}}' | python -m agile_bot.src.cli.cli_main"
-    
-    def _get_current_command_files(self) -> Set[Path]:
-        try:
-            bot_prefix = f'{self.bot_name}_'
-            existing_files = set()
-            for file_path in self.commands_dir.glob(f'{bot_prefix}*.md'):
-                existing_files.add(file_path)
-            return existing_files
-        except (FileNotFoundError, OSError):
-            return set()
-    
     def _generate_base_commands(self) -> None:
         base_command_content = self._build_base_command()
         self.commands[f'{self.bot_name}'] = self._write_command_file(
@@ -199,46 +183,6 @@ class CursorCommandGenerator(BaseBehaviorsAdapter):
                         lines.append(f"- {action_name}")
                 else:
                     lines.append(f"- {action_name}")
-        
-        return "\n".join(lines)
-    
-    def _build_action_command(self, behavior_name: str, action_name: str) -> str:
-        bot_dir_str = str(self.bot_directory).replace('\\', '\\')
-        workspace_str = str(self.workspace_root).replace('\\', '\\')
-        
-        action_desc = ""
-        if self.data_collector:
-            action_desc = self.data_collector.get_action_description(action_name)
-        
-        short_desc = ""
-        if action_desc:
-            short_desc = action_desc.split('\n')[0].split('.')[0]
-        
-        behavior_name_underscore = behavior_name.replace('-', '_')
-        action_name_underscore = action_name.replace('-', '_')
-        
-        lines = [
-            f"# {self.bot_name}_{behavior_name_underscore}_{action_name_underscore} - Execute {behavior_name.capitalize()} {action_name.capitalize()} Action",
-            "",
-        ]
-        
-        if short_desc:
-            lines.append(f"{short_desc}")
-            lines.append("")
-        
-        lines.extend([
-            "## Navigate to Action",
-            f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo '{behavior_name}.{action_name}' | python -m agile_bot.src.cli.cli_main",
-            "",
-            "## Get Instructions",
-            f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo '{behavior_name}.{action_name}.instructions' | python -m agile_bot.src.cli.cli_main",
-            "",
-            "## Submit Work",
-            f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo '{behavior_name}.{action_name}.submit${{1:+ }}${{1:--scope \"${{2:story_name}}\"}}' | python -m agile_bot.src.cli.cli_main",
-            "",
-            "## Confirm and Advance",
-            f"$env:BOT_DIRECTORY = '{bot_dir_str}'; $env:PYTHONPATH = '{workspace_str}'; echo '{behavior_name}.{action_name}.confirm' | python -m agile_bot.src.cli.cli_main",
-        ])
         
         return "\n".join(lines)
     

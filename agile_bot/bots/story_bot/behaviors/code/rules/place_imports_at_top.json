@@ -46,21 +46,21 @@
           "import pytest",
           "",
           "# Local application imports",
-          "from agile_bot.bots.base_bot.src.actions.action import Action"
+          "from agile_bot.src.actions.action import Action"
         ]
       },
       "dont": {
         "description": "Don't mix import groups or place imports randomly",
         "content": [
           "import os",
-          "from agile_bot.bots.base_bot.src.actions.action import Action  # WRONG - local before stdlib",
+          "from agile_bot.src.actions.action import Action  # WRONG - local before stdlib",
           "import json",
           "import pytest  # WRONG - third-party mixed with stdlib"
         ]
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.scanners.import_placement_scanner.ImportPlacementScanner"
+  "scanner": "agile_bot.src.scanners.import_placement_scanner.ImportPlacementScanner"
 }
 
 

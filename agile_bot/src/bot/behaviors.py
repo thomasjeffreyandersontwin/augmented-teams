@@ -248,29 +248,6 @@ class Behaviors:
                 self._current_index += 1
                 self.save_state()
 
-    def _inject_next_behavior_reminder(self, result: dict, action_name: str=None) -> dict:
-        if not self._is_final_behavior():
-            return result
-        if action_name and self.current:
-            action_names = self.current.actions.names
-            if action_names and action_name != action_names[-1]:
-                return result
-        reminder = self._get_next_behavior_reminder()
-        if not reminder:
-            return result
-        return inject_reminder_to_instructions(result, reminder)
-
-    def _is_final_behavior(self) -> bool:
-        try:
-            if self.current is None:
-                return False
-            if self.names and self.current.name == self.names[-1]:
-                return True
-        except Exception as e:
-            logger.debug(f'Failed to check if behavior is final: {e}')
-            raise
-        return False
-
     def _get_next_behavior_reminder(self) -> str:
         try:
             next_behavior = self.next()

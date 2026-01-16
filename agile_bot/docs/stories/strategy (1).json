@@ -1,0 +1,86 @@
+{
+  "shape": {
+    "strategy_criteria": {
+      "criteria": {
+        "depth_of_shaping": {
+          "question": "How deep should we drill down in each shaping phase for the drill-down areas?",
+          "options": [
+            "Estimates -> story_count only",
+            "Decompose -> Discover all stories listed",
+            "Workflow -> Figure out logical process, alternate/or conditions",
+            "Extensive -> Specify all scenarios",
+            "Testable -> Specify minimal examples",
+            "Complete -> Specify all examples"
+          ]
+        },
+        "drill_down_approach": {
+          "question": "What areas of the story map do you want to explore more deeply as a part of shaping?",
+          "options": [
+            "Dig deep on business complexity",
+            "Dig deep on system interactions",
+            "Dig deep on architectural pieces",
+            "Dig deep on user workflows",
+            "High and wide across all epics",
+            "Focus on highest value areas",
+            "Dig deep on behavioral complexity",
+            "Dig deep on data and reporting needs",
+            "Dig deep on change management or training impact",
+            "Dig deep on system-of-record versus system-of-engagement boundaries"
+          ]
+        },
+        "drill_down_limits": {
+          "question": "What are the approximate limits for drill-down coverage (to prevent over-detailing)?",
+          "options": [
+            "Approximate story limit: 3-5 stories",
+            "Approximate story limit: 5-10 stories",
+            "Approximate story limit: 10-15 stories",
+            "Approximate story limit: 15-20 stories",
+            "Approximate story limit: No limit",
+            "Approximate feature limit: 2-3 features",
+            "Approximate feature limit: 3-5 features",
+            "Approximate feature limit: 5-7 features",
+            "Approximate feature limit: 7-10 features",
+            "Approximate feature limit: No limit"
+          ]
+        },
+        "flow_scope_and_granularity": {
+          "question": "How wide are we going with the flow and what level of scope are we documenting?",
+          "options": [
+            "End-to-end user-system behavior \u2013 One user interaction followed by one system response",
+            "Journey level \u2013 Complete user journey across multiple touchpoints, systems, and interactions. Captures full experience flow.",
+            "Intra-system level \u2013 Focus on interactions within a single system, Useful for Solutions with significant backend or service flows.",
+            "Business processes \u2013 All business processes, including manual and system interactions.",
+            "Integration boundary level \u2013 Focus on system-to-system integration points and data flow across boundaries.",
+            "Capability level \u2013 High-level flow showing major capabilities and how they connect, without detailed interactions."
+          ]
+        },
+        "structure_exploration_depth": {
+          "question": "What level of acceptance criteria should be explored for structure-focused areas?",
+          "options": [
+            "Structure -> Explore structural AC only (data, relationships, constraints)",
+            "Behavioral -> Explore business and behavioral AC (user interactions, workflows, outcomes)"
+          ]
+        }
+      },
+      "decisions_made": {
+        "depth_of_shaping": "Extensive",
+        "drill_down_approach": "High and wide across all epics",
+        "drill_down_limits": "15-20 stories and 5-7 features",
+        "flow_scope_and_granularity": "Integration boundary level",
+        "structure_exploration_depth": "Behavioral"
+      }
+    },
+    "assumptions": {
+      "typical_assumptions": [
+        "Focus on user flow over internal systems",
+        "Cover the end-to-end scenario from user perspective",
+        "Prioritize customer-facing features in early increments"
+      ],
+      "assumptions_made": [
+        "Focus on user flow over internal systems",
+        "Cover the end-to-end scenario from user perspective",
+        "Prioritize customer-facing features in early increments"
+      ]
+    }
+  }
+}

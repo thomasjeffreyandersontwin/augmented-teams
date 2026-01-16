@@ -77,14 +77,6 @@ class DomainLanguageScanner(DomainScanner):
         # Simple heuristic: if it's just "Data" or "Config" it's generic
         # If it's "PortfolioData" it might be okay in some contexts, but ideally should be "Portfolio"
         return len(name.split()) > 1 or name.lower() not in ['data', 'config', 'parameter', 'result']
-    
-    def _is_generic_usage(self, responsibility: str, pattern: str) -> bool:
-        # Simple heuristic: if it's standalone or with generic context, it's generic
-        matches = re.findall(pattern, responsibility.lower())
-        for match in matches:
-            if match.strip() == 'data' or match.strip() == 'config':
-                return True
-        return False
 
 
 

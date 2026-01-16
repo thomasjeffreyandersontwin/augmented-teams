@@ -63,5 +63,5 @@
       }
     }
   ],
-  "scanner": "agile_bot.bots.base_bot.src.actions.validate.scanners.separate_concerns_scanner.SeparateConcernsScanner"
+  "scanner": "agile_bot.src.scanners.separate_concerns_scanner.SeparateConcernsScanner"
 }

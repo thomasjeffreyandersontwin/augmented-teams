@@ -183,14 +183,6 @@ class Action:
         else:
             return "Optional parameter"
 
-    def _merge_instructions(self, base_instructions, behavior_instructions) -> List:
-        if isinstance(base_instructions, list) and isinstance(behavior_instructions, list):
-            return base_instructions + behavior_instructions
-        elif isinstance(base_instructions, list):
-            return base_instructions + [behavior_instructions] if behavior_instructions else base_instructions
-        else:
-            return behavior_instructions if behavior_instructions else base_instructions
-
     def _inject_clarification_data(self, instructions: Dict[str, Any]) -> list:
         return self._context_data_injector.inject_clarification_data(instructions)
 
@@ -202,10 +194,6 @@ class Action:
 
     def get_workflow_status_breadcrumbs(self) -> list:
         return self._workflow_status_builder.get_behavior_action_status_breadcrumbs()
-
-    def _inject_status_update_breadcrumbs(self, instructions: Dict[str, Any]) -> list:
-        breadcrumbs = self.get_workflow_status_breadcrumbs()
-        return breadcrumbs
 
     def _replace_context_placeholders(self, instructions_list: List[str]) -> List[str]:
         """Replace standard context placeholders with actual values.

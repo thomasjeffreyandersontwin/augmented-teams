@@ -218,18 +218,6 @@ class Actions:
             raise
         return False
 
-    def _get_next_action_reminder(self) -> str:
-        if self.is_final_action():
-            return self._get_next_behavior_reminder()
-        try:
-            next_action = self.next()
-            if next_action:
-                return f'After completing this action, the next action in sequence is `{next_action.action_name}`. When ready to continue, proceed with `{next_action.action_name}`.'
-        except Exception as e:
-            logging.getLogger(__name__).debug(f'Failed to get next action reminder: {e}')
-            raise
-        return ''
-
     def _get_next_behavior_reminder(self) -> str:
         try:
             behavior_names = self.behavior.bot.behaviors.names
@@ -269,21 +257,6 @@ class Actions:
         current_index_ref = [self._current_index]
         self._state_manager.load_state(self._actions, current_index_ref)
         self._current_index = current_index_ref[0]
-
-    def _save_completed_action(self, action_name: str):
-        workspace_dir = self.behavior.bot_paths.workspace_directory
-        state_file = workspace_dir / 'behavior_action_state.json'
-        if state_file.exists():
-            state_data = json.loads(state_file.read_text(encoding='utf-8'))
-        else:
-            state_data = {'current_behavior': f'{self.behavior.bot_name}.{self.behavior.name}', 'current_action': '', 'completed_actions': [], 'timestamp': datetime.now().isoformat()}
-        if 'completed_actions' not in state_data:
-            state_data['completed_actions'] = []
-        action_state = f'{self.behavior.bot_name}.{self.behavior.name}.{action_name}'
-        if not any((a.get('action_state') == action_state for a in state_data['completed_actions'])):
-            state_data['completed_actions'].append({'action_state': action_state, 'timestamp': datetime.now().isoformat()})
-        state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(json.dumps(state_data, indent=2), encoding='utf-8')
 
     def is_action_completed(self, action_name: str) -> bool:
         """

@@ -272,19 +272,6 @@ class ValidationReportWriter:
             logger.warning(f'Could not create report hyperlink: {e}')
             return str(report_path)
 
-    def _build_report_lines(self, instructions: Dict[str, Any], validation_rules: List[Dict[str, Any]], files: Dict[str, List[Path]], report_path: str) -> List[str]:
-        lines = []
-        lines.extend(self.builder.build_header())
-        lines.extend(self.builder.build_metadata())
-        lines.extend(self.builder.build_summary(validation_rules, files))
-        lines.extend(self.builder.build_content_validated(files, self.file_link_builder.get_relative_path, self._build_scanned_files_section))
-        lines.extend(self.scanner_status_formatter.build_scanner_status(validation_rules))
-        lines.extend(self.scanner_status_builder.build_validation_rules(validation_rules))
-        lines.extend(self.violation_formatter.build_violations(validation_rules))
-        lines.extend(self.builder.build_instructions(instructions))
-        lines.extend(self.builder.build_report_location(report_path))
-        return lines
-
     def _build_scanned_files_section(self, file_type: str, files_scanned: List[str], section_title: str) -> List[str]:
         lines = []
         if files_scanned:

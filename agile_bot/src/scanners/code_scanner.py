@@ -187,17 +187,6 @@ class CodeScanner(Scanner):
         # Default implementation - subclasses override
         return []
     
-    def _parse_code_file(self, file_path: Path) -> Optional[Tuple[str, ast.AST]]:
-        if not file_path.exists():
-            return None
-        
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            tree = ast.parse(content, filename=str(file_path))
-            return (content, tree)
-        except (SyntaxError, UnicodeDecodeError):
-            return None
-    
     def _read_and_parse_file(self, file_path: Path) -> Optional[Tuple[str, List[str], ast.AST]]:
         import logging
         logger = logging.getLogger(__name__)
@@ -213,26 +202,6 @@ class CodeScanner(Scanner):
         except (SyntaxError, UnicodeDecodeError) as e:
             logger.debug(f'Skipping file {file_path} due to {type(e).__name__}: {e}')
             return None
-    
-    def _get_all_code_files_parsed(
-        self, 
-        test_files: Optional[List[Path]] = None,
-        code_files: Optional[List[Path]] = None
-    ) -> List[Tuple[Path, str, ast.AST]]:
-        parsed_files = []
-        all_files = []
-        if code_files:
-            all_files.extend(code_files)
-        if test_files:
-            all_files.extend(test_files)
-        
-        for file_path in all_files:
-            parsed = self._parse_code_file(file_path)
-            if parsed:
-                content, tree = parsed
-                parsed_files.append((file_path, content, tree))
-        
-        return parsed_files
     
     def _extract_code_snippet(self, content: str, ast_node: Optional[ast.AST] = None, 
                              start_line: Optional[int] = None, end_line: Optional[int] = None,

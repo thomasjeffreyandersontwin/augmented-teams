@@ -1397,41 +1397,6 @@ class DuplicationScanner(CodeScanner):
         
         return 0.0
     
-    def _get_ast_signature(self, block: List[ast.stmt]) -> str:
-        signatures = []
-        for node in block:
-            sig = self._get_node_signature(node)
-            signatures.append(sig)
-        return "|".join(signatures)
-    
-    def _get_node_signature(self, node: ast.AST) -> str:
-        node_type = type(node).__name__
-        
-        if isinstance(node, ast.Assign):
-            return f"ASSIGN({len(node.targets)}_targets)"
-        elif isinstance(node, ast.AugAssign):
-            return f"AUGASSIGN({type(node.op).__name__})"
-        elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
-            return "CALL"
-        elif isinstance(node, ast.Assert):
-            return "ASSERT"
-        elif isinstance(node, ast.Return):
-            return "RETURN"
-        elif isinstance(node, ast.If):
-            return "IF"
-        elif isinstance(node, ast.For):
-            return "FOR"
-        elif isinstance(node, ast.While):
-            return "WHILE"
-        elif isinstance(node, ast.With):
-            return "WITH"
-        elif isinstance(node, ast.Try):
-            return "TRY"
-        elif isinstance(node, ast.Raise):
-            return "RAISE"
-        else:
-            return node_type
-    
     def _compare_ast_nodes_deep(self, node1: ast.AST, node2: ast.AST) -> float:
         if type(node1) != type(node2):
             return 0.0

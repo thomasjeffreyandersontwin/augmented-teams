@@ -79,25 +79,6 @@ class GivenWhenThenHelpersScanner(TestScanner):
         
         return helpers
     
-    def _get_helper_calls_in_file(self, tree: ast.AST, content: str) -> Set[str]:
-        helper_calls = set()
-        helper_functions = self._get_helper_functions(tree, content)
-        
-        # Walk through all call nodes to find helper function calls
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                func_name = None
-                if isinstance(node.func, ast.Name):
-                    func_name = node.func.id
-                elif isinstance(node.func, ast.Attribute):
-                    if isinstance(node.func.value, ast.Name) and node.func.value.id == 'self':
-                        func_name = node.func.attr
-                
-                if func_name and func_name in helper_functions:
-                    helper_calls.add(func_name)
-        
-        return helper_calls
-    
     def _parse_test_file(self, file_path: Path) -> Optional[Tuple[str, ast.AST]]:
         if not file_path.exists():
             return None
