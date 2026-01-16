@@ -678,13 +678,21 @@ class Action:
         Uses the existing MarkdownInstructions adapter to format the complete instructions
         object as markdown, including behavior/action instructions, base instructions,
         guardrails, clarifications, strategy decisions, and all other data.
+        
+        IMPORTANT: Creates a temporary copy without display_content to avoid circular
+        serialization (display_content shouldn't include itself).
         """
         from agile_bot.src.instructions.markdown_instructions import MarkdownInstructions
+
+        # Create a temporary copy without display_content to avoid circular serialization
+        # (display_content shouldn't include itself when serialized)
+        temp_instructions = instructions.copy()
+        temp_instructions._display_content = []  # Clear display_content before serializing
         
-        # Use the existing markdown adapter to format the complete instructions
-        markdown_adapter = MarkdownInstructions(instructions)
+        # Use the existing markdown adapter to format the instructions (without display_content)
+        markdown_adapter = MarkdownInstructions(temp_instructions)
         markdown_output = markdown_adapter.serialize()
-        
+
         # Add the markdown output to display_content
         for line in markdown_output.split('\n'):
             instructions.add_display(line)

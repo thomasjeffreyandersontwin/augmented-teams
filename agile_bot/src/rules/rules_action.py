@@ -8,6 +8,10 @@ from .rules_digest_guidance import RulesDigestGuidance
 class RulesAction(Action):
     context_class: Type[ActionContext] = RulesActionContext
 
+    def _load_behavior_guardrails(self, instructions):
+        """Rules action should not load guardrails/clarifications - it's just for displaying rules."""
+        pass
+
     def _prepare_instructions(self, instructions, context: RulesActionContext):
         """Prepare rules instructions by building rules digest and adding to display content."""
         rules = Rules(behavior=self.behavior, bot_paths=self.behavior.bot_paths)
